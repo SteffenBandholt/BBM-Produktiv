@@ -663,3 +663,9 @@ Hinweis:
 - Das rechte Steuerpanel zeigt offene Sitzungsänderungen und bietet „Alle Änderungen verwerfen“ sowie „Editor ausschalten/einschalten“.
 - Rücknahmen laufen über Inspector-Bridge und HostAdapter/Layout-State; das Panel setzt keine DOM-Styles direkt zurück.
 - Ausschalten stoppt Auswahlmodus und Overlays, ohne Sitzungsänderungen automatisch zu verwerfen.
+
+## M64 Korrektur 5 – saubere Runtime-Sitzungsverwaltung
+- Die M64-Sitzungs-Baseline liegt nicht mehr im sichtbaren Statuspanel, sondern in der neutralen Inspector-/Runtime-Schicht.
+- Das Statuspanel nutzt nur öffentliche Bridge-Befehle für Sitzungsstart, Status, Element-Verwerfen, Alles-Verwerfen und Sitzungsende.
+- Die interne `__getHostAdapter`-Hintertür wurde entfernt; die Bridge greift nicht direkt auf HostAdapter- oder LayoutStore-Interna zu.
+- Verwerfen, Editor ein-/ausschalten und Schließen bleiben funktional; Guardrails sichern die Architekturgrenzen ab.

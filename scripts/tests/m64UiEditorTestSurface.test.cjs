@@ -11,6 +11,7 @@ const REPO_ROOT = path.join(__dirname, "../..");
 const PANEL_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/BbmUiEditorStatusPanel.js");
 const BRIDGE_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js");
 const HOST_ADAPTER_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/bbmMainUiHostAdapter.js");
+const INSPECTOR_PATH = path.join(REPO_ROOT, "src/renderer/editorRuntime/inspector/editorScopeInspector.js");
 const CSS_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js");
 const REFS_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiElementRefs.js");
 const LAYOUT_PERSISTENCE_PATH = path.join(REPO_ROOT, "src/renderer/editorRuntime/layout/editorLayoutPersistence.js");
@@ -511,9 +512,13 @@ async function runM64UiEditorTestSurfaceTests(run) {
   await run("M64 Guardrails: Registry bleibt fuehrend, Bridge hat keine zweite Parent-Tabelle", () => {
     const panelSource = fs.readFileSync(PANEL_PATH, "utf8");
     const bridgeSource = fs.readFileSync(BRIDGE_PATH, "utf8");
+    const inspectorSource = fs.readFileSync(INSPECTOR_PATH, "utf8");
     assert.doesNotMatch(panelSource, /createNode\("input"\)|createNode\("select"\)|createElement\("input"\)|createElement\("select"\)/);
     assert.doesNotMatch(panelSource, /ipcRenderer|ipcMain|invoke\(|localStorage|querySelector|querySelectorAll|getElementById|getElementsBy|MutationObserver/);
     assert.doesNotMatch(panelSource, /style\.(?:setProperty|removeProperty)|\.style\s*=/);
+    assert.doesNotMatch(panelSource, /sessionLayoutBaseline|layoutValuesEqual|getBaselineEntriesFor/);
+    assert.doesNotMatch(inspectorSource, /__getHostAdapter/);
+    assert.doesNotMatch(bridgeSource, /__getHostAdapter|restoreLayoutState|layoutStore/);
     assert.doesNotMatch(bridgeSource, /PARENT_BY_ELEMENT_ID/);
     assert.doesNotMatch(bridgeSource, /bbm\.uiEditorTest\.workspace"\s*:\s*"root"/);
     assert.match(bridgeSource, /parentId:\s*element\?\.parentId \?\? null/);

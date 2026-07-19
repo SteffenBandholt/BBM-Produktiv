@@ -60,8 +60,7 @@ export class BbmUiEditorStatusPanel {
     this.activeLayoutControlMode = "move";
     this.lastRenderedLayoutControlElementId = "";
     this.editorActive = true;
-    this.sessionBaselineCaptured = false;
-    this.sessionLayoutBaseline = new globalThis.Map();
+    this.layoutSessionStatus = { ok: true, active: false, changedElementIds: [], changedCount: 0, changedByElementId: {} };
     this.inspectorBridge = createBbmEditorRuntimeInspectorBridge({
       getRegistryElements: () => this.elements,
       getSelectedElement: () => this.selectedElement,
@@ -128,6 +127,7 @@ export class BbmUiEditorStatusPanel {
     this.editorActive = false;
     this.stopSelectionMode();
     this.destroyKitController();
+    this.inspectorBridge?.endLayoutSession?.();
     try {
       await window.bbmDb?.uiEditorClose?.();
     } catch (_e) {
@@ -160,7 +160,7 @@ export class BbmUiEditorStatusPanel {
     this.refStatus = getBbmUiElementRefStatus();
     this.elements = Array.isArray(elementsResult?.elements) ? elementsResult.elements : [];
     this.selectedElement = detailsResult?.selectedElement || null;
-    this.captureSessionBaselineOnce();
+    this.beginLayoutSession();
     this.renderAll();
     await this.initializeDefaultSelectionRuntime();
   }
@@ -449,50 +449,24 @@ export class BbmUiEditorStatusPanel {
     this.elementsNode.appendChild(list);
   }
 
-  cloneLayoutValue(value) {
-    return value && typeof value === "object" && !Array.isArray(value) ? Object.freeze({ ...value }) : null;
+  beginLayoutSession() {
+    const result = this.inspectorBridge?.beginLayoutSession?.();
+    this.layoutSessionStatus = result?.status || this.inspectorBridge?.getLayoutSessionStatus?.()?.status || this.layoutSessionStatus;
   }
 
-  captureSessionBaselineOnce() {
-    if (this.sessionBaselineCaptured || !this.inspectorBridge || !this.elements.length) return;
-    const state = this.inspectorBridge.getCurrentLayoutState?.();
-    const byId = new globalThis.Map((state?.layoutState || []).map((entry) => [String(entry.elementId || ""), entry]));
-    this.sessionLayoutBaseline = new globalThis.Map(this.elements.map((element) => {
-      const elementId = String(element.elementId || element.id || "").trim();
-      const entry = byId.get(elementId);
-      return [elementId, entry ? { ...entry, layoutValue: this.cloneLayoutValue(entry.layoutValue) } : null];
-    }));
-    this.sessionBaselineCaptured = true;
-  }
-
-  getCurrentLayoutMap() {
-    const state = this.inspectorBridge?.getCurrentLayoutState?.();
-    return new globalThis.Map((state?.layoutState || []).map((entry) => [String(entry.elementId || ""), entry]));
-  }
-
-  layoutValuesEqual(a, b) {
-    const left = a && typeof a === "object" ? a : {};
-    const right = b && typeof b === "object" ? b : {};
-    return JSON.stringify({ x: left.x ?? 0, y: left.y ?? 0, width: left.width ?? null, height: left.height ?? null, visible: left.visible ?? null })
-      === JSON.stringify({ x: right.x ?? 0, y: right.y ?? 0, width: right.width ?? null, height: right.height ?? null, visible: right.visible ?? null });
+  refreshLayoutSessionStatus() {
+    const result = this.inspectorBridge?.getLayoutSessionStatus?.();
+    this.layoutSessionStatus = result?.status || result || this.layoutSessionStatus;
   }
 
   hasSessionChange(elementId) {
-    const current = this.getCurrentLayoutMap().get(String(elementId || ""))?.layoutValue || null;
-    const baseline = this.sessionLayoutBaseline.get(String(elementId || ""))?.layoutValue || null;
-    return !this.layoutValuesEqual(current, baseline);
-  }
-
-  getChangedElementIds() {
-    return this.elements.map((element) => String(element.elementId || element.id || "").trim()).filter((id) => id && this.hasSessionChange(id));
+    this.refreshLayoutSessionStatus();
+    return Boolean(this.layoutSessionStatus?.changedByElementId?.[String(elementId || "")]);
   }
 
   getOpenChangeCount() {
-    return this.getChangedElementIds().length;
-  }
-
-  getBaselineEntriesFor(elementIds) {
-    return elementIds.map((id) => this.sessionLayoutBaseline.get(id)).filter(Boolean).map((entry) => ({ ...entry, layoutValue: { ...entry.layoutValue } }));
+    this.refreshLayoutSessionStatus();
+    return Number(this.layoutSessionStatus?.changedCount || 0);
   }
 
   renderEditorSessionControls() {
@@ -637,10 +611,8 @@ export class BbmUiEditorStatusPanel {
   discardSelectedElementChanges() {
     const elementId = String(this.selectedElement?.elementId || this.selectedElement?.id || "").trim();
     if (!elementId || !this.selectedElement?.editable || !this.hasSessionChange(elementId)) return;
-    const result = this.inspectorBridge?.restoreSessionLayoutState?.({
-      elementIds: [elementId],
-      entries: this.getBaselineEntriesFor([elementId]),
-    });
+    const result = this.inspectorBridge?.discardSelectedElementChanges?.(elementId);
+    this.layoutSessionStatus = result?.status || this.layoutSessionStatus;
     const label = asText(this.selectedElement?.label || this.selectedElement?.name, elementId);
     this.selectionMessage = result?.ok ? `Änderungen für ${label} verworfen.` : "Änderungen konnten nicht verworfen werden.";
     this.renderAll();
@@ -648,12 +620,9 @@ export class BbmUiEditorStatusPanel {
   }
 
   discardAllSessionChanges() {
-    const elementIds = this.getChangedElementIds();
-    if (!elementIds.length) return;
-    const result = this.inspectorBridge?.restoreSessionLayoutState?.({
-      elementIds,
-      entries: this.getBaselineEntriesFor(elementIds),
-    });
+    if (this.getOpenChangeCount() === 0) return;
+    const result = this.inspectorBridge?.discardAllSessionChanges?.();
+    this.layoutSessionStatus = result?.status || this.layoutSessionStatus;
     this.selectionMessage = result?.ok ? "Alle Änderungen dieser Sitzung wurden verworfen." : "Änderungen konnten nicht verworfen werden.";
     this.renderAll();
     this.syncActiveSelectionRuntime();
@@ -712,6 +681,7 @@ export class BbmUiEditorStatusPanel {
   destroy() {
     this.editorActive = false;
     this.destroyKitController();
+    this.inspectorBridge?.endLayoutSession?.();
     this.selectionModeActive = false;
     for (const elementId of ["bbm.uiEditorTest.workspace", "bbm.uiEditorTest.card", "bbm.uiEditorTest.card.title", "bbm.uiEditorTest.card.text", "bbm.uiEditorTest.card.button", "bbm.uiEditorTest.card.input", "bbm.uiEditorTest.card.select", "bbm.uiEditorTest.table"]) { try { unregisterBbmUiElementRef(elementId); } catch (_error) {} }
     this.panelRoot = null;
@@ -839,6 +809,7 @@ export class BbmUiEditorStatusPanel {
   handleKitRuntimeError(error) {
     this.runtimeError = error?.message || String(error || "Kit-Runtime-Fehler");
     this.destroyKitController();
+    this.inspectorBridge?.endLayoutSession?.();
     this.selectionModeActive = false;
     this.hoverTargetLabel = "keines";
     this.renderAll();

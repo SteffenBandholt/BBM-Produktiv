@@ -3080,3 +3080,22 @@ Wichtig:
   - Lokale Windows-Abnahme: Verwerfen je Element, alle verwerfen, Editor aus/ein und Zurück/Schließen praktisch prüfen.
 - Risiken/Hinweise:
   - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.
+
+### M64 Korrektur 5 – saubere Runtime-Sitzungsverwaltung
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Die Sitzungs-Baseline wurde aus `BbmUiEditorStatusPanel` in die neutrale Inspector-/Runtime-Schicht verschoben.
+  - Das Panel berechnet keine offenen Layoutänderungen mehr aus einer eigenen Baseline-Kopie, sondern fragt den öffentlichen Session-Status der Bridge ab.
+  - Die `__getHostAdapter`-Hintertür wurde entfernt; die Bridge ruft nur öffentliche Inspector-Session-Methoden auf.
+  - Einzelelement-Verwerfen, „Alle Änderungen verwerfen“, Editor aus/ein und Close-Verhalten bleiben über Tests abgesichert.
+- Betroffene Dateien:
+  - `src/renderer/editorRuntime/inspector/editorScopeInspector.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - Lokale Windows-Abnahme für PR #204 erneut durchführen.
+- Risiken/Hinweise:
+  - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.

@@ -196,6 +196,8 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
   const targetAppId = normalizeId(options.targetAppId) || DEFAULT_TARGET_APP_ID;
   const getRegistryElements = typeof options.getRegistryElements === "function" ? options.getRegistryElements : () => options.registryElements || [];
   const getSelectedElement = typeof options.getSelectedElement === "function" ? options.getSelectedElement : () => options.selectedElement || null;
+  let runtimeInspector = null;
+  let runtimeRegistrySignature = "";
   function getSnapshot() {
     const registryElements = getRegistryElements() || [];
     const selectedElement = getSelectedElement() || null;
@@ -225,7 +227,7 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
     const status = getStatus();
     if (!status.ok || status.kind === "empty") return { ...status, registry: snapshot.transformed.registry };
     try {
-      const inspector = createRuntimeInspector({ inspector: options.inspector, inspectorFactory: options.inspectorFactory, hostAdapterFactory: options.hostAdapterFactory, registry: snapshot.transformed.registry, scopeId, moduleId, targetAppId });
+      const inspector = createInspectorForSnapshot(snapshot);
       const panel = inspector.getLayoutControlPanel(scopeId, snapshot.selectedElementId);
       return {
         ...status,
@@ -249,7 +251,13 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
   }
 
   function createInspectorForSnapshot(snapshot) {
-    return createRuntimeInspector({ inspector: options.inspector, inspectorFactory: options.inspectorFactory, hostAdapterFactory: options.hostAdapterFactory, registry: snapshot.transformed.registry, scopeId, moduleId, targetAppId });
+    if (options.inspector) return options.inspector;
+    const registrySignature = JSON.stringify(snapshot.transformed.registry.map((element) => ({ id: element.id, parentId: element.parentId, type: element.type, role: element.role })));
+    if (!runtimeInspector || runtimeRegistrySignature !== registrySignature) {
+      runtimeInspector = createRuntimeInspector({ inspectorFactory: options.inspectorFactory, hostAdapterFactory: options.hostAdapterFactory, registry: snapshot.transformed.registry, scopeId, moduleId, targetAppId });
+      runtimeRegistrySignature = registrySignature;
+    }
+    return runtimeInspector;
   }
 
   function applySelectedElementLayoutAction(action) {
@@ -266,33 +274,41 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
     });
   }
 
-  function getCurrentLayoutState() {
+  function callLayoutSessionMethod(methodName, ...args) {
     const snapshot = getSnapshot();
     try {
       const inspector = createInspectorForSnapshot(snapshot);
-      const inspection = inspector.inspectScope(scopeId);
-      return { ok: Boolean(inspection?.ok), layoutState: Array.isArray(inspection?.layoutState) ? inspection.layoutState : [], errors: inspection?.errors || [] };
-    } catch (error) {
-      return { ok: false, layoutState: [], errors: [{ code: "LAYOUT_STATE_ERROR", message: error?.message || String(error || "Layout-State-Fehler") }] };
-    }
-  }
-
-  function restoreSessionLayoutState({ entries = [], elementIds = [] } = {}) {
-    const snapshot = getSnapshot();
-    try {
-      const inspector = createInspectorForSnapshot(snapshot);
-      const inspection = inspector.inspectScope(scopeId);
-      const hostAdapter = inspection?.ok ? inspector.__getHostAdapter?.(scopeId) : null;
-      if (!hostAdapter || typeof hostAdapter.restoreLayoutState !== "function") {
-        return { ok: false, blocked: true, reason: "HOST_RESTORE_LAYOUT_STATE_MISSING" };
+      const method = inspector?.[methodName];
+      if (typeof method !== "function") {
+        return { ok: false, blocked: true, reason: "LAYOUT_SESSION_API_MISSING", status: { ok: false, active: false, changedElementIds: [], changedCount: 0, changedByElementId: {} } };
       }
-      return hostAdapter.restoreLayoutState({ entries, elementIds });
+      return method(scopeId, ...args);
     } catch (error) {
-      return { ok: false, blocked: true, reason: "RESTORE_LAYOUT_STATE_ERROR", error };
+      return { ok: false, blocked: true, reason: "LAYOUT_SESSION_ERROR", error, status: { ok: false, active: false, changedElementIds: [], changedCount: 0, changedByElementId: {} } };
     }
   }
 
-  return { inspectSelectedElement, getSelectedElementControlPanel, applySelectedElementLayoutAction, getCurrentLayoutState, restoreSessionLayoutState, getStatus };
+  function beginLayoutSession() {
+    return callLayoutSessionMethod("beginLayoutSession");
+  }
+
+  function getLayoutSessionStatus() {
+    return callLayoutSessionMethod("getLayoutSessionStatus");
+  }
+
+  function discardSelectedElementChanges(elementId) {
+    return callLayoutSessionMethod("discardLayoutSessionElement", normalizeId(elementId));
+  }
+
+  function discardAllSessionChanges() {
+    return callLayoutSessionMethod("discardLayoutSession");
+  }
+
+  function endLayoutSession() {
+    return callLayoutSessionMethod("endLayoutSession");
+  }
+
+  return { inspectSelectedElement, getSelectedElementControlPanel, applySelectedElementLayoutAction, beginLayoutSession, getLayoutSessionStatus, discardSelectedElementChanges, discardAllSessionChanges, endLayoutSession, getStatus };
 }
 
 export const BBM_EDITOR_RUNTIME_INSPECTOR_BRIDGE_ROLE_BY_ID = ROLE_BY_ELEMENT_ID;
