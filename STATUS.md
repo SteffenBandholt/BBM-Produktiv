@@ -3118,3 +3118,14 @@ Wichtig:
   - Lokale Windows-Abnahme für PR #204 erneut durchführen, insbesondere Kreuzmitte nach Move der Testkarte.
 - Risiken/Hinweise:
   - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.
+
+### M64 Korrektur 7 – Kreuzmitte-Regression explizit abgesichert
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Der M64-Sitzungstest prüft nach Move der Testkarte zusätzlich direkt `hasSessionChange("bbm.uiEditorTest.card") === true`.
+  - Damit ist die Aktivierungsbedingung der Kreuzmitte ↶ vollständig abgesichert: Änderung vorhanden, `selectedElement.editable === true`, Button aktiv.
+- Betroffene Dateien:
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - Lokale Windows-Abnahme für PR #204 erneut durchführen.

@@ -441,6 +441,7 @@ async function runM64UiEditorTestSurfaceTests(run) {
     assert.equal(padButton(context.panel.detailsNode, "center").disabled, true);
     assert.equal(context.panel.selectedElement?.editable, true);
     await applyLayoutTriple(context, "bbm.uiEditorTest.card", target, { width: 300, height: 300 });
+    assert.equal(context.panel.hasSessionChange("bbm.uiEditorTest.card"), true);
     assert.match(collectText(context.panel.detailsNode), /Änderungen offen: 1/);
     const discardCenter = padButton(context.panel.detailsNode, "center");
     assert.equal(discardCenter.disabled, false);
