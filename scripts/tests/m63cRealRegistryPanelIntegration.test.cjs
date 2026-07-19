@@ -234,7 +234,7 @@ async function runM63cRealRegistryPanelIntegrationTests(run) {
     padButton(panel.detailsNode, "up").click();
     assert.equal(changeRequests.at(-1).operation, "resize");
     assert.deepEqual(changeRequests.at(-1).payload, { height: 5 });
-    assert.equal(target.style.values.height, "185px");
+    assert.equal(target.style.values.height, "305px");
     assert.equal(panel.selectedElement.elementId, "bbm.uiEditorTest.card");
     assert.match(collectText(panel.detailsNode), /Testkarte/);
     assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.card"), target, "Orange Overlay kann die Testkarte nach Änderung neu auflösen");

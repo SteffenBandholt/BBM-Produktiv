@@ -5,8 +5,8 @@ const BBM_UI_SCOPE = "bbm.main";
 const BBM_LAYOUT_SCOPE = "bbm.main-layout";
 const BBM_LAYOUT_PROFILE_ID = "default";
 
-const BBM_SUPPORTED_ELEMENT_TYPES = Object.freeze(["frame", "navigation", "header", "content", "actions"]);
-const BBM_SUPPORTED_ROLES = Object.freeze(["layout", "navigation", "content", "action"]);
+const BBM_SUPPORTED_ELEMENT_TYPES = Object.freeze(["frame", "navigation", "header", "content", "container", "text", "action", "field", "table", "actions"]);
+const BBM_SUPPORTED_ROLES = Object.freeze(["layout", "navigation", "content", "action", "test-workspace", "heading", "visual-control", "input", "select", "content-table"]);
 const BBM_SUPPORTED_OPERATIONS = Object.freeze([
   "layout.read",
   "layout.save",

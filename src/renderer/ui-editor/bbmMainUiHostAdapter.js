@@ -97,7 +97,16 @@ function mergeLayoutValue({ previous, operation, nextValue, registryElement, ele
   return { ...previous, ...nextValue };
 }
 
-function applyLayoutValueToRegisteredTarget(elementId, layoutValue) {
+
+
+function cloneLayoutEntryForRestore(entry) {
+  return {
+    ...entry,
+    layoutValue: entry?.layoutValue && typeof entry.layoutValue === "object" ? { ...entry.layoutValue } : {},
+  };
+}
+
+function applyLayoutValueToRegisteredTarget(elementId, layoutValue, { resetMissingSize = false } = {}) {
   const target = getBbmUiElementRef(elementId);
   if (!target) {
     return { ok: false, reason: "ELEMENT_REF_MISSING" };
@@ -109,9 +118,13 @@ function applyLayoutValueToRegisteredTarget(elementId, layoutValue) {
 
   if (Object.prototype.hasOwnProperty.call(layoutValue, "width")) {
     target.style.setProperty("width", `${Math.max(DEFAULT_MIN_WIDTH, toNumber(layoutValue.width))}px`);
+  } else if (resetMissingSize) {
+    target.style.removeProperty("width");
   }
   if (Object.prototype.hasOwnProperty.call(layoutValue, "height")) {
     target.style.setProperty("height", `${Math.max(DEFAULT_MIN_HEIGHT, toNumber(layoutValue.height))}px`);
+  } else if (resetMissingSize) {
+    target.style.removeProperty("height");
   }
 
   return { ok: true, applied: true };
@@ -175,6 +188,21 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
       }
 
       return { ok: true, blocked: false, reason: null, layoutState: layoutStore.reset(normalizedElementId || null) };
+    },
+
+    restoreLayoutState({ entries = [], elementIds = [] } = {}) {
+      const ids = Array.isArray(elementIds) ? elementIds.map(normalizeId).filter(Boolean) : [];
+      const unknown = ids.find((id) => !runtimeRegistry.some((entry) => entry.id === id));
+      if (unknown) return { ok: false, blocked: true, reason: "ELEMENT_ID_UNKNOWN", elementId: unknown, layoutState: layoutStore.list() };
+      const restoreEntries = (Array.isArray(entries) ? entries : []).map(cloneLayoutEntryForRestore).filter((entry) => ids.includes(normalizeId(entry.elementId)));
+      const layoutState = layoutStore.replace(restoreEntries, ids);
+      const byId = new Map(restoreEntries.map((entry) => [normalizeId(entry.elementId), entry]));
+      for (const id of ids) {
+        const layoutValue = byId.get(id)?.layoutValue || {};
+        const applyResult = applyLayoutValueToRegisteredTarget(id, layoutValue, { resetMissingSize: true });
+        if (!applyResult.ok) return { ok: false, blocked: true, reason: applyResult.reason, elementId: id, layoutState };
+      }
+      return { ok: true, blocked: false, reason: null, layoutState };
     },
   };
 

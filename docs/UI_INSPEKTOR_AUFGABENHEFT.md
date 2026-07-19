@@ -629,3 +629,48 @@ Hinweis:
 - Der UI-Editor-Arbeitsbereich enthaelt Bedienpanel und Testflaeche als getrennte Geschwisterbereiche.
 - `getPanelRoot()` bleibt auf das Bedienpanel begrenzt; Klicks in der Testflaeche laufen ueber die bestehende Kit-Auswahlruntime.
 - Der Realintegrationstest `scripts/tests/m63cRealRegistryPanelIntegration.test.cjs` sichert ab, dass die Testkarte ausserhalb von `panelRoot` liegt, per echtem Klick in `selectedElement` uebernommen wird und Panelbuttons keine Zielauswahl ausloesen.
+
+## M64 Abschlussnotiz – UI-Editor-Testfläche
+- M64 erweitert die bisherige einzelne Testkarte zu einer kleinen expliziten UI-Editor-Testfläche.
+- Registrierte Testelemente: Testflächen-Root, Testkarte, Überschrift, Beispieltext, Beispielbutton-Hülle, Eingabefeld-Hülle, Auswahlfeld-Hülle und Beispieltabelle.
+- Alle Testelemente werden manuell über die führende Registry geführt und beim Rendern per explizitem HTMLElement-Ref gebunden.
+- Button, Eingabefeld und Auswahlfeld bleiben neutrale Hüllen: keine Fachaktion, keine Dateneingabe, keine Auswahlwertänderung, kein IPC und keine Datenbankaktion.
+- Die Testfläche bleibt außerhalb des ausgeschlossenen Bedienpanels; Auswahl und Layoutschritte laufen weiter über Kit-Auswahl, Inspector-Bridge, HostAdapter und Layout-State.
+- Neuer Guardrail-Test: `scripts/tests/m64UiEditorTestSurface.test.cjs`.
+- Nächster Schritt: manuelle Electron-/Windows-Sichtprüfung aller M64-Testelemente mit Auswahlrahmen und Move-/Resize-Schritten.
+
+## M64 Korrektur – Parent-Vertrag und Integrationsauswahl
+- Der M64-Parent-Override in der Inspector-Bridge wurde entfernt; Parent-IDs werden ausschließlich aus der führenden Registry übernommen.
+- `bbm.uiEditorTest.workspace` ist kein zweites Root-Element mehr; die Testfläche ist als Container unter `bbm.main.content` eingeordnet.
+- Der M64-Test prüft nun Kit-Auswahl, Elementdetails, Overlay-Ref-Auflösung und Layoutwirkung für alle M64-Testelemente.
+- Fachaktions-Guardrails sichern ab, dass Button-, Eingabe- und Auswahl-Hüllen ausschließlich Editor-Auswahlziele sind.
+
+## M64 Korrektur 2 – Ein-Root-Startpfad
+- Die allgemeine Mehrfach-Root-Aufweichung wurde zurückgenommen; der Runtime-Vertrag bleibt bei genau einem Registry-Root.
+- Einziger Root der BBM-Registry ist wieder `bbm.main.shell`.
+- `bbm.uiEditorTest.workspace` ist als Testflächen-Container unter `bbm.main.content` eingeordnet und wird nicht mehr als Root behandelt.
+- Der M64-Test prüft nun zusätzlich den echten `startBbmUiEditorRuntime()`-Pfad und den echten IPC-Status-/Elementpfad über `uiEditorIpc._m52`.
+
+## M64 Korrektur 3 – ergonomische Prüfanordnung
+- Die M64-Testfläche ist für wiederholte manuelle Tests in einen sichtbaren Prüfarbeitsbereich mit Testfläche und kompaktem Steuerpanel eingeordnet.
+- Auf Desktop-Breiten liegt das Steuerpanel neben der Testfläche und bleibt per Sticky-Verhalten sichtbar.
+- Unter ca. 1100px fällt die Prüfanordnung auf eine einspaltige Darstellung zurück.
+- Auswahl- und Layoutvertrag bleiben unverändert; die Testfläche bleibt außerhalb des ausgeschlossenen Bedienpanel-Roots.
+
+## M64 Korrektur 4 – Sitzungs-Verwerfen und Editor-Schalter
+- Die M64-Prüffläche erhält eine Sitzungs-Baseline aus dem vorhandenen HostAdapter/Layout-State.
+- Die Mitte des Steuerkreuzes verwirft Änderungen des ausgewählten Elements auf den Zustand beim Öffnen der aktuellen Editor-Sitzung.
+- Das rechte Steuerpanel zeigt offene Sitzungsänderungen und bietet „Alle Änderungen verwerfen“ sowie „Editor ausschalten/einschalten“.
+- Rücknahmen laufen über Inspector-Bridge und HostAdapter/Layout-State; das Panel setzt keine DOM-Styles direkt zurück.
+- Ausschalten stoppt Auswahlmodus und Overlays, ohne Sitzungsänderungen automatisch zu verwerfen.
+
+## M64 Korrektur 5 – saubere Runtime-Sitzungsverwaltung
+- Die M64-Sitzungs-Baseline liegt nicht mehr im sichtbaren Statuspanel, sondern in der neutralen Inspector-/Runtime-Schicht.
+- Das Statuspanel nutzt nur öffentliche Bridge-Befehle für Sitzungsstart, Status, Element-Verwerfen, Alles-Verwerfen und Sitzungsende.
+- Die interne `__getHostAdapter`-Hintertür wurde entfernt; die Bridge greift nicht direkt auf HostAdapter- oder LayoutStore-Interna zu.
+- Verwerfen, Editor ein-/ausschalten und Schließen bleiben funktional; Guardrails sichern die Architekturgrenzen ab.
+
+## M64 Korrektur 6 – IPC-Elementvertrag für Verwerfen-Mitte
+- Der IPC-Elementklon überträgt `editable` und `lockedOps` explizit aus der führenden Registry.
+- Die Kreuzmitte bleibt im Panel weiterhin von `selectedElement.editable` abhängig; keine Ableitung aus IDs, DOM oder allowedOps.
+- Der M64-Test prüft den echten IPC-Auswahl-/Detailpfad und die Aktivierung der Kreuzmitte nach einer Layoutänderung.

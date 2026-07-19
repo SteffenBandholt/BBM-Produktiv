@@ -19,7 +19,7 @@ const REQUIRED_ATTRIBUTES = [
 ];
 
 const OPTIONAL_ATTRIBUTES = ["data-ui-editor-ops"];
-const ALLOWED_KINDS = ["frame", "field", "single"];
+const ALLOWED_KINDS = ["frame", "field", "single", "root", "container", "text", "action", "table"];
 const ALLOWED_OPS = ["move", "resize", "hide", "layout"];
 const ALLOWED_EDITABLE = ["true", "false"];
 

@@ -12,8 +12,16 @@ const TYPE_BY_ELEMENT_ID = Object.freeze({
   "bbm.main.header": "area",
   "bbm.main.content": "area",
   "bbm.main.actions": "area",
+  "bbm.uiEditorTest.workspace": "area",
   "bbm.uiEditorTest.card": "area",
+  "bbm.uiEditorTest.card.title": "label",
+  "bbm.uiEditorTest.card.text": "label",
+  "bbm.uiEditorTest.card.button": "button",
+  "bbm.uiEditorTest.card.input": "field",
+  "bbm.uiEditorTest.card.select": "field",
+  "bbm.uiEditorTest.table": "table",
 });
+
 
 const ROLE_BY_ELEMENT_ID = Object.freeze({
   "bbm.main.shell": "layout",
@@ -21,7 +29,14 @@ const ROLE_BY_ELEMENT_ID = Object.freeze({
   "bbm.main.header": "layout",
   "bbm.main.content": "content",
   "bbm.main.actions": "action",
+  "bbm.uiEditorTest.workspace": "content",
   "bbm.uiEditorTest.card": "content",
+  "bbm.uiEditorTest.card.title": "content",
+  "bbm.uiEditorTest.card.text": "content",
+  "bbm.uiEditorTest.card.button": "action",
+  "bbm.uiEditorTest.card.input": "content",
+  "bbm.uiEditorTest.card.select": "content",
+  "bbm.uiEditorTest.table": "content",
 });
 
 function normalizeId(value) {
@@ -34,6 +49,12 @@ function cloneList(value) {
 
 function unique(values) {
   return [...new Set(values.filter(Boolean))];
+}
+
+const RUNTIME_LAYOUT_OPS = Object.freeze(["move", "resize", "hide", "show", "label", "spacing", "width", "height", "fontSize", "fontWeight", "margin", "pageBreak", "columnWidth", "logoSize", "footerPosition"]);
+
+function toRuntimeLockedOps(element) {
+  return unique(cloneList(element?.lockedOps)).filter((op) => RUNTIME_LAYOUT_OPS.includes(op));
 }
 
 function getSelectedElementId(selectedElement) {
@@ -74,7 +95,7 @@ function isEditable(element) {
 
 function transformRegistryElement(element, order) {
   const id = normalizeId(element?.elementId || element?.id);
-  const role = element?.role || ROLE_BY_ELEMENT_ID[id];
+  const role = ROLE_BY_ELEMENT_ID[id] || element?.runtimeRole || element?.editorRuntimeRole || element?.role;
   const type = TYPE_BY_ELEMENT_ID[id] || element?.runtimeType || element?.editorRuntimeType;
 
   if (!id || !role || !type) {
@@ -100,7 +121,7 @@ function transformRegistryElement(element, order) {
       editable: isEditable(element),
       layoutDefaults: element?.layoutDefaults && typeof element.layoutDefaults === "object" ? { ...element.layoutDefaults } : {},
       allowedOps: toRuntimeAllowedOps(element),
-      lockedOps: cloneList(element?.lockedOps),
+      lockedOps: toRuntimeLockedOps(element),
     },
   };
 }
@@ -175,6 +196,8 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
   const targetAppId = normalizeId(options.targetAppId) || DEFAULT_TARGET_APP_ID;
   const getRegistryElements = typeof options.getRegistryElements === "function" ? options.getRegistryElements : () => options.registryElements || [];
   const getSelectedElement = typeof options.getSelectedElement === "function" ? options.getSelectedElement : () => options.selectedElement || null;
+  let runtimeInspector = null;
+  let runtimeRegistrySignature = "";
   function getSnapshot() {
     const registryElements = getRegistryElements() || [];
     const selectedElement = getSelectedElement() || null;
@@ -204,7 +227,7 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
     const status = getStatus();
     if (!status.ok || status.kind === "empty") return { ...status, registry: snapshot.transformed.registry };
     try {
-      const inspector = createRuntimeInspector({ inspector: options.inspector, inspectorFactory: options.inspectorFactory, hostAdapterFactory: options.hostAdapterFactory, registry: snapshot.transformed.registry, scopeId, moduleId, targetAppId });
+      const inspector = createInspectorForSnapshot(snapshot);
       const panel = inspector.getLayoutControlPanel(scopeId, snapshot.selectedElementId);
       return {
         ...status,
@@ -227,13 +250,23 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
     return inspectSelectedElement().controlPanel || null;
   }
 
+  function createInspectorForSnapshot(snapshot) {
+    if (options.inspector) return options.inspector;
+    const registrySignature = JSON.stringify(snapshot.transformed.registry.map((element) => ({ id: element.id, parentId: element.parentId, type: element.type, role: element.role })));
+    if (!runtimeInspector || runtimeRegistrySignature !== registrySignature) {
+      runtimeInspector = createRuntimeInspector({ inspectorFactory: options.inspectorFactory, hostAdapterFactory: options.hostAdapterFactory, registry: snapshot.transformed.registry, scopeId, moduleId, targetAppId });
+      runtimeRegistrySignature = registrySignature;
+    }
+    return runtimeInspector;
+  }
+
   function applySelectedElementLayoutAction(action) {
     const step = createStepPayload(action);
     const status = getStatus();
     if (!step) return { ok: false, blocked: true, reason: "UNKNOWN_LAYOUT_ACTION" };
     if (!status.ok || status.kind !== "ready") return { ok: false, blocked: true, reason: status.reason || "NO_SELECTED_ELEMENT" };
     const snapshot = getSnapshot();
-    const inspector = createRuntimeInspector({ inspector: options.inspector, inspectorFactory: options.inspectorFactory, hostAdapterFactory: options.hostAdapterFactory, registry: snapshot.transformed.registry, scopeId, moduleId, targetAppId });
+    const inspector = createInspectorForSnapshot(snapshot);
     return inspector.applyLayoutChange(scopeId, {
       elementId: snapshot.selectedElementId,
       operation: step.operation,
@@ -241,7 +274,41 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
     });
   }
 
-  return { inspectSelectedElement, getSelectedElementControlPanel, applySelectedElementLayoutAction, getStatus };
+  function callLayoutSessionMethod(methodName, ...args) {
+    const snapshot = getSnapshot();
+    try {
+      const inspector = createInspectorForSnapshot(snapshot);
+      const method = inspector?.[methodName];
+      if (typeof method !== "function") {
+        return { ok: false, blocked: true, reason: "LAYOUT_SESSION_API_MISSING", status: { ok: false, active: false, changedElementIds: [], changedCount: 0, changedByElementId: {} } };
+      }
+      return method(scopeId, ...args);
+    } catch (error) {
+      return { ok: false, blocked: true, reason: "LAYOUT_SESSION_ERROR", error, status: { ok: false, active: false, changedElementIds: [], changedCount: 0, changedByElementId: {} } };
+    }
+  }
+
+  function beginLayoutSession() {
+    return callLayoutSessionMethod("beginLayoutSession");
+  }
+
+  function getLayoutSessionStatus() {
+    return callLayoutSessionMethod("getLayoutSessionStatus");
+  }
+
+  function discardSelectedElementChanges(elementId) {
+    return callLayoutSessionMethod("discardLayoutSessionElement", normalizeId(elementId));
+  }
+
+  function discardAllSessionChanges() {
+    return callLayoutSessionMethod("discardLayoutSession");
+  }
+
+  function endLayoutSession() {
+    return callLayoutSessionMethod("endLayoutSession");
+  }
+
+  return { inspectSelectedElement, getSelectedElementControlPanel, applySelectedElementLayoutAction, beginLayoutSession, getLayoutSessionStatus, discardSelectedElementChanges, discardAllSessionChanges, endLayoutSession, getStatus };
 }
 
 export const BBM_EDITOR_RUNTIME_INSPECTOR_BRIDGE_ROLE_BY_ID = ROLE_BY_ELEMENT_ID;

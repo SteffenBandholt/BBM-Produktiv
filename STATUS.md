@@ -2970,3 +2970,162 @@ Wichtig:
 - Risiken/Hinweise:
   - `node scripts/test.cjs` bleibt in dieser Umgebung durch die bekannte native `better-sqlite3`/Node-ABI-Abweichung teilweise blockiert.
   - `npm test` bleibt in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert.
+
+### M64 – UI-Editor-Testfläche erweitert
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Die bisherige einzelne UI-Editor-Testkarte wurde zu einer neutralen M64-Testfläche mit Root, Testkarte, Überschrift, Beispieltext, Button-Hülle, Eingabefeld-Hülle, Auswahlfeld-Hülle und Beispieltabelle erweitert.
+  - Alle M64-Testelemente sind explizit in der führenden BBM-UI-Editor-Registry registriert und besitzen explizite HTMLElement-Refs beim Rendern.
+  - Die Testfläche bleibt außerhalb des ausgeschlossenen Bedienpanels; Auswahl und Layoutänderungen laufen weiter über UI-Editor-kit, Inspector-Bridge, HostAdapter und Layout-State.
+  - Button-/Feld-/Auswahl-Hüllen lösen keine Fachaktionen, keine Dateneingaben, keine IPC-/DB-Aktionen und keine Autosaves aus.
+- Betroffene Dateien:
+  - `src/ui-editor/bbm-ui-element-registry.cjs`
+  - `src/renderer/ui-editor/bbmUiElementRefs.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js`
+  - `scripts/ui-editor-contract-check.cjs`
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `scripts/tests/m63cRealRegistryPanelIntegration.test.cjs`
+  - `scripts/tests/m63cLayoutControlConsole.test.cjs`
+  - `scripts/tests/m54UiElementRefs.test.cjs`
+  - `scripts/test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Commit:
+  - wird mit diesem Paket-Commit erstellt
+- Naechster offener Schritt:
+  - Manuelle Electron-/Windows-Sichtpruefung: UI-Editor oeffnen, jedes M64-Testelement auswaehlen, lesbaren Namen und orange Markierung pruefen, Move/Resize fuer Karte, Text-/Feld-/Button-Huellen und Tabelle ausfuehren.
+- Risiken/Hinweise:
+  - Praktische Computer-Use-Pruefung kann in dieser Cloud-Umgebung durch fehlende GUI/Electron-Systembibliotheken eingeschraenkt sein.
+
+### M64 Korrektur – Parent-Vertrag und Auswahlintegration
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Der in PR #204 gefundene Parent-Vertragsbruch wurde korrigiert: Die Bridge überschreibt `bbm.uiEditorTest.workspace` nicht mehr auf `bbm.main.content`.
+  - `transformRegistryElement()` übernimmt `parentId` wieder ausschließlich aus der führenden Registry.
+  - Das bestehende Runtime-Modell unterstützt mehrere Registry-Roots jetzt sauber als Forest mit internem virtuellem Tree-Root, ohne Registry-Parent-Werte zu verändern.
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs` prüft jetzt Kit-Auswahl, lesbare Elementdetails, Overlay-Ref-Auflösung, Layoutwirkung und Fachaktions-Guardrails für die M64-Testfläche.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/editorRuntime/registry/editorRegistryValidator.js`
+  - `src/renderer/editorRuntime/inspector/editorRegistryTree.js`
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - Praktische Windows-/Electron-Abnahme von PR #204 lokal durchführen.
+- Risiken/Hinweise:
+  - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.
+
+### M64 Korrektur 2 – Ein-Root-Vertrag wiederhergestellt
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Die Mehrfach-Root-Aufweichung in `editorRegistryValidator.js` und `editorRegistryTree.js` wurde vollständig zurückgenommen.
+  - Einziger Root bleibt `bbm.main.shell`; `bbm.uiEditorTest.workspace` ist jetzt ein Container-Kind von `bbm.main.content`.
+  - Die Bridge enthält weiterhin keine Parent-Override-Tabelle und übernimmt Parent-IDs ausschließlich aus der führenden Registry.
+  - Die Kit-/Runtime-Abbildung behandelt den Workspace nicht mehr als zusätzlichen Root.
+  - Der M64-Test prüft nun den echten `startBbmUiEditorRuntime()`-Pfad und den echten `uiEditorIpc._m52`-Status-/Elementpfad gegen `invalid_registry`.
+- Betroffene Dateien:
+  - `src/ui-editor/bbm-ui-element-registry.cjs`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/editorRuntime/registry/editorRegistryValidator.js`
+  - `src/renderer/editorRuntime/inspector/editorRegistryTree.js`
+  - `scripts/tests/m63cLayoutControlConsole.test.cjs`
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - PR #204 erneut lokal unter Windows/Electron öffnen und UI-Editor-Status sowie M64-Testfläche praktisch abnehmen.
+- Risiken/Hinweise:
+  - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.
+
+### M64 Korrektur 3 – ergonomische Prüfanordnung
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Die M64-Prüffläche ist für wiederholte manuelle Tests ergonomisch in Testfläche und kompaktes Steuerpanel aufgeteilt.
+  - Auf breiten Fenstern steht das Steuerpanel neben der Testfläche und bleibt per `position: sticky` sichtbar.
+  - Unter ca. 1100px fällt die Darstellung auf eine Spalte zurück, ohne horizontale Scrollpflicht im Arbeitsbereich zu erzwingen.
+  - Auswahl-, Parent-, Registry-, HostAdapter-, Layout-State-, Kit- und IPC-Verträge wurden nicht geändert.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js`
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - PR #204 lokal unter Windows/Electron öffnen und die neue Desktop-/Responsive-Prüfanordnung sichtbar abnehmen.
+- Risiken/Hinweise:
+  - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.
+
+### M64 Korrektur 4 – Sitzungs-Verwerfen und Editor-Schalter
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Beim Öffnen der UI-Editor-Sitzung wird der aktuelle Layout-State als Sitzungs-Baseline erfasst.
+  - Die Steuerkreuz-Mitte verwirft die Änderungen des aktuell ausgewählten Elements auf diese Baseline; „Alle Änderungen verwerfen“ setzt alle geänderten Sitzungselemente zurück.
+  - Das Steuerpanel zeigt die Anzahl offener Änderungen ohne technische IDs.
+  - Der Editor kann sauber aus- und wieder eingeschaltet werden; Ausschalten stoppt Auswahlmodus und Overlays, verwirft aber keine Änderungen automatisch.
+  - Rücknahmen laufen über Inspector-Bridge, HostAdapter und Layout-State; keine direkte Style-Rücksetzung im Panel.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/bbmMainUiHostAdapter.js`
+  - `src/renderer/editorRuntime/inspector/editorScopeInspector.js`
+  - `src/renderer/editorRuntime/layout/editorLayoutPersistence.js`
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - Lokale Windows-Abnahme: Verwerfen je Element, alle verwerfen, Editor aus/ein und Zurück/Schließen praktisch prüfen.
+- Risiken/Hinweise:
+  - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.
+
+### M64 Korrektur 5 – saubere Runtime-Sitzungsverwaltung
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Die Sitzungs-Baseline wurde aus `BbmUiEditorStatusPanel` in die neutrale Inspector-/Runtime-Schicht verschoben.
+  - Das Panel berechnet keine offenen Layoutänderungen mehr aus einer eigenen Baseline-Kopie, sondern fragt den öffentlichen Session-Status der Bridge ab.
+  - Die `__getHostAdapter`-Hintertür wurde entfernt; die Bridge ruft nur öffentliche Inspector-Session-Methoden auf.
+  - Einzelelement-Verwerfen, „Alle Änderungen verwerfen“, Editor aus/ein und Close-Verhalten bleiben über Tests abgesichert.
+- Betroffene Dateien:
+  - `src/renderer/editorRuntime/inspector/editorScopeInspector.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - Lokale Windows-Abnahme für PR #204 erneut durchführen.
+- Risiken/Hinweise:
+  - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.
+
+### M64 Korrektur 6 – IPC-Elementvertrag für Verwerfen-Mitte
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - `uiEditorIpc.cloneElement()` überträgt `editable` und `lockedOps` aus der Registry an Renderer und Detailpfad.
+  - Der M64-IPC-Test prüft `getElements`, `selectElement` und `getSelectedElementDetails` für editierbare Testkarte und nicht editierbaren Workspace.
+  - Die Panelintegration nutzt für Auswahl den echten IPC-geklonten `selectedElement`-Vertrag und prüft: ↶ zunächst deaktiviert, nach Move aktiviert, nach Verwerfen wieder deaktiviert.
+- Betroffene Dateien:
+  - `src/main/ipc/uiEditorIpc.js`
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `scripts/tests/restarbeitenV2ReadOnlyAdapter.test.cjs`
+  - `scripts/tests/restarbeitenV2LegacyReadBridge.test.cjs`
+  - `scripts/tests/restarbeitenV2ReadOnlyDataSourceFactory.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - Lokale Windows-Abnahme für PR #204 erneut durchführen, insbesondere Kreuzmitte nach Move der Testkarte.
+- Risiken/Hinweise:
+  - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.
+
+### M64 Korrektur 7 – Kreuzmitte-Regression explizit abgesichert
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Der M64-Sitzungstest prüft nach Move der Testkarte zusätzlich direkt `hasSessionChange("bbm.uiEditorTest.card") === true`.
+  - Damit ist die Aktivierungsbedingung der Kreuzmitte ↶ vollständig abgesichert: Änderung vorhanden, `selectedElement.editable === true`, Button aktiv.
+- Betroffene Dateien:
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - Lokale Windows-Abnahme für PR #204 erneut durchführen.
