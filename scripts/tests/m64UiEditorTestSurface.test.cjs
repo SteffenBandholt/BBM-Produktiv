@@ -406,6 +406,97 @@ async function runM64UiEditorTestSurfaceTests(run) {
     context.refs.clearBbmUiElementRefs();
   }));
 
+
+  await run("M64 Sitzung: Mittelpunkt verwirft Änderungen des ausgewählten Elements", async () => withDom(async ({ doc, win }) => {
+    const context = await createIntegratedPanel({ doc, win });
+    const target = await selectByRealClick(context, "bbm.uiEditorTest.card");
+    const baselineTransform = target.style.values.transform;
+    const baselineWidth = target.style.values.width;
+    const baselineHeight = target.style.values.height;
+    await applyLayoutTriple(context, "bbm.uiEditorTest.card", target, { width: 300, height: 300 });
+    assert.match(collectText(context.panel.detailsNode), /Änderungen offen: 1/);
+    padButton(context.panel.detailsNode, "center").click();
+    assert.equal(target.style.values.transform, baselineTransform || "translate(0px, 0px)");
+    assert.equal(target.style.values.width, baselineWidth);
+    assert.equal(target.style.values.height, baselineHeight);
+    assert.equal(context.panel.selectedElement?.elementId, "bbm.uiEditorTest.card");
+    assert.match(collectText(context.panel.detailsNode), /Keine offenen Änderungen/);
+    assert.match(collectText(context.panel.detailsNode), /Änderungen für Testkarte verworfen\./);
+    const selectedOverlay = findNode(doc.body, (node) => node.attributes?.["data-selection-overlay"] === "selected");
+    assert.ok(selectedOverlay);
+    assert.equal(selectedOverlay.style.display, "block");
+    context.refs.clearBbmUiElementRefs();
+  }));
+
+  await run("M64 Sitzung: Alle Änderungen verwerfen setzt mehrere Elemente auf Baseline zurück", async () => withDom(async ({ doc, win }) => {
+    const context = await createIntegratedPanel({ doc, win });
+    const card = await selectByRealClick(context, "bbm.uiEditorTest.card");
+    await applyLayoutTriple(context, "bbm.uiEditorTest.card", card, { width: 300, height: 300 });
+    const title = await selectByRealClick(context, "bbm.uiEditorTest.card.title");
+    await applyLayoutTriple(context, "bbm.uiEditorTest.card.title", title, { width: 240, height: 36 });
+    assert.match(collectText(context.panel.detailsNode), /Änderungen offen: 2/);
+    const discardAll = findNode(context.panel.detailsNode, (node) => String(node.tagName).toLowerCase() === "button" && node.textContent === "Alle Änderungen verwerfen");
+    assert.ok(discardAll);
+    assert.equal(discardAll.disabled, false);
+    discardAll.click();
+    assert.equal(card.style.values.transform, "translate(0px, 0px)");
+    assert.equal(card.style.values.width, undefined);
+    assert.equal(card.style.values.height, undefined);
+    assert.equal(title.style.values.transform, "translate(0px, 0px)");
+    assert.equal(title.style.values.width, undefined);
+    assert.equal(title.style.values.height, undefined);
+    assert.match(collectText(context.panel.detailsNode), /Keine offenen Änderungen/);
+    assert.match(collectText(context.panel.detailsNode), /Alle Änderungen dieser Sitzung wurden verworfen\./);
+    context.refs.clearBbmUiElementRefs();
+  }));
+
+  await run("M64 Sitzung: Editor ausschalten stoppt Auswahl und deaktiviert Layoutbedienung", async () => withDom(async ({ doc, win }) => {
+    const context = await createIntegratedPanel({ doc, win });
+    const title = await selectByRealClick(context, "bbm.uiEditorTest.card.title");
+    assert.equal(context.panel.selectionModeActive, true);
+    const toggle = findNode(context.panel.detailsNode, (node) => String(node.tagName).toLowerCase() === "button" && node.textContent === "Editor ausschalten");
+    assert.ok(toggle);
+    toggle.click();
+    assert.equal(context.panel.selectionModeActive, false);
+    assert.equal(context.panel.editorActive, false);
+    const selectedOverlay = findNode(doc.body, (node) => node.attributes?.["data-selection-overlay"] === "selected");
+    assert.ok(!selectedOverlay || selectedOverlay.style.display !== "block");
+    const before = context.panel.selectedElement?.elementId || null;
+    context.interactionRoot.dispatch("click", { target: title });
+    await flushSelection();
+    assert.equal(context.panel.selectedElement?.elementId || null, before);
+    assert.equal(buttonByText(context.panel.detailsNode, "Move"), undefined);
+    context.refs.clearBbmUiElementRefs();
+  }));
+
+  await run("M64 Sitzung: Editor wieder einschalten nutzt vorhandenen Controller ohne doppelte Klickaktion", async () => withDom(async ({ doc, win }) => {
+    const context = await createIntegratedPanel({ doc, win });
+    await selectByRealClick(context, "bbm.uiEditorTest.card.title");
+    findNode(context.panel.detailsNode, (node) => String(node.tagName).toLowerCase() === "button" && node.textContent === "Editor ausschalten").click();
+    findNode(context.panel.detailsNode, (node) => String(node.tagName).toLowerCase() === "button" && node.textContent === "Editor einschalten").click();
+    const beforeClickListeners = (context.interactionRoot.listeners.click || []).length;
+    await selectByRealClick(context, "bbm.uiEditorTest.card.text");
+    assert.equal(context.panel.selectedElement?.elementId, "bbm.uiEditorTest.card.text");
+    assert.equal((context.interactionRoot.listeners.click || []).length, beforeClickListeners + 1);
+    context.panel.stopSelectionMode();
+    assert.equal((context.interactionRoot.listeners.click || []).length, 0);
+    context.refs.clearBbmUiElementRefs();
+  }));
+
+  await run("M64 Sitzung: Close stoppt Controller und verhindert weitere Auswahlaktionen", async () => withDom(async ({ doc, win }) => {
+    const context = await createIntegratedPanel({ doc, win });
+    const card = await selectByRealClick(context, "bbm.uiEditorTest.card");
+    assert.equal((context.interactionRoot.listeners.click || []).length, 1);
+    await context.panel.close();
+    assert.equal(context.panel.selectionModeActive, false);
+    assert.equal((context.interactionRoot.listeners.click || []).length, 0);
+    const before = context.panel.selectedElement?.elementId || null;
+    context.interactionRoot.dispatch("click", { target: card });
+    await flushSelection();
+    assert.equal(context.panel.selectedElement?.elementId || null, before);
+    context.refs.clearBbmUiElementRefs();
+  }));
+
   await run("M64 Fachaktions-Guardrails: Test-Huellen waehlen nur Editor-Ziele aus", async () => withDom(async ({ doc, win }) => {
     const context = await createIntegratedPanel({ doc, win });
     for (const elementId of ["bbm.uiEditorTest.card.button", "bbm.uiEditorTest.card.input", "bbm.uiEditorTest.card.select"]) {
@@ -422,6 +513,7 @@ async function runM64UiEditorTestSurfaceTests(run) {
     const bridgeSource = fs.readFileSync(BRIDGE_PATH, "utf8");
     assert.doesNotMatch(panelSource, /createNode\("input"\)|createNode\("select"\)|createElement\("input"\)|createElement\("select"\)/);
     assert.doesNotMatch(panelSource, /ipcRenderer|ipcMain|invoke\(|localStorage|querySelector|querySelectorAll|getElementById|getElementsBy|MutationObserver/);
+    assert.doesNotMatch(panelSource, /style\.(?:setProperty|removeProperty)|\.style\s*=/);
     assert.doesNotMatch(bridgeSource, /PARENT_BY_ELEMENT_ID/);
     assert.doesNotMatch(bridgeSource, /bbm\.uiEditorTest\.workspace"\s*:\s*"root"/);
     assert.match(bridgeSource, /parentId:\s*element\?\.parentId \?\? null/);

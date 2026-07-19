@@ -279,10 +279,39 @@ export function createEditorLayoutStore({ scope, storage = createEditorLayoutMem
     return list();
   }
 
+  function replace(entries = [], elementIds = null) {
+    const payload = readStoragePayload(storage, normalizedScope);
+    const ids = Array.isArray(elementIds) ? elementIds.map(normalizeString).filter(Boolean) : [];
+    if (ids.length > 0) {
+      for (const id of ids) delete payload.entries[id];
+    } else {
+      payload.entries = {};
+    }
+    for (const entry of Array.isArray(entries) ? entries : []) {
+      const elementId = normalizeString(entry?.elementId);
+      if (!elementId || !isPlainObject(entry?.layoutValue)) continue;
+      const timestamp = normalizeString(entry.updatedAt) || now();
+      payload.entries[elementId] = {
+        layoutProfileId: normalizeString(entry.layoutProfileId) || DEFAULT_LAYOUT_PROFILE_ID,
+        targetAppId: normalizedScope.targetAppId,
+        moduleId: normalizedScope.moduleId,
+        scopeId: normalizedScope.scopeId,
+        elementId,
+        operation: normalizeString(entry.operation) || "session.restore",
+        layoutValue: structuredClone(entry.layoutValue),
+        createdAt: normalizeString(entry.createdAt) || timestamp,
+        updatedAt: timestamp,
+      };
+    }
+    writeStoragePayload(storage, payload);
+    return list();
+  }
+
   return {
     list,
     save,
     reset,
+    replace,
   };
 }
 

@@ -59,6 +59,9 @@ export class BbmUiEditorStatusPanel {
     this.selectionModeActive = false;
     this.activeLayoutControlMode = "move";
     this.lastRenderedLayoutControlElementId = "";
+    this.editorActive = true;
+    this.sessionBaselineCaptured = false;
+    this.sessionLayoutBaseline = new globalThis.Map();
     this.inspectorBridge = createBbmEditorRuntimeInspectorBridge({
       getRegistryElements: () => this.elements,
       getSelectedElement: () => this.selectedElement,
@@ -122,6 +125,7 @@ export class BbmUiEditorStatusPanel {
   }
 
   async close() {
+    this.editorActive = false;
     this.stopSelectionMode();
     this.destroyKitController();
     try {
@@ -156,6 +160,7 @@ export class BbmUiEditorStatusPanel {
     this.refStatus = getBbmUiElementRefStatus();
     this.elements = Array.isArray(elementsResult?.elements) ? elementsResult.elements : [];
     this.selectedElement = detailsResult?.selectedElement || null;
+    this.captureSessionBaselineOnce();
     this.renderAll();
     await this.initializeDefaultSelectionRuntime();
   }
@@ -444,17 +449,82 @@ export class BbmUiEditorStatusPanel {
     this.elementsNode.appendChild(list);
   }
 
+  cloneLayoutValue(value) {
+    return value && typeof value === "object" && !Array.isArray(value) ? Object.freeze({ ...value }) : null;
+  }
+
+  captureSessionBaselineOnce() {
+    if (this.sessionBaselineCaptured || !this.inspectorBridge || !this.elements.length) return;
+    const state = this.inspectorBridge.getCurrentLayoutState?.();
+    const byId = new globalThis.Map((state?.layoutState || []).map((entry) => [String(entry.elementId || ""), entry]));
+    this.sessionLayoutBaseline = new globalThis.Map(this.elements.map((element) => {
+      const elementId = String(element.elementId || element.id || "").trim();
+      const entry = byId.get(elementId);
+      return [elementId, entry ? { ...entry, layoutValue: this.cloneLayoutValue(entry.layoutValue) } : null];
+    }));
+    this.sessionBaselineCaptured = true;
+  }
+
+  getCurrentLayoutMap() {
+    const state = this.inspectorBridge?.getCurrentLayoutState?.();
+    return new globalThis.Map((state?.layoutState || []).map((entry) => [String(entry.elementId || ""), entry]));
+  }
+
+  layoutValuesEqual(a, b) {
+    const left = a && typeof a === "object" ? a : {};
+    const right = b && typeof b === "object" ? b : {};
+    return JSON.stringify({ x: left.x ?? 0, y: left.y ?? 0, width: left.width ?? null, height: left.height ?? null, visible: left.visible ?? null })
+      === JSON.stringify({ x: right.x ?? 0, y: right.y ?? 0, width: right.width ?? null, height: right.height ?? null, visible: right.visible ?? null });
+  }
+
+  hasSessionChange(elementId) {
+    const current = this.getCurrentLayoutMap().get(String(elementId || ""))?.layoutValue || null;
+    const baseline = this.sessionLayoutBaseline.get(String(elementId || ""))?.layoutValue || null;
+    return !this.layoutValuesEqual(current, baseline);
+  }
+
+  getChangedElementIds() {
+    return this.elements.map((element) => String(element.elementId || element.id || "").trim()).filter((id) => id && this.hasSessionChange(id));
+  }
+
+  getOpenChangeCount() {
+    return this.getChangedElementIds().length;
+  }
+
+  getBaselineEntriesFor(elementIds) {
+    return elementIds.map((id) => this.sessionLayoutBaseline.get(id)).filter(Boolean).map((entry) => ({ ...entry, layoutValue: { ...entry.layoutValue } }));
+  }
+
+  renderEditorSessionControls() {
+    const box = createNode("section", "bbm-ui-editor-session-controls");
+    const changeCount = this.getOpenChangeCount();
+    const status = createNode("p", "bbm-ui-editor-panel__empty");
+    status.textContent = changeCount > 0 ? `Änderungen offen: ${changeCount}` : "Keine offenen Änderungen";
+    const toggle = createNode("button", "bbm-ui-editor-panel__secondary");
+    toggle.type = "button";
+    toggle.textContent = this.editorActive ? "Editor ausschalten" : "Editor einschalten";
+    toggle.addEventListener("click", () => this.setEditorActive(!this.editorActive));
+    const discardAll = createNode("button", "bbm-ui-editor-panel__secondary bbm-ui-editor-panel__secondary--danger");
+    discardAll.type = "button";
+    discardAll.textContent = "Alle Änderungen verwerfen";
+    discardAll.disabled = changeCount === 0;
+    discardAll.addEventListener("click", () => this.discardAllSessionChanges());
+    box.append(status, toggle, discardAll);
+    this.detailsNode.appendChild(box);
+  }
+
   renderDetails() {
     if (!this.detailsNode) return;
     this.detailsNode.innerHTML = "";
     const title = createNode("h2");
     title.textContent = "Elementdetails";
     this.detailsNode.appendChild(title);
+    this.renderEditorSessionControls();
 
     const element = this.selectedElement;
     if (!element) {
       const empty = createNode("p", "bbm-ui-editor-panel__empty");
-      empty.textContent = "Noch kein registriertes Element ausgewaehlt.";
+      empty.textContent = this.editorActive ? "Noch kein registriertes Element ausgewaehlt." : "Editor ausgeschaltet.";
       this.detailsNode.appendChild(empty);
       return;
     }
@@ -483,7 +553,7 @@ export class BbmUiEditorStatusPanel {
     for (const mode of ["move", "width", "height"]) {
       const button = createNode("button", "bbm-ui-editor-layout-console__mode");
       const requiredOperation = mode === "move" ? "move" : "resize";
-      const enabled = Boolean(result?.ok && allowedOps.includes(requiredOperation));
+      const enabled = Boolean(this.editorActive && result?.ok && allowedOps.includes(requiredOperation));
       button.type = "button";
       button.textContent = mode === "move" ? "Move" : mode === "width" ? "Breite" : "Höhe";
       button.disabled = !enabled;
@@ -537,13 +607,20 @@ export class BbmUiEditorStatusPanel {
     button.type = "button";
     button.textContent = label;
     const action = this.resolveLayoutPadAction(direction);
-    const operation = action?.startsWith("width") || action?.startsWith("height") ? "resize" : action ? "move" : null;
-    const allowed = Boolean(result?.ok && operation && Array.isArray(result.allowedOps) && result.allowedOps.includes(operation));
-    button.disabled = !allowed;
-    button.setAttribute("aria-label", direction === "center" ? "Standard derzeit nicht verfügbar" : label);
+    const elementId = String(this.selectedElement?.elementId || this.selectedElement?.id || "").trim();
     if (direction === "center") {
-      button.title = "Standard derzeit nicht verfügbar";
+      const allowed = Boolean(this.editorActive && elementId && this.selectedElement?.editable && this.hasSessionChange(elementId));
+      button.textContent = "↶";
+      button.disabled = !allowed;
+      button.setAttribute("aria-label", "Änderungen dieses Elements verwerfen");
+      button.title = "Änderungen dieses Elements verwerfen";
+      button.addEventListener("click", () => this.discardSelectedElementChanges());
+      return button;
     }
+    const operation = action?.startsWith("width") || action?.startsWith("height") ? "resize" : action ? "move" : null;
+    const allowed = Boolean(this.editorActive && result?.ok && operation && Array.isArray(result.allowedOps) && result.allowedOps.includes(operation));
+    button.disabled = !allowed;
+    button.setAttribute("aria-label", label);
     if (action) {
       button.addEventListener("click", () => this.applyLayoutAction(action));
     }
@@ -551,8 +628,51 @@ export class BbmUiEditorStatusPanel {
   }
 
   applyLayoutAction(action) {
+    if (!this.editorActive) return;
     const result = this.inspectorBridge?.applySelectedElementLayoutAction?.(action);
     this.selectionMessage = result?.ok ? "Layoutschritt angewendet." : "Layoutschritt blockiert.";
+    this.renderAll();
+  }
+
+  discardSelectedElementChanges() {
+    const elementId = String(this.selectedElement?.elementId || this.selectedElement?.id || "").trim();
+    if (!elementId || !this.selectedElement?.editable || !this.hasSessionChange(elementId)) return;
+    const result = this.inspectorBridge?.restoreSessionLayoutState?.({
+      elementIds: [elementId],
+      entries: this.getBaselineEntriesFor([elementId]),
+    });
+    const label = asText(this.selectedElement?.label || this.selectedElement?.name, elementId);
+    this.selectionMessage = result?.ok ? `Änderungen für ${label} verworfen.` : "Änderungen konnten nicht verworfen werden.";
+    this.renderAll();
+    this.syncActiveSelectionRuntime();
+  }
+
+  discardAllSessionChanges() {
+    const elementIds = this.getChangedElementIds();
+    if (!elementIds.length) return;
+    const result = this.inspectorBridge?.restoreSessionLayoutState?.({
+      elementIds,
+      entries: this.getBaselineEntriesFor(elementIds),
+    });
+    this.selectionMessage = result?.ok ? "Alle Änderungen dieser Sitzung wurden verworfen." : "Änderungen konnten nicht verworfen werden.";
+    this.renderAll();
+    this.syncActiveSelectionRuntime();
+  }
+
+  setEditorActive(active) {
+    this.editorActive = Boolean(active);
+    if (!this.editorActive) {
+      this.kitSelectionController?.stop?.();
+      this.selectionModeActive = false;
+      this.hoverTargetLabel = "keines";
+      this.selectedElement = null;
+      this.selectionMessage = "Editor ausgeschaltet.";
+      try { window.bbmDb?.uiEditorSelectElement?.({ elementId: "" }); } catch (_error) {}
+      this.renderAll();
+      this.syncActiveSelectionRuntime();
+      return;
+    }
+    this.selectionMessage = "Editor eingeschaltet.";
     this.renderAll();
   }
 
@@ -566,6 +686,7 @@ export class BbmUiEditorStatusPanel {
   }
 
   canStartSelectionMode() {
+    if (!this.editorActive) return false;
     if (this.selectionModeActive) return false;
     if (!this.status?.runtimeStarted || !this.status?.adapterValid) return false;
     if (!this.kitSelectionController) return false;
@@ -573,7 +694,7 @@ export class BbmUiEditorStatusPanel {
   }
 
   startSelectionMode() {
-    if (!this.canStartSelectionMode()) return;
+    if (!this.editorActive || !this.canStartSelectionMode()) return;
     this.selectionMessage = "";
     this.kitSelectionController?.start?.();
     this.selectionModeActive = this.kitSelectionController?.isActive?.() || false;
@@ -589,6 +710,7 @@ export class BbmUiEditorStatusPanel {
   }
 
   destroy() {
+    this.editorActive = false;
     this.destroyKitController();
     this.selectionModeActive = false;
     for (const elementId of ["bbm.uiEditorTest.workspace", "bbm.uiEditorTest.card", "bbm.uiEditorTest.card.title", "bbm.uiEditorTest.card.text", "bbm.uiEditorTest.card.button", "bbm.uiEditorTest.card.input", "bbm.uiEditorTest.card.select", "bbm.uiEditorTest.table"]) { try { unregisterBbmUiElementRef(elementId); } catch (_error) {} }

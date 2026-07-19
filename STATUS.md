@@ -3058,3 +3058,25 @@ Wichtig:
   - PR #204 lokal unter Windows/Electron öffnen und die neue Desktop-/Responsive-Prüfanordnung sichtbar abnehmen.
 - Risiken/Hinweise:
   - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.
+
+### M64 Korrektur 4 – Sitzungs-Verwerfen und Editor-Schalter
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Beim Öffnen der UI-Editor-Sitzung wird der aktuelle Layout-State als Sitzungs-Baseline erfasst.
+  - Die Steuerkreuz-Mitte verwirft die Änderungen des aktuell ausgewählten Elements auf diese Baseline; „Alle Änderungen verwerfen“ setzt alle geänderten Sitzungselemente zurück.
+  - Das Steuerpanel zeigt die Anzahl offener Änderungen ohne technische IDs.
+  - Der Editor kann sauber aus- und wieder eingeschaltet werden; Ausschalten stoppt Auswahlmodus und Overlays, verwirft aber keine Änderungen automatisch.
+  - Rücknahmen laufen über Inspector-Bridge, HostAdapter und Layout-State; keine direkte Style-Rücksetzung im Panel.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/bbmMainUiHostAdapter.js`
+  - `src/renderer/editorRuntime/inspector/editorScopeInspector.js`
+  - `src/renderer/editorRuntime/layout/editorLayoutPersistence.js`
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - Lokale Windows-Abnahme: Verwerfen je Element, alle verwerfen, Editor aus/ein und Zurück/Schließen praktisch prüfen.
+- Risiken/Hinweise:
+  - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.

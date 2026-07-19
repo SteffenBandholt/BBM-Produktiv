@@ -248,13 +248,17 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
     return inspectSelectedElement().controlPanel || null;
   }
 
+  function createInspectorForSnapshot(snapshot) {
+    return createRuntimeInspector({ inspector: options.inspector, inspectorFactory: options.inspectorFactory, hostAdapterFactory: options.hostAdapterFactory, registry: snapshot.transformed.registry, scopeId, moduleId, targetAppId });
+  }
+
   function applySelectedElementLayoutAction(action) {
     const step = createStepPayload(action);
     const status = getStatus();
     if (!step) return { ok: false, blocked: true, reason: "UNKNOWN_LAYOUT_ACTION" };
     if (!status.ok || status.kind !== "ready") return { ok: false, blocked: true, reason: status.reason || "NO_SELECTED_ELEMENT" };
     const snapshot = getSnapshot();
-    const inspector = createRuntimeInspector({ inspector: options.inspector, inspectorFactory: options.inspectorFactory, hostAdapterFactory: options.hostAdapterFactory, registry: snapshot.transformed.registry, scopeId, moduleId, targetAppId });
+    const inspector = createInspectorForSnapshot(snapshot);
     return inspector.applyLayoutChange(scopeId, {
       elementId: snapshot.selectedElementId,
       operation: step.operation,
@@ -262,7 +266,33 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
     });
   }
 
-  return { inspectSelectedElement, getSelectedElementControlPanel, applySelectedElementLayoutAction, getStatus };
+  function getCurrentLayoutState() {
+    const snapshot = getSnapshot();
+    try {
+      const inspector = createInspectorForSnapshot(snapshot);
+      const inspection = inspector.inspectScope(scopeId);
+      return { ok: Boolean(inspection?.ok), layoutState: Array.isArray(inspection?.layoutState) ? inspection.layoutState : [], errors: inspection?.errors || [] };
+    } catch (error) {
+      return { ok: false, layoutState: [], errors: [{ code: "LAYOUT_STATE_ERROR", message: error?.message || String(error || "Layout-State-Fehler") }] };
+    }
+  }
+
+  function restoreSessionLayoutState({ entries = [], elementIds = [] } = {}) {
+    const snapshot = getSnapshot();
+    try {
+      const inspector = createInspectorForSnapshot(snapshot);
+      const inspection = inspector.inspectScope(scopeId);
+      const hostAdapter = inspection?.ok ? inspector.__getHostAdapter?.(scopeId) : null;
+      if (!hostAdapter || typeof hostAdapter.restoreLayoutState !== "function") {
+        return { ok: false, blocked: true, reason: "HOST_RESTORE_LAYOUT_STATE_MISSING" };
+      }
+      return hostAdapter.restoreLayoutState({ entries, elementIds });
+    } catch (error) {
+      return { ok: false, blocked: true, reason: "RESTORE_LAYOUT_STATE_ERROR", error };
+    }
+  }
+
+  return { inspectSelectedElement, getSelectedElementControlPanel, applySelectedElementLayoutAction, getCurrentLayoutState, restoreSessionLayoutState, getStatus };
 }
 
 export const BBM_EDITOR_RUNTIME_INSPECTOR_BRIDGE_ROLE_BY_ID = ROLE_BY_ELEMENT_ID;

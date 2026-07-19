@@ -656,3 +656,10 @@ Hinweis:
 - Auf Desktop-Breiten liegt das Steuerpanel neben der Testfläche und bleibt per Sticky-Verhalten sichtbar.
 - Unter ca. 1100px fällt die Prüfanordnung auf eine einspaltige Darstellung zurück.
 - Auswahl- und Layoutvertrag bleiben unverändert; die Testfläche bleibt außerhalb des ausgeschlossenen Bedienpanel-Roots.
+
+## M64 Korrektur 4 – Sitzungs-Verwerfen und Editor-Schalter
+- Die M64-Prüffläche erhält eine Sitzungs-Baseline aus dem vorhandenen HostAdapter/Layout-State.
+- Die Mitte des Steuerkreuzes verwirft Änderungen des ausgewählten Elements auf den Zustand beim Öffnen der aktuellen Editor-Sitzung.
+- Das rechte Steuerpanel zeigt offene Sitzungsänderungen und bietet „Alle Änderungen verwerfen“ sowie „Editor ausschalten/einschalten“.
+- Rücknahmen laufen über Inspector-Bridge und HostAdapter/Layout-State; das Panel setzt keine DOM-Styles direkt zurück.
+- Ausschalten stoppt Auswahlmodus und Overlays, ohne Sitzungsänderungen automatisch zu verwerfen.

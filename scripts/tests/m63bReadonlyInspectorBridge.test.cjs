@@ -127,7 +127,7 @@ async function runM63bReadonlyInspectorBridgeTests(run) {
       assert.match(text, /Breite/);
       assert.match(text, /Höhe/);
       assert.match(text, /▲/);
-      assert.match(text, /●/);
+      assert.match(text, /↶/);
       assert.doesNotMatch(text, /Textgroesse|Textposition|freie Werteingabe:/);
       assert.equal(tags.includes("button"), true);
       assert.equal(tags.includes("input"), false);

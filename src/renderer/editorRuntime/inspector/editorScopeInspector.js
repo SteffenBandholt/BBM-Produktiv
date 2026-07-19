@@ -257,6 +257,7 @@ export function createEditorScopeInspector({
     applyLayoutChange,
     loadLayoutState,
     resetLayoutState,
+    __getHostAdapter: getHostAdapter,
   };
 }
 

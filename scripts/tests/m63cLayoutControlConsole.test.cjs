@@ -113,7 +113,7 @@ async function runM63cLayoutControlConsoleTests(run) {
     assert.equal(heightButtons.find((btn) => btn.className.includes("--right")).disabled, true);
     const center = heightButtons.find((btn) => btn.className.includes("--center"));
     assert.equal(center.disabled, true);
-    assert.equal(center.attributes["aria-label"], "Standard derzeit nicht verfügbar");
+    assert.equal(center.attributes["aria-label"], "Änderungen dieses Elements verwerfen");
   }));
 
   await run("M63C Konsole: neue Auswahl setzt Modus auf move zurueck", async () => withDom(() => {
