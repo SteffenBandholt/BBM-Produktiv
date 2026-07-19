@@ -60,11 +60,26 @@ async function createHarness(layoutStorage) {
   return { adapter, inspector, refs };
 }
 
+function createPersistentTestStorage(createEditorLayoutMemoryStorage, initialPayload = null) {
+  const storage = createEditorLayoutMemoryStorage(initialPayload);
+  return {
+    available: true,
+    persistent: true,
+    readResult() {
+      const payload = storage.read();
+      return payload ? { ok: true, found: true, payload } : { ok: true, found: false, payload: null };
+    },
+    read: storage.read,
+    write: storage.write,
+    clear: storage.clear,
+  };
+}
+
 async function runM65LayoutPersistenceRoundtripTests(run) {
   const { createEditorLayoutMemoryStorage } = await importEsmFromFile(LAYOUT_PERSISTENCE_PATH);
 
   await run("M65 Speichern: echte M64-Registry schreibt erst per expliziter Session-Speicherung dauerhaft", async () => {
-    const layoutStorage = createEditorLayoutMemoryStorage();
+    const layoutStorage = createPersistentTestStorage(createEditorLayoutMemoryStorage);
     const { adapter, inspector } = await createHarness(layoutStorage);
     assert.equal(inspector.beginLayoutSession("bbm.main-layout").ok, true);
     assert.equal(adapter.submitChangeRequest(request("bbm.uiEditorTest.card", "move", { x: 10, y: 15 })).ok, true);
@@ -83,7 +98,7 @@ async function runM65LayoutPersistenceRoundtripTests(run) {
   });
 
   await run("M65 Laden: neue Runtime lädt gespeicherte Werte und beginnt Baseline auf gespeichertem Zustand", async () => {
-    const layoutStorage = createEditorLayoutMemoryStorage();
+    const layoutStorage = createPersistentTestStorage(createEditorLayoutMemoryStorage);
     let harness = await createHarness(layoutStorage);
     harness.inspector.beginLayoutSession("bbm.main-layout");
     harness.adapter.submitChangeRequest(request("bbm.uiEditorTest.card", "move", { x: 20, y: 5 }));
@@ -102,7 +117,7 @@ async function runM65LayoutPersistenceRoundtripTests(run) {
   });
 
   await run("M65 Verwerfen nach Speichern: einzelnes Element kehrt zum gespeicherten Zustand zurück", async () => {
-    const layoutStorage = createEditorLayoutMemoryStorage();
+    const layoutStorage = createPersistentTestStorage(createEditorLayoutMemoryStorage);
     const { adapter, inspector, refs } = await createHarness(layoutStorage);
     inspector.beginLayoutSession("bbm.main-layout");
     adapter.submitChangeRequest(request("bbm.uiEditorTest.card", "move", { x: 10, y: 0 }));
@@ -115,7 +130,7 @@ async function runM65LayoutPersistenceRoundtripTests(run) {
   });
 
   await run("M65 Alle verwerfen: mehrere Änderungen kehren zum gespeicherten Zustand zurück ohne Storage zu löschen", async () => {
-    const layoutStorage = createEditorLayoutMemoryStorage();
+    const layoutStorage = createPersistentTestStorage(createEditorLayoutMemoryStorage);
     const { adapter, inspector, refs } = await createHarness(layoutStorage);
     inspector.beginLayoutSession("bbm.main-layout");
     adapter.submitChangeRequest(request("bbm.uiEditorTest.card", "move", { x: 10, y: 0 }));
@@ -131,7 +146,7 @@ async function runM65LayoutPersistenceRoundtripTests(run) {
   });
 
   await run("M65 Guardrail: UI-Zustände und Registry-Metadaten werden nicht persistiert", async () => {
-    const layoutStorage = createEditorLayoutMemoryStorage();
+    const layoutStorage = createPersistentTestStorage(createEditorLayoutMemoryStorage);
     const { adapter, inspector } = await createHarness(layoutStorage);
     inspector.beginLayoutSession("bbm.main-layout");
     adapter.submitChangeRequest(request("bbm.uiEditorTest.card", "move", { x: 1 }));
@@ -140,6 +155,71 @@ async function runM65LayoutPersistenceRoundtripTests(run) {
     for (const forbidden of ["selectedElement", "selectionModeActive", "editorActive", "activeLayoutControlMode", "Meldung", "DOM", "ref", "registry", "metadata"]) {
       assert.equal(serialized.includes(forbidden), false, `${forbidden} darf nicht im Layoutspeicher stehen`);
     }
+  });
+
+  await run("M65 Kein gespeichertes Layout: Load meldet found false und Paneltext ist neutral", async () => {
+    const layoutStorage = createPersistentTestStorage(createEditorLayoutMemoryStorage);
+    const { inspector } = await createHarness(layoutStorage);
+    const loaded = inspector.loadSavedLayout("bbm.main-layout");
+    assert.equal(loaded.ok, true);
+    assert.equal(loaded.savedLayoutFound, false);
+    const panelSource = fs.readFileSync(PANEL_PATH, "utf8");
+    assert.match(panelSource, /Noch kein Layout gespeichert/);
+    assert.doesNotMatch(panelSource, /loadResult\?\.ok \? "Gespeichertes Layout geladen"/);
+  });
+
+  await run("M65 Default-Storage: ohne Browser-Storage nicht persistent und Save bleibt Fehler", async () => {
+    const previousStorage = global.localStorage;
+    delete global.localStorage;
+    try {
+      const [{ createBbmMainUiHostAdapter }, refs] = await Promise.all([importEsmFromFile(HOST_ADAPTER_PATH), importEsmFromFile(REFS_PATH)]);
+      refs.clearBbmUiElementRefs();
+      global.HTMLElement = TestRef;
+      refs.registerBbmUiElementRef("bbm.uiEditorTest.card", new TestRef());
+      const adapter = createBbmMainUiHostAdapter({ registry: [{ id: "bbm.uiEditorTest.card", elementId: "bbm.uiEditorTest.card", name: "Testkarte", type: "card", role: "content", parentId: null, order: 1, visible: true, editable: true, allowedOps: ["move"], lockedOps: [] }] });
+      assert.deepEqual(adapter.getPersistenceStatus(), { persistenceAvailable: false, persistencePersistent: false });
+      assert.equal(adapter.submitChangeRequest(request("bbm.uiEditorTest.card", "move", { x: 5 })).ok, true);
+      const result = adapter.saveLayoutSession();
+      assert.equal(result.ok, false);
+      assert.equal(result.reason, "LAYOUT_STORAGE_NOT_PERSISTENT");
+    } finally {
+      global.localStorage = previousStorage;
+    }
+  });
+
+  await run("M65 Beschädigtes JSON: Load meldet Fehler und wendet nichts an", async () => {
+    const previousStorage = global.localStorage;
+    global.localStorage = { getItem: () => "{ kaputt", setItem() {}, removeItem() {} };
+    try {
+      const [{ createBbmMainUiHostAdapter }, { createBbmMainUiLayoutStorage }, refs] = await Promise.all([importEsmFromFile(HOST_ADAPTER_PATH), importEsmFromFile(DEFAULT_STORAGE_PATH), importEsmFromFile(REFS_PATH)]);
+      refs.clearBbmUiElementRefs();
+      global.HTMLElement = TestRef;
+      const ref = new TestRef();
+      refs.registerBbmUiElementRef("bbm.uiEditorTest.card", ref);
+      const layoutStorage = createBbmMainUiLayoutStorage("m65.corrupt.storage");
+      const adapter = createBbmMainUiHostAdapter({ registry: [{ id: "bbm.uiEditorTest.card", elementId: "bbm.uiEditorTest.card", name: "Testkarte", type: "card", role: "content", parentId: null, order: 1, visible: true, editable: true, allowedOps: ["move"], lockedOps: [] }], layoutStorage });
+      const result = adapter.loadSavedLayout();
+      assert.equal(result.ok, false);
+      assert.equal(result.reason, "LAYOUT_STORAGE_READ_FAILED");
+      assert.equal(ref.style.values.transform, undefined);
+      const panelSource = fs.readFileSync(PANEL_PATH, "utf8");
+      assert.match(panelSource, /Gespeichertes Layout konnte nicht geladen werden\./);
+    } finally {
+      global.localStorage = previousStorage;
+    }
+  });
+
+  await run("M65 Schreibfehler: Save bleibt Fehler, Änderungen bleiben offen und Verwerfen funktioniert", async () => {
+    const failingStorage = { available: true, persistent: true, readResult: () => ({ ok: true, found: false, payload: null }), read: () => null, write: () => { const error = new Error("write failed"); error.code = "LAYOUT_STORAGE_WRITE_FAILED"; throw error; }, clear() {} };
+    const { adapter, inspector, refs } = await createHarness(failingStorage);
+    inspector.beginLayoutSession("bbm.main-layout");
+    adapter.submitChangeRequest(request("bbm.uiEditorTest.card", "move", { x: 5 }));
+    const result = inspector.saveLayoutSession("bbm.main-layout");
+    assert.equal(result.ok, false);
+    assert.equal(result.reason, "LAYOUT_STORAGE_WRITE_FAILED");
+    assert.equal(inspector.getLayoutSessionStatus("bbm.main-layout").changedCount, 1);
+    assert.equal(inspector.discardLayoutSessionElement("bbm.main-layout", "bbm.uiEditorTest.card").ok, true);
+    assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.card").style.values.transform, "translate(0px, 0px)");
   });
 
   await run("M65 Default-Storage: separater Adapter nutzt Browser-Storage, falls vorhanden", async () => {
@@ -170,7 +250,7 @@ async function runM65LayoutPersistenceRoundtripTests(run) {
     assert.equal(result.ok, false);
     assert.equal(inspector.getLayoutSessionStatus("bbm.main-layout").active, true);
     const panelSource = fs.readFileSync(PANEL_PATH, "utf8");
-    assert.match(panelSource, /Layout konnte nicht gespeichert werden\./);
+    assert.match(panelSource, /Layout konnte nicht dauerhaft gespeichert werden\./);
     assert.doesNotMatch(panelSource, /localStorage/);
   });
 }

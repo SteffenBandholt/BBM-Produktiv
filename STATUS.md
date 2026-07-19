@@ -3165,3 +3165,29 @@ Wichtig:
 - Risiken/Hinweise:
   - Kein neuer Bestätigungsdialog, kein Autosave, keine Layoutprofile und keine PDF-/Fachmaskenänderung.
   - Die Cloud kann die praktische Neustartprüfung nicht ersetzen.
+
+### M65 Korrektur – persistente Speicherung ohne stillen Memory-Fallback
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Der produktive BBM-Main-Layout-Storage meldet `available` und `persistent` explizit und verwendet keinen stillen Memory-Fallback mehr, wenn Browser-Storage fehlt.
+  - Lesefälle werden unterschieden: kein gespeichertes Layout, gespeichertes Layout gefunden, und Lesefehler wie beschädigtes JSON.
+  - `saveLayoutSession()` liefert nur bei verfügbarer persistenter Speicherung und erfolgreicher Verifikation `ok: true`; bei Fehler bleibt die bisherige Session-Baseline erhalten.
+  - `loadSavedLayout()` liefert `savedLayoutFound` und aktualisiert die Baseline nur bei tatsächlich gefundenem/geladenem Layout.
+  - Das UI-Editor-Steuerpanel zeigt präzise neutrale Statusmeldungen und deaktiviert Speichern bei nicht verfügbarer Persistenz.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/bbmMainUiLayoutStorage.js`
+  - `src/renderer/ui-editor/bbmMainUiHostAdapter.js`
+  - `src/renderer/editorRuntime/inspector/editorScopeInspector.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Pruefung:
+  - `node scripts/ui-editor-contract-check.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs --self-test` OK
+  - `node scripts/tests/m64UiEditorTestSurface.test.cjs` OK
+  - `node scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs` OK
+- Naechster offener Schritt:
+  - Lokale Windows-/Electron-Abnahme von Speichern, Neustart-Laden und Fehlerstatus durchführen.
+- Risiken/Hinweise:
+  - Memory-Storage bleibt nur für Tests oder ausdrücklich injizierte Laufzeiten erlaubt, nicht als stiller produktiver Ersatz.

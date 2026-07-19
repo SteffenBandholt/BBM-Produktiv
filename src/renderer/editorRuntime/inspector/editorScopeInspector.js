@@ -281,11 +281,14 @@ export function createEditorScopeInspector({
   function buildLayoutSessionStatus(scopeId, context) {
     const normalizedScopeId = normalizeId(scopeId);
     const session = layoutSessions.get(normalizedScopeId) || null;
+    const persistenceStatus = typeof context.hostAdapter?.getPersistenceStatus === "function"
+      ? context.hostAdapter.getPersistenceStatus()
+      : { persistenceAvailable: false, persistencePersistent: false };
     if (!context.ok) {
-      return { ok: false, active: Boolean(session), changedElementIds: [], changedCount: 0, changedByElementId: {}, errors: context.inspection.errors || [] };
+      return { ...persistenceStatus, ok: false, active: Boolean(session), changedElementIds: [], changedCount: 0, changedByElementId: {}, errors: context.inspection.errors || [] };
     }
     if (!session) {
-      return { ok: true, active: false, changedElementIds: [], changedCount: 0, changedByElementId: {} };
+      return { ...persistenceStatus, ok: true, active: false, changedElementIds: [], changedCount: 0, changedByElementId: {} };
     }
     const currentLayoutState = typeof context.hostAdapter.getCurrentLayoutState === "function" ? context.hostAdapter.getCurrentLayoutState() : [];
     const changedElementIds = context.registry
@@ -296,6 +299,7 @@ export function createEditorScopeInspector({
         session.baselineByElementId.get(elementId)?.layoutValue || null
       ));
     return {
+      ...persistenceStatus,
       ok: true,
       active: true,
       changedElementIds,
@@ -367,6 +371,7 @@ export function createEditorScopeInspector({
     }
     const result = context.hostAdapter.loadSavedLayout();
     if (!result?.ok) return { ...result, status: buildLayoutSessionStatus(scopeId, context) };
+    if (!result.savedLayoutFound) return { ...result, status: buildLayoutSessionStatus(scopeId, context) };
     return { ...result, status: resetSessionBaseline(scopeId, context) };
   }
 

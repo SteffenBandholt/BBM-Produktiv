@@ -153,13 +153,38 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
     return { ok: true, applied: true };
   }
 
-  function loadPersistentEntriesIntoSession() {
-    const savedEntries = persistentLayoutStore.list();
-    layoutStore.replace(savedEntries, runtimeRegistry.map((entry) => normalizeId(entry.id)).filter(Boolean));
-    return savedEntries;
+  function getPersistenceStatus() {
+    return {
+      persistenceAvailable: Boolean(layoutStorage?.available),
+      persistencePersistent: Boolean(layoutStorage?.persistent),
+    };
   }
 
-  loadPersistentEntriesIntoSession();
+  function readPersistentStorage() {
+    if (typeof layoutStorage?.readResult === "function") {
+      return layoutStorage.readResult();
+    }
+    try {
+      const payload = typeof layoutStorage?.read === "function" ? layoutStorage.read() : null;
+      return payload ? { ok: true, found: true, payload } : { ok: true, found: false, payload: null };
+    } catch (error) {
+      return { ok: false, found: false, payload: null, reason: error?.code || "LAYOUT_STORAGE_READ_FAILED" };
+    }
+  }
+
+  function loadPersistentEntriesIntoSession() {
+    const readResult = readPersistentStorage();
+    if (!readResult.ok) return { ok: false, savedLayoutFound: false, reason: readResult.reason || "LAYOUT_STORAGE_READ_FAILED", entries: [] };
+    if (!readResult.found) return { ok: true, savedLayoutFound: false, entries: [] };
+    const savedEntries = persistentLayoutStore.list();
+    layoutStore.replace(savedEntries, runtimeRegistry.map((entry) => normalizeId(entry.id)).filter(Boolean));
+    return { ok: true, savedLayoutFound: savedEntries.length > 0, entries: savedEntries };
+  }
+
+  const initialLoad = loadPersistentEntriesIntoSession();
+  if (!initialLoad.ok && initialLoad.reason !== "LAYOUT_STORAGE_UNAVAILABLE") {
+    // Der Fehler wird erst beim expliziten Laden sichtbar gemeldet.
+  }
 
   const adapter = {
     getRegistry() {
@@ -174,25 +199,40 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
       return persistentLayoutStore.list();
     },
 
+    getPersistenceStatus() {
+      return getPersistenceStatus();
+    },
+
     loadSavedLayout() {
       try {
-        const savedEntries = loadPersistentEntriesIntoSession();
-        const applyResult = applyEntries(savedEntries, { resetMissingSize: true });
-        if (!applyResult.ok) return { ok: false, blocked: true, reason: applyResult.reason, elementId: applyResult.elementId, layoutState: layoutStore.list() };
-        return { ok: true, blocked: false, reason: null, layoutState: layoutStore.list(), savedLayoutState: persistentLayoutStore.list() };
+        const loadResult = loadPersistentEntriesIntoSession();
+        if (!loadResult.ok) return { ...getPersistenceStatus(), ok: false, blocked: true, reason: loadResult.reason || "LAYOUT_LOAD_FAILED", savedLayoutFound: false, layoutState: layoutStore.list() };
+        if (!loadResult.savedLayoutFound) return { ...getPersistenceStatus(), ok: true, blocked: false, reason: null, savedLayoutFound: false, layoutState: layoutStore.list(), savedLayoutState: [] };
+        const applyResult = applyEntries(loadResult.entries, { resetMissingSize: true });
+        if (!applyResult.ok) return { ...getPersistenceStatus(), ok: false, blocked: true, reason: applyResult.reason, elementId: applyResult.elementId, savedLayoutFound: true, layoutState: layoutStore.list() };
+        return { ...getPersistenceStatus(), ok: true, blocked: false, reason: null, savedLayoutFound: true, layoutState: layoutStore.list(), savedLayoutState: persistentLayoutStore.list() };
       } catch (_error) {
-        return { ok: false, blocked: true, reason: "LAYOUT_LOAD_FAILED", layoutState: layoutStore.list() };
+        return { ...getPersistenceStatus(), ok: false, blocked: true, reason: "LAYOUT_LOAD_FAILED", savedLayoutFound: false, layoutState: layoutStore.list() };
       }
     },
 
     saveLayoutSession() {
+      const persistence = getPersistenceStatus();
+      if (!persistence.persistenceAvailable || !persistence.persistencePersistent) {
+        return { ...persistence, ok: false, blocked: true, reason: "LAYOUT_STORAGE_NOT_PERSISTENT", layoutState: layoutStore.list() };
+      }
       try {
         const ids = runtimeRegistry.map((entry) => normalizeId(entry.id)).filter(Boolean);
         const layoutState = layoutStore.list();
         persistentLayoutStore.replace(layoutState, ids);
-        return { ok: true, blocked: false, reason: null, layoutState: layoutStore.list(), savedLayoutState: persistentLayoutStore.list() };
-      } catch (_error) {
-        return { ok: false, blocked: true, reason: "LAYOUT_SAVE_FAILED", layoutState: layoutStore.list() };
+        const verify = readPersistentStorage();
+        if (!verify.ok || !verify.found) {
+          return { ...persistence, ok: false, blocked: true, reason: verify.reason || "LAYOUT_STORAGE_VERIFY_FAILED", layoutState: layoutStore.list() };
+        }
+        const savedLayoutState = persistentLayoutStore.list();
+        return { ...persistence, ok: true, blocked: false, reason: null, savedLayoutFound: savedLayoutState.length > 0, layoutState: layoutStore.list(), savedLayoutState };
+      } catch (error) {
+        return { ...persistence, ok: false, blocked: true, reason: error?.code || "LAYOUT_SAVE_FAILED", layoutState: layoutStore.list() };
       }
     },
 

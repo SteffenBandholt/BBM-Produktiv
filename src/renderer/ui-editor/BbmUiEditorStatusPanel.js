@@ -166,9 +166,15 @@ export class BbmUiEditorStatusPanel {
     if (!this.savedLayoutLoadedForSession) {
       const loadResult = this.inspectorBridge?.loadSavedLayout?.();
       this.layoutSessionStatus = loadResult?.status || this.layoutSessionStatus;
-      this.layoutPersistenceStatus = loadResult?.ok ? "Gespeichertes Layout geladen" : "Noch nicht gespeichert";
+      this.layoutPersistenceStatus = loadResult?.ok
+        ? (loadResult.savedLayoutFound ? "Gespeichertes Layout geladen" : "Noch kein Layout gespeichert")
+        : "Gespeichertes Layout konnte nicht geladen werden.";
       this.savedLayoutLoadedForSession = true;
-      this.beginLayoutSession();
+      if (loadResult?.ok && loadResult.savedLayoutFound) {
+        this.layoutSessionStatus = loadResult?.status || this.layoutSessionStatus;
+      } else {
+        this.beginLayoutSession();
+      }
     } else {
       this.refreshLayoutSessionStatus();
     }
@@ -490,7 +496,9 @@ export class BbmUiEditorStatusPanel {
     const save = createNode("button", "bbm-ui-editor-panel__secondary");
     save.type = "button";
     save.textContent = "Änderungen speichern";
-    save.disabled = !this.editorActive || changeCount === 0 || !this.status?.layoutStoreAvailable;
+    const persistenceAvailable = this.layoutSessionStatus?.persistenceAvailable !== false;
+    const persistencePersistent = this.layoutSessionStatus?.persistencePersistent !== false;
+    save.disabled = !this.editorActive || changeCount === 0 || !persistenceAvailable || !persistencePersistent;
     save.addEventListener("click", () => this.saveLayoutSession());
     const toggle = createNode("button", "bbm-ui-editor-panel__secondary");
     toggle.type = "button";
@@ -630,8 +638,8 @@ export class BbmUiEditorStatusPanel {
     if (!this.editorActive || this.getOpenChangeCount() === 0) return;
     const result = this.inspectorBridge?.saveLayoutSession?.();
     this.layoutSessionStatus = result?.status || this.layoutSessionStatus;
-    this.layoutPersistenceStatus = result?.ok ? "Layout gespeichert" : "Layout konnte nicht gespeichert werden.";
-    this.selectionMessage = result?.ok ? "Layout gespeichert." : "Layout konnte nicht gespeichert werden.";
+    this.layoutPersistenceStatus = result?.ok ? "Layout gespeichert" : "Layout konnte nicht dauerhaft gespeichert werden.";
+    this.selectionMessage = result?.ok ? "Layout gespeichert." : "Layout konnte nicht dauerhaft gespeichert werden.";
     this.renderAll();
     this.syncActiveSelectionRuntime();
   }
