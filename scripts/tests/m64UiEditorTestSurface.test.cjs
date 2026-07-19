@@ -134,10 +134,11 @@ async function createIntegratedPanel({ doc, win }) {
   const { createSelectionController } = await import(pathToFileURL(KIT_RUNTIME_PATH).href);
 
   refs.clearBbmUiElementRefs();
-  const registryResult = getBbmUiElementRegistry();
-  const realRegistry = registryResult.elements;
+  uiEditorIpc._m52.closeUiEditorSession();
+  const initialElements = uiEditorIpc._m52.getUiEditorElements();
+  assert.equal(initialElements.ok, true);
   let selectedElement = null;
-  let elements = realRegistry.map((entry) => ({ ...entry, selected: false }));
+  let elements = initialElements.elements;
   const changeRequests = [];
   const fachCalls = [];
   const layoutStorage = createEditorLayoutMemoryStorage();
@@ -147,9 +148,13 @@ async function createIntegratedPanel({ doc, win }) {
     uiEditorGetElements: async () => ({ ok: true, elements }),
     uiEditorGetSelectedElementDetails: async () => ({ ok: true, selectedElement }),
     uiEditorSelectElement: async ({ elementId }) => {
-      elements = realRegistry.map((entry) => ({ ...entry, selected: entry.elementId === elementId }));
-      selectedElement = elements.find((entry) => entry.elementId === elementId) || null;
-      return { ok: true, selectedElement };
+      const result = uiEditorIpc._m52.selectUiEditorElement({ elementId });
+      if (result?.ok) {
+        selectedElement = result.selectedElement || null;
+        const latestElements = uiEditorIpc._m52.getUiEditorElements();
+        elements = latestElements.ok ? latestElements.elements : elements;
+      }
+      return result;
     },
     ipcCall: (...args) => fachCalls.push(["ipcCall", ...args]),
     dbCall: (...args) => fachCalls.push(["dbCall", ...args]),
@@ -286,6 +291,25 @@ async function runM64UiEditorTestSurfaceTests(run) {
     for (const [elementId] of M64_ELEMENTS) {
       assert.ok(byId.has(elementId), `${elementId} fehlt im IPC-Elementpfad`);
     }
+    const workspaceFromList = byId.get("bbm.uiEditorTest.workspace");
+    assert.equal(workspaceFromList.editable, false);
+    const cardFromList = byId.get("bbm.uiEditorTest.card");
+    assert.equal(cardFromList.editable, true);
+    assert.ok(cardFromList.allowedOps.includes("move"));
+    assert.ok(cardFromList.allowedOps.includes("resize"));
+    assert.ok(cardFromList.lockedOps.includes("delete"));
+    const cardSelection = uiEditorIpc._m52.selectUiEditorElement({ elementId: "bbm.uiEditorTest.card" });
+    assert.equal(cardSelection.ok, true);
+    assert.equal(cardSelection.selectedElement.editable, true);
+    assert.ok(cardSelection.selectedElement.allowedOps.includes("move"));
+    assert.ok(cardSelection.selectedElement.allowedOps.includes("resize"));
+    assert.ok(cardSelection.selectedElement.lockedOps.includes("delete"));
+    const cardDetails = uiEditorIpc._m52.getSelectedUiEditorElementDetails();
+    assert.equal(cardDetails.ok, true);
+    assert.equal(cardDetails.selectedElement.editable, true);
+    const workspaceSelection = uiEditorIpc._m52.selectUiEditorElement({ elementId: "bbm.uiEditorTest.workspace" });
+    assert.equal(workspaceSelection.ok, true);
+    assert.equal(workspaceSelection.selectedElement.editable, false);
     uiEditorIpc._m52.closeUiEditorSession();
   });
 
@@ -414,15 +438,20 @@ async function runM64UiEditorTestSurfaceTests(run) {
     const baselineTransform = target.style.values.transform;
     const baselineWidth = target.style.values.width;
     const baselineHeight = target.style.values.height;
+    assert.equal(padButton(context.panel.detailsNode, "center").disabled, true);
+    assert.equal(context.panel.selectedElement?.editable, true);
     await applyLayoutTriple(context, "bbm.uiEditorTest.card", target, { width: 300, height: 300 });
     assert.match(collectText(context.panel.detailsNode), /Änderungen offen: 1/);
-    padButton(context.panel.detailsNode, "center").click();
+    const discardCenter = padButton(context.panel.detailsNode, "center");
+    assert.equal(discardCenter.disabled, false);
+    discardCenter.click();
     assert.equal(target.style.values.transform, baselineTransform || "translate(0px, 0px)");
     assert.equal(target.style.values.width, baselineWidth);
     assert.equal(target.style.values.height, baselineHeight);
     assert.equal(context.panel.selectedElement?.elementId, "bbm.uiEditorTest.card");
     assert.match(collectText(context.panel.detailsNode), /Keine offenen Änderungen/);
     assert.match(collectText(context.panel.detailsNode), /Änderungen für Testkarte verworfen\./);
+    assert.equal(padButton(context.panel.detailsNode, "center").disabled, true);
     const selectedOverlay = findNode(doc.body, (node) => node.attributes?.["data-selection-overlay"] === "selected");
     assert.ok(selectedOverlay);
     assert.equal(selectedOverlay.style.display, "block");

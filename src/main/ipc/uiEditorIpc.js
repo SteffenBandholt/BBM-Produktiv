@@ -28,6 +28,9 @@ function cloneElement(element, selected = false) {
     capabilities: Array.isArray(element?.capabilities) ? element.capabilities.map(String) : [],
     allowedChanges: Array.isArray(element?.allowedChanges) ? element.allowedChanges.map(String) : [],
     allowedOps: Array.isArray(element?.allowedOps) ? element.allowedOps.map(String) : [],
+    lockedOps: Array.isArray(element?.lockedOps) ? element.lockedOps.map(String) : [],
+    editable: Boolean(element?.editable),
+    layoutDefaults: element?.layoutDefaults && typeof element.layoutDefaults === "object" && !Array.isArray(element.layoutDefaults) ? { ...element.layoutDefaults } : {},
     selected: Boolean(selected),
   };
 }

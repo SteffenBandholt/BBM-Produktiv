@@ -669,3 +669,8 @@ Hinweis:
 - Das Statuspanel nutzt nur öffentliche Bridge-Befehle für Sitzungsstart, Status, Element-Verwerfen, Alles-Verwerfen und Sitzungsende.
 - Die interne `__getHostAdapter`-Hintertür wurde entfernt; die Bridge greift nicht direkt auf HostAdapter- oder LayoutStore-Interna zu.
 - Verwerfen, Editor ein-/ausschalten und Schließen bleiben funktional; Guardrails sichern die Architekturgrenzen ab.
+
+## M64 Korrektur 6 – IPC-Elementvertrag für Verwerfen-Mitte
+- Der IPC-Elementklon überträgt `editable` und `lockedOps` explizit aus der führenden Registry.
+- Die Kreuzmitte bleibt im Panel weiterhin von `selectedElement.editable` abhängig; keine Ableitung aus IDs, DOM oder allowedOps.
+- Der M64-Test prüft den echten IPC-Auswahl-/Detailpfad und die Aktivierung der Kreuzmitte nach einer Layoutänderung.

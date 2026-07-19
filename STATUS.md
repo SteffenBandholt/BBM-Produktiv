@@ -3099,3 +3099,22 @@ Wichtig:
   - Lokale Windows-Abnahme für PR #204 erneut durchführen.
 - Risiken/Hinweise:
   - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.
+
+### M64 Korrektur 6 – IPC-Elementvertrag für Verwerfen-Mitte
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - `uiEditorIpc.cloneElement()` überträgt `editable` und `lockedOps` aus der Registry an Renderer und Detailpfad.
+  - Der M64-IPC-Test prüft `getElements`, `selectElement` und `getSelectedElementDetails` für editierbare Testkarte und nicht editierbaren Workspace.
+  - Die Panelintegration nutzt für Auswahl den echten IPC-geklonten `selectedElement`-Vertrag und prüft: ↶ zunächst deaktiviert, nach Move aktiviert, nach Verwerfen wieder deaktiviert.
+- Betroffene Dateien:
+  - `src/main/ipc/uiEditorIpc.js`
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `scripts/tests/restarbeitenV2ReadOnlyAdapter.test.cjs`
+  - `scripts/tests/restarbeitenV2LegacyReadBridge.test.cjs`
+  - `scripts/tests/restarbeitenV2ReadOnlyDataSourceFactory.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - Lokale Windows-Abnahme für PR #204 erneut durchführen, insbesondere Kreuzmitte nach Move der Testkarte.
+- Risiken/Hinweise:
+  - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.
