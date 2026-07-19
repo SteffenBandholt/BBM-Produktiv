@@ -132,10 +132,9 @@ function isDefaultLayoutProfile(entry) {
 
 function buildDefaultLayoutValue(registryElement) {
   const defaults = getLayoutDefaults(registryElement);
-  const layoutValue = {
-    x: toNumber(defaults.x, 0),
-    y: toNumber(defaults.y, 0),
-  };
+  const layoutValue = {};
+  if (Object.prototype.hasOwnProperty.call(defaults, "x")) layoutValue.x = toNumber(defaults.x, 0);
+  if (Object.prototype.hasOwnProperty.call(defaults, "y")) layoutValue.y = toNumber(defaults.y, 0);
   if (Object.prototype.hasOwnProperty.call(defaults, "width")) layoutValue.width = defaults.width;
   if (Object.prototype.hasOwnProperty.call(defaults, "height")) layoutValue.height = defaults.height;
   if (Object.prototype.hasOwnProperty.call(defaults, "visible")) layoutValue.visible = Boolean(defaults.visible);
@@ -173,9 +172,13 @@ function applyLayoutValueToRegisteredTarget(elementId, layoutValue, { resetMissi
     return { ok: false, reason: "ELEMENT_REF_MISSING" };
   }
 
-  const x = toNumber(layoutValue.x);
-  const y = toNumber(layoutValue.y);
-  target.style.setProperty("transform", `translate(${x}px, ${y}px)`);
+  if (Object.prototype.hasOwnProperty.call(layoutValue, "x") || Object.prototype.hasOwnProperty.call(layoutValue, "y")) {
+    const x = toNumber(layoutValue.x);
+    const y = toNumber(layoutValue.y);
+    target.style.setProperty("transform", `translate(${x}px, ${y}px)`);
+  } else if (resetMissingSize) {
+    target.style.removeProperty("transform");
+  }
 
   if (Object.prototype.hasOwnProperty.call(layoutValue, "visible")) {
     target.hidden = layoutValue.visible === false;
@@ -413,7 +416,7 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
       }
 
       try {
-        const layoutState = layoutStore.replace(defaultEntries, ids);
+        layoutStore.replace(defaultEntries, ids);
         const applyResult = applyEntries(defaultEntries, { resetMissingSize: true });
         if (!applyResult.ok) {
           return restorePreviousState(applyResult.reason || "LAYOUT_DEFAULT_APPLY_FAILED", { elementId: applyResult.elementId });
@@ -426,6 +429,7 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
         if (verify.some(isDefaultLayoutProfile)) {
           return restorePreviousState("LAYOUT_STORAGE_CLEAR_VERIFY_FAILED");
         }
+        const layoutState = layoutStore.replace([], ids);
         return { ...getPersistenceStatus(), ok: true, blocked: false, reason: null, savedLayoutFound: false, deviatesFromDefaults: false, standardLayoutActive: true, layoutState, savedLayoutState: verify };
       } catch (error) {
         return restorePreviousState(error?.code || "LAYOUT_RESET_DEFAULTS_FAILED");

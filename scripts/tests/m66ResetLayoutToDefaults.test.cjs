@@ -17,12 +17,14 @@ class TestRef {
     this.style = {
       values: {},
       setProperty: (k, v) => {
-        if (this.failDefaultTransform && k === "transform" && v === "translate(0px, 0px)") {
-          return { ok: false, reason: "STYLE_APPLY_FAILED" }.missing.property;
-        }
         this.style.values[k] = String(v);
       },
-      removeProperty: (k) => { delete this.style.values[k]; },
+      removeProperty: (k) => {
+        if (this.failDefaultTransform && k === "transform") {
+          return { ok: false, reason: "STYLE_REMOVE_FAILED" }.missing.property;
+        }
+        delete this.style.values[k];
+      },
     };
     this.rect = { width, height, left: 0, top: 0 };
   }
@@ -113,11 +115,16 @@ async function createHarness(layoutStorage, options = {}) {
   global.HTMLElement = TestRef;
   const registry = [
     { id: "bbm.main.content", elementId: "bbm.main.content", name: "Inhalt", type: "root", role: "layout", parentId: null, order: 1, visible: true, editable: false, allowedOps: [], lockedOps: [], layoutDefaults: { visible: true } },
-    { id: "bbm.uiEditorTest.card", elementId: "bbm.uiEditorTest.card", name: "Testkarte", type: "card", role: "content", parentId: "bbm.main.content", order: 2, visible: true, editable: true, allowedOps: ["move", "resize"], lockedOps: [], layoutDefaults: { visible: true, width: 300, height: 300 } },
-    { id: "bbm.uiEditorTest.table", elementId: "bbm.uiEditorTest.table", name: "Beispieltabelle", type: "table", role: "content", parentId: "bbm.main.content", order: 3, visible: true, editable: true, allowedOps: ["move", "resize", "hide", "show"], lockedOps: [], layoutDefaults: { visible: true, width: 420 } },
+    { id: "bbm.uiEditorTest.card", elementId: "bbm.uiEditorTest.card", name: "Testkarte", type: "card", role: "content", parentId: "bbm.main.content", order: 2, visible: true, editable: true, allowedOps: ["move", "resize"], lockedOps: [], layoutDefaults: { visible: true, minWidth: 80, minHeight: 80 } },
+    { id: "bbm.uiEditorTest.card.title", elementId: "bbm.uiEditorTest.card.title", name: "Überschrift", type: "label", role: "content", parentId: "bbm.uiEditorTest.card", order: 3, visible: true, editable: true, allowedOps: ["move", "resize"], lockedOps: [], layoutDefaults: { visible: true, minWidth: 80, minHeight: 24 } },
+    { id: "bbm.uiEditorTest.card.text", elementId: "bbm.uiEditorTest.card.text", name: "Beispieltext", type: "label", role: "content", parentId: "bbm.uiEditorTest.card", order: 4, visible: true, editable: true, allowedOps: ["move", "resize"], lockedOps: [], layoutDefaults: { visible: true, minWidth: 80, minHeight: 24 } },
+    { id: "bbm.uiEditorTest.card.button", elementId: "bbm.uiEditorTest.card.button", name: "Beispielbutton", type: "button", role: "action", parentId: "bbm.uiEditorTest.card", order: 5, visible: true, editable: true, allowedOps: ["move", "resize"], lockedOps: [], layoutDefaults: { visible: true, minWidth: 80, minHeight: 24 } },
+    { id: "bbm.uiEditorTest.card.input", elementId: "bbm.uiEditorTest.card.input", name: "Eingabefeld", type: "field", role: "content", parentId: "bbm.uiEditorTest.card", order: 6, visible: true, editable: true, allowedOps: ["move", "resize"], lockedOps: [], layoutDefaults: { visible: true, minWidth: 80, minHeight: 24 } },
+    { id: "bbm.uiEditorTest.card.select", elementId: "bbm.uiEditorTest.card.select", name: "Auswahlfeld", type: "field", role: "content", parentId: "bbm.uiEditorTest.card", order: 7, visible: true, editable: true, allowedOps: ["move", "resize"], lockedOps: [], layoutDefaults: { visible: true, minWidth: 80, minHeight: 24 } },
+    { id: "bbm.uiEditorTest.table", elementId: "bbm.uiEditorTest.table", name: "Beispieltabelle", type: "table", role: "content", parentId: "bbm.main.content", order: 8, visible: true, editable: true, allowedOps: ["move", "resize", "hide", "show"], lockedOps: [], layoutDefaults: { visible: true, minWidth: 160, minHeight: 80 } },
   ];
   for (const entry of registry) {
-    if (options.missingRefIds?.includes(entry.id)) continue;
+    if (entry.id === "bbm.main.content" || options.missingRefIds?.includes(entry.id)) continue;
     refs.registerBbmUiElementRef(entry.id, new TestRef(entry.id.includes("table") ? 420 : 300, 180, options.failRefId === entry.id ? { failDefaultTransform: true } : {}));
   }
   const adapter = createBbmMainUiHostAdapter({ registry, layoutStorage });
@@ -126,10 +133,21 @@ async function createHarness(layoutStorage, options = {}) {
 }
 
 async function installSavedLayout(storage) {
-  const { adapter, inspector } = await createHarness(storage);
+  const { adapter, inspector, refs } = await createHarness(storage);
+  for (const elementId of ["bbm.uiEditorTest.card", "bbm.uiEditorTest.card.title", "bbm.uiEditorTest.card.text", "bbm.uiEditorTest.card.button", "bbm.uiEditorTest.card.input", "bbm.uiEditorTest.card.select", "bbm.uiEditorTest.table"]) {
+    const ref = refs.getBbmUiElementRef(elementId);
+    assert.equal(ref.style.values.transform, undefined);
+    assert.equal(ref.style.values.width, undefined);
+    assert.equal(ref.style.values.height, undefined);
+  }
   inspector.beginLayoutSession("bbm.main-layout");
   adapter.submitChangeRequest(request("bbm.uiEditorTest.card", "move", { x: 10, y: 15 }));
   adapter.submitChangeRequest(request("bbm.uiEditorTest.card", "resize", { width: 25, height: 20 }));
+  adapter.submitChangeRequest(request("bbm.uiEditorTest.card.title", "move", { x: 5 }));
+  adapter.submitChangeRequest(request("bbm.uiEditorTest.card.text", "resize", { width: 25, height: 10 }));
+  adapter.submitChangeRequest(request("bbm.uiEditorTest.card.button", "resize", { width: 10, height: 5 }));
+  adapter.submitChangeRequest(request("bbm.uiEditorTest.card.input", "resize", { width: 10, height: 5 }));
+  adapter.submitChangeRequest(request("bbm.uiEditorTest.card.select", "resize", { width: 10, height: 5 }));
   adapter.submitChangeRequest(request("bbm.uiEditorTest.table", "resize", { height: 25 }));
   assert.equal(inspector.saveLayoutSession("bbm.main-layout").ok, true);
 }
@@ -150,11 +168,18 @@ async function runM66ResetLayoutToDefaultsTests(run) {
     assert.equal(result.status.deviatesFromDefaults, false);
     assert.equal(result.status.standardLayoutActive, true);
     assert.equal(result.status.changedCount, 0);
-    assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.card").style.values.transform, "translate(0px, 0px)");
-    assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.card").style.values.width, "300px");
-    assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.card").style.values.height, "300px");
-    assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.table").style.values.width, "420px");
-    assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.table").style.values.height, undefined);
+    for (const elementId of ["bbm.uiEditorTest.card", "bbm.uiEditorTest.card.title", "bbm.uiEditorTest.card.text", "bbm.uiEditorTest.card.button", "bbm.uiEditorTest.card.input", "bbm.uiEditorTest.card.select", "bbm.uiEditorTest.table"]) {
+      const ref = refs.getBbmUiElementRef(elementId);
+      assert.equal(ref.style.values.transform, undefined);
+      assert.equal(ref.style.values.width, undefined);
+      assert.equal(ref.style.values.height, undefined);
+      assert.equal(ref.hidden, false);
+    }
+    assert.deepEqual(result.layoutState, []);
+    const cssSource = fs.readFileSync(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js"), "utf8");
+    assert.match(cssSource, /\.bbm-ui-editor-test-card \{[^}]*width: 300px;[^}]*min-height: 300px;/);
+    assert.match(cssSource, /\.bbm-ui-editor-test-table \{[^}]*width: 420px;/);
+    assert.doesNotMatch(cssSource, /\.bbm-ui-editor-test-table \{[^}]*height: 170px;/);
     assert.deepEqual(storage.read().entries, {});
   });
 
@@ -169,6 +194,8 @@ async function runM66ResetLayoutToDefaultsTests(run) {
     assert.equal(loaded.ok, true);
     assert.equal(loaded.savedLayoutFound, false);
     assert.equal(harness.refs.getBbmUiElementRef("bbm.uiEditorTest.card").style.values.transform, undefined);
+    assert.equal(harness.refs.getBbmUiElementRef("bbm.uiEditorTest.card").style.values.width, undefined);
+    assert.equal(harness.refs.getBbmUiElementRef("bbm.uiEditorTest.card").style.values.height, undefined);
   });
 
   await run("M66 E: echtes Panel-Abbrechen ruft Reset nicht auf und lässt Zustand unverändert", async () => {

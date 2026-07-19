@@ -710,3 +710,7 @@ Hinweis:
 - Erforderliche Refs werden vor destruktiven Speicheroperationen validiert; nicht editierbare technische Elemente ohne Layoutwert blockieren nicht unnötig.
 - Das Bedienpanel leitet die Button-Aktivierung nicht mehr aus Anzeigetexten ab, sondern nutzt strukturierte Felder wie `savedLayoutFound`, `deviatesFromDefaults` und `standardLayoutActive`.
 - Der M66-Test deckt jetzt echtes Dialog-Abbrechen, Scope-/Profil-Isolation und Rollbacks bei Ref-/Apply-/Löschfehlern ab.
+
+### M66-Korrektur: Standardreset auf CSS-/Registry-Ursprung
+
+Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Schreiben gemessener oder erfundener Pixelwerte. Der HostAdapter löscht Editor-Inlinewerte (`transform`, `width`, `height`) und setzt nur freigegebene Zustände wie `visible` gemäß Registry/Layout-Default. Fehlen Layoutentries, gilt dies als Standardzustand; CSS und natürlicher Dokumentfluss liefern dann Breite, Höhe und Anordnung. Das Bedienpanel darf daraus keine eigene Default-Wahrheit ableiten.

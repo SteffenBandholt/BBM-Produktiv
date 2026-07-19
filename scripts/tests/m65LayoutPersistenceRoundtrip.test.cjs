@@ -140,7 +140,7 @@ async function runM65LayoutPersistenceRoundtripTests(run) {
     adapter.submitChangeRequest(request("bbm.uiEditorTest.table", "move", { x: 5, y: 5 }));
     assert.equal(inspector.discardLayoutSession("bbm.main-layout").ok, true);
     assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.card").style.values.transform, "translate(10px, 0px)");
-    assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.table").style.values.transform, "translate(0px, 0px)");
+    assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.table").style.values.transform, undefined);
     assert.ok(layoutStorage.read().entries["bbm.uiEditorTest.card"]);
     assert.ok(layoutStorage.read().entries["bbm.uiEditorTest.table"]);
   });
@@ -224,7 +224,7 @@ async function runM65LayoutPersistenceRoundtripTests(run) {
     assert.equal(result.reason, "LAYOUT_STORAGE_WRITE_FAILED");
     assert.equal(inspector.getLayoutSessionStatus("bbm.main-layout").changedCount, 1);
     assert.equal(inspector.discardLayoutSessionElement("bbm.main-layout", "bbm.uiEditorTest.card").ok, true);
-    assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.card").style.values.transform, "translate(0px, 0px)");
+    assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.card").style.values.transform, undefined);
   });
 
   await run("M65 Default-Storage: separater Adapter nutzt Browser-Storage, falls vorhanden", async () => {

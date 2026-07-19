@@ -3249,3 +3249,12 @@ Wichtig:
   - `npm test` bleibt wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` in der Cloud-Umgebung nicht ausführbar
 - Nächster offener Schritt:
   - Lokale Windows-/Electron-Abnahme für PR #206 durchführen; PR nicht mergen, bevor der sichtbare Nutzerablauf fachlich geprüft ist.
+
+## M66 Korrektur 2 – Standardreset auf echten CSS-Ursprung
+
+- Der M64-Standardzustand wird nicht mehr über künstliche Registry-Pixelwerte für Breite/Höhe rekonstruiert.
+- Für die M64-Testelemente bleiben nur Sichtbarkeit und Bearbeitungsgrenzen als `layoutDefaults` erhalten; CSS und Dokumentfluss sind wieder die Größenwahrheit.
+- Der HostAdapter entfernt beim Standardreset Editor-Inlinewerte für `transform`, `width` und `height`, statt Null-Transforms oder künstliche Maße zu setzen.
+- Nach erfolgreichem Standardreset ist der Session-LayoutStore wieder ein leerer Abweichungszustand; der persistente Default-Scope enthält keine Layoutentries.
+- M66-Tests prüfen den ursprünglichen Inline-Zustand, den Reset auf fehlende Inlinewerte, CSS-Quellen für Karte/Tabelle, Neustart, Abbrechen, Scope-/Profil-Isolation und Rollbackfälle.
+- Nächster offener Schritt: praktische Windows-Prüfung des UI-Editor-Ablaufs bleibt fachlich durchzuführen.
