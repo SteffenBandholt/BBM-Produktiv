@@ -95,6 +95,7 @@ const { runM63cLayoutControlConsoleTests } = require("./tests/m63cLayoutControlC
 const { runM63cRealRegistryPanelIntegrationTests } = require("./tests/m63cRealRegistryPanelIntegration.test.cjs");
 const { runM64UiEditorTestSurfaceTests } = require("./tests/m64UiEditorTestSurface.test.cjs");
 const { runM65LayoutPersistenceRoundtripTests } = require("./tests/m65LayoutPersistenceRoundtrip.test.cjs");
+const { runM66ResetLayoutToDefaultsTests } = require("./tests/m66ResetLayoutToDefaults.test.cjs");
 
 let failed = false;
 
@@ -237,6 +238,7 @@ async function main() {
   await runM63cRealRegistryPanelIntegrationTests(run);
   await runM64UiEditorTestSurfaceTests(run);
   await runM65LayoutPersistenceRoundtripTests(run);
+  await runM66ResetLayoutToDefaultsTests(run);
 
   if (failed) {
     process.exitCode = 1;

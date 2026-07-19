@@ -3191,3 +3191,33 @@ Wichtig:
   - Lokale Windows-/Electron-Abnahme von Speichern, Neustart-Laden und Fehlerstatus durchführen.
 - Risiken/Hinweise:
   - Memory-Storage bleibt nur für Tests oder ausdrücklich injizierte Laufzeiten erlaubt, nicht als stiller produktiver Ersatz.
+
+### M66 – Layout auf Standard zurücksetzen und gespeicherten Zustand löschen
+- Status: umgesetzt im automatisierten Adapter-/Panelpfad; praktische Windows-Neustartprüfung in Cloud nicht verfügbar.
+- Beschreibung:
+  - Das rechte UI-Editor-Steuerpanel ergänzt den dritten, getrennten Rücksetzweg „Auf Standard zurücksetzen“ mit Sicherheitsdialog und kurzem Hinweis zur Abgrenzung von Sitzungs-Verwerfen.
+  - Die öffentliche Kette läuft über Panel → Inspector-Bridge → Inspector/Runtime → BBM-Main-HostAdapter → LayoutStores → explizite HTMLElement-Refs.
+  - Der Reset löscht ausschließlich den persistenten BBM-Main-Layoutscope `bbm-produktiv / bbm.main / bbm.main-layout / default` und setzt die sichtbaren registrierten Elemente sofort auf Registry-/Layout-Defaults.
+  - Fehlende Default-Größen entfernen Inline-width/height; Transform wird auf `translate(0px, 0px)` gesetzt; Sichtbarkeit folgt den Defaults.
+  - Nach erfolgreichem Reset ist der Standardzustand neue Sitzungsbaseline, offene Änderungen sind 0 und der Status lautet „Standardlayout aktiv“.
+- Betroffene Dateien:
+  - `src/renderer/editorRuntime/inspector/editorScopeInspector.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/bbmMainUiHostAdapter.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `scripts/tests/m66ResetLayoutToDefaults.test.cjs`
+  - `scripts/test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Prüfung:
+  - `node scripts/ui-editor-contract-check.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs --self-test` OK
+  - `node scripts/tests/m64UiEditorTestSurface.test.cjs` OK
+  - `node scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs` OK
+  - `node scripts/tests/m66ResetLayoutToDefaults.test.cjs` OK
+  - `node scripts/test.cjs` in dieser Umgebung wegen `better-sqlite3`/Node-Modulversionskonflikt nicht vollständig grün
+  - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
+- Nächster offener Schritt:
+  - Lokale Windows-/Electron-Abnahme des vollständigen Nutzerablaufs: Speichern, Neustart-Laden, Abbrechen, Standard-Reset, Neustart mit Standardlayout.
+- Risiken/Hinweise:
+  - Kein Einzel-Default-Reset, keine Layoutprofile, kein Autosave, keine produktive Fachmaske und keine PDF-Änderung.

@@ -107,6 +107,35 @@ function cloneLayoutEntryForRestore(entry) {
   };
 }
 
+function buildDefaultLayoutValue(registryElement) {
+  const defaults = getLayoutDefaults(registryElement);
+  const layoutValue = {
+    x: toNumber(defaults.x, 0),
+    y: toNumber(defaults.y, 0),
+  };
+  if (Object.prototype.hasOwnProperty.call(defaults, "width")) layoutValue.width = defaults.width;
+  if (Object.prototype.hasOwnProperty.call(defaults, "height")) layoutValue.height = defaults.height;
+  if (Object.prototype.hasOwnProperty.call(defaults, "visible")) layoutValue.visible = Boolean(defaults.visible);
+  else if (Object.prototype.hasOwnProperty.call(registryElement || {}, "visible")) layoutValue.visible = Boolean(registryElement.visible);
+  return layoutValue;
+}
+
+function buildDefaultEntries(registry) {
+  return (Array.isArray(registry) ? registry : [])
+    .map((registryElement) => ({
+      layoutProfileId: "default",
+      targetAppId: SCOPE.targetAppId,
+      moduleId: SCOPE.moduleId,
+      scopeId: SCOPE.scopeId,
+      elementId: normalizeId(registryElement?.id || registryElement?.elementId),
+      operation: "layout.defaults",
+      layoutValue: buildDefaultLayoutValue(registryElement),
+      createdAt: "",
+      updatedAt: "",
+    }))
+    .filter((entry) => entry.elementId);
+}
+
 function applyLayoutValueToRegisteredTarget(elementId, layoutValue, { resetMissingSize = false } = {}) {
   const target = getBbmUiElementRef(elementId);
   if (!target) {
@@ -116,6 +145,10 @@ function applyLayoutValueToRegisteredTarget(elementId, layoutValue, { resetMissi
   const x = toNumber(layoutValue.x);
   const y = toNumber(layoutValue.y);
   target.style.setProperty("transform", `translate(${x}px, ${y}px)`);
+
+  if (Object.prototype.hasOwnProperty.call(layoutValue, "visible")) {
+    target.hidden = layoutValue.visible === false;
+  }
 
   if (Object.prototype.hasOwnProperty.call(layoutValue, "width")) {
     target.style.setProperty("width", `${Math.max(DEFAULT_MIN_WIDTH, toNumber(layoutValue.width))}px`);
@@ -278,6 +311,29 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
       }
 
       return { ok: true, blocked: false, reason: null, layoutState: layoutStore.reset(normalizedElementId || null) };
+    },
+
+    resetLayoutToDefaults() {
+      const persistence = getPersistenceStatus();
+      if (!persistence.persistenceAvailable || !persistence.persistencePersistent) {
+        return { ...persistence, ok: false, blocked: true, reason: "LAYOUT_STORAGE_NOT_PERSISTENT", layoutState: layoutStore.list() };
+      }
+      const ids = runtimeRegistry.map((entry) => normalizeId(entry.id)).filter(Boolean);
+      const defaultEntries = buildDefaultEntries(runtimeRegistry);
+      try {
+        const clearedPersistentState = persistentLayoutStore.reset(null);
+        if (clearedPersistentState.length !== 0) {
+          return { ...persistence, ok: false, blocked: true, reason: "LAYOUT_STORAGE_CLEAR_FAILED", layoutState: layoutStore.list() };
+        }
+        const layoutState = layoutStore.replace(defaultEntries, ids);
+        const applyResult = applyEntries(defaultEntries, { resetMissingSize: true });
+        if (!applyResult.ok) {
+          return { ...persistence, ok: false, blocked: true, reason: applyResult.reason, elementId: applyResult.elementId, layoutState };
+        }
+        return { ...persistence, ok: true, blocked: false, reason: null, savedLayoutFound: false, layoutState, savedLayoutState: persistentLayoutStore.list(), standardLayoutActive: true };
+      } catch (error) {
+        return { ...persistence, ok: false, blocked: true, reason: error?.code || "LAYOUT_RESET_DEFAULTS_FAILED", layoutState: layoutStore.list() };
+      }
     },
 
     restoreLayoutState({ entries = [], elementIds = [] } = {}) {

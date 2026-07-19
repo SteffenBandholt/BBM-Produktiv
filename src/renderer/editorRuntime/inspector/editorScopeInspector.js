@@ -361,6 +361,19 @@ export function createEditorScopeInspector({
     return { ...result, status: resetSessionBaseline(scopeId, context) };
   }
 
+  function resetLayoutToDefaults(scopeId) {
+    const context = prepareScopeContext(scopeId);
+    if (!context.ok) {
+      return { ok: false, blocked: true, reason: context.inspection.errors?.[0]?.code || "SCOPE_UNAVAILABLE", status: buildLayoutSessionStatus(scopeId, context) };
+    }
+    if (typeof context.hostAdapter.resetLayoutToDefaults !== "function") {
+      return { ok: false, blocked: true, reason: "HOST_RESET_LAYOUT_DEFAULTS_MISSING", status: buildLayoutSessionStatus(scopeId, context) };
+    }
+    const result = context.hostAdapter.resetLayoutToDefaults();
+    if (!result?.ok) return { ...result, status: buildLayoutSessionStatus(scopeId, context) };
+    return { ...result, status: resetSessionBaseline(scopeId, context) };
+  }
+
   function loadSavedLayout(scopeId) {
     const context = prepareScopeContext(scopeId);
     if (!context.ok) {
@@ -422,6 +435,7 @@ export function createEditorScopeInspector({
     getLayoutSessionStatus,
     saveLayoutSession,
     loadSavedLayout,
+    resetLayoutToDefaults,
     discardLayoutSessionElement,
     discardLayoutSession,
     endLayoutSession,

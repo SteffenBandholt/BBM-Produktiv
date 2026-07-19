@@ -693,3 +693,13 @@ Hinweis:
 - Das Panel zeigt „Noch kein Layout gespeichert“, „Gespeichertes Layout geladen“, „Gespeichertes Layout konnte nicht geladen werden.“ und „Layout konnte nicht dauerhaft gespeichert werden.“ passend zum Ergebnis.
 - Der Speichern-Button berücksichtigt `persistenceAvailable` und `persistencePersistent` aus dem öffentlichen Inspector-/Bridge-Status.
 - M65-Tests decken nun leeren Storage, fehlenden produktiven Browser-Storage, beschädigtes JSON, Schreibfehler und erfolgreichen Browser-Storage-Roundtrip ab.
+
+## M66 Abschlussnotiz – Layout auf Standard zurücksetzen
+- M66 ergänzt neben ↶ und „Alle Änderungen verwerfen“ den dritten getrennten Rücksetzweg „Auf Standard zurücksetzen“.
+- Vor Ausführung erscheint ein Sicherheitsdialog mit „Abbrechen“ und destruktiv gekennzeichnetem Bestätigungsbutton.
+- Der Reset läuft über die öffentliche Inspector-/Bridge-/HostAdapter-Kette; das Panel greift nicht direkt auf Storage oder DOM-Styles zu.
+- Der persistente BBM-Main-Scope `bbm-produktiv / bbm.main / bbm.main-layout / default` wird gelöscht; andere Scopes/Profile und Fachdaten bleiben ausgeschlossen.
+- Die sichtbaren registrierten M64-Testelemente springen sofort auf Registry-/Layout-Defaults; fehlende Default-Größen entfernen Inline-width/height.
+- Nach erfolgreichem Reset ist der Standardzustand neue Sitzungsbaseline und das Panel meldet „Standardlayout aktiv“ ohne offene Änderungen.
+- Neuer Guardrail-/Roundtrip-Test: `scripts/tests/m66ResetLayoutToDefaults.test.cjs`.
+- Hinweis: Die Cloud-Umgebung erlaubt keine praktische Windows-/Electron-Neustartprüfung; der Neustartpfad ist automatisiert über neue Adapter-/Storage-Instanzen abgesichert.
