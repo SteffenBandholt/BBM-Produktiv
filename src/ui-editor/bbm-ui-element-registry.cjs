@@ -25,13 +25,13 @@ const KIT_LOCKED_OPS = Object.freeze([
 const M64_TEST_ELEMENTS = Object.freeze([
   Object.freeze({
     elementId: "bbm.uiEditorTest.workspace",
-    type: "root",
+    type: "container",
     role: "test-workspace",
     label: "UI-Editor-Testfläche",
     scope: BBM_UI_SCOPE,
     layoutScope: BBM_LAYOUT_SCOPE,
     layoutProfileId: BBM_LAYOUT_PROFILE_ID,
-    parentId: null,
+    parentId: "bbm.main.content",
     capabilities: Object.freeze(["select", "layout"]),
     allowedChanges: ALLOWED_LAYOUT_OPS,
     allowedOps: Object.freeze([]),
@@ -142,7 +142,7 @@ const KIT_TYPE_BY_BBM_TYPE = Object.freeze({
   content: "area",
   container: "group",
   root: "root",
-  text: "text",
+  text: "label",
   field: "field",
   table: "table",
   actions: "area",
@@ -155,12 +155,12 @@ const KIT_ROLE_BY_BBM_TYPE = Object.freeze({
   header: "layout",
   content: "content",
   container: "content",
-  root: "test-workspace",
+  root: "layout",
   text: "content",
-  field: "input",
-  table: "content-table",
+  field: "content",
+  table: "content",
   actions: "action",
-  action: "visual-control",
+  action: "action",
 });
 
 function cloneElement(element) {
@@ -176,7 +176,19 @@ function cloneElement(element) {
   };
 }
 
+function toKitLockedOps(element, allowedOps) {
+  const mapped = Array.isArray(element.lockedOps) ? element.lockedOps.flatMap((op) => {
+    if (["move", "resize", "hide", "show", "delete", "rename", "reset", "inspect", "reorder", "changeWidth", "pin", "unpin", "applyPreset"].includes(op)) return [op];
+    if (op === "execute") return ["executeTargetAction"];
+    if (["write", "submit", "change-data", "edit-data"].includes(op)) return ["modifyDomainData"];
+    return [];
+  }) : KIT_LOCKED_OPS;
+  const allowedSet = new Set(Array.isArray(allowedOps) ? allowedOps : []);
+  return [...new Set(mapped)].filter((op) => !allowedSet.has(op));
+}
+
 function toKitElement(element, order) {
+  const allowedOps = Array.isArray(element.allowedOps) ? [...element.allowedOps] : [...KIT_ALLOWED_OPS];
   return {
     id: element.elementId,
     name: element.label,
@@ -186,8 +198,8 @@ function toKitElement(element, order) {
     order,
     visible: element.layoutDefaults?.visible !== false,
     editable: Boolean(element.editable),
-    allowedOps: Array.isArray(element.allowedOps) ? [...element.allowedOps] : [...KIT_ALLOWED_OPS],
-    lockedOps: Array.isArray(element.lockedOps) ? [...element.lockedOps] : [...KIT_LOCKED_OPS],
+    allowedOps,
+    lockedOps: toKitLockedOps(element, allowedOps),
     uiScope: element.scope,
     layoutScope: element.layoutScope,
   };

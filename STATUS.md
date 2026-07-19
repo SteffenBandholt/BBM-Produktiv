@@ -3017,3 +3017,26 @@ Wichtig:
   - Praktische Windows-/Electron-Abnahme von PR #204 lokal durchführen.
 - Risiken/Hinweise:
   - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.
+
+### M64 Korrektur 2 – Ein-Root-Vertrag wiederhergestellt
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Die Mehrfach-Root-Aufweichung in `editorRegistryValidator.js` und `editorRegistryTree.js` wurde vollständig zurückgenommen.
+  - Einziger Root bleibt `bbm.main.shell`; `bbm.uiEditorTest.workspace` ist jetzt ein Container-Kind von `bbm.main.content`.
+  - Die Bridge enthält weiterhin keine Parent-Override-Tabelle und übernimmt Parent-IDs ausschließlich aus der führenden Registry.
+  - Die Kit-/Runtime-Abbildung behandelt den Workspace nicht mehr als zusätzlichen Root.
+  - Der M64-Test prüft nun den echten `startBbmUiEditorRuntime()`-Pfad und den echten `uiEditorIpc._m52`-Status-/Elementpfad gegen `invalid_registry`.
+- Betroffene Dateien:
+  - `src/ui-editor/bbm-ui-element-registry.cjs`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/editorRuntime/registry/editorRegistryValidator.js`
+  - `src/renderer/editorRuntime/inspector/editorRegistryTree.js`
+  - `scripts/tests/m63cLayoutControlConsole.test.cjs`
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - PR #204 erneut lokal unter Windows/Electron öffnen und UI-Editor-Status sowie M64-Testfläche praktisch abnehmen.
+- Risiken/Hinweise:
+  - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.

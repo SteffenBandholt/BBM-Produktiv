@@ -210,8 +210,8 @@ export class BbmUiEditorStatusPanel {
       "bbm-ui-editor-test-workspace",
       "bbm.uiEditorTest.workspace",
       "UI-Editor-Testfläche",
-      "root",
-      "",
+      "container",
+      "bbm.main.content",
       false,
       []
     );

@@ -57,7 +57,7 @@ async function runM51UiEditorKitIntegrationTests(run) {
     for (const field of getTargetAppAdapterManifestRequiredFields()) {
       assert.equal(Object.prototype.hasOwnProperty.call(manifest, field), true, `${field} missing`);
     }
-    assert.deepEqual(manifest.supportedElementTypes, ["frame", "navigation", "header", "content", "root", "container", "text", "action", "field", "table", "actions"]);
+    assert.deepEqual(manifest.supportedElementTypes, ["frame", "navigation", "header", "content", "container", "text", "action", "field", "table", "actions"]);
     assert.deepEqual(manifest.supportedOperations, ["layout.read", "layout.save", "layout.reset", "element.select", "registry.read", "scope.validate", "status.read"]);
     assert.equal(manifest.persistenceMode, "memory-only");
     assert.equal(manifest.executionMode, "test-host");

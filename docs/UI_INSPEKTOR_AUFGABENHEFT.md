@@ -641,6 +641,12 @@ Hinweis:
 
 ## M64 Korrektur – Parent-Vertrag und Integrationsauswahl
 - Der M64-Parent-Override in der Inspector-Bridge wurde entfernt; Parent-IDs werden ausschließlich aus der führenden Registry übernommen.
-- `bbm.uiEditorTest.workspace` bleibt ein echtes Root-Element mit `parentId: null`; die Runtime unterstützt dafür eine Registry-Forest-Struktur ohne falsche Parent-Korrektur.
+- `bbm.uiEditorTest.workspace` ist kein zweites Root-Element mehr; die Testfläche ist als Container unter `bbm.main.content` eingeordnet.
 - Der M64-Test prüft nun Kit-Auswahl, Elementdetails, Overlay-Ref-Auflösung und Layoutwirkung für alle M64-Testelemente.
 - Fachaktions-Guardrails sichern ab, dass Button-, Eingabe- und Auswahl-Hüllen ausschließlich Editor-Auswahlziele sind.
+
+## M64 Korrektur 2 – Ein-Root-Startpfad
+- Die allgemeine Mehrfach-Root-Aufweichung wurde zurückgenommen; der Runtime-Vertrag bleibt bei genau einem Registry-Root.
+- Einziger Root der BBM-Registry ist wieder `bbm.main.shell`.
+- `bbm.uiEditorTest.workspace` ist als Testflächen-Container unter `bbm.main.content` eingeordnet und wird nicht mehr als Root behandelt.
+- Der M64-Test prüft nun zusätzlich den echten `startBbmUiEditorRuntime()`-Pfad und den echten IPC-Status-/Elementpfad über `uiEditorIpc._m52`.

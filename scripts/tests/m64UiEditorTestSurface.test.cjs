@@ -4,6 +4,8 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 const { getBbmUiElementRegistry } = require("../../src/ui-editor/bbm-ui-element-registry.cjs");
+const { startBbmUiEditorRuntime, getBbmUiEditorIntegrationStatus } = require("../../src/ui-editor/start-bbm-ui-editor-runtime.cjs");
+const uiEditorIpc = require("../../src/main/ipc/uiEditorIpc.js");
 
 const REPO_ROOT = path.join(__dirname, "../..");
 const PANEL_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/BbmUiEditorStatusPanel.js");
@@ -14,7 +16,7 @@ const LAYOUT_PERSISTENCE_PATH = path.join(REPO_ROOT, "src/renderer/editorRuntime
 const KIT_RUNTIME_PATH = path.join(REPO_ROOT, "node_modules/ui-editor-kit/dist/selection-runtime.browser.mjs");
 
 const M64_ELEMENTS = [
-  ["bbm.uiEditorTest.workspace", "UI-Editor-Testfläche", "root", null, false, [], ["move", "resize", "hide", "delete"]],
+  ["bbm.uiEditorTest.workspace", "UI-Editor-Testfläche", "container", "bbm.main.content", false, [], ["move", "resize", "hide", "delete"]],
   ["bbm.uiEditorTest.card", "Testkarte", "container", "bbm.uiEditorTest.workspace", true, ["move", "resize"], ["delete"]],
   ["bbm.uiEditorTest.card.title", "Überschrift", "text", "bbm.uiEditorTest.card", true, ["move", "resize"], ["delete", "execute"]],
   ["bbm.uiEditorTest.card.text", "Beispieltext", "text", "bbm.uiEditorTest.card", true, ["move", "resize"], ["delete", "execute"]],
@@ -247,6 +249,44 @@ async function runM64UiEditorTestSurfaceTests(run) {
     }
   });
 
+
+  await run("M64 Runtime-Start: echter UI-Editor-kit Public-API-Pfad akzeptiert genau einen Root", () => {
+    const result = startBbmUiEditorRuntime();
+    assert.equal(result.ok, true);
+    assert.equal(result.blockCode, null);
+    const status = getBbmUiEditorIntegrationStatus(result);
+    assert.equal(status.runtimeStarted, true);
+    assert.equal(status.adapterValid, true);
+    const roots = result.registry.elements.filter((entry) => entry.parentId === null);
+    assert.deepEqual(roots.map((entry) => entry.elementId), ["bbm.main.shell"]);
+    const byId = new Map(result.registry.elements.map((entry) => [entry.elementId, entry]));
+    assert.equal(byId.get("bbm.uiEditorTest.workspace")?.parentId, "bbm.main.content");
+    for (const [elementId] of M64_ELEMENTS) {
+      assert.ok(byId.has(elementId), `${elementId} fehlt im echten Runtime-Startpfad`);
+    }
+  });
+
+  await run("M64 IPC: echter UI-Editor-Statuspfad startet Runtime und liefert M64-Elemente", () => {
+    uiEditorIpc._m52.closeUiEditorSession();
+    const status = uiEditorIpc._m52.getUiEditorStatus();
+    assert.equal(status.ok, true);
+    assert.equal(status.runtimeStarted, true);
+    assert.equal(status.adapterValid, true);
+    assert.notEqual(status.blockCode, "invalid_registry");
+    assert.equal(status.blockCode, null);
+    assert.ok(status.registeredElementCount >= M64_ELEMENTS.length);
+
+    const elementsResult = uiEditorIpc._m52.getUiEditorElements();
+    assert.equal(elementsResult.ok, true);
+    const byId = new Map(elementsResult.elements.map((entry) => [entry.elementId, entry]));
+    assert.deepEqual(elementsResult.elements.filter((entry) => entry.parentId === null).map((entry) => entry.elementId), ["bbm.main.shell"]);
+    assert.equal(byId.get("bbm.uiEditorTest.workspace")?.parentId, "bbm.main.content");
+    for (const [elementId] of M64_ELEMENTS) {
+      assert.ok(byId.has(elementId), `${elementId} fehlt im IPC-Elementpfad`);
+    }
+    uiEditorIpc._m52.closeUiEditorSession();
+  });
+
   await run("M64 Render: alle Testelemente bekommen explizite Metadaten und HTMLElement-Refs", async () => withDom(async () => {
     const { BbmUiEditorStatusPanel } = await importEsmFromFile(PANEL_PATH);
     const refs = await importEsmFromFile(REFS_PATH);
@@ -328,7 +368,8 @@ async function runM64UiEditorTestSurfaceTests(run) {
     const bridgeSource = fs.readFileSync(BRIDGE_PATH, "utf8");
     assert.doesNotMatch(panelSource, /createNode\("input"\)|createNode\("select"\)|createElement\("input"\)|createElement\("select"\)/);
     assert.doesNotMatch(panelSource, /ipcRenderer|ipcMain|invoke\(|localStorage|querySelector|querySelectorAll|getElementById|getElementsBy|MutationObserver/);
-    assert.doesNotMatch(bridgeSource, /PARENT_BY_ELEMENT_ID|bbm\.uiEditorTest\.workspace"\s*:\s*"bbm\.main\.content"/);
+    assert.doesNotMatch(bridgeSource, /PARENT_BY_ELEMENT_ID/);
+    assert.doesNotMatch(bridgeSource, /bbm\.uiEditorTest\.workspace"\s*:\s*"root"/);
     assert.match(bridgeSource, /parentId:\s*element\?\.parentId \?\? null/);
     assert.match(panelSource, /bindTestSurfaceElementRef\("bbm\.uiEditorTest\.card\.button", buttonShell\)/);
     assert.match(panelSource, /bindTestSurfaceElementRef\("bbm\.uiEditorTest\.table", table\)/);

@@ -65,7 +65,7 @@ const registryElements = [
   { elementId: "bbm.main.shell", label: "Shell", type: "frame", parentId: null, capabilities: ["select", "layout"], allowedChanges: ["layout.read"] },
   { elementId: "bbm.main.navigation", label: "Hauptnavigation", type: "navigation", parentId: "bbm.main.shell", capabilities: ["select", "layout"], allowedChanges: ["layout.read"] },
   { elementId: "bbm.main.content", label: "Inhalt", type: "content", parentId: "bbm.main.shell", capabilities: ["select", "layout"], allowedChanges: ["layout.read"] },
-  { elementId: "bbm.uiEditorTest.workspace", label: "UI-Editor-Testfläche", type: "root", parentId: null, capabilities: ["select", "layout"], allowedChanges: ["layout.read"], allowedOps: [] },
+  { elementId: "bbm.uiEditorTest.workspace", label: "UI-Editor-Testfläche", type: "container", parentId: "bbm.main.content", capabilities: ["select", "layout"], allowedChanges: ["layout.read"], allowedOps: [] },
   { elementId: "bbm.uiEditorTest.card", label: "Testkarte", type: "container", parentId: "bbm.uiEditorTest.workspace", capabilities: ["select", "layout"], allowedChanges: ["layout.read"], allowedOps: ["move", "resize"] },
   { elementId: "bbm.main.header", label: "Header", type: "header", parentId: "bbm.main.shell", capabilities: ["select", "layout"], allowedChanges: ["layout.read"] },
 ];
