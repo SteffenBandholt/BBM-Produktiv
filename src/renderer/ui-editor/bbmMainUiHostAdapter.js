@@ -6,6 +6,7 @@ import {
   normalizeEditorLayoutValue,
 } from "../editorRuntime/layout/editorLayoutPersistence.js";
 import { getBbmUiElementRef } from "./bbmUiElementRefs.js";
+import { createBbmMainUiLayoutStorage } from "./bbmMainUiLayoutStorage.js";
 
 const SCOPE = Object.freeze({
   targetAppId: "bbm-produktiv",
@@ -13,7 +14,7 @@ const SCOPE = Object.freeze({
   scopeId: "bbm.main-layout",
 });
 
-const sharedLayoutStorage = createEditorLayoutMemoryStorage();
+const sharedLayoutStorage = createBbmMainUiLayoutStorage();
 const DEFAULT_MIN_WIDTH = 20;
 const DEFAULT_MIN_HEIGHT = 20;
 
@@ -132,10 +133,33 @@ function applyLayoutValueToRegisteredTarget(elementId, layoutValue, { resetMissi
 
 export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = sharedLayoutStorage, onChangeRequest = null } = {}) {
   const runtimeRegistry = cloneRegistry(registry);
-  const layoutStore = createEditorLayoutStore({
+  const persistentLayoutStore = createEditorLayoutStore({
     scope: SCOPE,
     storage: layoutStorage,
   });
+  const sessionLayoutStorage = createEditorLayoutMemoryStorage();
+  const layoutStore = createEditorLayoutStore({
+    scope: SCOPE,
+    storage: sessionLayoutStorage,
+  });
+
+  function applyEntries(entries = [], { resetMissingSize = false } = {}) {
+    for (const entry of Array.isArray(entries) ? entries : []) {
+      const elementId = normalizeId(entry?.elementId);
+      if (!elementId) continue;
+      const applyResult = applyLayoutValueToRegisteredTarget(elementId, entry?.layoutValue || {}, { resetMissingSize });
+      if (!applyResult.ok) return { ok: false, reason: applyResult.reason, elementId };
+    }
+    return { ok: true, applied: true };
+  }
+
+  function loadPersistentEntriesIntoSession() {
+    const savedEntries = persistentLayoutStore.list();
+    layoutStore.replace(savedEntries, runtimeRegistry.map((entry) => normalizeId(entry.id)).filter(Boolean));
+    return savedEntries;
+  }
+
+  loadPersistentEntriesIntoSession();
 
   const adapter = {
     getRegistry() {
@@ -144,6 +168,32 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
 
     getCurrentLayoutState() {
       return layoutStore.list();
+    },
+
+    getSavedLayoutState() {
+      return persistentLayoutStore.list();
+    },
+
+    loadSavedLayout() {
+      try {
+        const savedEntries = loadPersistentEntriesIntoSession();
+        const applyResult = applyEntries(savedEntries, { resetMissingSize: true });
+        if (!applyResult.ok) return { ok: false, blocked: true, reason: applyResult.reason, elementId: applyResult.elementId, layoutState: layoutStore.list() };
+        return { ok: true, blocked: false, reason: null, layoutState: layoutStore.list(), savedLayoutState: persistentLayoutStore.list() };
+      } catch (_error) {
+        return { ok: false, blocked: true, reason: "LAYOUT_LOAD_FAILED", layoutState: layoutStore.list() };
+      }
+    },
+
+    saveLayoutSession() {
+      try {
+        const ids = runtimeRegistry.map((entry) => normalizeId(entry.id)).filter(Boolean);
+        const layoutState = layoutStore.list();
+        persistentLayoutStore.replace(layoutState, ids);
+        return { ok: true, blocked: false, reason: null, layoutState: layoutStore.list(), savedLayoutState: persistentLayoutStore.list() };
+      } catch (_error) {
+        return { ok: false, blocked: true, reason: "LAYOUT_SAVE_FAILED", layoutState: layoutStore.list() };
+      }
     },
 
     submitChangeRequest(changeRequest) {

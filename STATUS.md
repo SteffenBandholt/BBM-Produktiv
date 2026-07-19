@@ -2908,6 +2908,7 @@ Wichtig:
   - `src/main/ipc/uiEditorIpc.js`
   - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
   - `src/renderer/ui-editor/bbmMainUiHostAdapter.js`
+  - `src/renderer/ui-editor/bbmMainUiLayoutStorage.js`
   - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
   - `scripts/tests/m63cRealRegistryPanelIntegration.test.cjs`
   - `scripts/test.cjs`
@@ -2933,6 +2934,7 @@ Wichtig:
   - `src/renderer/ui-editor/bbmUiElementRefs.js`
   - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
   - `src/renderer/ui-editor/bbmMainUiHostAdapter.js`
+  - `src/renderer/ui-editor/bbmMainUiLayoutStorage.js`
   - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
   - `src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js`
   - `scripts/tests/m63cRealRegistryPanelIntegration.test.cjs`
@@ -3129,3 +3131,37 @@ Wichtig:
   - `STATUS.md`
 - Naechster offener Schritt:
   - Lokale Windows-Abnahme für PR #204 erneut durchführen.
+
+### M65 – UI-Editor Layout speichern, laden und dauerhaft wiederherstellen
+- Status: umgesetzt im automatisierten Adapter-/Panelpfad; praktische Windows-Neustartprüfung in Cloud nicht verfügbar.
+- Beschreibung:
+  - `EditorScopeInspector` stellt öffentliche `saveLayoutSession`- und `loadSavedLayout`-Methoden bereit und setzt die Sitzungsbaseline nach erfolgreichem Speichern/Laden neu.
+  - Die Renderer-Bridge reicht diese Methoden ohne HostAdapter-Hintertür an das Steuerpanel durch.
+  - Der BBM-Main-HostAdapter trennt Sitzungs-LayoutStore und gespeicherten LayoutStore auf Basis des vorhandenen Storage-Adapter-Vertrags.
+  - Das M64-Steuerpanel zeigt Speicherstatus und den neuen Button „Änderungen speichern“; Bedienpanel-Elemente bleiben nicht editorfähig.
+  - Ein neuer M65-Roundtrip-Test prüft Speichern, Laden in neuer Instanz, Verwerfen einzelner Elemente, alle verwerfen, ausgeschlossene UI-Zustände und Fehlerfall.
+- Betroffene Dateien:
+  - `src/renderer/editorRuntime/inspector/editorScopeInspector.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/bbmMainUiHostAdapter.js`
+  - `src/renderer/ui-editor/bbmMainUiLayoutStorage.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs`
+  - `scripts/test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Pruefung:
+  - `node scripts/ui-editor-contract-check.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs --self-test` OK
+  - `node scripts/tests/m63cRealRegistryPanelIntegration.test.cjs` OK
+  - `node scripts/tests/m63cLayoutControlConsole.test.cjs` OK
+  - `node scripts/tests/m64UiEditorTestSurface.test.cjs` OK
+  - `node scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs` OK
+  - `node scripts/test.cjs` in dieser Umgebung wegen `better-sqlite3`/Node-Modulversionskonflikt nicht vollstaendig gruen
+  - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
+- Naechster offener Schritt:
+  - Lokale Windows-Abnahme: BBM starten, UI-Editor öffnen, Testkarte/Tabelle ändern, speichern, BBM neu starten, gespeichertes Layout sichtbar prüfen.
+  - Lokale Prüfung bestätigt den separaten nichtflüchtigen Storage-Adapter in der echten Windows-/Electron-Umgebung; keine Panel- oder DOM-/UI-Scan-Persistenz ergänzen.
+- Risiken/Hinweise:
+  - Kein neuer Bestätigungsdialog, kein Autosave, keine Layoutprofile und keine PDF-/Fachmaskenänderung.
+  - Die Cloud kann die praktische Neustartprüfung nicht ersetzen.
