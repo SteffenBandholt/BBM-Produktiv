@@ -61,6 +61,8 @@ export class BbmUiEditorStatusPanel {
     this.lastRenderedLayoutControlElementId = "";
     this.editorActive = true;
     this.layoutSessionStatus = { ok: true, active: false, changedElementIds: [], changedCount: 0, changedByElementId: {} };
+    this.layoutPersistenceStatus = "Noch nicht gespeichert";
+    this.savedLayoutLoadedForSession = false;
     this.inspectorBridge = createBbmEditorRuntimeInspectorBridge({
       getRegistryElements: () => this.elements,
       getSelectedElement: () => this.selectedElement,
@@ -128,6 +130,7 @@ export class BbmUiEditorStatusPanel {
     this.stopSelectionMode();
     this.destroyKitController();
     this.inspectorBridge?.endLayoutSession?.();
+    this.savedLayoutLoadedForSession = false;
     try {
       await window.bbmDb?.uiEditorClose?.();
     } catch (_e) {
@@ -160,7 +163,21 @@ export class BbmUiEditorStatusPanel {
     this.refStatus = getBbmUiElementRefStatus();
     this.elements = Array.isArray(elementsResult?.elements) ? elementsResult.elements : [];
     this.selectedElement = detailsResult?.selectedElement || null;
-    this.beginLayoutSession();
+    if (!this.savedLayoutLoadedForSession) {
+      const loadResult = this.inspectorBridge?.loadSavedLayout?.();
+      this.layoutSessionStatus = loadResult?.status || this.layoutSessionStatus;
+      this.layoutPersistenceStatus = loadResult?.ok
+        ? (loadResult.savedLayoutFound ? "Gespeichertes Layout geladen" : "Noch kein Layout gespeichert")
+        : "Gespeichertes Layout konnte nicht geladen werden.";
+      this.savedLayoutLoadedForSession = true;
+      if (loadResult?.ok && loadResult.savedLayoutFound) {
+        this.layoutSessionStatus = loadResult?.status || this.layoutSessionStatus;
+      } else {
+        this.beginLayoutSession();
+      }
+    } else {
+      this.refreshLayoutSessionStatus();
+    }
     this.renderAll();
     await this.initializeDefaultSelectionRuntime();
   }
@@ -474,6 +491,15 @@ export class BbmUiEditorStatusPanel {
     const changeCount = this.getOpenChangeCount();
     const status = createNode("p", "bbm-ui-editor-panel__empty");
     status.textContent = changeCount > 0 ? `Änderungen offen: ${changeCount}` : "Keine offenen Änderungen";
+    const persistence = createNode("p", "bbm-ui-editor-panel__empty");
+    persistence.textContent = this.layoutPersistenceStatus || "Noch nicht gespeichert";
+    const save = createNode("button", "bbm-ui-editor-panel__secondary");
+    save.type = "button";
+    save.textContent = "Änderungen speichern";
+    const persistenceAvailable = this.layoutSessionStatus?.persistenceAvailable !== false;
+    const persistencePersistent = this.layoutSessionStatus?.persistencePersistent !== false;
+    save.disabled = !this.editorActive || changeCount === 0 || !persistenceAvailable || !persistencePersistent;
+    save.addEventListener("click", () => this.saveLayoutSession());
     const toggle = createNode("button", "bbm-ui-editor-panel__secondary");
     toggle.type = "button";
     toggle.textContent = this.editorActive ? "Editor ausschalten" : "Editor einschalten";
@@ -483,7 +509,7 @@ export class BbmUiEditorStatusPanel {
     discardAll.textContent = "Alle Änderungen verwerfen";
     discardAll.disabled = changeCount === 0;
     discardAll.addEventListener("click", () => this.discardAllSessionChanges());
-    box.append(status, toggle, discardAll);
+    box.append(status, persistence, save, toggle, discardAll);
     this.detailsNode.appendChild(box);
   }
 
@@ -608,6 +634,16 @@ export class BbmUiEditorStatusPanel {
     this.renderAll();
   }
 
+  saveLayoutSession() {
+    if (!this.editorActive || this.getOpenChangeCount() === 0) return;
+    const result = this.inspectorBridge?.saveLayoutSession?.();
+    this.layoutSessionStatus = result?.status || this.layoutSessionStatus;
+    this.layoutPersistenceStatus = result?.ok ? "Layout gespeichert" : "Layout konnte nicht dauerhaft gespeichert werden.";
+    this.selectionMessage = result?.ok ? "Layout gespeichert." : "Layout konnte nicht dauerhaft gespeichert werden.";
+    this.renderAll();
+    this.syncActiveSelectionRuntime();
+  }
+
   discardSelectedElementChanges() {
     const elementId = String(this.selectedElement?.elementId || this.selectedElement?.id || "").trim();
     if (!elementId || !this.selectedElement?.editable || !this.hasSessionChange(elementId)) return;
@@ -615,6 +651,7 @@ export class BbmUiEditorStatusPanel {
     this.layoutSessionStatus = result?.status || this.layoutSessionStatus;
     const label = asText(this.selectedElement?.label || this.selectedElement?.name, elementId);
     this.selectionMessage = result?.ok ? `Änderungen für ${label} verworfen.` : "Änderungen konnten nicht verworfen werden.";
+    if (!result?.ok) this.layoutPersistenceStatus = "Speichern fehlgeschlagen";
     this.renderAll();
     this.syncActiveSelectionRuntime();
   }
@@ -624,6 +661,7 @@ export class BbmUiEditorStatusPanel {
     const result = this.inspectorBridge?.discardAllSessionChanges?.();
     this.layoutSessionStatus = result?.status || this.layoutSessionStatus;
     this.selectionMessage = result?.ok ? "Alle Änderungen dieser Sitzung wurden verworfen." : "Änderungen konnten nicht verworfen werden.";
+    if (!result?.ok) this.layoutPersistenceStatus = "Speichern fehlgeschlagen";
     this.renderAll();
     this.syncActiveSelectionRuntime();
   }
@@ -682,6 +720,7 @@ export class BbmUiEditorStatusPanel {
     this.editorActive = false;
     this.destroyKitController();
     this.inspectorBridge?.endLayoutSession?.();
+    this.savedLayoutLoadedForSession = false;
     this.selectionModeActive = false;
     for (const elementId of ["bbm.uiEditorTest.workspace", "bbm.uiEditorTest.card", "bbm.uiEditorTest.card.title", "bbm.uiEditorTest.card.text", "bbm.uiEditorTest.card.button", "bbm.uiEditorTest.card.input", "bbm.uiEditorTest.card.select", "bbm.uiEditorTest.table"]) { try { unregisterBbmUiElementRef(elementId); } catch (_error) {} }
     this.panelRoot = null;
@@ -810,6 +849,7 @@ export class BbmUiEditorStatusPanel {
     this.runtimeError = error?.message || String(error || "Kit-Runtime-Fehler");
     this.destroyKitController();
     this.inspectorBridge?.endLayoutSession?.();
+    this.savedLayoutLoadedForSession = false;
     this.selectionModeActive = false;
     this.hoverTargetLabel = "keines";
     this.renderAll();

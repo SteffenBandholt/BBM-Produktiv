@@ -674,3 +674,22 @@ Hinweis:
 - Der IPC-Elementklon überträgt `editable` und `lockedOps` explizit aus der führenden Registry.
 - Die Kreuzmitte bleibt im Panel weiterhin von `selectedElement.editable` abhängig; keine Ableitung aus IDs, DOM oder allowedOps.
 - Der M64-Test prüft den echten IPC-Auswahl-/Detailpfad und die Aktivierung der Kreuzmitte nach einer Layoutänderung.
+
+## M65 Abschlussnotiz – Layout speichern, laden und wiederherstellen
+- M65 ergänzt den M64-Sitzungsablauf um explizites Speichern und Laden über öffentliche Inspector-/Bridge-Methoden.
+- Der BBM-Main-HostAdapter trennt aktuelle Sitzungswerte von gespeicherten Layoutwerten: Layoutschritte ändern zuerst die aktuelle Darstellung, `saveLayoutSession` übernimmt diese Werte in den vorhandenen Storage-Adapter.
+- Beim Öffnen des Panels wird ein gespeicherter Layoutzustand über `loadSavedLayout` geladen und danach als Sitzungsbaseline verwendet.
+- Das rechte Steuerpanel zeigt Speicherstatus und den neuen Button „Änderungen speichern“; Bedienbuttons bleiben vom Editor ausgeschlossen und erhalten keine Registry-ID.
+- Verwerfen nach dem Speichern kehrt zum zuletzt gespeicherten Zustand zurück, nicht zum ursprünglichen Registry-Default.
+- Neuer Guardrail-/Roundtrip-Test: `scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs`.
+- Nicht umgesetzt: keine Profilverwaltung, kein Autosave, keine direkte Panel- oder DOM-Persistenz, keine produktive Fachmaske und keine PDF-Änderung.
+- Hinweis: Die Cloud-Umgebung erlaubt keine praktische Windows-/Electron-Neustartprüfung; der Roundtrip ist automatisiert über einen injizierten persistenten Storage-Adapter sowie den separaten BBM-Main-Storage-Adapter abgesichert.
+
+## M65 Korrektur – dauerhafte Speicherung ehrlich melden
+- Der produktive BBM-Main-Storage-Adapter fällt bei fehlendem Browser-Storage nicht mehr still auf Memory zurück.
+- `createBbmMainUiLayoutStorage()` meldet `available` und `persistent` explizit und unterscheidet kein gespeichertes Layout, erfolgreich gelesenen Payload und Lesefehler.
+- `saveLayoutSession()` meldet Erfolg nur noch bei verfügbarer persistenter Speicherung und erfolgreicher Verifikation; bei Fehler bleibt die Session-Baseline unverändert.
+- `loadSavedLayout()` unterscheidet `savedLayoutFound: true`, `savedLayoutFound: false` und Ladefehler.
+- Das Panel zeigt „Noch kein Layout gespeichert“, „Gespeichertes Layout geladen“, „Gespeichertes Layout konnte nicht geladen werden.“ und „Layout konnte nicht dauerhaft gespeichert werden.“ passend zum Ergebnis.
+- Der Speichern-Button berücksichtigt `persistenceAvailable` und `persistencePersistent` aus dem öffentlichen Inspector-/Bridge-Status.
+- M65-Tests decken nun leeren Storage, fehlenden produktiven Browser-Storage, beschädigtes JSON, Schreibfehler und erfolgreichen Browser-Storage-Roundtrip ab.

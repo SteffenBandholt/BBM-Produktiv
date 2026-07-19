@@ -6,6 +6,7 @@ import {
   normalizeEditorLayoutValue,
 } from "../editorRuntime/layout/editorLayoutPersistence.js";
 import { getBbmUiElementRef } from "./bbmUiElementRefs.js";
+import { createBbmMainUiLayoutStorage } from "./bbmMainUiLayoutStorage.js";
 
 const SCOPE = Object.freeze({
   targetAppId: "bbm-produktiv",
@@ -13,7 +14,7 @@ const SCOPE = Object.freeze({
   scopeId: "bbm.main-layout",
 });
 
-const sharedLayoutStorage = createEditorLayoutMemoryStorage();
+const sharedLayoutStorage = createBbmMainUiLayoutStorage();
 const DEFAULT_MIN_WIDTH = 20;
 const DEFAULT_MIN_HEIGHT = 20;
 
@@ -132,10 +133,58 @@ function applyLayoutValueToRegisteredTarget(elementId, layoutValue, { resetMissi
 
 export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = sharedLayoutStorage, onChangeRequest = null } = {}) {
   const runtimeRegistry = cloneRegistry(registry);
-  const layoutStore = createEditorLayoutStore({
+  const persistentLayoutStore = createEditorLayoutStore({
     scope: SCOPE,
     storage: layoutStorage,
   });
+  const sessionLayoutStorage = createEditorLayoutMemoryStorage();
+  const layoutStore = createEditorLayoutStore({
+    scope: SCOPE,
+    storage: sessionLayoutStorage,
+  });
+
+  function applyEntries(entries = [], { resetMissingSize = false } = {}) {
+    for (const entry of Array.isArray(entries) ? entries : []) {
+      const elementId = normalizeId(entry?.elementId);
+      if (!elementId) continue;
+      const applyResult = applyLayoutValueToRegisteredTarget(elementId, entry?.layoutValue || {}, { resetMissingSize });
+      if (!applyResult.ok) return { ok: false, reason: applyResult.reason, elementId };
+    }
+    return { ok: true, applied: true };
+  }
+
+  function getPersistenceStatus() {
+    return {
+      persistenceAvailable: Boolean(layoutStorage?.available),
+      persistencePersistent: Boolean(layoutStorage?.persistent),
+    };
+  }
+
+  function readPersistentStorage() {
+    if (typeof layoutStorage?.readResult === "function") {
+      return layoutStorage.readResult();
+    }
+    try {
+      const payload = typeof layoutStorage?.read === "function" ? layoutStorage.read() : null;
+      return payload ? { ok: true, found: true, payload } : { ok: true, found: false, payload: null };
+    } catch (error) {
+      return { ok: false, found: false, payload: null, reason: error?.code || "LAYOUT_STORAGE_READ_FAILED" };
+    }
+  }
+
+  function loadPersistentEntriesIntoSession() {
+    const readResult = readPersistentStorage();
+    if (!readResult.ok) return { ok: false, savedLayoutFound: false, reason: readResult.reason || "LAYOUT_STORAGE_READ_FAILED", entries: [] };
+    if (!readResult.found) return { ok: true, savedLayoutFound: false, entries: [] };
+    const savedEntries = persistentLayoutStore.list();
+    layoutStore.replace(savedEntries, runtimeRegistry.map((entry) => normalizeId(entry.id)).filter(Boolean));
+    return { ok: true, savedLayoutFound: savedEntries.length > 0, entries: savedEntries };
+  }
+
+  const initialLoad = loadPersistentEntriesIntoSession();
+  if (!initialLoad.ok && initialLoad.reason !== "LAYOUT_STORAGE_UNAVAILABLE") {
+    // Der Fehler wird erst beim expliziten Laden sichtbar gemeldet.
+  }
 
   const adapter = {
     getRegistry() {
@@ -144,6 +193,47 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
 
     getCurrentLayoutState() {
       return layoutStore.list();
+    },
+
+    getSavedLayoutState() {
+      return persistentLayoutStore.list();
+    },
+
+    getPersistenceStatus() {
+      return getPersistenceStatus();
+    },
+
+    loadSavedLayout() {
+      try {
+        const loadResult = loadPersistentEntriesIntoSession();
+        if (!loadResult.ok) return { ...getPersistenceStatus(), ok: false, blocked: true, reason: loadResult.reason || "LAYOUT_LOAD_FAILED", savedLayoutFound: false, layoutState: layoutStore.list() };
+        if (!loadResult.savedLayoutFound) return { ...getPersistenceStatus(), ok: true, blocked: false, reason: null, savedLayoutFound: false, layoutState: layoutStore.list(), savedLayoutState: [] };
+        const applyResult = applyEntries(loadResult.entries, { resetMissingSize: true });
+        if (!applyResult.ok) return { ...getPersistenceStatus(), ok: false, blocked: true, reason: applyResult.reason, elementId: applyResult.elementId, savedLayoutFound: true, layoutState: layoutStore.list() };
+        return { ...getPersistenceStatus(), ok: true, blocked: false, reason: null, savedLayoutFound: true, layoutState: layoutStore.list(), savedLayoutState: persistentLayoutStore.list() };
+      } catch (_error) {
+        return { ...getPersistenceStatus(), ok: false, blocked: true, reason: "LAYOUT_LOAD_FAILED", savedLayoutFound: false, layoutState: layoutStore.list() };
+      }
+    },
+
+    saveLayoutSession() {
+      const persistence = getPersistenceStatus();
+      if (!persistence.persistenceAvailable || !persistence.persistencePersistent) {
+        return { ...persistence, ok: false, blocked: true, reason: "LAYOUT_STORAGE_NOT_PERSISTENT", layoutState: layoutStore.list() };
+      }
+      try {
+        const ids = runtimeRegistry.map((entry) => normalizeId(entry.id)).filter(Boolean);
+        const layoutState = layoutStore.list();
+        persistentLayoutStore.replace(layoutState, ids);
+        const verify = readPersistentStorage();
+        if (!verify.ok || !verify.found) {
+          return { ...persistence, ok: false, blocked: true, reason: verify.reason || "LAYOUT_STORAGE_VERIFY_FAILED", layoutState: layoutStore.list() };
+        }
+        const savedLayoutState = persistentLayoutStore.list();
+        return { ...persistence, ok: true, blocked: false, reason: null, savedLayoutFound: savedLayoutState.length > 0, layoutState: layoutStore.list(), savedLayoutState };
+      } catch (error) {
+        return { ...persistence, ok: false, blocked: true, reason: error?.code || "LAYOUT_SAVE_FAILED", layoutState: layoutStore.list() };
+      }
     },
 
     submitChangeRequest(changeRequest) {
