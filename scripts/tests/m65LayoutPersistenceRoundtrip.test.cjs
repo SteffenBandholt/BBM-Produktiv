@@ -177,7 +177,12 @@ async function runM65LayoutPersistenceRoundtripTests(run) {
       global.HTMLElement = TestRef;
       refs.registerBbmUiElementRef("bbm.uiEditorTest.card", new TestRef());
       const adapter = createBbmMainUiHostAdapter({ registry: [{ id: "bbm.uiEditorTest.card", elementId: "bbm.uiEditorTest.card", name: "Testkarte", type: "card", role: "content", parentId: null, order: 1, visible: true, editable: true, allowedOps: ["move"], lockedOps: [] }] });
-      assert.deepEqual(adapter.getPersistenceStatus(), { persistenceAvailable: false, persistencePersistent: false });
+      const persistenceStatus = adapter.getPersistenceStatus();
+      assert.equal(persistenceStatus.persistenceAvailable, false);
+      assert.equal(persistenceStatus.persistencePersistent, false);
+      assert.equal(persistenceStatus.savedLayoutFound, false);
+      assert.equal(persistenceStatus.deviatesFromDefaults, false);
+      assert.equal(persistenceStatus.standardLayoutActive, true);
       assert.equal(adapter.submitChangeRequest(request("bbm.uiEditorTest.card", "move", { x: 5 })).ok, true);
       const result = adapter.saveLayoutSession();
       assert.equal(result.ok, false);

@@ -703,3 +703,10 @@ Hinweis:
 - Nach erfolgreichem Reset ist der Standardzustand neue Sitzungsbaseline und das Panel meldet „Standardlayout aktiv“ ohne offene Änderungen.
 - Neuer Guardrail-/Roundtrip-Test: `scripts/tests/m66ResetLayoutToDefaults.test.cjs`.
 - Hinweis: Die Cloud-Umgebung erlaubt keine praktische Windows-/Electron-Neustartprüfung; der Neustartpfad ist automatisiert über neue Adapter-/Storage-Instanzen abgesichert.
+
+## M66 Korrektur – Rückrollbarkeit und Statusfelder
+- Der Standard-Reset löscht persistente Layoutdaten nicht mehr vor der sichtbaren Default-Anwendung.
+- Vor dem Reset werden persistenter Zustand und Sessionzustand gesichert; bei Fehlern werden Session, sichtbare Refs und Persistenz bestmöglich auf den vorherigen Zustand zurückgeführt.
+- Erforderliche Refs werden vor destruktiven Speicheroperationen validiert; nicht editierbare technische Elemente ohne Layoutwert blockieren nicht unnötig.
+- Das Bedienpanel leitet die Button-Aktivierung nicht mehr aus Anzeigetexten ab, sondern nutzt strukturierte Felder wie `savedLayoutFound`, `deviatesFromDefaults` und `standardLayoutActive`.
+- Der M66-Test deckt jetzt echtes Dialog-Abbrechen, Scope-/Profil-Isolation und Rollbacks bei Ref-/Apply-/Löschfehlern ab.

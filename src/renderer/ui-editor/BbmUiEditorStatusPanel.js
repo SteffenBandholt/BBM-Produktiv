@@ -513,7 +513,9 @@ export class BbmUiEditorStatusPanel {
     const resetDefaults = createNode("button", "bbm-ui-editor-panel__secondary bbm-ui-editor-panel__secondary--danger");
     resetDefaults.type = "button";
     resetDefaults.textContent = "Auf Standard zurücksetzen";
-    const resetAvailable = Boolean(this.editorActive && persistenceAvailable && persistencePersistent && (changeCount > 0 || this.layoutPersistenceStatus === "Gespeichertes Layout geladen" || this.layoutPersistenceStatus === "Layout gespeichert"));
+    const savedLayoutFound = Boolean(this.layoutSessionStatus?.savedLayoutFound);
+    const deviatesFromDefaults = Boolean(this.layoutSessionStatus?.deviatesFromDefaults);
+    const resetAvailable = Boolean(this.editorActive && persistenceAvailable && persistencePersistent && (savedLayoutFound || deviatesFromDefaults));
     resetDefaults.disabled = !resetAvailable;
     resetDefaults.addEventListener("click", () => this.openResetDefaultsDialog());
     const hint = createNode("p", "bbm-ui-editor-panel__empty");

@@ -3221,3 +3221,31 @@ Wichtig:
   - Lokale Windows-/Electron-Abnahme des vollständigen Nutzerablaufs: Speichern, Neustart-Laden, Abbrechen, Standard-Reset, Neustart mit Standardlayout.
 - Risiken/Hinweise:
   - Kein Einzel-Default-Reset, keine Layoutprofile, kein Autosave, keine produktive Fachmaske und keine PDF-Änderung.
+
+### M66 Korrektur – rückrollbarer Standard-Reset und strukturierter Buttonstatus
+- Status: umgesetzt im PR-#206-Korrekturstand.
+- Beschreibung:
+  - `resetLayoutToDefaults()` sichert vor dem Reset den bisherigen persistenten Layoutzustand und den bisherigen Sessionzustand.
+  - Registry-Defaults werden vorbereitet, erforderliche explizite Refs vor destruktiven Speicheroperationen geprüft und erst nach erfolgreicher Session-/Ref-Anwendung wird der Default-Layoutzustand im aktuellen Scope gelöscht.
+  - Bei Fehlern während Default-Anwendung oder persistentem Löschen werden Sessionzustand, sichtbarer Zustand und persistenter Zustand bestmöglich auf den vorherigen Zustand zurückgerollt; es wird kein Mischzustand als Erfolg gemeldet.
+  - Nicht editierbare technische Registry-Elemente ohne sichtbaren Ref und ohne aktuellen/persistenten Layoutwert blockieren den Reset nicht unnötig.
+  - Das Panel steuert den Reset-Button nur noch über strukturierte Statusfelder (`savedLayoutFound`, `deviatesFromDefaults`, `standardLayoutActive`, Persistenzstatus) und nicht mehr über deutsche Anzeigetexte.
+  - Der M66-Test prüft jetzt Erfolg, sichtbare Defaults, Baseline, Neustart, echtes Dialog-Abbrechen, Scope-/Profil-Isolation, fehlenden Ref vor Löschung, Rollback bei Default-Anwendungsfehler, Rollback bei Löschfehler und den strukturierten Button-Guardrail.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/bbmMainUiHostAdapter.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `scripts/tests/m66ResetLayoutToDefaults.test.cjs`
+  - `scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs`
+  - `STATUS.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+- Prüfung:
+  - `node scripts/ui-editor-contract-check.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs --self-test` OK
+  - `node scripts/tests/m64UiEditorTestSurface.test.cjs` OK
+  - `node scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs` OK
+  - `node scripts/tests/m66ResetLayoutToDefaults.test.cjs` OK
+  - `git diff --check` OK
+  - `node scripts/test.cjs` erreicht und besteht die M64/M65/M66-Tests, endet aber wegen `better-sqlite3`/Node-Modulversionskonflikt in der Cloud-Umgebung nicht vollständig grün
+  - `npm test` bleibt wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` in der Cloud-Umgebung nicht ausführbar
+- Nächster offener Schritt:
+  - Lokale Windows-/Electron-Abnahme für PR #206 durchführen; PR nicht mergen, bevor der sichtbare Nutzerablauf fachlich geprüft ist.
