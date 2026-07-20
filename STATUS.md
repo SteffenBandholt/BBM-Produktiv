@@ -3298,3 +3298,23 @@ Wichtig:
   - `timeout 30s npm start` in dieser Umgebung aus demselben Grund nicht ausführbar
 - Nächster offener Schritt:
   - Lokale Windows-/Electron-Prüfung nach Nutzerliste auf dem Zielsystem durchführen.
+
+## M67 Korrektur 2 – sichtbare Isolation nach Testflächen-Ref-Neuaufbau
+- Status: umgesetzt im Korrekturcommit zu PR #207.
+- Beschreibung:
+  - Nach dem Neuregistrieren der UI-Editor-Testflächen-Refs wird der aktuelle Session-Layoutzustand über eine öffentliche Runtime-Kette erneut auf die expliziten Refs angewendet.
+  - Die neue Reapply-Kette läuft Panel/Testflächen-Ref-Neuaufbau → Inspector-Bridge → Inspector → HostAdapter → aktueller Session-LayoutStore → explizite Refs.
+  - Reapply speichert nichts, lädt keinen persistenten Zustand, löscht keine Einträge und verändert keine Sessionbaseline.
+  - `confirmResetSelectedElementToDefaults()` aktualisiert nach dem Einzelreset nur Status und Detailbereich statt pauschal `renderAll()` aufzurufen.
+  - Dadurch bleibt die zurückgesetzte Testkarte standardmäßig, während Tabelle und Kindelemente ihre aktuellen Sessionwerte auch nach Ref-Neuaufbau sichtbar behalten.
+- Prüfung:
+  - `git diff --check` OK
+  - `node scripts/ui-editor-contract-check.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs --self-test` OK
+  - `node scripts/tests/m67ResetElementToDefaults.test.cjs` OK
+  - `node scripts/tests/m66ResetLayoutToDefaults.test.cjs` OK
+  - `node scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs` OK
+  - `node scripts/tests/m64UiEditorTestSurface.test.cjs` OK
+  - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
+- Nächster offener Schritt:
+  - Lokale Windows-/Electron-Abnahme auf dem Zielsystem: Testkarte und Tabelle verändern/speichern, Testkarte einzeln zurücksetzen, Tabelle darf sichtbar nicht springen.

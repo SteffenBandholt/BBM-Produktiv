@@ -424,6 +424,15 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
       return { ok: true, blocked: false, reason: null, validation, layoutEntry, applyResult };
     },
 
+    reapplyCurrentLayoutState() {
+      const layoutState = layoutStore.list();
+      const applyResult = applyEntries(layoutState, { resetMissingSize: false });
+      if (!applyResult.ok) {
+        return { ...getPersistenceStatus(), ok: false, blocked: true, reason: applyResult.reason || "LAYOUT_REAPPLY_FAILED", elementId: applyResult.elementId, layoutState };
+      }
+      return { ...getPersistenceStatus(), ok: true, blocked: false, reason: null, layoutState };
+    },
+
     resetLayoutElementToDefaults({ elementId = null } = {}) {
       const normalizedElementId = normalizeId(elementId);
       const registryElement = getRegistryElement(runtimeRegistry, normalizedElementId);

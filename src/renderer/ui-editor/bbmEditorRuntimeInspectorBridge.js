@@ -313,6 +313,10 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
     return callLayoutSessionMethod("resetLayoutToDefaults");
   }
 
+  function reapplyCurrentLayoutState() {
+    return callLayoutSessionMethod("reapplyCurrentLayoutState");
+  }
+
   function resetSelectedElementToDefaults() {
     const status = getStatus();
     if (!status.ok || status.kind !== "ready") return { ok: false, blocked: true, reason: status.reason || "NO_SELECTED_ELEMENT" };
@@ -332,7 +336,7 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
     return callLayoutSessionMethod("endLayoutSession");
   }
 
-  return { inspectSelectedElement, getSelectedElementControlPanel, applySelectedElementLayoutAction, beginLayoutSession, getLayoutSessionStatus, saveLayoutSession, loadSavedLayout, resetLayoutToDefaults, resetSelectedElementToDefaults, discardSelectedElementChanges, discardAllSessionChanges, endLayoutSession, getStatus };
+  return { inspectSelectedElement, getSelectedElementControlPanel, applySelectedElementLayoutAction, beginLayoutSession, getLayoutSessionStatus, saveLayoutSession, loadSavedLayout, resetLayoutToDefaults, resetSelectedElementToDefaults, reapplyCurrentLayoutState, discardSelectedElementChanges, discardAllSessionChanges, endLayoutSession, getStatus };
 }
 
 export const BBM_EDITOR_RUNTIME_INSPECTOR_BRIDGE_ROLE_BY_ID = ROLE_BY_ELEMENT_ID;

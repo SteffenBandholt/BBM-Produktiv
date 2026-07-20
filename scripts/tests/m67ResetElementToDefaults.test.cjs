@@ -20,12 +20,25 @@ class TestRef {
   getBoundingClientRect() { return { ...this.rect }; }
 }
 class TestNode {
-  constructor(tagName) { this.tagName = tagName; this.children = []; this.textContent = ""; this.type = ""; this.disabled = false; this.hidden = false; this.className = ""; this.attributes = {}; this.listeners = {}; }
+  constructor(tagName) {
+    this.tagName = tagName;
+    this.children = [];
+    this.textContent = "";
+    this.type = "";
+    this.disabled = false;
+    this.hidden = false;
+    this.className = "";
+    this.attributes = {};
+    this.listeners = {};
+    this.style = { values: {}, setProperty: (k, v) => { this.style.values[k] = String(v); }, removeProperty: (k) => { delete this.style.values[k]; } };
+    this.rect = { width: tagName === "table" ? 420 : 300, height: 180, left: 0, top: 0 };
+  }
   append(...children) { children.forEach((child) => this.appendChild(child)); }
   appendChild(child) { this.children.push(child); return child; }
   setAttribute(name, value) { this.attributes[name] = String(value); }
   addEventListener(name, handler) { this.listeners[name] = [...(this.listeners[name] || []), handler]; }
   click() { if (!this.disabled) return this.listeners.click?.[0]?.({ target: this, preventDefault() {}, stopPropagation() {} }); return undefined; }
+  getBoundingClientRect() { return { ...this.rect }; }
   set innerHTML(_value) { this.children = []; }
 }
 function findNode(node, predicate) { if (!node) return null; if (predicate(node)) return node; for (const child of node.children || []) { const found = findNode(child, predicate); if (found) return found; } return null; }
@@ -101,6 +114,79 @@ async function runM67ResetElementToDefaultsTests(run) {
 
   await run("M67 E: Panel-Abbrechen ruft keine API auf", async () => {
     const oldDocument = global.document; try { global.document = { createElement: (tagName) => new TestNode(tagName) }; const { BbmUiEditorStatusPanel } = await importEsmFromFile(PANEL_PATH); const panel = new BbmUiEditorStatusPanel(); let calls = 0; panel.detailsNode = new TestNode("section"); panel.editorActive = true; panel.selectedElement = { elementId: "bbm.uiEditorTest.card", label: "Testkarte", editable: true }; panel.inspectorBridge = { inspectSelectedElement: () => ({ ok: true, allowedOps: ["move", "resize"], selectedElementCanResetToDefaults: true }), resetSelectedElementToDefaults: () => { calls += 1; return { ok: true }; } }; panel.renderReadonlyLayoutControls(panel.selectedElement); findNode(panel.detailsNode, (n) => n.tagName === "button" && n.textContent === "Element auf Standard …").click(); panel.detailsNode = new TestNode("section"); panel.renderReadonlyLayoutControls(panel.selectedElement); assert.match(collectText(panel.detailsNode), /Element auf Standard zurücksetzen\?/); assert.doesNotMatch(collectText(panel.detailsNode), /bbm\.uiEditorTest\.card/); findNode(panel.detailsNode, (n) => n.tagName === "button" && n.textContent === "Abbrechen").click(); assert.equal(calls, 0); } finally { global.document = oldDocument; }
+  });
+
+
+  await run("M67 Panelintegration: Ref-Neuaufbau übernimmt aktuelle Sessionwerte anderer Elemente", async () => {
+    const oldDocument = global.document;
+    const oldWindow = global.window;
+    const oldHTMLElement = global.HTMLElement;
+    try {
+      const doc = { defaultView: { HTMLElement: TestNode }, createElement: (tagName) => new TestNode(tagName) };
+      const win = { HTMLElement: TestNode, addEventListener() {}, removeEventListener() {} };
+      global.document = doc;
+      global.window = win;
+      global.HTMLElement = TestNode;
+      const [{ createBbmMainUiHostAdapter }, { createBbmEditorRuntimeInspectorBridge }, { BbmUiEditorStatusPanel }, refs] = await Promise.all([
+        importEsmFromFile(HOST_ADAPTER_PATH),
+        importEsmFromFile(BRIDGE_PATH),
+        importEsmFromFile(PANEL_PATH),
+        importEsmFromFile(REFS_PATH),
+      ]);
+      const storage = persistentStorage(createEditorLayoutMemoryStorage);
+      refs.clearBbmUiElementRefs();
+      const panel = new BbmUiEditorStatusPanel();
+      panel.statusNode = new TestNode("section");
+      panel.elementsNode = new TestNode("section");
+      panel.detailsNode = new TestNode("section");
+      panel.testSurfaceNode = new TestNode("section");
+      panel.status = { ok: true };
+      panel.elements = registry.map((entry) => ({ ...entry, label: entry.name, elementId: entry.id }));
+      panel.selectedElement = panel.elements.find((entry) => entry.elementId === "bbm.uiEditorTest.card");
+      const adapter = createBbmMainUiHostAdapter({ registry, layoutStorage: storage });
+      panel.inspectorBridge = createBbmEditorRuntimeInspectorBridge({
+        registryElements: panel.elements,
+        getSelectedElement: () => panel.selectedElement,
+        hostAdapterFactory: () => adapter,
+      });
+      panel.renderTestSurface();
+      panel.inspectorBridge.beginLayoutSession();
+      adapter.submitChangeRequest(request("bbm.uiEditorTest.card", "move", { x: 10, y: 15 }));
+      adapter.submitChangeRequest(request("bbm.uiEditorTest.card", "resize", { width: 25, height: 20 }));
+      adapter.submitChangeRequest(request("bbm.uiEditorTest.card.title", "move", { x: 5 }));
+      adapter.submitChangeRequest(request("bbm.uiEditorTest.table", "move", { x: 20 }));
+      adapter.submitChangeRequest(request("bbm.uiEditorTest.table", "resize", { width: 15, height: 10 }));
+      assert.equal(panel.inspectorBridge.saveLayoutSession().ok, true);
+      const oldTableRef = refs.getBbmUiElementRef("bbm.uiEditorTest.table");
+      panel.renderDetails();
+      const open = findNode(panel.detailsNode, (node) => node.tagName === "button" && node.textContent === "Element auf Standard …");
+      assert.equal(open.disabled, false);
+      open.click();
+      const confirm = findNode(panel.detailsNode, (node) => node.tagName === "button" && node.textContent === "Element zurücksetzen");
+      assert.ok(confirm);
+      confirm.click();
+      panel.renderTestSurface();
+      const cardRef = refs.getBbmUiElementRef("bbm.uiEditorTest.card");
+      const titleRef = refs.getBbmUiElementRef("bbm.uiEditorTest.card.title");
+      const tableRef = refs.getBbmUiElementRef("bbm.uiEditorTest.table");
+      assert.notEqual(tableRef, oldTableRef);
+      assert.equal(cardRef.style.values.transform, undefined);
+      assert.equal(cardRef.style.values.width, undefined);
+      assert.equal(cardRef.style.values.height, undefined);
+      assert.equal(titleRef.style.values.transform, "translate(5px, 0px)");
+      assert.equal(tableRef.style.values.transform, "translate(20px, 0px)");
+      assert.equal(tableRef.style.values.width, "435px");
+      assert.equal(tableRef.style.values.height, "190px");
+      assert.equal(storage.read().entries["bbm.uiEditorTest.card"], undefined);
+      assert.ok(storage.read().entries["bbm.uiEditorTest.table"]);
+      assert.ok(adapter.getCurrentLayoutState().some((entry) => entry.elementId === "bbm.uiEditorTest.table"));
+      assert.equal(panel.inspectorBridge.getLayoutSessionStatus().changedCount, 0);
+      assert.equal(panel.selectedElement?.elementId, "bbm.uiEditorTest.card");
+    } finally {
+      global.document = oldDocument;
+      global.window = oldWindow;
+      global.HTMLElement = oldHTMLElement;
+    }
   });
 
   await run("M67 F/G/I: fehlender Ref, Persistenzfehler und nicht editierbar blockieren/rollen zurück", async () => {

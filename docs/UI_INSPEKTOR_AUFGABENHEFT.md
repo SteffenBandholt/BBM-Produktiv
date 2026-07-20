@@ -739,3 +739,14 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
   - `scripts/tests/m67ResetElementToDefaults.test.cjs` prüft jetzt zusätzlich den echten Bridge-Pfad für `selectedElementHasSavedLayout` und `selectedElementCanResetToDefaults`.
 - Offen:
   - Praktische Windows-/Electron-Abnahme bleibt außerhalb der Cloud durchzuführen.
+
+## M67 Korrektur 2 – sichtbare Isolation bei neuen Refs
+- Status: umgesetzt.
+- Korrektur:
+  - Der aktuelle Session-Layoutzustand wird nach Testflächen-Ref-Neuaufbau erneut über eine öffentliche Runtime-/HostAdapter-Funktion angewendet.
+  - Beim Einzelreset wird kein `loadSavedLayout()` ausgeführt und keine globale Sessionbaseline neu begonnen.
+  - Der Einzelreset aktualisiert im Panel nur Status und Details; die Testfläche wird nicht wegen der Erfolgsmeldung vollständig neu aufgebaut.
+- Testergänzung:
+  - `scripts/tests/m67ResetElementToDefaults.test.cjs` enthält einen echten Panelintegrationstest, der neue Refs erzwingt und prüft, dass Tabelle und Kindelemente ihre sichtbaren Layoutwerte behalten.
+- Offen:
+  - Praktische Windows-/Electron-Abnahme nach manuellem Fehlerbefund bleibt auf dem Zielsystem durchzuführen.

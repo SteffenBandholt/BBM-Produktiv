@@ -353,6 +353,7 @@ export class BbmUiEditorStatusPanel {
     this.bindTestSurfaceElementRef("bbm.uiEditorTest.card.input", inputShell);
     this.bindTestSurfaceElementRef("bbm.uiEditorTest.card.select", selectShell);
     this.bindTestSurfaceElementRef("bbm.uiEditorTest.table", table);
+    this.inspectorBridge?.reapplyCurrentLayoutState?.();
   }
 
   renderStatus() {
@@ -704,7 +705,8 @@ export class BbmUiEditorStatusPanel {
     this.resetElementDefaultsDialogOpen = false;
     this.selectionMessage = result?.ok ? `„${label}“ wurde auf Standard zurückgesetzt.` : "Das Element konnte nicht auf Standard zurückgesetzt werden.";
     if (!result?.ok) this.layoutPersistenceStatus = "Layout konnte nicht auf Standard zurückgesetzt werden.";
-    this.renderAll();
+    this.renderStatus();
+    this.renderDetails();
     this.syncActiveSelectionRuntime();
   }
 
