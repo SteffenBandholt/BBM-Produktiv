@@ -89,6 +89,9 @@ export function createEditorLayoutControlPanel({ scope, registry, hostAdapter, e
 
   const safeLayoutOps = toSafeLayoutOps(detailsResult.details);
   const currentLayoutEntry = findLayoutEntry(layoutState, elementId);
+  const persistenceStatus = typeof hostAdapter?.getPersistenceStatus === "function"
+    ? hostAdapter.getPersistenceStatus({ elementId: normalizeString(elementId) })
+    : {};
 
   return {
     ok: true,
@@ -123,6 +126,7 @@ export function createEditorLayoutControlPanel({ scope, registry, hostAdapter, e
         ? "Gespeicherter Layoutzustand ist verfuegbar."
         : "Standardzustand ist aktiv.",
       reason: null,
+      ...persistenceStatus,
     },
     layoutState,
     errors: [],

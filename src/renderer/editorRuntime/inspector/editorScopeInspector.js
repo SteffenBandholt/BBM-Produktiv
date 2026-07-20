@@ -334,6 +334,16 @@ export function createEditorScopeInspector({
   }
 
 
+  function resetSessionBaselineElement(scopeId, context, elementId) {
+    const normalizedScopeId = normalizeId(context.scope.scopeId);
+    const normalizedElementId = normalizeId(elementId);
+    const session = layoutSessions.get(normalizedScopeId);
+    if (!session || !normalizedElementId) return buildLayoutSessionStatus(normalizedScopeId, context);
+    const currentLayoutState = typeof context.hostAdapter.getCurrentLayoutState === "function" ? context.hostAdapter.getCurrentLayoutState() : [];
+    session.baselineByElementId.set(normalizedElementId, cloneLayoutEntry(findLayoutEntry(currentLayoutState, normalizedElementId)));
+    return buildLayoutSessionStatus(normalizedScopeId, context);
+  }
+
   function resetSessionBaseline(scopeId, context) {
     const normalizedScopeId = normalizeId(context.scope.scopeId);
     const layoutState = typeof context.hostAdapter.getCurrentLayoutState === "function" ? context.hostAdapter.getCurrentLayoutState() : [];
@@ -372,6 +382,23 @@ export function createEditorScopeInspector({
     const result = context.hostAdapter.resetLayoutToDefaults();
     if (!result?.ok) return { ...result, status: buildLayoutSessionStatus(scopeId, context) };
     return { ...result, status: resetSessionBaseline(scopeId, context) };
+  }
+
+  function resetLayoutElementToDefaults(scopeId, elementId) {
+    const context = prepareScopeContext(scopeId);
+    if (!context.ok) {
+      return { ok: false, blocked: true, reason: context.inspection.errors?.[0]?.code || "SCOPE_UNAVAILABLE", status: buildLayoutSessionStatus(scopeId, context) };
+    }
+    const normalizedElementId = normalizeId(elementId);
+    const registryElement = context.registry.find((entry) => normalizeId(entry?.id || entry?.elementId) === normalizedElementId) || null;
+    if (!registryElement) return { ok: false, blocked: true, reason: "ELEMENT_ID_UNKNOWN", status: buildLayoutSessionStatus(scopeId, context) };
+    if (!registryElement.editable) return { ok: false, blocked: true, reason: "ELEMENT_NOT_EDITABLE", status: buildLayoutSessionStatus(scopeId, context) };
+    if (typeof context.hostAdapter.resetLayoutElementToDefaults !== "function") {
+      return { ok: false, blocked: true, reason: "HOST_RESET_LAYOUT_ELEMENT_DEFAULTS_MISSING", status: buildLayoutSessionStatus(scopeId, context) };
+    }
+    const result = context.hostAdapter.resetLayoutElementToDefaults({ elementId: normalizedElementId });
+    if (!result?.ok) return { ...result, status: buildLayoutSessionStatus(scopeId, context) };
+    return { ...result, status: resetSessionBaselineElement(scopeId, context, normalizedElementId) };
   }
 
   function loadSavedLayout(scopeId) {
@@ -436,6 +463,7 @@ export function createEditorScopeInspector({
     saveLayoutSession,
     loadSavedLayout,
     resetLayoutToDefaults,
+    resetLayoutElementToDefaults,
     discardLayoutSessionElement,
     discardLayoutSession,
     endLayoutSession,

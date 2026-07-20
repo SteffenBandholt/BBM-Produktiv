@@ -3258,3 +3258,24 @@ Wichtig:
 - Nach erfolgreichem Standardreset ist der Session-LayoutStore wieder ein leerer Abweichungszustand; der persistente Default-Scope enthält keine Layoutentries.
 - M66-Tests prüfen den ursprünglichen Inline-Zustand, den Reset auf fehlende Inlinewerte, CSS-Quellen für Karte/Tabelle, Neustart, Abbrechen, Scope-/Profil-Isolation und Rollbackfälle.
 - Nächster offener Schritt: praktische Windows-Prüfung des UI-Editor-Ablaufs bleibt fachlich durchzuführen.
+
+## M67 Abschlussnotiz – ausgewähltes Element auf Standard zurücksetzen
+- M67 ergänzt den vierten klar getrennten Rücksetzweg „Element auf Standard …“ im Bereich des aktuell ausgewählten Elements.
+- Der Button öffnet einen Bestätigungsdialog mit lesbarem Elementnamen und ohne technische ID; „Abbrechen“ führt keine API- oder Layoutänderung aus.
+- Der Erfolgsweg läuft Panel → Inspector-Bridge → Inspector → BBM-Main-HostAdapter → Session- und persistenter LayoutStore → expliziter HTMLElement-Ref.
+- Aus dem persistenten Defaultprofil wird nur der Eintrag des ausgewählten Elements entfernt; andere Elemente, fremde Profile und fremde Scopes bleiben erhalten.
+- Aus dem Session-LayoutStore und aus der Sitzungsbaseline wird ebenfalls nur das ausgewählte Element auf CSS-/Registry-Standard aktualisiert; Kind- und Elternelemente bleiben isoliert.
+- Sichtbar entfernt der HostAdapter nur Editor-Inlinewerte (`transform`, `width`, `height`) und setzt `hidden` gemäß Registry-/Layout-Default; Fachinhalte bleiben unverändert.
+- Strukturierte Statusfelder (`selectedElementHasSavedLayout`, `selectedElementDeviatesFromDefaults`, `selectedElementCanResetToDefaults`) steuern die Button-Aktivierung ohne Textvergleich oder ID-Sonderfall im Panel.
+- Neuer Guardrail-/Regressionstest: `scripts/tests/m67ResetElementToDefaults.test.cjs`; `scripts/test.cjs` bindet den M67-Test ein.
+- Prüfung in Codex Cloud:
+  - `node scripts/ui-editor-contract-check.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs --self-test` OK
+  - `node scripts/tests/m64UiEditorTestSurface.test.cjs` OK
+  - `node scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs` OK
+  - `node scripts/tests/m66ResetLayoutToDefaults.test.cjs` OK
+  - `node scripts/tests/m67ResetElementToDefaults.test.cjs` OK
+  - `timeout 180s node scripts/test.cjs` erreicht nur OK-Ausgaben, beendet aber nicht innerhalb des Cloud-Zeitfensters
+  - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
+- Nächster offener Schritt:
+  - Praktische Windows-/Electron-Abnahme des vollständigen M67-Nutzerablaufs lokal durchführen; in Codex Cloud nicht verfügbar.

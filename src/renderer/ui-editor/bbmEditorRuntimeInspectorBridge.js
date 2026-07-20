@@ -237,6 +237,11 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
         controlPanel: panel ? { ...panel, controls: toM63cControls(panel.controls) } : null,
         controls: toM63cControls(panel?.controls),
         allowedOps: Array.isArray(panel?.selectedElement?.effectiveOps) ? [...panel.selectedElement.effectiveOps] : [],
+        selectedElementHasSavedLayout: Boolean(panel?.status?.selectedElementHasSavedLayout),
+        selectedElementDeviatesFromDefaults: Boolean(panel?.status?.selectedElementDeviatesFromDefaults),
+        selectedElementCanResetToDefaults: Boolean(panel?.status?.selectedElementCanResetToDefaults),
+        persistenceAvailable: Boolean(panel?.status?.persistenceAvailable),
+        persistencePersistent: Boolean(panel?.status?.persistencePersistent),
         registry: snapshot.transformed.registry,
         errors: panel?.errors || [],
         warnings: panel?.warnings || [],
@@ -308,6 +313,13 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
     return callLayoutSessionMethod("resetLayoutToDefaults");
   }
 
+  function resetSelectedElementToDefaults() {
+    const status = getStatus();
+    if (!status.ok || status.kind !== "ready") return { ok: false, blocked: true, reason: status.reason || "NO_SELECTED_ELEMENT" };
+    const snapshot = getSnapshot();
+    return callLayoutSessionMethod("resetLayoutElementToDefaults", snapshot.selectedElementId);
+  }
+
   function discardSelectedElementChanges(elementId) {
     return callLayoutSessionMethod("discardLayoutSessionElement", normalizeId(elementId));
   }
@@ -320,7 +332,7 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
     return callLayoutSessionMethod("endLayoutSession");
   }
 
-  return { inspectSelectedElement, getSelectedElementControlPanel, applySelectedElementLayoutAction, beginLayoutSession, getLayoutSessionStatus, saveLayoutSession, loadSavedLayout, resetLayoutToDefaults, discardSelectedElementChanges, discardAllSessionChanges, endLayoutSession, getStatus };
+  return { inspectSelectedElement, getSelectedElementControlPanel, applySelectedElementLayoutAction, beginLayoutSession, getLayoutSessionStatus, saveLayoutSession, loadSavedLayout, resetLayoutToDefaults, resetSelectedElementToDefaults, discardSelectedElementChanges, discardAllSessionChanges, endLayoutSession, getStatus };
 }
 
 export const BBM_EDITOR_RUNTIME_INSPECTOR_BRIDGE_ROLE_BY_ID = ROLE_BY_ELEMENT_ID;
