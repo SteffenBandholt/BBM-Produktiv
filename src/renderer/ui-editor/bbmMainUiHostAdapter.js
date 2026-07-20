@@ -262,7 +262,11 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
 
   function getSavedEntry(elementId) {
     const normalizedElementId = normalizeId(elementId);
-    return persistentLayoutStore.list().find((entry) => normalizeId(entry.elementId) === normalizedElementId && isDefaultLayoutProfile(entry)) || null;
+    try {
+      return persistentLayoutStore.list().find((entry) => normalizeId(entry.elementId) === normalizedElementId && isDefaultLayoutProfile(entry)) || null;
+    } catch (_error) {
+      return null;
+    }
   }
 
   function elementDeviatesFromDefaults(elementId) {

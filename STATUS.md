@@ -3337,3 +3337,22 @@ Wichtig:
   - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
 - Nächster offener Schritt:
   - Lokale Windows-/Electron-Abnahme des Dialogablaufs auf dem Zielsystem wiederholen; die Tabelle darf beim Öffnen, Abbrechen oder Bestätigen nicht springen.
+
+## M67 Korrektur 4 – M63C-Operationspfad bei fehlender Persistenz
+- Status: umgesetzt im Korrekturcommit zu PR #207.
+- Beschreibung:
+  - Der elementbezogene M67-Persistenzstatus blockiert den Inspector-/Bridge-Pfad nicht mehr, wenn kein persistenter Browser-Storage verfügbar ist.
+  - `getSavedEntry(elementId)` behandelt nicht verfügbare Persistenz als „kein gespeicherter Eintrag“ statt den Inspector mit `LAYOUT_STORAGE_UNAVAILABLE` abbrechen zu lassen.
+  - Damit bleiben M63C-`allowedOps`/`effectiveOps`, Schrittweite 5 und Richtungspfeil-Aktivierung vollständig registry-/inspectorgeführt.
+- Prüfung:
+  - `node scripts/tests/m63cLayoutControlConsole.test.cjs` OK
+  - `node scripts/tests/m67ResetElementToDefaults.test.cjs` OK
+  - `git diff --check` OK
+  - `node scripts/ui-editor-contract-check.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs --self-test` OK
+  - `node scripts/tests/m66ResetLayoutToDefaults.test.cjs` OK
+  - `node scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs` OK
+  - `node scripts/tests/m64UiEditorTestSurface.test.cjs` OK
+  - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
+- Nächster offener Schritt:
+  - Vollständigen `npm test` lokal/CI mit vorhandenen Electron-Systembibliotheken erneut ausführen.

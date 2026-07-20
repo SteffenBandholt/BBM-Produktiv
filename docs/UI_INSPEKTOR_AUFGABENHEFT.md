@@ -761,3 +761,13 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
   - Der M67-Test prüft jetzt explizit die Objektidentität von Karten-, Überschrift- und Tabellen-Refs bei Öffnen, Abbrechen und Bestätigen.
 - Offen:
   - Praktische Windows-/Electron-Abnahme des manuellen Fehlerfalls bleibt auf dem Zielsystem durchzuführen.
+
+## M67 Korrektur 4 – M63C-Kompatibilität
+- Status: umgesetzt.
+- Korrektur:
+  - Fehlende Persistenz blockiert die M63C-Bridge-/Inspector-Ermittlung der erlaubten Layoutoperationen nicht mehr.
+  - Der M67-Status behandelt nicht verfügbaren Storage für den Elementstatus neutral und deaktiviert nur den Element-Standard-Reset, nicht die Layoutpfeile.
+- Testergänzung:
+  - `scripts/tests/m63cLayoutControlConsole.test.cjs` läuft wieder grün und sichert `allowedOps`, Schrittweite 5 und Richtungspfeile ab.
+- Offen:
+  - Vollständiger `npm test` bleibt in der Cloud wegen fehlender Electron-Systembibliothek blockiert.
