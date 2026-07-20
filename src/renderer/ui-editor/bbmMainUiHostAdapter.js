@@ -166,6 +166,20 @@ function buildDefaultEntries(registry, stateElementIds = new Set()) {
     .filter((entry) => entry.elementId);
 }
 
+function readInlineStyleValue(target, propertyName) {
+  if (target?.style?.values && Object.prototype.hasOwnProperty.call(target.style.values, propertyName)) return target.style.values[propertyName];
+  if (typeof target?.style?.getPropertyValue === "function") {
+    const value = target.style.getPropertyValue(propertyName);
+    return value === "" ? undefined : value;
+  }
+  return undefined;
+}
+
+function applyInlineStyleValue(target, propertyName, value) {
+  if (value === undefined) target.style.removeProperty(propertyName);
+  else target.style.setProperty(propertyName, value);
+}
+
 function applyLayoutValueToRegisteredTarget(elementId, layoutValue, { resetMissingSize = false } = {}) {
   const target = getBbmUiElementRef(elementId);
   if (!target) {
@@ -241,23 +255,65 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
     }
   }
 
-  function currentDeviatesFromDefaults() {
-    const currentEntries = layoutStore.list();
-    const currentById = new Map(currentEntries.map((entry) => [normalizeId(entry.elementId), entry.layoutValue || {}]));
-    const stateIds = getStateElementIds(currentEntries);
-    const defaultEntries = buildDefaultEntries(runtimeRegistry, stateIds);
-    return defaultEntries.some((entry) => currentById.has(normalizeId(entry.elementId)) && !sameComparableLayoutValue(currentById.get(normalizeId(entry.elementId)) || {}, entry.layoutValue || {}));
+  function getCurrentEntry(elementId) {
+    const normalizedElementId = normalizeId(elementId);
+    return layoutStore.list().find((entry) => normalizeId(entry.elementId) === normalizedElementId) || null;
   }
 
-  function getPersistenceStatus() {
+  function getSavedEntry(elementId) {
+    const normalizedElementId = normalizeId(elementId);
+    try {
+      return persistentLayoutStore.list().find((entry) => normalizeId(entry.elementId) === normalizedElementId && isDefaultLayoutProfile(entry)) || null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function elementDeviatesFromDefaults(elementId) {
+    const currentEntry = getCurrentEntry(elementId);
+    if (!currentEntry) return false;
+    const registryElement = getRegistryElement(runtimeRegistry, elementId);
+    if (!registryElement) return false;
+    return !sameComparableLayoutValue(currentEntry.layoutValue || {}, buildDefaultLayoutValue(registryElement));
+  }
+
+  function currentDeviatesFromDefaults() {
+    return runtimeRegistry.some((entry) => elementDeviatesFromDefaults(entry.id));
+  }
+
+  function getSelectedLayoutStatus(elementId) {
+    const normalizedElementId = normalizeId(elementId);
+    const registryElement = getRegistryElement(runtimeRegistry, normalizedElementId);
+    const persistenceAvailable = Boolean(layoutStorage?.available);
+    const persistencePersistent = Boolean(layoutStorage?.persistent);
+    const selectedElementHasSavedLayout = Boolean(registryElement && getSavedEntry(normalizedElementId));
+    const selectedElementDeviatesFromDefaults = Boolean(registryElement && elementDeviatesFromDefaults(normalizedElementId));
+    return {
+      elementId: normalizedElementId,
+      selectedElementRegistered: Boolean(registryElement),
+      selectedElementEditable: Boolean(registryElement?.editable),
+      selectedElementHasSavedLayout,
+      selectedElementDeviatesFromDefaults,
+      selectedElementCanResetToDefaults: Boolean(
+        registryElement?.editable &&
+        persistenceAvailable &&
+        persistencePersistent &&
+        (selectedElementHasSavedLayout || selectedElementDeviatesFromDefaults)
+      ),
+    };
+  }
+
+  function getPersistenceStatus({ elementId = null } = {}) {
     const savedLayoutFound = hasSavedLayout();
     const deviatesFromDefaults = currentDeviatesFromDefaults();
+    const selectedLayoutStatus = elementId ? getSelectedLayoutStatus(elementId) : {};
     return {
       persistenceAvailable: Boolean(layoutStorage?.available),
       persistencePersistent: Boolean(layoutStorage?.persistent),
       savedLayoutFound,
       deviatesFromDefaults,
       standardLayoutActive: !savedLayoutFound && !deviatesFromDefaults,
+      ...selectedLayoutStatus,
     };
   }
 
@@ -300,8 +356,8 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
       return persistentLayoutStore.list();
     },
 
-    getPersistenceStatus() {
-      return getPersistenceStatus();
+    getPersistenceStatus(options = {}) {
+      return getPersistenceStatus(options);
     },
 
     loadSavedLayout() {
@@ -370,6 +426,72 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
       }
 
       return { ok: true, blocked: false, reason: null, validation, layoutEntry, applyResult };
+    },
+
+    reapplyCurrentLayoutState() {
+      const layoutState = layoutStore.list();
+      const applyResult = applyEntries(layoutState, { resetMissingSize: false });
+      if (!applyResult.ok) {
+        return { ...getPersistenceStatus(), ok: false, blocked: true, reason: applyResult.reason || "LAYOUT_REAPPLY_FAILED", elementId: applyResult.elementId, layoutState };
+      }
+      return { ...getPersistenceStatus(), ok: true, blocked: false, reason: null, layoutState };
+    },
+
+    resetLayoutElementToDefaults({ elementId = null } = {}) {
+      const normalizedElementId = normalizeId(elementId);
+      const registryElement = getRegistryElement(runtimeRegistry, normalizedElementId);
+      const persistence = getPersistenceStatus({ elementId: normalizedElementId });
+      if (!registryElement) return { ...persistence, ok: false, blocked: true, reason: "ELEMENT_ID_UNKNOWN", layoutState: layoutStore.list(), savedLayoutState: persistentLayoutStore.list() };
+      if (!registryElement.editable) return { ...persistence, ok: false, blocked: true, reason: "ELEMENT_NOT_EDITABLE", layoutState: layoutStore.list(), savedLayoutState: persistentLayoutStore.list() };
+      if (!persistence.persistenceAvailable || !persistence.persistencePersistent) return { ...persistence, ok: false, blocked: true, reason: "LAYOUT_STORAGE_NOT_PERSISTENT", layoutState: layoutStore.list(), savedLayoutState: persistentLayoutStore.list() };
+      if (!persistence.selectedElementHasSavedLayout && !persistence.selectedElementDeviatesFromDefaults) return { ...persistence, ok: false, blocked: true, reason: "ELEMENT_LAYOUT_ALREADY_DEFAULT", layoutState: layoutStore.list(), savedLayoutState: persistentLayoutStore.list() };
+      const target = getBbmUiElementRef(normalizedElementId);
+      if (!target) return { ...persistence, ok: false, blocked: true, reason: "ELEMENT_REF_MISSING", elementId: normalizedElementId, layoutState: layoutStore.list(), savedLayoutState: persistentLayoutStore.list() };
+
+      const previousPersistentEntries = cloneLayoutEntries(persistentLayoutStore.list());
+      const previousSessionEntries = cloneLayoutEntries(layoutStore.list());
+      const previousVisibleState = {
+        transform: readInlineStyleValue(target, "transform"),
+        width: readInlineStyleValue(target, "width"),
+        height: readInlineStyleValue(target, "height"),
+        hidden: Boolean(target.hidden),
+      };
+      const ids = runtimeRegistry.map((entry) => normalizeId(entry.id)).filter(Boolean);
+      function restoreElementStyle() {
+        applyInlineStyleValue(target, "transform", previousVisibleState.transform);
+        applyInlineStyleValue(target, "width", previousVisibleState.width);
+        applyInlineStyleValue(target, "height", previousVisibleState.height);
+        target.hidden = previousVisibleState.hidden;
+      }
+      function rollback(reason, extra = {}) {
+        try { layoutStore.replace(previousSessionEntries.filter((entry) => normalizeId(entry.elementId) === normalizedElementId), [normalizedElementId]); } catch (_error) {}
+        try { persistentLayoutStore.replace(previousPersistentEntries, ids); } catch (_error) {}
+        try { restoreElementStyle(); } catch (_error) {}
+        return { ...getPersistenceStatus({ elementId: normalizedElementId }), ok: false, blocked: true, reason, ...extra, layoutState: layoutStore.list(), savedLayoutState: persistentLayoutStore.list() };
+      }
+
+      try {
+        const defaultEntry = {
+          layoutProfileId: "default",
+          targetAppId: SCOPE.targetAppId,
+          moduleId: SCOPE.moduleId,
+          scopeId: SCOPE.scopeId,
+          elementId: normalizedElementId,
+          operation: "layout.elementDefaults",
+          layoutValue: buildDefaultLayoutValue(registryElement),
+          createdAt: "",
+          updatedAt: "",
+        };
+        const applyResult = applyLayoutValueToRegisteredTarget(normalizedElementId, defaultEntry.layoutValue, { resetMissingSize: true });
+        if (!applyResult.ok) return rollback(applyResult.reason || "LAYOUT_ELEMENT_DEFAULT_APPLY_FAILED");
+        layoutStore.replace([], [normalizedElementId]);
+        persistentLayoutStore.reset(normalizedElementId);
+        const verify = persistentLayoutStore.list();
+        if (verify.some((entry) => normalizeId(entry.elementId) === normalizedElementId && isDefaultLayoutProfile(entry))) return rollback("LAYOUT_STORAGE_ELEMENT_VERIFY_FAILED");
+        return { ...getPersistenceStatus({ elementId: normalizedElementId }), ok: true, blocked: false, reason: null, elementId: normalizedElementId, layoutState: layoutStore.list(), savedLayoutState: verify };
+      } catch (error) {
+        return rollback(error?.code || "LAYOUT_ELEMENT_RESET_DEFAULTS_FAILED");
+      }
     },
 
     resetLayoutState({ elementId = null } = {}) {

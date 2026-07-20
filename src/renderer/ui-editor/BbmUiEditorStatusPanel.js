@@ -63,6 +63,7 @@ export class BbmUiEditorStatusPanel {
     this.layoutSessionStatus = { ok: true, active: false, changedElementIds: [], changedCount: 0, changedByElementId: {} };
     this.layoutPersistenceStatus = "Noch nicht gespeichert";
     this.resetDefaultsDialogOpen = false;
+    this.resetElementDefaultsDialogOpen = false;
     this.savedLayoutLoadedForSession = false;
     this.inspectorBridge = createBbmEditorRuntimeInspectorBridge({
       getRegistryElements: () => this.elements,
@@ -352,6 +353,7 @@ export class BbmUiEditorStatusPanel {
     this.bindTestSurfaceElementRef("bbm.uiEditorTest.card.input", inputShell);
     this.bindTestSurfaceElementRef("bbm.uiEditorTest.card.select", selectShell);
     this.bindTestSurfaceElementRef("bbm.uiEditorTest.table", table);
+    this.inspectorBridge?.reapplyCurrentLayoutState?.();
   }
 
   renderStatus() {
@@ -551,6 +553,7 @@ export class BbmUiEditorStatusPanel {
     const elementId = String(element.elementId || element.id || "").trim();
     if (elementId !== this.lastRenderedLayoutControlElementId) {
       this.activeLayoutControlMode = "move";
+      this.resetElementDefaultsDialogOpen = false;
       this.lastRenderedLayoutControlElementId = elementId;
     }
 
@@ -588,6 +591,18 @@ export class BbmUiEditorStatusPanel {
 
     consoleNode.append(modes, pad);
     section.appendChild(consoleNode);
+
+    const elementReset = createNode("div", "bbm-ui-editor-element-reset");
+    const elementResetButton = createNode("button", "bbm-ui-editor-panel__secondary bbm-ui-editor-panel__secondary--danger");
+    elementResetButton.type = "button";
+    elementResetButton.textContent = "Element auf Standard …";
+    elementResetButton.disabled = !Boolean(this.editorActive && element?.editable && result?.selectedElementCanResetToDefaults);
+    elementResetButton.addEventListener("click", () => this.openResetElementDefaultsDialog());
+    const elementResetHint = createNode("p", "bbm-ui-editor-panel__empty");
+    elementResetHint.textContent = "↶ verwirft Sitzungsänderungen. Element-Standard löscht die gespeicherte Anpassung.";
+    elementReset.append(elementResetButton, elementResetHint);
+    section.appendChild(elementReset);
+    if (this.resetElementDefaultsDialogOpen) section.appendChild(this.renderResetElementDefaultsDialog());
     if (this.selectionMessage) {
       const selected = createNode("p", "bbm-ui-editor-panel__notice");
       selected.textContent = this.selectionMessage;
@@ -648,6 +663,53 @@ export class BbmUiEditorStatusPanel {
     this.renderAll();
   }
 
+  openResetElementDefaultsDialog() {
+    if (!this.selectedElement) return;
+    this.resetElementDefaultsDialogOpen = true;
+    this.renderDetails();
+  }
+
+  closeResetElementDefaultsDialog() {
+    this.resetElementDefaultsDialogOpen = false;
+    this.renderDetails();
+  }
+
+  renderResetElementDefaultsDialog() {
+    const dialog = createNode("div", "bbm-ui-editor-reset-defaults-dialog");
+    dialog.setAttribute("role", "dialog");
+    dialog.setAttribute("aria-modal", "true");
+    const title = createNode("h3");
+    title.textContent = "Element auf Standard zurücksetzen?";
+    const label = asText(this.selectedElement?.label || this.selectedElement?.name, "ausgewähltes Element");
+    const text = createNode("p", "bbm-ui-editor-panel__notice");
+    text.textContent = `Die gespeicherten Layoutanpassungen für „${label}“ werden gelöscht. Das Element wird auf seine ursprüngliche Position und Darstellung zurückgesetzt.`;
+    const actions = createNode("div", "bbm-ui-editor-panel__actions");
+    const cancel = createNode("button", "bbm-ui-editor-panel__secondary");
+    cancel.type = "button";
+    cancel.textContent = "Abbrechen";
+    cancel.addEventListener("click", () => this.closeResetElementDefaultsDialog());
+    const confirm = createNode("button", "bbm-ui-editor-panel__secondary bbm-ui-editor-panel__secondary--danger");
+    confirm.type = "button";
+    confirm.textContent = "Element zurücksetzen";
+    confirm.setAttribute("data-destructive", "true");
+    confirm.addEventListener("click", () => this.confirmResetSelectedElementToDefaults());
+    actions.append(cancel, confirm);
+    dialog.append(title, text, actions);
+    return dialog;
+  }
+
+  confirmResetSelectedElementToDefaults() {
+    const label = asText(this.selectedElement?.label || this.selectedElement?.name, "Das Element");
+    const result = this.inspectorBridge?.resetSelectedElementToDefaults?.();
+    this.layoutSessionStatus = result?.status || this.layoutSessionStatus;
+    this.resetElementDefaultsDialogOpen = false;
+    this.selectionMessage = result?.ok ? `„${label}“ wurde auf Standard zurückgesetzt.` : "Das Element konnte nicht auf Standard zurückgesetzt werden.";
+    if (!result?.ok) this.layoutPersistenceStatus = "Layout konnte nicht auf Standard zurückgesetzt werden.";
+    this.renderStatus();
+    this.renderDetails();
+    this.syncActiveSelectionRuntime();
+  }
+
   openResetDefaultsDialog() {
     this.resetDefaultsDialogOpen = true;
     this.renderAll();
@@ -685,6 +747,7 @@ export class BbmUiEditorStatusPanel {
     const result = this.inspectorBridge?.resetLayoutToDefaults?.();
     this.layoutSessionStatus = result?.status || this.layoutSessionStatus;
     this.resetDefaultsDialogOpen = false;
+    this.resetElementDefaultsDialogOpen = false;
     this.layoutPersistenceStatus = result?.ok ? "Standardlayout aktiv" : "Layout konnte nicht auf Standard zurückgesetzt werden.";
     this.selectionMessage = result?.ok ? "Standardlayout aktiv." : "Layout konnte nicht auf Standard zurückgesetzt werden.";
     this.renderAll();

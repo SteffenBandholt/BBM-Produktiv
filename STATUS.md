@@ -3258,3 +3258,101 @@ Wichtig:
 - Nach erfolgreichem Standardreset ist der Session-LayoutStore wieder ein leerer Abweichungszustand; der persistente Default-Scope enthält keine Layoutentries.
 - M66-Tests prüfen den ursprünglichen Inline-Zustand, den Reset auf fehlende Inlinewerte, CSS-Quellen für Karte/Tabelle, Neustart, Abbrechen, Scope-/Profil-Isolation und Rollbackfälle.
 - Nächster offener Schritt: praktische Windows-Prüfung des UI-Editor-Ablaufs bleibt fachlich durchzuführen.
+
+## M67 Abschlussnotiz – ausgewähltes Element auf Standard zurücksetzen
+- M67 ergänzt den vierten klar getrennten Rücksetzweg „Element auf Standard …“ im Bereich des aktuell ausgewählten Elements.
+- Der Button öffnet einen Bestätigungsdialog mit lesbarem Elementnamen und ohne technische ID; „Abbrechen“ führt keine API- oder Layoutänderung aus.
+- Der Erfolgsweg läuft Panel → Inspector-Bridge → Inspector → BBM-Main-HostAdapter → Session- und persistenter LayoutStore → expliziter HTMLElement-Ref.
+- Aus dem persistenten Defaultprofil wird nur der Eintrag des ausgewählten Elements entfernt; andere Elemente, fremde Profile und fremde Scopes bleiben erhalten.
+- Aus dem Session-LayoutStore und aus der Sitzungsbaseline wird ebenfalls nur das ausgewählte Element auf CSS-/Registry-Standard aktualisiert; Kind- und Elternelemente bleiben isoliert.
+- Sichtbar entfernt der HostAdapter nur Editor-Inlinewerte (`transform`, `width`, `height`) und setzt `hidden` gemäß Registry-/Layout-Default; Fachinhalte bleiben unverändert.
+- Strukturierte Statusfelder (`selectedElementHasSavedLayout`, `selectedElementDeviatesFromDefaults`, `selectedElementCanResetToDefaults`) steuern die Button-Aktivierung ohne Textvergleich oder ID-Sonderfall im Panel.
+- Neuer Guardrail-/Regressionstest: `scripts/tests/m67ResetElementToDefaults.test.cjs`; `scripts/test.cjs` bindet den M67-Test ein.
+- Prüfung in Codex Cloud:
+  - `node scripts/ui-editor-contract-check.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs --self-test` OK
+  - `node scripts/tests/m64UiEditorTestSurface.test.cjs` OK
+  - `node scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs` OK
+  - `node scripts/tests/m66ResetLayoutToDefaults.test.cjs` OK
+  - `node scripts/tests/m67ResetElementToDefaults.test.cjs` OK
+  - `timeout 180s node scripts/test.cjs` erreicht nur OK-Ausgaben, beendet aber nicht innerhalb des Cloud-Zeitfensters
+  - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
+- Nächster offener Schritt:
+  - Praktische Windows-/Electron-Abnahme des vollständigen M67-Nutzerablaufs lokal durchführen; in Codex Cloud nicht verfügbar.
+
+## M67 Korrektur – strukturierter Elementstatus erreicht echten Bridge-Pfad
+- Status: umgesetzt im Korrekturcommit nach Reviewbefund.
+- Beschreibung:
+  - Der BBM-Main-HostAdapter reicht `getPersistenceStatus({ elementId })` jetzt bis in die interne Statusberechnung durch, statt das ausgewählte Elementargument zu verwerfen.
+  - Dadurch erreichen `selectedElementHasSavedLayout`, `selectedElementDeviatesFromDefaults` und `selectedElementCanResetToDefaults` den echten `EditorLayoutControls`-/Bridge-/Panelpfad.
+  - Der M67-Test prüft nun zusätzlich den echten Bridge-Statuspfad mit gespeichertem Layout und aktivierbarem Einzelreset.
+- Prüfung:
+  - `node scripts/tests/m67ResetElementToDefaults.test.cjs` OK
+  - `git diff --check` OK
+  - `node scripts/ui-editor-contract-check.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs --self-test` OK
+  - `node scripts/tests/m64UiEditorTestSurface.test.cjs` OK
+  - `node scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs` OK
+  - `node scripts/tests/m66ResetLayoutToDefaults.test.cjs` OK
+  - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
+  - `timeout 30s npm start` in dieser Umgebung aus demselben Grund nicht ausführbar
+- Nächster offener Schritt:
+  - Lokale Windows-/Electron-Prüfung nach Nutzerliste auf dem Zielsystem durchführen.
+
+## M67 Korrektur 2 – sichtbare Isolation nach Testflächen-Ref-Neuaufbau
+- Status: umgesetzt im Korrekturcommit zu PR #207.
+- Beschreibung:
+  - Nach dem Neuregistrieren der UI-Editor-Testflächen-Refs wird der aktuelle Session-Layoutzustand über eine öffentliche Runtime-Kette erneut auf die expliziten Refs angewendet.
+  - Die neue Reapply-Kette läuft Panel/Testflächen-Ref-Neuaufbau → Inspector-Bridge → Inspector → HostAdapter → aktueller Session-LayoutStore → explizite Refs.
+  - Reapply speichert nichts, lädt keinen persistenten Zustand, löscht keine Einträge und verändert keine Sessionbaseline.
+  - `confirmResetSelectedElementToDefaults()` aktualisiert nach dem Einzelreset nur Status und Detailbereich statt pauschal `renderAll()` aufzurufen.
+  - Dadurch bleibt die zurückgesetzte Testkarte standardmäßig, während Tabelle und Kindelemente ihre aktuellen Sessionwerte auch nach Ref-Neuaufbau sichtbar behalten.
+- Prüfung:
+  - `git diff --check` OK
+  - `node scripts/ui-editor-contract-check.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs --self-test` OK
+  - `node scripts/tests/m67ResetElementToDefaults.test.cjs` OK
+  - `node scripts/tests/m66ResetLayoutToDefaults.test.cjs` OK
+  - `node scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs` OK
+  - `node scripts/tests/m64UiEditorTestSurface.test.cjs` OK
+  - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
+- Nächster offener Schritt:
+  - Lokale Windows-/Electron-Abnahme auf dem Zielsystem: Testkarte und Tabelle verändern/speichern, Testkarte einzeln zurücksetzen, Tabelle darf sichtbar nicht springen.
+
+## M67 Korrektur 3 – Elementdialog ohne Testflächen-Neuaufbau
+- Status: umgesetzt im Korrekturcommit zu PR #207.
+- Beschreibung:
+  - `openResetElementDefaultsDialog()` und `closeResetElementDefaultsDialog()` aktualisieren nur noch den Detailbereich und rufen kein `renderAll()` mehr auf.
+  - Der Bestätigungspfad bleibt ohne `renderAll()` und ohne `renderTestSurface()`; er aktualisiert nur Status, Details und Auswahl-/Overlay-Synchronisation.
+  - Der Reapply-Pfad bleibt als Absicherung für tatsächlich notwendige Ref-Neuaufbauten erhalten, wird aber nicht als Ersatz für unnötiges Dialog-Rendering genutzt.
+  - Der M67-Paneltest prüft nun explizit, dass Karten-, Überschrift- und Tabellen-Refs beim Öffnen, Abbrechen und Bestätigen identisch bleiben.
+- Prüfung:
+  - `git diff --check` OK
+  - `node scripts/tests/m67ResetElementToDefaults.test.cjs` OK
+  - `node scripts/tests/m66ResetLayoutToDefaults.test.cjs` OK
+  - `node scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs` OK
+  - `node scripts/tests/m64UiEditorTestSurface.test.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs --self-test` OK
+  - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
+- Nächster offener Schritt:
+  - Lokale Windows-/Electron-Abnahme des Dialogablaufs auf dem Zielsystem wiederholen; die Tabelle darf beim Öffnen, Abbrechen oder Bestätigen nicht springen.
+
+## M67 Korrektur 4 – M63C-Operationspfad bei fehlender Persistenz
+- Status: umgesetzt im Korrekturcommit zu PR #207.
+- Beschreibung:
+  - Der elementbezogene M67-Persistenzstatus blockiert den Inspector-/Bridge-Pfad nicht mehr, wenn kein persistenter Browser-Storage verfügbar ist.
+  - `getSavedEntry(elementId)` behandelt nicht verfügbare Persistenz als „kein gespeicherter Eintrag“ statt den Inspector mit `LAYOUT_STORAGE_UNAVAILABLE` abbrechen zu lassen.
+  - Damit bleiben M63C-`allowedOps`/`effectiveOps`, Schrittweite 5 und Richtungspfeil-Aktivierung vollständig registry-/inspectorgeführt.
+- Prüfung:
+  - `node scripts/tests/m63cLayoutControlConsole.test.cjs` OK
+  - `node scripts/tests/m67ResetElementToDefaults.test.cjs` OK
+  - `git diff --check` OK
+  - `node scripts/ui-editor-contract-check.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs --self-test` OK
+  - `node scripts/tests/m66ResetLayoutToDefaults.test.cjs` OK
+  - `node scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs` OK
+  - `node scripts/tests/m64UiEditorTestSurface.test.cjs` OK
+  - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
+- Nächster offener Schritt:
+  - Vollständigen `npm test` lokal/CI mit vorhandenen Electron-Systembibliotheken erneut ausführen.
