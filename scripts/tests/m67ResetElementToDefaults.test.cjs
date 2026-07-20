@@ -117,6 +117,85 @@ async function runM67ResetElementToDefaultsTests(run) {
   });
 
 
+  await run("M67 Paneldialog: Öffnen, Abbrechen und Bestätigen ersetzen keine Testflächen-Refs", async () => {
+    const oldDocument = global.document;
+    const oldWindow = global.window;
+    const oldHTMLElement = global.HTMLElement;
+    try {
+      const doc = { defaultView: { HTMLElement: TestNode }, createElement: (tagName) => new TestNode(tagName) };
+      const win = { HTMLElement: TestNode, addEventListener() {}, removeEventListener() {} };
+      global.document = doc;
+      global.window = win;
+      global.HTMLElement = TestNode;
+      const [{ createBbmMainUiHostAdapter }, { createBbmEditorRuntimeInspectorBridge }, { BbmUiEditorStatusPanel }, refs] = await Promise.all([
+        importEsmFromFile(HOST_ADAPTER_PATH),
+        importEsmFromFile(BRIDGE_PATH),
+        importEsmFromFile(PANEL_PATH),
+        importEsmFromFile(REFS_PATH),
+      ]);
+      const storage = persistentStorage(createEditorLayoutMemoryStorage);
+      refs.clearBbmUiElementRefs();
+      const panel = new BbmUiEditorStatusPanel();
+      panel.statusNode = new TestNode("section");
+      panel.elementsNode = new TestNode("section");
+      panel.detailsNode = new TestNode("section");
+      panel.testSurfaceNode = new TestNode("section");
+      panel.status = { ok: true };
+      panel.elements = registry.map((entry) => ({ ...entry, label: entry.name, elementId: entry.id }));
+      panel.selectedElement = panel.elements.find((entry) => entry.elementId === "bbm.uiEditorTest.card");
+      const adapter = createBbmMainUiHostAdapter({ registry, layoutStorage: storage });
+      panel.inspectorBridge = createBbmEditorRuntimeInspectorBridge({
+        registryElements: panel.elements,
+        getSelectedElement: () => panel.selectedElement,
+        hostAdapterFactory: () => adapter,
+      });
+      panel.renderTestSurface();
+      panel.inspectorBridge.beginLayoutSession();
+      adapter.submitChangeRequest(request("bbm.uiEditorTest.card", "move", { x: 10, y: 15 }));
+      adapter.submitChangeRequest(request("bbm.uiEditorTest.card", "resize", { width: 25, height: 20 }));
+      adapter.submitChangeRequest(request("bbm.uiEditorTest.card.title", "move", { x: 5 }));
+      adapter.submitChangeRequest(request("bbm.uiEditorTest.table", "move", { x: 20 }));
+      adapter.submitChangeRequest(request("bbm.uiEditorTest.table", "resize", { width: 15, height: 10 }));
+      assert.equal(panel.inspectorBridge.saveLayoutSession().ok, true);
+      const cardRefBefore = refs.getBbmUiElementRef("bbm.uiEditorTest.card");
+      const titleRefBefore = refs.getBbmUiElementRef("bbm.uiEditorTest.card.title");
+      const tableRefBefore = refs.getBbmUiElementRef("bbm.uiEditorTest.table");
+      panel.renderDetails();
+      const openFirst = findNode(panel.detailsNode, (node) => node.tagName === "button" && node.textContent === "Element auf Standard …");
+      assert.equal(openFirst.disabled, false);
+      openFirst.click();
+      assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.card"), cardRefBefore);
+      assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.table"), tableRefBefore);
+      const cancel = findNode(panel.detailsNode, (node) => node.tagName === "button" && node.textContent === "Abbrechen");
+      assert.ok(cancel);
+      cancel.click();
+      assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.card"), cardRefBefore);
+      assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.table"), tableRefBefore);
+      const openSecond = findNode(panel.detailsNode, (node) => node.tagName === "button" && node.textContent === "Element auf Standard …");
+      openSecond.click();
+      const confirm = findNode(panel.detailsNode, (node) => node.tagName === "button" && node.textContent === "Element zurücksetzen");
+      assert.ok(confirm);
+      confirm.click();
+      assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.card"), cardRefBefore);
+      assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.card.title"), titleRefBefore);
+      assert.equal(refs.getBbmUiElementRef("bbm.uiEditorTest.table"), tableRefBefore);
+      assert.equal(cardRefBefore.style.values.transform, undefined);
+      assert.equal(cardRefBefore.style.values.width, undefined);
+      assert.equal(cardRefBefore.style.values.height, undefined);
+      assert.equal(titleRefBefore.style.values.transform, "translate(5px, 0px)");
+      assert.equal(tableRefBefore.style.values.transform, "translate(20px, 0px)");
+      assert.equal(tableRefBefore.style.values.width, "435px");
+      assert.equal(tableRefBefore.style.values.height, "190px");
+      assert.equal(storage.read().entries["bbm.uiEditorTest.card"], undefined);
+      assert.ok(storage.read().entries["bbm.uiEditorTest.table"]);
+      assert.ok(adapter.getCurrentLayoutState().some((entry) => entry.elementId === "bbm.uiEditorTest.table"));
+    } finally {
+      global.document = oldDocument;
+      global.window = oldWindow;
+      global.HTMLElement = oldHTMLElement;
+    }
+  });
+
   await run("M67 Panelintegration: Ref-Neuaufbau übernimmt aktuelle Sessionwerte anderer Elemente", async () => {
     const oldDocument = global.document;
     const oldWindow = global.window;

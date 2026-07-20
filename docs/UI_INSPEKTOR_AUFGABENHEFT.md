@@ -750,3 +750,14 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
   - `scripts/tests/m67ResetElementToDefaults.test.cjs` enthält einen echten Panelintegrationstest, der neue Refs erzwingt und prüft, dass Tabelle und Kindelemente ihre sichtbaren Layoutwerte behalten.
 - Offen:
   - Praktische Windows-/Electron-Abnahme nach manuellem Fehlerbefund bleibt auf dem Zielsystem durchzuführen.
+
+## M67 Korrektur 3 – Dialog ohne Ref-Ersatz
+- Status: umgesetzt.
+- Korrektur:
+  - Öffnen und Schließen des Element-Resetdialogs aktualisieren ausschließlich den Detailbereich.
+  - Bestätigen bleibt ohne vollständiges Rendering und ohne Testflächen-Neuaufbau.
+  - Reapply bleibt nur Absicherung für notwendige Neuaufbauten, nicht als Dialog-Workaround.
+- Testergänzung:
+  - Der M67-Test prüft jetzt explizit die Objektidentität von Karten-, Überschrift- und Tabellen-Refs bei Öffnen, Abbrechen und Bestätigen.
+- Offen:
+  - Praktische Windows-/Electron-Abnahme des manuellen Fehlerfalls bleibt auf dem Zielsystem durchzuführen.

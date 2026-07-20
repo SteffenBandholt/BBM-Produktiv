@@ -3318,3 +3318,22 @@ Wichtig:
   - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
 - Nächster offener Schritt:
   - Lokale Windows-/Electron-Abnahme auf dem Zielsystem: Testkarte und Tabelle verändern/speichern, Testkarte einzeln zurücksetzen, Tabelle darf sichtbar nicht springen.
+
+## M67 Korrektur 3 – Elementdialog ohne Testflächen-Neuaufbau
+- Status: umgesetzt im Korrekturcommit zu PR #207.
+- Beschreibung:
+  - `openResetElementDefaultsDialog()` und `closeResetElementDefaultsDialog()` aktualisieren nur noch den Detailbereich und rufen kein `renderAll()` mehr auf.
+  - Der Bestätigungspfad bleibt ohne `renderAll()` und ohne `renderTestSurface()`; er aktualisiert nur Status, Details und Auswahl-/Overlay-Synchronisation.
+  - Der Reapply-Pfad bleibt als Absicherung für tatsächlich notwendige Ref-Neuaufbauten erhalten, wird aber nicht als Ersatz für unnötiges Dialog-Rendering genutzt.
+  - Der M67-Paneltest prüft nun explizit, dass Karten-, Überschrift- und Tabellen-Refs beim Öffnen, Abbrechen und Bestätigen identisch bleiben.
+- Prüfung:
+  - `git diff --check` OK
+  - `node scripts/tests/m67ResetElementToDefaults.test.cjs` OK
+  - `node scripts/tests/m66ResetLayoutToDefaults.test.cjs` OK
+  - `node scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs` OK
+  - `node scripts/tests/m64UiEditorTestSurface.test.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs --self-test` OK
+  - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
+- Nächster offener Schritt:
+  - Lokale Windows-/Electron-Abnahme des Dialogablaufs auf dem Zielsystem wiederholen; die Tabelle darf beim Öffnen, Abbrechen oder Bestätigen nicht springen.

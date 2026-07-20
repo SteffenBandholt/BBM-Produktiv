@@ -666,12 +666,12 @@ export class BbmUiEditorStatusPanel {
   openResetElementDefaultsDialog() {
     if (!this.selectedElement) return;
     this.resetElementDefaultsDialogOpen = true;
-    this.renderAll();
+    this.renderDetails();
   }
 
   closeResetElementDefaultsDialog() {
     this.resetElementDefaultsDialogOpen = false;
-    this.renderAll();
+    this.renderDetails();
   }
 
   renderResetElementDefaultsDialog() {
