@@ -3279,3 +3279,22 @@ Wichtig:
   - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
 - Nächster offener Schritt:
   - Praktische Windows-/Electron-Abnahme des vollständigen M67-Nutzerablaufs lokal durchführen; in Codex Cloud nicht verfügbar.
+
+## M67 Korrektur – strukturierter Elementstatus erreicht echten Bridge-Pfad
+- Status: umgesetzt im Korrekturcommit nach Reviewbefund.
+- Beschreibung:
+  - Der BBM-Main-HostAdapter reicht `getPersistenceStatus({ elementId })` jetzt bis in die interne Statusberechnung durch, statt das ausgewählte Elementargument zu verwerfen.
+  - Dadurch erreichen `selectedElementHasSavedLayout`, `selectedElementDeviatesFromDefaults` und `selectedElementCanResetToDefaults` den echten `EditorLayoutControls`-/Bridge-/Panelpfad.
+  - Der M67-Test prüft nun zusätzlich den echten Bridge-Statuspfad mit gespeichertem Layout und aktivierbarem Einzelreset.
+- Prüfung:
+  - `node scripts/tests/m67ResetElementToDefaults.test.cjs` OK
+  - `git diff --check` OK
+  - `node scripts/ui-editor-contract-check.cjs` OK
+  - `node scripts/ui-editor-contract-check.cjs --self-test` OK
+  - `node scripts/tests/m64UiEditorTestSurface.test.cjs` OK
+  - `node scripts/tests/m65LayoutPersistenceRoundtrip.test.cjs` OK
+  - `node scripts/tests/m66ResetLayoutToDefaults.test.cjs` OK
+  - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
+  - `timeout 30s npm start` in dieser Umgebung aus demselben Grund nicht ausführbar
+- Nächster offener Schritt:
+  - Lokale Windows-/Electron-Prüfung nach Nutzerliste auf dem Zielsystem durchführen.

@@ -83,6 +83,22 @@ async function runM67ResetElementToDefaultsTests(run) {
     const result = inspector.resetLayoutElementToDefaults("bbm.main-layout", "bbm.uiEditorTest.card"); assert.equal(result.ok, true); assert.equal(result.status.changedCount, 1); assert.equal(result.status.changedByElementId["bbm.uiEditorTest.table"], true);
   });
 
+  await run("M67 Status: echter Bridge-Pfad aktiviert Button über strukturierte Elementfelder", async () => {
+    const { createBbmEditorRuntimeInspectorBridge } = await importEsmFromFile(BRIDGE_PATH);
+    const storage = persistentStorage(createEditorLayoutMemoryStorage);
+    await saveTwo(storage);
+    const harness = await createHarness(storage);
+    const bridge = createBbmEditorRuntimeInspectorBridge({
+      registryElements: registry.map((entry) => ({ ...entry, label: entry.name, elementId: entry.id })),
+      selectedElement: { elementId: "bbm.uiEditorTest.card", label: "Testkarte", editable: true },
+      hostAdapterFactory: () => harness.adapter,
+    });
+    const status = bridge.inspectSelectedElement();
+    assert.equal(status.ok, true);
+    assert.equal(status.selectedElementHasSavedLayout, true);
+    assert.equal(status.selectedElementCanResetToDefaults, true);
+  });
+
   await run("M67 E: Panel-Abbrechen ruft keine API auf", async () => {
     const oldDocument = global.document; try { global.document = { createElement: (tagName) => new TestNode(tagName) }; const { BbmUiEditorStatusPanel } = await importEsmFromFile(PANEL_PATH); const panel = new BbmUiEditorStatusPanel(); let calls = 0; panel.detailsNode = new TestNode("section"); panel.editorActive = true; panel.selectedElement = { elementId: "bbm.uiEditorTest.card", label: "Testkarte", editable: true }; panel.inspectorBridge = { inspectSelectedElement: () => ({ ok: true, allowedOps: ["move", "resize"], selectedElementCanResetToDefaults: true }), resetSelectedElementToDefaults: () => { calls += 1; return { ok: true }; } }; panel.renderReadonlyLayoutControls(panel.selectedElement); findNode(panel.detailsNode, (n) => n.tagName === "button" && n.textContent === "Element auf Standard …").click(); panel.detailsNode = new TestNode("section"); panel.renderReadonlyLayoutControls(panel.selectedElement); assert.match(collectText(panel.detailsNode), /Element auf Standard zurücksetzen\?/); assert.doesNotMatch(collectText(panel.detailsNode), /bbm\.uiEditorTest\.card/); findNode(panel.detailsNode, (n) => n.tagName === "button" && n.textContent === "Abbrechen").click(); assert.equal(calls, 0); } finally { global.document = oldDocument; }
   });

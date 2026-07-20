@@ -729,3 +729,13 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
   - M64/M65/M66/M67 Einzeltests laufen in Codex Cloud grün.
 - Offen:
   - Lokale Windows-/Electron-Bedienprüfung: speichern, neu starten, Elementreset abbrechen/bestätigen, erneutes Verschieben und ↶, erneuter Neustart.
+
+## M67 Korrektur – Elementstatus im echten Runtimepfad
+- Status: umgesetzt.
+- Korrektur:
+  - `getPersistenceStatus({ elementId })` wird im BBM-Main-HostAdapter nicht mehr ohne Argument ausgewertet.
+  - Der echte Bridge-/Inspector-Status liefert damit die elementbezogenen Felder für die Aktivierung von „Element auf Standard …“.
+- Testergänzung:
+  - `scripts/tests/m67ResetElementToDefaults.test.cjs` prüft jetzt zusätzlich den echten Bridge-Pfad für `selectedElementHasSavedLayout` und `selectedElementCanResetToDefaults`.
+- Offen:
+  - Praktische Windows-/Electron-Abnahme bleibt außerhalb der Cloud durchzuführen.

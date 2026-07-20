@@ -352,8 +352,8 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
       return persistentLayoutStore.list();
     },
 
-    getPersistenceStatus() {
-      return getPersistenceStatus();
+    getPersistenceStatus(options = {}) {
+      return getPersistenceStatus(options);
     },
 
     loadSavedLayout() {
