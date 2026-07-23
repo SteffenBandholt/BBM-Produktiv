@@ -6,6 +6,10 @@ import {
   getRestarbeitenModuleEntry,
   RESTARBEITEN_MODULE_ID,
 } from "../../modules/restarbeiten/index.js";
+import {
+  getPlaeneModuleEntry,
+  PLAENE_MODULE_ID,
+} from "../../modules/plaene/index.js";
 
 const AVAILABLE_MODULE_ENTRIES = Object.freeze([
   Object.freeze({
@@ -16,11 +20,16 @@ const AVAILABLE_MODULE_ENTRIES = Object.freeze([
     moduleId: RESTARBEITEN_MODULE_ID,
     entry: getRestarbeitenModuleEntry(),
   }),
+  Object.freeze({
+    moduleId: PLAENE_MODULE_ID,
+    entry: getPlaeneModuleEntry(),
+  }),
 ]);
 
 const DEFAULT_ACTIVE_MODULE_IDS = Object.freeze([
   PROTOKOLL_MODULE_ID,
   RESTARBEITEN_MODULE_ID,
+  PLAENE_MODULE_ID,
 ]);
 
 const PRODUCTIVE_DEFAULT_RELEASE_STATE = Object.freeze({
@@ -225,4 +234,4 @@ export function getActiveModuleIdsForReleaseState(releaseState) {
   return RELEASE_STATE_MODULE_ACCESS.getModuleIds(releaseState);
 }
 
-export { PROTOKOLL_MODULE_ID };
+export { PROTOKOLL_MODULE_ID, RESTARBEITEN_MODULE_ID, PLAENE_MODULE_ID };
