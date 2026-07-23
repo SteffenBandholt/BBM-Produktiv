@@ -33,6 +33,12 @@ function createFakeDocument() {
         this.textContent = "";
         this.append(...nodes);
       },
+      addEventListener(name, handler) {
+        this[`on${String(name)}`] = handler;
+      },
+      click() {
+        if (typeof this.onclick === "function") this.onclick({ type: "click", target: this });
+      },
       setAttribute(name, value) {
         const key = String(name);
         const text = String(value);
@@ -141,6 +147,53 @@ async function runPlaeneModuleTests(run) {
     assert.equal(text.includes("Öffnen Sie zuerst ein Projekt, um dessen Pläne zu verwalten."), true);
     assert.equal(text.includes("Modul Pläne"), false);
     assert.equal(Boolean(findByUiId(root, "plaene.m1.no-project-notice")), true);
+  }));
+
+  await run("Pläne: Zurück ohne aktives Projekt öffnet Projektliste", async () => withFakeDom(async () => {
+    const calls = [];
+    const screen = new screenModule.default({
+      projectId: null,
+      project: null,
+      router: {
+        async showProjects() {
+          calls.push(["showProjects"]);
+        },
+      },
+    });
+    const root = screen.render();
+    await flush();
+    const buttons = findNodes(root, (node) => node.tagName === "BUTTON" && node.textContent === "Zurück");
+    assert.equal(buttons.length, 1);
+    buttons[0].click();
+    await flush();
+    assert.deepEqual(calls, [["showProjects"]]);
+  }));
+
+  await run("Pläne: Zurück mit aktivem Projekt öffnet Projekt-/Modulauswahl ohne Projektkontextänderung", async () => withFakeDom(async () => {
+    const calls = [];
+    const project = { id: "projekt-a", name: "Projekt A" };
+    const screen = new screenModule.default({
+      projectId: "projekt-a",
+      project,
+      router: {
+        async showProjectWorkspace(projectId, options) {
+          calls.push(["showProjectWorkspace", projectId, options]);
+        },
+        async showProjects() {
+          calls.push(["showProjects"]);
+        },
+      },
+    });
+    const root = screen.render();
+    await flush();
+    const buttons = findNodes(root, (node) => node.tagName === "BUTTON" && node.textContent === "Zurück");
+    assert.equal(buttons.length, 1);
+    buttons[0].click();
+    await flush();
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0][0], "showProjectWorkspace");
+    assert.equal(calls[0][1], "projekt-a");
+    assert.deepEqual(calls[0][2], { project });
   }));
 
   await run("Pläne: aktives Projekt zeigt ausschließlich übergebene Projektwerte", async () => withFakeDom(async () => {

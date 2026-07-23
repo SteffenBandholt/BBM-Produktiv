@@ -126,6 +126,30 @@ export default class PlaeneScreen {
     return this.root;
   }
 
+
+  async goBack() {
+    if (this.projectId && typeof this.router?.showProjectWorkspace === "function") {
+      await this.router.showProjectWorkspace(this.projectId, { project: this.project });
+      return true;
+    }
+    if (typeof this.router?.showProjects === "function") {
+      await this.router.showProjects();
+      return true;
+    }
+    return false;
+  }
+
+  _renderBackButton() {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "bbm-plaene-back-button";
+    button.textContent = "Zurück";
+    button.addEventListener("click", () => {
+      void this.goBack();
+    });
+    return button;
+  }
+
   async loadProjectFolder() {
     if (!this.projectId || !this.project || typeof window === "undefined") return;
     const api = window.bbmDb || {};
@@ -148,7 +172,7 @@ export default class PlaeneScreen {
     if (!this.root) return;
     this.root.replaceChildren();
     if (!this.projectId) {
-      this.root.append(this._renderNoProjectNotice());
+      this.root.append(this._renderBackButton(), this._renderNoProjectNotice());
       return;
     }
     this.root.append(this._renderProjectView());
@@ -186,6 +210,7 @@ export default class PlaeneScreen {
       parent: "plaene.m1.root",
     });
     header.append(
+      this._renderBackButton(),
       createText("h1", "Modul Pläne", {
         id: "plaene.m1.title",
         kind: "single",
