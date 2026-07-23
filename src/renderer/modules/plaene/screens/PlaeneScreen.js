@@ -139,11 +139,19 @@ export default class PlaeneScreen {
     return false;
   }
 
-  _renderBackButton() {
+  _renderBackButton(parentId) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "bbm-plaene-back-button";
     button.textContent = "Zurück";
+    setUiEditorAttributes(button, {
+      id: "plaene.m1.back-button",
+      kind: "button",
+      label: "Zurück",
+      parent: parentId,
+      editable: "true",
+      ops: "layout",
+    });
     button.addEventListener("click", () => {
       void this.goBack();
     });
@@ -172,7 +180,7 @@ export default class PlaeneScreen {
     if (!this.root) return;
     this.root.replaceChildren();
     if (!this.projectId) {
-      this.root.append(this._renderBackButton(), this._renderNoProjectNotice());
+      this.root.append(this._renderBackButton("plaene.m1.root"), this._renderNoProjectNotice());
       return;
     }
     this.root.append(this._renderProjectView());
@@ -210,7 +218,7 @@ export default class PlaeneScreen {
       parent: "plaene.m1.root",
     });
     header.append(
-      this._renderBackButton(),
+      this._renderBackButton("plaene.m1.header"),
       createText("h1", "Modul Pläne", {
         id: "plaene.m1.title",
         kind: "single",

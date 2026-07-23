@@ -164,6 +164,13 @@ async function runPlaeneModuleTests(run) {
     await flush();
     const buttons = findNodes(root, (node) => node.tagName === "BUTTON" && node.textContent === "Zurück");
     assert.equal(buttons.length, 1);
+    const backButtons = findNodes(root, (node) => node.getAttribute?.("data-ui-inspector-id") === "plaene.m1.back-button");
+    assert.equal(backButtons.length, 1);
+    assert.equal(backButtons[0].getAttribute("data-ui-editor-kind"), "button");
+    assert.equal(backButtons[0].getAttribute("data-ui-editor-label"), "Zurück");
+    assert.equal(backButtons[0].getAttribute("data-ui-editor-parent"), "plaene.m1.root");
+    assert.equal(backButtons[0].getAttribute("data-ui-editor-editable"), "true");
+    assert.equal(backButtons[0].getAttribute("data-ui-editor-ops"), "layout");
     buttons[0].click();
     await flush();
     assert.deepEqual(calls, [["showProjects"]]);
@@ -188,6 +195,13 @@ async function runPlaeneModuleTests(run) {
     await flush();
     const buttons = findNodes(root, (node) => node.tagName === "BUTTON" && node.textContent === "Zurück");
     assert.equal(buttons.length, 1);
+    const backButtons = findNodes(root, (node) => node.getAttribute?.("data-ui-inspector-id") === "plaene.m1.back-button");
+    assert.equal(backButtons.length, 1);
+    assert.equal(backButtons[0].getAttribute("data-ui-editor-kind"), "button");
+    assert.equal(backButtons[0].getAttribute("data-ui-editor-label"), "Zurück");
+    assert.equal(backButtons[0].getAttribute("data-ui-editor-parent"), "plaene.m1.header");
+    assert.equal(backButtons[0].getAttribute("data-ui-editor-editable"), "true");
+    assert.equal(backButtons[0].getAttribute("data-ui-editor-ops"), "layout");
     buttons[0].click();
     await flush();
     assert.equal(calls.length, 1);
@@ -293,6 +307,7 @@ async function runPlaeneModuleTests(run) {
     const expected = new Map([
       ["plaene.m1.root", ""],
       ["plaene.m1.header", "plaene.m1.root"],
+      ["plaene.m1.back-button", "plaene.m1.header"],
       ["plaene.m1.title", "plaene.m1.header"],
       ["plaene.m1.active-project", "plaene.m1.header"],
       ["plaene.m1.project-summary", "plaene.m1.root"],
@@ -308,8 +323,12 @@ async function runPlaeneModuleTests(run) {
       assert.equal(node.getAttribute("data-ui-editor-id"), id);
       assert.equal(node.getAttribute("data-ui-editor-parent"), parentId);
       assert.equal(node.getAttribute("data-ui-editor-editable"), "true");
-      assert.equal(node.getAttribute("data-ui-editor-ops"), "inspect,select");
-      assert.ok(["frame", "field", "single"].includes(node.getAttribute("data-ui-editor-kind")));
+      if (id === "plaene.m1.back-button") {
+        assert.equal(node.getAttribute("data-ui-editor-ops"), "layout");
+      } else {
+        assert.equal(node.getAttribute("data-ui-editor-ops"), "inspect,select");
+      }
+      assert.ok(["frame", "field", "single", "button"].includes(node.getAttribute("data-ui-editor-kind")));
       assert.ok(node.getAttribute("data-ui-editor-label"));
       if (parentId) assert.ok(findByUiId(root, parentId), `${id} Parent fehlt`);
     }
