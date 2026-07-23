@@ -3356,3 +3356,32 @@ Wichtig:
   - `npm test` in dieser Umgebung wegen fehlender Electron-Systembibliothek `libatk-1.0.so.0` nicht ausführbar
 - Nächster offener Schritt:
   - Vollständigen `npm test` lokal/CI mit vorhandenen Electron-Systembibliotheken erneut ausführen.
+
+## Modul Pläne – M1 Modulgerüst im bestehenden Projektkontext
+- Status: umgesetzt im Branch `codex/plaene-m1-modulgeruest`.
+- Beschreibung:
+  - Neues Projektmodul `plaene` als kleines Modulgerüst parallel zu vorhandenen Projektmodulen ergänzt.
+  - Das Modul nutzt den bestehenden generischen Projektmodul-Pfad und erzeugt keinen eigenen Projekt-State.
+  - Ohne aktives Projekt zeigt die Ansicht den Hinweis: „Kein Projekt ausgewählt. Öffnen Sie zuerst ein Projekt, um dessen Pläne zu verwalten.“
+  - Mit aktivem Projekt zeigt die Ansicht nur den übergebenen Projektkontext: Projektname, Projekt-ID, bestehenden Projektordner über die vorhandene Storage-Preview sowie lesend gezählte Gebäude und Geschosse aus vorhandenen Projektwerten.
+  - Spätere Meilensteine wie Planordner-Auswahl, PDF-Suche/-Analyse, OCR, KI, WebP, Planversionierung, Planwächter, Mobil-Synchronisation und Restarbeiten-Anbindung wurden nicht begonnen.
+- Prüfung:
+  - `node scripts/tests/plaeneModule.test.cjs` OK
+- Nächster offener Schritt:
+  - M2 erst nach Abnahme von M1 beginnen: externen Planordner projektbezogen anbinden.
+- Risiken/Hindernisse:
+  - Praktische Computer-Use-/Electron-UI-Abnahme ist in dieser Umgebung nicht verfügbar und muss lokal/auf Zielsystem nachgeholt werden.
+  - Im aktuellen Checkout ist kein Git-Remote `origin` eingerichtet; Veröffentlichung/PR hängt vom verfügbaren PR-Werkzeug ab.
+
+## Modul Pläne – M1 Korrektur Zurück-Button
+- Status: umgesetzt im Branch `codex/plaene-m1-zurueck-button`.
+- Beschreibung:
+  - Die Planseite erhält oben links im Kopfbereich einen sichtbaren Button „Zurück“.
+  - Mit aktivem Projekt nutzt der Button den vorhandenen Router-Weg `showProjectWorkspace(projectId, { project })` zurück in die Projekt-/Modulauswahl.
+  - Ohne aktives Projekt nutzt der Button den vorhandenen Router-Weg `showProjects()` zurück zur Projektliste.
+  - Die Button-UI ist mit den vorhandenen UI-Editor-Metadaten klassifiziert; die fachliche Navigation bleibt keine Editor-Aktion.
+  - Keine Browser-History-Logik, keine zweite Navigation und keine späteren Pläne-Meilensteine wurden ergänzt.
+- Prüfung:
+  - `node scripts/tests/plaeneModule.test.cjs` OK
+- Nächster offener Schritt:
+  - Praktische Windows-/Electron-Prüfung des Zurück-Ablaufs nachholen, da Computer Use in dieser Umgebung nicht verfügbar ist.
