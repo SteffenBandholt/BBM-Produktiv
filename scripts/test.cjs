@@ -24,6 +24,7 @@ const { runBbmUiEditorInstalledArtifactsTests } = require("./tests/bbmUiEditorIn
 const { runBbmUiEditorRuntimeLauncherTests } = require("./tests/bbmUiEditorRuntimeLauncher.test.cjs");
 const { runProjektverwaltungModuleTests } = require("./tests/projektverwaltungModule.test.cjs");
 const { runRestarbeitenModuleTests } = require("./tests/restarbeitenModule.test.cjs");
+const { runPlaeneModuleTests } = require("./tests/plaeneModule.test.cjs");
 const { runRestarbeitenDataModelTests } = require("./tests/restarbeitenDataModel.test.cjs");
 const { runRestarbeitenRulesTests } = require("./tests/restarbeitenRules.test.cjs");
 const { runUiEditorContractTests } = require("./tests/uiEditorContract.test.cjs");
@@ -168,6 +169,7 @@ async function main() {
   await runBbmUiEditorRuntimeLauncherTests(run);
   await runProjektverwaltungModuleTests(run);
   await runRestarbeitenModuleTests(run);
+  await runPlaeneModuleTests(run);
   await runRestarbeitenDataModelTests(run);
   await runRestarbeitenRulesTests(run);
   await runUiEditorContractTests(run);
