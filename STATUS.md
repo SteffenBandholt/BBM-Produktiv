@@ -1,4 +1,20 @@
-# STATUS.md â€” BBM-Produktiv
+# STATUS.md — BBM-Produktiv
+
+### Korrektur PR #209 – Pläne-Zurück-Button
+- Ergebnis:
+  - PR #209 wurde auf die kleine Zurück-Ergänzung im Pläne-Screen begrenzt.
+  - Der Button führt mit aktivem Projekt zur Projekt-/Modulauswahl und ohne aktives Projekt zur Projektliste, ohne den Projektkontext zu verändern.
+- Geaenderte Dateien:
+  - `src/renderer/modules/plaene/screens/PlaeneScreen.js`
+  - `scripts/tests/plaeneModule.test.cjs`
+  - `STATUS.md`
+- Pruefung:
+  - `node scripts/tests/plaeneModule.test.cjs`
+  - `node scripts/ui-editor-contract-check.cjs src/renderer/modules/plaene/screens/PlaeneScreen.js`
+- Risiken / offen:
+  - Keine automatisierte GitHub-PR-Aktualisierung aus der Sandbox möglich, falls der Remote-Zugriff blockiert bleibt.
+- Naechster Schritt:
+  - PR #209 konfliktfrei gegen `main` prüfen.
 
 ### M62 – BBM Selection Legacy Cleanup
 - Ergebnis:
