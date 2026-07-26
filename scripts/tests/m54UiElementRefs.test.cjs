@@ -87,8 +87,9 @@ async function runM54UiElementRefsTests(run) {
     assert.doesNotMatch(coreShell, /createEditorScopeInspector/);
     assert.doesNotMatch(coreShell, /targetSelection/);
     const navigation = read("src/renderer/app/coreShellNavigation.js");
-    assert.match(navigation, /UI-Editor Status/);
-    assert.match(navigation, /showUiEditor/);
+    assert.match(navigation, /UI-Editor öffnen/);
+    assert.match(navigation, /kind:\s*"action"/);
+    assert.doesNotMatch(navigation, /showUiEditor/);
   });
 
   await run("M54 Sicherheit: keine DOM-Suche, keine zweite Registry, kein IPC-DOM und Registry bleibt explicit", () => {

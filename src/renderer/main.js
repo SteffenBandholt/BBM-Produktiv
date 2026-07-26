@@ -6,6 +6,8 @@ import Router from "./app/Router.js";
 import CoreShell from "./app/CoreShell.js";
 import { DEFAULT_THEME_SETTINGS, applyThemeForSettings } from "./theme/themes.js";
 import { applyPopupButtonStyle, applyPopupCardStyle } from "./ui/popupButtonStyles.js";
+import { installBbmM80EditorBridge } from "./ui-editor/m80Bridge.js";
+import { installBbmM80DiagnosticPilot } from "./ui-editor/m80Diagnostic.js";
 
 // App-Kern-Bootstrap: zentrale Startkonstanten und lokale Storage-/Settings-Keys.
 const PRINT_V2_PAD_LEFT_KEY = "print.v2.pagePadLeftMm";
@@ -21,6 +23,8 @@ const PRINT_LAYOUT_DEFAULTS = {
   [PRINT_V2_FOOTER_RESERVE_KEY]: "12",
 };
 const WHATSNEW_KEY_PREFIX = "bbm_whatsnew_seen_";
+
+installBbmM80EditorBridge();
 
 // Gemeinsame service-nahe Helfer: Settings-/Storage-Zugriffe ohne UI-Verdrahtung.
 const toSeenKey = (version) => `${WHATSNEW_KEY_PREFIX}${String(version || "").trim() || "unknown"}`;
@@ -162,6 +166,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   coreShell.start();
+
+  const m80Diagnostic = await window.uiEditor?.getDiagnosticMode?.();
+  if (m80Diagnostic?.ok === true && m80Diagnostic.enabled === true) {
+    const expiresAt = Date.now() + 2_000;
+    while (!router.currentView && Date.now() < expiresAt) {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    installBbmM80DiagnosticPilot({ router });
+  }
 
   try {
     const versionRes = await window.bbmDb?.appGetVersion?.();

@@ -95,12 +95,12 @@ function findNode(node, predicate) {
 }
 
 async function runM52UiEditorVisibleEntryTests(run) {
-  await run("M52 Startpunkt: bestehende Navigation enthaelt eindeutigen UI-Editor-Status-Einstieg", () => {
+  await run("M52/M80 Startpunkt: Navigation enthaelt die separate UI-Editor-Aktion", () => {
     const navigation = read("src/renderer/app/coreShellNavigation.js");
     const router = read("src/renderer/app/Router.js");
-    assert.match(navigation, /label:\s*"UI-Editor Status"/);
-    assert.doesNotMatch(navigation, /label:\s*"UI-Editor"[,}]/);
-    assert.match(navigation, /router\.showUiEditor\(\)/);
+    assert.match(navigation, /label:\s*"UI-Editor öffnen"/);
+    assert.match(navigation, /kind:\s*"action"/);
+    assert.doesNotMatch(navigation, /router\.showUiEditor\(\)/);
     const coreShell = read("src/renderer/app/CoreShell.js");
     assert.match(router, /async showUiEditor\(\)/);
     assert.match(router, /const panel = createBbmUiEditorStatusPanel\(\{ router: this \}\);/);
@@ -108,6 +108,7 @@ async function runM52UiEditorVisibleEntryTests(run) {
     assert.doesNotMatch(router, /this\.show\(panel\.render\(\), \{/);
     assert.match(router, /showSettings\(\)/);
     assert.match(coreShell, /const routeButtons = shellNavigationRouteDefs\.map/);
+    assert.match(coreShell, /def\.kind === "action"/);
     assert.match(coreShell, /const coreNavigationButtons = \[\.\.\.routeButtons, btnHelp\]/);
     assert.doesNotMatch(coreShell, /const \[btnHome, btnProjects, btnFirms, btnSettings\]/);
   });
@@ -126,16 +127,13 @@ async function runM52UiEditorVisibleEntryTests(run) {
   });
 
 
-  await run("M52 echte Navigationskette: UI-Editor-Route bindet onClick und nutzt Router.show-Schnittstelle", async () => {
+  await run("M52/M80 echte Navigationskette: UI-Editor-Aktion startet keinen Screen", async () => {
     const previousDocument = global.document;
     const previousWindow = global.window;
     const doc = createPanelTestDocument();
     global.document = doc;
-    global.window = {
-      bbmDb: {
-        uiEditorOpen: async () => ({ ok: false, blockCode: "BBM_UI_EDITOR_TEST_BLOCK" }),
-      },
-    };
+    let openCalls = 0;
+    global.window = { uiEditor: { open: async () => { openCalls += 1; return { ok: true, started: true }; } } };
 
     try {
       const navigationModule = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/app/coreShellNavigation.js"));
@@ -184,7 +182,8 @@ async function runM52UiEditorVisibleEntryTests(run) {
       const routeDefs = navigationModule.createCoreShellNavigationRouteDefs(router);
       const uiEditorRoute = routeDefs.find((route) => route.key === "uiEditor");
       assert.ok(uiEditorRoute, "uiEditor route missing");
-      assert.equal(uiEditorRoute.label, "UI-Editor Status");
+      assert.equal(uiEditorRoute.label, "UI-Editor öffnen");
+      assert.equal(uiEditorRoute.kind, "action");
 
       const buttonsByKey = new Map();
       const button = buttonModule.createScreenRouteButton(
@@ -196,37 +195,32 @@ async function runM52UiEditorVisibleEntryTests(run) {
 
       await button.onclick();
 
-      assert.equal(showCalls.length, 1);
+      assert.equal(showCalls.length, 0);
+      assert.equal(openCalls, 1);
       assert.equal(legacyToggleCalls, 0);
-      assert.equal(renderCallCount, 1);
-      assert.equal(showCalls[0].view, createdPanel);
-      assert.equal(activeSection, "uiEditor");
-      assert.equal(showCalls[0].options.section, "uiEditor");
-      assert.equal(showCalls[0].rendered.tagName, "SECTION");
-      assert.equal(showCalls[0].rendered.getAttribute("data-bbm-ui-editor-panel"), "true");
+      assert.equal(renderCallCount, 0);
+      assert.equal(createdPanel, null);
+      assert.equal(activeSection, null);
       assert.equal(contentRoot.children.length, 1);
-      assert.equal(contentRoot.children[0], showCalls[0].rendered);
-      assert.ok(findNode(contentRoot.children[0], (node) => node.textContent === "UI-Editor"));
-      assert.equal(findNode(contentRoot.children[0], (node) => node.getAttribute?.("data-ui-editor-launcher-host") === "true"), null);
-      assert.equal(findNode(contentRoot.children[0], (node) => node.getAttribute?.("data-ui-editor-panel") === "true"), null);
-      assert.equal(findNode(contentRoot.children[0], (node) => node.getAttribute?.("data-ui-editor-hover-frame") === "true"), null);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;
     }
   });
 
-  await run("M52 Runtime: M51-Startfunktion wird ueber sichere IPC-Bruecke verwendet", () => {
+  await run("M52/M80 Runtime: Legacy-Helfer bleibt isoliert und M80-Controller ist produktführend", () => {
     const ipc = read("src/main/ipc/uiEditorIpc.js");
     const main = read("src/main/main.js");
     const preload = read("src/main/preload.js");
     assert.match(ipc, /startBbmUiEditorRuntime/);
     assert.match(ipc, /getBbmUiEditorIntegrationStatus/);
     assert.match(ipc, /let session = null/);
-    assert.match(main, /registerUiEditorIpc\(\)/);
-    assert.match(preload, /uiEditorOpen/);
-    assert.match(preload, /uiEditorGetStatus/);
-    assert.match(preload, /uiEditorSelectElement/);
+    assert.match(ipc, /ElectronUiEditorSessionController/);
+    assert.match(main, /registerUiEditorIpc\(\{ app, ipcMain, getMainWindow/);
+    assert.match(preload, /exposeInMainWorld\("uiEditor"/);
+    assert.match(preload, /open:\s*\(\) => ipcRenderer\.invoke\("uiEditor:open"\)/);
+    assert.match(preload, /respond:/);
+    assert.doesNotMatch(preload, /uiEditorOpen|uiEditorSelectElement/);
     assert.doesNotMatch(preload, /eval|nodeIntegration\s*:\s*true|contextIsolation\s*:\s*false/);
   });
 

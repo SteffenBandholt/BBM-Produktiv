@@ -1,5 +1,32 @@
 # STATUS.md — BBM-Produktiv
 
+### M80 – Electron-Ziel-App-Anbindung und Restarbeiten-UI-Pilot
+
+- Status: `[A] abgenommen`.
+- Ergebnis:
+  - Die Sidebar-Aktion `UI-Editor öffnen` startet/fokussiert den vorhandenen separaten nativen Editor; es gibt genau einen Manager- und einen Node-Core-Prozess je BBM-Sitzung.
+  - Führend sind eine explizite M80-Registry, ein Ref-Resolver, ein Electron-HostAdapter, eine enge Main-/Preload-/Renderer-Bridge, der vorhandene Profilweg und ein Lifecycle.
+  - Der Restarbeiten-Pilot umfasst Listen- und Bearbeitungs-Scope, getrennte Labels/Felder, die bestätigte Hauptliste mit drei Spaltengruppen und `Neu` nur als Layoutobjekt.
+  - Auswahl/Markierung, Live-Layout, Sichtbarkeit, Save/Load, Neustart-Restore, Discard, Reset und vollständiger Rollback sind sichtbar nachgewiesen; Fachwert und Fachaktion blieben unverändert.
+  - Entwicklungsstart und gepackter Verzeichnisbuild verwenden denselben mitgelieferten Manager/Node-Core. BBM-PDF bleibt ehrlich M81.
+- Dokumentation:
+  - `docs/M80_UI_PDF_ENTWURFSENTSCHEIDUNG.md`
+  - `docs/M80_ELECTRON_HOSTADAPTER.md`
+  - `docs/M80_PILOT_REGISTRY.md`
+  - `docs/M80_LIFECYCLE_SICHERHEIT_DIAGNOSE.md`
+- Prüfung:
+  - `npm test` und `npm run test:node`: vollständig grün.
+  - `npm run pack`: grün; gepackte `BBM.exe`, Manager, Preload/Bridge und `editor-runtime` praktisch gestartet.
+  - sichtbarer 43-Schritte-Ende-zu-Ende-Lauf mit echten Prozessen und Fenstern: grün.
+  - globales `npm run lint`: weiterhin rot durch 17 bereits außerhalb M80 vorhandene Fehler; der neue M80-Pfad ist gezielt lint-grün.
+- Risiken / offen:
+  - M81: BBM-PDF-Anbindung an den bestehenden PDF-Arbeitsbereich.
+  - Historische Editorpfade bleiben erhalten, sind aber nicht produktführend.
+- Nächster Schritt:
+  - M81 erst mit eigener UI-/PDF-Entwurfsentscheidung beginnen.
+- Commit/PR:
+  - keiner; gemäß Nutzeranweisung wurde weder committet noch gepusht.
+
 ### Korrektur PR #209 – Pläne-Zurück-Button
 - Ergebnis:
   - PR #209 wurde auf die kleine Zurück-Ergänzung im Pläne-Screen begrenzt.

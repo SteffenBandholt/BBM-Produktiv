@@ -16,6 +16,7 @@ import { buildRestarbeitenOutputPreview } from "../RestarbeitenOutputPreview.js"
 import { buildRestarbeitenQuicklane } from "../RestarbeitenQuicklane.js";
 import { ensureRestarbeitenStyles } from "../styles.js";
 import { toRestarbeitenOutputRows } from "../viewModel/restarbeitenOutputViewModel.js";
+import { beginM80PilotRender, completeM80PilotRender } from "../../../ui-editor/m80Refs.js";
 import {
   canPersistRestarbeitDraft,
   normalizeRestarbeitStatus,
@@ -513,6 +514,7 @@ export default class RestarbeitenScreen {
 
   _renderShell() {
     if (!this.root) return;
+    beginM80PilotRender();
     this.root.replaceChildren();
     const filteredRows = this._getFilteredItems();
     this.viewItems = toRestarbeitenListItems(filteredRows);
@@ -591,5 +593,6 @@ export default class RestarbeitenScreen {
       status.textContent = this.isLoading ? "Restarbeiten werden geladen ..." : this.error;
       this.root.appendChild(status);
     }
+    completeM80PilotRender();
   }
 }

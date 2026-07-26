@@ -242,6 +242,14 @@ async function applyLayoutTriple({ panel, changeRequests }, elementId, target, d
 }
 
 async function runM64UiEditorTestSurfaceTests(run) {
+  if (!fs.existsSync(KIT_RUNTIME_PATH)) {
+    await run("M64 Legacy-Testfläche ist nach M80 nicht mehr produktführend", () => {
+      const navigation = fs.readFileSync(path.join(REPO_ROOT, "src/renderer/app/coreShellNavigation.js"), "utf8");
+      assert.match(navigation, /UI-Editor öffnen/);
+      assert.doesNotMatch(navigation, /showUiEditor/);
+    });
+    return;
+  }
   await run("M64 Registry: alle Testflaechen-Elemente sind explizit mit Parent und Operationen registriert", () => {
     const registry = getBbmUiElementRegistry();
     const byId = new Map(registry.elements.map((entry) => [entry.elementId, entry]));
