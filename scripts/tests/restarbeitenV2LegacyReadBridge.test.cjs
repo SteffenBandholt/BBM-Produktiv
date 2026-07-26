@@ -117,6 +117,7 @@ async function runRestarbeitenV2LegacyReadBridgeTests(run) {
     "src/main/ipc/uiEditorIpc.js",
     "src/main/main.js",
     "src/main/preload.js",
+    "src/main/ui-editor/electronUiEditorSession.js",
   ]);
   assert.equal(
     diffFiles.some((file) => file.startsWith("src/main/") && !allowedRestarbeitenMainFiles.has(file)),

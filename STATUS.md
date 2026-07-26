@@ -1,5 +1,28 @@
 # STATUS.md — BBM-Produktiv
 
+### M80.1 – Bestands-App-Registrierung, Registry-Refresh und vollständige Restarbeiten-Anbindung
+
+- Status: `[A] abgenommen`.
+- Ergebnis:
+  - Registryversion `2` und deterministischer SHA-256-Fingerprint werden vor jedem Öffnen/Fokussieren gemeinsam geprüft.
+  - Fünf Registry-Laufzeitereignisse lösen denselben sicheren Refresh aus; Fehler, Dirty-Zustand und notwendige Migration überschreiben den gültigen Stand nicht.
+  - Der vorhandene Profilweg behält kompatible stabile IDs, startet neue IDs mit Baseline, ignoriert/archiviert entfernte IDs und entfernt entfallene Capabilities.
+  - Vollständig und aktiv sind `restarbeiten.layout.root`, `restarbeiten.list.root` und `restarbeiten.edit.root` mit lückenlosen erwarteten Inventaren und auflösbaren Refs.
+  - Die Hauptliste besitzt ausschließlich die drei bestätigten Spaltengruppen. Die sichtbare Editbox ist elementweise einschließlich aller Labels, Felder, Auswahl-/Datumsfelder, Hinweise und Fachbuttons als Layoutobjekte registriert.
+  - Alle übrigen nicht sicher inventarisierten BBM- und Restarbeiten-Bereiche sind ausdrücklich gesperrt; keine BBM-Gesamtvollständigkeit wird behauptet.
+- Dokumentation:
+  - `docs/M80_1_BESTANDSAPP_REGISTRIERUNG.md`
+- Prüfung bisher:
+  - `npm test`, `npm run test:node` und die M80.1-Einzeltests grün.
+  - gezieltes ESLint der neuen und produktführend geänderten M80.1-Dateien grün; globaler Altbestand unverändert bei 17 Fehlern und 371 Warnungen.
+  - produktionsnahes `npm run pack` grün.
+  - sichtbarer gepackter Lauf: alle 49 Editbox-Elemente und alle sieben Listenknoten auswählbar, genau drei Tabellenspalten, unabhängige Label-/Feld- und Sichtbarkeitsänderung, Fachaktionssperre, Save/Load/Restore/Reset/Discard/Rollback, kontrollierter Registry-Reload, Dirty-Konflikt und genau eine Editorinstanz grün.
+- Risiken / offen:
+  - alle nicht vollständig inventarisierten BBM-Scopes bleiben ausdrücklich gesperrt.
+  - M81 BBM-PDF und M82 App-Starterpaket bleiben offen; keine Arbeit daran wurde begonnen.
+- Commit/PR:
+  - keiner; gemäß Nutzeranweisung weder Commit noch Push noch PR.
+
 ### M80 – Electron-Ziel-App-Anbindung und Restarbeiten-UI-Pilot
 
 - Status: `[A] abgenommen`.

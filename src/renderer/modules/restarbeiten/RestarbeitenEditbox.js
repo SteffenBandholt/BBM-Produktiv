@@ -25,9 +25,13 @@ function createField({
   onInput,
   onCommit,
   required = false,
+  editorGroupId,
+  editorLabelId,
+  editorFieldId,
 } = {}) {
   const wrap = createEl("label", { className: "bbm-restarbeiten-field", uiId });
-  wrap.appendChild(createEl("span", { text: label, uiId: labelUiId }));
+  const labelElement = createEl("span", { text: label, uiId: labelUiId });
+  wrap.appendChild(labelElement);
   const input = document.createElement(type === "textarea" ? "textarea" : type === "select" ? "select" : "input");
   if (type === "date") input.type = "date";
   if (required) input.required = true;
@@ -50,6 +54,9 @@ function createField({
     input.addEventListener("blur", () => onCommit?.(input.value));
   }
   wrap.appendChild(input);
+  if (editorGroupId) registerM80Ref(editorGroupId, wrap);
+  if (editorLabelId) registerM80Ref(editorLabelId, labelElement);
+  if (editorFieldId) registerM80Ref(editorFieldId, input);
   return wrap;
 }
 
@@ -154,6 +161,8 @@ function createTextField({
     className: "bbm-restarbeiten-remaining",
     uiId: remainingUiId,
   });
+  const labelElement = createEl("span", { text: label, uiId: labelUiId });
+  const dictation = createDictationButton(dictationUiId);
   const updateRemaining = () => {
     if (typeof maxLength !== "number") return;
     const left = Math.max(0, maxLength - String(input.value || "").length);
@@ -172,11 +181,13 @@ function createTextField({
     onInput?.(input.value);
   });
   input.addEventListener("blur", () => onCommit?.(input.value));
-  labelRow.append(createEl("span", { text: label, uiId: labelUiId }), remaining, createDictationButton(dictationUiId), ...labelControls);
+  labelRow.append(labelElement, remaining, dictation, ...labelControls);
   wrap.append(labelRow, input);
   registerM80Ref(editorGroupId, wrap);
-  registerM80Ref(editorLabelId, labelRow);
+  registerM80Ref(editorLabelId, labelElement);
   registerM80Ref(editorFieldId, input);
+  registerM80Ref(`${editorGroupId}.remaining`, remaining);
+  registerM80Ref(`${editorGroupId}.dictation`, dictation);
   return wrap;
 }
 
@@ -187,11 +198,12 @@ function createClassToggle({ value = "rest", uiId, labelUiId, onChange, onCommit
       : "bbm-restarbeiten-field bbm-restarbeiten-class-field",
     uiId,
   });
-  if (!inline || labelUiId) wrap.appendChild(createEl("span", { text: "Klasse", uiId: labelUiId }));
+  const labelElement = createEl("span", { text: "Klasse", uiId: labelUiId });
+  if (!inline || labelUiId) wrap.appendChild(labelElement);
   const classToggle = createEl("div", { className: "bbm-restarbeiten-class-toggle" });
   for (const option of [
-    { value: "rest", label: "Rest" },
-    { value: "mangel", label: "Mangel" },
+    { value: "rest", label: "Rest", editorId: "restarbeiten.edit.class.rest" },
+    { value: "mangel", label: "Mangel", editorId: "restarbeiten.edit.class.defect" },
   ]) {
     const btn = createEl("button", { className: "bbm-restarbeiten-word-switch", text: option.label });
     btn.type = "button";
@@ -202,8 +214,12 @@ function createClassToggle({ value = "rest", uiId, labelUiId, onChange, onCommit
       onCommit?.(option.value);
     });
     classToggle.appendChild(btn);
+    registerM80Ref(option.editorId, btn);
   }
   wrap.appendChild(classToggle);
+  registerM80Ref("restarbeiten.edit.class", wrap);
+  registerM80Ref("restarbeiten.edit.class.label", labelElement);
+  registerM80Ref("restarbeiten.edit.class.control", classToggle);
   return wrap;
 }
 
@@ -271,6 +287,10 @@ export function buildRestarbeitenEditbox({
   });
   actions.append(newBtn, deleteBtn);
   header.append(currentRecord);
+  registerM80Ref("restarbeiten.edit.header", header);
+  registerM80Ref("restarbeiten.edit.header.current", currentRecord);
+  registerM80Ref("restarbeiten.edit.short.actions", actions);
+  registerM80Ref("restarbeiten.edit.action.delete", deleteBtn);
 
   const classToggle = createClassToggle({
     value: draft.item_class || "rest",
@@ -330,6 +350,7 @@ export function buildRestarbeitenEditbox({
     className: "bbm-restarbeiten-edit-group bbm-restarbeiten-edit-group--stack",
     uiId: "restarbeiten.editbox.location",
   });
+  registerM80Ref("restarbeiten.edit.location", location);
   labels.forEach((label, index) => {
     const sourceKey = `location_level_${index + 1}`;
     location.appendChild(
@@ -338,6 +359,9 @@ export function buildRestarbeitenEditbox({
         labelUiId: `restarbeiten.editbox.location.level${index + 1}.label`,
         value: draft[sourceKey] || "",
         uiId: `restarbeiten.editbox.location.level${index + 1}`,
+        editorGroupId: `restarbeiten.edit.location.${index + 1}`,
+        editorLabelId: `restarbeiten.edit.location.${index + 1}.label`,
+        editorFieldId: `restarbeiten.edit.location.${index + 1}.field`,
         onInput: (value) => onDraftChange?.({ [sourceKey]: value }, { render: false }),
         onCommit: () => onAutoSave?.(),
       })
@@ -348,12 +372,14 @@ export function buildRestarbeitenEditbox({
     className: "bbm-restarbeiten-edit-group bbm-restarbeiten-edit-group--stack",
     uiId: "restarbeiten.editbox.meta",
   });
+  registerM80Ref("restarbeiten.edit.meta", meta);
   const ampelWrap = createEl("span", {
     className: "bbm-restarbeiten-ampel-field",
     uiId: "restarbeiten.editbox.meta.ampel",
   });
   ampelWrap.hidden = showAmpel === false;
   ampelWrap.style.display = showAmpel === false ? "none" : "";
+  registerM80Ref("restarbeiten.edit.meta.ampel", ampelWrap);
   const ampel = createEl("span", {
     className: "bbm-restarbeiten-ampel",
   });
@@ -365,6 +391,9 @@ export function buildRestarbeitenEditbox({
     value: draft.due_date || "",
     type: "date",
     uiId: "restarbeiten.editbox.meta.dueDate",
+    editorGroupId: "restarbeiten.edit.meta.due",
+    editorLabelId: "restarbeiten.edit.meta.due.label",
+    editorFieldId: "restarbeiten.edit.meta.due.field",
     onInput: (due_date) => onDraftChange?.({ due_date }),
     onCommit: () => onAutoSave?.(),
   });
@@ -378,6 +407,9 @@ export function buildRestarbeitenEditbox({
         ? RESTARBEITEN_STATUS_OPTIONS
         : [{ value: "", label: "Status ungueltig" }, ...RESTARBEITEN_STATUS_OPTIONS],
       uiId: "restarbeiten.editbox.meta.status",
+      editorGroupId: "restarbeiten.edit.meta.status",
+      editorLabelId: "restarbeiten.edit.meta.status.label",
+      editorFieldId: "restarbeiten.edit.meta.status.field",
       onInput: (status) => onDraftChange?.({ status }),
       onCommit: () => onAutoSave?.(),
     }),
@@ -390,6 +422,9 @@ export function buildRestarbeitenEditbox({
       type: "select",
       options: [{ value: "", label: "Nicht zugeordnet" }, ...responsibleOptions],
       uiId: "restarbeiten.editbox.meta.responsible",
+      editorGroupId: "restarbeiten.edit.meta.responsible",
+      editorLabelId: "restarbeiten.edit.meta.responsible.label",
+      editorFieldId: "restarbeiten.edit.meta.responsible.field",
       onInput: (responsible_project_firm_id) => {
         const selected = responsibleOptions.find((item) => String(item.value) === String(responsible_project_firm_id));
         onDraftChange?.({
@@ -405,6 +440,7 @@ export function buildRestarbeitenEditbox({
     text: validationText,
     uiId: "restarbeiten.editbox.validation.shortText",
   });
+  registerM80Ref("restarbeiten.edit.validation", validation);
   meta.appendChild(validation);
   const noteBtn = createEl("button", {
     className: "bbm-restarbeiten-button bbm-restarbeiten-note",
@@ -418,6 +454,7 @@ export function buildRestarbeitenEditbox({
   noteBtn.addEventListener("click", () => {
     if (draft.id) onNote?.();
   });
+  registerM80Ref("restarbeiten.edit.action.note", noteBtn);
   meta.appendChild(noteBtn);
 
   area.append(header, textArea, location, meta);

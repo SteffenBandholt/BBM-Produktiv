@@ -218,7 +218,7 @@ async function runM52UiEditorVisibleEntryTests(run) {
     assert.match(ipc, /ElectronUiEditorSessionController/);
     assert.match(main, /registerUiEditorIpc\(\{ app, ipcMain, getMainWindow/);
     assert.match(preload, /exposeInMainWorld\("uiEditor"/);
-    assert.match(preload, /open:\s*\(\) => ipcRenderer\.invoke\("uiEditor:open"\)/);
+    assert.match(preload, /open:\s*\(registration\) => ipcRenderer\.invoke\("uiEditor:open",/);
     assert.match(preload, /respond:/);
     assert.doesNotMatch(preload, /uiEditorOpen|uiEditorSelectElement/);
     assert.doesNotMatch(preload, /eval|nodeIntegration\s*:\s*true|contextIsolation\s*:\s*false/);

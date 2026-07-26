@@ -6,6 +6,8 @@ BBM nutzt ab M51 das eigenständige `UI-Editor-kit` in Version `v0.2.0` als Ziel
 
 Ab M80 ist die produktführende Integration die Sidebar-Aktion `UI-Editor öffnen`: Sie verbindet die laufende Electron-App ausschließlich lokal mit dem vorhandenen separaten nativen Editor. Der Restarbeiten-Pilot nutzt explizite Registry/Refs, getrennte Labels/Felder, die bestätigte Hauptliste, neutrale Layoutänderungen, Sichtbarkeit und den vorhandenen Profil-/Rollbackweg. Fachaktionen und Fachwerte sind ausgeschlossen. Einstieg: [M80-HostAdapter](docs/M80_ELECTRON_HOSTADAPTER.md), [Pilotregistry](docs/M80_PILOT_REGISTRY.md), [Sicherheit/Diagnose](docs/M80_LIFECYCLE_SICHERHEIT_DIAGNOSE.md).
 
+M80.1 ergänzt Registryversion und deterministischen Fingerprint, vollständige Scope-Inventare, Refresh vor jedem Öffnen/Fokussieren und bei Laufzeitereignissen sowie sicheren Profilabgleich. Nur die drei vollständig registrierten Restarbeiten-Scopes sind aktiv; alle weiteren noch nicht sicher inventarisierten BBM-Bereiche bleiben ausdrücklich gesperrt. Details: [M80.1-Bestands-App-Registrierung](docs/M80_1_BESTANDSAPP_REGISTRIERUNG.md).
+
 Die vollständige BBM-PDF-Anbindung ist M81; bis dahin zeigt der PDF-Tab im Editor ausdrücklich, dass BBM-PDF noch nicht angebunden ist.
 
 Status M51: Core-Vertrag technisch angebunden und testbar; noch keine vollständige sichtbare Editor-Oberfläche und noch keine dauerhafte Layoutspeicherung.

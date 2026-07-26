@@ -5,21 +5,25 @@ const path = require("node:path");
 const { spawn } = require("node:child_process");
 const {
   ELECTRON_EDITOR_ERROR_CODES,
+  ELECTRON_TARGET_ADAPTER_VERSION,
   ElectronEditorError,
-  ELECTRON_TARGET_OPERATIONS,
   LOCAL_TARGET_MAX_MESSAGE_BYTES,
   LOCAL_TARGET_PROTOCOL_VERSION,
   NamedPipeTargetClient,
+  compareRegistrySnapshots,
   createElectronTargetContract,
+  createRegistryFingerprint,
   createSessionIdentifiers,
+  validateRegistrationSnapshot,
 } = require("ui-editor-kit");
 
 const APPLICATION_ID = "bbm-produktiv";
 const DISPLAY_NAME = "BBM";
-const ACTIVE_SCOPES = Object.freeze(["restarbeiten.list.root", "restarbeiten.edit.root"]);
+const ACTIVE_SCOPES = Object.freeze(["restarbeiten.layout.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
 const NATIVE_REQUEST_ACTIONS = new Set(["getRegistry", "getLayoutState", "submitChange"]);
 const NATIVE_EVENT_ACTIONS = new Set(["beginTargetSelection", "cancelTargetSelection", "highlightElement", "activateTarget", "editorClosed"]);
-const TARGET_EVENT_ACTIONS = new Set(["targetSelectionChanged"]);
+const REGISTRY_EVENT_ACTIONS = new Set(["registryChanged", "registryStatusChanged", "scopeAdded", "scopeChanged", "scopeRemoved"]);
+const TARGET_EVENT_ACTIONS = new Set(["targetSelectionChanged", ...REGISTRY_EVENT_ACTIONS]);
 const RENDERER_RESPONSE_TIMEOUT_MS = 8_000;
 
 function trustedEditorCandidates({ app, resourcesPath = process.resourcesPath, localAppData = process.env.LOCALAPPDATA } = {}) {
@@ -77,6 +81,11 @@ function publicError(error) {
     [ELECTRON_EDITOR_ERROR_CODES.EDITOR_ALREADY_RUNNING]: "Der UI-Editor läuft bereits und wird fokussiert.",
     [ELECTRON_EDITOR_ERROR_CODES.PIPE_TIMEOUT]: "Die lokale Verbindung zum UI-Editor konnte nicht rechtzeitig hergestellt werden.",
     [ELECTRON_EDITOR_ERROR_CODES.HANDSHAKE_FAILED]: "Die sichere lokale Verbindung zum UI-Editor ist fehlgeschlagen.",
+    [ELECTRON_EDITOR_ERROR_CODES.REGISTRY_REFRESH_FAILED]: "Die aktuelle UI-Registry konnte nicht sicher geladen werden. Der vorherige gültige Stand bleibt erhalten.",
+    [ELECTRON_EDITOR_ERROR_CODES.REGISTRY_SCOPE_BLOCKED]: "Für den aktuellen BBM-Bereich ist noch kein vollständiger, auflösbarer Editor-Scope verfügbar.",
+    [ELECTRON_EDITOR_ERROR_CODES.REGISTRY_INCOMPATIBLE]: "BBM-Registry und Editor-Adapter sind nicht kompatibel.",
+    [ELECTRON_EDITOR_ERROR_CODES.REGISTRY_PROFILE_CONFLICT]: "Die Registry wurde geändert, aber im Editor bestehen ungespeicherte Änderungen.",
+    [ELECTRON_EDITOR_ERROR_CODES.REGISTRY_PROFILE_MIGRATION_REQUIRED]: "Die Registryänderung benötigt wegen geänderter IDs oder Parents eine ausdrückliche Profilmigration.",
   };
   return { ok: false, errorCode: code, message: messages[code] || "Der separate UI-Editor konnte nicht gestartet werden." };
 }
@@ -101,6 +110,7 @@ class ElectronUiEditorSessionController {
     this.startPromise = null;
     this.pendingRendererRequests = new Map();
     this.heartbeat = null;
+    this.currentRegistration = null;
     this.registered = false;
     this.stopping = false;
   }
@@ -108,66 +118,130 @@ class ElectronUiEditorSessionController {
   registerIpc() {
     if (this.registered) return;
     this.registered = true;
-    this.ipcMain.handle("uiEditor:open", () => this.open());
+    this.ipcMain.handle("uiEditor:open", (_event, registration) => this.open(registration));
     this.ipcMain.handle("uiEditor:close", () => this.close());
     this.ipcMain.handle("uiEditor:getStatus", () => this.status());
     this.ipcMain.handle("uiEditor:respond", (_event, message) => this.respondFromRenderer(message));
     this.ipcMain.handle("uiEditor:targetEvent", (_event, message) => this.forwardTargetEvent(message));
   }
 
-  async open() {
-    if (this.client?.connected && this.child && this.child.exitCode === null) {
-      this.client.sendEvent("activateEditor");
-      return { ok: true, started: false, focused: true, sessionId: this.sessionId };
-    }
+  async open(registration, reason = "open") {
     if (this.startPromise) return this.startPromise;
-    this.startPromise = this.#start().catch((error) => {
-      void this.#disposeSession("editor_start_failed", true);
-      return publicError(error);
-    }).finally(() => { this.startPromise = null; });
+    this.startPromise = this.#openAfterRefresh(registration, reason)
+      .catch((error) => publicError(error))
+      .finally(() => { this.startPromise = null; });
     return this.startPromise;
   }
 
-  async #start() {
-    const executablePath = this.executableResolver({ app: this.app, ...this.pathOptions });
-    const editorRuntimeRoot = this.runtimeRootResolver(executablePath);
-    const identifiers = this.sessionIdentifiersFactory();
-    this.sessionId = identifiers.sessionId;
-    const profileRoot = this.profileRootResolver(this.app);
-    this.ensureDirectory(profileRoot);
+  #registrationSnapshot(registration, { sessionId, profileRoot }) {
+    ensureSmallPlainObject(registration, "Ziel-App-Registrierung");
+    if (registration.applicationId !== APPLICATION_ID || registration.displayName !== DISPLAY_NAME) {
+      throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_INCOMPATIBLE, "Ziel-App-Kennung der Registrierung ist ungültig.");
+    }
+    const registryScopes = Array.isArray(registration.registryScopes) ? registration.registryScopes : [];
+    const activeScopes = Array.isArray(registration.activeScopes) ? registration.activeScopes.map(String) : [];
+    if (activeScopes.length === 0) {
+      throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_SCOPE_BLOCKED, "Kein vollständiger Scope ist im aktuellen BBM-Bereich auflösbar.");
+    }
     const contract = createElectronTargetContract({
-      applicationId: APPLICATION_ID,
-      displayName: DISPLAY_NAME,
-      registryVersion: 1,
-      activeScopes: ACTIVE_SCOPES,
+      applicationId: registration.applicationId,
+      displayName: registration.displayName,
+      appVersion: this.app.getVersion?.() || "0.0.0-dev",
+      registryVersion: registration.registryVersion,
+      registryFingerprint: createRegistryFingerprint(registryScopes),
+      registryStatus: registration.registryStatus,
+      activeScopes,
       profileRoot,
-      supportedOperations: ELECTRON_TARGET_OPERATIONS,
+      supportedOperations: registration.supportedOperations,
       transportProtocolVersion: LOCAL_TARGET_PROTOCOL_VERSION,
-      sessionId: identifiers.sessionId,
+      sessionId,
       processId: process.pid,
     });
+    if (registration.framework !== contract.framework || registration.uiCapability !== contract.uiCapability ||
+        registration.pdfCapability !== contract.pdfCapability || registration.labelFieldSeparation !== true ||
+        registration.visibilityCapability !== true || contract.adapterVersion !== ELECTRON_TARGET_ADAPTER_VERSION) {
+      throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_INCOMPATIBLE, "Ziel-App-Vertrag oder Adapter-Capabilities sind nicht kompatibel.");
+    }
+    const snapshot = { contract, registryScopes };
+    const validation = validateRegistrationSnapshot(snapshot);
+    if (!validation.ok) {
+      const first = validation.errors[0];
+      throw new ElectronEditorError(first?.code || ELECTRON_EDITOR_ERROR_CODES.REGISTRATION_FAILED, "BBM-Registry ist unvollständig oder ungültig.", validation.errors);
+    }
+    return snapshot;
+  }
+
+  async #openAfterRefresh(registration, reason) {
+    const running = Boolean(this.client?.connected && this.child && this.child.exitCode === null && this.currentRegistration);
+    if (!running) return this.#start(registration);
+    let candidate;
+    try {
+      candidate = this.#registrationSnapshot(registration, {
+        sessionId: this.currentRegistration.contract.sessionId,
+        profileRoot: this.currentRegistration.contract.profileRoot,
+      });
+    } catch (error) {
+      throw new ElectronEditorError(error?.code || ELECTRON_EDITOR_ERROR_CODES.REGISTRY_REFRESH_FAILED, error?.message || "Registry-Refresh fehlgeschlagen.");
+    }
+    const comparison = compareRegistrySnapshots(this.currentRegistration, candidate);
+    const guard = await this.client.request("prepareRegistryRefresh", {
+      reason,
+      registryVersion: candidate.contract.registryVersion,
+      registryFingerprint: candidate.contract.registryFingerprint,
+      comparison,
+    }, "prepareRegistryRefreshAccepted");
+    if (comparison.status !== "current" && guard?.isDirty === true) {
+      throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_PROFILE_CONFLICT, "Ungespeicherte Editoränderungen verhindern den Registry-Refresh.");
+    }
+    if (comparison.migrationRequiredIds.length) {
+      throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_PROFILE_MIGRATION_REQUIRED, "Geänderte Parents oder Bedeutungen benötigen eine Profilmigration.");
+    }
+    if (comparison.status === "current") {
+      if (reason === "open" || reason === "focus") this.client.sendEvent("activateEditor");
+      return { ok: true, started: false, focused: reason === "open" || reason === "focus", sessionId: this.sessionId, registryRefreshStatus: "current" };
+    }
+    await this.#disposeSession("registry_changed", true);
+    const result = await this.#start(registration);
+    return { ...result, registryRefreshStatus: "changed", addedElementIds: comparison.addedElementIds, removedElementIds: comparison.removedElementIds };
+  }
+
+  async #start(registration) {
+    const identifiers = this.sessionIdentifiersFactory();
+    const profileRoot = this.profileRootResolver(this.app);
+    this.ensureDirectory(profileRoot);
+    const registrationSnapshot = this.#registrationSnapshot(registration, { sessionId: identifiers.sessionId, profileRoot });
+    const contract = registrationSnapshot.contract;
+    const executablePath = this.executableResolver({ app: this.app, ...this.pathOptions });
+    const editorRuntimeRoot = this.runtimeRootResolver(executablePath);
     const args = [
       "--electron-target-editor",
       `--pipe-name=${identifiers.pipeName}`,
       `--session-nonce=${identifiers.sessionNonce}`,
-      `--application-id=${APPLICATION_ID}`,
+      `--application-id=${contract.applicationId}`,
       `--profile-root=${profileRoot}`,
       `--editor-runtime-root=${editorRuntimeRoot}`,
     ];
-    this.child = this.spawnProcess(executablePath, args, {
-      cwd: path.dirname(executablePath),
-      shell: false,
-      windowsHide: false,
-      detached: false,
-      stdio: "ignore",
-    });
-    this.child.once("exit", () => { void this.#disposeSession("editor_process_exited", false); });
-    this.child.once("error", (error) => { void this.#disposeSession(error?.code || "editor_process_error", false); });
-    this.client = await this.#connectWithRetry(identifiers, contract);
-    this.client.on("disconnect", () => { void this.#disposeSession("editor_disconnected", false); });
-    this.client.on("connectionError", (_error) => { void _error; });
-    this.#startHeartbeat();
-    return { ok: true, started: true, focused: false, sessionId: identifiers.sessionId };
+    try {
+      this.sessionId = identifiers.sessionId;
+      this.child = this.spawnProcess(executablePath, args, {
+        cwd: path.dirname(executablePath),
+        shell: false,
+        windowsHide: false,
+        detached: false,
+        stdio: "ignore",
+      });
+      this.child.once("exit", () => { void this.#disposeSession("editor_process_exited", false); });
+      this.child.once("error", (error) => { void this.#disposeSession(error?.code || "editor_process_error", false); });
+      this.client = await this.#connectWithRetry(identifiers, contract);
+      this.client.on("disconnect", () => { void this.#disposeSession("editor_disconnected", false); });
+      this.client.on("connectionError", (_error) => { void _error; });
+      this.currentRegistration = registrationSnapshot;
+      this.#startHeartbeat();
+      return { ok: true, started: true, focused: false, sessionId: identifiers.sessionId, registryRefreshStatus: "changed" };
+    } catch (error) {
+      await this.#disposeSession("editor_start_failed", true);
+      throw error;
+    }
   }
 
   async #connectWithRetry(identifiers, contract) {
@@ -231,8 +305,27 @@ class ElectronUiEditorSessionController {
     this.pendingRendererRequests.delete(requestId);
     clearTimeout(pending.timeout);
     if (message.ok === true) {
-      const payload = ensureSmallPlainObject(message.payload || {}, "Antwortpayload");
+      let payload = ensureSmallPlainObject(message.payload || {}, "Antwortpayload");
       const requestAction = String(pending.message?.payload?.action || "");
+      if (requestAction === "getRegistry") {
+        const registryScopes = Array.isArray(payload.registryScopes) ? payload.registryScopes : [];
+        const candidate = { contract: this.currentRegistration?.contract, registryScopes };
+        const validation = validateRegistrationSnapshot(candidate);
+        if (!this.currentRegistration || !validation.ok || validation.fingerprint !== this.currentRegistration.contract.registryFingerprint) {
+          this.client?.respond(pending.message, {}, {
+            code: validation.errors?.[0]?.code || ELECTRON_EDITOR_ERROR_CODES.REGISTRY_REFRESH_FAILED,
+            message: "Die Registry hat sich nach dem Preflight geändert oder ist ungültig.",
+          });
+          return { ok: false, errorCode: validation.errors?.[0]?.code || ELECTRON_EDITOR_ERROR_CODES.REGISTRY_REFRESH_FAILED };
+        }
+        payload = {
+          ...payload,
+          registryVersion: this.currentRegistration.contract.registryVersion,
+          registryFingerprint: this.currentRegistration.contract.registryFingerprint,
+          registryStatus: this.currentRegistration.contract.registryStatus,
+          activeScopes: [...this.currentRegistration.contract.activeScopes],
+        };
+      }
       console.info(`[ui-editor] renderer response: ${requestAction}`);
       this.client?.respond(pending.message, { action: `${requestAction}Accepted`, ...payload });
     }
@@ -243,14 +336,26 @@ class ElectronUiEditorSessionController {
     return { ok: true };
   }
 
-  forwardTargetEvent(message) {
+  async forwardTargetEvent(message) {
     ensureSmallPlainObject(message, "Ziel-App-Ereignis");
     if (!TARGET_EVENT_ACTIONS.has(message.action)) return { ok: false, errorCode: ELECTRON_EDITOR_ERROR_CODES.MESSAGE_INVALID };
+    if (REGISTRY_EVENT_ACTIONS.has(message.action)) {
+      const result = await this.open(message.registration, message.action);
+      if (result.ok) this.client?.sendEvent(message.action, { scopeId: String(message.scopeId || ""), registryRefreshStatus: result.registryRefreshStatus });
+      return result;
+    }
     return { ok: this.client?.sendEvent(message.action, { scopeId: String(message.scopeId || ""), elementId: String(message.elementId || "") }) === true };
   }
 
   status() {
-    return { ok: true, running: Boolean(this.client?.connected && this.child?.exitCode === null), sessionId: this.sessionId || null };
+    return {
+      ok: true,
+      running: Boolean(this.client?.connected && this.child?.exitCode === null),
+      sessionId: this.sessionId || null,
+      registryVersion: this.currentRegistration?.contract.registryVersion || null,
+      registryFingerprint: this.currentRegistration?.contract.registryFingerprint || null,
+      registryStatus: this.currentRegistration?.contract.registryStatus || "registrationRequired",
+    };
   }
 
   async close() {
@@ -282,6 +387,7 @@ class ElectronUiEditorSessionController {
     this.client = null;
     this.child = null;
     this.sessionId = null;
+    this.currentRegistration = null;
     try {
       if (stopProcess && client?.connected) client.sendEvent("shutdownEditor");
       await client?.close(reason);
