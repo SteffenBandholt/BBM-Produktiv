@@ -1,10 +1,34 @@
+import { createM80RegistrationDescriptor } from "../ui-editor/m80HostAdapter.js";
+
+function showRegistryRefreshStatus(message, state = "checking") {
+  const doc = globalThis.document;
+  if (!doc?.body || typeof doc.createElement !== "function") return;
+  let status = doc.querySelector?.("[data-bbm-ui-editor-registry-status]");
+  if (!status) {
+    status = doc.createElement("div");
+    status.setAttribute("data-bbm-ui-editor-registry-status", "true");
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+    status.style.cssText = "position:fixed;right:18px;bottom:18px;z-index:2147482000;padding:9px 12px;border-radius:8px;background:#172033;color:#fff;box-shadow:0 8px 24px rgba(15,23,42,.24);font:600 12px/1.3 system-ui,sans-serif";
+    doc.body.appendChild(status);
+  }
+  status.dataset.state = state;
+  status.textContent = message;
+}
+
 export async function openNativeUiEditor() {
   const api = window.uiEditor;
   if (!api || typeof api.open !== "function") {
     alert("Der separate UI-Editor ist nicht installiert oder die sichere BBM-Brücke ist nicht verfügbar.");
     return { ok: false, errorCode: "electron_editor_not_installed" };
   }
-  const result = await api.open();
+  showRegistryRefreshStatus("UI-Registry wird geprüft …", "checking");
+  const result = await api.open(createM80RegistrationDescriptor());
+  if (result?.ok) {
+    showRegistryRefreshStatus(result.registryRefreshStatus === "changed" ? "UI-Registry aktualisiert." : "UI-Registry ist aktuell.", result.registryRefreshStatus || "current");
+  } else {
+    showRegistryRefreshStatus(result?.message || "UI-Registry konnte nicht freigegeben werden.", "blocked");
+  }
   if (!result?.ok) alert(result?.message || "Der separate UI-Editor konnte nicht gestartet werden.");
   return result;
 }

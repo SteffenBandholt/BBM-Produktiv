@@ -1,10 +1,17 @@
-import { getM80RegistryEntry, listM80RegistryScopes } from "./m80Registry.js";
+import {
+  BBM_M80_ACTIVE_SCOPES,
+  BBM_M80_REGISTRY_STATUS,
+  BBM_M80_REGISTRY_VERSION,
+  getM80RegistryEntry,
+  listM80RegistryScopes,
+} from "./m80Registry.js";
 import {
   applyM80State,
   beginM80PilotRender,
   clearM80VisualState,
   completeM80PilotRender,
   getM80IdFromTarget,
+  getM80ReferenceStatus,
   getM80Ref,
   registerM80Ref,
   resetM80PilotWorkingStatesForDiagnostic,
@@ -12,9 +19,11 @@ import {
 } from "./m80Refs.js";
 
 const ALLOWED_ACTIONS = new Set(["getRegistry", "getLayoutState", "submitChange"]);
+const REGISTRY_EVENT_ACTIONS = new Set(["registryChanged", "registryStatusChanged", "scopeAdded", "scopeChanged", "scopeRemoved"]);
 const FORBIDDEN_KEYS = new Set(["fachDaten", "businessData", "domainData", "recordId", "entity", "database", "sql", "status", "responsible", "dueDate", "photos", "rows", "values"]);
 let selectionMode = false;
 let selectedId = null;
+let diagnosticRegistryRevision = 0;
 
 function hasForbidden(value) {
   if (Array.isArray(value)) return value.some(hasForbidden);
@@ -97,11 +106,69 @@ function belongsToScope(entry, scopeId) {
 }
 
 function layoutPayload() {
-  return listM80RegistryScopes().map((scope) => ({
+  return createM80RegistrationDescriptor().activeScopes.map((scopeId) => listM80RegistryScopes().find((scope) => scope.scopeId === scopeId)).filter(Boolean).map((scope) => ({
     scopeId: scope.scopeId,
     capturedAt: new Date().toISOString(),
     elements: scope.elements.map((entry) => snapshotM80State(entry.id)).filter(Boolean),
   }));
+}
+
+export function createM80RegistrationDescriptor() {
+  const registryScopes = listM80RegistryScopes().map((scope) => {
+    if (scope.status !== "complete") return scope;
+    const elements = scope.elements.map((entry) => {
+      const resolved = { ...entry, ...getM80ReferenceStatus(entry.id) };
+      if (diagnosticRegistryRevision > 0 && entry.id === "restarbeiten.edit.validation") {
+        return {
+          ...resolved,
+          baseline: {
+            ...resolved.baseline,
+            maxWidth: Number(resolved.baseline?.maxWidth || 1200) + diagnosticRegistryRevision,
+          },
+        };
+      }
+      return resolved;
+    });
+    const referenceComplete = elements.every((entry) => entry.referenceResolved === true);
+    return {
+      ...scope,
+      status: referenceComplete ? "complete" : "blocked",
+      reason: referenceComplete ? null : "registry_reference_missing",
+      elements,
+    };
+  });
+  const activeScopes = BBM_M80_ACTIVE_SCOPES.filter((scopeId) => registryScopes.some((scope) => scope.scopeId === scopeId && scope.status === "complete"));
+  return {
+    applicationId: "bbm-produktiv",
+    displayName: "BBM",
+    framework: "electron",
+    registryVersion: BBM_M80_REGISTRY_VERSION + diagnosticRegistryRevision,
+    registryStatus: BBM_M80_REGISTRY_STATUS,
+    activeScopes,
+    supportedOperations: ["move", "resize", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility"],
+    uiCapability: "layout",
+    pdfCapability: "unavailable",
+    labelFieldSeparation: true,
+    visibilityCapability: true,
+    registryScopes,
+  };
+}
+
+export function setM80DiagnosticRegistryRevision(value) {
+  const revision = Number(value);
+  if (!Number.isInteger(revision) || revision < 0) throw new Error("Ungültige Diagnose-Registryrevision.");
+  diagnosticRegistryRevision = revision;
+  return diagnosticRegistryRevision;
+}
+
+export function advanceM80DiagnosticRegistryRevision() {
+  diagnosticRegistryRevision += 1;
+  return diagnosticRegistryRevision;
+}
+
+export async function emitM80RegistryEvent(action, scopeId = "") {
+  if (!REGISTRY_EVENT_ACTIONS.has(action)) throw Object.assign(new Error("Unbekanntes Registryereignis."), { code: "electron_editor_message_invalid" });
+  return window.uiEditor?.sendTargetEvent?.({ action, scopeId: String(scopeId || ""), registration: createM80RegistrationDescriptor() });
 }
 
 function overlay() {
@@ -150,7 +217,15 @@ export function handleM80EditorEvent(event = {}) {
 export function handleM80EditorRequest(request = {}) {
   const action = String(request.action || "");
   if (!ALLOWED_ACTIONS.has(action)) throw Object.assign(new Error("Unbekannte Editoranfrage."), { code: "electron_editor_message_invalid" });
-  if (action === "getRegistry") return { registryScopes: listM80RegistryScopes() };
+  if (action === "getRegistry") {
+    const registration = createM80RegistrationDescriptor();
+    return {
+      registryVersion: registration.registryVersion,
+      registryStatus: registration.registryStatus,
+      activeScopes: registration.activeScopes,
+      registryScopes: registration.registryScopes,
+    };
+  }
   if (action === "getLayoutState") return { scopeStates: layoutPayload() };
   return { changeResult: submitChange(request.changeRequest, request.scopeId) };
 }

@@ -1,5 +1,6 @@
 import RestarbeitenScreen from "../modules/restarbeiten/screens/RestarbeitenScreen.js";
 import { getM80Ref, resetM80PilotWorkingStatesForDiagnostic } from "./m80Refs.js";
+import { advanceM80DiagnosticRegistryRevision } from "./m80HostAdapter.js";
 
 const DIAGNOSTIC_FAILURE_TARGET = "restarbeiten.edit.short.field";
 
@@ -45,6 +46,13 @@ export function installBbmM80DiagnosticPilot({ router } = {}) {
     ref.element.dataset.uiEditorFailNextApply = "true";
     window.removeEventListener("keydown", onControlledFailureKey);
   };
+  const onRegistryRevisionKey = (event) => {
+    if (!(event.ctrlKey && event.shiftKey && (event.code === "F9" || event.key === "F9"))) return;
+    event.preventDefault();
+    const revision = advanceM80DiagnosticRegistryRevision();
+    screen.root.dataset.bbmM80DiagnosticRegistryRevision = String(revision);
+  };
   window.addEventListener("keydown", onControlledFailureKey);
+  window.addEventListener("keydown", onRegistryRevisionKey);
   return screen;
 }

@@ -99,6 +99,7 @@ const { runM65LayoutPersistenceRoundtripTests } = require("./tests/m65LayoutPers
 const { runM66ResetLayoutToDefaultsTests } = require("./tests/m66ResetLayoutToDefaults.test.cjs");
 const { runM67ResetElementToDefaultsTests } = require("./tests/m67ResetElementToDefaults.test.cjs");
 const { runM80ElectronUiEditorTests } = require("./tests/m80ElectronUiEditor.test.cjs");
+const { runM801RegistrationRefreshTests } = require("./tests/m80-1RegistrationRefresh.test.cjs");
 
 let failed = false;
 
@@ -245,6 +246,7 @@ async function main() {
   await runM66ResetLayoutToDefaultsTests(run);
   await runM67ResetElementToDefaultsTests(run);
   await runM80ElectronUiEditorTests(run);
+  await runM801RegistrationRefreshTests(run);
 
   if (failed) {
     process.exitCode = 1;

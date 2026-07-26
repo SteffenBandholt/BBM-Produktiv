@@ -16,7 +16,7 @@ import { buildRestarbeitenOutputPreview } from "../RestarbeitenOutputPreview.js"
 import { buildRestarbeitenQuicklane } from "../RestarbeitenQuicklane.js";
 import { ensureRestarbeitenStyles } from "../styles.js";
 import { toRestarbeitenOutputRows } from "../viewModel/restarbeitenOutputViewModel.js";
-import { beginM80PilotRender, completeM80PilotRender } from "../../../ui-editor/m80Refs.js";
+import { beginM80PilotRender, completeM80PilotRender, registerM80SharedVerticalLayout } from "../../../ui-editor/m80Refs.js";
 import {
   canPersistRestarbeitDraft,
   normalizeRestarbeitStatus,
@@ -526,8 +526,7 @@ export default class RestarbeitenScreen {
       }))
       .filter((entry) => entry.value && entry.label);
 
-    this.root.append(
-      buildRestarbeitenQuicklane({
+    const quicklane = buildRestarbeitenQuicklane({
         pinned: this.quicklanePinned,
         showAmpel: this.showAmpelInList,
         showLongtext: this.showLongtextInList,
@@ -544,8 +543,8 @@ export default class RestarbeitenScreen {
         onAmpelToggle: () => this.toggleAmpelDisplay(),
         onLongtextToggle: () => this.toggleLongtextDisplay(),
         onPreview: () => this.openRestarbeitenPreview(),
-      }),
-      buildRestarbeitenFilterbar({
+      });
+    const filterbar = buildRestarbeitenFilterbar({
         settings: this.settings,
         filters: this.filters,
         filterOptions: this._buildFilterOptions(),
@@ -554,37 +553,46 @@ export default class RestarbeitenScreen {
           this._renderShell();
         },
         onClose: () => this.router?.showProjectWorkspace?.(this.projectId, { project: this.project }),
-      }),
-      this.outputPreviewOpen
-        ? buildRestarbeitenOutputPreview({
+      });
+    this.root.append(quicklane, filterbar);
+
+    if (this.outputPreviewOpen) {
+      this.root.appendChild(buildRestarbeitenOutputPreview({
             items: toRestarbeitenOutputRows(filteredRows),
             projectName: normalizeText(this.project?.name || this.project?.project_name || this.project?.title),
             onClose: () => this.closeRestarbeitenPreview(),
-          })
-        : buildRestarbeitenMainBody({
-            items: this.viewItems,
-            selectedId: this.selectedId,
-            showAmpel: this.showAmpelInList,
-            showLongtext: this.showLongtextInList,
-            onSelect: (id) => this._selectItem(id),
-            onPhotos: (id) => this.openRestarbeitPhotos(id),
-          })
-    );
-
-    if (!this.outputPreviewOpen) {
-      this.root.appendChild(
-        buildRestarbeitenEditbox({
-          settings: this.settings,
-          draft: this.draft,
-          showAmpel: this.showAmpelInList,
-          responsibleOptions,
-          onNew: () => this._newDraft(),
-          onDraftChange: (patch, options) => this._updateDraft(patch, options),
-          onDelete: () => this._deleteDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
-          onNote: () => this._openNotesPopup().catch((err) => this._setStubMessage(err?.message || String(err))),
-          onAutoSave: () => this._autoSaveDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
-        })
-      );
+          }));
+    } else {
+      const main = buildRestarbeitenMainBody({
+        items: this.viewItems,
+        selectedId: this.selectedId,
+        showAmpel: this.showAmpelInList,
+        showLongtext: this.showLongtextInList,
+        onSelect: (id) => this._selectItem(id),
+        onPhotos: (id) => this.openRestarbeitPhotos(id),
+      });
+      const editbox = buildRestarbeitenEditbox({
+        settings: this.settings,
+        draft: this.draft,
+        showAmpel: this.showAmpelInList,
+        responsibleOptions,
+        onNew: () => this._newDraft(),
+        onDraftChange: (patch, options) => this._updateDraft(patch, options),
+        onDelete: () => this._deleteDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
+        onNote: () => this._openNotesPopup().catch((err) => this._setStubMessage(err?.message || String(err))),
+        onAutoSave: () => this._autoSaveDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
+      });
+      const workspace = document.createElement("div");
+      workspace.className = "bbm-restarbeiten-workspace";
+      const listPane = document.createElement("div");
+      listPane.className = "bbm-restarbeiten-workspace__list";
+      const editPane = document.createElement("div");
+      editPane.className = "bbm-restarbeiten-workspace__edit";
+      listPane.appendChild(main);
+      editPane.appendChild(editbox);
+      workspace.append(listPane, editPane);
+      registerM80SharedVerticalLayout({ scopeRoot: this.root, root: workspace, listPane, editPane });
+      this.root.appendChild(workspace);
     }
 
     if (this.isLoading || this.error) {

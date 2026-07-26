@@ -61,6 +61,18 @@ async function runM80ElectronUiEditorTests(run) {
   const registryModule = await importEsmFromFile(path.join(ROOT, "src/renderer/ui-editor/m80Registry.js"));
   const scopes = registryModule.listM80RegistryScopes();
   const entries = scopes.flatMap((scope) => scope.elements);
+  const registrationScopes = scopes.map((scope) => scope.status === "complete" ? {
+    ...scope,
+    elements: scope.elements.map((entry) => ({ ...entry, referenceResolved: true })),
+  } : scope);
+  const registration = {
+    applicationId: "bbm-produktiv", displayName: "BBM", framework: "electron",
+    registryVersion: registryModule.BBM_M80_REGISTRY_VERSION, registryStatus: "incomplete",
+    activeScopes: [...registryModule.BBM_M80_ACTIVE_SCOPES],
+    supportedOperations: ["move", "resize", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility"],
+    uiCapability: "layout", pdfCapability: "unavailable", labelFieldSeparation: true, visibilityCapability: true,
+    registryScopes: registrationScopes,
+  };
 
   await run("M80 Sidebar: echte Aktion UI-Editor öffnen ist keine Screenroute", () => {
     const navigation = read("src/renderer/app/coreShellNavigation.js");
@@ -97,8 +109,9 @@ async function runM80ElectronUiEditorTests(run) {
     assert.match(main, /BBM_M80_EDITOR_DIAGNOSTIC/);
   });
 
-  await run("M80 Registry: nur zwei Restarbeiten-Pilotscopes mit eindeutigen stabilen Parents", () => {
-    assert.deepEqual(scopes.map((scope) => scope.scopeId), ["restarbeiten.list.root", "restarbeiten.edit.root"]);
+  await run("M80 Registry: drei aktive Restarbeiten-Scopes und explizit gesperrte Restbereiche", () => {
+    assert.deepEqual(scopes.filter((scope) => scope.status === "complete").map((scope) => scope.scopeId), ["restarbeiten.layout.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
+    assert.ok(scopes.some((scope) => scope.scopeId === "bbm.protokoll" && scope.status === "blocked"));
     assert.equal(new Set(entries.map((entry) => entry.id)).size, entries.length);
     const ids = new Set(entries.map((entry) => entry.id));
     entries.filter((entry) => entry.parentId).forEach((entry) => assert.ok(ids.has(entry.parentId), entry.id));
@@ -173,7 +186,7 @@ async function runM80ElectronUiEditorTests(run) {
     const handlers = new Map(); const client = new MockClient(); const child = new MockChild(); client.child = child; let spawns = 0;
     const sent = []; const mainWindow = { isDestroyed: () => false, focus() {}, webContents: { send: (...args) => sent.push(args) } };
     const controller = new ElectronUiEditorSessionController({
-      app: { isPackaged: false, getPath: () => path.join(ROOT, ".m80-test-profile") },
+      app: { isPackaged: false, getPath: () => path.join(ROOT, ".m80-test-profile"), getVersion: () => "1.5.0" },
       ipcMain: { handle: (name, fn) => handlers.set(name, fn) }, getMainWindow: () => mainWindow,
       spawnProcess: () => { spawns += 1; return child; }, clientFactory: () => client,
       executableResolver: () => "C:\\trusted\\UiEditorManager.exe", runtimeRootResolver: () => "C:\\trusted\\editor-runtime",
@@ -181,14 +194,15 @@ async function runM80ElectronUiEditorTests(run) {
       profileRootResolver: () => "C:\\trusted\\profiles", ensureDirectory: () => {},
     });
     controller.registerIpc();
-    const first = await handlers.get("uiEditor:open")(); const second = await handlers.get("uiEditor:open")();
+    const first = await handlers.get("uiEditor:open")(null, registration); const second = await handlers.get("uiEditor:open")(null, registration);
     assert.equal(first.started, true); assert.equal(second.focused, true); assert.equal(spawns, 1);
     assert.equal(client.events.filter((event) => event.action === "activateEditor").length, 1);
 
     client.emit("message", { messageType: "request", messageId: "request-0001", payload: { action: "getRegistry" } });
     assert.equal(sent.at(-1)[0], "uiEditor:request");
-    await handlers.get("uiEditor:respond")(null, { requestId: "request-0001", ok: true, payload: { registryScopes: [] } });
-    assert.equal(client.response.payload.registryScopes.length, 0);
+    await handlers.get("uiEditor:respond")(null, { requestId: "request-0001", ok: true, payload: { registryScopes: registrationScopes } });
+    assert.equal(client.response.payload.registryScopes.length, registrationScopes.length);
+    assert.match(client.response.payload.registryFingerprint, /^sha256:[a-f0-9]{64}$/);
     await controller.shutdown();
     assert.equal(child.exitCode, 0); assert.equal(controller.status().running, false);
   });

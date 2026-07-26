@@ -7,6 +7,7 @@ const HIDDEN_CLASS = "bbm-ui-editor-hidden";
 
 function finite(value, fallback = 0) { return Number.isFinite(Number(value)) ? Number(value) : fallback; }
 function positive(value, fallback) { const number = finite(value, fallback); return number > 0 ? number : fallback; }
+function clamp(value, minimum, maximum) { return Math.min(maximum, Math.max(minimum, value)); }
 function px(value) { return `${Math.round(Number(value) * 1000) / 1000}px`; }
 function isElementRef(value) { return Boolean(value) && typeof value.setAttribute === "function"; }
 function rectOf(element) { return typeof element.getBoundingClientRect === "function" ? element.getBoundingClientRect() : { left: 0, top: 0, width: finite(parseFloat(element.style?.width)), height: finite(parseFloat(element.style?.height)) }; }
@@ -40,12 +41,20 @@ function readGeneric(element, id) {
   };
 }
 
-function applyGeneric(element, state) {
+function bounded(entry, field, value, fallback) {
+  const baseline = entry?.baseline || {};
+  const capitalized = field[0].toUpperCase() + field.slice(1);
+  return clamp(positive(value, fallback), positive(baseline[`min${capitalized}`], 1), positive(baseline[`max${capitalized}`], Number.MAX_SAFE_INTEGER));
+}
+
+function applyGeneric(element, state, entry) {
   element.dataset.uiEditorX = String(finite(state.x));
   element.dataset.uiEditorY = String(finite(state.y));
   element.style.translate = `${px(state.x)} ${px(state.y)}`;
-  element.style.width = px(positive(state.width, 1));
-  element.style.height = px(positive(state.height, 1));
+  element.style.boxSizing = "border-box";
+  element.style.flexShrink = "0";
+  element.style.width = px(bounded(entry, "width", state.width, 1));
+  element.style.height = px(bounded(entry, "height", state.height, 1));
   if (state.textOffsetX !== null && state.textOffsetX !== undefined) { element.dataset.uiEditorTextX = String(state.textOffsetX); element.style.paddingLeft = px(Math.max(0, finite(state.textOffsetX))); }
   if (state.textOffsetY !== null && state.textOffsetY !== undefined) { element.dataset.uiEditorTextY = String(state.textOffsetY); element.style.paddingTop = px(Math.max(0, finite(state.textOffsetY))); }
   if (state.fontSize !== null && state.fontSize !== undefined) element.style.fontSize = px(positive(state.fontSize, 1));
@@ -70,7 +79,7 @@ export function registerM80Ref(id, element, custom = {}) {
     entry,
     element,
     read: custom.read || (() => readGeneric(element, id)),
-    apply: custom.apply || ((state) => applyGeneric(element, state)),
+    apply: custom.apply || ((state) => applyGeneric(element, state, entry)),
   };
   refs.set(id, ref);
   elementIds.set(element, id);
@@ -88,6 +97,7 @@ export function completeM80PilotRender() {
 }
 
 export function registerM80TableColumnRef(id, headerCell, tableElement, cssVariable, initialWidth) {
+  const entry = getM80RegistryEntry(id);
   return registerM80Ref(id, headerCell, {
     read: () => {
       const style = styleOf(headerCell);
@@ -101,7 +111,7 @@ export function registerM80TableColumnRef(id, headerCell, tableElement, cssVaria
       };
     },
     apply: (state) => {
-      setCustomProperty(tableElement.style, cssVariable, px(positive(state.width, initialWidth)));
+      setCustomProperty(tableElement.style, cssVariable, px(bounded(entry, "width", state.width, initialWidth)));
       headerCell.dataset.uiEditorTextX = String(finite(state.textOffsetX));
       headerCell.dataset.uiEditorTextY = String(finite(state.textOffsetY));
       headerCell.style.paddingLeft = px(Math.max(0, finite(state.textOffsetX)));
@@ -111,6 +121,33 @@ export function registerM80TableColumnRef(id, headerCell, tableElement, cssVaria
       toggleClass(headerCell, HIDDEN_CLASS, state.visible === false);
     },
   });
+}
+
+export function registerM80SharedVerticalLayout({ scopeRoot, root, listPane, editPane, minimumListHeight = 180, minimumEditHeight = 160 } = {}) {
+  if (!isElementRef(scopeRoot) || !isElementRef(root) || !isElementRef(listPane) || !isElementRef(editPane)) throw new Error("M80-Hauptlayoutreferenzen fehlen.");
+  const splitHeight = () => positive(rectOf(listPane).height, 420);
+  const availableHeight = () => positive(rectOf(root).height, splitHeight() + positive(rectOf(editPane).height, 250));
+  const applySplit = (requestedHeight) => {
+    const available = availableHeight();
+    const maximumListHeight = Math.max(minimumListHeight, available - minimumEditHeight);
+    setCustomProperty(root.style, "--bbm-restarbeiten-list-height", px(clamp(positive(requestedHeight, splitHeight()), minimumListHeight, maximumListHeight)));
+  };
+  registerM80Ref("restarbeiten.layout.root", scopeRoot);
+  registerM80Ref("restarbeiten.layout.split", root, {
+    read: () => ({
+      elementId: "restarbeiten.layout.split", x: 0, y: 0,
+      width: positive(rectOf(root).width, 900), height: splitHeight(),
+      textOffsetX: 0, textOffsetY: 0, fontSize: 12,
+      visible: !hasClass(root, HIDDEN_CLASS),
+    }),
+    apply: (state) => {
+      applySplit(state.height);
+      toggleClass(root, HIDDEN_CLASS, state.visible === false);
+    },
+  });
+  registerM80Ref("restarbeiten.layout.list", listPane);
+  registerM80Ref("restarbeiten.layout.edit", editPane);
+  return root;
 }
 
 export function getM80Ref(id) { return refs.get(String(id || "")) || null; }
@@ -145,6 +182,10 @@ export function listM80CurrentStates(scopeId) {
       while (entry && entry.parentId) entry = getM80RegistryEntry(entry.parentId);
       return entry?.id === scopeId;
     }).map((ref) => readM80State(ref.id));
+}
+export function getM80ReferenceStatus(id) {
+  const ref = getM80Ref(id);
+  return { refKey: String(id || ""), referenceResolved: Boolean(ref && (typeof ref.element.isConnected !== "boolean" || ref.element.isConnected)) };
 }
 export function clearM80VisualState() {
   document.querySelector("[data-bbm-ui-editor-overlay]")?.remove();

@@ -259,7 +259,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
 });
 
 const UI_EDITOR_MAX_MESSAGE_BYTES = 1024 * 1024;
-const UI_EDITOR_TARGET_EVENTS = new Set(["targetSelectionChanged"]);
+const UI_EDITOR_TARGET_EVENTS = new Set(["targetSelectionChanged", "registryChanged", "registryStatusChanged", "scopeAdded", "scopeChanged", "scopeRemoved"]);
 
 function _uiEditorPayload(value, label) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new TypeError(`${label} ist ungültig.`);
@@ -276,7 +276,7 @@ function _uiEditorListener(channel, callback) {
 
 contextBridge.exposeInMainWorld("uiEditor", Object.freeze({
   getDiagnosticMode: () => ipcRenderer.invoke("uiEditor:getDiagnosticMode"),
-  open: () => ipcRenderer.invoke("uiEditor:open"),
+  open: (registration) => ipcRenderer.invoke("uiEditor:open", _uiEditorPayload(registration, "UI-Editor-Registrierung")),
   close: () => ipcRenderer.invoke("uiEditor:close"),
   getStatus: () => ipcRenderer.invoke("uiEditor:getStatus"),
   respond: (message) => ipcRenderer.invoke("uiEditor:respond", _uiEditorPayload(message, "UI-Editor-Antwort")),
