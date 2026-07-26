@@ -1,0 +1,19 @@
+# M80 – Lifecycle, Sicherheit und Diagnose
+
+## Lokaler Transport
+
+Je BBM-Sitzung werden zufälliger Pipe-Name, kryptografische Nonce und Sitzungs-ID erzeugt. Die Verbindung verwendet Protokollversion, Handshake vor Nutzdaten, Current-User-only, genau eine Verbindung, feste Nachrichtentypen, Korrelations-IDs, Größenlimit, Timeouts/Heartbeat, strukturierte Fehler und kontrollierten Disconnect. HTTP, WebSocket, Webserver, Browser, Netzwerk und Cloud sind ausgeschlossen.
+
+Ein erster Sidebar-Aufruf startet die feste vertrauenswürdige Editor-EXE. Ein weiterer Aufruf sendet nur `activateEditor`; er startet keinen zweiten Manager- oder Node-Prozess. Renderer dürfen keinen Programmpfad angeben. BBM- und Editorende räumen Pipe, Auswahlmodus und Overlay auf.
+
+## Entwicklung und Produktion
+
+- Entwicklung: vorbereiteter Manager unter `build/ui-editor-manager` oder kontrollierter UI-Editor-kit-Debugbuild.
+- Gepackt: `resources/ui-editor/UiEditorManager.exe` und `resources/ui-editor/editor-runtime`.
+- Optionaler stabiler Installationsfallback: `%LOCALAPPDATA%\UI-Editor-kit\Manager\app`.
+
+## Diagnose
+
+`--bbm-electron-editor-diagnostic` beziehungsweise `BBM_M80_EDITOR_DIAGNOSTIC=1` rendert einen isolierten realen Restarbeiten-Screen mit einem nicht persistenten In-Memory-Datensatz. Es werden weder Kunden-/Produktivdaten noch Fachdatenbanken geändert. Der nur dort aktive Tastengriff `Ctrl+Shift+F8` armiert einmalig einen kontrollierten Applyfehler für den sichtbaren Rollbacknachweis.
+
+Nachgewiesen wurden 43 E2E-Schritte mit echten sichtbaren Fenstern: Start, Sidebar, Handshake, Registry, Auswahl/Markierung in beide Richtungen, Layoutmodi, getrennte Sichtbarkeit, Tabelle, Fachaktionsschutz, Save/Load, Neustart-Restore, Discard, Reset, Rollback, Eininstanz, PDF-Abgrenzung, Editorende, BBM-Weiterbetrieb und vollständige Prozess-/Temporärbereinigung.

@@ -338,6 +338,12 @@
   padding: 18px 20px;
 }
 
+.bbm-restarbeiten-table {
+  --bbm-restarbeiten-number-column: 82px;
+  --bbm-restarbeiten-subject-column: minmax(0, 1fr);
+  --bbm-restarbeiten-meta-column: 172px;
+}
+
 .bbm-restarbeiten-records {
   display: grid;
   gap: 6px;
@@ -345,7 +351,7 @@
 
 .bbm-restarbeiten-table-header {
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr) 172px;
+  grid-template-columns: var(--bbm-restarbeiten-number-column) var(--bbm-restarbeiten-subject-column) var(--bbm-restarbeiten-meta-column);
   gap: 12px;
   padding: 0 10px 6px;
   color: var(--bbm-muted);
@@ -371,7 +377,7 @@
 
 .bbm-restarbeiten-record {
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr) 172px;
+  grid-template-columns: var(--bbm-restarbeiten-number-column) var(--bbm-restarbeiten-subject-column) var(--bbm-restarbeiten-meta-column);
   gap: 12px;
   padding: 9px 10px;
   border: 1px solid var(--bbm-line);
@@ -654,8 +660,17 @@
   min-width: 0;
 }
 
-.bbm-restarbeiten-text-field .bbm-restarbeiten-field {
+.bbm-restarbeiten-text-field > input,
+.bbm-restarbeiten-text-field > textarea {
   min-width: 0;
+  border: 1px solid var(--bbm-line);
+  border-radius: 6px;
+  padding: 3px 5px;
+  background: var(--bbm-surface-soft);
+  color: var(--bbm-text);
+  font-family: var(--bbm-rest-font-family);
+  font-size: 8pt;
+  line-height: 1.15;
 }
 
 .bbm-restarbeiten-text-label__row {
@@ -663,6 +678,26 @@
   align-items: center;
   gap: 5px;
   flex-wrap: wrap;
+}
+
+.bbm-restarbeiten-text-label__row > span:first-child {
+  color: var(--bbm-muted);
+  font-size: var(--bbm-rest-label-font-size);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.bbm-ui-editor-hidden {
+  visibility: hidden !important;
+}
+
+.bbm-restarbeiten-table.bbm-ui-editor-hidden-number .bbm-restarbeiten-table-header__number,
+.bbm-restarbeiten-table.bbm-ui-editor-hidden-number .bbm-restarbeiten-record > :nth-child(1),
+.bbm-restarbeiten-table.bbm-ui-editor-hidden-subject .bbm-restarbeiten-table-header__subject,
+.bbm-restarbeiten-table.bbm-ui-editor-hidden-subject .bbm-restarbeiten-record > :nth-child(2),
+.bbm-restarbeiten-table.bbm-ui-editor-hidden-meta .bbm-restarbeiten-table-header__meta,
+.bbm-restarbeiten-table.bbm-ui-editor-hidden-meta .bbm-restarbeiten-record > :nth-child(3) {
+  visibility: hidden !important;
 }
 
 .bbm-restarbeiten-remaining {
@@ -729,6 +764,11 @@
   padding: 3px 5px;
   font-size: 8pt;
   line-height: 1.15;
+}
+
+.bbm-restarbeiten-editbox .bbm-restarbeiten-text-field > textarea {
+  min-height: 34px;
+  resize: none;
 }
 
 .bbm-restarbeiten-editbox [data-ui-editor-id="restarbeiten.editbox.text.short"] input {

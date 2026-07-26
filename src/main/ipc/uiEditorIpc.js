@@ -134,13 +134,15 @@ function closeUiEditorSession() {
   return { ok: true };
 }
 
-function registerUiEditorIpc() {
-  ipcMain.handle("uiEditor:open", async () => getUiEditorStatus());
-  ipcMain.handle("uiEditor:close", async () => closeUiEditorSession());
-  ipcMain.handle("uiEditor:getStatus", async () => getUiEditorStatus());
-  ipcMain.handle("uiEditor:getElements", async () => getUiEditorElements());
-  ipcMain.handle("uiEditor:selectElement", async (_event, payload) => selectUiEditorElement(payload));
-  ipcMain.handle("uiEditor:getSelectedElementDetails", async () => getSelectedUiEditorElementDetails());
+function registerUiEditorIpc(options = {}) {
+  const { ElectronUiEditorSessionController } = require("../ui-editor/electronUiEditorSession");
+  const controller = new ElectronUiEditorSessionController({
+    app: options.app,
+    ipcMain: options.ipcMain || ipcMain,
+    getMainWindow: options.getMainWindow,
+  });
+  controller.registerIpc();
+  return controller;
 }
 
 module.exports = {

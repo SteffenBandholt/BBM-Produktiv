@@ -256,16 +256,38 @@ contextBridge.exposeInMainWorld("bbmDb", {
   restarbeitenImportAttachments: (data) => ipcRenderer.invoke("restarbeiten:importAttachments", data),
   restarbeitenDeleteAttachment: (data) => ipcRenderer.invoke("restarbeiten:deleteAttachment", data),
 
-  // ============================================================
-  // UI-Editor M52: sichere, eng begrenzte Status-/Auswahlbruecke
-  // ============================================================
-  uiEditorOpen: () => ipcRenderer.invoke("uiEditor:open"),
-  uiEditorClose: () => ipcRenderer.invoke("uiEditor:close"),
-  uiEditorGetStatus: () => ipcRenderer.invoke("uiEditor:getStatus"),
-  uiEditorGetElements: () => ipcRenderer.invoke("uiEditor:getElements"),
-  uiEditorSelectElement: (data) => ipcRenderer.invoke("uiEditor:selectElement", data),
-  uiEditorGetSelectedElementDetails: () => ipcRenderer.invoke("uiEditor:getSelectedElementDetails"),
 });
+
+const UI_EDITOR_MAX_MESSAGE_BYTES = 1024 * 1024;
+const UI_EDITOR_TARGET_EVENTS = new Set(["targetSelectionChanged"]);
+
+function _uiEditorPayload(value, label) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new TypeError(`${label} ist ungültig.`);
+  if (Buffer.byteLength(JSON.stringify(value), "utf8") > UI_EDITOR_MAX_MESSAGE_BYTES) throw new RangeError(`${label} ist zu groß.`);
+  return value;
+}
+
+function _uiEditorListener(channel, callback) {
+  if (typeof callback !== "function") throw new TypeError("UI-Editor-Listener fehlt.");
+  const listener = (_event, message) => callback(_uiEditorPayload(message, "UI-Editor-Nachricht"));
+  ipcRenderer.on(channel, listener);
+  return () => ipcRenderer.removeListener(channel, listener);
+}
+
+contextBridge.exposeInMainWorld("uiEditor", Object.freeze({
+  getDiagnosticMode: () => ipcRenderer.invoke("uiEditor:getDiagnosticMode"),
+  open: () => ipcRenderer.invoke("uiEditor:open"),
+  close: () => ipcRenderer.invoke("uiEditor:close"),
+  getStatus: () => ipcRenderer.invoke("uiEditor:getStatus"),
+  respond: (message) => ipcRenderer.invoke("uiEditor:respond", _uiEditorPayload(message, "UI-Editor-Antwort")),
+  sendTargetEvent: (message) => {
+    const payload = _uiEditorPayload(message, "UI-Editor-Ereignis");
+    if (!UI_EDITOR_TARGET_EVENTS.has(payload.action)) throw new TypeError("UI-Editor-Ereignis ist nicht erlaubt.");
+    return ipcRenderer.invoke("uiEditor:targetEvent", payload);
+  },
+  onRequest: (callback) => _uiEditorListener("uiEditor:request", callback),
+  onEvent: (callback) => _uiEditorListener("uiEditor:event", callback),
+}));
 
 contextBridge.exposeInMainWorld("bbmPrint", {
   printPdf: (data) => ipcRenderer.invoke("print:toPdf", data),

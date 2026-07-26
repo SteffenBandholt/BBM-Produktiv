@@ -4,8 +4,7 @@ const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 const REPO_ROOT = path.join(__dirname, "../..");
-const KIT_MERGE_COMMIT = "af1fbabd0b875a4ab382ed84c5cd986c3c7acb14";
-const KIT_SPEC = `github:SteffenBandholt/UI-Editor-kit#${KIT_MERGE_COMMIT}`;
+const KIT_SPEC = "file:../UI-Editor-kit";
 const EXPECTED_EXPORTS = [
   "createSelectionController",
   "createHoverOverlay",
@@ -100,12 +99,13 @@ function findFirstNode(root, tagName) {
 }
 
 async function runM59KitSelectionRuntimeIntegrationTests(run) {
-  await run("M59 Abhaengigkeit: UI-Editor-kit ist auf M59-Kit-Merge-Commit gepinnt und Exportvertrag ist pruefbar", () => {
+  await run("M59/M80 Abhaengigkeit: UI-Editor-kit ist als lokaler Workspace kontrolliert angebunden", () => {
     const pkg = readJson("package.json");
     const lock = readJson("package-lock.json");
     assert.equal(pkg.dependencies["ui-editor-kit"], KIT_SPEC);
     assert.equal(lock.packages[""].dependencies["ui-editor-kit"], KIT_SPEC);
-    assert.match(lock.packages["node_modules/ui-editor-kit"].resolved, new RegExp(`${KIT_MERGE_COMMIT}$`));
+    assert.equal(lock.packages["node_modules/ui-editor-kit"].resolved, "../UI-Editor-kit");
+    assert.equal(lock.packages["node_modules/ui-editor-kit"].link, true);
     const browserRuntimePath = path.join(REPO_ROOT, "node_modules/ui-editor-kit/dist/selection-runtime.browser.mjs");
     if (!fs.existsSync(browserRuntimePath)) {
       return;

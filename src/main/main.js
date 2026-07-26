@@ -39,6 +39,8 @@ const personsRepo = require("./db/personsRepo");
 const { buildStoragePreviewPaths } = require("./ipc/projectStoragePaths");
 
 let mainWindow;
+let uiEditorSessionController;
+let uiEditorShutdownComplete = false;
 const WINDOWS_APP_ID = "de.bbm.baubesprechungsmanager";
 const LICENSE_FILE_EXTENSION = ".bbmlic";
 const pendingLicenseImportPaths = [];
@@ -567,7 +569,13 @@ app.whenReady().then(async () => {
   registerLicenseIpc();
   registerAudioIpc();
   registerRestarbeitenIpc({ ipcMain });
-  registerUiEditorIpc();
+  uiEditorSessionController = registerUiEditorIpc({ app, ipcMain, getMainWindow: () => mainWindow });
+  ipcMain.handle("uiEditor:getDiagnosticMode", () => ({
+    ok: true,
+    enabled: process.env.BBM_M80_EDITOR_DIAGNOSTIC === "1" ||
+      process.argv.includes("--bbm-electron-editor-diagnostic") ||
+      app.commandLine.hasSwitch("bbm-electron-editor-diagnostic"),
+  }));
 
   // ============================================================
   // ✅ Build Channel IPCs
@@ -891,4 +899,13 @@ app.on("window-all-closed", () => {
     return;
   }
   if (process.platform !== "darwin") app.quit();
+});
+
+app.on("before-quit", (event) => {
+  if (!uiEditorSessionController || uiEditorShutdownComplete) return;
+  event.preventDefault();
+  void uiEditorSessionController.shutdown().finally(() => {
+    uiEditorShutdownComplete = true;
+    app.quit();
+  });
 });

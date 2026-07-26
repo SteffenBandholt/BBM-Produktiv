@@ -117,9 +117,14 @@ export default class CoreShell {
 
     const shellNavigationRouteDefs = createCoreShellNavigationRouteDefs(router);
 
-    const routeButtons = shellNavigationRouteDefs.map((def) =>
-      createScreenRouteButton({ buttonsByKey, runNavSafe }, def)
-    );
+    const routeButtons = shellNavigationRouteDefs.map((def) => {
+      if (def.kind === "action") {
+        const button = mkActionBtn(runNavSafe, def.label, def.onClick);
+        buttonsByKey.set(def.key, button);
+        return button;
+      }
+      return createScreenRouteButton({ buttonsByKey, runNavSafe }, def);
+    });
     const btnHelp = mkNavBtn({ buttonsByKey, runNavSafe }, "help", "Hilfe", () => router.openHelpModal());
 
     const coreNavigationButtons = [...routeButtons, btnHelp];

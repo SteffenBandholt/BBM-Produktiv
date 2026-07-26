@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
@@ -107,6 +108,14 @@ async function withDom(fn) {
 }
 
 async function runM63cRealRegistryPanelIntegrationTests(run) {
+  if (!fs.existsSync(KIT_RUNTIME_PATH)) {
+    await run("M63C Legacy-Browserintegration ist nach M80 nicht mehr produktführend", () => {
+      const navigation = fs.readFileSync(path.join(REPO_ROOT, "src/renderer/app/coreShellNavigation.js"), "utf8");
+      assert.doesNotMatch(navigation, /showUiEditor/);
+      assert.match(navigation, /UI-Editor öffnen/);
+    });
+    return;
+  }
   const { BbmUiEditorStatusPanel } = await importEsmFromFile(PANEL_PATH);
   const { createBbmEditorRuntimeInspectorBridge } = await importEsmFromFile(BRIDGE_PATH);
   const { createBbmMainUiHostAdapter } = await importEsmFromFile(HOST_ADAPTER_PATH);

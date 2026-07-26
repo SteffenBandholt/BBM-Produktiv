@@ -5,6 +5,7 @@ import {
   getRestarbeitRequiredFieldSummary,
   normalizeRestarbeitStatus,
 } from "./domain/restarbeitenRules.js";
+import { registerM80Ref } from "../../ui-editor/m80Refs.js";
 
 function createEl(tag, { className = "", text = "", uiId = "" } = {}) {
   const el = document.createElement(tag);
@@ -141,10 +142,12 @@ function createTextField({
   multiline = true,
   maxLength,
   labelControls = [],
+  editorGroupId,
+  editorLabelId,
+  editorFieldId,
 }) {
   const wrap = createEl("div", { className: "bbm-restarbeiten-text-field", uiId });
-  const field = createEl("label", { className: "bbm-restarbeiten-field bbm-restarbeiten-text-label" });
-  const labelRow = createEl("span", { className: "bbm-restarbeiten-text-label__row" });
+  const labelRow = createEl("div", { className: "bbm-restarbeiten-text-label__row" });
   const input = document.createElement(multiline ? "textarea" : "input");
   if (inputUiId) input.setAttribute("data-ui-editor-id", inputUiId);
   const remaining = createEl("span", {
@@ -170,8 +173,10 @@ function createTextField({
   });
   input.addEventListener("blur", () => onCommit?.(input.value));
   labelRow.append(createEl("span", { text: label, uiId: labelUiId }), remaining, createDictationButton(dictationUiId), ...labelControls);
-  field.append(labelRow, input);
-  wrap.appendChild(field);
+  wrap.append(labelRow, input);
+  registerM80Ref(editorGroupId, wrap);
+  registerM80Ref(editorLabelId, labelRow);
+  registerM80Ref(editorFieldId, input);
   return wrap;
 }
 
@@ -229,6 +234,9 @@ export function buildRestarbeitenEditbox({
     className: "bbm-restarbeiten-editbox",
     uiId: "restarbeiten.editbox",
   });
+  const area = createEl("div", { className: "bbm-restarbeiten-editbox__editor-area" });
+  registerM80Ref("restarbeiten.edit.root", root);
+  registerM80Ref("restarbeiten.edit.area", area);
   root.dataset.fachlichVollstaendig = String(missingRequiredFields.length === 0);
 
   const header = createEl("div", {
@@ -248,6 +256,7 @@ export function buildRestarbeitenEditbox({
     text: "Neu",
     uiId: "restarbeiten.editbox.action.new",
   });
+  registerM80Ref("restarbeiten.edit.action.new", newBtn);
   newBtn.type = "button";
   newBtn.addEventListener("click", () => onNew?.());
   const deleteBtn = createEl("button", {
@@ -275,6 +284,7 @@ export function buildRestarbeitenEditbox({
   const textArea = createEl("div", {
     className: "bbm-restarbeiten-text-area",
   });
+  registerM80Ref("restarbeiten.edit.fields", textArea);
   textArea.append(
     createTextField({
       label: "Kurztext / Gegenstand",
@@ -288,6 +298,9 @@ export function buildRestarbeitenEditbox({
       multiline: false,
       maxLength: 87,
       labelControls: [classToggle, actions],
+      editorGroupId: "restarbeiten.edit.short",
+      editorLabelId: "restarbeiten.edit.short.label",
+      editorFieldId: "restarbeiten.edit.short.field",
       onInput: (short_text) => {
         if (validation) {
           validation.textContent = getValidationText({ ...draft, short_text });
@@ -305,6 +318,9 @@ export function buildRestarbeitenEditbox({
       dictationUiId: "restarbeiten.editbox.text.long.dictation",
       remainingUiId: "restarbeiten.editbox.text.long.remaining",
       maxLength: 400,
+      editorGroupId: "restarbeiten.edit.long",
+      editorLabelId: "restarbeiten.edit.long.label",
+      editorFieldId: "restarbeiten.edit.long.field",
       onInput: (long_text) => onDraftChange?.({ long_text }, { render: false }),
       onCommit: () => onAutoSave?.(),
     })
@@ -404,6 +420,7 @@ export function buildRestarbeitenEditbox({
   });
   meta.appendChild(noteBtn);
 
-  root.append(header, textArea, location, meta);
+  area.append(header, textArea, location, meta);
+  root.appendChild(area);
   return root;
 }

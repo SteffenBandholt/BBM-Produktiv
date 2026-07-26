@@ -395,7 +395,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(entry.moduleLabel, "Restarbeiten");
     assert.equal(entry.workScreenId, "restarbeitenWork");
     assert.equal(entry.navigation.project[0].key, "restarbeiten");
-    assert.equal(entry.shell.hideSidebar, true);
+    assert.equal(entry.shell.hideSidebar, false);
     assert.equal(typeof screenResolver.resolveModuleWorkScreenFromEntry(entry), "function");
   });
 
@@ -423,7 +423,7 @@ async function runRestarbeitenModuleTests(run) {
     const rendered = await renderRouteScreen();
     const text = collectText(rendered.root);
     assert.equal(rendered.pageTitle, "Restarbeiten");
-    assert.equal(rendered.sidebarVisible, false);
+    assert.equal(rendered.sidebarVisible, true);
     assert.equal(text.includes("Restarbeitenliste wird neu aufgebaut."), false);
     assert.equal(text.includes("Verortung"), false);
     assert.equal(text.includes("Tuer einstellen"), true);
