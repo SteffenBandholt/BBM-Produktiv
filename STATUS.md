@@ -1,5 +1,26 @@
 # STATUS.md — BBM-Produktiv
 
+### M81.1 – Editorstart bei inkompatiblen Benutzerprofilen repariert
+
+- Status: `[A] abgenommen`; gezielte Regressionen und reale Abnahme im normalen Benutzerprofilpfad sind abgeschlossen.
+- Ursache:
+  - Ein Profilfehler nach erfolgreichem Handshake wurde als `electron_restore_failed` in den generischen Verbindungsfehlerpfad geleitet.
+  - Das reale Altprofil besitzt eine frühere Editbox-Registry und keinen aktuellen Header-Scope; eine sichere Migration ist mangels vollständigem Altstrukturbeleg nicht beweisbar.
+- Ergebnis:
+  - UI-/PDF-Profilzustände und Fehlercodes bleiben getrennt; bewusster Abbruch erzeugt keine zweite generische BBM-Meldung.
+  - Baseline/Migration archivieren das Original zuerst byte-identisch mit Metadaten und SHA-256 unterhalb der vorhandenen Profilwurzel.
+  - Nur identische vorhandene Scopes plus ausschließlich neue Baseline-Scopes sind automatisch migrationsfähig.
+  - Erfolgreich normalisierte Zielzustände starten sauber, ohne falsches Dirty und ohne Autosave.
+- Praktische Prüfung:
+  - echter normaler Benutzerprofilpfad, sichtbarer Sicherheitsdialog und Details,
+  - Altprofil byte-identisch archiviert; Standardlayout sauber geöffnet,
+  - UI-Auswahl/Markierung, Save, vollständiger BBM-Neustart und sauberer Restore,
+  - echte zweiseitige BBM-Protokoll-PDF mit 28 Elementen, Save/Restore, Reset und Discard,
+  - genau eine Editorinstanz; Fachwerte unverändert.
+- Dokumentation: `docs/M81_1_PROFIL_RESTORE.md`.
+- Risiken / offen: M82 bleibt offen und wurde nicht begonnen.
+- Commit/PR: keiner; gemäß Nutzeranweisung weder Commit noch Push noch PR noch Merge.
+
 ### M81 – BBM-PDF an den bestehenden PDF-Arbeitsbereich angebunden
 
 - Status: `[A] abgenommen`; automatisierte Pflichtprüfungen und sichtbare native Abnahme sind abgeschlossen.

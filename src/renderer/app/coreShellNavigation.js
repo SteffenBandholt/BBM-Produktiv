@@ -32,7 +32,9 @@ export async function openNativeUiEditor(context = {}) {
   } else {
     showRegistryRefreshStatus(result?.message || "UI-Registry konnte nicht freigegeben werden.", "blocked");
   }
-  if (!result?.ok) alert(result?.message || "Der separate UI-Editor konnte nicht gestartet werden.");
+  if (!result?.ok && result?.errorCode !== "electron_profile_user_cancelled") {
+    alert(result?.message || "Der separate UI-Editor konnte nicht gestartet werden.");
+  }
   return result;
 }
 
