@@ -1615,6 +1615,9 @@ export default class TopsScreen {
   }
 
   async load() {
+    if (this.projectId && this.meetingId && typeof window.uiEditor?.preparePdfContext === "function") {
+      await window.uiEditor.preparePdfContext({ projectId: this.projectId, meetingId: this.meetingId });
+    }
     const showAmpelInList = await this._loadDisplaySetting({
       key: "tops.ampelEnabled",
       fallback: true,

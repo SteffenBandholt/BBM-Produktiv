@@ -142,6 +142,7 @@ const TEST_GROUPS = Object.freeze([
       ["m80ElectronUiEditor.test.cjs", "runM80ElectronUiEditorTests"],
       ["m80-1RegistrationRefresh.test.cjs", "runM801RegistrationRefreshTests"],
       ["m80-2HeaderEditboxLayout.test.cjs", "runM802HeaderEditboxLayoutTests"],
+      ["m81BbmPdfAdapter.test.cjs", "runM81BbmPdfAdapterTests"],
       ["testHarnessOrchestration.test.cjs", "runTestHarnessOrchestrationTests"],
     ]),
   }),

@@ -21,6 +21,13 @@ const APPLICATION_ID = "bbm-produktiv";
 const DISPLAY_NAME = "BBM";
 const ACTIVE_SCOPES = Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
 const NATIVE_REQUEST_ACTIONS = new Set(["getRegistry", "getLayoutState", "submitChange"]);
+const NATIVE_PDF_REQUEST_ACTIONS = new Set([
+  "getPdfRegistry",
+  "getCurrentPdfLayoutState",
+  "submitPdfChangeRequest",
+  "regeneratePdfPreview",
+  "getPreviewMetadata",
+]);
 const NATIVE_EVENT_ACTIONS = new Set(["beginTargetSelection", "cancelTargetSelection", "highlightElement", "activateTarget", "editorClosed"]);
 const REGISTRY_EVENT_ACTIONS = new Set(["registryChanged", "registryStatusChanged", "scopeAdded", "scopeChanged", "scopeRemoved"]);
 const TARGET_EVENT_ACTIONS = new Set(["targetSelectionChanged", ...REGISTRY_EVENT_ACTIONS]);
@@ -93,10 +100,11 @@ function publicError(error) {
 function delay(milliseconds) { return new Promise((resolve) => setTimeout(resolve, milliseconds)); }
 
 class ElectronUiEditorSessionController {
-  constructor({ app, ipcMain, getMainWindow, spawnProcess = spawn, clientFactory, pathOptions = {}, executableResolver, runtimeRootResolver, sessionIdentifiersFactory, profileRootResolver, ensureDirectory }) {
+  constructor({ app, ipcMain, getMainWindow, pdfAdapter = null, spawnProcess = spawn, clientFactory, pathOptions = {}, executableResolver, runtimeRootResolver, sessionIdentifiersFactory, profileRootResolver, ensureDirectory }) {
     this.app = app;
     this.ipcMain = ipcMain;
     this.getMainWindow = getMainWindow;
+    this.pdfAdapter = pdfAdapter;
     this.spawnProcess = spawnProcess;
     this.clientFactory = clientFactory || ((options) => new NamedPipeTargetClient(options));
     this.pathOptions = pathOptions;
@@ -123,6 +131,14 @@ class ElectronUiEditorSessionController {
     this.ipcMain.handle("uiEditor:getStatus", () => this.status());
     this.ipcMain.handle("uiEditor:respond", (_event, message) => this.respondFromRenderer(message));
     this.ipcMain.handle("uiEditor:targetEvent", (_event, message) => this.forwardTargetEvent(message));
+    this.ipcMain.handle("uiEditor:preparePdfContext", (_event, context) => this.preparePdfContext(context));
+  }
+
+  preparePdfContext(context = {}) {
+    if (!this.pdfAdapter) return { ok: false, pdfRegistryStatus: "unavailable", activeDocumentId: "" };
+    const result = this.pdfAdapter.setActiveDocumentContext({ projectId: context?.projectId, meetingId: context?.meetingId });
+    console.info(`[ui-editor] PDF context: ${result.pdfRegistryStatus}`);
+    return result;
   }
 
   async open(registration, reason = "open") {
@@ -143,6 +159,7 @@ class ElectronUiEditorSessionController {
     if (activeScopes.length === 0) {
       throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_SCOPE_BLOCKED, "Kein vollständiger Scope ist im aktuellen BBM-Bereich auflösbar.");
     }
+    const pdfContract = this.pdfAdapter?.getPdfContract?.() || null;
     const contract = createElectronTargetContract({
       applicationId: registration.applicationId,
       displayName: registration.displayName,
@@ -156,9 +173,11 @@ class ElectronUiEditorSessionController {
       transportProtocolVersion: LOCAL_TARGET_PROTOCOL_VERSION,
       sessionId,
       processId: process.pid,
+      pdfCapability: pdfContract ? "available" : "unavailable",
+      pdfContract,
     });
     if (registration.framework !== contract.framework || registration.uiCapability !== contract.uiCapability ||
-        registration.pdfCapability !== contract.pdfCapability || registration.labelFieldSeparation !== true ||
+        registration.labelFieldSeparation !== true ||
         registration.visibilityCapability !== true || contract.adapterVersion !== ELECTRON_TARGET_ADAPTER_VERSION) {
       throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_INCOMPATIBLE, "Ziel-App-Vertrag oder Adapter-Capabilities sind nicht kompatibel.");
     }
@@ -184,25 +203,28 @@ class ElectronUiEditorSessionController {
       throw new ElectronEditorError(error?.code || ELECTRON_EDITOR_ERROR_CODES.REGISTRY_REFRESH_FAILED, error?.message || "Registry-Refresh fehlgeschlagen.");
     }
     const comparison = compareRegistrySnapshots(this.currentRegistration, candidate);
+    const previousPdf = this.currentRegistration.contract.pdfContract;
+    const nextPdf = candidate.contract.pdfContract;
+    const pdfChanged = JSON.stringify(previousPdf) !== JSON.stringify(nextPdf);
     const guard = await this.client.request("prepareRegistryRefresh", {
       reason,
       registryVersion: candidate.contract.registryVersion,
       registryFingerprint: candidate.contract.registryFingerprint,
       comparison,
     }, "prepareRegistryRefreshAccepted");
-    if (comparison.status !== "current" && guard?.isDirty === true) {
+    if ((comparison.status !== "current" || pdfChanged) && guard?.isDirty === true) {
       throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_PROFILE_CONFLICT, "Ungespeicherte Editoränderungen verhindern den Registry-Refresh.");
     }
     if (comparison.migrationRequiredIds.length) {
       throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_PROFILE_MIGRATION_REQUIRED, "Geänderte Parents oder Bedeutungen benötigen eine Profilmigration.");
     }
-    if (comparison.status === "current") {
+    if (comparison.status === "current" && !pdfChanged) {
       if (reason === "open" || reason === "focus") this.client.sendEvent("activateEditor");
       return { ok: true, started: false, focused: reason === "open" || reason === "focus", sessionId: this.sessionId, registryRefreshStatus: "current" };
     }
     await this.#disposeSession("registry_changed", true);
     const result = await this.#start(registration);
-    return { ...result, registryRefreshStatus: "changed", addedElementIds: comparison.addedElementIds, removedElementIds: comparison.removedElementIds };
+    return { ...result, registryRefreshStatus: "changed", pdfRegistryRefreshStatus: pdfChanged ? "changed" : "current", addedElementIds: comparison.addedElementIds, removedElementIds: comparison.removedElementIds };
   }
 
   async #start(registration) {
@@ -272,6 +294,10 @@ class ElectronUiEditorSessionController {
 
   #handleNativeMessage(message) {
     const action = String(message?.payload?.action || "");
+    if (message.messageType === "request" && NATIVE_PDF_REQUEST_ACTIONS.has(action)) {
+      void this.#handleNativePdfRequest(message, action);
+      return;
+    }
     if (message.messageType === "request" && NATIVE_REQUEST_ACTIONS.has(action)) {
       console.info(`[ui-editor] native request: ${action}`);
       const window = this.getMainWindow?.();
@@ -294,6 +320,21 @@ class ElectronUiEditorSessionController {
       if (action === "activateTarget") this.getMainWindow?.()?.focus?.();
       this.getMainWindow?.()?.webContents?.send?.("uiEditor:event", message.payload);
       if (action === "editorClosed") void this.#disposeSession("editor_closed", false);
+    }
+  }
+
+  async #handleNativePdfRequest(message, action) {
+    try {
+      if (!this.pdfAdapter || !this.pdfAdapter.getPdfContract()) throw Object.assign(new Error("BBM-PDF ist nicht verfügbar."), { code: "pdf_document_unavailable" });
+      let payload;
+      if (action === "getPdfRegistry") payload = { pdfRegistry: this.pdfAdapter.getPdfRegistry() };
+      else if (action === "getCurrentPdfLayoutState") payload = { layoutState: this.pdfAdapter.getCurrentPdfLayoutState() };
+      else if (action === "submitPdfChangeRequest") payload = { changeResult: this.pdfAdapter.submitPdfChangeRequest(message.payload?.changeRequest) };
+      else if (action === "regeneratePdfPreview") payload = { previewMetadata: await this.pdfAdapter.regeneratePdfPreview() };
+      else payload = { previewMetadata: this.pdfAdapter.getPreviewMetadata() };
+      this.client?.respond(message, { action: `${action}Accepted`, ...payload });
+    } catch (error) {
+      this.client?.respond(message, {}, { code: String(error?.code || "pdf_request_failed"), message: String(error?.message || "BBM-PDF-Anfrage fehlgeschlagen.") });
     }
   }
 
