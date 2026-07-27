@@ -8,7 +8,7 @@ Ab M80 ist die produktführende Integration die Sidebar-Aktion `UI-Editor öffne
 
 M80.1 ergänzt Registryversion und deterministischen Fingerprint, vollständige Scope-Inventare, Refresh vor jedem Öffnen/Fokussieren und bei Laufzeitereignissen sowie sicheren Profilabgleich. Nur die drei vollständig registrierten Restarbeiten-Scopes sind aktiv; alle weiteren noch nicht sicher inventarisierten BBM-Bereiche bleiben ausdrücklich gesperrt. Details: [M80.1-Bestands-App-Registrierung](docs/M80_1_BESTANDSAPP_REGISTRIERUNG.md).
 
-Die vollständige BBM-PDF-Anbindung ist M81; bis dahin zeigt der PDF-Tab im Editor ausdrücklich, dass BBM-PDF noch nicht angebunden ist.
+M81 bindet die reale BBM-Protokoll-PDF über eine explizite 28-Element-Registry an den vorhandenen nativen M77-PDF-Arbeitsbereich an. BBM behält den bestehenden Paginierungs- und `printToPDF`-Fachweg; der Editor nutzt denselben PDF-Core, Profilweg, Readback und Rollback. Details: [M81-BBM-PDF-Adapter](docs/M81_BBM_PDF_ADAPTER.md).
 
 Status M51: Core-Vertrag technisch angebunden und testbar; noch keine vollständige sichtbare Editor-Oberfläche und noch keine dauerhafte Layoutspeicherung.
 

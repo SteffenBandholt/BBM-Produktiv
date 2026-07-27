@@ -655,21 +655,23 @@ export function renderPrint({ pages, data } = {}) {
     } else {
       pageEl.appendChild(renderV2MiniHeader({ data: runtimeData, pageNo, totalPages, modeLabel }));
     }
+    const pageBody = _el("div", "v2PageBody");
     const intro = _buildIntro(page);
-    if (intro) pageEl.appendChild(intro);
+    if (intro) pageBody.appendChild(intro);
     const preRemarks = _buildPreRemarks(page);
-    if (preRemarks) pageEl.appendChild(preRemarks);
+    if (preRemarks) pageBody.appendChild(preRemarks);
     const isTops = String(page?.table?.type || "") === "tops";
     const hasRows = (page?.table?.rows || []).length > 0;
     // Tops-Tabelle ohne Zeilen nicht rendern (sonst Tabellenkopf allein).
     const renderTable = !(isTops && !hasRows);
     if (renderTable) {
-      pageEl.appendChild(_buildTable(page, runtimeData));
+      pageBody.appendChild(_buildTable(page, runtimeData));
     }
     if (isTops && idx === tailPageIdx) {
       const tail = _buildTopsTail(page, runtimeData);
-      if (tail) pageEl.appendChild(tail);
+      if (tail) pageBody.appendChild(tail);
     }
+    pageEl.appendChild(pageBody);
     pageEl.appendChild(_el("div", "v2FooterReserveSpacer"));
     root.appendChild(pageEl);
   });

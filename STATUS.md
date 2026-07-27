@@ -1,5 +1,27 @@
 # STATUS.md — BBM-Produktiv
 
+### M81 – BBM-PDF an den bestehenden PDF-Arbeitsbereich angebunden
+
+- Status: `[A] abgenommen`; automatisierte Pflichtprüfungen und sichtbare native Abnahme sind abgeschlossen.
+- Ergebnis:
+  - Der vorhandene native M77-PDF-Arbeitsbereich verarbeitet die explizite BBM-Registry mit 28 Elementen über denselben lokalen Electron-Vertrag und denselben Profilweg.
+  - Die reale Protokoll-PDF wird weiterhin über BBMs bestehenden Paginierungs- und `printToPDF`-Pfad erzeugt und anschließend in der vorhandenen Vorschau zurückgelesen.
+  - Titel, getrennte Labels/Werte, Teilnehmerbereich, TOP-Tabelle mit drei sichtbaren Spalten sowie Kopf-/Fuß- und Wiederholungsbereiche sind capability-gesteuert bearbeitbar.
+  - Fachwerte, Fachaktionen, Datenbank-, Datei- und Druckaktionen bleiben gesperrt; kein zweiter Core, Renderer oder Profilweg wurde eingeführt.
+  - Kompatible stabile Profile werden kontrolliert übernommen; Regeneration, Readback, Save, Neustart-Restore, Reset, Discard und Batchrollback verwenden den bestehenden Zustandsweg.
+- Praktische Prüfung:
+  - reales Protokoll, 28 Registry-Elemente und reale dreiseitige PDF,
+  - Titel-, Label/Wert-, Tabellen-, Spalten-, Kopf- und Fußauswahl,
+  - Layoutänderung, Vorschau-veraltet-Status, Regeneration, Save und Restore nach Neustart,
+  - Einzel-/Gesamt-Reset und Discard,
+  - vollständiger Rollback bei absichtlich ungültiger Spaltensumme.
+- Dokumentation:
+  - `docs/M81_BBM_PDF_ADAPTER.md`
+- Risiken / offen:
+  - M82 App-Starterpaket bleibt offen und unangetastet.
+- Commit/PR:
+  - keiner; gemäß Nutzeranweisung weder Commit noch Push noch PR noch Merge.
+
 ### M80.2 – Restarbeiten-Header und Editbox direkt editierbar
 
 - Status: `[A] abgenommen`; die sichtbare native Abnahme und der stabilisierte BBM-Pflichtprüfungsblock sind abgeschlossen.
@@ -20,7 +42,7 @@
   - Das UI-Editor-kit ist mit 88 Manager- und 51 Ziel-App-Tests, `npm test`, Pack-Dry-Run und Release-Check grün.
 - Risiken / offen:
   - Das globale Lint bleibt unverändert auf dem bekannten Repo-Bestand von 17 Fehlern/371 Warnungen rot; das gezielte ESLint aller geänderten Harness-/Skriptdateien ist grün.
-  - M81 BBM-PDF und M82 App-Starterpaket bleiben offen und unangetastet.
+  - M81 ist abgenommen; M82 App-Starterpaket bleibt offen und unangetastet.
 - Commit/PR:
   - keiner; gemäß Nutzeranweisung weder Commit noch Push noch PR noch Merge.
 

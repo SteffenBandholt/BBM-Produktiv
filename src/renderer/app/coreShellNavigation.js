@@ -16,11 +16,14 @@ function showRegistryRefreshStatus(message, state = "checking") {
   status.textContent = message;
 }
 
-export async function openNativeUiEditor() {
+export async function openNativeUiEditor(context = {}) {
   const api = window.uiEditor;
   if (!api || typeof api.open !== "function") {
     alert("Der separate UI-Editor ist nicht installiert oder die sichere BBM-Brücke ist nicht verfügbar.");
     return { ok: false, errorCode: "electron_editor_not_installed" };
+  }
+  if (typeof api.preparePdfContext === "function" && context?.projectId && context?.meetingId) {
+    await api.preparePdfContext({ projectId: context?.projectId || null, meetingId: context?.meetingId || null });
   }
   showRegistryRefreshStatus("UI-Registry wird geprüft …", "checking");
   const result = await api.open(createM80RegistrationDescriptor());
@@ -39,6 +42,9 @@ export function createCoreShellNavigationRouteDefs(router) {
     { key: "projects", label: "Projekte", onClick: () => router.showProjects() },
     { key: "firms", label: "Firmen", onClick: () => router.showFirms() },
     { key: "settings", label: "Einstellungen", onClick: () => router.showSettings() },
-    { key: "uiEditor", kind: "action", label: "UI-Editor öffnen", onClick: () => openNativeUiEditor() },
+    { key: "uiEditor", kind: "action", label: "UI-Editor öffnen", onClick: () => openNativeUiEditor({
+      projectId: router.currentProjectId,
+      meetingId: router.currentMeetingId || router.lastTopsMeetingId,
+    }) },
   ];
 }

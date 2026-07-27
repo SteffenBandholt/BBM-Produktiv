@@ -4,6 +4,7 @@ import { renderHeaderTestPages } from "./headerTest/HeaderTestPages.js";
 import { renderV2GlobalHeader } from "./v2/header/GlobalHeader.js";
 import { renderV2FullHeader } from "./v2/header/FullHeader.js";
 import { renderV2MiniHeader } from "./v2/header/MiniHeader.js";
+import { applyBbmPdfEditorLayout, collectBbmPdfPreviewMetadata, prepareBbmPdfEditorLayout } from "./pdfEditorLayout.js";
 import { V2_LAYOUT } from "./v2/v2LayoutConfig.js";
 import {
   normalizeTopLongText,
@@ -1024,6 +1025,7 @@ function _measureTopsTailHeight(data) {
   const tail = _buildTopsTailElement(data);
   page.appendChild(tail);
   root.appendChild(page);
+  applyBbmPdfEditorLayout(root, data);
   const h = Math.ceil(tail.getBoundingClientRect().height || 0);
   root.remove();
   return h;
@@ -1153,6 +1155,7 @@ function _measurePreRemarksHeight(ctx, preRemarks) {
   const el = _buildPreRemarksElement(preRemarks);
   if (!el) return 0;
   ctx.root.querySelector(".page")?.appendChild(el);
+  applyBbmPdfEditorLayout(ctx.root, ctx.data);
   const rectH = el.getBoundingClientRect().height;
   const style = getComputedStyle(el);
   const marginTop = parseFloat(style.marginTop) || 0;
@@ -1167,6 +1170,7 @@ function _measureIntroHeight(ctx, intro) {
   const introEl = _buildParticipantsIntroElement(intro);
   if (!introEl) return 0;
   ctx.root.querySelector(".page")?.appendChild(introEl);
+  applyBbmPdfEditorLayout(ctx.root, ctx.data);
   const rectH = introEl.getBoundingClientRect().height;
   const style = getComputedStyle(introEl);
   const marginTop = parseFloat(style.marginTop) || 0;
@@ -1258,6 +1262,7 @@ function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind 
   const tbody = document.createElement("tbody");
   table.appendChild(tbody);
   page.appendChild(table);
+  applyBbmPdfEditorLayout(root, data);
   const pageRect = page.getBoundingClientRect();
   const style = getComputedStyle(page);
   const padTop = parseFloat(style.paddingTop) || 0;
@@ -1287,6 +1292,7 @@ function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind 
 
   return {
     root,
+    data,
     maxBodyHeight,
     measureRow,
     cleanup: () => root.remove(),
@@ -1772,6 +1778,7 @@ async function handleInit(payload) {
     }
 
     const data = res.data || {};
+    prepareBbmPdfEditorLayout(data);
     const topsLayout = _getTopLayout(data);
     // Version/Channel für PDF-Fußnote bereitstellen (falls nicht im Payload enthalten)
     if (!data.appVersion && window.bbmDb?.appGetVersion) {
@@ -1812,7 +1819,7 @@ async function handleInit(payload) {
     }
 
     const pages = _buildPages(data);
-    const root = renderPrint({ pages, data });
+    const root = applyBbmPdfEditorLayout(renderPrint({ pages, data }), data);
     root._bbmRuntimeData = data;
     if (root?.dataset) root.dataset.tableLayout = topsLayout.tableKey || "protokoll_tops";
     if (root?.dataset) root.dataset.orientation = orientation;
@@ -1878,7 +1885,7 @@ async function handleInit(payload) {
       });
     }
 
-    window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: true });
+    window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: true, previewMetadata: collectBbmPdfPreviewMetadata(root, data) });
   } catch (err) {
     setError(err?.message || "Daten konnten nicht geladen werden.");
     window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: false });

@@ -290,9 +290,9 @@ async function runM80ElectronUiEditorTests(run) {
     assert.match(read("src/renderer/ui-editor/m80HostAdapter.js"), /FORBIDDEN_KEYS/);
   });
 
-  await run("M80 PDF-Grenze: BBM bleibt für M81 ausdrücklich nicht angebunden", () => {
+  await run("M80/M81 PDF-Grenze: nativer Adapter nutzt kein Referenz-Fachmodell", () => {
     const native = read("../UI-Editor-kit/reference-target-app/src/ReferenceTargetApp.Wpf/UI/Editor/ElectronTargetEditor.cs");
-    assert.match(native, /BBM-PDF noch nicht angebunden/); assert.doesNotMatch(native, /ReferenceOrderFactory/);
+    assert.match(native, /CreatePdfHostAdapterAsync/); assert.doesNotMatch(native, /ReferenceOrderFactory/);
   });
 }
 

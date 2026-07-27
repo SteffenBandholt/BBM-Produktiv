@@ -136,10 +136,22 @@ function closeUiEditorSession() {
 
 function registerUiEditorIpc(options = {}) {
   const { ElectronUiEditorSessionController } = require("../ui-editor/electronUiEditorSession");
+  const { getSharedBbmPdfAdapter } = require("../ui-editor/bbmPdfAdapter.cjs");
+  const { generatePdfForUiEditor } = require("./printIpc");
+  const pdfAdapter = getSharedBbmPdfAdapter();
+  pdfAdapter.configureRegenerate(async ({ projectId, meetingId, activeDocumentId }) => generatePdfForUiEditor({
+    mode: "protocol",
+    projectId,
+    meetingId,
+    targetDir: "temp",
+    fileName: `BBM-UI-Editor-${activeDocumentId}.pdf`,
+    overwrite: true,
+  }));
   const controller = new ElectronUiEditorSessionController({
     app: options.app,
     ipcMain: options.ipcMain || ipcMain,
     getMainWindow: options.getMainWindow,
+    pdfAdapter,
   });
   controller.registerIpc();
   return controller;

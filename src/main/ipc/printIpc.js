@@ -384,7 +384,7 @@ function attachPrintDebugPipes(win, jobId) {
   win.webContents.on("crashed", () => console.log(`[print:${jobId}] webContents crashed`));
 }
 
-async function printToPdf(payload = {}) {
+async function _printToPdf(payload = {}, includeMetadata = false) {
   const jobId = _randId();
   const { resolvePrintMode } = await _loadPrintModesModule();
   const mode = resolvePrintMode(payload.mode, { fallback: "protocol" });
@@ -485,12 +485,19 @@ async function printToPdf(payload = {}) {
             0
           )}`
         );
+        if (msg?.ok === false) throw new Error("Print-Renderer hat die PDF-Erzeugung abgewiesen.");
         const pdfBuffer = await win.webContents.printToPDF(options);
         fs.writeFileSync(outPath, pdfBuffer);
         console.log(`[print:${jobId}] PDF written -> ${outPath}`);
         done = true;
         cleanup();
-        resolve(outPath);
+        resolve(includeMetadata ? {
+          filePath: outPath,
+          controlledOutputPath: outPath,
+          pageCount: Number(msg?.previewMetadata?.pageCount || 0),
+          generatedAt: new Date().toISOString(),
+          renderBounds: Array.isArray(msg?.previewMetadata?.renderBounds) ? msg.previewMetadata.renderBounds : [],
+        } : outPath);
       } catch (err) {
         console.log(`[print:${jobId}] printToPDF ERROR: ${err?.message || err}`);
         done = true;
@@ -515,6 +522,7 @@ async function printToPdf(payload = {}) {
         testOrientation: payload.testOrientation || null,
         debug,
         layoutCalibrationEnabled: _readLayoutCalibrationEnabled(),
+        pdfEditorPreview: payload.pdfEditorPreview === true,
       });
     });
 
@@ -526,6 +534,14 @@ async function printToPdf(payload = {}) {
       reject(err);
     });
   });
+}
+
+async function printToPdf(payload = {}) {
+  return _printToPdf(payload, false);
+}
+
+async function generatePdfForUiEditor(payload = {}) {
+  return _printToPdf({ ...payload, pdfEditorPreview: true, silent: true }, true);
 }
 
 function registerPrintIpc() {
@@ -546,6 +562,12 @@ function registerPrintIpc() {
         restarbeitenLocationLabels: p.restarbeitenLocationLabels || null,
         showAmpelInList: typeof p.showAmpelInList === "boolean" ? p.showAmpelInList : null,
       });
+      if (p.pdfEditorPreview === true && data.mode === "protocol") {
+        const { getSharedBbmPdfAdapter } = require("../ui-editor/bbmPdfAdapter.cjs");
+        const pdfAdapter = getSharedBbmPdfAdapter();
+        data.pdfEditorLayoutState = pdfAdapter.getCurrentPdfLayoutState();
+        data.pdfEditorRegistry = pdfAdapter.getPdfRegistry();
+      }
       // Version/Channel für PDF-Footer mitgeben
       data.appVersion = app.getVersion ? app.getVersion() : "";
       data.buildChannel = app.isPackaged ? "STABLE" : "DEV";
@@ -691,4 +713,4 @@ function registerPrintIpc() {
   );
 }
 
-module.exports = { registerPrintIpc };
+module.exports = { registerPrintIpc, generatePdfForUiEditor };

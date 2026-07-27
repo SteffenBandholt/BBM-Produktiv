@@ -13,7 +13,11 @@ export function renderV2MiniHeader({ data, pageNo, totalPages, modeLabel } = {})
 
   const topRow = headerUtils.el("div", "v2MiniTopRow");
   const line1Project = headerUtils.el("div", "v2MiniProject", headerUtils.projectLabel(data?.project));
-  const rightPage = headerUtils.el("div", "v2MiniRight", "Seite " + pageNo + " / " + totalPages);
+  const rightPage = headerUtils.el("div", "v2MiniRight");
+  rightPage.append(
+    headerUtils.el("span", "v2MiniPageLabel", "Seite "),
+    headerUtils.el("span", "v2MiniPageValue", pageNo + " / " + totalPages)
+  );
   topRow.append(line1Project, rightPage);
 
   const line2Protocol = headerUtils.el("div", "v2MiniProtocolTitle", titleText);
