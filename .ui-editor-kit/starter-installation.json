@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "productName": "App-Starterpaket",
+  "applicationId": "bbm-produktiv",
+  "framework": "electron",
+  "integrationMode": "existing-app",
+  "installedPackageVersion": "1.0.0",
+  "installedAt": "2026-07-27T00:00:00+00:00",
+  "updatedAt": "2026-07-27T00:00:00+00:00",
+  "files": [
+    {
+      "relativePath": "ui-editor-target.json",
+      "installedHash": "0cdaa0c676f18bd4edf4cdb435dd174c3244de58c0061a62d5095698da97618a",
+      "preserveOnUninstall": false
+    },
+    {
+      "relativePath": ".ui-editor-kit/starter-installation.json",
+      "installedHash": "",
+      "preserveOnUninstall": false
+    }
+  ]
+}
