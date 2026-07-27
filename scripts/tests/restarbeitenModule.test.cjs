@@ -358,7 +358,7 @@ async function renderRouteScreen({ keepGlobals = false } = {}) {
     router._setSidebarVisibility = (visible) => {
       router._lastSidebarVisible = visible;
     };
-    const opened = await router.openProjectModule("p-1", "restarbeiten", {
+    await router.openProjectModule("p-1", "restarbeiten", {
       project: { id: "p-1", project_number: "P-1", short: "Test" },
     });
     await flush();
@@ -1745,10 +1745,11 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(source.includes("window.scrollTo"), false);
     assert.equal(source.includes("scrollIntoView"), true);
     assert.equal(source.includes("data-bbm-restarbeiten-record-id"), true);
-    assert.equal(css.includes("grid-template-rows: 96px minmax(0, 1fr);"), true);
-    assert.equal(css.includes("grid-template-rows: var(--bbm-restarbeiten-list-height) minmax(160px, 1fr);"), true);
+    assert.equal(css.includes("grid-template-rows: auto minmax(0, 1fr);"), true);
+    assert.equal(css.includes("flex-direction: column;"), true);
+    assert.equal(css.includes("--bbm-restarbeiten-list-height"), false);
     assert.equal(css.includes(".bbm-restarbeiten-main {\n  min-height: 0;\n  overflow: auto;"), true);
-    assert.equal(css.includes(".bbm-restarbeiten-screen {\n  min-height: calc(100vh - 92px);"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-screen {\n  min-height: 0;\n  height: 100%;\n  max-height: 100%;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-record__number {\n  font-size: 8.5pt;\n  font-weight: 600;\n  line-height: 1.15;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-record__short {\n  font-size: 8.5pt;\n  line-height: 1.35;\n  font-weight: 500;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-record__meta {\n  display: grid;\n  gap: 2px;\n  align-content: start;\n  color: var(--bbm-muted);\n  font-size: 8pt;\n  font-weight: 400;\n  line-height: 1.25;"), true);
@@ -1964,7 +1965,7 @@ async function runRestarbeitenModuleTests(run) {
 if (require.main === module) {
   let failed = false;
 
-  function run(name, fn) {
+  const run = function run(name, fn) {
     try {
       const out = fn();
       if (out && typeof out.then === "function") {
@@ -1985,7 +1986,7 @@ if (require.main === module) {
       console.error(err?.stack || err?.message || err);
     }
     return Promise.resolve();
-  }
+  };
 
   runRestarbeitenModuleTests(run)
     .then(() => {

@@ -113,10 +113,6 @@ function walk(node, predicate, results = []) {
   return results;
 }
 
-function byAttr(root, attr) {
-  return walk(root, (node) => node.getAttribute?.(attr) === "true");
-}
-
 function eventFor(target) {
   return { target, key: undefined, preventDefault() {}, stopPropagation() {}, stopImmediatePropagation() {} };
 }
@@ -391,7 +387,7 @@ async function runM56PersistentSelectionFrameTests(run) {
     assert.match(read("docs/M56_DAUERHAFTER_AUSWAHLRAHMEN.md"), /dauerhafter Auswahlrahmen/i);
     assert.match(read("STATUS.md"), /M56/);
     assert.match(read("docs/UI_INSPEKTOR_AUFGABENHEFT.md"), /M56/);
-    assert.match(read("scripts/test.cjs"), /runM56PersistentSelectionFrameTests/);
+    assert.match(read("scripts/testGroups.cjs"), /runM56PersistentSelectionFrameTests/);
   });
 }
 

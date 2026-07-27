@@ -14,7 +14,7 @@ Ein erster Sidebar-Aufruf startet die feste vertrauenswürdige Editor-EXE. Ein w
 
 ## Diagnose
 
-`--bbm-electron-editor-diagnostic` beziehungsweise `BBM_M80_EDITOR_DIAGNOSTIC=1` rendert einen isolierten realen Restarbeiten-Screen mit einem nicht persistenten In-Memory-Datensatz. Es werden weder Kunden-/Produktivdaten noch Fachdatenbanken geändert. Der nur dort aktive Tastengriff `Ctrl+Shift+F8` armiert einmalig einen kontrollierten Applyfehler für den sichtbaren Rollbacknachweis. `Ctrl+Shift+F9` erhöht ausschließlich im Diagnosemodus eine kontrollierte Registryrevision und eine neutrale Baseline-Grenze; der nächste normale Sidebar-Klick belegt damit Reload und Dirty-Konfliktschutz ohne neue ID oder geänderte Fachbedeutung.
+`--bbm-electron-editor-diagnostic` beziehungsweise `BBM_M80_EDITOR_DIAGNOSTIC=1` rendert einen isolierten realen Restarbeiten-Screen mit einem nicht persistenten In-Memory-Datensatz. Es werden weder Kunden-/Produktivdaten noch Fachdatenbanken geändert. Der nur dort aktive Tastengriff `Ctrl+Shift+F8` armiert einmalig einen kontrollierten Applyfehler für den sichtbaren Rollbacknachweis. `Ctrl+Shift+F9` erhöht ausschließlich im Diagnosemodus eine kontrollierte Registryrevision, meldet `registryChanged` an den Host und setzt eine neutrale Baseline-Grenze. Damit lassen sich Reload und Dirty-Konfliktschutz ohne neue ID oder geänderte Fachbedeutung nachweisen.
 
 Nachgewiesen wurden 43 E2E-Schritte mit echten sichtbaren Fenstern: Start, Sidebar, Handshake, Registry, Auswahl/Markierung in beide Richtungen, Layoutmodi, getrennte Sichtbarkeit, Tabelle, Fachaktionsschutz, Save/Load, Neustart-Restore, Discard, Reset, Rollback, Eininstanz, PDF-Abgrenzung, Editorende, BBM-Weiterbetrieb und vollständige Prozess-/Temporärbereinigung.
 

@@ -1,5 +1,29 @@
 # STATUS.md — BBM-Produktiv
 
+### M80.2 – Restarbeiten-Header und Editbox direkt editierbar
+
+- Status: `[A] abgenommen`; die sichtbare native Abnahme und der stabilisierte BBM-Pflichtprüfungsblock sind abgeschlossen.
+- Ergebnis:
+  - Registryversion `3` führt `restarbeiten.header.root`, `restarbeiten.list.root` und `restarbeiten.edit.root` als vollständige aktive Scopes.
+  - Der tatsächliche Filter-Header ist mit 31 Elementen explizit registriert. Header-Root und stabiler Editbox-Root erlauben direkte, begrenzte Breiten-/Höhen- und Sichtbarkeitsoperationen; freie Verschiebung bleibt zum Schutz vor Überlagerungen gesperrt.
+  - `restarbeiten.layout.root` ist mit `M80_2_split_removed` gesperrt; die frühere Split-ID und Verhältnisoperation werden nicht mehr geliefert.
+  - Die 49 Editbox-Elemente sowie die Hauptliste mit den drei bestätigten Spaltengruppen bleiben erhalten.
+  - Liste und Editbox liegen in einer Flex-Spalte. Die Liste füllt den verbleibenden Bereich und scrollt kontrolliert, ohne hinter Header oder Editbox weiterzulaufen.
+- Dokumentation:
+  - `docs/M80_2_RESTARBEITEN_HEADER_EDITBOX_LAYOUT.md`
+  - `docs/M80_PILOT_REGISTRY.md`
+- Prüfung bisher:
+  - `npm test` führt alle 97 Suite-Einstiege und die drei Storage-Pfad-Tests in acht festen Child-Prozess-Gruppen vollständig und ohne OOM aus.
+  - `npm run test:node` baut `better-sqlite3` kontrolliert für Node ABI 127, führt alle acht Gruppen aus und stellt im `finally`-Pfad Electron ABI 123 wieder her. `npm run pack` aktiviert Electron-ABI vor dem Builder; dessen zweiter interner Rebuild ist deaktiviert.
+  - M80.2-, M80.1- und M80-Regressionen, gezieltes ESLint, Vertrags-Self-Test und gepackter Verzeichnisbuild sind grün.
+  - Die sichtbare gepackte Abnahme ist abgeschlossen: drei Scopes ohne Split, Markierung, direkte Header-/Editbox-Größenänderung, lange intern scrollende Liste, Save/Neustart/Restore, Reset, Discard, kontrollierter Rollback, Fachbutton-Auswahlschutz, Registry-Refresh und genau eine Editorinstanz wurden geprüft.
+  - Das UI-Editor-kit ist mit 88 Manager- und 51 Ziel-App-Tests, `npm test`, Pack-Dry-Run und Release-Check grün.
+- Risiken / offen:
+  - Das globale Lint bleibt unverändert auf dem bekannten Repo-Bestand von 17 Fehlern/371 Warnungen rot; das gezielte ESLint aller geänderten Harness-/Skriptdateien ist grün.
+  - M81 BBM-PDF und M82 App-Starterpaket bleiben offen und unangetastet.
+- Commit/PR:
+  - keiner; gemäß Nutzeranweisung weder Commit noch Push noch PR noch Merge.
+
 ### M80.1 – Bestands-App-Registrierung, Registry-Refresh und vollständige Restarbeiten-Anbindung
 
 - Status: `[A] abgenommen`.

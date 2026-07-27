@@ -123,33 +123,6 @@ export function registerM80TableColumnRef(id, headerCell, tableElement, cssVaria
   });
 }
 
-export function registerM80SharedVerticalLayout({ scopeRoot, root, listPane, editPane, minimumListHeight = 180, minimumEditHeight = 160 } = {}) {
-  if (!isElementRef(scopeRoot) || !isElementRef(root) || !isElementRef(listPane) || !isElementRef(editPane)) throw new Error("M80-Hauptlayoutreferenzen fehlen.");
-  const splitHeight = () => positive(rectOf(listPane).height, 420);
-  const availableHeight = () => positive(rectOf(root).height, splitHeight() + positive(rectOf(editPane).height, 250));
-  const applySplit = (requestedHeight) => {
-    const available = availableHeight();
-    const maximumListHeight = Math.max(minimumListHeight, available - minimumEditHeight);
-    setCustomProperty(root.style, "--bbm-restarbeiten-list-height", px(clamp(positive(requestedHeight, splitHeight()), minimumListHeight, maximumListHeight)));
-  };
-  registerM80Ref("restarbeiten.layout.root", scopeRoot);
-  registerM80Ref("restarbeiten.layout.split", root, {
-    read: () => ({
-      elementId: "restarbeiten.layout.split", x: 0, y: 0,
-      width: positive(rectOf(root).width, 900), height: splitHeight(),
-      textOffsetX: 0, textOffsetY: 0, fontSize: 12,
-      visible: !hasClass(root, HIDDEN_CLASS),
-    }),
-    apply: (state) => {
-      applySplit(state.height);
-      toggleClass(root, HIDDEN_CLASS, state.visible === false);
-    },
-  });
-  registerM80Ref("restarbeiten.layout.list", listPane);
-  registerM80Ref("restarbeiten.layout.edit", editPane);
-  return root;
-}
-
 export function getM80Ref(id) { return refs.get(String(id || "")) || null; }
 export function getM80IdFromTarget(target) {
   let current = isElementRef(target) ? target : null;

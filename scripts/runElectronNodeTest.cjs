@@ -1,44 +1,38 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+const { runGroupedTests } = require("./runGroupedTests.cjs");
+const { switchNativeAbi } = require("./nativeDepsAbi.cjs");
 
-const isWindows = process.platform === "win32";
-const electronCandidates = isWindows
-  ? [
-      path.resolve(__dirname, "..", "node_modules", "electron", "dist", "electron.exe"),
-      path.resolve(__dirname, "..", "node_modules", ".bin", "electron.cmd"),
-    ]
-  : [path.resolve(__dirname, "..", "node_modules", ".bin", "electron")];
+function resolveElectronBinary() {
+  const candidates = process.platform === "win32"
+    ? [
+        path.resolve(__dirname, "..", "node_modules", "electron", "dist", "electron.exe"),
+        path.resolve(__dirname, "..", "node_modules", ".bin", "electron.cmd"),
+      ]
+    : [path.resolve(__dirname, "..", "node_modules", ".bin", "electron")];
+  const binary = candidates.find((candidate) => fs.existsSync(candidate));
+  if (!binary) throw new Error(`Kein Electron-Binary gefunden. Geprüft: ${candidates.join(", ")}`);
+  return binary;
+}
 
-const electronBinary = electronCandidates.find((candidate) => fs.existsSync(candidate));
+function runElectronTests({ switchAbi = switchNativeAbi, runGroups = runGroupedTests } = {}) {
+  const abiResult = switchAbi("electron");
+  if (abiResult !== 0) return abiResult;
+  const executable = resolveElectronBinary();
+  const result = runGroups({
+    executable,
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
+  });
+  return result.exitCode;
+}
 
-if (!electronBinary) {
-  console.error("Fehler: Kein Electron-Binary gefunden. Gepruefte Kandidaten:");
-  for (const candidate of electronCandidates) {
-    console.error(`- ${candidate}`);
+if (require.main === module) {
+  try {
+    process.exitCode = runElectronTests();
+  } catch (error) {
+    process.exitCode = 1;
+    console.error(`Fehler im Electron-Testlauf: ${error?.message || error}`);
   }
-  process.exit(1);
 }
 
-const testScript = path.resolve(__dirname, "test.cjs");
-const useCmdLauncher = isWindows && electronBinary.toLowerCase().endsWith(".cmd");
-const spawnCommand = useCmdLauncher ? "cmd.exe" : electronBinary;
-const spawnArgs = useCmdLauncher
-  ? ["/d", "/s", "/c", `"${electronBinary}" "${testScript}"`]
-  : [testScript];
-
-const child = spawnSync(spawnCommand, spawnArgs, {
-  env: {
-    ...process.env,
-    ELECTRON_RUN_AS_NODE: "1",
-  },
-  stdio: "inherit",
-});
-
-if (child.error) {
-  console.error("Fehler: Testlauf mit Electron konnte nicht gestartet werden.");
-  console.error(child.error?.message || child.error);
-  process.exit(1);
-}
-
-process.exit(typeof child.status === "number" ? child.status : 1);
+module.exports = { resolveElectronBinary, runElectronTests };

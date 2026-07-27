@@ -111,9 +111,9 @@ async function runLicenseDoubleClickImportTests(run) {
   });
 
   await run("Testversionen bleiben unveraendert abgesichert", () => {
-    const testRunnerSource = read("scripts/test.cjs");
+    const testGroupsSource = read("scripts/testGroups.cjs");
     const trialRuntimeSource = read("scripts/tests/licenseTrialRuntime.test.cjs");
-    assert.equal(testRunnerSource.includes("runLicenseTrialRuntimeTests"), true);
+    assert.equal(testGroupsSource.includes("runLicenseTrialRuntimeTests"), true);
     assert.equal(trialRuntimeSource.includes("trialDurationDays"), true);
     assert.equal(trialRuntimeSource.includes("licenseStorage"), true);
   });

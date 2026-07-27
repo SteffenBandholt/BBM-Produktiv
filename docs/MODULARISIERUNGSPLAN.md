@@ -121,6 +121,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - M21-Einordnung: `Protokoll` ist noch nicht fertig bereinigt und wird fuer UI-Editor-Themen defensiv/read-only behandelt.
 - M21-Einordnung: BBM-Produktiv ist Beispiel-/Pilot-Zielapp fuer das generische UI-Editor-kit; die Ziel-App liefert die ElementRegistry, der Editor liest ausschliesslich diese Registry.
 - Keine Selbstuntersuchung der Ziel-App-Oberflaeche, keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung.
+- M80.2 ist `[A]` abgenommen: tatsächlicher Restarbeiten-Header und stabiler Editbox-Root sind direkt größenfähig, der alte Splitpfad ist gesperrt und die Hauptliste als flexibler Scrollbereich gesichert. M80.2a stabilisiert ausschließlich Testharness und Node-/Electron-ABI-Wechsel. M81/M82 und der Fachausbau bleiben offen und wurden nicht begonnen.
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

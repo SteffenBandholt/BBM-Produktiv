@@ -19,7 +19,7 @@ const {
 
 const APPLICATION_ID = "bbm-produktiv";
 const DISPLAY_NAME = "BBM";
-const ACTIVE_SCOPES = Object.freeze(["restarbeiten.layout.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
+const ACTIVE_SCOPES = Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
 const NATIVE_REQUEST_ACTIONS = new Set(["getRegistry", "getLayoutState", "submitChange"]);
 const NATIVE_EVENT_ACTIONS = new Set(["beginTargetSelection", "cancelTargetSelection", "highlightElement", "activateTarget", "editorClosed"]);
 const REGISTRY_EVENT_ACTIONS = new Set(["registryChanged", "registryStatusChanged", "scopeAdded", "scopeChanged", "scopeRemoved"]);

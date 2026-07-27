@@ -1,4 +1,5 @@
 import { RESTARBEITEN_STATUS_OPTIONS } from "./domain/restarbeitenRules.js";
+import { registerM80Ref } from "../../ui-editor/m80Refs.js";
 
 const DEFAULT_LOCATION_LABELS = ["Haus", "Geschoss", "Einheit", "Raum"];
 
@@ -26,6 +27,9 @@ function createField({ label, labelUiId, value = "", options = [], type = "selec
   input.value = value ?? "";
   input.addEventListener("change", () => onChange?.(input.value));
   wrap.append(labelEl, input);
+  registerM80Ref(uiId, wrap);
+  registerM80Ref(labelUiId, labelEl);
+  registerM80Ref(`${uiId}.field`, input);
   return wrap;
 }
 
@@ -37,6 +41,7 @@ function createClassToggle({ value = "all", options = [], onChange } = {}) {
     btn.className = "bbm-restarbeiten-word-switch";
     btn.setAttribute("aria-pressed", String(value === option.value));
     btn.addEventListener("click", () => onChange?.(option.value));
+    registerM80Ref(option.uiId, btn);
     classToggle.appendChild(btn);
   }
   return classToggle;
@@ -68,6 +73,7 @@ export function buildRestarbeitenFilterbar({
     className: "bbm-restarbeiten-filter-group",
     uiId: "restarbeiten.filterbar.group.location",
   });
+  registerM80Ref("restarbeiten.filterbar.group.location", locationGroup);
   labels.forEach((label, index) => {
     const key = `level${index + 1}`;
     locationGroup.appendChild(
@@ -86,6 +92,7 @@ export function buildRestarbeitenFilterbar({
     className: "bbm-restarbeiten-filter-group",
     uiId: "restarbeiten.filterbar.group.class",
   });
+  registerM80Ref("restarbeiten.filterbar.group.class", classGroup);
   classGroup.appendChild(
     createClassToggle({
       value: filters.itemClass || "all",
@@ -102,6 +109,7 @@ export function buildRestarbeitenFilterbar({
     className: "bbm-restarbeiten-filter-group",
     uiId: "restarbeiten.filterbar.group.meta",
   });
+  registerM80Ref("restarbeiten.filterbar.group.meta", metaGroup);
   metaGroup.append(
     createField({
       label: "Status",
@@ -136,13 +144,16 @@ export function buildRestarbeitenFilterbar({
   });
   closeBtn.type = "button";
   closeBtn.addEventListener("click", () => onClose?.());
+  registerM80Ref("restarbeiten.filterbar.action.close", closeBtn);
 
   const actions = createEl("div", {
     className: "bbm-restarbeiten-filter-actions",
     uiId: "restarbeiten.filterbar.actions",
   });
+  registerM80Ref("restarbeiten.filterbar.actions", actions);
   actions.appendChild(closeBtn);
 
   root.append(locationGroup, classGroup, metaGroup, actions);
+  registerM80Ref("restarbeiten.filterbar", root);
   return root;
 }
