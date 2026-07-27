@@ -10,6 +10,8 @@ M80.1 ergänzt Registryversion und deterministischen Fingerprint, vollständige 
 
 M81 bindet die reale BBM-Protokoll-PDF über eine explizite 28-Element-Registry an den vorhandenen nativen M77-PDF-Arbeitsbereich an. BBM behält den bestehenden Paginierungs- und `printToPDF`-Fachweg; der Editor nutzt denselben PDF-Core, Profilweg, Readback und Rollback. Details: [M81-BBM-PDF-Adapter](docs/M81_BBM_PDF_ADAPTER.md).
 
+M81.1 trennt Profilinkompatibilität vom bereits erfolgreichen Editor-Handshake. Alte oder beschädigte UI-/PDF-Profile werden sicher klassifiziert, vor einem Baselinestart byte-identisch archiviert und nie still überschrieben; Abbruch lässt BBM und Profil unverändert. Details: [M81.1-Profil-Restore](docs/M81_1_PROFIL_RESTORE.md).
+
 Status M51: Core-Vertrag technisch angebunden und testbar; noch keine vollständige sichtbare Editor-Oberfläche und noch keine dauerhafte Layoutspeicherung.
 
 ## M52: Sichtbarer UI-Editor-Startpunkt

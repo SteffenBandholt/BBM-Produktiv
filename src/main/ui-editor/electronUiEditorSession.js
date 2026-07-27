@@ -93,6 +93,15 @@ function publicError(error) {
     [ELECTRON_EDITOR_ERROR_CODES.REGISTRY_INCOMPATIBLE]: "BBM-Registry und Editor-Adapter sind nicht kompatibel.",
     [ELECTRON_EDITOR_ERROR_CODES.REGISTRY_PROFILE_CONFLICT]: "Die Registry wurde geändert, aber im Editor bestehen ungespeicherte Änderungen.",
     [ELECTRON_EDITOR_ERROR_CODES.REGISTRY_PROFILE_MIGRATION_REQUIRED]: "Die Registryänderung benötigt wegen geänderter IDs oder Parents eine ausdrückliche Profilmigration.",
+    [ELECTRON_EDITOR_ERROR_CODES.PROFILE_INCOMPATIBLE]: "Das gespeicherte Editorlayout ist nicht mehr mit der aktuellen BBM-Version kompatibel.",
+    [ELECTRON_EDITOR_ERROR_CODES.PROFILE_CORRUPT]: "Das gespeicherte Editorlayout ist beschädigt und wurde nicht angewendet.",
+    [ELECTRON_EDITOR_ERROR_CODES.PROFILE_MIGRATION_AVAILABLE]: "Für das gespeicherte Editorlayout ist eine sichere Migration verfügbar.",
+    [ELECTRON_EDITOR_ERROR_CODES.PROFILE_MIGRATION_FAILED]: "Das gespeicherte Editorlayout konnte nicht sicher migriert werden; das Altprofil bleibt erhalten.",
+    [ELECTRON_EDITOR_ERROR_CODES.PROFILE_ARCHIVE_FAILED]: "Das Altprofil konnte nicht sicher archiviert werden und bleibt unverändert.",
+    [ELECTRON_EDITOR_ERROR_CODES.PROFILE_BASELINE_STARTED]: "Der Editor wurde mit dem Standardlayout geöffnet.",
+    [ELECTRON_EDITOR_ERROR_CODES.UI_PROFILE_RESTORE_FAILED]: "Das UI-Layout konnte nicht wiederhergestellt werden; die Editorverbindung selbst ist verfügbar.",
+    [ELECTRON_EDITOR_ERROR_CODES.PDF_PROFILE_RESTORE_FAILED]: "Das PDF-Layout konnte nicht wiederhergestellt werden; der UI-Arbeitsbereich bleibt getrennt.",
+    [ELECTRON_EDITOR_ERROR_CODES.PROFILE_USER_CANCELLED]: "Das Öffnen des Editors wurde abgebrochen. BBM bleibt geöffnet.",
   };
   return { ok: false, errorCode: code, message: messages[code] || "Der separate UI-Editor konnte nicht gestartet werden." };
 }
