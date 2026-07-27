@@ -107,3 +107,8 @@
 **Beschluss:** Der alte M13-Hover- und Restarbeiten-Inspector-Pfad ist fachlich beendet; UI-V2 und Editor-V2 werden als Neustart neu geplant.
 
 **Begründung:** Der bisherige Pfad wird nicht weiter repariert. Ein klarer Neustart trennt die neue Architektur sauber von alten Sonderwegen und fuehrt zuerst ueber EditorLab.
+
+## Entscheidung 021
+**Beschluss:** M80.2 entfernt die gekoppelte Restarbeiten-Splitoperation aus der produktiven Registry. Der tatsächliche Filter-Header und der stabile Editbox-Root sind unabhängig größenfähig; die Hauptliste füllt den verbleibenden Bereich flexibel und scrollt innerhalb ihres eigenen Containers.
+
+**Begründung:** Eine freie Split- oder Positionssteuerung würde den sicheren Überlagerungsschutz schwächen. Direkte, begrenzte Größenoperationen an den beiden festen Bereichen bilden den Nutzerbedarf mit dem vorhandenen Editor-Core ab. Quicklane, Fachaktionen, Daten und PDF bleiben außerhalb dieses Layoutvertrags.

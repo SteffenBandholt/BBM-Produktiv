@@ -2,6 +2,9 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 
+const dataUrlCache = new Map();
+const modulePromiseCache = new Map();
+
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -31,8 +34,15 @@ async function toDataUrl(absPath, cache) {
 }
 
 async function importEsmFromFile(filePath) {
-  const dataUrl = await toDataUrl(path.resolve(filePath), new Map());
-  return import(dataUrl);
+  const resolvedPath = path.resolve(filePath);
+  let modulePromise = modulePromiseCache.get(resolvedPath);
+
+  if (!modulePromise) {
+    modulePromise = toDataUrl(resolvedPath, dataUrlCache).then((dataUrl) => import(dataUrl));
+    modulePromiseCache.set(resolvedPath, modulePromise);
+  }
+
+  return modulePromise;
 }
 
 module.exports = {

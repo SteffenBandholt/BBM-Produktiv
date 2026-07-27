@@ -1,7 +1,7 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.16a abgeschlossen (neutraler BBM-UI-Editor-Aktivmodus zeigt festen Registry-Scope). M62 abgeschlossen (alte BBM-Auswahlruntime entfernt; Statuspanel nutzt ausschliesslich Kit-Runtime). M63B.1 abgeschlossen (interne read-only Inspector-Bridge, sichtbare Konsole vorbereitet).
+Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.16a abgeschlossen (neutraler BBM-UI-Editor-Aktivmodus zeigt festen Registry-Scope). M62 abgeschlossen (alte BBM-Auswahlruntime entfernt; Statuspanel nutzt ausschliesslich Kit-Runtime). M63B.1 abgeschlossen (interne read-only Inspector-Bridge, sichtbare Konsole vorbereitet). M80.2 ist umgesetzt, nativ geprüft und `[A]` abgenommen.
 
 Statusupdate: M36 abgeschlossen (UI-Editor Fixstand nach M29 bis M35 dokumentiert).
 
@@ -70,6 +70,19 @@ Aktueller Stand:
 - [x] M63A Editor-Bestand und Integrationsplan dokumentieren
 - [x] M63B M51/M52-Auswahl read-only an EditorScopeInspector anbinden
 - [x] M63C Kleine Layout-Bedienkonsole fuer ausgewaehltes Element
+- [x] M80.2 Restarbeiten-Header und Editbox direkt editierbar; Split gesperrt, Liste flexibel
+
+## Statusupdate M80.2
+
+- Registryversion `3` führt den tatsächlichen Filter-Header, die Hauptliste und den stabilen Editbox-Root als vollständige aktive Scopes.
+- `restarbeiten.layout.root` ist mit `M80_2_split_removed` gesperrt; `restarbeiten.layout.split` und die Verhältnisoperation entfallen.
+- Header-Root und Editbox-Root erlauben begrenzte Breiten-, Höhen- und Sichtbarkeitsoperationen. Freies Verschieben ist zur Sicherung des Überlagerungsschutzes gesperrt.
+- Die 49 Editbox-Elemente und die drei bestätigten Hauptlistenspalten bleiben erhalten.
+- Die Hauptliste füllt den verbleibenden Flex-Bereich und scrollt innerhalb des vorhandenen Listencontainers.
+- Führender Vertrag: `docs/M80_2_RESTARBEITEN_HEADER_EDITBOX_LAYOUT.md`.
+- Sichtbare Abnahme mit gepacktem BBM/Editor ist grün: Scopes/Markierungen, Größenänderung, lange Liste, Save/Restore, Reset, Discard, Rollback, Fachbutton-Auswahlschutz, Refresh und Einzelinstanz wurden geprüft.
+- M80.2a-Abschluss: `npm test` läuft vollständig in acht Child-Prozess-Gruppen ohne OOM; `npm run test:node` wechselt kontrolliert auf Node ABI 127 und stellt Electron ABI 123 im `finally`-Pfad wieder her; `npm run pack` beginnt deterministisch mit Electron-ABI.
+- Der bekannte globale Repo-Lintbestand bleibt getrennt dokumentiert; das gezielte ESLint aller geänderten Harness-/Skriptdateien ist grün.
 
 
 ## Statusupdate M63C

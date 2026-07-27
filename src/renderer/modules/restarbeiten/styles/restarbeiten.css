@@ -27,11 +27,12 @@
 }
 
 .bbm-restarbeiten-screen {
-  min-height: calc(100vh - 92px);
-  height: calc(100vh - 92px);
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
   position: relative;
   display: grid;
-  grid-template-rows: 96px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   background: var(--bbm-bg);
   color: var(--bbm-text);
   font-family: var(--bbm-rest-font-family);
@@ -39,12 +40,22 @@
   overflow: hidden;
 }
 
+.bbm-restarbeiten-header {
+  grid-row: 1;
+  min-width: 640px;
+  min-height: 56px;
+  max-width: 100%;
+  max-height: 240px;
+  overflow: auto;
+}
+
 .bbm-restarbeiten-workspace {
-  --bbm-restarbeiten-list-height: minmax(180px, 1.6fr);
+  grid-row: 2;
+  height: 100%;
   min-height: 0;
   overflow: hidden;
-  display: grid;
-  grid-template-rows: var(--bbm-restarbeiten-list-height) minmax(160px, 1fr);
+  display: flex;
+  flex-direction: column;
 }
 
 .bbm-restarbeiten-workspace__list,
@@ -54,14 +65,24 @@
   overflow: hidden;
 }
 
-.bbm-restarbeiten-workspace__list > .bbm-restarbeiten-main,
-.bbm-restarbeiten-workspace__edit > .bbm-restarbeiten-editbox {
+.bbm-restarbeiten-workspace__list {
+  flex: 1 1 0;
+  min-height: 180px;
+}
+
+.bbm-restarbeiten-workspace__edit {
+  flex: 0 1 auto;
+  max-height: calc(100% - 180px);
+  overflow: auto;
+}
+
+.bbm-restarbeiten-workspace__list > .bbm-restarbeiten-main {
   width: auto;
   height: 100%;
 }
 
 .bbm-restarbeiten-screen[data-output-preview="true"] {
-  grid-template-rows: 96px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .bbm-restarbeiten-screen,
@@ -90,8 +111,8 @@
   padding: 8px 10px;
   box-sizing: border-box;
   height: auto;
-  max-height: 72px;
-  overflow: hidden;
+  max-height: 220px;
+  overflow: auto;
   display: flex;
   flex-wrap: nowrap;
   gap: 8px;
@@ -520,6 +541,8 @@
 }
 
 .bbm-restarbeiten-output {
+  grid-row: 2;
+  min-height: 0;
   display: grid;
   justify-content: center;
 }
@@ -633,9 +656,11 @@
   border-radius: 8px;
   padding: 9px 10px;
   box-sizing: border-box;
-  min-height: 0;
-  max-height: none;
-  overflow: hidden;
+  min-width: 320px;
+  min-height: 160px;
+  max-width: calc(100% - 88px);
+  max-height: min(520px, calc(100vh - 360px));
+  overflow: auto;
   display: grid;
   grid-template-columns: minmax(260px, 1fr) 98px 98px;
   grid-template-rows: auto minmax(0, 1fr);

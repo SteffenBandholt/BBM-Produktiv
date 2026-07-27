@@ -1,12 +1,11 @@
-export const BBM_M80_REGISTRY_VERSION = 2;
+export const BBM_M80_REGISTRY_VERSION = 3;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 const CONTAINER_LAYOUT = Object.freeze(["move", "resizeWidth", "resizeHeight", "setVisibility"]);
-const PANE_LAYOUT = Object.freeze(["resizeWidth", "setVisibility"]);
+const FIXED_AREA_LAYOUT = Object.freeze(["resizeWidth", "resizeHeight", "setVisibility"]);
 const TEXT_LAYOUT = Object.freeze(["move", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility"]);
 const TABLE_LAYOUT = Object.freeze(["move", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility"]);
 const COLUMN_LAYOUT = Object.freeze(["resizeWidth", "textMove", "textResize", "setVisibility"]);
-const SPLIT_LAYOUT = Object.freeze(["resizeHeight", "setVisibility"]);
 const DOMAIN_LOCKS = Object.freeze(["executeTargetAction", "modifyDomainData", "createRecord", "deleteRecord"]);
 
 function defaultBaseline(values = {}) {
@@ -58,11 +57,31 @@ function blockedScope(scopeId, name, reason = "registration_inventory_pending") 
   });
 }
 
-const layoutElements = [
-  element({ id: "restarbeiten.layout.root", name: "Restarbeiten · Hauptlayout", type: "root", role: "scopeRoot", parentId: null, order: 0, editable: false, allowedOps: [], componentKind: "scope", baseline: { width: 900, height: 670, minHeight: 340, maxHeight: 1600 } }),
-  element({ id: "restarbeiten.layout.split", name: "Restarbeiten · Verhältnis Hauptliste/Editbox", type: "area", role: "layout", parentId: "restarbeiten.layout.root", order: 10, allowedOps: SPLIT_LAYOUT, componentKind: "verticalSplit", baseline: { width: 900, height: 420, minHeight: 180, maxHeight: 1200 } }),
-  element({ id: "restarbeiten.layout.list", name: "Restarbeiten · Hauptlistenbereich", type: "area", role: "layout", parentId: "restarbeiten.layout.split", order: 20, allowedOps: PANE_LAYOUT, componentKind: "splitPane", baseline: { width: 900, height: 420, minWidth: 320, minHeight: 180 } }),
-  element({ id: "restarbeiten.layout.edit", name: "Restarbeiten · Editboxbereich", type: "area", role: "layout", parentId: "restarbeiten.layout.split", order: 30, allowedOps: PANE_LAYOUT, componentKind: "splitPane", baseline: { width: 900, height: 250, minWidth: 320, minHeight: 160 } }),
+const headerElements = [
+  element({ id: "restarbeiten.header.root", name: "Restarbeiten · Header", type: "root", role: "scopeRoot", parentId: null, order: 0, allowedOps: FIXED_AREA_LAYOUT, componentKind: "fixedHeader", baseline: { width: 1180, height: 82, minWidth: 640, maxWidth: 2400, minHeight: 56, maxHeight: 240 } }),
+  element({ id: "restarbeiten.filterbar", name: "Restarbeiten · Filterleiste", type: "area", role: "layout", parentId: "restarbeiten.header.root", order: 10, allowedOps: CONTAINER_LAYOUT, componentKind: "filterbar", baseline: { width: 1092, height: 72, minWidth: 560, maxWidth: 2200, minHeight: 48, maxHeight: 220 } }),
+  element({ id: "restarbeiten.filterbar.group.location", name: "Verortungsfilter", type: "group", role: "layoutGroup", parentId: "restarbeiten.filterbar", order: 20, allowedOps: CONTAINER_LAYOUT, componentKind: "filterGroup" }),
+  ...[1, 2, 3, 4].flatMap((level, index) => [
+    element({ id: `restarbeiten.filterbar.location.level${level}`, name: `Verortung L${level}`, type: "fieldGroup", role: "formFieldGroup", parentId: "restarbeiten.filterbar.group.location", order: 21 + index * 3, allowedOps: CONTAINER_LAYOUT, componentKind: "fieldGroup" }),
+    element({ id: `restarbeiten.filterbar.location.level${level}.label`, name: `Verortung L${level} · Bezeichnung`, type: "label", role: "fieldLabel", parentId: `restarbeiten.filterbar.location.level${level}`, order: 22 + index * 3, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
+    element({ id: `restarbeiten.filterbar.location.level${level}.field`, name: `Verortung L${level} · Auswahl`, type: "field", role: "dataFieldLayout", parentId: `restarbeiten.filterbar.location.level${level}`, order: 23 + index * 3, allowedOps: TEXT_LAYOUT, fieldKind: "select", componentKind: "select" }),
+  ]),
+  element({ id: "restarbeiten.filterbar.group.class", name: "Klassenfilter", type: "group", role: "layoutGroup", parentId: "restarbeiten.filterbar", order: 40, allowedOps: CONTAINER_LAYOUT, componentKind: "buttonGroup" }),
+  domainButton({ id: "restarbeiten.filterbar.class.all", name: "Klasse · Alle", parentId: "restarbeiten.filterbar.group.class", order: 41, actionKind: "domainFilter" }),
+  domainButton({ id: "restarbeiten.filterbar.class.rest", name: "Klasse · Rest", parentId: "restarbeiten.filterbar.group.class", order: 42, actionKind: "domainFilter" }),
+  domainButton({ id: "restarbeiten.filterbar.class.defect", name: "Klasse · Mangel", parentId: "restarbeiten.filterbar.group.class", order: 43, actionKind: "domainFilter" }),
+  element({ id: "restarbeiten.filterbar.group.meta", name: "Status- und Zuordnungsfilter", type: "group", role: "layoutGroup", parentId: "restarbeiten.filterbar", order: 50, allowedOps: CONTAINER_LAYOUT, componentKind: "filterGroup" }),
+  ...[
+    ["status", "Status", "select"],
+    ["dueDate", "Fertig bis", "date"],
+    ["responsible", "Verantwortlich", "select"],
+  ].flatMap(([key, name, fieldKind], index) => [
+    element({ id: `restarbeiten.filterbar.meta.${key}`, name, type: "fieldGroup", role: "formFieldGroup", parentId: "restarbeiten.filterbar.group.meta", order: 51 + index * 3, allowedOps: CONTAINER_LAYOUT, componentKind: "fieldGroup" }),
+    element({ id: `restarbeiten.filterbar.meta.${key}.label`, name: `${name} · Bezeichnung`, type: "label", role: "fieldLabel", parentId: `restarbeiten.filterbar.meta.${key}`, order: 52 + index * 3, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
+    element({ id: `restarbeiten.filterbar.meta.${key}.field`, name: `${name} · Auswahl`, type: "field", role: "dataFieldLayout", parentId: `restarbeiten.filterbar.meta.${key}`, order: 53 + index * 3, allowedOps: TEXT_LAYOUT, fieldKind, componentKind: fieldKind === "date" ? "dateInput" : "select" }),
+  ]),
+  element({ id: "restarbeiten.filterbar.actions", name: "Header-Aktionen", type: "group", role: "layoutGroup", parentId: "restarbeiten.filterbar", order: 70, allowedOps: CONTAINER_LAYOUT, componentKind: "actionGroup" }),
+  domainButton({ id: "restarbeiten.filterbar.action.close", name: "Schließen", parentId: "restarbeiten.filterbar.actions", order: 71, actionKind: "domainNavigation" }),
 ];
 
 const listElements = [
@@ -76,7 +95,7 @@ const listElements = [
 ];
 
 const editElements = [
-  element({ id: "restarbeiten.edit.root", name: "Restarbeiten · Bearbeitung", type: "root", role: "scopeRoot", parentId: null, order: 0, editable: false, allowedOps: [], componentKind: "scope", baseline: { width: 900, height: 250, minWidth: 320, minHeight: 160 } }),
+  element({ id: "restarbeiten.edit.root", name: "Restarbeiten · Bearbeitung", type: "root", role: "scopeRoot", parentId: null, order: 0, allowedOps: FIXED_AREA_LAYOUT, componentKind: "fixedEditArea", baseline: { width: 900, height: 250, minWidth: 320, maxWidth: 1800, minHeight: 160, maxHeight: 520 } }),
   element({ id: "restarbeiten.edit.area", name: "Bearbeitungsbereich", type: "area", role: "formArea", parentId: "restarbeiten.edit.root", order: 10, allowedOps: CONTAINER_LAYOUT, componentKind: "formArea", baseline: { width: 878, height: 226, minWidth: 300, minHeight: 140 } }),
   element({ id: "restarbeiten.edit.header", name: "Editbox-Kopf", type: "group", role: "layoutGroup", parentId: "restarbeiten.edit.area", order: 20, allowedOps: CONTAINER_LAYOUT, componentKind: "header" }),
   element({ id: "restarbeiten.edit.header.current", name: "Aktueller Datensatz", type: "label", role: "status", parentId: "restarbeiten.edit.header", order: 21, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
@@ -121,13 +140,13 @@ const editElements = [
 ];
 
 export const BBM_M80_ACTIVE_SCOPES = Object.freeze([
-  "restarbeiten.layout.root",
+  "restarbeiten.header.root",
   "restarbeiten.list.root",
   "restarbeiten.edit.root",
 ]);
 
 export const BBM_M80_REGISTRY_SCOPES = Object.freeze([
-  completeScope("restarbeiten.layout.root", layoutElements),
+  completeScope("restarbeiten.header.root", headerElements),
   completeScope("restarbeiten.list.root", listElements),
   completeScope("restarbeiten.edit.root", editElements),
   blockedScope("bbm.shell", "Shell und Hauptnavigation"),
@@ -140,7 +159,7 @@ export const BBM_M80_REGISTRY_SCOPES = Object.freeze([
   blockedScope("bbm.settings", "Einstellungen"),
   blockedScope("bbm.help", "Hilfe"),
   blockedScope("bbm.dialogs", "Produktive Dialoge"),
-  blockedScope("restarbeiten.filterbar", "Restarbeiten · Filterleiste"),
+  blockedScope("restarbeiten.layout.root", "Restarbeiten · technischer Alt-Layoutcontainer", "M80_2_split_removed"),
   blockedScope("restarbeiten.quicklane", "Restarbeiten · Quicklane"),
   blockedScope("restarbeiten.notes", "Restarbeiten · Notizdialog"),
   blockedScope("restarbeiten.output-preview", "Restarbeiten · Ausgabevorschau", "M81_pdf_excluded"),

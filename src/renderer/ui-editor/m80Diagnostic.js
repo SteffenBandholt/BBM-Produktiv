@@ -1,6 +1,6 @@
 import RestarbeitenScreen from "../modules/restarbeiten/screens/RestarbeitenScreen.js";
 import { getM80Ref, resetM80PilotWorkingStatesForDiagnostic } from "./m80Refs.js";
-import { advanceM80DiagnosticRegistryRevision } from "./m80HostAdapter.js";
+import { advanceM80DiagnosticRegistryRevision, emitM80RegistryEvent } from "./m80HostAdapter.js";
 
 const DIAGNOSTIC_FAILURE_TARGET = "restarbeiten.edit.short.field";
 
@@ -21,6 +21,14 @@ const DIAGNOSTIC_ITEM = Object.freeze({
   created_at: "2026-07-26T08:00:00.000Z",
 });
 
+const DIAGNOSTIC_ITEMS = Object.freeze(Array.from({ length: 60 }, (_value, index) => Object.freeze({
+  ...DIAGNOSTIC_ITEM,
+  id: index === 0 ? DIAGNOSTIC_ITEM.id : `m80-diagnostic-item-${index + 1}`,
+  running_number: `M80-${String(index + 1).padStart(3, "0")}`,
+  short_text: index === 0 ? DIAGNOSTIC_ITEM.short_text : `Kontrollierter Diagnoseeintrag ${index + 1}`,
+  long_text: `${DIAGNOSTIC_ITEM.long_text} Listenzeile ${index + 1}.`,
+})));
+
 export function installBbmM80DiagnosticPilot({ router } = {}) {
   if (!router?.contentRoot) throw new Error("M80-Diagnose braucht den vorhandenen BBM-Inhaltsbereich.");
   resetM80PilotWorkingStatesForDiagnostic();
@@ -30,7 +38,7 @@ export function installBbmM80DiagnosticPilot({ router } = {}) {
     project: { name: "M80 Diagnoseprojekt" },
     moduleId: "restarbeiten",
   });
-  screen.items = [{ ...DIAGNOSTIC_ITEM }];
+  screen.items = DIAGNOSTIC_ITEMS.map((item) => ({ ...item }));
   screen.responsibleFirms = [{ id: "m80-diagnostic-firm", shortName: "M80 Diagnosefirma" }];
   screen.settings = {};
   screen.render();
@@ -46,11 +54,12 @@ export function installBbmM80DiagnosticPilot({ router } = {}) {
     ref.element.dataset.uiEditorFailNextApply = "true";
     window.removeEventListener("keydown", onControlledFailureKey);
   };
-  const onRegistryRevisionKey = (event) => {
+  const onRegistryRevisionKey = async (event) => {
     if (!(event.ctrlKey && event.shiftKey && (event.code === "F9" || event.key === "F9"))) return;
     event.preventDefault();
     const revision = advanceM80DiagnosticRegistryRevision();
     screen.root.dataset.bbmM80DiagnosticRegistryRevision = String(revision);
+    await emitM80RegistryEvent("registryChanged");
   };
   window.addEventListener("keydown", onControlledFailureKey);
   window.addEventListener("keydown", onRegistryRevisionKey);

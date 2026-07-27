@@ -1,5 +1,7 @@
 # M80.1 – BBM-Bestands-App-Registrierung
 
+> Historischer Abnahmestand von M80.1. M80.2 ersetzt den damaligen Split-Scope durch den vollständig registrierten Header und direkte Größenoperationen am stabilen Editbox-Root. Der aktuelle Vertrag steht in `M80_2_RESTARBEITEN_HEADER_EDITBOX_LAYOUT.md`.
+
 ## Führender Registrierungsweg
 
 BBM liefert bei jedem Klick auf `UI-Editor öffnen` einen frisch aus den expliziten Renderer-Refs erzeugten Registrierungsstand. Der Main-Prozess ergänzt den Ziel-App-Vertrag, berechnet den deterministischen Fingerprint, validiert Version, Registry, Refs, Scope-Status und Inventar und öffnet oder fokussiert erst danach den vorhandenen nativen Editor.

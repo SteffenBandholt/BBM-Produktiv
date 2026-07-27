@@ -83,20 +83,21 @@ async function runM801RegistrationRefreshTests(run) {
       document.body.appendChild(rendered.root);
       const registration = rendered.registration;
       runtimeRegistration = structuredClone(registration);
-      assert.equal(registration.registryVersion, 2);
+      assert.equal(registration.registryVersion, 3);
       assert.equal(registration.registryStatus, "incomplete");
-      assert.deepEqual(registration.activeScopes, ["restarbeiten.layout.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
+      assert.deepEqual(registration.activeScopes, ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
       const complete = registration.registryScopes.filter((scope) => scope.status === "complete");
       const blocked = registration.registryScopes.filter((scope) => scope.status === "blocked");
       assert.equal(complete.length, 3);
       assert.ok(blocked.some((scope) => scope.scopeId === "bbm.protokoll"));
-      assert.ok(blocked.some((scope) => scope.scopeId === "restarbeiten.filterbar"));
+      assert.ok(blocked.some((scope) => scope.scopeId === "restarbeiten.layout.root" && scope.reason === "M80_2_split_removed"));
       for (const scope of complete) {
         assert.equal(scope.expectedElementIds.length, scope.elements.length, scope.scopeId);
         assert.ok(scope.elements.every((entry) => entry.referenceResolved && rendered.getRef(entry.id)), scope.scopeId);
       }
 
       const edit = complete.find((scope) => scope.scopeId === "restarbeiten.edit.root");
+      assert.equal(edit.elements.length, 49, "alle 49 Editbox-Elemente bleiben erhalten");
       const ids = new Set(edit.elements.map((entry) => entry.id));
       for (const id of [
         "restarbeiten.edit.header.current", "restarbeiten.edit.short.label", "restarbeiten.edit.short.field",
@@ -137,11 +138,23 @@ async function runM801RegistrationRefreshTests(run) {
       assert.notEqual(createRegistryFingerprint(changedRegistration.registryScopes), currentFingerprint);
       rendered.setDiagnosticRegistryRevision(0);
 
+      const header = complete.find((scope) => scope.scopeId === "restarbeiten.header.root");
+      assert.equal(header.elements.length, 31, "sichtbarer Filter-Header ist vollständig inventarisiert");
+      assert.ok(header.elements.every((entry) => entry.referenceResolved));
+      assert.equal(header.elements.some((entry) => entry.id === "restarbeiten.layout.split"), false);
       const split = rendered.request({ action: "submitChange", scopeId: "restarbeiten.layout.root", changeRequest: { changeId: "split", elementId: "restarbeiten.layout.split", operation: "resizeHeight", payload: { height: 300 } } }).changeResult;
-      assert.equal(split.success, true);
-      assert.equal(rendered.getRef("restarbeiten.layout.split").element.style["--bbm-restarbeiten-list-height"], "300px");
-      const minimum = rendered.request({ action: "submitChange", scopeId: "restarbeiten.layout.root", changeRequest: { changeId: "split-min", elementId: "restarbeiten.layout.split", operation: "resizeHeight", payload: { height: 1 } } }).changeResult;
-      assert.equal(minimum.newState.height >= 180, true);
+      assert.equal(split.success, false);
+      assert.equal(split.errorCode, "electron_element_not_found", "alte Verhältnisoperation wird nicht mehr angeboten");
+
+      const resizeHeader = rendered.request({ action: "submitChange", scopeId: "restarbeiten.header.root", changeRequest: { changeId: "header-height", elementId: "restarbeiten.header.root", operation: "resizeHeight", payload: { height: 110 } } }).changeResult;
+      assert.equal(resizeHeader.success, true);
+      assert.equal(resizeHeader.newState.height, 110);
+      const editWidth = rendered.request({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "edit-width", elementId: "restarbeiten.edit.root", operation: "resizeWidth", payload: { width: 760 } } }).changeResult;
+      const editHeight = rendered.request({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "edit-height", elementId: "restarbeiten.edit.root", operation: "resizeHeight", payload: { height: 300 } } }).changeResult;
+      assert.equal(editWidth.newState.width, 760);
+      assert.equal(editHeight.newState.height, 300);
+      const editMinimum = rendered.request({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "edit-min", elementId: "restarbeiten.edit.root", operation: "resizeHeight", payload: { height: 1 } } }).changeResult;
+      assert.equal(editMinimum.newState.height, 160, "Editbox-Mindesthöhe wird eingehalten");
 
       const shortInput = rendered.getRef("restarbeiten.edit.short.field").element;
       const fachwert = shortInput.value;

@@ -16,7 +16,7 @@ import { buildRestarbeitenOutputPreview } from "../RestarbeitenOutputPreview.js"
 import { buildRestarbeitenQuicklane } from "../RestarbeitenQuicklane.js";
 import { ensureRestarbeitenStyles } from "../styles.js";
 import { toRestarbeitenOutputRows } from "../viewModel/restarbeitenOutputViewModel.js";
-import { beginM80PilotRender, completeM80PilotRender, registerM80SharedVerticalLayout } from "../../../ui-editor/m80Refs.js";
+import { beginM80PilotRender, completeM80PilotRender, registerM80Ref } from "../../../ui-editor/m80Refs.js";
 import {
   canPersistRestarbeitDraft,
   normalizeRestarbeitStatus,
@@ -554,7 +554,11 @@ export default class RestarbeitenScreen {
         },
         onClose: () => this.router?.showProjectWorkspace?.(this.projectId, { project: this.project }),
       });
-    this.root.append(quicklane, filterbar);
+    const header = document.createElement("header");
+    header.className = "bbm-restarbeiten-header";
+    header.appendChild(filterbar);
+    registerM80Ref("restarbeiten.header.root", header);
+    this.root.append(header, quicklane);
 
     if (this.outputPreviewOpen) {
       this.root.appendChild(buildRestarbeitenOutputPreview({
@@ -591,7 +595,6 @@ export default class RestarbeitenScreen {
       listPane.appendChild(main);
       editPane.appendChild(editbox);
       workspace.append(listPane, editPane);
-      registerM80SharedVerticalLayout({ scopeRoot: this.root, root: workspace, listPane, editPane });
       this.root.appendChild(workspace);
     }
 

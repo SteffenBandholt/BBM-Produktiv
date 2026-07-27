@@ -31,7 +31,7 @@ function fakeDom() {
   const document = {
     body,
     createElement: (tag) => new FakeElement(tag),
-    querySelector(selector) { if (selector === "[data-bbm-ui-editor-overlay]") return all().find((node) => node.getAttribute("data-bbm-ui-editor-overlay") != null) || null; return null; },
+    querySelector(selector) { if (selector === "[data-bbm-ui-editor-overlay]") return all().find((node) => node.getAttribute("data-bbm-ui-editor-overlay") !== null) || null; return null; },
     addEventListener(type, handler) { listeners.set(type, handler); },
     removeEventListener(type, handler) { if (listeners.get(type) === handler) listeners.delete(type); },
     async click(target) {
@@ -45,7 +45,7 @@ function fakeDom() {
 
 class MockChild extends EventEmitter {
   constructor() { super(); this.exitCode = null; }
-  exit(code = 0) { if (this.exitCode != null) return; this.exitCode = code; this.emit("exit", code); }
+  exit(code = 0) { if (this.exitCode !== null) return; this.exitCode = code; this.emit("exit", code); }
   kill() { this.exit(0); return true; }
 }
 class MockClient extends EventEmitter {
@@ -110,8 +110,10 @@ async function runM80ElectronUiEditorTests(run) {
   });
 
   await run("M80 Registry: drei aktive Restarbeiten-Scopes und explizit gesperrte Restbereiche", () => {
-    assert.deepEqual(scopes.filter((scope) => scope.status === "complete").map((scope) => scope.scopeId), ["restarbeiten.layout.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
+    assert.deepEqual(scopes.filter((scope) => scope.status === "complete").map((scope) => scope.scopeId), ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
     assert.ok(scopes.some((scope) => scope.scopeId === "bbm.protokoll" && scope.status === "blocked"));
+    assert.ok(scopes.some((scope) => scope.scopeId === "restarbeiten.layout.root" && scope.status === "blocked"));
+    assert.equal(entries.some((entry) => entry.id === "restarbeiten.layout.split"), false);
     assert.equal(new Set(entries.map((entry) => entry.id)).size, entries.length);
     const ids = new Set(entries.map((entry) => entry.id));
     entries.filter((entry) => entry.parentId).forEach((entry) => assert.ok(ids.has(entry.parentId), entry.id));
@@ -119,7 +121,7 @@ async function runM80ElectronUiEditorTests(run) {
   });
 
   await run("M80 Registry: Label und Feld sind getrennte Geschwister", () => {
-    for (const prefix of ["restarbeiten.edit.short", "restarbeiten.edit.long"]) {
+    for (const prefix of ["restarbeiten.filterbar.location.level1", "restarbeiten.filterbar.meta.status", "restarbeiten.edit.short", "restarbeiten.edit.long"]) {
       const label = entries.find((entry) => entry.id === `${prefix}.label`);
       const field = entries.find((entry) => entry.id === `${prefix}.field`);
       assert.equal(label.parentId, prefix); assert.equal(field.parentId, prefix); assert.notEqual(label.id, field.id);
@@ -228,7 +230,13 @@ async function runM80ElectronUiEditorTests(run) {
       for (const entry of entries) { const element = new FakeElement(entry.type === "field" ? "input" : entry.type === "button" ? "button" : "div"); element.isConnected = true; refs.set(entry.id, element); host.registerM80Ref(entry.id, element); }
       host.completeM80PilotRender();
       assert.equal(host.getM80InteractionStatus().scopeStates.flatMap((scope) => scope.elements).find((state) => state.elementId === "restarbeiten.list.root").width, 200, "Getrenntes Vorab-Rendern darf keine 1-DIP-Baseline einfrieren");
-      const submit = (elementId, operation, payload, changeId = `${elementId}-${operation}`) => host.handleM80EditorRequest({ action: "submitChange", scopeId: elementId.startsWith("restarbeiten.list") ? "restarbeiten.list.root" : "restarbeiten.edit.root", changeRequest: { changeId, elementId, operation, payload } }).changeResult;
+      const submit = (elementId, operation, payload, changeId = `${elementId}-${operation}`) => host.handleM80EditorRequest({
+        action: "submitChange",
+        scopeId: elementId.startsWith("restarbeiten.header") || elementId.startsWith("restarbeiten.filterbar")
+          ? "restarbeiten.header.root"
+          : elementId.startsWith("restarbeiten.list") ? "restarbeiten.list.root" : "restarbeiten.edit.root",
+        changeRequest: { changeId, elementId, operation, payload },
+      }).changeResult;
       const fieldId = "restarbeiten.edit.short.field"; const labelId = "restarbeiten.edit.short.label";
       assert.equal(submit(fieldId, "move", { x: 7, y: 9 }).success, true);
       assert.equal(submit(fieldId, "resizeWidth", { width: 310 }).newState.width, 310);
@@ -244,6 +252,10 @@ async function runM80ElectronUiEditorTests(run) {
       assert.equal(refs.get(labelId).classList.contains("bbm-ui-editor-hidden"), false); assert.equal(refs.get(fieldId).classList.contains("bbm-ui-editor-hidden"), true);
       submit(fieldId, "setVisibility", { visible: true });
       assert.equal(submit("restarbeiten.list.table.number", "resizeWidth", { width: 125 }).newState.width, 125);
+      assert.equal(submit("restarbeiten.header.root", "resizeHeight", { height: 108 }).newState.height, 108);
+      assert.equal(submit("restarbeiten.edit.root", "resizeWidth", { width: 760 }).newState.width, 760);
+      assert.equal(submit("restarbeiten.edit.root", "resizeHeight", { height: 300 }).newState.height, 300);
+      assert.equal(submit("restarbeiten.header.root", "move", { x: 10 }).errorCode, "electron_operation_not_allowed");
 
       host.handleM80EditorEvent({ action: "highlightElement", elementId: labelId });
       assert.equal(dom.document.querySelector("[data-bbm-ui-editor-overlay]").style.display, "block");
