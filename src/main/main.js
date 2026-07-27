@@ -888,6 +888,12 @@ app.whenReady().then(async () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.once("did-finish-load", () => {
       void drainQueuedLicenseImports();
+      if (process.argv.includes("--open-ui-editor") || app.commandLine.hasSwitch("open-ui-editor")) {
+        const openExistingEditor = "import('./app/coreShellNavigation.js').then((module) => module.openNativeUiEditor({}))";
+        mainWindow.webContents.executeJavaScript(openExistingEditor).catch((error) => {
+          console.error("[ui-editor] M82 starter launch failed", error?.code || error?.message || error);
+        });
+      }
     });
   }
   await maybePromptLegacyMigration(mainWindow);

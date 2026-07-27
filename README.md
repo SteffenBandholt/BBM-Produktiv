@@ -14,6 +14,10 @@ M81.1 trennt Profilinkompatibilität vom bereits erfolgreichen Editor-Handshake.
 
 Status M51: Core-Vertrag technisch angebunden und testbar; noch keine vollständige sichtbare Editor-Oberfläche und noch keine dauerhafte Layoutspeicherung.
 
+## M82: App-Starterpaket-Bestandsreferenz
+
+BBM ist als bereits angebundene `existing-app` des versionierten App-Starterpakets deklariert. Der native Manager uebernimmt die vorhandene Electron-Integration ohne zweite Bridge oder Registry und zeigt die drei vollstaendigen Restarbeiten-Scopes, blockierte Restbereiche, den verfuegbaren Protokoll-PDF-Pilot und Profil-Recovery ehrlich an. Details: [M82-Bestandsreferenz](docs/M82_APP_STARTERPAKET_BESTANDSREFERENZ.md).
+
 ## M52: Sichtbarer UI-Editor-Startpunkt
 
 Ab M52 gibt es in BBM einen kleinen sichtbaren Einstieg `UI-Editor Status` in der bestehenden Navigation. Die Ansicht zeigt den Status der M51-Runtime, den aktiven Scope, das Layoutprofil, die explizit registrierten UI-Elemente und eine gepruefte Elementauswahl. Es ist noch keine vollstaendige Bearbeitung von Layout, Farben, Schrift, Drag-and-drop oder Resize. Details: [docs/M52_UI_EDITOR_SICHTBARER_STARTPUNKT.md](docs/M52_UI_EDITOR_SICHTBARER_STARTPUNKT.md).

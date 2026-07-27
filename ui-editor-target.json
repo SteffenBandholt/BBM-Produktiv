@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 2,
+  "starterPackageVersion": "1.0.0",
+  "applicationId": "bbm-produktiv",
+  "displayName": "BBM",
+  "framework": "electron",
+  "integrationMode": "existing-app",
+  "contractVersion": "1.2",
+  "adapterVersion": "1.2",
+  "registryVersion": 3,
+  "registryFingerprint": "sha256:bba726bf6237a1403a3b64fc1ec273e9f12bd0251c2e852e8fae1ab905c46d5f",
+  "registryStatus": "incomplete",
+  "activeScopes": [
+    "restarbeiten.header.root",
+    "restarbeiten.list.root",
+    "restarbeiten.edit.root"
+  ],
+  "uiCapability": "layout",
+  "pdfCapability": "available",
+  "profileRoot": ".ui-editor-kit/profiles",
+  "supportedOperations": [
+    "move",
+    "resize",
+    "resizeWidth",
+    "resizeHeight",
+    "textMove",
+    "textResize",
+    "setVisibility"
+  ],
+  "selectionCapability": "bidirectional",
+  "visibilityCapability": true,
+  "labelFieldSeparation": true,
+  "transportProtocolVersion": "1.0",
+  "scopes": [
+    { "scopeId": "restarbeiten.header.root", "status": "complete", "reason": null, "elementCount": 31, "missingReferenceCount": 0 },
+    { "scopeId": "restarbeiten.list.root", "status": "complete", "reason": null, "elementCount": 7, "missingReferenceCount": 0 },
+    { "scopeId": "restarbeiten.edit.root", "status": "complete", "reason": null, "elementCount": 50, "missingReferenceCount": 0 },
+    { "scopeId": "bbm.remaining", "status": "blocked", "reason": "registration_inventory_pending", "elementCount": 0, "missingReferenceCount": 0 },
+    { "scopeId": "pdf.bbm.protocol", "status": "complete", "reason": null, "elementCount": 28, "missingReferenceCount": 0 }
+  ],
+  "installationOwnership": {
+    "owner": "App-Starterpaket",
+    "manifestPath": ".ui-editor-kit/starter-installation.json",
+    "ownedFiles": [
+      ".ui-editor-kit/starter-installation.json",
+      "ui-editor-target.json"
+    ]
+  },
+  "installedAt": "2026-07-27T00:00:00+00:00",
+  "updatedAt": "2026-07-27T00:00:00+00:00"
+}

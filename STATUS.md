@@ -1,5 +1,14 @@
 # STATUS.md — BBM-Produktiv
 
+### M82 - App-Starterpaket-Bestandsreferenz
+
+- Status: `[A] abgenommen`; deklarative Bestandsanbindung, Pflichtpruefungen und sichtbarer nativer Manager-/BBM-Nachweis sind abgeschlossen.
+- BBM ist als `existing-app` / `electron` mit Vertrag und Adapter 1.2, Registryversion 3, aktuellem Fingerprint und Starterpaketversion 1.0.0 beschrieben.
+- Drei Restarbeiten-Scopes sind vollstaendig; weitere BBM-Bereiche bleiben ehrlich blockiert. Der Protokoll-PDF-Pilot ist mit 28 Elementen verfuegbar, Profil-Recovery ist vorhanden.
+- Der Manager erkennt die bestehende Integration und installiert keine zweite Bridge, Registry oder Runtime. `--open-ui-editor` ruft nur den vorhandenen lokalen Startweg auf.
+- Fachlogik, Registryinhalte, PDF-/Druckfachweg und `docs/licensing.md` wurden nicht geaendert.
+- Pflichtnachweis: `npm test` und `npm run test:node` jeweils 8/8 Gruppen ohne OOM, Node ABI 127 mit Wiederherstellung auf Electron ABI 123, M82-Einzelgruppe, gezieltes ESLint ohne Fehler und `npm run pack` mit `npmRebuild: false`. Der globale Altstand bleibt bei 17 Fehlern/371 Warnungen.
+
 ### M81.1 – Editorstart bei inkompatiblen Benutzerprofilen repariert
 
 - Status: `[A] abgenommen`; gezielte Regressionen und reale Abnahme im normalen Benutzerprofilpfad sind abgeschlossen.
@@ -18,7 +27,7 @@
   - echte zweiseitige BBM-Protokoll-PDF mit 28 Elementen, Save/Restore, Reset und Discard,
   - genau eine Editorinstanz; Fachwerte unverändert.
 - Dokumentation: `docs/M81_1_PROFIL_RESTORE.md`.
-- Risiken / offen: M82 bleibt offen und wurde nicht begonnen.
+- Risiken / offen: Die damalige Folgeaufgabe M82 ist inzwischen getrennt abgeschlossen.
 - Commit/PR: keiner; gemäß Nutzeranweisung weder Commit noch Push noch PR noch Merge.
 
 ### M81 – BBM-PDF an den bestehenden PDF-Arbeitsbereich angebunden
@@ -39,7 +48,7 @@
 - Dokumentation:
   - `docs/M81_BBM_PDF_ADAPTER.md`
 - Risiken / offen:
-  - M82 App-Starterpaket bleibt offen und unangetastet.
+  - Die damalige Folgeaufgabe M82 ist inzwischen getrennt abgeschlossen.
 - Commit/PR:
   - keiner; gemäß Nutzeranweisung weder Commit noch Push noch PR noch Merge.
 
@@ -63,7 +72,7 @@
   - Das UI-Editor-kit ist mit 88 Manager- und 51 Ziel-App-Tests, `npm test`, Pack-Dry-Run und Release-Check grün.
 - Risiken / offen:
   - Das globale Lint bleibt unverändert auf dem bekannten Repo-Bestand von 17 Fehlern/371 Warnungen rot; das gezielte ESLint aller geänderten Harness-/Skriptdateien ist grün.
-  - M81 ist abgenommen; M82 App-Starterpaket bleibt offen und unangetastet.
+  - M81 und die damalige Folgeaufgabe M82 sind inzwischen getrennt abgeschlossen.
 - Commit/PR:
   - keiner; gemäß Nutzeranweisung weder Commit noch Push noch PR noch Merge.
 
@@ -86,7 +95,7 @@
   - sichtbarer gepackter Lauf: alle 49 Editbox-Elemente und alle sieben Listenknoten auswählbar, genau drei Tabellenspalten, unabhängige Label-/Feld- und Sichtbarkeitsänderung, Fachaktionssperre, Save/Load/Restore/Reset/Discard/Rollback, kontrollierter Registry-Reload, Dirty-Konflikt und genau eine Editorinstanz grün.
 - Risiken / offen:
   - alle nicht vollständig inventarisierten BBM-Scopes bleiben ausdrücklich gesperrt.
-  - M81 BBM-PDF und M82 App-Starterpaket bleiben offen; keine Arbeit daran wurde begonnen.
+  - Die damaligen Folgeaufgaben M81 und M82 sind inzwischen getrennt abgeschlossen.
 - Commit/PR:
   - keiner; gemäß Nutzeranweisung weder Commit noch Push noch PR.
 
