@@ -29,7 +29,7 @@ const NATIVE_PDF_REQUEST_ACTIONS = new Set([
   "regeneratePdfPreview",
   "getPreviewMetadata",
 ]);
-const NATIVE_EVENT_ACTIONS = new Set(["beginTargetSelection", "cancelTargetSelection", "highlightElement", "activateTarget", "editorClosed"]);
+const NATIVE_EVENT_ACTIONS = new Set(["beginTargetSelection", "cancelTargetSelection", "highlightElement", "clearGeometryPreview", "activateTarget", "editorClosed"]);
 const REGISTRY_EVENT_ACTIONS = new Set(["registryChanged", "registryStatusChanged", "scopeAdded", "scopeChanged", "scopeRemoved"]);
 const TARGET_EVENT_ACTIONS = new Set(["targetSelectionChanged", ...REGISTRY_EVENT_ACTIONS]);
 const RENDERER_RESPONSE_TIMEOUT_MS = 8_000;
@@ -533,7 +533,7 @@ class ElectronUiEditorSessionController {
       if (stopProcess && client?.connected) client.sendEvent("shutdownEditor");
       await client?.close(reason);
     } catch (_closeError) { void _closeError; }
-    if (stopProcess && (child?.exitCode === null || child?.exitCode === undefined)) {
+    if (stopProcess && child && (child.exitCode === null || child.exitCode === undefined)) {
       await Promise.race([
         new Promise((resolve) => child.once("exit", resolve)),
         delay(1_000),

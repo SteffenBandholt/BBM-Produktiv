@@ -42,7 +42,7 @@ function element(values) {
       ...(values.operationEffects || {}),
     }),
     operationAffectedIds: Object.freeze({ ...(values.operationAffectedIds || {}) }),
-    geometry: Object.freeze({ maximumOffset: 80, ...(values.geometry || {}) }),
+    geometry: Object.freeze({ maximumOffset: 80, maximumStoredOffset: 2400, ...(values.geometry || {}) }),
     allowedOps,
     lockedOps: Object.freeze([...(values.lockedOps || [])]),
   });

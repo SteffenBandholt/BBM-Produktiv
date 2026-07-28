@@ -66,6 +66,10 @@ function _toStatusPayload(status) {
     daysRemaining: typeof status?.daysRemaining === "number" ? status.daysRemaining : expiry.daysRemaining,
     expiresSoon: typeof status?.expiresSoon === "boolean" ? status.expiresSoon : expiry.expiresSoon,
     expired: typeof status?.expired === "boolean" ? status.expired : expiry.expired,
+    developmentLicense: status?.developmentLicense === true,
+    licenseSource: String(status?.licenseSource || "user-license").trim(),
+    displayLabel: String(status?.displayLabel || "").trim(),
+    buildFlavor: String(status?.buildIdentity?.flavor || "release").trim(),
   };
   payload.diagnosticsText = _buildDiagnosticsText(payload);
   return payload;

@@ -14,6 +14,10 @@ const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
 
+const DEVELOPMENT_BUILD_FLAVOR = "development-diagnostic";
+const DEVELOPMENT_LICENSE_PROVIDER_ID = "bbm-internal-development-license-v1";
+const DEVELOPMENT_PROVIDER_SOURCE = "dev/internal/developmentLicenseProvider.cjs";
+
 function readJsonSafe(p) {
   try {
     return JSON.parse(fs.readFileSync(p, "utf8"));
@@ -126,7 +130,41 @@ function buildCustomerDistConfig({
   };
 }
 
-function runDist({ cwd = process.cwd(), env = process.env } = {}) {
+function applyBuildFlavor({ build = {}, channel = "STABLE", diagnostic = false } = {}) {
+  const isDev = normalizeChannel(channel) === "DEV";
+  const extraMetadata = { ...(build.extraMetadata || {}), buildChannel: isDev ? "DEV" : "STABLE" };
+  delete extraMetadata.developmentLicenseProvider;
+  extraMetadata.buildFlavor = isDev ? DEVELOPMENT_BUILD_FLAVOR : "release";
+  if (isDev) extraMetadata.developmentLicenseProvider = DEVELOPMENT_LICENSE_PROVIDER_ID;
+
+  const extraResources = (Array.isArray(build.extraResources) ? build.extraResources : []).filter((entry) =>
+    entry?.to !== "internal-development-license/provider.cjs" && entry?.from !== DEVELOPMENT_PROVIDER_SOURCE
+  );
+  if (isDev) {
+    extraResources.push({
+      from: DEVELOPMENT_PROVIDER_SOURCE,
+      to: "internal-development-license/provider.cjs",
+    });
+  }
+
+  return {
+    ...build,
+    directories: diagnostic
+      ? { ...(build.directories || {}), output: path.join("dist", "diagnostic") }
+      : { ...(build.directories || {}) },
+    extraMetadata,
+    extraResources,
+  };
+}
+
+function parseCliArgs(argv = []) {
+  return Object.freeze({
+    diagnostic: argv.includes("--diagnostic"),
+    dirOnly: argv.includes("--dir"),
+  });
+}
+
+function runDist({ cwd = process.cwd(), env = process.env, diagnostic = false, dirOnly = false } = {}) {
   const repoRoot = findRepoRoot(cwd);
   if (!repoRoot) {
     console.error("[dist] Fehler: package.json nicht gefunden (Repo-Root).");
@@ -146,7 +184,7 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
   // channel.json
   const channelPath = path.join(repoRoot, "channel.json");
   const channelJson = readJsonSafe(channelPath) || { channel: "DEV" };
-  const channel = normalizeChannel(channelJson.channel);
+  const channel = diagnostic ? "DEV" : normalizeChannel(channelJson.channel);
   const isDev = channel === "DEV";
 
   // Stable Defaults (aus package.json build/appId + productName)
@@ -183,15 +221,11 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
   });
 
   // Override-Config für electron-builder (als separate Config-Datei)
+  const flavoredBuild = applyBuildFlavor({ build: customerConfig.build, channel, diagnostic });
   const override = {
-    ...customerConfig.build,
+    ...flavoredBuild,
     appId,
     productName,
-    extraMetadata: {
-      ...(baseBuild.extraMetadata || {}),
-      // ✅ wird in die gepackte package.json geschrieben
-      buildChannel: channel,
-    },
     // ✅ pro Target eigene artifactName (kein ${target})
     nsis: customerConfig.artifactName
       ? { ...(customerConfig.build.nsis || {}) }
@@ -210,6 +244,8 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
   console.log(" Version: ", baseVersion);
   console.log(" appId:   ", appId);
   console.log(" Name:    ", productName);
+  console.log(" Flavor:  ", override.extraMetadata.buildFlavor);
+  console.log(" Ausgabe: ", override.directories?.output || "dist");
   console.log(" NSIS:    ", customerConfig.artifactName || nsisName);
   if (customerConfig.artifactName) {
     console.log(" Kundenmodus: aktiv");
@@ -238,7 +274,9 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
   console.log("[dist] node", cliJs);
 
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, [cliJs, "--config", tmpConfigPath], {
+    const childArgs = [cliJs, "--config", tmpConfigPath];
+    if (dirOnly) childArgs.push("--dir");
+    const child = spawn(process.execPath, childArgs, {
       cwd: repoRoot,
       stdio: "inherit",
       windowsHide: false,
@@ -274,7 +312,7 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
 }
 
 async function main() {
-  const code = await runDist();
+  const code = await runDist(parseCliArgs(process.argv.slice(2)));
   process.exit(code || 0);
 }
 
@@ -286,5 +324,7 @@ module.exports = {
   sanitizeCustomerSlug,
   buildMachineSetupMetaFromEnv,
   buildCustomerDistConfig,
+  applyBuildFlavor,
+  parseCliArgs,
   runDist,
 };

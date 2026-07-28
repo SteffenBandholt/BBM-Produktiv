@@ -30,6 +30,7 @@ const {
   sanitizeDirName,
   resolveProjectFolderName,
 } = require("./projectStoragePaths");
+const { resolveBuildIdentity } = require("../buildIdentity");
 
 let _printModesModulePromise = null;
 
@@ -570,7 +571,7 @@ function registerPrintIpc() {
       }
       // Version/Channel für PDF-Footer mitgeben
       data.appVersion = app.getVersion ? app.getVersion() : "";
-      data.buildChannel = app.isPackaged ? "STABLE" : "DEV";
+      data.buildChannel = resolveBuildIdentity({ electronApp: app }).channel;
       return { ok: true, data };
     })
   );

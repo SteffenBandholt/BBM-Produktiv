@@ -298,7 +298,7 @@ export default class MainHeader {
 
     // DEV Badge (rot oben rechts)
     const devBadge = document.createElement("div");
-    devBadge.textContent = "DEV";
+    devBadge.textContent = "Entwicklungsversion – Testlizenz";
     devBadge.style.position = "absolute";
     devBadge.style.top = "8px";
     devBadge.style.right = "10px";
@@ -827,7 +827,7 @@ export default class MainHeader {
       stickyNotice.style.gridRow = "3";
     }
 
-    root.append(logoGroup, trialInfo, elCenterTitle, leftIdentity, rightInfo, actionWrap, stickyNotice);
+    root.append(logoGroup, trialInfo, elCenterTitle, leftIdentity, rightInfo, actionWrap, stickyNotice, devBadge);
 
     this.root = root;
 
@@ -1770,6 +1770,7 @@ export default class MainHeader {
 
     // ✅ Fenster-Titel Trial AN (Header AUS)
     this._refreshTrialInfo();
+    this._refreshBuildChannelBadge();
 
     const logoSize = this._clampLogoNumber(settings["header.logoSizePx"], 12, 48, 20);
     const logoPadLeft = this._clampLogoNumber(settings["header.logoPadLeftPx"], 0, 40, 0);

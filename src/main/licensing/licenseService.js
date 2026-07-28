@@ -1,5 +1,6 @@
 const { loadLicense } = require("./licenseStorage");
 const { verifyLicense } = require("./licenseVerifier");
+const { loadDevelopmentLicenseStatus } = require("./developmentLicenseLoader");
 const {
   LICENSE_MODULES,
   LICENSE_FEATURES,
@@ -14,6 +15,11 @@ let cachedStatus = null;
 // Zentrale Kernlogik:
 // Lizenzdatei lesen, verifizieren und den aktuellen Laufzeitstatus cachen.
 function checkLicense() {
+  const developmentStatus = loadDevelopmentLicenseStatus();
+  if (developmentStatus) {
+    cachedStatus = developmentStatus;
+    return cachedStatus;
+  }
   const licenseData = loadLicense();
   cachedStatus = verifyLicense(licenseData);
   return cachedStatus;

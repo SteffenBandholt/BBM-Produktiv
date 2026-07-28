@@ -29,6 +29,9 @@ function _extractLicenseInfo(status) {
 
 function buildLicensedToText(statusOrLicense) {
   const source = statusOrLicense && typeof statusOrLicense === "object" ? statusOrLicense : {};
+  if (source.developmentLicense === true) {
+    return String(source.displayLabel || "Entwicklungsversion – Testlizenz").trim();
+  }
   const isStatusShape = Object.prototype.hasOwnProperty.call(source, "valid") || Object.prototype.hasOwnProperty.call(source, "license");
   const valid = isStatusShape ? !!source.valid : true;
   const license = isStatusShape

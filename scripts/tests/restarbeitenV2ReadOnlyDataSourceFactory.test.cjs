@@ -120,12 +120,17 @@ async function runRestarbeitenV2ReadOnlyDataSourceFactoryTests(run) {
   assert.equal(diffFiles.some(isUnexpectedProtokollDiff), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
   const allowedRestarbeitenMainFiles = new Set([
+    "src/main/buildIdentity.js",
     "src/main/db/database.js",
     "src/main/db/restarbeitenRepo.js",
+    "src/main/ipc/licenseIpc.js",
     "src/main/ipc/printIpc.js",
     "src/main/ipc/restarbeitenIpc.js",
     "src/main/ipc/uiEditorIpc.js",
     "src/main/main.js",
+    "src/main/licensing/developmentLicenseLoader.js",
+    "src/main/licensing/featureGuard.js",
+    "src/main/licensing/licenseService.js",
     "src/main/preload.js",
     "src/main/ui-editor/bbmPdfAdapter.cjs",
     "src/main/ui-editor/electronUiEditorSession.js",

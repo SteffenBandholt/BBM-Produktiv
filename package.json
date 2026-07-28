@@ -10,6 +10,7 @@
     "start:raw": "set ELECTRON_RUN_AS_NODE=&& electron .",
     "prepare:ui-editor": "node scripts/prepareUiEditorManager.cjs",
     "pack": "npm run fix:electron-deps && npm run prepare:ui-editor && electron-builder --dir",
+    "pack:diagnostic": "npm run fix:electron-deps && npm run prepare:ui-editor && node scripts/dist.cjs --diagnostic --dir",
     "dist": "node scripts/dist.cjs",
     "test": "node scripts/runElectronNodeTest.cjs",
     "lint": "eslint \"src/**/*.js\"",
@@ -41,6 +42,7 @@
     "files": [
       "src/**/*",
       "uiEditor/**/*",
+      "ui-editor-target.json",
       "package.json",
       "build/bbm-icon.ico",
       "!src/main/db/app.db",

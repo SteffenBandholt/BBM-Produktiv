@@ -73,7 +73,7 @@ async function runM821BbmFeintuningTests(run) {
   await run("M82.1 BBM 25: Direktauswahl nutzt nur den gemeinsamen Vertrag", () => assert.match(host, /direct-selection-contract\.mjs/));
   await run("M82.1 BBM 26: Tab und Shift-Tab werden unterstützt", () => { assert.match(host, /event\.key === "Tab"/); assert.match(host, /event\.shiftKey/); });
   await run("M82.1 BBM 27: Enter bestätigt und Escape beendet", () => { assert.match(host, /event\.key === "Enter"/); assert.match(host, /event\.key === "Escape"/); });
-  await run("M82.1 BBM 28: Geometriewirkungen werden vor Annahme geprüft", () => { assert.match(host, /assertSafeGeometry/); assert.match(host, /electron_unexpected_layout_effect/); });
+  await run("M82.1 BBM 28: Geometriewirkungen werden vor Annahme geprüft", () => { assert.match(host, /inspectGeometryEffect/); assert.match(host, /electron_unexpected_layout_effect/); });
   await run("M82.1 BBM 29: generisches Anwenden friert Flexelemente nicht mehr ein", () => { assert.doesNotMatch(refs, /flexShrink\s*=\s*"0"/); assert.match(refs, /allowedOps/); });
   await run("M82.1 BBM 30: Layout und Icon-Trennung sind real im Renderer verankert", () => { assert.match(editbox, /\.headerZone/); assert.match(editbox, /dictation\.icon/); assert.match(css, /min-height:\s*190px/); assert.match(css, /overflow:\s*auto/); });
 
