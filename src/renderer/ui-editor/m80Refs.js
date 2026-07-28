@@ -48,17 +48,24 @@ function bounded(entry, field, value, fallback) {
 }
 
 function applyGeneric(element, state, entry) {
-  element.dataset.uiEditorX = String(finite(state.x));
-  element.dataset.uiEditorY = String(finite(state.y));
-  element.style.translate = `${px(state.x)} ${px(state.y)}`;
-  element.style.boxSizing = "border-box";
-  element.style.flexShrink = "0";
-  element.style.width = px(bounded(entry, "width", state.width, 1));
-  element.style.height = px(bounded(entry, "height", state.height, 1));
-  if (state.textOffsetX !== null && state.textOffsetX !== undefined) { element.dataset.uiEditorTextX = String(state.textOffsetX); element.style.paddingLeft = px(Math.max(0, finite(state.textOffsetX))); }
-  if (state.textOffsetY !== null && state.textOffsetY !== undefined) { element.dataset.uiEditorTextY = String(state.textOffsetY); element.style.paddingTop = px(Math.max(0, finite(state.textOffsetY))); }
-  if (state.fontSize !== null && state.fontSize !== undefined) element.style.fontSize = px(positive(state.fontSize, 1));
-  toggleClass(element, HIDDEN_CLASS, state.visible === false);
+  const operations = new Set(entry.allowedOps);
+  if (operations.has("move")) {
+    element.dataset.uiEditorX = String(finite(state.x));
+    element.dataset.uiEditorY = String(finite(state.y));
+    element.style.translate = `${px(state.x)} ${px(state.y)}`;
+  }
+  if (operations.has("resize") || operations.has("resizeWidth")) element.style.width = px(bounded(entry, "width", state.width, 1));
+  if (operations.has("resize") || operations.has("resizeHeight")) element.style.height = px(bounded(entry, "height", state.height, 1));
+  if (operations.has("textMove") && state.textOffsetX !== null && state.textOffsetX !== undefined) {
+    element.dataset.uiEditorTextX = String(state.textOffsetX);
+    element.style.paddingLeft = px(Math.max(0, finite(state.textOffsetX)));
+  }
+  if (operations.has("textMove") && state.textOffsetY !== null && state.textOffsetY !== undefined) {
+    element.dataset.uiEditorTextY = String(state.textOffsetY);
+    element.style.paddingTop = px(Math.max(0, finite(state.textOffsetY)));
+  }
+  if (operations.has("textResize") && state.fontSize !== null && state.fontSize !== undefined) element.style.fontSize = px(positive(state.fontSize, 1));
+  if (operations.has("setVisibility")) toggleClass(element, HIDDEN_CLASS, state.visible === false);
 }
 
 export function beginM80PilotRender() {
@@ -94,6 +101,10 @@ export function completeM80PilotRender() {
     const current = ref.read();
     if (!workingStates.has(ref.id)) workingStates.set(ref.id, { ...current });
   }
+  if (typeof window?.dispatchEvent === "function") {
+    const event = typeof CustomEvent === "function" ? new CustomEvent("bbm:m80-pilot-render-complete") : { type: "bbm:m80-pilot-render-complete" };
+    window.dispatchEvent(event);
+  }
 }
 
 export function registerM80TableColumnRef(id, headerCell, tableElement, cssVariable, initialWidth) {
@@ -124,6 +135,13 @@ export function registerM80TableColumnRef(id, headerCell, tableElement, cssVaria
 }
 
 export function getM80Ref(id) { return refs.get(String(id || "")) || null; }
+export function listM80Refs() { return [...refs.values()]; }
+export function snapshotM80Geometry() {
+  return new Map([...refs.values()].map((ref) => {
+    const rect = rectOf(ref.element);
+    return [ref.id, { left: finite(rect.left), top: finite(rect.top), width: finite(rect.width), height: finite(rect.height) }];
+  }));
+}
 export function getM80IdFromTarget(target) {
   let current = isElementRef(target) ? target : null;
   while (current) {

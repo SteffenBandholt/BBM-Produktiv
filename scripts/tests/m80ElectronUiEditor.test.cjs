@@ -120,8 +120,13 @@ async function runM80ElectronUiEditorTests(run) {
     assert.equal(entries.some((entry) => /protokoll|projektverwaltung|firma/i.test(entry.id)), false);
   });
 
-  await run("M80 Registry: Label und Feld sind getrennte Geschwister", () => {
-    for (const prefix of ["restarbeiten.filterbar.location.level1", "restarbeiten.filterbar.meta.status", "restarbeiten.edit.short", "restarbeiten.edit.long"]) {
+  await run("M80 Registry: Label und Feld bleiben getrennte explizite Ziele", () => {
+    for (const prefix of ["restarbeiten.filterbar.location.level1", "restarbeiten.filterbar.meta.status"]) {
+      const label = entries.find((entry) => entry.id === `${prefix}.label`);
+      const field = entries.find((entry) => entry.id === `${prefix}.field`);
+      assert.equal(label.parentId, prefix); assert.equal(field.parentId, prefix); assert.notEqual(label.id, field.id);
+    }
+    for (const prefix of ["restarbeiten.edit.short", "restarbeiten.edit.long"]) {
       const label = entries.find((entry) => entry.id === `${prefix}.label`);
       const field = entries.find((entry) => entry.id === `${prefix}.field`);
       assert.equal(label.parentId, prefix); assert.equal(field.parentId, prefix); assert.notEqual(label.id, field.id);
@@ -237,11 +242,12 @@ async function runM80ElectronUiEditorTests(run) {
           : elementId.startsWith("restarbeiten.list") ? "restarbeiten.list.root" : "restarbeiten.edit.root",
         changeRequest: { changeId, elementId, operation, payload },
       }).changeResult;
+      const stateFor = (elementId) => host.getM80InteractionStatus().scopeStates
+        .flatMap((scope) => scope.elements).find((item) => item.elementId === elementId);
       const fieldId = "restarbeiten.edit.short.field"; const labelId = "restarbeiten.edit.short.label";
       assert.equal(submit(fieldId, "move", { x: 7, y: 9 }).success, true);
       assert.equal(submit(fieldId, "resizeWidth", { width: 310 }).newState.width, 310);
       assert.equal(submit(fieldId, "resizeHeight", { height: 65 }).newState.height, 65);
-      assert.equal(submit(fieldId, "textMove", { text: { offsetX: 8, offsetY: 6 } }).newState.textOffsetX, 8);
       assert.equal(submit(fieldId, "textResize", { text: { fontSize: 18 } }).newState.fontSize, 18);
       assert.equal(submit(labelId, "setVisibility", { visible: false }).success, true);
       assert.equal(submit(fieldId, "setVisibility", { visible: true }).newState.visible, true);
@@ -253,14 +259,49 @@ async function runM80ElectronUiEditorTests(run) {
       submit(fieldId, "setVisibility", { visible: true });
       assert.equal(submit("restarbeiten.list.table.number", "resizeWidth", { width: 125 }).newState.width, 125);
       assert.equal(submit("restarbeiten.header.root", "resizeHeight", { height: 108 }).newState.height, 108);
-      assert.equal(submit("restarbeiten.edit.root", "resizeWidth", { width: 760 }).newState.width, 760);
+      assert.equal(submit("restarbeiten.edit.root", "resizeWidth", { width: 760 }).errorCode, "electron_operation_not_allowed");
       assert.equal(submit("restarbeiten.edit.root", "resizeHeight", { height: 300 }).newState.height, 300);
       assert.equal(submit("restarbeiten.header.root", "move", { x: 10 }).errorCode, "electron_operation_not_allowed");
 
       host.handleM80EditorEvent({ action: "highlightElement", elementId: labelId });
       assert.equal(dom.document.querySelector("[data-bbm-ui-editor-overlay]").style.display, "block");
+      host.handleM80EditorEvent({ action: "beginTargetSelection" });
+      dom.listeners.get("mousemove")?.({ target: refs.get("restarbeiten.edit.class.control") });
+      let selectionOverlay = dom.document.querySelector("[data-bbm-ui-editor-overlay]");
+      assert.deepEqual(selectionOverlay.children.map((frame) => frame.dataset.selectionLevel), ["Element", "Gruppe", "Bereich"]);
+      dom.listeners.get("keydown")?.({ key: "Tab", shiftKey: false, preventDefault() {} });
+      selectionOverlay = dom.document.querySelector("[data-bbm-ui-editor-overlay]");
+      assert.equal(selectionOverlay.children.find((frame) => frame.dataset.selectionActive === "true").dataset.selectionLevel, "Gruppe");
+      dom.listeners.get("keydown")?.({ key: "Escape", preventDefault() {} });
+      assert.equal(host.getM80InteractionStatus().selectionMode, false);
+      assert.equal(targetEvents.at(-1).action, "targetSelectionChanged");
+      assert.equal(targetEvents.at(-1).cancelled, true, "Escape synchronisiert den Abbruch mit dem Manager");
+
+      const dictationId = "restarbeiten.edit.short.dictation";
+      const dictationIconId = `${dictationId}.icon`;
+      const iconBefore = host.getM80InteractionStatus().scopeStates.flatMap((scope) => scope.elements).find((item) => item.elementId === dictationIconId);
+      assert.equal(submit(dictationId, "move", { x: -5, y: 0 }).success, true);
+      assert.equal(submit(dictationId, "move", { x: 5, y: 0 }).success, true);
+      assert.equal(submit(dictationId, "move", { x: 0, y: -5 }).success, true);
+      assert.equal(submit(dictationId, "move", { x: 0, y: 5 }).success, true);
+      const iconAfterMoves = host.getM80InteractionStatus().scopeStates.flatMap((scope) => scope.elements).find((item) => item.elementId === dictationIconId);
+      assert.equal(iconAfterMoves.width, iconBefore.width); assert.equal(iconAfterMoves.height, iconBefore.height);
+      const dictationBeforeIconResize = stateFor(dictationId);
+      assert.equal(submit(dictationIconId, "resizeWidth", { width: 20 }).success, true);
+      assert.equal(submit(dictationIconId, "resizeHeight", { height: 20 }).success, true);
+      const dictationAfterIconResize = host.getM80InteractionStatus().scopeStates.flatMap((scope) => scope.elements).find((item) => item.elementId === dictationId);
+      assert.equal(dictationAfterIconResize.x, dictationBeforeIconResize.x); assert.equal(dictationAfterIconResize.y, dictationBeforeIconResize.y);
+
+      const remainingBefore = stateFor("restarbeiten.edit.short.remaining");
+      assert.equal(submit(labelId, "resizeWidth", { width: 100 }).success, true);
+      const remainingAfter = stateFor("restarbeiten.edit.short.remaining");
+      assert.deepEqual({ x: remainingAfter.x, y: remainingAfter.y, width: remainingAfter.width, height: remainingAfter.height },
+        { x: remainingBefore.x, y: remainingBefore.y, width: remainingBefore.width, height: remainingBefore.height });
+      assert.equal(submit(fieldId, "move", { x: Number.POSITIVE_INFINITY }).errorCode, "electron_editor_message_invalid");
+
       let businessExecutions = 0; const button = refs.get("restarbeiten.edit.action.new");
       host.handleM80EditorEvent({ action: "beginTargetSelection" });
+      dom.listeners.get("mousemove")?.({ target: button });
       const selected = await dom.document.click(button); if (!selected.stopped) businessExecutions += 1;
       assert.equal(businessExecutions, 0); assert.equal(targetEvents.at(-1).elementId, "restarbeiten.edit.action.new");
       const locked = submit("restarbeiten.edit.action.new", "createRecord", {});

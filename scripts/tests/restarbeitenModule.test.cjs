@@ -1758,8 +1758,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(css.includes(".bbm-restarbeiten-editbox .bbm-restarbeiten-field input,\n.bbm-restarbeiten-editbox .bbm-restarbeiten-field select,\n.bbm-restarbeiten-editbox .bbm-restarbeiten-field textarea {\n  padding: 3px 5px;\n  font-size: 8pt;\n  line-height: 1.15;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-editbox [data-ui-editor-id=\"restarbeiten.editbox.text.short\"] input {\n  height: 20px;\n  min-height: 20px;\n  padding-top: 1px;\n  padding-bottom: 1px;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group .bbm-restarbeiten-field input,\n.bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group .bbm-restarbeiten-field select {\n  font-size: 7pt;\n  line-height: 1.15;"), true);
-    assert.equal(css.includes(".bbm-restarbeiten-editbox__actions--inline {\n  margin-left: 1.5cm;"), true);
-    assert.equal(css.includes(".bbm-restarbeiten-class-field--inline {\n  display: inline-flex;\n  align-items: center;\n  min-width: 0;\n  margin-left: 1.5cm;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-editbox__actions--inline {\n  margin-left: 0;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-class-field--inline {\n  display: inline-flex;\n  align-items: center;\n  min-width: 0;\n  margin-left: 0;"), true);
     assert.equal(css.includes("grid-template-columns: minmax(260px, 1fr) 98px 98px;"), true);
     assert.equal(css.includes("gap: 8px 6px;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group {\n  grid-template-columns: minmax(0, 1fr);\n  align-content: start;\n  gap: 4px;\n  min-height: 0;\n  justify-self: end;\n  width: 96px;"), true);

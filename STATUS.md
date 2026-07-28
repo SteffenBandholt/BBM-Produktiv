@@ -1,5 +1,15 @@
 # STATUS.md — BBM-Produktiv
 
+### M82.1 – BBM-Editor bedienbar und Layoutwirkung begrenzt
+
+- Status: `[A] abgenommen`; alle Pflichtprüfungen und der vollständige sichtbare 56-Schritt-Nachweis im normalen Benutzerprofil sind abgeschlossen.
+- Der korrekte Ausgangsstand ist die abgenommene M80.2-Baseline. Das unbrauchbare aktive UI-Profil wurde mit M81.1 bytegleich samt Metadaten archiviert; das getrennte PDF-Profil blieb unverändert.
+- Kompatible UI-Profile werden beim normalen BBM-Start manifest-, registry- und fingerprintgeprüft über denselben HostAdapter angewandt. Der Editorprozess ist dafür nicht erforderlich; eine Quittung verhindert spätere Doppelanwendung.
+- Direktauswahl unterscheidet Element, Gruppe und Bereich mit Linie, Stärke, Badge und verständlichem Namen. Tab/Shift+Tab, Enter/Klick und Esc sind verdrahtet.
+- Editbox, Kurztextlabel, Diktatbutton und Mikrofonicon besitzen getrennte sichere Operationen. Wirkungsmenge und abhängige IDs sind deklarativ; unerwartete Geometrie wird zurückgerollt.
+- Automatisiert belegt: 36 Kit-Einzelfälle, 32 BBM-Einzelfälle, echter Startdienst ohne Editorprozess, Diktat-/Icon-Entkopplung, Label-/Nachbarstabilität und bestehende M73–M82-Regressionswege. Sichtbar belegt sind zusätzlich Start-Restore ohne Sprung, Direktauswahl, Tastaturbedienung, Save/Discard/Reset/Rollback, echte mehrseitige BBM-PDF und der gepackte BBM-Start.
+- Detaildokument: `docs/M82_1_BBM_FEINTUNING.md`.
+
 ### M82 - App-Starterpaket-Bestandsreferenz
 
 - Status: `[A] abgenommen`; deklarative Bestandsanbindung, Pflichtpruefungen und sichtbarer nativer Manager-/BBM-Nachweis sind abgeschlossen.

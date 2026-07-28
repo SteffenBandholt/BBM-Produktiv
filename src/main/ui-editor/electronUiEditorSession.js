@@ -14,6 +14,7 @@ const {
   createElectronTargetContract,
   createRegistryFingerprint,
   createSessionIdentifiers,
+  loadTargetStartupLayout,
   validateRegistrationSnapshot,
 } = require("ui-editor-kit");
 
@@ -128,6 +129,8 @@ class ElectronUiEditorSessionController {
     this.pendingRendererRequests = new Map();
     this.heartbeat = null;
     this.currentRegistration = null;
+    this.pendingStartupLayout = null;
+    this.startupLayoutReceipt = null;
     this.registered = false;
     this.stopping = false;
   }
@@ -141,6 +144,82 @@ class ElectronUiEditorSessionController {
     this.ipcMain.handle("uiEditor:respond", (_event, message) => this.respondFromRenderer(message));
     this.ipcMain.handle("uiEditor:targetEvent", (_event, message) => this.forwardTargetEvent(message));
     this.ipcMain.handle("uiEditor:preparePdfContext", (_event, context) => this.preparePdfContext(context));
+    this.ipcMain.handle("uiEditor:loadStartupLayout", (_event, registration) => this.loadStartupLayout(registration));
+    this.ipcMain.handle("uiEditor:completeStartupLayout", (_event, result) => this.completeStartupLayout(result));
+  }
+
+  #readTargetManifest() {
+    const appRoot = this.app.getAppPath?.() || path.resolve(__dirname, "..", "..", "..");
+    const manifestPath = path.join(appRoot, "ui-editor-target.json");
+    let manifest;
+    try { manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8")); }
+    catch (cause) {
+      throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_INCOMPATIBLE, "Ziel-App-Manifest fehlt oder ist beschädigt.", cause);
+    }
+    return { manifest, manifestPath };
+  }
+
+  #validateTargetManifest(contract) {
+    const { manifest, manifestPath } = this.#readTargetManifest();
+    if (manifest.schemaVersion !== 2 || manifest.applicationId !== APPLICATION_ID || manifest.framework !== "electron" ||
+        manifest.contractVersion !== contract.contractVersion || manifest.adapterVersion !== contract.adapterVersion ||
+        manifest.registryVersion !== contract.registryVersion || manifest.registryFingerprint !== contract.registryFingerprint ||
+        JSON.stringify(manifest.activeScopes) !== JSON.stringify(contract.activeScopes)) {
+      throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_INCOMPATIBLE, "Ziel-App-Manifest und aktive Registry stimmen nicht überein.");
+    }
+    return manifestPath;
+  }
+
+  loadStartupLayout(registration) {
+    const profileRoot = this.profileRootResolver(this.app);
+    this.ensureDirectory(profileRoot);
+    console.info(`[ui-editor] startup layout requested: activeScopes=${Array.isArray(registration?.activeScopes) ? registration.activeScopes.length : 0}`);
+    try {
+      const snapshot = this.#registrationSnapshot(registration, { sessionId: "startup-layout", profileRoot });
+      const manifestPath = this.#validateTargetManifest(snapshot.contract);
+      const result = loadTargetStartupLayout({
+        profileRoot,
+        applicationId: snapshot.contract.applicationId,
+        activeScopes: snapshot.contract.activeScopes,
+        registryScopes: snapshot.registryScopes,
+      });
+      this.pendingStartupLayout = result.ok && result.found ? { ...result, manifestPath } : null;
+      this.startupLayoutReceipt = result.found ? null : {
+        applied: false,
+        state: result.state,
+        code: result.code,
+        profileId: result.profileId,
+        editorProcessRequired: false,
+      };
+      console.info(`[ui-editor] startup layout loaded: ${result.code}, found=${result.found === true}`);
+      return { ...result, manifestPath };
+    } catch (error) {
+      this.pendingStartupLayout = null;
+      this.startupLayoutReceipt = { applied: false, state: "baseline", code: error?.code || "startup_layout_failed", editorProcessRequired: false };
+      console.info(`[ui-editor] startup layout rejected: ${this.startupLayoutReceipt.code}`);
+      return { ok: false, found: false, applied: false, state: "baseline", code: error?.code || "startup_layout_failed", message: error?.message || "Startlayout konnte nicht validiert werden.", scopes: [], editorProcessRequired: false };
+    }
+  }
+
+  completeStartupLayout(result = {}) {
+    const pending = this.pendingStartupLayout;
+    this.pendingStartupLayout = null;
+    if (!pending || result.ok !== true || result.profileSha256 !== pending.profileSha256) {
+      this.startupLayoutReceipt = { applied: false, state: "baseline", code: String(result.code || "startup_layout_apply_failed"), editorProcessRequired: false };
+      console.info(`[ui-editor] startup layout: ${this.startupLayoutReceipt.code}, applied=false, reason=${String(result.message || "unavailable").replace(/[\r\n]+/g, " ")}`);
+      return { ok: false, code: this.startupLayoutReceipt.code };
+    }
+    this.startupLayoutReceipt = {
+      applied: true,
+      state: "compatible",
+      code: "startup_layout_applied",
+      profileId: pending.profileId,
+      savedAt: pending.savedAt,
+      profileSha256: pending.profileSha256,
+      editorProcessRequired: false,
+    };
+    console.info("[ui-editor] startup layout: startup_layout_applied, applied=true");
+    return { ok: true, receipt: { ...this.startupLayoutReceipt } };
   }
 
   preparePdfContext(context = {}) {
@@ -190,7 +269,7 @@ class ElectronUiEditorSessionController {
         registration.visibilityCapability !== true || contract.adapterVersion !== ELECTRON_TARGET_ADAPTER_VERSION) {
       throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_INCOMPATIBLE, "Ziel-App-Vertrag oder Adapter-Capabilities sind nicht kompatibel.");
     }
-    const snapshot = { contract, registryScopes };
+    const snapshot = { contract: { ...contract, startupLayout: this.startupLayoutReceipt ? { ...this.startupLayoutReceipt } : null }, registryScopes };
     const validation = validateRegistrationSnapshot(snapshot);
     if (!validation.ok) {
       const first = validation.errors[0];
@@ -242,6 +321,7 @@ class ElectronUiEditorSessionController {
     this.ensureDirectory(profileRoot);
     const registrationSnapshot = this.#registrationSnapshot(registration, { sessionId: identifiers.sessionId, profileRoot });
     const contract = registrationSnapshot.contract;
+    console.info(`[ui-editor] editor start receipt: ${contract.startupLayout?.code || "none"}, applied=${contract.startupLayout?.applied === true}`);
     const executablePath = this.executableResolver({ app: this.app, ...this.pathOptions });
     const editorRuntimeRoot = this.runtimeRootResolver(executablePath);
     const args = [
@@ -394,7 +474,18 @@ class ElectronUiEditorSessionController {
       if (result.ok) this.client?.sendEvent(message.action, { scopeId: String(message.scopeId || ""), registryRefreshStatus: result.registryRefreshStatus });
       return result;
     }
-    return { ok: this.client?.sendEvent(message.action, { scopeId: String(message.scopeId || ""), elementId: String(message.elementId || "") }) === true };
+    return { ok: this.client?.sendEvent(message.action, {
+      scopeId: String(message.scopeId || ""),
+      elementId: String(message.elementId || ""),
+      displayName: String(message.displayName || ""),
+      elementType: String(message.elementType || ""),
+      selectionKind: String(message.selectionKind || ""),
+      selectionLevel: String(message.selectionLevel || ""),
+      parentId: String(message.parentId || ""),
+      childCount: Number.isInteger(message.childCount) ? message.childCount : 0,
+      cancelled: message.cancelled === true,
+      boundingRect: message.boundingRect && typeof message.boundingRect === "object" ? message.boundingRect : null,
+    }) === true };
   }
 
   status() {
