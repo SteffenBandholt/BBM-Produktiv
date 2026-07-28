@@ -1,5 +1,17 @@
 # STATUS.md — BBM-Produktiv
 
+### M82.2 – Verständliche Geometriehinweise in BBM
+
+- Status: `[A] abgenommen`; die vollständige sichtbare UI-/PDF-Abnahme und der kontrollierte Development-Lizenznachweis sind abgeschlossen.
+- Die paketierte Diagnostic-Variante zeigt „Entwicklungsversion – Testlizenz“, erzeugt die echte vierseitige BBM-PDF mit 28 Registryelementen und nutzt das normale Benutzerprofil. Release-Pakete enthalten weder Development-Buildidentität noch Development-Provider; die abgelaufene Benutzerlizenz bleibt dort auch bei gesetzten Umgebungsvariablen `LICENSE_EXPIRED`.
+- BBM bindet den gemeinsamen Geführt-/Frei-Risikovertrag über vorhandene Registry, Pipe, Electron-HostAdapter und Profilwege an.
+- Auswahl allein bleibt neutral; konkrete Risiken nennen sichtbare BBM-Anzeigenamen, technische IDs stehen nur in Details.
+- Die Renderer-Vorschau unterscheidet aktuellen Zustand, Ziel, Gruppe/Bereich und Überlappung ohne reine Farbcodierung.
+- Bestätigen, Begrenzen, Abbrechen, Zurück und Rollback laufen operationsgebunden und hinterlassen den Editor unmittelbar bedienbar.
+- Keine Fachwerte, Datenbanken, PDF-Fachlogik oder BBM-spezifische Risikoregel im gemeinsamen Core.
+- Die vorhandene Benutzerlizenz und `docs/licensing.md` blieben bytegleich; der interne Development-Provider schreibt keine Lizenzdatei und ist ausschließlich über die beim Diagnostic-Pack erzeugte Buildidentität erreichbar.
+- Detaildokument: `docs/M82_2_BBM_GEOMETRIEHINWEISE.md`.
+
 ### M82.1 – BBM-Editor bedienbar und Layoutwirkung begrenzt
 
 - Status: `[A] abgenommen`; alle Pflichtprüfungen und der vollständige sichtbare 56-Schritt-Nachweis im normalen Benutzerprofil sind abgeschlossen.

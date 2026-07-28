@@ -25,6 +25,11 @@ import {
   describeDirectSelection,
   directSelectionFramePresentation,
 } from "../../../node_modules/ui-editor-kit/dist/direct-selection-contract.mjs";
+import {
+  EDIT_MODES,
+  RISK_ACTIONS,
+  evaluateGeometryRisk,
+} from "../../../node_modules/ui-editor-kit/dist/geometry-risk-contract.mjs";
 
 const ALLOWED_ACTIONS = new Set(["getRegistry", "getLayoutState", "submitChange"]);
 const REGISTRY_EVENT_ACTIONS = new Set(["registryChanged", "registryStatusChanged", "scopeAdded", "scopeChanged", "scopeRemoved"]);
@@ -36,14 +41,15 @@ let hoverIndex = 0;
 let startupRestorePromise = null;
 let startupRestoreStatus = { state: "pending", applied: false, editorProcessRequired: false };
 let diagnosticRegistryRevision = 0;
+const pendingGeometryRisks = new Map();
 
 function hasForbidden(value) {
   if (Array.isArray(value)) return value.some(hasForbidden);
   if (!value || typeof value !== "object") return false;
   return Object.entries(value).some(([key, nested]) => FORBIDDEN_KEYS.has(key) || hasForbidden(nested));
 }
-function failure(request, errorCode, message, previousState = null, rollbackSucceeded = true) {
-  return { success: false, changeId: String(request?.changeId || ""), elementId: String(request?.elementId || ""), operation: String(request?.operation || ""), errorCode, message, previousState, newState: previousState, rollbackSucceeded };
+function failure(request, errorCode, message, previousState = null, rollbackSucceeded = true, geometryRisk = null) {
+  return { success: false, changeId: String(request?.changeId || ""), elementId: String(request?.elementId || ""), operation: String(request?.operation || ""), errorCode, message, previousState, newState: previousState, rollbackSucceeded, geometryRisk };
 }
 function number(value, field, { positive = false, nonNegative = false } = {}) {
   const result = Number(value);
@@ -116,20 +122,13 @@ function geometryChanged(left, right, tolerance = 0.75) {
   return ["left", "top", "width", "height"].some((key) => Math.abs(Number(left[key]) - Number(right[key])) > tolerance);
 }
 
-function intersectionArea(left, right) {
-  if (!left || !right) return 0;
-  return Math.max(0, Math.min(left.left + left.width, right.left + right.width) - Math.max(left.left, right.left)) *
-    Math.max(0, Math.min(left.top + left.height, right.top + right.height) - Math.max(left.top, right.top));
-}
-
-function assertSafeGeometry(entry, operation, beforeGeometry, afterGeometry) {
+function inspectGeometryEffect(entry, operation, beforeGeometry, afterGeometry) {
   const affected = allowedGeometryChanges(entry, operation);
   if (affected.effect === "forbidden") throw Object.assign(new Error("Operation besitzt keine zulässige Wirkungsmenge."), { code: "electron_operation_not_allowed" });
   const unexpected = [];
   for (const [id, before] of beforeGeometry) {
     if (!affected.ids.has(id) && geometryChanged(before, afterGeometry.get(id))) unexpected.push(id);
   }
-  if (unexpected.length) throw Object.assign(new Error(`Unerwartete Reflowwirkung: ${unexpected.join(", ")}`), { code: "electron_unexpected_layout_effect" });
   for (const id of affected.ids) {
     if (id === entry.id) continue;
     const candidate = getM80RegistryEntry(id);
@@ -145,19 +144,121 @@ function assertSafeGeometry(entry, operation, beforeGeometry, afterGeometry) {
   const target = afterGeometry.get(entry.id);
   if (!target || !Number.isFinite(target.left) || !Number.isFinite(target.top) || target.width <= 0 || target.height <= 0)
     throw Object.assign(new Error("Zielgeometrie ist ungültig."), { code: "electron_invalid_geometry" });
-  const parent = entry.parentId ? afterGeometry.get(entry.parentId) : null;
-  if (parent && (target.left + target.width < parent.left + 4 || target.left > parent.left + parent.width - 4 ||
-      target.top + target.height < parent.top + 4 || target.top > parent.top + parent.height - 4))
-    throw Object.assign(new Error("Ziel darf den sichtbaren Parentbereich nicht verlassen."), { code: "electron_invalid_geometry" });
-  if (operation === "move" && entry.parentId) {
-    const siblings = listM80RegistryScopes().flatMap((scope) => scope.elements).filter((candidate) => candidate.parentId === entry.parentId && candidate.id !== entry.id);
-    for (const sibling of siblings) {
-      const beforeOverlap = intersectionArea(beforeGeometry.get(entry.id), beforeGeometry.get(sibling.id));
-      const afterOverlap = intersectionArea(target, afterGeometry.get(sibling.id));
-      if (afterOverlap > beforeOverlap + 4) throw Object.assign(new Error(`Ziel würde '${sibling.name}' überlagern.`), { code: "electron_invalid_geometry" });
-    }
+  return { ...affected, unexpected };
+}
+
+function allEntries() { return listM80RegistryScopes().flatMap((scope) => scope.elements); }
+function ancestor(entry, predicate) {
+  let current = entry?.parentId ? getM80RegistryEntry(entry.parentId) : null;
+  while (current) { if (predicate(current)) return current; current = current.parentId ? getM80RegistryEntry(current.parentId) : null; }
+  return null;
+}
+function entryWithBounds(entry, geometry) {
+  const bounds = entry ? geometry.get(entry.id) : null;
+  return entry && bounds ? { elementId: entry.id, displayName: entry.name, elementType: entry.type, bounds } : null;
+}
+function isAncestor(candidateId, elementId) {
+  let current = getM80RegistryEntry(elementId);
+  while (current?.parentId) { if (current.parentId === candidateId) return true; current = getM80RegistryEntry(current.parentId); }
+  return false;
+}
+function sensibleNeighbors(entry, beforeGeometry, afterGeometry, unexpected) {
+  const parent = entry.parentId ? getM80RegistryEntry(entry.parentId) : null;
+  const contextId = parent?.parentId || entry.parentId;
+  return allEntries().filter((candidate) => {
+    if (candidate.id === entry.id || isAncestor(candidate.id, entry.id) || isAncestor(entry.id, candidate.id)) return false;
+    if (!beforeGeometry.get(candidate.id) || !afterGeometry.get(candidate.id)) return false;
+    return unexpected.includes(candidate.id) || candidate.parentId === entry.parentId || candidate.parentId === contextId || candidate.id === contextId;
+  }).map((candidate) => ({
+    elementId: candidate.id,
+    displayName: candidate.name,
+    elementType: candidate.type,
+    bounds: afterGeometry.get(candidate.id),
+    geometryChanged: unexpected.includes(candidate.id),
+  }));
+}
+function geometryRiskFor(entry, request, beforeGeometry, afterGeometry, effect) {
+  const parentEntry = entry.parentId ? getM80RegistryEntry(entry.parentId) : null;
+  const groupEntry = ancestor(entry, (candidate) => ["group", "fieldGroup"].includes(candidate.type));
+  let rootEntry = entry;
+  while (rootEntry?.parentId) rootEntry = getM80RegistryEntry(rootEntry.parentId);
+  return evaluateGeometryRisk({
+    editMode: request.editMode === EDIT_MODES.FREE ? EDIT_MODES.FREE : EDIT_MODES.GUIDED,
+    operationId: String(request.changeId || ""),
+    rollbackToken: `bbm-m80:${String(request.changeId || "")}`,
+    scopeId: rootEntry?.id || "",
+    registryVersion: BBM_M80_REGISTRY_VERSION + diagnosticRegistryRevision,
+    effectScope: effect.effect,
+    errorCode: effect.unexpected.length ? "electron_unexpected_layout_effect" : null,
+    rollbackStatus: "guaranteed",
+    currentBounds: beforeGeometry.get(entry.id),
+    targetBounds: afterGeometry.get(entry.id),
+    target: entryWithBounds(entry, beforeGeometry),
+    group: entryWithBounds(groupEntry, afterGeometry),
+    parent: entryWithBounds(parentEntry, afterGeometry),
+    editableArea: entryWithBounds(rootEntry, afterGeometry),
+    affectedNeighbors: sensibleNeighbors(entry, beforeGeometry, afterGeometry, effect.unexpected),
+  });
+}
+function requestSignature(request) {
+  return JSON.stringify({ elementId: String(request.elementId || ""), operation: String(request.operation || ""), payload: request.payload || null });
+}
+function confirmedRisk(request) {
+  const confirmation = request?.riskConfirmation;
+  if (!confirmation || typeof confirmation !== "object") return null;
+  const pending = pendingGeometryRisks.get(String(confirmation.operationId || ""));
+  if (!pending || pending.signature !== requestSignature(request)) return null;
+  if (![RISK_ACTIONS.APPLY_ANYWAY, RISK_ACTIONS.CLAMP_TO_GROUP, RISK_ACTIONS.CLAMP_TO_AREA].includes(confirmation.action)) return null;
+  return { ...pending, action: confirmation.action };
+}
+function clampDesiredState(desired, risk, action) {
+  const clamped = action === RISK_ACTIONS.CLAMP_TO_GROUP ? risk.clampedToGroupBounds : risk.clampedToAreaBounds;
+  if (!clamped) throw Object.assign(new Error("Für diese Änderung steht keine Begrenzung zur Verfügung."), { code: "electron_invalid_geometry" });
+  if (!Object.hasOwn(desired, "x") || !Object.hasOwn(desired, "y")) throw Object.assign(new Error("Nur Positionsänderungen können an einer Grenze gehalten werden."), { code: "electron_invalid_geometry" });
+  return { ...desired, x: desired.x + clamped.left - risk.preview.targetBounds.left, y: desired.y + clamped.top - risk.preview.targetBounds.top };
+}
+
+function riskPreviewOverlay() {
+  let value = document.querySelector("[data-bbm-ui-editor-risk-preview]");
+  if (!value) {
+    value = document.createElement("div");
+    value.setAttribute("data-bbm-ui-editor-risk-preview", "true");
+    value.setAttribute("data-ui-inspector-id", "editor.geometry-preview");
+    value.setAttribute("data-ui-editor-kind", "overlay");
+    value.setAttribute("data-ui-editor-label", "Geometrievorschau");
+    value.setAttribute("data-ui-editor-parent", "");
+    value.setAttribute("data-ui-editor-editable", "false");
+    value.setAttribute("data-ui-editor-ops", "");
+    value.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:2147483001;display:none";
+    document.body.appendChild(value);
   }
-  return affected;
+  return value;
+}
+function previewFrame(container, bounds, style, label) {
+  if (!bounds) return;
+  const frame = document.createElement("div");
+  frame.dataset.geometryPreviewFrame = label;
+  frame.style.cssText = `position:fixed;left:${bounds.left}px;top:${bounds.top}px;width:${bounds.width}px;height:${bounds.height}px;box-sizing:border-box;${style}`;
+  frame.setAttribute("aria-label", label);
+  container.appendChild(frame);
+}
+function clearGeometryRiskPreview() {
+  const value = document.querySelector("[data-bbm-ui-editor-risk-preview]");
+  if (value) { value.replaceChildren(); value.style.display = "none"; }
+  document.removeEventListener("keydown", onRiskPreviewKey, true);
+}
+function onRiskPreviewKey(event) { if (event.key === "Escape") clearGeometryRiskPreview(); }
+function renderGeometryRiskPreview(risk) {
+  const value = riskPreviewOverlay();
+  value.replaceChildren();
+  previewFrame(value, risk.preview.currentBounds, "border:3px solid #0f172a;background:transparent", "Aktuelles Elementrechteck");
+  previewFrame(value, risk.preview.targetBounds, "border:3px dashed #c2410c;background:rgba(251,146,60,.10)", "Neues Zielrechteck");
+  previewFrame(value, risk.preview.groupBounds, "border:4px double #6d28d9;background:transparent", "Gruppengrenze");
+  previewFrame(value, risk.preview.areaBounds, "border:3px dotted #0f766e;background:transparent", "Bereichsgrenze");
+  risk.affectedNeighbors.filter((item) => item.overlapBounds).forEach((item) => previewFrame(value, item.overlapBounds,
+    "border:4px double #b91c1c;background:repeating-linear-gradient(45deg,rgba(185,28,28,.28),rgba(185,28,28,.28) 5px,transparent 5px,transparent 10px)", `Überlappung mit ${item.displayName}`));
+  value.style.display = "block";
+  document.addEventListener("keydown", onRiskPreviewKey, true);
 }
 
 function submitChange(changeRequest, scopeId) {
@@ -176,9 +277,22 @@ function submitChange(changeRequest, scopeId) {
       delete ref.element.dataset.uiEditorFailNextApply;
       throw Object.assign(new Error("Kontrollierter Diagnosefehler."), { code: "electron_change_apply_failed" });
     }
-    const desired = desiredState(previous, request.operation, request.payload);
+    const confirmation = confirmedRisk(request);
+    let desired = desiredState(previous, request.operation, request.payload);
+    if (confirmation && confirmation.action !== RISK_ACTIONS.APPLY_ANYWAY) desired = clampDesiredState(desired, confirmation.risk, confirmation.action);
     const readback = applyM80State(entry.id, desired);
-    const affected = assertSafeGeometry(entry, request.operation, beforeGeometry, snapshotM80Geometry());
+    const afterGeometry = snapshotM80Geometry();
+    const affected = inspectGeometryEffect(entry, request.operation, beforeGeometry, afterGeometry);
+    const interactive = request.source === "ui-editor-panel";
+    const risk = interactive ? geometryRiskFor(entry, request, beforeGeometry, afterGeometry, affected) : null;
+    if (risk?.hasRisks && !confirmation) {
+      const restored = applyM80State(entry.id, previous);
+      pendingGeometryRisks.set(risk.operationId, { signature: requestSignature(request), risk });
+      renderGeometryRiskPreview(risk);
+      return failure(request, "geometry_risk_confirmation_required", risk.message, restored, true, risk);
+    }
+    clearGeometryRiskPreview();
+    if (confirmation) pendingGeometryRisks.delete(confirmation.risk.operationId);
     return { success: true, changeId: request.changeId, elementId: entry.id, operation: request.operation, effectScope: affected.effect, affectedElementIds: [...affected.ids], errorCode: null, message: "Layoutänderung angewandt, geometrisch geprüft und zurückgelesen.", previousState: previous, newState: readback, rollbackSucceeded: true };
   } catch (error) {
     try {
@@ -392,6 +506,7 @@ function rootScope(id) { let entry = getM80RegistryEntry(id); while (entry?.pare
 export function handleM80EditorEvent(event = {}) {
   const action = String(event.action || "");
   if (action === "beginTargetSelection") {
+    clearGeometryRiskPreview();
     stopSelection({ clearHover: true });
     selectionMode = true;
     document.addEventListener("mousemove", onSelectionHover, true);
@@ -399,9 +514,10 @@ export function handleM80EditorEvent(event = {}) {
     document.addEventListener("keydown", onSelectionKey, true);
     return { ok: true };
   }
-  if (action === "cancelTargetSelection") { stopSelection({ clearHover: true }); return { ok: true }; }
-  if (action === "highlightElement") { highlightM80Element(event.elementId); return { ok: true }; }
-  if (action === "editorClosed") { stopSelection(); selectedId = null; clearM80VisualState(); return { ok: true }; }
+  if (action === "cancelTargetSelection") { stopSelection({ clearHover: true }); clearGeometryRiskPreview(); return { ok: true }; }
+  if (action === "highlightElement") { clearGeometryRiskPreview(); highlightM80Element(event.elementId); return { ok: true }; }
+  if (action === "clearGeometryPreview") { clearGeometryRiskPreview(); return { ok: true }; }
+  if (action === "editorClosed") { stopSelection(); selectedId = null; pendingGeometryRisks.clear(); clearGeometryRiskPreview(); clearM80VisualState(); return { ok: true }; }
   return { ok: false, errorCode: "electron_editor_message_invalid" };
 }
 
@@ -418,7 +534,11 @@ export function handleM80EditorRequest(request = {}) {
     };
   }
   if (action === "getLayoutState") return { scopeStates: layoutPayload() };
-  return { changeResult: submitChange(request.changeRequest, request.scopeId) };
+  return { changeResult: submitChange({
+    ...(request.changeRequest || {}),
+    editMode: request.editMode,
+    riskConfirmation: request.riskConfirmation,
+  }, request.scopeId) };
 }
 
 function startupRequests(scopeId, element, explicitOperations = null) {
@@ -498,6 +618,15 @@ export function restoreM80StartupLayout() {
   return startupRestorePromise;
 }
 
-export function clearM80EditorInteraction() { stopSelection(); selectedId = null; clearM80VisualState(); }
+export async function refreshM80StartupLayoutAfterRegistryMount() {
+  if (startupRestorePromise) {
+    try { await startupRestorePromise; } catch (_error) { void _error; }
+  }
+  startupRestorePromise = null;
+  startupRestoreStatus = { state: "pending", applied: false, editorProcessRequired: false };
+  return restoreM80StartupLayout();
+}
+
+export function clearM80EditorInteraction() { stopSelection(); selectedId = null; pendingGeometryRisks.clear(); clearGeometryRiskPreview(); clearM80VisualState(); }
 export function getM80InteractionStatus() { return { selectionMode, selectedId, hoverElementIds: hoverCandidates.map((candidate) => candidate.entry.id), hoverIndex, startupRestoreStatus: { ...startupRestoreStatus }, scopeStates: layoutPayload() }; }
 export { beginM80PilotRender, completeM80PilotRender, registerM80Ref, resetM80PilotWorkingStatesForDiagnostic };

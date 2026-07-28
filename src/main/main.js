@@ -37,6 +37,7 @@ const { getDatabaseDiagnostics, importLegacyIntoActive } = require("./db/databas
 const firmsRepo = require("./db/firmsRepo");
 const personsRepo = require("./db/personsRepo");
 const { buildStoragePreviewPaths } = require("./ipc/projectStoragePaths");
+const { resolveBuildIdentity } = require("./buildIdentity");
 
 let mainWindow;
 let uiEditorSessionController;
@@ -332,15 +333,7 @@ async function _openQuickAssistViaSpawn() {
 
 // ✅ für EXE: buildChannel aus gepackter package.json (extraMetadata)
 function _readPackagedBuildChannel() {
-  try {
-    const pkgPath = path.join(app.getAppPath(), "package.json");
-    const raw = fs.readFileSync(pkgPath, "utf8");
-    const data = JSON.parse(raw);
-    const ch = _normalizeChannel(data?.buildChannel);
-    return ch;
-  } catch (_e) {
-    return "STABLE";
-  }
+  return resolveBuildIdentity({ electronApp: app }).channel;
 }
 
 function createWindow() {

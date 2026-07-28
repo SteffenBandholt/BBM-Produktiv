@@ -1,6 +1,6 @@
 import RestarbeitenScreen from "../modules/restarbeiten/screens/RestarbeitenScreen.js";
-import { getM80Ref, resetM80PilotWorkingStatesForDiagnostic } from "./m80Refs.js";
-import { advanceM80DiagnosticRegistryRevision, emitM80RegistryEvent } from "./m80HostAdapter.js";
+import { getM80Ref } from "./m80Refs.js";
+import { advanceM80DiagnosticRegistryRevision, emitM80RegistryEvent, refreshM80StartupLayoutAfterRegistryMount } from "./m80HostAdapter.js";
 
 const DIAGNOSTIC_FAILURE_TARGET = "restarbeiten.edit.short.field";
 
@@ -31,7 +31,6 @@ const DIAGNOSTIC_ITEMS = Object.freeze(Array.from({ length: 60 }, (_value, index
 
 export function installBbmM80DiagnosticPilot({ router } = {}) {
   if (!router?.contentRoot) throw new Error("M80-Diagnose braucht den vorhandenen BBM-Inhaltsbereich.");
-  resetM80PilotWorkingStatesForDiagnostic();
   const screen = new RestarbeitenScreen({
     router: null,
     projectId: null,
@@ -46,6 +45,7 @@ export function installBbmM80DiagnosticPilot({ router } = {}) {
   screen.root.setAttribute("data-bbm-m80-diagnostic", "true");
   router.contentRoot.replaceChildren(screen.root);
   screen._renderShell();
+  void refreshM80StartupLayoutAfterRegistryMount();
   const onControlledFailureKey = (event) => {
     if (!(event.ctrlKey && event.shiftKey && (event.code === "F8" || event.key === "F8"))) return;
     event.preventDefault();

@@ -212,6 +212,8 @@ async function runM80ElectronUiEditorTests(run) {
     assert.match(client.response.payload.registryFingerprint, /^sha256:[a-f0-9]{64}$/);
     await controller.shutdown();
     assert.equal(child.exitCode, 0); assert.equal(controller.status().running, false);
+    await controller.shutdown();
+    assert.equal(controller.status().running, false);
   });
 
   await run("M80 Fehlerweg: fehlender Editor liefert gefilterten Installationshinweis", () => {

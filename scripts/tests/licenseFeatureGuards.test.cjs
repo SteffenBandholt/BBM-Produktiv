@@ -48,7 +48,7 @@ async function runLicenseFeatureGuardTests(run) {
     assert.equal(printIpc.includes('app.getPath("downloads")'), true);
     assert.equal(printIpc.includes('app.getPath("temp")'), true);
     assert.equal(printIpc.includes('app.getVersion ? app.getVersion() : ""'), true);
-    assert.equal(printIpc.includes('app.isPackaged ? "STABLE" : "DEV"'), true);
+    assert.equal(printIpc.includes('resolveBuildIdentity({ electronApp: app }).channel'), true);
   });
 
   await run("License-Guard: PDF-IPC nutzt modebasierte Feature-Zuordnung", () => {
