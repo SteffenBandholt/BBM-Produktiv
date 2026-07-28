@@ -7,8 +7,8 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 3,
-  "registryFingerprint": "sha256:bba726bf6237a1403a3b64fc1ec273e9f12bd0251c2e852e8fae1ab905c46d5f",
+  "registryVersion": 4,
+  "registryFingerprint": "sha256:1d467121999904085cc6e7283c9ebb1b1d91e201948f5de0b7dc0d36c41da32e",
   "registryStatus": "incomplete",
   "activeScopes": [
     "restarbeiten.header.root",
@@ -34,7 +34,7 @@
   "scopes": [
     { "scopeId": "restarbeiten.header.root", "status": "complete", "reason": null, "elementCount": 31, "missingReferenceCount": 0 },
     { "scopeId": "restarbeiten.list.root", "status": "complete", "reason": null, "elementCount": 7, "missingReferenceCount": 0 },
-    { "scopeId": "restarbeiten.edit.root", "status": "complete", "reason": null, "elementCount": 50, "missingReferenceCount": 0 },
+    { "scopeId": "restarbeiten.edit.root", "status": "complete", "reason": null, "elementCount": 53, "missingReferenceCount": 0 },
     { "scopeId": "bbm.remaining", "status": "blocked", "reason": "registration_inventory_pending", "elementCount": 0, "missingReferenceCount": 0 },
     { "scopeId": "pdf.bbm.protocol", "status": "complete", "reason": null, "elementCount": 28, "missingReferenceCount": 0 }
   ],

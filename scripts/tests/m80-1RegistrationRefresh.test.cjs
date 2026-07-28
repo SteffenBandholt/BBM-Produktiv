@@ -83,7 +83,7 @@ async function runM801RegistrationRefreshTests(run) {
       document.body.appendChild(rendered.root);
       const registration = rendered.registration;
       runtimeRegistration = structuredClone(registration);
-      assert.equal(registration.registryVersion, 3);
+      assert.equal(registration.registryVersion, 4);
       assert.equal(registration.registryStatus, "incomplete");
       assert.deepEqual(registration.activeScopes, ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
       const complete = registration.registryScopes.filter((scope) => scope.status === "complete");
@@ -97,7 +97,7 @@ async function runM801RegistrationRefreshTests(run) {
       }
 
       const edit = complete.find((scope) => scope.scopeId === "restarbeiten.edit.root");
-      assert.equal(edit.elements.length, 49, "alle 49 Editbox-Elemente bleiben erhalten");
+      assert.equal(edit.elements.length, 53, "alle 49 Altziele und vier explizite Layoutzonen/Iconziele sind vorhanden");
       const ids = new Set(edit.elements.map((entry) => entry.id));
       for (const id of [
         "restarbeiten.edit.header.current", "restarbeiten.edit.short.label", "restarbeiten.edit.short.field",
@@ -151,18 +151,18 @@ async function runM801RegistrationRefreshTests(run) {
       assert.equal(resizeHeader.newState.height, 110);
       const editWidth = rendered.request({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "edit-width", elementId: "restarbeiten.edit.root", operation: "resizeWidth", payload: { width: 760 } } }).changeResult;
       const editHeight = rendered.request({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "edit-height", elementId: "restarbeiten.edit.root", operation: "resizeHeight", payload: { height: 300 } } }).changeResult;
-      assert.equal(editWidth.newState.width, 760);
+      assert.equal(editWidth.errorCode, "electron_operation_not_allowed", "Editboxbreite bleibt im flexiblen BBM-Layout verankert");
       assert.equal(editHeight.newState.height, 300);
       const editMinimum = rendered.request({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "edit-min", elementId: "restarbeiten.edit.root", operation: "resizeHeight", payload: { height: 1 } } }).changeResult;
-      assert.equal(editMinimum.newState.height, 160, "Editbox-Mindesthöhe wird eingehalten");
+      assert.equal(editMinimum.newState.height, 190, "Editbox-Mindesthöhe wird eingehalten");
 
       const shortInput = rendered.getRef("restarbeiten.edit.short.field").element;
       const fachwert = shortInput.value;
       const defectButton = rendered.getRef("restarbeiten.edit.class.defect").element;
       const resizeDefect = rendered.request({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "resize-defect", elementId: "restarbeiten.edit.class.defect", operation: "resizeWidth", payload: { width: 44 } } }).changeResult;
       assert.equal(resizeDefect.success, true);
-      assert.equal(defectButton.style.boxSizing, "border-box", "gemessene Außenbreiten werden ohne content-box-Drift angewandt");
-      assert.equal(defectButton.style.flexShrink, "0", "explizite Editorbreiten werden nicht durch Flexbox nachträglich verkleinert");
+      assert.equal(defectButton.style.boxSizing || "", "", "HostAdapter erzwingt kein fremdes Boxmodell");
+      assert.equal(defectButton.style.flexShrink || "", "", "HostAdapter friert den bestehenden Flexvertrag nicht ein");
       assert.equal(resizeDefect.newState.width, 44);
       const hideLabel = rendered.request({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "hide-label", elementId: "restarbeiten.edit.short.label", operation: "setVisibility", payload: { visible: false } } }).changeResult;
       assert.equal(hideLabel.success, true);

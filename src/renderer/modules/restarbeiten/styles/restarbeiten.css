@@ -657,14 +657,22 @@
   padding: 9px 10px;
   box-sizing: border-box;
   min-width: 320px;
-  min-height: 160px;
+  height: 276px;
+  min-height: 190px;
   max-width: calc(100% - 88px);
   max-height: min(520px, calc(100vh - 360px));
-  overflow: auto;
+  overflow: hidden;
+  display: block;
+}
+
+.bbm-restarbeiten-editbox__editor-area {
+  height: 100%;
+  min-height: 0;
   display: grid;
   grid-template-columns: minmax(260px, 1fr) 98px 98px;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 8px 6px;
+  overflow: auto;
 }
 
 .bbm-restarbeiten-editbox__header {
@@ -692,7 +700,7 @@
 }
 
 .bbm-restarbeiten-editbox__actions--inline {
-  margin-left: 1.5cm;
+  margin-left: 0;
 }
 
 .bbm-restarbeiten-text-area {
@@ -720,13 +728,24 @@
 }
 
 .bbm-restarbeiten-text-label__row {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: 190px 30px 24px minmax(92px, auto) auto;
   align-items: center;
   gap: 5px;
-  flex-wrap: wrap;
+  min-height: 24px;
 }
 
 .bbm-restarbeiten-text-label__row > span:first-child {
+  width: 150px;
+  min-width: 74px;
+  max-width: 190px;
+  min-height: 18px;
+  max-height: 48px;
+  white-space: normal;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  overflow: visible;
+  align-self: start;
   color: var(--bbm-muted);
   font-size: var(--bbm-rest-label-font-size);
   font-weight: 400;
@@ -765,7 +784,7 @@
   display: inline-flex;
   align-items: center;
   min-width: 0;
-  margin-left: 1.5cm;
+  margin-left: 0;
 }
 
 .bbm-restarbeiten-class-field--inline .bbm-restarbeiten-class-toggle {
@@ -779,6 +798,7 @@
   height: 22px;
   padding: 0;
   font-size: var(--bbm-rest-button-font-size);
+  flex: 0 0 auto;
 }
 
 .bbm-restarbeiten-dictation-button {
@@ -793,6 +813,32 @@
   display: block;
   width: 17px;
   height: 17px;
+}
+
+.bbm-restarbeiten-dictation-icon {
+  width: 17px;
+  height: 17px;
+  min-width: 12px;
+  min-height: 12px;
+  max-width: 22px;
+  max-height: 22px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.bbm-restarbeiten-dictation-icon > svg {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+}
+
+.bbm-restarbeiten-text-field[data-ui-editor-id="restarbeiten.editbox.text.long"] .bbm-restarbeiten-text-label__row {
+  grid-template-columns: 220px 30px 24px;
+}
+
+.bbm-restarbeiten-text-field[data-ui-editor-id="restarbeiten.editbox.text.long"] .bbm-restarbeiten-text-label__row > span:first-child {
+  max-width: 220px;
 }
 
 .bbm-restarbeiten-dictation-button[data-bbm-dictation-state="ready"] [data-bbm-dictation-icon="recording"],

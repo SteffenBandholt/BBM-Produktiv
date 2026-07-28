@@ -280,6 +280,8 @@ contextBridge.exposeInMainWorld("uiEditor", Object.freeze({
   close: () => ipcRenderer.invoke("uiEditor:close"),
   getStatus: () => ipcRenderer.invoke("uiEditor:getStatus"),
   preparePdfContext: (context) => ipcRenderer.invoke("uiEditor:preparePdfContext", _uiEditorPayload(context, "PDF-Dokumentkontext")),
+  loadStartupLayout: (registration) => ipcRenderer.invoke("uiEditor:loadStartupLayout", _uiEditorPayload(registration, "UI-Editor-Startregistrierung")),
+  completeStartupLayout: (result) => ipcRenderer.invoke("uiEditor:completeStartupLayout", _uiEditorPayload(result, "UI-Editor-Startlayout-Ergebnis")),
   respond: (message) => ipcRenderer.invoke("uiEditor:respond", _uiEditorPayload(message, "UI-Editor-Antwort")),
   sendTargetEvent: (message) => {
     const payload = _uiEditorPayload(message, "UI-Editor-Ereignis");

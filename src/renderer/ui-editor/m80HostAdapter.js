@@ -13,16 +13,28 @@ import {
   getM80IdFromTarget,
   getM80ReferenceStatus,
   getM80Ref,
+  listM80Refs,
   registerM80Ref,
   resetM80PilotWorkingStatesForDiagnostic,
   snapshotM80State,
+  snapshotM80Geometry,
 } from "./m80Refs.js";
+import {
+  createDirectSelectionHierarchy,
+  cycleDirectSelectionIndex,
+  describeDirectSelection,
+  directSelectionFramePresentation,
+} from "../../../node_modules/ui-editor-kit/dist/direct-selection-contract.mjs";
 
 const ALLOWED_ACTIONS = new Set(["getRegistry", "getLayoutState", "submitChange"]);
 const REGISTRY_EVENT_ACTIONS = new Set(["registryChanged", "registryStatusChanged", "scopeAdded", "scopeChanged", "scopeRemoved"]);
 const FORBIDDEN_KEYS = new Set(["fachDaten", "businessData", "domainData", "recordId", "entity", "database", "sql", "status", "responsible", "dueDate", "photos", "rows", "values"]);
 let selectionMode = false;
 let selectedId = null;
+let hoverCandidates = [];
+let hoverIndex = 0;
+let startupRestorePromise = null;
+let startupRestoreStatus = { state: "pending", applied: false, editorProcessRequired: false };
 let diagnosticRegistryRevision = 0;
 
 function hasForbidden(value) {
@@ -71,6 +83,83 @@ function desiredState(previous, operation, payload) {
   return next;
 }
 
+function descendantsOf(elementId) {
+  const ids = new Set([elementId]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const scope of listM80RegistryScopes()) {
+      for (const entry of scope.elements) {
+        if (entry.parentId && ids.has(entry.parentId) && !ids.has(entry.id)) { ids.add(entry.id); changed = true; }
+      }
+    }
+  }
+  return ids;
+}
+
+function allowedGeometryChanges(entry, operation) {
+  const effect = entry.operationEffects?.[operation] || "forbidden";
+  if (effect === "forbidden") return { effect, ids: new Set() };
+  const declared = new Set(entry.operationAffectedIds?.[operation] || []);
+  if (effect === "elementOnly") return { effect, ids: new Set([entry.id, ...declared]) };
+  if (effect === "groupWithChildren" || effect === "layoutZone") return { effect, ids: new Set([...descendantsOf(entry.id), ...declared]) };
+  if (effect === "parentReflowRequired") {
+    const ids = new Set([entry.id]);
+    for (const declaredId of declared) for (const id of descendantsOf(declaredId)) ids.add(id);
+    return { effect, ids };
+  }
+  return { effect: "forbidden", ids: new Set() };
+}
+
+function geometryChanged(left, right, tolerance = 0.75) {
+  if (!left || !right) return false;
+  return ["left", "top", "width", "height"].some((key) => Math.abs(Number(left[key]) - Number(right[key])) > tolerance);
+}
+
+function intersectionArea(left, right) {
+  if (!left || !right) return 0;
+  return Math.max(0, Math.min(left.left + left.width, right.left + right.width) - Math.max(left.left, right.left)) *
+    Math.max(0, Math.min(left.top + left.height, right.top + right.height) - Math.max(left.top, right.top));
+}
+
+function assertSafeGeometry(entry, operation, beforeGeometry, afterGeometry) {
+  const affected = allowedGeometryChanges(entry, operation);
+  if (affected.effect === "forbidden") throw Object.assign(new Error("Operation besitzt keine zulässige Wirkungsmenge."), { code: "electron_operation_not_allowed" });
+  const unexpected = [];
+  for (const [id, before] of beforeGeometry) {
+    if (!affected.ids.has(id) && geometryChanged(before, afterGeometry.get(id))) unexpected.push(id);
+  }
+  if (unexpected.length) throw Object.assign(new Error(`Unerwartete Reflowwirkung: ${unexpected.join(", ")}`), { code: "electron_unexpected_layout_effect" });
+  for (const id of affected.ids) {
+    if (id === entry.id) continue;
+    const candidate = getM80RegistryEntry(id);
+    const before = beforeGeometry.get(id); const after = afterGeometry.get(id);
+    if (!candidate || !before || !after) continue;
+    const sizeChanged = Math.abs(before.width - after.width) > 0.75 || Math.abs(before.height - after.height) > 0.75;
+    const widthChanged = Math.abs(before.width - after.width) > 0.75;
+    if (operation === "resizeHeight" && widthChanged)
+      throw Object.assign(new Error(`Breite von '${candidate.name}' darf durch die Höhenänderung nicht verändert werden.`), { code: "electron_unexpected_layout_effect" });
+    if (sizeChanged && (operation === "move" || ["button", "componentPart", "statusIndicator"].includes(candidate.type)))
+      throw Object.assign(new Error(`Größe von '${candidate.name}' darf durch diese Operation nicht verändert werden.`), { code: "electron_unexpected_layout_effect" });
+  }
+  const target = afterGeometry.get(entry.id);
+  if (!target || !Number.isFinite(target.left) || !Number.isFinite(target.top) || target.width <= 0 || target.height <= 0)
+    throw Object.assign(new Error("Zielgeometrie ist ungültig."), { code: "electron_invalid_geometry" });
+  const parent = entry.parentId ? afterGeometry.get(entry.parentId) : null;
+  if (parent && (target.left + target.width < parent.left + 4 || target.left > parent.left + parent.width - 4 ||
+      target.top + target.height < parent.top + 4 || target.top > parent.top + parent.height - 4))
+    throw Object.assign(new Error("Ziel darf den sichtbaren Parentbereich nicht verlassen."), { code: "electron_invalid_geometry" });
+  if (operation === "move" && entry.parentId) {
+    const siblings = listM80RegistryScopes().flatMap((scope) => scope.elements).filter((candidate) => candidate.parentId === entry.parentId && candidate.id !== entry.id);
+    for (const sibling of siblings) {
+      const beforeOverlap = intersectionArea(beforeGeometry.get(entry.id), beforeGeometry.get(sibling.id));
+      const afterOverlap = intersectionArea(target, afterGeometry.get(sibling.id));
+      if (afterOverlap > beforeOverlap + 4) throw Object.assign(new Error(`Ziel würde '${sibling.name}' überlagern.`), { code: "electron_invalid_geometry" });
+    }
+  }
+  return affected;
+}
+
 function submitChange(changeRequest, scopeId) {
   const request = changeRequest && typeof changeRequest === "object" ? changeRequest : {};
   const entry = getM80RegistryEntry(request.elementId);
@@ -81,6 +170,7 @@ function submitChange(changeRequest, scopeId) {
   const previous = snapshotM80State(entry.id);
   if (!previous) return failure(request, "electron_element_not_found", "Explizite Elementreferenz fehlt.");
   try {
+    const beforeGeometry = snapshotM80Geometry();
     const ref = getM80Ref(entry.id);
     if (ref?.element?.dataset?.uiEditorFailNextApply === "true") {
       delete ref.element.dataset.uiEditorFailNextApply;
@@ -88,11 +178,12 @@ function submitChange(changeRequest, scopeId) {
     }
     const desired = desiredState(previous, request.operation, request.payload);
     const readback = applyM80State(entry.id, desired);
-    return { success: true, changeId: request.changeId, elementId: entry.id, operation: request.operation, errorCode: null, message: "Layoutänderung angewandt und zurückgelesen.", previousState: previous, newState: readback, rollbackSucceeded: true };
+    const affected = assertSafeGeometry(entry, request.operation, beforeGeometry, snapshotM80Geometry());
+    return { success: true, changeId: request.changeId, elementId: entry.id, operation: request.operation, effectScope: affected.effect, affectedElementIds: [...affected.ids], errorCode: null, message: "Layoutänderung angewandt, geometrisch geprüft und zurückgelesen.", previousState: previous, newState: readback, rollbackSucceeded: true };
   } catch (error) {
     try {
       const restored = applyM80State(entry.id, previous);
-      return failure(request, error?.code || "electron_change_apply_failed", "Layoutänderung wurde sicher abgewiesen und zurückgerollt.", restored, true);
+      return failure(request, error?.code || "electron_change_apply_failed", `Layoutänderung wurde sicher abgewiesen und zurückgerollt: ${error?.message || "Unbekannte Geometrieverletzung."}`, restored, true);
     } catch (_rollbackError) {
       return failure(request, "electron_change_rollback_failed", "Layoutänderung und Rollback sind fehlgeschlagen.", previous, false);
     }
@@ -176,39 +267,139 @@ function overlay() {
   if (!value) {
     value = document.createElement("div");
     value.setAttribute("data-bbm-ui-editor-overlay", "true");
-    value.style.cssText = "position:fixed;pointer-events:none;z-index:2147483000;border:3px solid #2563eb;background:rgba(37,99,235,.10);box-shadow:0 0 0 2px rgba(255,255,255,.9);display:none";
+    value.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:2147483000;display:none";
     document.body.appendChild(value);
   }
   return value;
+}
+
+function directChildCount(id) {
+  return listM80RegistryScopes().flatMap((scope) => scope.elements).filter((entry) => entry.parentId === id).length;
+}
+
+function selectionCandidates(id) {
+  return createDirectSelectionHierarchy(listM80RegistryScopes().flatMap((scope) => scope.elements), id)
+    .filter((candidate) => getM80Ref(candidate.entry.id));
+}
+
+function frameStyle(level) {
+  const value = directSelectionFramePresentation(level);
+  return {
+    border: `${value.lineWidth}px ${value.lineStyle} ${level === "Gruppe" ? "#7c3aed" : level === "Bereich" ? "#9a3412" : "#1d4ed8"}`,
+    background: level === "Gruppe" ? "rgba(124,58,237,.07)" : level === "Bereich" ? "rgba(154,52,18,.05)" : "rgba(37,99,235,.09)",
+    inset: value.inset,
+  };
+}
+
+function renderSelectionFrames(candidates, activeIndex = 0, persistent = false) {
+  const value = overlay();
+  if (typeof value.replaceChildren === "function") value.replaceChildren();
+  else value.children = [];
+  if (!candidates.length) { value.style.display = "none"; return; }
+  candidates.forEach((candidate, index) => {
+    const rect = getM80Ref(candidate.entry.id).element.getBoundingClientRect();
+    const style = frameStyle(candidate.level);
+    const frame = document.createElement("div");
+    frame.dataset.selectionLevel = candidate.level;
+    frame.dataset.selectionActive = String(index === activeIndex);
+    frame.style.cssText = `position:fixed;left:${rect.left - style.inset}px;top:${rect.top - style.inset}px;width:${rect.width + style.inset * 2}px;height:${rect.height + style.inset * 2}px;border:${style.border};background:${style.background};box-sizing:border-box;`;
+    const badge = document.createElement("span");
+    badge.textContent = describeDirectSelection(candidate, directChildCount(candidate.entry.id));
+    badge.style.cssText = `position:absolute;left:-2px;top:${index === activeIndex ? "-29px" : "2px"};max-width:420px;padding:3px 7px;border:2px ${candidate.level === "Gruppe" ? "dashed" : candidate.level === "Bereich" ? "double" : "solid"} #111827;border-radius:4px;background:${index === activeIndex ? "#111827" : "#fff"};color:${index === activeIndex ? "#fff" : "#111827"};font:600 12px/1.25 sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;`;
+    frame.appendChild(badge);
+    value.appendChild(frame);
+  });
+  value.dataset.persistent = String(persistent);
+  value.style.display = "block";
 }
 
 export function highlightM80Element(elementId) {
   const ref = getM80Ref(elementId);
   if (!ref) throw Object.assign(new Error("Element kann nicht markiert werden."), { code: "electron_highlight_failed" });
   selectedId = elementId;
-  const rect = ref.element.getBoundingClientRect();
-  const value = overlay();
-  value.style.left = `${rect.left}px`; value.style.top = `${rect.top}px`; value.style.width = `${rect.width}px`; value.style.height = `${rect.height}px`; value.style.display = "block";
+  renderSelectionFrames([{ entry: getM80RegistryEntry(elementId), level: "Element" }], 0, true);
   return true;
 }
 
-function stopSelection() { selectionMode = false; document.removeEventListener("click", onSelectionClick, true); }
-async function onSelectionClick(event) {
+function stopSelection({ clearHover = false } = {}) {
+  selectionMode = false;
+  hoverCandidates = [];
+  hoverIndex = 0;
+  document.removeEventListener("mousemove", onSelectionHover, true);
+  document.removeEventListener("click", onSelectionClick, true);
+  document.removeEventListener("keydown", onSelectionKey, true);
+  if (clearHover) clearM80VisualState();
+}
+
+function onSelectionHover(event) {
   if (!selectionMode) return;
   const id = getM80IdFromTarget(event.target);
-  if (!id) return;
-  event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();
+  if (!id) { hoverCandidates = []; renderSelectionFrames([]); return; }
+  const candidates = selectionCandidates(id);
+  const same = candidates.map((candidate) => candidate.entry.id).join("|") === hoverCandidates.map((candidate) => candidate.entry.id).join("|");
+  hoverCandidates = candidates;
+  if (!same) hoverIndex = 0;
+  renderSelectionFrames(hoverCandidates, hoverIndex);
+}
+
+async function commitHoverSelection() {
+  const candidate = hoverCandidates[hoverIndex];
+  if (!candidate) return false;
+  const ref = getM80Ref(candidate.entry.id);
+  const rect = ref.element.getBoundingClientRect();
   stopSelection();
-  selectedId = id;
-  highlightM80Element(id);
-  await window.uiEditor?.sendTargetEvent?.({ action: "targetSelectionChanged", scopeId: rootScope(id), elementId: id });
+  selectedId = candidate.entry.id;
+  renderSelectionFrames([candidate], 0, true);
+  await window.uiEditor?.sendTargetEvent?.({
+    action: "targetSelectionChanged",
+    scopeId: rootScope(candidate.entry.id),
+    elementId: candidate.entry.id,
+    displayName: candidate.entry.name,
+    elementType: candidate.entry.type,
+    selectionKind: candidate.entry.selectionKind,
+    selectionLevel: candidate.level,
+    parentId: candidate.entry.parentId || "",
+    childCount: directChildCount(candidate.entry.id),
+    boundingRect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+  });
+  return true;
+}
+
+async function onSelectionClick(event) {
+  if (!selectionMode || !hoverCandidates.length) return;
+  event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();
+  await commitHoverSelection();
+}
+
+function onSelectionKey(event) {
+  if (!selectionMode) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    stopSelection({ clearHover: true });
+    void window.uiEditor?.sendTargetEvent?.({ action: "targetSelectionChanged", cancelled: true });
+    return;
+  }
+  if (event.key === "Tab" && hoverCandidates.length) {
+    event.preventDefault();
+    hoverIndex = cycleDirectSelectionIndex(hoverIndex, hoverCandidates.length, event.shiftKey);
+    renderSelectionFrames(hoverCandidates, hoverIndex);
+    return;
+  }
+  if (event.key === "Enter" && hoverCandidates.length) { event.preventDefault(); void commitHoverSelection(); }
 }
 function rootScope(id) { let entry = getM80RegistryEntry(id); while (entry?.parentId) entry = getM80RegistryEntry(entry.parentId); return entry?.id || ""; }
 
 export function handleM80EditorEvent(event = {}) {
   const action = String(event.action || "");
-  if (action === "beginTargetSelection") { stopSelection(); selectionMode = true; document.addEventListener("click", onSelectionClick, true); return { ok: true }; }
-  if (action === "cancelTargetSelection") { stopSelection(); return { ok: true }; }
+  if (action === "beginTargetSelection") {
+    stopSelection({ clearHover: true });
+    selectionMode = true;
+    document.addEventListener("mousemove", onSelectionHover, true);
+    document.addEventListener("click", onSelectionClick, true);
+    document.addEventListener("keydown", onSelectionKey, true);
+    return { ok: true };
+  }
+  if (action === "cancelTargetSelection") { stopSelection({ clearHover: true }); return { ok: true }; }
   if (action === "highlightElement") { highlightM80Element(event.elementId); return { ok: true }; }
   if (action === "editorClosed") { stopSelection(); selectedId = null; clearM80VisualState(); return { ok: true }; }
   return { ok: false, errorCode: "electron_editor_message_invalid" };
@@ -230,6 +421,83 @@ export function handleM80EditorRequest(request = {}) {
   return { changeResult: submitChange(request.changeRequest, request.scopeId) };
 }
 
+function startupRequests(scopeId, element, explicitOperations = null) {
+  const entry = getM80RegistryEntry(element.elementId);
+  if (!entry) throw Object.assign(new Error("Startprofil enthält ein unbekanntes Element."), { code: "electron_element_not_found" });
+  const current = snapshotM80State(entry.id);
+  if (!current) throw Object.assign(new Error("Startprofilziel besitzt keine auflösbare Baseline."), { code: "electron_element_not_found" });
+  const requests = [];
+  const explicit = explicitOperations === null || explicitOperations === undefined
+    ? null
+    : new Set(explicitOperations[element.elementId] || []);
+  const present = (value) => value !== null && value !== undefined;
+  const changed = (value, baseline) => present(value) && Math.abs(Number(value) - Number(baseline)) > 0.01;
+  const push = (operation, payload) => {
+    if (entry.allowedOps.includes(operation) && (explicit === null || explicit.has(operation))) requests.push({ changeId: `startup-${requests.length + 1}-${entry.id}`, elementId: entry.id, operation, payload, source: "target-app-start" });
+  };
+  const move = {};
+  if (changed(element.x, current.x)) move.x = element.x;
+  if (changed(element.y, current.y)) move.y = element.y;
+  if (Object.keys(move).length) push("move", move);
+  if (changed(element.width, current.width)) push("resizeWidth", { width: element.width });
+  if (changed(element.height, current.height)) push("resizeHeight", { height: element.height });
+  const text = {};
+  if (changed(element.textOffsetX, current.textOffsetX)) text.offsetX = element.textOffsetX;
+  if (changed(element.textOffsetY, current.textOffsetY)) text.offsetY = element.textOffsetY;
+  if (Object.keys(text).length) push("textMove", { text });
+  if (changed(element.fontSize, current.fontSize)) push("textResize", { text: { fontSize: element.fontSize } });
+  if (present(element.visible) && Boolean(element.visible) !== current.visible) push("setVisibility", { visible: element.visible });
+  return requests.map((request) => ({ scopeId, request }));
+}
+
+export function restoreM80StartupLayout() {
+  if (startupRestorePromise) return startupRestorePromise;
+  const restore = (async () => {
+    const api = window.uiEditor;
+    if (typeof api?.loadStartupLayout !== "function") {
+      startupRestoreStatus = { state: "baseline", applied: false, code: "startup_layout_bridge_missing", editorProcessRequired: false };
+      return startupRestoreStatus;
+    }
+    const registration = createM80RegistrationDescriptor();
+    if (registration.activeScopes.length !== BBM_M80_ACTIVE_SCOPES.length) {
+      startupRestoreStatus = { state: "waitingForRegistry", applied: false, code: "registry_reference_missing", editorProcessRequired: false };
+      return startupRestoreStatus;
+    }
+    const loaded = await api.loadStartupLayout(registration);
+    if (!loaded?.ok || !loaded?.found) {
+      startupRestoreStatus = { state: loaded?.state || "baseline", applied: false, code: loaded?.code || "startup_layout_failed", recoveryMarkerPath: loaded?.recoveryMarkerPath || null, editorProcessRequired: false };
+      return startupRestoreStatus;
+    }
+    const original = new Map(listM80Refs().map((ref) => [ref.id, snapshotM80State(ref.id)]));
+    try {
+      for (const scope of loaded.scopes) {
+        for (const element of scope.elements) {
+          for (const item of startupRequests(scope.scopeId, element, scope.explicitOperations)) {
+            const result = submitChange(item.request, item.scopeId);
+            if (!result.success) throw Object.assign(new Error(`${item.request.elementId}/${item.request.operation}: ${result.message}`), { code: result.errorCode || "startup_layout_apply_failed" });
+          }
+        }
+      }
+      const completion = await api.completeStartupLayout({ ok: true, profileSha256: loaded.profileSha256 });
+      if (!completion?.ok) throw Object.assign(new Error("Startlayout konnte nicht bestätigt werden."), { code: completion?.code || "startup_layout_apply_failed" });
+      startupRestoreStatus = { state: "compatible", applied: true, code: "startup_layout_applied", profileId: loaded.profileId, savedAt: loaded.savedAt, profileSha256: loaded.profileSha256, editorProcessRequired: false };
+      return startupRestoreStatus;
+    } catch (error) {
+      let rollbackSucceeded = true;
+      for (const [id, state] of original) {
+        try { applyM80State(id, state); } catch { rollbackSucceeded = false; }
+      }
+      await api.completeStartupLayout({ ok: false, profileSha256: loaded.profileSha256, code: error?.code || "startup_layout_apply_failed", message: error?.message || "Startlayout konnte nicht angewandt werden." });
+      startupRestoreStatus = { state: "baseline", applied: false, code: error?.code || "startup_layout_apply_failed", rollbackSucceeded, editorProcessRequired: false };
+      return startupRestoreStatus;
+    }
+  })();
+  startupRestorePromise = restore.finally(() => {
+    if (startupRestoreStatus.state === "waitingForRegistry") startupRestorePromise = null;
+  });
+  return startupRestorePromise;
+}
+
 export function clearM80EditorInteraction() { stopSelection(); selectedId = null; clearM80VisualState(); }
-export function getM80InteractionStatus() { return { selectionMode, selectedId, scopeStates: layoutPayload() }; }
+export function getM80InteractionStatus() { return { selectionMode, selectedId, hoverElementIds: hoverCandidates.map((candidate) => candidate.entry.id), hoverIndex, startupRestoreStatus: { ...startupRestoreStatus }, scopeStates: layoutPayload() }; }
 export { beginM80PilotRender, completeM80PilotRender, registerM80Ref, resetM80PilotWorkingStatesForDiagnostic };

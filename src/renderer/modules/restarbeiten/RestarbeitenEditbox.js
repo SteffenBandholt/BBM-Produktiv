@@ -108,7 +108,10 @@ function createDictationButton(uiId) {
   dictation.setAttribute("data-bbm-dictation-state", "ready");
   const readyIcon = createDictationIcon("ready");
   const recordingIcon = createDictationIcon("recording");
-  dictation.append(readyIcon, recordingIcon);
+  const icon = createEl("span", { className: "bbm-restarbeiten-dictation-icon" });
+  icon.append(readyIcon, recordingIcon);
+  dictation.append(icon);
+  dictation._uiEditorIcon = icon;
   return dictation;
 }
 
@@ -184,10 +187,12 @@ function createTextField({
   labelRow.append(labelElement, remaining, dictation, ...labelControls);
   wrap.append(labelRow, input);
   registerM80Ref(editorGroupId, wrap);
+  registerM80Ref(`${editorGroupId}.headerZone`, labelRow);
   registerM80Ref(editorLabelId, labelElement);
   registerM80Ref(editorFieldId, input);
   registerM80Ref(`${editorGroupId}.remaining`, remaining);
   registerM80Ref(`${editorGroupId}.dictation`, dictation);
+  registerM80Ref(`${editorGroupId}.dictation.icon`, dictation._uiEditorIcon);
   return wrap;
 }
 

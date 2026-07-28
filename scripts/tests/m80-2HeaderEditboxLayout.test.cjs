@@ -15,7 +15,7 @@ async function runM802HeaderEditboxLayoutTests(run) {
   const elements = complete.flatMap((scope) => scope.elements);
 
   await run("M80.2 Registry: Header, Liste und Editbox sind direkt aktiv; Split ist gesperrt", () => {
-    assert.equal(registryModule.BBM_M80_REGISTRY_VERSION, 3);
+    assert.equal(registryModule.BBM_M80_REGISTRY_VERSION, 4);
     assert.deepEqual(registryModule.BBM_M80_ACTIVE_SCOPES, [
       "restarbeiten.header.root",
       "restarbeiten.list.root",
@@ -31,23 +31,24 @@ async function runM802HeaderEditboxLayoutTests(run) {
     const header = complete.find((scope) => scope.scopeId === "restarbeiten.header.root");
     const edit = complete.find((scope) => scope.scopeId === "restarbeiten.edit.root");
     assert.equal(header.elements.length, 31);
-    assert.equal(edit.elements.length, 49);
+    assert.equal(edit.elements.length, 53);
     assert.equal(header.elements.find((entry) => entry.id === "restarbeiten.filterbar").type, "area");
-    const nativeTypes = new Set(["root", "area", "group", "fieldGroup", "label", "field", "button", "table", "tableColumn", "statusIndicator"]);
+    const nativeTypes = new Set(["root", "area", "group", "fieldGroup", "label", "field", "button", "table", "tableColumn", "statusIndicator", "componentPart"]);
     const nativeLockedOps = new Set(["executeTargetAction", "modifyDomainData", "createRecord", "deleteRecord"]);
     for (const entry of elements) {
       assert.ok(nativeTypes.has(entry.type), `${entry.id}: nativer Elementtyp`);
       assert.equal(entry.lockedOps.every((operation) => nativeLockedOps.has(operation)), true, `${entry.id}: native lockedOps`);
     }
     for (const root of [header.elements[0], edit.elements[0]]) {
-      assert.ok(root.allowedOps.includes("resizeWidth"));
       assert.ok(root.allowedOps.includes("resizeHeight"));
       assert.ok(root.allowedOps.includes("setVisibility"));
       assert.equal(root.allowedOps.includes("move"), false);
       assert.equal(root.lockedOps.includes("move"), false);
     }
+    assert.equal(header.elements[0].allowedOps.includes("resizeWidth"), false);
+    assert.equal(edit.elements[0].allowedOps.includes("resizeWidth"), false);
     assert.equal(edit.elements[0].baseline.minWidth, 320);
-    assert.equal(edit.elements[0].baseline.minHeight, 160);
+    assert.equal(edit.elements[0].baseline.minHeight, 190);
     assert.equal(edit.elements[0].baseline.maxHeight, 520);
     for (const id of [
       "restarbeiten.edit.short.field",
