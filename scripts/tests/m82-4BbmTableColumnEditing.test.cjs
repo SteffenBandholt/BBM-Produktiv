@@ -110,7 +110,7 @@ async function runM824BbmTableColumnEditingTests(run) {
   await run("M82.4 BBM 08: keine neue Tabellenansicht wird eingefuehrt", () => assert.match(read("src/renderer/modules/restarbeiten/RestarbeitenMainBody.js"), /buildRestarbeitenList\(options\)/));
   await run("M82.4 BBM 09: Kopf und Datenzeilen verwenden dieselben drei CSS-Variablen", () => { const css = read("src/renderer/modules/restarbeiten/styles/restarbeiten.css"); assert.equal((css.match(/grid-template-columns: var\(--bbm-restarbeiten-number-column\) var\(--bbm-restarbeiten-subject-column\) var\(--bbm-restarbeiten-meta-column\)/g) || []).length, 2); });
   await run("M82.4 BBM 10: sichtbarer Inhaltsbereich begrenzt die Listenbreite", () => assert.match(read("src/renderer/modules/restarbeiten/styles/restarbeiten.css"), /\.bbm-restarbeiten-table-viewport[\s\S]*max-width:\s*100%[\s\S]*overflow:\s*hidden/));
-  await run("M82.4 BBM 10a: JavaScript- und WPF-Fingerprint stimmen fuer alle Tabellenrollen ueberein", () => assert.equal(createUiScopeFingerprint(scope), "sha256:dcdef2f965e7e3c6d71695e6e028874ac11432e8e47aac01a6963ed7e3e36d55"));
+  await run("M82.4 BBM 10a: JavaScript- und WPF-Fingerprint stimmen fuer alle Tabellenrollen ueberein", () => assert.equal(createUiScopeFingerprint(scope), "sha256:caa59d5066b584e6b7a5354156ed269341db52184d1f3f85a645019f92fd8f15"));
 
   const runtime = await createRuntime(refs, host);
   try {

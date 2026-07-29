@@ -1,4 +1,4 @@
-export const BBM_M80_REGISTRY_VERSION = 6;
+export const BBM_M80_REGISTRY_VERSION = 7;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 const GROUP_LAYOUT = Object.freeze(["move", "setVisibility"]);
@@ -158,7 +158,7 @@ const listElements = [
   element({ id: "restarbeiten.list.table.body", name: "Datenbereich der Restarbeiten-Liste", type: "tableBody", role: "tableBody", parentId: "restarbeiten.list.table", order: 50, allowedOps: [], componentKind: "tableBody" }),
   element({ id: "restarbeiten.list.table.row", name: "Restarbeiten-Zeile", type: "tableRow", role: "tableRow", parentId: "restarbeiten.list.table.body", order: 51, allowedOps: [], componentKind: "rowTemplate", rowLayout: { heightMode: "bounded", minimumHeight: 54, maximumHeight: 180 } }),
   ...listTableColumns.flatMap((column, index) => [
-    element({ id: column.headerElementId, name: `${column.displayName} · Überschrift`, type: "tableHeaderCell", role: "tableHeaderCell", parentId: column.columnId, order: 60 + index * 2, allowedOps: [], componentKind: "tableHeaderCell", tableBinding: tableBinding(column.columnId, "header") }),
+    element({ id: column.headerElementId, name: `${column.displayName} · Überschrift`, type: "tableHeaderCell", role: "tableHeaderCell", parentId: column.columnId, order: 60 + index * 2, allowedOps: ["textResize"], componentKind: "tableHeaderCell", tableBinding: tableBinding(column.columnId, "header"), baseline: { fontSize: 12, minFontSize: 8, maxFontSize: 32 } }),
     element({ id: column.dataCellTemplateId, name: `${column.displayName} · Datenbereich`, type: "tableDataCell", role: "tableDataCell", parentId: column.columnId, order: 61 + index * 2, allowedOps: [], componentKind: "dataCellTemplate", tableBinding: tableBinding(column.columnId, "data") }),
   ]),
 ];

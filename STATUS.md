@@ -1,5 +1,15 @@
 # STATUS.md — BBM-Produktiv
 
+### M82.5 – Radikal vereinfachter Einfachmodus
+
+- Status: `[A] abgenommen`; Implementierung, vollständige Pflichtläufe und sichtbare paketierte UI-/PDF-Abnahme sind abgeschlossen.
+- Die bestehende Restarbeiten-Inhaltstabelle behält ihre drei M82.4-Hauptspalten und alle einzeln registrierten Unterelemente.
+- Direkte Spaltenbreite, `-10/-1/+1/+10`, Umbruch, Ellipsis, Original und Viewport-Fit verwenden dieselbe Spaltenbreitenquelle für Header und Daten.
+- Die drei Spaltenüberschriften sind capability-gesteuert in der Schriftgröße bearbeitbar; Breite und Fachwerte bleiben davon unberührt.
+- Save, Session-Undo, Neustart-Restore, Discard und Reset verwenden den vorhandenen Profil-/HostAdapterweg.
+- Sichtbar belegt sind Direktauswahl, Text-/Element-/Gruppenänderung, Save und Neustart-Restore, zwei exakte Undo-Schritte, Tabellen-Fit, bedienbare Managerbreiten von 760/1180/1550 Pixel sowie eine echte zweiseitige BBM-PDF mit 28 Registryelementen.
+- Detaildokument: `docs/M82_5_BBM_EINFACHMODUS.md`.
+
 ### M82.2 – Verständliche Geometriehinweise in BBM
 
 - Status: `[A] abgenommen`; die vollständige sichtbare UI-/PDF-Abnahme und der kontrollierte Development-Lizenznachweis sind abgeschlossen.
