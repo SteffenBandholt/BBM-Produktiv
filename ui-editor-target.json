@@ -7,8 +7,8 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 6,
-  "registryFingerprint": "sha256:b130497bc6213660f8b81a1d6dbf1d3c2ea741efa80cf394a4ff134c6b060e08",
+  "registryVersion": 7,
+  "registryFingerprint": "sha256:755b22065dc4cc23ad8274521e5f1e59be5750014e805e2bd9593554827d0c37",
   "registryStatus": "incomplete",
   "activeScopes": [
     "restarbeiten.header.root",
