@@ -47,6 +47,10 @@ export function buildRestarbeitenList({
     className: "bbm-restarbeiten-records",
     uiId: "restarbeiten.main.records",
   });
+  const rows = [];
+  const columnCells = [[], [], []];
+  records._m80Rows = rows;
+  records._m80ColumnCells = columnCells;
 
   if (!items.length) {
     records.appendChild(
@@ -111,6 +115,10 @@ export function buildRestarbeitenList({
     }
 
     row.append(numberColumn, contentColumn, metaColumn);
+    rows.push(row);
+    columnCells[0].push(numberColumn);
+    columnCells[1].push(contentColumn);
+    columnCells[2].push(metaColumn);
     records.appendChild(row);
   }
 

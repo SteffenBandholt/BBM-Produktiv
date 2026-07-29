@@ -83,7 +83,7 @@ async function runM801RegistrationRefreshTests(run) {
       document.body.appendChild(rendered.root);
       const registration = rendered.registration;
       runtimeRegistration = structuredClone(registration);
-      assert.equal(registration.registryVersion, 5);
+      assert.equal(registration.registryVersion, 6);
       assert.equal(registration.registryStatus, "incomplete");
       assert.deepEqual(registration.activeScopes, ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
       const complete = registration.registryScopes.filter((scope) => scope.status === "complete");
@@ -118,7 +118,7 @@ async function runM801RegistrationRefreshTests(run) {
       assert.deepEqual(columns.map((entry) => entry.name), [
         "Nr. / Datum / Klasse / Fotos",
         "Gegenstand – Verortung / Kurztext / Langtext",
-        "Status-Metaspalte – Fertig bis / Ampel / Status / Verantwortlich",
+        "Fertig bis / Ampel / Status / Verantwortlich",
       ]);
 
       const fingerprint = createRegistryFingerprint(registration.registryScopes);

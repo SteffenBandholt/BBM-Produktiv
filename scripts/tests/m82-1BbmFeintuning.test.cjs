@@ -24,8 +24,8 @@ async function runM821BbmFeintuningTests(run) {
   const editbox = read("src/renderer/modules/restarbeiten/RestarbeitenEditbox.js");
   const css = read("src/renderer/modules/restarbeiten/styles/restarbeiten.css");
 
-  await run("M82.1 BBM 01: Registryversion 5 ist aktiv", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 5));
-  await run("M82.1 BBM 02: Manifestversion folgt der Registry", () => assert.equal(manifest.registryVersion, 5));
+  await run("M82.1 BBM 01: Registryversion bleibt konsistent", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 6));
+  await run("M82.1 BBM 02: Manifestversion folgt der Registry", () => assert.equal(manifest.registryVersion, registry.BBM_M80_REGISTRY_VERSION));
   await run("M82.1 BBM 03: Manifestfingerprint ist aktuell", () => assert.equal(manifest.registryFingerprint, createRegistryFingerprint(scopes)));
   await run("M82.1 BBM 04: genau drei Restarbeiten-Scopes bleiben aktiv", () => assert.deepEqual(registry.BBM_M80_ACTIVE_SCOPES, ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]));
   await run("M82.1 BBM 05: Header behält 31 Elemente", () => assert.equal(byId.has("restarbeiten.header.root") && scopes.find((scope) => scope.scopeId === "restarbeiten.header.root").elements.length, 31));
@@ -91,7 +91,7 @@ async function runM821BbmFeintuningTests(run) {
         applicationId: "bbm-produktiv", displayName: "BBM", framework: "electron",
         registryVersion: registry.BBM_M80_REGISTRY_VERSION, registryStatus: "incomplete",
         activeScopes: [...registry.BBM_M80_ACTIVE_SCOPES],
-        supportedOperations: ["move", "resize", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility"],
+        supportedOperations: ["move", "resize", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility", "spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset", "fitTableToViewport", "resizeColumnsProportionally", "setHorizontalOverflowMode", "setColumnWidthMode", "setColumnWrapMode", "setColumnOverflowMode", "setRowHeightMode", "resetTableColumn", "resetTable"],
         uiCapability: "layout", pdfCapability: "unavailable", labelFieldSeparation: true, visibilityCapability: true,
         registryScopes,
       };
@@ -105,6 +105,8 @@ async function runM821BbmFeintuningTests(run) {
         if (ops.has("textResize")) saved.fontSize = entry.baseline.fontSize;
         if (ops.has("setVisibility")) saved.visible = entry.baseline.visible;
         if (["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"].some((operation) => ops.has(operation))) saved.spacing = { ...(entry.baseline.spacing || {}) };
+        if (entry.tableColumnLayout) saved.table = { tableId: entry.tableBinding.tableId, columnId: entry.id, widthMode: entry.tableColumnLayout.widthMode, wrapMode: entry.tableColumnLayout.wrapMode, overflowMode: entry.tableColumnLayout.overflowMode };
+        if (entry.tableLayout) saved.table = { tableId: entry.id, horizontalOverflowMode: entry.tableLayout.horizontalOverflowMode, rowHeightMode: entry.tableLayout.rowHeightMode };
         return saved;
       };
       const document = {

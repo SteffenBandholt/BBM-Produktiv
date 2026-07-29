@@ -371,6 +371,7 @@
 
 .bbm-restarbeiten-paper {
   width: min(100%, 900px);
+  min-width: 0;
   min-height: 720px;
   aspect-ratio: 210 / 297;
   border: 1px solid var(--bbm-line);
@@ -380,10 +381,28 @@
   padding: 18px 20px;
 }
 
+.bbm-restarbeiten-table-viewport {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.bbm-restarbeiten-table-scroll-area {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
 .bbm-restarbeiten-table {
   --bbm-restarbeiten-number-column: 82px;
   --bbm-restarbeiten-subject-column: minmax(0, 1fr);
   --bbm-restarbeiten-meta-column: 172px;
+  width: 100%;
+  min-width: 320px;
+  box-sizing: border-box;
 }
 
 .bbm-restarbeiten-records {
@@ -431,6 +450,23 @@
   font-size: var(--bbm-rest-short-font-size);
   line-height: var(--bbm-rest-line-height);
   text-align: left;
+}
+
+.bbm-restarbeiten-table[data-ui-editor-row-height-mode="fixed"] .bbm-restarbeiten-record {
+  height: 54px;
+  overflow: hidden;
+}
+
+.bbm-restarbeiten-table[data-ui-editor-row-height-mode="bounded"] .bbm-restarbeiten-record,
+.bbm-restarbeiten-table[data-ui-editor-row-height-mode="ellipsis"] .bbm-restarbeiten-record {
+  min-height: 54px;
+  max-height: 180px;
+  overflow: hidden;
+}
+
+.bbm-restarbeiten-table[data-ui-editor-row-height-mode="ellipsis"] .bbm-restarbeiten-record > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bbm-restarbeiten-record[aria-selected="true"] {

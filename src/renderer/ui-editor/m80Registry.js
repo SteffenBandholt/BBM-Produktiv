@@ -1,4 +1,4 @@
-export const BBM_M80_REGISTRY_VERSION = 5;
+export const BBM_M80_REGISTRY_VERSION = 6;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 const GROUP_LAYOUT = Object.freeze(["move", "setVisibility"]);
@@ -7,8 +7,8 @@ const TEXT_LAYOUT = Object.freeze(["move", "resizeWidth", "resizeHeight", "textR
 const FIELD_LAYOUT = Object.freeze(["move", "resizeWidth", "resizeHeight", "textResize", "setVisibility"]);
 const BUTTON_LAYOUT = Object.freeze(["move", "resizeWidth", "resizeHeight", "setVisibility"]);
 const ICON_LAYOUT = Object.freeze(["resizeWidth", "resizeHeight", "setVisibility"]);
-const TABLE_LAYOUT = Object.freeze(["resizeHeight", "setVisibility"]);
-const COLUMN_LAYOUT = Object.freeze(["resizeWidth", "textResize", "setVisibility"]);
+const TABLE_LAYOUT = Object.freeze(["resizeHeight", "setVisibility", "fitTableToViewport", "resizeColumnsProportionally", "setHorizontalOverflowMode", "setRowHeightMode", "resetTable"]);
+const COLUMN_LAYOUT = Object.freeze(["resizeWidth", "textResize", "setVisibility", "setColumnWidthMode", "setColumnWrapMode", "setColumnOverflowMode", "resetTableColumn"]);
 const SPACING_LAYOUT = Object.freeze(["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"]);
 const DOMAIN_LOCKS = Object.freeze(["executeTargetAction", "modifyDomainData", "createRecord", "deleteRecord"]);
 
@@ -25,7 +25,10 @@ function element(values) {
   const selectionKind = values.selectionKind || ({
     root: "layoutZone", area: "layoutZone", group: "group", fieldGroup: "group",
     label: values.role === "status" ? "statusText" : "label", field: "field", button: "button",
-    componentPart: "icon", statusIndicator: "icon", table: "table", tableColumn: "column",
+    componentPart: "icon", statusIndicator: "icon", table: "table", tableHeader: "tableHeader",
+    tableBody: "tableBody", tableRow: "tableRow", tableColumn: "column", tableHeaderCell: "tableHeaderCell",
+    tableDataCell: "tableDataCell", tableFooter: "tableFooter", tableViewport: "tableViewport",
+    horizontalScrollArea: "horizontalScrollArea",
   }[values.type] || "element");
   return Object.freeze({
     visible: true,
@@ -103,14 +106,61 @@ const headerElements = [
   domainButton({ id: "restarbeiten.filterbar.action.close", name: "Schließen", parentId: "restarbeiten.filterbar.actions", order: 71, actionKind: "domainNavigation" }),
 ];
 
+const listTableColumns = Object.freeze([
+  Object.freeze({
+    columnId: "restarbeiten.list.table.number", displayName: "Nr. / Datum / Klasse / Fotos",
+    headerElementId: "restarbeiten.list.table.number.header", dataCellTemplateId: "restarbeiten.list.table.number.cells",
+    cellElementIds: Object.freeze([]), currentWidth: 82, minimumWidth: 50, maximumWidth: 240, widthMode: "fixed",
+    resizable: true, wrapMode: "noWrap", overflowMode: "clip", alignment: "stretch", visibility: true,
+    order: 1, lockedOps: Object.freeze([...DOMAIN_LOCKS]), widthSourceId: "restarbeiten.list.table.number", flexible: false, priority: 10,
+  }),
+  Object.freeze({
+    columnId: "restarbeiten.list.table.subject", displayName: "Gegenstand – Verortung / Kurztext / Langtext",
+    headerElementId: "restarbeiten.list.table.subject.header", dataCellTemplateId: "restarbeiten.list.table.subject.cells",
+    cellElementIds: Object.freeze([]), currentWidth: 560, minimumWidth: 160, maximumWidth: 1200, widthMode: "proportional",
+    resizable: true, wrapMode: "wordWrap", overflowMode: "clip", alignment: "stretch", visibility: true,
+    order: 2, lockedOps: Object.freeze([...DOMAIN_LOCKS]), widthSourceId: "restarbeiten.list.table.subject", flexible: true, priority: 100,
+  }),
+  Object.freeze({
+    columnId: "restarbeiten.list.table.meta", displayName: "Fertig bis / Ampel / Status / Verantwortlich",
+    headerElementId: "restarbeiten.list.table.meta.header", dataCellTemplateId: "restarbeiten.list.table.meta.cells",
+    cellElementIds: Object.freeze([]), currentWidth: 172, minimumWidth: 110, maximumWidth: 420, widthMode: "fixed",
+    resizable: true, wrapMode: "wordWrap", overflowMode: "clip", alignment: "stretch", visibility: true,
+    order: 3, lockedOps: Object.freeze([...DOMAIN_LOCKS]), widthSourceId: "restarbeiten.list.table.meta", flexible: false, priority: 20,
+  }),
+]);
+
+const listTableLayout = Object.freeze({
+  tableId: "restarbeiten.list.table", displayName: "Restarbeiten-Hauptliste",
+  bounds: Object.freeze({ left: 0, top: 0, width: 858, height: 680 }),
+  viewportBounds: Object.freeze({ left: 0, top: 0, width: 858, height: 680 }),
+  contentBounds: Object.freeze({ left: 0, top: 0, width: 858, height: 680 }),
+  parentId: "restarbeiten.list.scrollArea",
+  columnIds: Object.freeze(listTableColumns.map((column) => column.columnId)),
+  rowTemplateId: "restarbeiten.list.table.row", horizontalOverflowMode: "auto", verticalOverflowMode: "auto",
+  widthPolicy: "bounded", minimumWidth: 320, maximumWidth: 1600, reservedWidth: 44, scrollbarWidth: 0,
+  rowHeightMode: "bounded", minimumRowHeight: 54, maximumRowHeight: 180, columns: listTableColumns,
+});
+
+function tableBinding(columnId, part) {
+  return Object.freeze({ tableId: "restarbeiten.list.table", columnId, widthSourceId: columnId, part });
+}
+
 const listElements = [
   element({ id: "restarbeiten.list.root", name: "Restarbeiten · Liste", type: "root", role: "scopeRoot", parentId: null, order: 0, editable: false, allowedOps: [], componentKind: "scope" }),
   element({ id: "restarbeiten.list.area", name: "Restarbeiten-Liste", type: "area", role: "contentArea", parentId: "restarbeiten.list.root", order: 10, allowedOps: GROUP_LAYOUT, componentKind: "contentArea", baseline: { width: 900, height: 420, minWidth: 320, minHeight: 180 } }),
   element({ id: "restarbeiten.list.paper", name: "Gruppe Listenblatt", type: "group", role: "layoutGroup", parentId: "restarbeiten.list.area", order: 20, allowedOps: GROUP_LAYOUT, componentKind: "paper", baseline: { width: 900, height: 720, minWidth: 320, minHeight: 240 } }),
-  element({ id: "restarbeiten.list.table", name: "Restarbeiten-Hauptliste", type: "table", role: "contentTable", parentId: "restarbeiten.list.paper", order: 30, allowedOps: TABLE_LAYOUT, componentKind: "contentTable", baseline: { width: 858, height: 680, minWidth: 320, minHeight: 160, maxHeight: 12000 } }),
-  element({ id: "restarbeiten.list.table.number", name: "Nr. / Datum / Klasse / Fotos", type: "tableColumn", role: "contentColumn", parentId: "restarbeiten.list.table", order: 31, allowedOps: COLUMN_LAYOUT, columnRole: "contentColumn", baseline: { width: 82, height: 28, minWidth: 50, maxWidth: 240 } }),
-  element({ id: "restarbeiten.list.table.subject", name: "Gegenstand – Verortung / Kurztext / Langtext", type: "tableColumn", role: "contentColumn", parentId: "restarbeiten.list.table", order: 32, allowedOps: COLUMN_LAYOUT, columnRole: "contentColumn", baseline: { width: 600, height: 28, minWidth: 160, maxWidth: 1200 } }),
-  element({ id: "restarbeiten.list.table.meta", name: "Status-Metaspalte – Fertig bis / Ampel / Status / Verantwortlich", type: "tableColumn", role: "metaColumn", parentId: "restarbeiten.list.table", order: 33, allowedOps: COLUMN_LAYOUT, columnRole: "metaColumn", baseline: { width: 172, height: 28, minWidth: 110, maxWidth: 420 } }),
+  element({ id: "restarbeiten.list.viewport", name: "Sichtbarer Inhaltsbereich der Restarbeiten-Liste", type: "tableViewport", role: "tableViewport", parentId: "restarbeiten.list.paper", order: 21, allowedOps: [], componentKind: "tableViewport" }),
+  element({ id: "restarbeiten.list.scrollArea", name: "Horizontaler Scrollbereich der Restarbeiten-Liste", type: "horizontalScrollArea", role: "horizontalScrollArea", parentId: "restarbeiten.list.viewport", order: 22, allowedOps: [], componentKind: "scrollArea" }),
+  element({ id: "restarbeiten.list.table", name: "Restarbeiten-Hauptliste", type: "table", role: "contentTable", parentId: "restarbeiten.list.scrollArea", order: 30, allowedOps: TABLE_LAYOUT, componentKind: "contentTable", tableLayout: listTableLayout, baseline: { width: 858, height: 680, minWidth: 320, maxWidth: 1600, minHeight: 160, maxHeight: 12000 } }),
+  ...listTableColumns.map((column, index) => element({ id: column.columnId, name: column.displayName, type: "tableColumn", role: index === 2 ? "metaColumn" : "contentColumn", parentId: "restarbeiten.list.table", order: 31 + index, allowedOps: COLUMN_LAYOUT, columnRole: index === 2 ? "metaColumn" : "contentColumn", tableColumnLayout: column, tableBinding: tableBinding(column.columnId, "column"), baseline: { width: column.currentWidth, height: 28, minWidth: column.minimumWidth, maxWidth: column.maximumWidth } })),
+  element({ id: "restarbeiten.list.table.header", name: "Tabellenkopf der Restarbeiten-Liste", type: "tableHeader", role: "tableHeader", parentId: "restarbeiten.list.table", order: 40, allowedOps: [], componentKind: "tableHeader" }),
+  element({ id: "restarbeiten.list.table.body", name: "Datenbereich der Restarbeiten-Liste", type: "tableBody", role: "tableBody", parentId: "restarbeiten.list.table", order: 50, allowedOps: [], componentKind: "tableBody" }),
+  element({ id: "restarbeiten.list.table.row", name: "Restarbeiten-Zeile", type: "tableRow", role: "tableRow", parentId: "restarbeiten.list.table.body", order: 51, allowedOps: [], componentKind: "rowTemplate", rowLayout: { heightMode: "bounded", minimumHeight: 54, maximumHeight: 180 } }),
+  ...listTableColumns.flatMap((column, index) => [
+    element({ id: column.headerElementId, name: `${column.displayName} · Überschrift`, type: "tableHeaderCell", role: "tableHeaderCell", parentId: column.columnId, order: 60 + index * 2, allowedOps: [], componentKind: "tableHeaderCell", tableBinding: tableBinding(column.columnId, "header") }),
+    element({ id: column.dataCellTemplateId, name: `${column.displayName} · Datenbereich`, type: "tableDataCell", role: "tableDataCell", parentId: column.columnId, order: 61 + index * 2, allowedOps: [], componentKind: "dataCellTemplate", tableBinding: tableBinding(column.columnId, "data") }),
+  ]),
 ];
 
 const editElements = [

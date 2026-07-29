@@ -10,15 +10,21 @@ import {
   beginM80PilotRender,
   clearM80VisualState,
   completeM80PilotRender,
-  getM80IdFromTarget,
+  getM80IdsFromTarget,
   getM80ReferenceStatus,
   getM80Ref,
   listM80Refs,
   registerM80Ref,
+  fitM80Table,
+  resetM80Table,
   resetM80PilotWorkingStatesForDiagnostic,
   snapshotM80State,
   snapshotM80Geometry,
 } from "./m80Refs.js";
+import {
+  TABLE_LAYOUT_OPERATIONS,
+  validateTableLayoutIntent,
+} from "../../../node_modules/ui-editor-kit/dist/table-layout-contract.mjs";
 import {
   createDirectSelectionHierarchy,
   cycleDirectSelectionIndex,
@@ -32,6 +38,7 @@ import {
 } from "../../../node_modules/ui-editor-kit/dist/geometry-risk-contract.mjs";
 
 const ALLOWED_ACTIONS = new Set(["getRegistry", "getLayoutState", "submitChange"]);
+const SUPPORTED_OPERATIONS = Object.freeze(["move", "resize", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility", "spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset", ...TABLE_LAYOUT_OPERATIONS]);
 const REGISTRY_EVENT_ACTIONS = new Set(["registryChanged", "registryStatusChanged", "scopeAdded", "scopeChanged", "scopeRemoved"]);
 const FORBIDDEN_KEYS = new Set(["fachDaten", "businessData", "domainData", "recordId", "entity", "database", "sql", "status", "responsible", "dueDate", "photos", "rows", "values"]);
 let selectionMode = false;
@@ -81,6 +88,7 @@ function desiredState(previous, operation, payload) {
   } else if (operation === "resizeWidth") {
     if (Object.keys(payload).length !== 1 || !Object.hasOwn(payload, "width")) throw new Error("resizeWidth-Payload ist ungültig.");
     next.width = number(payload.width, "width", { positive: true });
+    if (previous.table?.columnId) next.table = { ...previous.table, widthMode: "fixed" };
   } else if (operation === "resizeHeight") {
     if (Object.keys(payload).length !== 1 || !Object.hasOwn(payload, "height")) throw new Error("resizeHeight-Payload ist ungültig.");
     next.height = number(payload.height, "height", { positive: true });
@@ -106,6 +114,15 @@ function desiredState(previous, operation, payload) {
       const value = number(payload.spacing.value, "spacing.value", { nonNegative: true });
       next.spacing[target] = operation === "spacingIncrease" ? current + value : operation === "spacingDecrease" ? Math.max(0, current - value) : value;
     }
+  } else if (TABLE_LAYOUT_OPERATIONS.includes(operation)) {
+    const validation = validateTableLayoutIntent(operation, payload);
+    if (!validation.ok) throw Object.assign(new Error(validation.errors[0]?.message || "Tabellenoperation ist ungÃ¼ltig."), { code: "electron_editor_message_invalid" });
+    next.table = { ...(previous.table || {}) };
+    if (operation === "setHorizontalOverflowMode") next.table.horizontalOverflowMode = validation.intent.horizontalOverflowMode;
+    if (operation === "setColumnWidthMode") next.table.widthMode = validation.intent.widthMode;
+    if (operation === "setColumnWrapMode") next.table.wrapMode = validation.intent.wrapMode;
+    if (operation === "setColumnOverflowMode") next.table.overflowMode = validation.intent.overflowMode;
+    if (operation === "setRowHeightMode") next.table.rowHeightMode = validation.intent.rowHeightMode;
   } else throw Object.assign(new Error("Operation ist nicht erlaubt."), { code: "electron_operation_not_allowed" });
   return next;
 }
@@ -301,6 +318,7 @@ function submitChange(changeRequest, scopeId) {
   const previous = snapshotM80State(entry.id);
   if (!previous) return failure(request, "electron_element_not_found", "Explizite Elementreferenz fehlt.");
   let groupRestore = null;
+  const tableRestore = new Map();
   try {
     const beforeGeometry = snapshotM80Geometry();
     const ref = getM80Ref(entry.id);
@@ -314,8 +332,26 @@ function submitChange(changeRequest, scopeId) {
     if (confirmation?.action === RISK_ACTIONS.PRESERVE_SPACE || confirmation?.action === RISK_ACTIONS.SHRINK_GROUP) {
       desired.spacing = { ...(desired.spacing || {}), reservedWidth: Number(desired.spacing?.reservedWidth || 0) + Number(confirmation.risk.technicalDetails?.freedWidth || 0) };
     }
-    const readback = applyM80State(entry.id, desired);
+    let readback;
     const affectedStates = [];
+    if (["fitTableToViewport", "resizeColumnsProportionally", "resetTable"].includes(request.operation)) {
+      tableRestore.set(entry.id, previous);
+      for (const column of entry.tableLayout?.columns || []) tableRestore.set(column.columnId, snapshotM80State(column.columnId));
+    }
+    if (["fitTableToViewport", "resizeColumnsProportionally"].includes(request.operation)) {
+      const fitted = fitM80Table(entry.id, request.payload?.table?.selectedColumnId || "");
+      affectedStates.push(...fitted.affectedStates);
+      readback = snapshotM80State(entry.id);
+    } else if (request.operation === "resetTable") {
+      const reset = resetM80Table(entry.id);
+      affectedStates.push(...reset.affectedStates);
+      readback = reset.newState;
+    } else if (request.operation === "resetTableColumn") {
+      const baseline = entry.tableColumnLayout;
+      readback = applyM80State(entry.id, { ...previous, width: baseline.currentWidth, visible: baseline.visibility, table: { tableId: entry.tableBinding.tableId, columnId: entry.id, widthMode: baseline.widthMode, wrapMode: baseline.wrapMode, overflowMode: baseline.overflowMode } });
+    } else {
+      readback = applyM80State(entry.id, desired);
+    }
     if (confirmation?.action === RISK_ACTIONS.SHRINK_GROUP) {
       const groupEntry = ancestor(entry, (candidate) => ["group", "fieldGroup"].includes(candidate.type));
       if (!groupEntry?.allowedOps?.includes("resizeWidth")) throw Object.assign(new Error("Die Breite dieser Gruppe kann nicht direkt verändert werden."), { code: "electron_operation_not_allowed" });
@@ -329,8 +365,17 @@ function submitChange(changeRequest, scopeId) {
     }
     const affected = inspectGeometryEffect(entry, request.operation, beforeGeometry, afterGeometry);
     const interactive = request.source === "ui-editor-panel";
-    const risk = interactive ? geometryRiskFor(entry, request, beforeGeometry, afterGeometry, affected) : null;
+    // Reset und bestaetigte Fit-Operationen sind bereits durch den
+    // Ziel-App-Vertrag und den Tabellen-Core begrenzt. Sie duerfen deshalb
+    // nicht an der Geometrie des aktuell ueberbreiten Laufzeitzustands
+    // haengen bleiben.
+    const usesValidatedTableGeometry = request.operation === "resetTable" ||
+      (["fitTableToViewport", "resizeColumnsProportionally"].includes(request.operation) && request.payload?.table?.previewAccepted === true);
+    const risk = interactive && !usesValidatedTableGeometry
+      ? geometryRiskFor(entry, request, beforeGeometry, afterGeometry, affected)
+      : null;
     if (risk?.hasRisks && !confirmation) {
+      for (const [id, state] of [...tableRestore].reverse()) if (state) applyM80State(id, state);
       const restored = applyM80State(entry.id, previous);
       pendingGeometryRisks.set(risk.operationId, { signature: requestSignature(request), risk });
       renderGeometryRiskPreview(risk);
@@ -342,6 +387,7 @@ function submitChange(changeRequest, scopeId) {
   } catch (error) {
     try {
       if (groupRestore?.state) applyM80State(groupRestore.id, groupRestore.state);
+      for (const [id, state] of [...tableRestore].reverse()) if (state) applyM80State(id, state);
       const restored = applyM80State(entry.id, previous);
       return failure(request, error?.code || "electron_change_apply_failed", `Layoutänderung wurde sicher abgewiesen und zurückgerollt: ${error?.message || "Unbekannte Geometrieverletzung."}`, restored, true);
     } catch (_rollbackError) {
@@ -396,7 +442,7 @@ export function createM80RegistrationDescriptor() {
     registryVersion: BBM_M80_REGISTRY_VERSION + diagnosticRegistryRevision,
     registryStatus: BBM_M80_REGISTRY_STATUS,
     activeScopes,
-    supportedOperations: ["move", "resize", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility", "spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"],
+    supportedOperations: [...SUPPORTED_OPERATIONS],
     uiCapability: "layout",
     pdfCapability: "unavailable",
     labelFieldSeparation: true,
@@ -437,9 +483,11 @@ function directChildCount(id) {
   return listM80RegistryScopes().flatMap((scope) => scope.elements).filter((entry) => entry.parentId === id).length;
 }
 
-function selectionCandidates(id) {
-  return createDirectSelectionHierarchy(listM80RegistryScopes().flatMap((scope) => scope.elements), id)
-    .filter((candidate) => getM80Ref(candidate.entry.id));
+function selectionCandidates(ids) {
+  const seen = new Set();
+  return (Array.isArray(ids) ? ids : [ids]).flatMap((id) =>
+    createDirectSelectionHierarchy(listM80RegistryScopes().flatMap((scope) => scope.elements), id))
+    .filter((candidate) => getM80Ref(candidate.entry.id) && !seen.has(candidate.entry.id) && seen.add(candidate.entry.id));
 }
 
 function frameStyle(level) {
@@ -493,9 +541,9 @@ function stopSelection({ clearHover = false } = {}) {
 
 function onSelectionHover(event) {
   if (!selectionMode) return;
-  const id = getM80IdFromTarget(event.target);
-  if (!id) { hoverCandidates = []; renderSelectionFrames([]); return; }
-  const candidates = selectionCandidates(id);
+  const ids = getM80IdsFromTarget(event.target);
+  if (!ids.length) { hoverCandidates = []; renderSelectionFrames([]); return; }
+  const candidates = selectionCandidates(ids);
   const same = candidates.map((candidate) => candidate.entry.id).join("|") === hoverCandidates.map((candidate) => candidate.entry.id).join("|");
   hoverCandidates = candidates;
   if (!same) hoverIndex = 0;
@@ -620,6 +668,14 @@ export function createM80StartupRequests(scopeId, element, explicitOperations = 
     if (Math.abs(desiredValue - currentValue) > 0.01 && entry.allowedOps.includes("spacingSet")) {
       requests.push({ changeId: `startup-${requests.length + 1}-${entry.id}`, elementId: entry.id, operation: "spacingSet", payload: { spacing: { target, value: desiredValue } }, source: "target-app-start" });
     }
+  }
+  const savedTable = element.table && typeof element.table === "object" && !Array.isArray(element.table) ? element.table : null;
+  if (savedTable && current.table) {
+    if (savedTable.widthMode && savedTable.widthMode !== current.table.widthMode) push("setColumnWidthMode", { table: { widthMode: savedTable.widthMode } });
+    if (savedTable.wrapMode && savedTable.wrapMode !== current.table.wrapMode) push("setColumnWrapMode", { table: { wrapMode: savedTable.wrapMode } });
+    if (savedTable.overflowMode && savedTable.overflowMode !== current.table.overflowMode) push("setColumnOverflowMode", { table: { overflowMode: savedTable.overflowMode } });
+    if (savedTable.horizontalOverflowMode && savedTable.horizontalOverflowMode !== current.table.horizontalOverflowMode) push("setHorizontalOverflowMode", { table: { horizontalOverflowMode: savedTable.horizontalOverflowMode } });
+    if (savedTable.rowHeightMode && savedTable.rowHeightMode !== current.table.rowHeightMode) push("setRowHeightMode", { table: { rowHeightMode: savedTable.rowHeightMode } });
   }
   return requests.map((request) => ({ scopeId, request }));
 }

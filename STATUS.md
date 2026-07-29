@@ -3547,3 +3547,17 @@ Wichtig:
 - Die reale Development-Abnahme belegte 28 PDF-Registryelemente und eine aktuelle zweitseitige A4-Vorschau; Fachwerte blieben unveraendert.
 - `docs/licensing.md` bleibt Fremdaenderung und unangetastet.
 - Commit/PR: keiner; gemaess Nutzeranweisung wurde weder committet noch gepusht.
+
+## M82.4 – Tabellen- und Spaltenbearbeitung der Restarbeitenliste
+
+- Status: `[A]`; Implementierung, Pflichtprüfungen und sichtbare Abnahme der gepackten Development-Version sind abgeschlossen.
+- Die bestehende Kartenliste bleibt die sichtbare UI-Inhaltstabelle; es wurde keine neue Ansicht erzeugt und kein Fachwert verändert.
+- Registriert sind Liste, Kopf, Datenbereich, Scrollbereich, Zeilentemplate sowie die drei bestätigten Spalten jeweils mit Header- und Datenbereich.
+- Header und Kartenzeilen verwenden dieselben drei CSS-Grid-Track-Variablen. Viewport, tatsächliche Tabellenbreite, Überlauf, Fit, Wrap/Ellipsis und begrenzte Zeilenhöhe werden über den appübergreifenden Tabellenvertrag gesteuert.
+- Start-Restore, Save, Spalten-/Tabellen-/Scope-/Gesamtreset, Discard und Rollback verwenden weiterhin den bestehenden UI-Profilweg.
+- Die sichtbare Abnahme belegte die drei zusammengefassten Spalten, gemeinsame Header-/Datenbreiten, echte Ellipsis der sichtbaren Unterzeilen, begrenzten horizontalen Überlauf bei 900/1400/Full-HD sowie Spaltenreset und Discard (`fixed/ellipsis` → `proportional/wordWrap` → `fixed/ellipsis`).
+- Der vollständige interaktive Tabellenreset und der nach eigener Tabellen-Vorschau bestätigte Fit verwenden ihre validierten Tabellenwerte ohne erneute generische Risikosperre; sichtbar resultierten beim Reset `proportional/wordWrap/clip`, 718 DIP Tabellenbreite und 0,45 DIP Rundungsüberlauf sowie beim Fit 795 DIP Tabellenbreite bei 795,26 DIP Viewport und 0 DIP Überlauf.
+- Die reale Projekt-12-Abnahme erzeugte anschließend eine aktuelle, zweiseitige BBM-Protokoll-PDF mit 28 registrierten Elementen.
+- Tabellenmetriken und betroffene Spaltenzustände bleiben im Editorprozess erhalten; Tabellenrollen erzeugen in JavaScript und WPF denselben Scope-Fingerprint. Ein gespeichertes Tabellenprofil wird beim Neustart ohne Recovery-Marker einmalig wiederhergestellt.
+- `docs/licensing.md` bleibt Fremdänderung und unangetastet.
+- Commit/PR: keiner; gemäß Nutzeranweisung wurde weder committet noch gepusht.

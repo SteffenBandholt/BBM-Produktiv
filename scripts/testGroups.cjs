@@ -149,6 +149,7 @@ const TEST_GROUPS = Object.freeze([
       ["m82-1BbmFeintuning.test.cjs", "runM821BbmFeintuningTests"],
       ["m82-2BbmGeometryRisks.test.cjs", "runM822BbmGeometryRiskTests"],
       ["m82-3BbmSpacerCompactUi.test.cjs", "runM823BbmSpacerCompactUiTests"],
+      ["m82-4BbmTableColumnEditing.test.cjs", "runM824BbmTableColumnEditingTests"],
       ["testHarnessOrchestration.test.cjs", "runTestHarnessOrchestrationTests"],
     ]),
   }),
