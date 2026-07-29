@@ -24,6 +24,17 @@ function getCustomProperty(style, name) { return typeof style?.getPropertyValue 
 function applyAttributes(target, id) {
   for (const [name, value] of Object.entries(m80EditorAttributes(id))) target.setAttribute(name, value);
 }
+function readSpacing(element) {
+  try {
+    const value = JSON.parse(element.dataset.uiEditorSpacing || "{}");
+    return value && typeof value === "object" && !Array.isArray(value) ? { ...value } : {};
+  } catch { return {}; }
+}
+function writeSpacing(element, spacing = {}) {
+  const normalized = Object.fromEntries(Object.entries(spacing).filter(([, value]) => Number.isFinite(Number(value)) && Number(value) >= 0).map(([key, value]) => [key, Number(value)]));
+  element.dataset.uiEditorSpacing = JSON.stringify(normalized);
+  return normalized;
+}
 
 function readGeneric(element, id) {
   const rect = rectOf(element);
@@ -38,6 +49,7 @@ function readGeneric(element, id) {
     textOffsetY: finite(element.dataset.uiEditorTextY, finite(parseFloat(style.paddingTop))),
     fontSize: positive(parseFloat(style.fontSize), 12),
     visible: !hasClass(element, HIDDEN_CLASS),
+    spacing: readSpacing(element),
   };
 }
 
@@ -54,7 +66,12 @@ function applyGeneric(element, state, entry) {
     element.dataset.uiEditorY = String(finite(state.y));
     element.style.translate = `${px(state.x)} ${px(state.y)}`;
   }
-  if (operations.has("resize") || operations.has("resizeWidth")) element.style.width = px(bounded(entry, "width", state.width, 1));
+  if (operations.has("resize") || operations.has("resizeWidth")) {
+    const desiredWidth = bounded(entry, "width", state.width, 1);
+    const horizontalPadding = finite(state.spacing?.groupPaddingLeft) + finite(state.spacing?.groupPaddingRight);
+    const contentWidth = styleOf(element).boxSizing === "border-box" ? desiredWidth : Math.max(1, desiredWidth - horizontalPadding);
+    element.style.width = px(contentWidth);
+  }
   if (operations.has("resize") || operations.has("resizeHeight")) element.style.height = px(bounded(entry, "height", state.height, 1));
   if (operations.has("textMove") && state.textOffsetX !== null && state.textOffsetX !== undefined) {
     element.dataset.uiEditorTextX = String(state.textOffsetX);
@@ -66,6 +83,17 @@ function applyGeneric(element, state, entry) {
   }
   if (operations.has("textResize") && state.fontSize !== null && state.fontSize !== undefined) element.style.fontSize = px(positive(state.fontSize, 1));
   if (operations.has("setVisibility")) toggleClass(element, HIDDEN_CLASS, state.visible === false);
+  if (["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"].some((operation) => operations.has(operation))) {
+    const spacing = writeSpacing(element, state.spacing || {});
+    element.style.marginLeft = px(finite(spacing.beforeElement));
+    element.style.marginRight = px(finite(spacing.afterElement) + finite(spacing.reservedWidth));
+    element.style.paddingLeft = px(finite(spacing.groupPaddingLeft));
+    element.style.paddingRight = px(finite(spacing.groupPaddingRight));
+    element.style.paddingTop = px(finite(spacing.groupPaddingTop));
+    element.style.paddingBottom = px(finite(spacing.groupPaddingBottom));
+    element.style.columnGap = px(finite(spacing.childGapHorizontal));
+    element.style.rowGap = px(finite(spacing.childGapVertical));
+  }
 }
 
 export function beginM80PilotRender() {
@@ -130,6 +158,38 @@ export function registerM80TableColumnRef(id, headerCell, tableElement, cssVaria
       headerCell.style.fontSize = px(positive(state.fontSize, 1));
       toggleClass(tableElement, `${HIDDEN_CLASS}-${id.split(".").pop()}`, state.visible === false);
       toggleClass(headerCell, HIDDEN_CLASS, state.visible === false);
+    },
+  });
+}
+
+export function registerM80FlowLabelRef(id, element, layoutRow, trailingColumns) {
+  const entry = getM80RegistryEntry(id);
+  return registerM80Ref(id, element, {
+    read: () => {
+      const state = readGeneric(element, id);
+      const configuredWidth = positive(element.dataset.uiEditorFlowWidth, positive(entry?.baseline?.width, state.width));
+      const spacing = readSpacing(element);
+      if (!Object.hasOwn(spacing, "reservedWidth")) {
+        const firstTrack = parseFloat(styleOf(layoutRow).gridTemplateColumns);
+        spacing.reservedWidth = Math.max(0, finite(firstTrack, configuredWidth) - configuredWidth);
+      }
+      return { ...state, width: configuredWidth, spacing };
+    },
+    apply: (state) => {
+      const spacing = { ...(state.spacing || {}) };
+      const reservedWidth = Math.max(0, finite(spacing.reservedWidth));
+      const genericSpacing = { ...spacing, reservedWidth: 0 };
+      applyGeneric(element, { ...state, spacing: genericSpacing }, entry);
+      const elementWidth = bounded(entry, "width", state.width, 1);
+      element.dataset.uiEditorFlowFixed = "true";
+      element.dataset.uiEditorFlowWidth = String(elementWidth);
+      setCustomProperty(element.style, "--bbm-ui-editor-flow-element-width", px(elementWidth));
+      element.style.justifySelf = "start";
+      element.style.minWidth = px(elementWidth);
+      element.style.maxWidth = px(elementWidth);
+      writeSpacing(element, spacing);
+      const slotWidth = elementWidth + reservedWidth;
+      layoutRow.style.gridTemplateColumns = `${px(slotWidth)} ${trailingColumns}`;
     },
   });
 }

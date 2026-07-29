@@ -63,7 +63,11 @@ async function runM80ElectronUiEditorTests(run) {
   const entries = scopes.flatMap((scope) => scope.elements);
   const registrationScopes = scopes.map((scope) => scope.status === "complete" ? {
     ...scope,
-    elements: scope.elements.map((entry) => ({ ...entry, referenceResolved: true })),
+    elements: scope.elements.map((entry) => ({
+      ...entry,
+      referenceResolved: true,
+      ...(entry.baseline?.width === null || entry.baseline?.height === null ? { capturedBaseline: { width: 640, height: 64 } } : {}),
+    })),
   } : scope);
   const registration = {
     applicationId: "bbm-produktiv", displayName: "BBM", framework: "electron",

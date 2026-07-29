@@ -1,4 +1,4 @@
-export const BBM_M80_REGISTRY_VERSION = 4;
+export const BBM_M80_REGISTRY_VERSION = 5;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 const GROUP_LAYOUT = Object.freeze(["move", "setVisibility"]);
@@ -9,12 +9,13 @@ const BUTTON_LAYOUT = Object.freeze(["move", "resizeWidth", "resizeHeight", "set
 const ICON_LAYOUT = Object.freeze(["resizeWidth", "resizeHeight", "setVisibility"]);
 const TABLE_LAYOUT = Object.freeze(["resizeHeight", "setVisibility"]);
 const COLUMN_LAYOUT = Object.freeze(["resizeWidth", "textResize", "setVisibility"]);
+const SPACING_LAYOUT = Object.freeze(["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"]);
 const DOMAIN_LOCKS = Object.freeze(["executeTargetAction", "modifyDomainData", "createRecord", "deleteRecord"]);
 
 function defaultBaseline(values = {}) {
   return Object.freeze({
     x: 0, y: 0, width: 100, height: 24, textOffsetX: 0, textOffsetY: 0,
-    fontSize: 12, visible: true, minWidth: 8, maxWidth: 2400, minHeight: 8, maxHeight: 1600,
+    fontSize: 12, visible: true, spacing: {}, minWidth: 8, maxWidth: 2400, minHeight: 8, maxHeight: 1600,
     ...values,
   });
 }
@@ -36,6 +37,7 @@ function element(values) {
     baseline: defaultBaseline(values.baseline),
     selectionKind,
     selectionLevels: Object.freeze([...(values.selectionLevels || [selectionKind])]),
+    spacingTargets: Object.freeze([...(values.spacingTargets || [])]),
     operationEffects: Object.freeze({
       ...Object.fromEntries(allowedOps.map((operation) => [operation,
         selectionKind === "group" ? "groupWithChildren" : selectionKind === "layoutZone" ? "layoutZone" : "elementOnly"])),
@@ -117,9 +119,9 @@ const editElements = [
   element({ id: "restarbeiten.edit.header", name: "Gruppe Editbox-Kopf", type: "group", role: "layoutGroup", parentId: "restarbeiten.edit.area", order: 20, allowedOps: GROUP_LAYOUT, componentKind: "header" }),
   element({ id: "restarbeiten.edit.header.current", name: "Status aktueller Datensatz", type: "label", role: "status", parentId: "restarbeiten.edit.header", order: 21, allowedOps: ["setVisibility"], componentKind: "label" }),
   element({ id: "restarbeiten.edit.fields", name: "Layoutzone Textfelder", type: "group", role: "fieldCollection", parentId: "restarbeiten.edit.area", order: 30, allowedOps: [], componentKind: "fieldCollection", selectionKind: "layoutZone" }),
-  element({ id: "restarbeiten.edit.short", name: "Gruppe Kurztext/Gegenstand", type: "group", role: "formFieldGroup", parentId: "restarbeiten.edit.fields", order: 40, allowedOps: GROUP_LAYOUT, componentKind: "fieldGroup" }),
-  element({ id: "restarbeiten.edit.short.headerZone", name: "Kopfzeile Kurztext/Gegenstand", type: "group", role: "layoutGroup", parentId: "restarbeiten.edit.short", order: 41, allowedOps: [], componentKind: "layoutZone", selectionKind: "layoutZone" }),
-  element({ id: "restarbeiten.edit.short.label", name: "Bezeichnung Kurztext/Gegenstand", type: "label", role: "fieldLabel", parentId: "restarbeiten.edit.short", order: 42, allowedOps: TEXT_LAYOUT, componentKind: "label", baseline: { width: 150, height: 22, minWidth: 74, maxWidth: 190, minHeight: 18, maxHeight: 48 }, operationEffects: { resizeWidth: "parentReflowRequired", resizeHeight: "parentReflowRequired" }, operationAffectedIds: { resizeWidth: ["restarbeiten.edit.short.headerZone", "restarbeiten.edit.short.field"], resizeHeight: ["restarbeiten.edit.short.headerZone", "restarbeiten.edit.short.field"] } }),
+  element({ id: "restarbeiten.edit.short", name: "Gruppe Kurztext/Gegenstand", type: "group", role: "formFieldGroup", parentId: "restarbeiten.edit.fields", order: 40, allowedOps: [...GROUP_LAYOUT, "resizeWidth", "resizeHeight", ...SPACING_LAYOUT], spacingTargets: ["groupPaddingLeft", "groupPaddingRight", "groupPaddingTop", "groupPaddingBottom", "childGapHorizontal", "childGapVertical"], componentKind: "fieldGroup", baseline: { width: null, height: null, minWidth: 320, maxWidth: 1400, minHeight: 42, maxHeight: 96 } }),
+  element({ id: "restarbeiten.edit.short.headerZone", name: "Kopfzeile Kurztext/Gegenstand", type: "group", role: "layoutGroup", parentId: "restarbeiten.edit.short", order: 41, allowedOps: SPACING_LAYOUT, spacingTargets: ["groupPaddingLeft", "groupPaddingRight", "groupPaddingTop", "groupPaddingBottom", "childGapHorizontal"], componentKind: "layoutZone", selectionKind: "layoutZone" }),
+  element({ id: "restarbeiten.edit.short.label", name: "Bezeichnung Kurztext/Gegenstand", type: "label", role: "fieldLabel", parentId: "restarbeiten.edit.short", order: 42, allowedOps: [...TEXT_LAYOUT, ...SPACING_LAYOUT], spacingTargets: ["beforeElement", "afterElement", "reservedWidth"], componentKind: "label", baseline: { width: 150, height: 22, spacing: { reservedWidth: 40 }, minWidth: 74, maxWidth: 190, minHeight: 18, maxHeight: 48 }, operationEffects: { resizeWidth: "parentReflowRequired", resizeHeight: "parentReflowRequired" }, operationAffectedIds: { resizeWidth: ["restarbeiten.edit.short.headerZone", "restarbeiten.edit.short.field"], resizeHeight: ["restarbeiten.edit.short.headerZone", "restarbeiten.edit.short.field"] } }),
   element({ id: "restarbeiten.edit.short.remaining", name: "Restzeichenanzeige Kurztext", type: "label", role: "status", parentId: "restarbeiten.edit.short.headerZone", order: 43, allowedOps: ["setVisibility"], componentKind: "counter" }),
   domainButton({ id: "restarbeiten.edit.short.dictation", name: "Diktatbutton Kurztext", parentId: "restarbeiten.edit.short.headerZone", order: 44, actionKind: "domainDictation", baseline: { width: 22, height: 22, minWidth: 20, maxWidth: 32, minHeight: 20, maxHeight: 32 }, operationEffects: { move: "groupWithChildren" }, operationAffectedIds: { move: ["restarbeiten.edit.short.dictation.icon"] } }),
   element({ id: "restarbeiten.edit.short.dictation.icon", name: "Mikrofonsymbol Kurztext", type: "componentPart", role: "layout", parentId: "restarbeiten.edit.short.dictation", order: 45, allowedOps: ICON_LAYOUT, componentKind: "icon", baseline: { width: 17, height: 17, minWidth: 12, maxWidth: 22, minHeight: 12, maxHeight: 22 } }),
@@ -193,7 +195,7 @@ export function listM80RegistryScopes() {
   return BBM_M80_REGISTRY_SCOPES.map((scope) => ({
     ...scope,
     expectedElementIds: [...scope.expectedElementIds],
-    elements: scope.elements.map((entry) => ({ ...entry, baseline: { ...entry.baseline }, allowedOps: [...entry.allowedOps], lockedOps: [...entry.lockedOps] })),
+    elements: scope.elements.map((entry) => ({ ...entry, baseline: { ...entry.baseline, spacing: { ...(entry.baseline?.spacing || {}) } }, spacingTargets: [...(entry.spacingTargets || [])], allowedOps: [...entry.allowedOps], lockedOps: [...entry.lockedOps] })),
   }));
 }
 

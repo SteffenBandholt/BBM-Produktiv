@@ -752,6 +752,13 @@
   line-height: 1.1;
 }
 
+.bbm-restarbeiten-text-label__row > span:first-child[data-ui-editor-flow-fixed="true"] {
+  width: var(--bbm-ui-editor-flow-element-width) !important;
+  min-width: var(--bbm-ui-editor-flow-element-width) !important;
+  max-width: var(--bbm-ui-editor-flow-element-width) !important;
+  justify-self: start;
+}
+
 .bbm-ui-editor-hidden {
   visibility: hidden !important;
 }

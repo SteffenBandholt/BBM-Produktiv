@@ -3536,3 +3536,14 @@ Wichtig:
 - Risiken/Hindernisse:
   - Praktische Computer-Use-/Electron-UI-Abnahme ist in dieser Umgebung nicht verfügbar und muss lokal/auf Zielsystem nachgeholt werden.
   - Im aktuellen Checkout ist kein Git-Remote `origin` eingerichtet; Veröffentlichung/PR hängt vom verfügbaren PR-Werkzeug ab.
+
+## M82.3 - Lokale Breitenwirkung und kompakte Editoroberflaeche
+
+- Status: `[A]`; Implementierung, Pflichtpruefungen und sichtbare native UI-/PDF-Abnahme sind abgeschlossen.
+- BBM registriert Breite, reservierten Platz, Spacer, Gruppenpadding und Kindabstaende explizit und bildet sie im vorhandenen Electron-HostAdapter ab.
+- Kurztext/Gegenstand behaelt bei reserviertem Platz Nachbarpositionen und Gruppengroesse; Nachruecken und Gruppenverkleinern bleiben getrennte Entscheidungen.
+- Responsive Gruppenbaselines werden vor Start-Restore einmalig erfasst und von Element-, Gruppen- und Gesamtreset korrekt wiederhergestellt.
+- Der gemeinsame Manager wurde sichtbar in 1/2/3 Spalten, mit fester Aktionsleiste, internem Baumscrollbereich und UI-/PDF-Tab geprueft.
+- Die reale Development-Abnahme belegte 28 PDF-Registryelemente und eine aktuelle zweitseitige A4-Vorschau; Fachwerte blieben unveraendert.
+- `docs/licensing.md` bleibt Fremdaenderung und unangetastet.
+- Commit/PR: keiner; gemaess Nutzeranweisung wurde weder committet noch gepusht.

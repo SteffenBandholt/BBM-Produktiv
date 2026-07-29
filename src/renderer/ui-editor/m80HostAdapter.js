@@ -42,6 +42,16 @@ let startupRestorePromise = null;
 let startupRestoreStatus = { state: "pending", applied: false, editorProcessRequired: false };
 let diagnosticRegistryRevision = 0;
 const pendingGeometryRisks = new Map();
+const capturedRuntimeBaselines = new Map();
+
+function capturedRuntimeBaseline(entry) {
+  if (entry?.baseline?.width !== null && entry?.baseline?.height !== null) return null;
+  if (!capturedRuntimeBaselines.has(entry.id)) {
+    const current = snapshotM80State(entry.id);
+    if (current) capturedRuntimeBaselines.set(entry.id, Object.freeze({ width: current.width, height: current.height }));
+  }
+  return capturedRuntimeBaselines.get(entry.id) || null;
+}
 
 function hasForbidden(value) {
   if (Array.isArray(value)) return value.some(hasForbidden);
@@ -58,7 +68,7 @@ function number(value, field, { positive = false, nonNegative = false } = {}) {
 }
 
 function desiredState(previous, operation, payload) {
-  const next = { ...previous };
+  const next = { ...previous, spacing: { ...(previous.spacing || {}) } };
   if (!payload || typeof payload !== "object" || Array.isArray(payload) || hasForbidden(payload)) throw Object.assign(new Error("Layout-Payload ist ungültig."), { code: "electron_editor_message_invalid" });
   if (operation === "move") {
     const keys = Object.keys(payload); if (!keys.length || keys.some((key) => !["x", "y"].includes(key))) throw new Error("move-Payload ist ungültig.");
@@ -85,6 +95,17 @@ function desiredState(previous, operation, payload) {
   } else if (operation === "setVisibility") {
     if (Object.keys(payload).length !== 1 || typeof payload.visible !== "boolean") throw new Error("setVisibility-Payload ist ungültig.");
     next.visible = payload.visible;
+  } else if (["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"].includes(operation)) {
+    if (Object.keys(payload).length !== 1 || !payload.spacing || typeof payload.spacing !== "object" || Array.isArray(payload.spacing)) throw new Error("spacing-Payload ist ungültig.");
+    const target = String(payload.spacing.target || "");
+    const entry = getM80RegistryEntry(previous.elementId);
+    if (!entry?.spacingTargets?.includes(target) || Object.keys(payload.spacing).some((key) => !["target", "value"].includes(key))) throw Object.assign(new Error("Abstandsziel ist nicht freigegeben."), { code: "electron_operation_not_allowed" });
+    const current = number(next.spacing[target] || 0, target, { nonNegative: true });
+    if (operation === "spacingReset") delete next.spacing[target];
+    else {
+      const value = number(payload.spacing.value, "spacing.value", { nonNegative: true });
+      next.spacing[target] = operation === "spacingIncrease" ? current + value : operation === "spacingDecrease" ? Math.max(0, current - value) : value;
+    }
   } else throw Object.assign(new Error("Operation ist nicht erlaubt."), { code: "electron_operation_not_allowed" });
   return next;
 }
@@ -162,19 +183,22 @@ function isAncestor(candidateId, elementId) {
   while (current?.parentId) { if (current.parentId === candidateId) return true; current = getM80RegistryEntry(current.parentId); }
   return false;
 }
-function sensibleNeighbors(entry, beforeGeometry, afterGeometry, unexpected) {
+export function collectM80GeometryNeighbors(entry, beforeGeometry, afterGeometry, unexpected = []) {
   const parent = entry.parentId ? getM80RegistryEntry(entry.parentId) : null;
   const contextId = parent?.parentId || entry.parentId;
+  const flowGroup = ancestor(entry, (candidate) => ["group", "fieldGroup"].includes(candidate.type));
   return allEntries().filter((candidate) => {
     if (candidate.id === entry.id || isAncestor(candidate.id, entry.id) || isAncestor(entry.id, candidate.id)) return false;
     if (!beforeGeometry.get(candidate.id) || !afterGeometry.get(candidate.id)) return false;
-    return unexpected.includes(candidate.id) || candidate.parentId === entry.parentId || candidate.parentId === contextId || candidate.id === contextId;
+    return unexpected.includes(candidate.id) || candidate.parentId === entry.parentId || candidate.parentId === contextId ||
+      candidate.id === contextId || (flowGroup && isAncestor(flowGroup.id, candidate.id));
   }).map((candidate) => ({
     elementId: candidate.id,
     displayName: candidate.name,
     elementType: candidate.type,
     bounds: afterGeometry.get(candidate.id),
-    geometryChanged: unexpected.includes(candidate.id),
+    previousBounds: beforeGeometry.get(candidate.id),
+    geometryChanged: geometryChanged(beforeGeometry.get(candidate.id), afterGeometry.get(candidate.id)),
   }));
 }
 function geometryRiskFor(entry, request, beforeGeometry, afterGeometry, effect) {
@@ -197,7 +221,9 @@ function geometryRiskFor(entry, request, beforeGeometry, afterGeometry, effect) 
     group: entryWithBounds(groupEntry, afterGeometry),
     parent: entryWithBounds(parentEntry, afterGeometry),
     editableArea: entryWithBounds(rootEntry, afterGeometry),
-    affectedNeighbors: sensibleNeighbors(entry, beforeGeometry, afterGeometry, effect.unexpected),
+    affectedNeighbors: collectM80GeometryNeighbors(entry, beforeGeometry, afterGeometry, effect.unexpected),
+    operation: request.operation,
+    groupWidthEditable: groupEntry?.allowedOps?.includes("resizeWidth") === true,
   });
 }
 function requestSignature(request) {
@@ -208,7 +234,7 @@ function confirmedRisk(request) {
   if (!confirmation || typeof confirmation !== "object") return null;
   const pending = pendingGeometryRisks.get(String(confirmation.operationId || ""));
   if (!pending || pending.signature !== requestSignature(request)) return null;
-  if (![RISK_ACTIONS.APPLY_ANYWAY, RISK_ACTIONS.CLAMP_TO_GROUP, RISK_ACTIONS.CLAMP_TO_AREA].includes(confirmation.action)) return null;
+  if (![RISK_ACTIONS.APPLY_ANYWAY, RISK_ACTIONS.CLAMP_TO_GROUP, RISK_ACTIONS.CLAMP_TO_AREA, RISK_ACTIONS.PRESERVE_SPACE, RISK_ACTIONS.REFLOW_NEIGHBORS, RISK_ACTIONS.SHRINK_GROUP].includes(confirmation.action)) return null;
   return { ...pending, action: confirmation.action };
 }
 function clampDesiredState(desired, risk, action) {
@@ -257,6 +283,10 @@ function renderGeometryRiskPreview(risk) {
   previewFrame(value, risk.preview.areaBounds, "border:3px dotted #0f766e;background:transparent", "Bereichsgrenze");
   risk.affectedNeighbors.filter((item) => item.overlapBounds).forEach((item) => previewFrame(value, item.overlapBounds,
     "border:4px double #b91c1c;background:repeating-linear-gradient(45deg,rgba(185,28,28,.28),rgba(185,28,28,.28) 5px,transparent 5px,transparent 10px)", `Überlappung mit ${item.displayName}`));
+  risk.affectedNeighbors.filter((item) => item.geometryChanged).forEach((item) => {
+    previewFrame(value, item.previousBounds, "border:2px dotted #475569;background:transparent", `Bisherige Position von ${item.displayName}`);
+    previewFrame(value, item.bounds, "border:2px dashed #c2410c;background:transparent", `Neue Position von ${item.displayName}`);
+  });
   value.style.display = "block";
   document.addEventListener("keydown", onRiskPreviewKey, true);
 }
@@ -270,6 +300,7 @@ function submitChange(changeRequest, scopeId) {
   if (!entry.allowedOps.includes(request.operation)) return failure(request, "electron_operation_not_allowed", "Operation ist nicht freigegeben.");
   const previous = snapshotM80State(entry.id);
   if (!previous) return failure(request, "electron_element_not_found", "Explizite Elementreferenz fehlt.");
+  let groupRestore = null;
   try {
     const beforeGeometry = snapshotM80Geometry();
     const ref = getM80Ref(entry.id);
@@ -279,9 +310,23 @@ function submitChange(changeRequest, scopeId) {
     }
     const confirmation = confirmedRisk(request);
     let desired = desiredState(previous, request.operation, request.payload);
-    if (confirmation && confirmation.action !== RISK_ACTIONS.APPLY_ANYWAY) desired = clampDesiredState(desired, confirmation.risk, confirmation.action);
+    if (confirmation && [RISK_ACTIONS.CLAMP_TO_GROUP, RISK_ACTIONS.CLAMP_TO_AREA].includes(confirmation.action)) desired = clampDesiredState(desired, confirmation.risk, confirmation.action);
+    if (confirmation?.action === RISK_ACTIONS.PRESERVE_SPACE || confirmation?.action === RISK_ACTIONS.SHRINK_GROUP) {
+      desired.spacing = { ...(desired.spacing || {}), reservedWidth: Number(desired.spacing?.reservedWidth || 0) + Number(confirmation.risk.technicalDetails?.freedWidth || 0) };
+    }
     const readback = applyM80State(entry.id, desired);
+    const affectedStates = [];
+    if (confirmation?.action === RISK_ACTIONS.SHRINK_GROUP) {
+      const groupEntry = ancestor(entry, (candidate) => ["group", "fieldGroup"].includes(candidate.type));
+      if (!groupEntry?.allowedOps?.includes("resizeWidth")) throw Object.assign(new Error("Die Breite dieser Gruppe kann nicht direkt verändert werden."), { code: "electron_operation_not_allowed" });
+      groupRestore = { id: groupEntry.id, state: snapshotM80State(groupEntry.id) };
+      affectedStates.push(applyM80State(groupEntry.id, { ...groupRestore.state, width: Math.max(groupEntry.baseline.minWidth || 1, groupRestore.state.width - Number(confirmation.risk.technicalDetails?.freedWidth || 0)) }));
+    }
     const afterGeometry = snapshotM80Geometry();
+    if (confirmation?.action === RISK_ACTIONS.PRESERVE_SPACE) {
+      const unexpectedLocal = [...beforeGeometry].filter(([id, before]) => id !== entry.id && geometryChanged(before, afterGeometry.get(id))).map(([id]) => id);
+      if (unexpectedLocal.length) throw Object.assign(new Error("Die Position weiterer Elemente würde sich unerwartet verändern."), { code: "electron_unexpected_layout_effect" });
+    }
     const affected = inspectGeometryEffect(entry, request.operation, beforeGeometry, afterGeometry);
     const interactive = request.source === "ui-editor-panel";
     const risk = interactive ? geometryRiskFor(entry, request, beforeGeometry, afterGeometry, affected) : null;
@@ -293,9 +338,10 @@ function submitChange(changeRequest, scopeId) {
     }
     clearGeometryRiskPreview();
     if (confirmation) pendingGeometryRisks.delete(confirmation.risk.operationId);
-    return { success: true, changeId: request.changeId, elementId: entry.id, operation: request.operation, effectScope: affected.effect, affectedElementIds: [...affected.ids], errorCode: null, message: "Layoutänderung angewandt, geometrisch geprüft und zurückgelesen.", previousState: previous, newState: readback, rollbackSucceeded: true };
+    return { success: true, changeId: request.changeId, elementId: entry.id, operation: request.operation, effectScope: affected.effect, affectedElementIds: [...affected.ids], affectedStates, errorCode: null, message: confirmation?.action === RISK_ACTIONS.PRESERVE_SPACE ? "Elementbreite geändert; frei gewordener Platz bleibt reserviert." : "Layoutänderung angewandt, geometrisch geprüft und zurückgelesen.", previousState: previous, newState: readback, rollbackSucceeded: true };
   } catch (error) {
     try {
+      if (groupRestore?.state) applyM80State(groupRestore.id, groupRestore.state);
       const restored = applyM80State(entry.id, previous);
       return failure(request, error?.code || "electron_change_apply_failed", `Layoutänderung wurde sicher abgewiesen und zurückgerollt: ${error?.message || "Unbekannte Geometrieverletzung."}`, restored, true);
     } catch (_rollbackError) {
@@ -322,7 +368,7 @@ export function createM80RegistrationDescriptor() {
   const registryScopes = listM80RegistryScopes().map((scope) => {
     if (scope.status !== "complete") return scope;
     const elements = scope.elements.map((entry) => {
-      const resolved = { ...entry, ...getM80ReferenceStatus(entry.id) };
+      const resolved = { ...entry, ...getM80ReferenceStatus(entry.id), capturedBaseline: capturedRuntimeBaseline(entry) };
       if (diagnosticRegistryRevision > 0 && entry.id === "restarbeiten.edit.validation") {
         return {
           ...resolved,
@@ -350,7 +396,7 @@ export function createM80RegistrationDescriptor() {
     registryVersion: BBM_M80_REGISTRY_VERSION + diagnosticRegistryRevision,
     registryStatus: BBM_M80_REGISTRY_STATUS,
     activeScopes,
-    supportedOperations: ["move", "resize", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility"],
+    supportedOperations: ["move", "resize", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility", "spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"],
     uiCapability: "layout",
     pdfCapability: "unavailable",
     labelFieldSeparation: true,
@@ -541,7 +587,7 @@ export function handleM80EditorRequest(request = {}) {
   }, request.scopeId) };
 }
 
-function startupRequests(scopeId, element, explicitOperations = null) {
+export function createM80StartupRequests(scopeId, element, explicitOperations = null) {
   const entry = getM80RegistryEntry(element.elementId);
   if (!entry) throw Object.assign(new Error("Startprofil enthält ein unbekanntes Element."), { code: "electron_element_not_found" });
   const current = snapshotM80State(entry.id);
@@ -567,6 +613,14 @@ function startupRequests(scopeId, element, explicitOperations = null) {
   if (Object.keys(text).length) push("textMove", { text });
   if (changed(element.fontSize, current.fontSize)) push("textResize", { text: { fontSize: element.fontSize } });
   if (present(element.visible) && Boolean(element.visible) !== current.visible) push("setVisibility", { visible: element.visible });
+  const desiredSpacing = element.spacing && typeof element.spacing === "object" && !Array.isArray(element.spacing) ? element.spacing : {};
+  for (const target of entry.spacingTargets || []) {
+    const desiredValue = Number(desiredSpacing[target] || 0);
+    const currentValue = Number(current.spacing?.[target] || 0);
+    if (Math.abs(desiredValue - currentValue) > 0.01 && entry.allowedOps.includes("spacingSet")) {
+      requests.push({ changeId: `startup-${requests.length + 1}-${entry.id}`, elementId: entry.id, operation: "spacingSet", payload: { spacing: { target, value: desiredValue } }, source: "target-app-start" });
+    }
+  }
   return requests.map((request) => ({ scopeId, request }));
 }
 
@@ -592,7 +646,7 @@ export function restoreM80StartupLayout() {
     try {
       for (const scope of loaded.scopes) {
         for (const element of scope.elements) {
-          for (const item of startupRequests(scope.scopeId, element, scope.explicitOperations)) {
+          for (const item of createM80StartupRequests(scope.scopeId, element, scope.explicitOperations)) {
             const result = submitChange(item.request, item.scopeId);
             if (!result.success) throw Object.assign(new Error(`${item.request.elementId}/${item.request.operation}: ${result.message}`), { code: result.errorCode || "startup_layout_apply_failed" });
           }
