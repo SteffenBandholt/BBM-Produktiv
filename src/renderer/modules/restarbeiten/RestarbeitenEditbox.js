@@ -5,7 +5,7 @@ import {
   getRestarbeitRequiredFieldSummary,
   normalizeRestarbeitStatus,
 } from "./domain/restarbeitenRules.js";
-import { registerM80Ref } from "../../ui-editor/m80Refs.js";
+import { registerM80FlowLabelRef, registerM80Ref } from "../../ui-editor/m80Refs.js";
 
 function createEl(tag, { className = "", text = "", uiId = "" } = {}) {
   const el = document.createElement(tag);
@@ -188,7 +188,9 @@ function createTextField({
   wrap.append(labelRow, input);
   registerM80Ref(editorGroupId, wrap);
   registerM80Ref(`${editorGroupId}.headerZone`, labelRow);
-  registerM80Ref(editorLabelId, labelElement);
+  if (editorGroupId === "restarbeiten.edit.short") {
+    registerM80FlowLabelRef(editorLabelId, labelElement, labelRow, "30px 24px minmax(92px, auto) auto");
+  } else registerM80Ref(editorLabelId, labelElement);
   registerM80Ref(editorFieldId, input);
   registerM80Ref(`${editorGroupId}.remaining`, remaining);
   registerM80Ref(`${editorGroupId}.dictation`, dictation);

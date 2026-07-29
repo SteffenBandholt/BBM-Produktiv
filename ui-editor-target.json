@@ -7,8 +7,8 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 4,
-  "registryFingerprint": "sha256:f53c95218c899854a10bcda691ccff22f50b4af3591018f1c87d3ae5d41b54c2",
+  "registryVersion": 5,
+  "registryFingerprint": "sha256:0ab12fdfe93a920f27d6842a5fd4e4f1ae0db3c296d4681355dabd0d8c6eeba0",
   "registryStatus": "incomplete",
   "activeScopes": [
     "restarbeiten.header.root",
@@ -25,7 +25,11 @@
     "resizeHeight",
     "textMove",
     "textResize",
-    "setVisibility"
+    "setVisibility",
+    "spacingIncrease",
+    "spacingDecrease",
+    "spacingSet",
+    "spacingReset"
   ],
   "selectionCapability": "bidirectional",
   "visibilityCapability": true,
