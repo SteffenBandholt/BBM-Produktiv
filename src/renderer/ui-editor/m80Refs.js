@@ -1,8 +1,14 @@
 import { getM80RegistryEntry, m80EditorAttributes } from "./m80Registry.js";
+import {
+  fitTableToViewport,
+  measureTableLayout,
+  normalizeTableLayout,
+} from "../../../node_modules/ui-editor-kit/dist/table-layout-contract.mjs";
 
 const refs = new Map();
 const elementIds = new WeakMap();
 const workingStates = new Map();
+const tableColumnRuntimeBindings = new Map();
 const HIDDEN_CLASS = "bbm-ui-editor-hidden";
 
 function finite(value, fallback = 0) { return Number.isFinite(Number(value)) ? Number(value) : fallback; }
@@ -23,6 +29,12 @@ function setCustomProperty(style, name, value) { if (typeof style?.setProperty =
 function getCustomProperty(style, name) { return typeof style?.getPropertyValue === "function" ? style.getPropertyValue(name) : style?.[name]; }
 function applyAttributes(target, id) {
   for (const [name, value] of Object.entries(m80EditorAttributes(id))) target.setAttribute(name, value);
+}
+function bindElementId(target, id) {
+  if (!isElementRef(target)) return;
+  const ids = elementIds.get(target) || new Set();
+  ids.add(id);
+  elementIds.set(target, ids);
 }
 function readSpacing(element) {
   try {
@@ -98,26 +110,30 @@ function applyGeneric(element, state, entry) {
 
 export function beginM80PilotRender() {
   refs.clear();
+  tableColumnRuntimeBindings.clear();
 }
 
 export function resetM80PilotWorkingStatesForDiagnostic() {
   refs.clear();
+  tableColumnRuntimeBindings.clear();
   workingStates.clear();
 }
 
 export function registerM80Ref(id, element, custom = {}) {
   const entry = getM80RegistryEntry(id);
   if (!entry || !isElementRef(element)) throw new Error(`Ungültige explizite M80-Referenz: ${id}`);
-  applyAttributes(element, id);
+  if (custom.applyPrimaryAttributes !== false) applyAttributes(element, id);
+  const targets = [...new Set([element, ...(Array.isArray(custom.targets) ? custom.targets : [])].filter(isElementRef))];
   const ref = {
     id,
     entry,
     element,
+    targets,
     read: custom.read || (() => readGeneric(element, id)),
     apply: custom.apply || ((state) => applyGeneric(element, state, entry)),
   };
   refs.set(id, ref);
-  elementIds.set(element, id);
+  targets.forEach((target) => bindElementId(target, id));
   if (workingStates.has(id)) ref.apply(workingStates.get(id));
   return element;
 }
@@ -135,31 +151,184 @@ export function completeM80PilotRender() {
   }
 }
 
-export function registerM80TableColumnRef(id, headerCell, tableElement, cssVariable, initialWidth) {
+function storedColumnState(tableElement, id, baseline) {
+  try {
+    const stored = JSON.parse(tableElement.dataset.uiEditorTableColumns || "{}")[id];
+    return stored && typeof stored === "object" ? { ...baseline, ...stored, tableId: baseline.tableId, columnId: id } : baseline;
+  } catch { return baseline; }
+}
+
+function writeColumnState(tableElement, id, value) {
+  let all = {};
+  try { all = JSON.parse(tableElement.dataset.uiEditorTableColumns || "{}"); } catch { all = {}; }
+  all[id] = value;
+  tableElement.dataset.uiEditorTableColumns = JSON.stringify(all);
+}
+
+function applyColumnTextMode(targets, tableState) {
+  for (const target of targets) {
+    const boundParts = [target, ...Array.from(target.children || [])];
+    for (const part of boundParts) {
+      const wrap = tableState.wrapMode;
+      part.style.whiteSpace = ["noWrap", "ellipsis"].includes(wrap) ? "nowrap" : "normal";
+      part.style.overflowWrap = wrap === "characterWrap" ? "anywhere" : wrap === "wordWrap" ? "break-word" : "normal";
+      const overflow = tableState.overflowMode;
+      part.style.overflow = overflow === "visible" ? "visible" : overflow === "scroll" ? "auto" : "hidden";
+      part.style.textOverflow = wrap === "ellipsis" || overflow === "ellipsis" ? "ellipsis" : "clip";
+    }
+  }
+}
+
+export function registerM80TableColumnRef(id, headerCell, dataCells, tableElement, viewportElement, cssVariable, initialWidth) {
   const entry = getM80RegistryEntry(id);
-  return registerM80Ref(id, headerCell, {
+  const layout = entry.tableColumnLayout;
+  const targets = [headerCell, ...(Array.isArray(dataCells) ? dataCells : [])];
+  tableColumnRuntimeBindings.set(id, { entry, headerCell, tableElement, viewportElement, cssVariable, initialWidth });
+  const baselineTable = {
+    tableId: entry.tableBinding.tableId, columnId: id, widthMode: layout.widthMode,
+    wrapMode: layout.wrapMode, overflowMode: layout.overflowMode,
+  };
+  registerM80Ref(id, headerCell, {
+    targets,
     read: () => {
       const style = styleOf(headerCell);
       const rect = rectOf(headerCell);
-      const width = positive(parseFloat(getCustomProperty(tableElement.style, cssVariable)), positive(rect.width, initialWidth));
+      const table = storedColumnState(tableElement, id, baselineTable);
+      const configured = parseFloat(getCustomProperty(tableElement.style, cssVariable));
+      const width = positive(configured, positive(rect.width, initialWidth));
+      const metrics = runtimeTableMetrics(entry.tableBinding.tableId, tableElement, viewportElement);
       return {
         elementId: id, x: 0, y: 0, width, height: positive(rect.height, 1),
         textOffsetX: finite(headerCell.dataset.uiEditorTextX, finite(parseFloat(style.paddingLeft))),
         textOffsetY: finite(headerCell.dataset.uiEditorTextY, finite(parseFloat(style.paddingTop))),
         fontSize: positive(parseFloat(style.fontSize), 12), visible: !hasClass(headerCell, HIDDEN_CLASS),
+        table: { ...table, ...metrics },
       };
     },
     apply: (state) => {
-      setCustomProperty(tableElement.style, cssVariable, px(bounded(entry, "width", state.width, initialWidth)));
+      const table = { ...baselineTable, ...(state.table || {}) };
+      const width = bounded(entry, "width", state.width, initialWidth);
+      const widthValue = table.widthMode === "proportional"
+        ? `minmax(${px(layout.minimumWidth)}, 1fr)`
+        : table.widthMode === "auto" ? `minmax(${px(layout.minimumWidth)}, max-content)` : px(width);
+      setCustomProperty(tableElement.style, cssVariable, widthValue);
+      writeColumnState(tableElement, id, table);
       headerCell.dataset.uiEditorTextX = String(finite(state.textOffsetX));
       headerCell.dataset.uiEditorTextY = String(finite(state.textOffsetY));
       headerCell.style.paddingLeft = px(Math.max(0, finite(state.textOffsetX)));
       headerCell.style.paddingTop = px(Math.max(0, finite(state.textOffsetY)));
       headerCell.style.fontSize = px(positive(state.fontSize, 1));
+      applyColumnTextMode(targets, table);
       toggleClass(tableElement, `${HIDDEN_CLASS}-${id.split(".").pop()}`, state.visible === false);
-      toggleClass(headerCell, HIDDEN_CLASS, state.visible === false);
+      targets.forEach((target) => toggleClass(target, HIDDEN_CLASS, state.visible === false));
     },
   });
+  registerM80Ref(layout.headerElementId, headerCell, { targets: [headerCell] });
+  registerM80Ref(layout.dataCellTemplateId, dataCells?.[0] || viewportElement, {
+    targets: dataCells,
+    applyPrimaryAttributes: Boolean(dataCells?.length),
+  });
+  return headerCell;
+}
+
+function runtimeTableMetrics(tableId, tableElement, viewportElement) {
+  const tableEntry = getM80RegistryEntry(tableId);
+  if (!tableEntry?.tableLayout) return {};
+  const tableRect = rectOf(tableElement);
+  const viewportRect = rectOf(viewportElement);
+  const columns = tableEntry.tableLayout.columns.map((column) => {
+    const binding = tableColumnRuntimeBindings.get(column.columnId);
+    const columnState = storedColumnState(tableElement, column.columnId, column);
+    return {
+      ...column,
+      currentWidth: positive(rectOf(binding?.headerCell || {}).width, binding?.initialWidth || column.currentWidth),
+      widthMode: columnState.widthMode || column.widthMode,
+      wrapMode: columnState.wrapMode || column.wrapMode,
+      overflowMode: columnState.overflowMode || column.overflowMode,
+      visibility: binding?.headerCell ? !hasClass(binding.headerCell, HIDDEN_CLASS) : column.visibility,
+    };
+  });
+  const layout = normalizeTableLayout({
+    ...tableEntry.tableLayout,
+    bounds: { left: tableRect.left, top: tableRect.top, width: tableRect.width, height: tableRect.height },
+    viewportBounds: { left: viewportRect.left, top: viewportRect.top, width: viewportRect.width, height: viewportRect.height },
+    contentBounds: { left: tableRect.left, top: tableRect.top, width: Math.max(finite(tableElement.scrollWidth), columns.filter((column) => column.visibility).reduce((sum, column) => sum + column.currentWidth, tableEntry.tableLayout.reservedWidth)), height: Math.max(tableRect.height, finite(tableElement.scrollHeight)) },
+    columns,
+  });
+  const metrics = measureTableLayout(layout);
+  return {
+    viewportWidth: metrics.viewportWidth,
+    tableWidth: metrics.tableWidth,
+    overflow: metrics.overflow,
+    overflowColumnIds: [...metrics.overflowColumnIds],
+  };
+}
+
+function runtimeTableLayout(entry, tableElement, viewportElement) {
+  const tableRect = rectOf(tableElement);
+  const viewportRect = rectOf(viewportElement);
+  const columns = entry.tableLayout.columns.map((column) => {
+    const state = getM80Ref(column.columnId)?.read();
+    return { ...column, currentWidth: positive(state?.width, column.currentWidth), widthMode: state?.table?.widthMode || column.widthMode, wrapMode: state?.table?.wrapMode || column.wrapMode, overflowMode: state?.table?.overflowMode || column.overflowMode, visibility: state?.visible !== false };
+  });
+  return normalizeTableLayout({
+    ...entry.tableLayout,
+    bounds: { left: tableRect.left, top: tableRect.top, width: tableRect.width, height: tableRect.height },
+    viewportBounds: { left: viewportRect.left, top: viewportRect.top, width: viewportRect.width, height: viewportRect.height },
+    contentBounds: { left: tableRect.left, top: tableRect.top, width: Math.max(finite(tableElement.scrollWidth), columns.filter((column) => column.visibility).reduce((sum, column) => sum + column.currentWidth, entry.tableLayout.reservedWidth)), height: Math.max(tableRect.height, finite(tableElement.scrollHeight)) },
+    horizontalOverflowMode: tableElement.dataset.uiEditorHorizontalOverflowMode || entry.tableLayout.horizontalOverflowMode,
+    rowHeightMode: tableElement.dataset.uiEditorRowHeightMode || entry.tableLayout.rowHeightMode,
+    columns,
+  });
+}
+
+export function registerM80TableRef(id, tableElement, viewportElement, scrollAreaElement) {
+  const entry = getM80RegistryEntry(id);
+  return registerM80Ref(id, tableElement, {
+    read: () => {
+      const generic = readGeneric(tableElement, id);
+      const layout = runtimeTableLayout(entry, tableElement, viewportElement);
+      const metrics = measureTableLayout(layout);
+      return { ...generic, table: { tableId: id, horizontalOverflowMode: layout.horizontalOverflowMode, rowHeightMode: layout.rowHeightMode, viewportWidth: metrics.viewportWidth, tableWidth: metrics.tableWidth, overflow: metrics.overflow, overflowColumnIds: [...metrics.overflowColumnIds] } };
+    },
+    apply: (state) => {
+      applyGeneric(tableElement, state, entry);
+      const table = state.table || {};
+      const horizontal = table.horizontalOverflowMode || entry.tableLayout.horizontalOverflowMode;
+      const rowHeight = table.rowHeightMode || entry.tableLayout.rowHeightMode;
+      tableElement.dataset.uiEditorHorizontalOverflowMode = horizontal;
+      tableElement.dataset.uiEditorRowHeightMode = rowHeight;
+      scrollAreaElement.style.overflowX = horizontal === "scroll" ? "scroll" : horizontal === "none" || horizontal === "fitViewport" ? "hidden" : "auto";
+      tableElement.style.maxWidth = horizontal === "fitViewport" ? "100%" : "none";
+    },
+  });
+}
+
+export function fitM80Table(id, selectedColumnId = "") {
+  const entry = getM80RegistryEntry(id);
+  const ref = getM80Ref(id);
+  if (!entry?.tableLayout || !ref) throw Object.assign(new Error("Tabellenreferenz fehlt."), { code: "electron_element_not_found" });
+  const layout = runtimeTableLayout(entry, ref.element, getM80Ref("restarbeiten.list.viewport")?.element || ref.element);
+  const result = fitTableToViewport(layout, selectedColumnId ? { selectedColumnId } : {});
+  if (!result.ok) throw Object.assign(new Error("Tabelle kann nicht an den sichtbaren Bereich angepasst werden."), { code: "electron_invalid_geometry" });
+  const affectedStates = [];
+  for (const column of result.model.columns) {
+    const current = snapshotM80State(column.columnId);
+    affectedStates.push(applyM80State(column.columnId, { ...current, width: column.currentWidth, table: { ...current.table, widthMode: column.widthMode } }));
+  }
+  return { result, affectedStates };
+}
+
+export function resetM80Table(id) {
+  const entry = getM80RegistryEntry(id);
+  const affectedStates = [];
+  for (const column of entry?.tableLayout?.columns || []) {
+    const current = snapshotM80State(column.columnId);
+    affectedStates.push(applyM80State(column.columnId, { ...current, width: column.currentWidth, visible: column.visibility, table: { tableId: id, columnId: column.columnId, widthMode: column.widthMode, wrapMode: column.wrapMode, overflowMode: column.overflowMode } }));
+  }
+  const current = snapshotM80State(id);
+  const newState = applyM80State(id, { ...current, table: { tableId: id, horizontalOverflowMode: entry.tableLayout.horizontalOverflowMode, rowHeightMode: entry.tableLayout.rowHeightMode } });
+  return { newState, affectedStates };
 }
 
 export function registerM80FlowLabelRef(id, element, layoutRow, trailingColumns) {
@@ -203,13 +372,16 @@ export function snapshotM80Geometry() {
   }));
 }
 export function getM80IdFromTarget(target) {
+  return getM80IdsFromTarget(target)[0] || null;
+}
+export function getM80IdsFromTarget(target) {
   let current = isElementRef(target) ? target : null;
   while (current) {
-    const id = elementIds.get(current);
-    if (id) return id;
+    const ids = elementIds.get(current);
+    if (ids?.size) return [...ids];
     current = current.parentElement;
   }
-  return null;
+  return [];
 }
 export function readM80State(id) {
   const ref = getM80Ref(id);

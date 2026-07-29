@@ -47,8 +47,8 @@ async function runM823BbmSpacerCompactUiTests(run) {
     groupWidthEditable,
   });
 
-  await run("M82.3 BBM 01: Registryversion 5 ist aktiv", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 5));
-  await run("M82.3 BBM 02: Manifest folgt Registry und Fingerprint", () => { assert.equal(manifest.registryVersion, 5); assert.equal(manifest.registryFingerprint, createRegistryFingerprint(scopes)); });
+  await run("M82.3 BBM 01: Registryversion bleibt konsistent", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 6));
+  await run("M82.3 BBM 02: Manifest folgt Registry und Fingerprint", () => { assert.equal(manifest.registryVersion, registry.BBM_M80_REGISTRY_VERSION); assert.equal(manifest.registryFingerprint, createRegistryFingerprint(scopes)); });
   await run("M82.3 BBM 03: Kurztextbezeichnung besitzt reservierte Breite", () => assert.deepEqual(label.baseline.spacing, { reservedWidth: 40 }));
   await run("M82.3 BBM 04: Kurztextbezeichnung erlaubt Spacer davor und danach", () => assert.deepEqual(label.spacingTargets, ["beforeElement", "afterElement", "reservedWidth"]));
   await run("M82.3 BBM 05: Gruppenbreite ist getrennt freigegeben und nutzt die responsive Laufzeitbaseline", () => { assert.ok(group.allowedOps.includes("resizeWidth")); assert.equal(group.baseline.width, null); });
@@ -77,7 +77,7 @@ async function runM823BbmSpacerCompactUiTests(run) {
   await run("M82.3 BBM 20: lokaler Stabilitätsguard rollt unerwartete Änderungen zurück", () => assert.match(host, /electron_unexpected_layout_effect[\s\S]*unerwartet verändern/));
   await run("M82.3 BBM 21: Gruppe wird beim Fehler ebenfalls zurückgerollt", () => assert.match(host, /groupRestore\?\.state[\s\S]*applyM80State\(groupRestore\.id/));
   await run("M82.3 BBM 22: Start-Restore bleibt derselbe Profilweg", () => assert.match(host, /restoreM80StartupLayout/));
-  await run("M82.3 BBM 23: Manifest veröffentlicht alle vier Spacingoperationen", () => assert.deepEqual(manifest.supportedOperations.slice(-4), ["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"]));
+  await run("M82.3 BBM 23: Manifest veröffentlicht alle vier Spacingoperationen", () => assert.deepEqual(manifest.supportedOperations.filter((operation) => operation.startsWith("spacing")), ["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"]));
   await run("M82.3 BBM 24: kompakter UI-Workspace hat Ein-Zwei-Drei-Modus", () => assert.match(compactCode, /width < 860 \? 1 : width < 1260 \? 2 : 3/));
   await run("M82.3 BBM 25: feste Aktionen liegen vor den adaptiven Spalten", () => assert.ok(compactXaml.indexOf("Nächstes Element auswählen") < compactXaml.indexOf("AdaptiveColumns")));
   await run("M82.3 BBM 26: Baum scrollt intern", () => assert.match(compactXaml, /CompactElementTree[\s\S]*VerticalScrollBarVisibility="Auto"/));

@@ -68,7 +68,7 @@ async function runM822BbmGeometryRiskTests(run) {
   await run("M82.2 BBM 32: genau eine gemeinsame Risikovertragsdatei wird importiert", () => { assert.match(host, /ui-editor-kit\/dist\/geometry-risk-contract\.mjs/); assert.doesNotMatch(read("../UI-Editor-kit/src/core/geometry-risk-contract.cjs"), /restarbeiten\.|bbm\./i); });
   await run("M82.2 BBM 33: docs/licensing.md bleibt hashgleich", () => assert.equal(crypto.createHash("sha256").update(fs.readFileSync(path.join(ROOT, "docs/licensing.md"))).digest("hex").toUpperCase(), "02AE66A8873C74869539F13F734B7CE43BC63B6EF37DA553A40C27A4F514D784"));
   await run("M82.2 BBM 34: Start- und Restorepfade öffnen keinen interaktiven Risikodialog", () => {
-    assert.match(host, /const interactive = request\.source === "ui-editor-panel";\s*const risk = interactive \? geometryRiskFor/);
+    assert.match(host, /const interactive = request\.source === "ui-editor-panel";[\s\S]*const risk = interactive && !usesValidatedTableGeometry/);
     assert.match(host, /source: "target-app-start"/);
   });
   await run("M82.2 BBM 35: Pack enthält das bestehende Ziel-App-Manifest", () => {

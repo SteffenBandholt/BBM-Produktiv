@@ -142,7 +142,7 @@ async function runM80ElectronUiEditorTests(run) {
     assert.deepEqual(columns.map((entry) => entry.name), [
       "Nr. / Datum / Klasse / Fotos",
       "Gegenstand – Verortung / Kurztext / Langtext",
-      "Status-Metaspalte – Fertig bis / Ampel / Status / Verantwortlich",
+      "Fertig bis / Ampel / Status / Verantwortlich",
     ]);
     assert.equal(columns[2].columnRole, "metaColumn");
   });
