@@ -13,6 +13,7 @@ const refs = new Map();
 const elementIds = new WeakMap();
 const workingStates = new Map();
 const persistentWorkingStateIds = new Set();
+const persistentWorkingStateOperations = new Map();
 const tableColumnRuntimeBindings = new Map();
 const tableRuntimeBindings = new Map();
 const HIDDEN_CLASS = "bbm-ui-editor-hidden";
@@ -131,31 +132,33 @@ function bounded(entry, field, value, fallback) {
   return clamp(positive(value, fallback), positive(baseline[`min${capitalized}`], 1), positive(baseline[`max${capitalized}`], Number.MAX_SAFE_INTEGER));
 }
 
-function applyGeneric(element, state, entry) {
+function applyGeneric(element, state, entry, requestedOperation = null) {
   const operations = new Set(entry.allowedOps);
-  if (operations.has("move")) {
+  const applies = (...candidates) => requestedOperation === null || candidates.includes(requestedOperation);
+  if (operations.has("move") && applies("move")) {
     element.dataset.uiEditorX = String(finite(state.x));
     element.dataset.uiEditorY = String(finite(state.y));
     element.style.translate = `${px(state.x)} ${px(state.y)}`;
   }
-  if (operations.has("resize") || operations.has("resizeWidth")) {
+  if ((operations.has("resize") || operations.has("resizeWidth")) && applies("resize", "resizeWidth")) {
     const desiredWidth = bounded(entry, "width", state.width, 1);
     const horizontalPadding = finite(state.spacing?.groupPaddingLeft) + finite(state.spacing?.groupPaddingRight);
     const contentWidth = styleOf(element).boxSizing === "border-box" ? desiredWidth : Math.max(1, desiredWidth - horizontalPadding);
     element.style.width = px(contentWidth);
   }
-  if (operations.has("resize") || operations.has("resizeHeight")) element.style.height = px(bounded(entry, "height", state.height, 1));
-  if (operations.has("textMove") && state.textOffsetX !== null && state.textOffsetX !== undefined) {
+  if ((operations.has("resize") || operations.has("resizeHeight")) && applies("resize", "resizeHeight")) element.style.height = px(bounded(entry, "height", state.height, 1));
+  if (operations.has("textMove") && applies("textMove") && state.textOffsetX !== null && state.textOffsetX !== undefined) {
     element.dataset.uiEditorTextX = String(state.textOffsetX);
     element.style.paddingLeft = px(Math.max(0, finite(state.textOffsetX)));
   }
-  if (operations.has("textMove") && state.textOffsetY !== null && state.textOffsetY !== undefined) {
+  if (operations.has("textMove") && applies("textMove") && state.textOffsetY !== null && state.textOffsetY !== undefined) {
     element.dataset.uiEditorTextY = String(state.textOffsetY);
     element.style.paddingTop = px(Math.max(0, finite(state.textOffsetY)));
   }
-  if (operations.has("textResize") && state.fontSize !== null && state.fontSize !== undefined) element.style.fontSize = px(positive(state.fontSize, 1));
-  if (operations.has("setVisibility")) toggleClass(element, HIDDEN_CLASS, state.visible === false);
-  if (["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"].some((operation) => operations.has(operation))) {
+  if (operations.has("textResize") && applies("textResize") && state.fontSize !== null && state.fontSize !== undefined) element.style.fontSize = px(positive(state.fontSize, 1));
+  if (operations.has("setVisibility") && applies("setVisibility")) toggleClass(element, HIDDEN_CLASS, state.visible === false);
+  const spacingOperations = ["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"];
+  if (spacingOperations.some((operation) => operations.has(operation)) && applies(...spacingOperations)) {
     const spacing = writeSpacing(element, state.spacing || {});
     element.style.marginLeft = px(finite(spacing.beforeElement));
     element.style.marginRight = px(finite(spacing.afterElement) + finite(spacing.reservedWidth));
@@ -180,6 +183,14 @@ export function resetM80PilotWorkingStatesForDiagnostic() {
   tableRuntimeBindings.clear();
   workingStates.clear();
   persistentWorkingStateIds.clear();
+  persistentWorkingStateOperations.clear();
+}
+
+function applyPersistentWorkingState(ref) {
+  const state = workingStates.get(ref.id);
+  const requestedOperations = persistentWorkingStateOperations.get(ref.id);
+  if (!requestedOperations?.size || requestedOperations.has("*")) ref.apply(state);
+  else for (const operation of requestedOperations) ref.apply(state, operation);
 }
 
 export function registerM80Ref(id, element, custom = {}) {
@@ -193,18 +204,18 @@ export function registerM80Ref(id, element, custom = {}) {
     element,
     targets,
     read: custom.read || (() => readGeneric(element, id)),
-    apply: custom.apply || ((state) => applyGeneric(element, state, entry)),
+    apply: custom.apply || ((state, requestedOperation = null) => applyGeneric(element, state, entry, requestedOperation)),
   };
   refs.set(id, ref);
   targets.forEach((target) => bindElementId(target, id));
-  if (persistentWorkingStateIds.has(id) && workingStates.has(id)) ref.apply(workingStates.get(id));
+  if (persistentWorkingStateIds.has(id) && workingStates.has(id)) applyPersistentWorkingState(ref);
   return element;
 }
 
 export function completeM80PilotRender() {
   for (const ref of refs.values()) {
     if (typeof ref.element.isConnected === "boolean" && !ref.element.isConnected) continue;
-    if (persistentWorkingStateIds.has(ref.id) && workingStates.has(ref.id)) ref.apply(workingStates.get(ref.id));
+    if (persistentWorkingStateIds.has(ref.id) && workingStates.has(ref.id)) applyPersistentWorkingState(ref);
     const current = ref.read();
     if (!persistentWorkingStateIds.has(ref.id)) workingStates.set(ref.id, { ...current });
   }
@@ -451,12 +462,16 @@ export function readM80State(id) {
   workingStates.set(id, { ...state });
   return { ...state };
 }
-export function applyM80State(id, state) {
+export function applyM80State(id, state, requestedOperation = null) {
   const ref = getM80Ref(id);
   if (!ref) throw Object.assign(new Error("Explizite Elementreferenz fehlt."), { code: "electron_element_not_found" });
-  ref.apply(state);
+  ref.apply(state, requestedOperation);
   const readback = ref.read();
   persistentWorkingStateIds.add(id);
+  const operations = persistentWorkingStateOperations.get(id) || new Set();
+  if (typeof requestedOperation === "string" && requestedOperation) operations.add(requestedOperation);
+  else operations.add("*");
+  persistentWorkingStateOperations.set(id, operations);
   workingStates.set(id, { ...readback });
   return { ...readback };
 }

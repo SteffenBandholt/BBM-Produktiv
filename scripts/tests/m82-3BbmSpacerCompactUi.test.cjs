@@ -47,7 +47,7 @@ async function runM823BbmSpacerCompactUiTests(run) {
     groupWidthEditable,
   });
 
-  await run("M82.3 BBM 01: Registryversion bleibt konsistent", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 10));
+  await run("M82.3 BBM 01: Registryversion bleibt konsistent", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 11));
   await run("M82.3 BBM 02: Manifest folgt Registry und Fingerprint", () => { assert.equal(manifest.registryVersion, registry.BBM_M80_REGISTRY_VERSION); assert.equal(manifest.registryFingerprint, createRegistryFingerprint(scopes)); });
   await run("M82.3 BBM 03: Kurztextbezeichnung besitzt reservierte Breite", () => assert.deepEqual(label.baseline.spacing, { reservedWidth: 40 }));
   await run("M82.3 BBM 04: Kurztextbezeichnung erlaubt Spacer davor und danach", () => assert.deepEqual(label.spacingTargets, ["beforeElement", "afterElement", "reservedWidth"]));

@@ -362,7 +362,7 @@ function submitChange(changeRequest, scopeId) {
       const baseline = entry.tableColumnLayout;
       readback = applyM80State(entry.id, { ...previous, width: baseline.currentWidth, visible: baseline.visibility, table: { tableId: entry.tableBinding.tableId, columnId: entry.id, widthMode: baseline.widthMode, wrapMode: baseline.wrapMode, overflowMode: baseline.overflowMode } });
     } else {
-      readback = applyM80State(entry.id, desired);
+      readback = applyM80State(entry.id, desired, request.operation);
     }
     if (confirmation?.action === RISK_ACTIONS.SHRINK_GROUP) {
       const groupEntry = ancestor(entry, (candidate) => ["group", "fieldGroup"].includes(candidate.type));

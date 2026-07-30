@@ -1,5 +1,14 @@
 # STATUS.md — BBM-Produktiv
 
+### M82.7.1 – Willkürliche Verschiebegrenze entfernen
+
+- Status: `[A] abgenommen`; gezielte Reparatur, Pflichtprüfungen und sichtbare isolierte Diagnostic-Abnahme sind abgeschlossen.
+- Die beiden vorhandenen Restzeichenanzeigen behalten Refs, Parents, Capabilities und Topologie. Die frühere elementbezogene ±12-Pixel-Grenze ist entfernt; wiederholte Schritte und direkte X-/Y-Werte wirken kumulativ bis zur weiterhin verbindlichen technischen Persistenzgrenze von ±2400 Pixeln.
+- Der HostAdapter wendet bei einer einzelnen Operation nur deren ausdrücklich geänderte Werte an. Eine reine Verschiebung schreibt dadurch keine vorläufig gemessene Schriftbaseline fest.
+- Abgelehnte oder unveränderte Aktionen erzeugen keinen zusätzlichen Dirty-/Undo-Eintrag. Der gemeinsame Manager zeigt die konkrete technische Grenze beziehungsweise den unveränderten Zustand verständlich an.
+- Die sichtbare Diagnostic-Abnahme belegte beide Anzeigen, 5-/10-Pixel-Schritte, Direktwerte, Undo, Save, Neustart-Restore, Reset, unveränderten Listenscroll und die vorhandene HTML-Ausgabevorschau. Für die Protokoll-Regression wurde ausschließlich in einer zweiten isolierten Testdatenbank ein minimales Diagnoseprojekt mit leerem Diagnoseprotokoll angelegt; der echte TopScreen blieb strukturell unverändert. Benutzer- und Produktivdaten wurden nicht verwendet.
+- Detaildokument: `docs/M82_7_1_BBM_FREIES_VERSCHIEBEN.md`.
+
 ### M82.7 – Restzeichenanzeigen wirksam feintunen
 
 - Status: `[A] abgenommen`; Implementierung, Pflichtprüfungen und sichtbare isolierte Diagnostic-Abnahme sind abgeschlossen.
