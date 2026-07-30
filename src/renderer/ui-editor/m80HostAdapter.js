@@ -76,13 +76,17 @@ function number(value, field, { positive = false, nonNegative = false } = {}) {
   return result;
 }
 
-function desiredState(previous, operation, payload) {
+function desiredState(previous, entry, operation, payload) {
   const next = { ...previous, spacing: { ...(previous.spacing || {}) } };
   if (!payload || typeof payload !== "object" || Array.isArray(payload) || hasForbidden(payload)) throw Object.assign(new Error("Layout-Payload ist ungültig."), { code: "electron_editor_message_invalid" });
   if (operation === "move") {
     const keys = Object.keys(payload); if (!keys.length || keys.some((key) => !["x", "y"].includes(key))) throw new Error("move-Payload ist ungültig.");
     if (Object.hasOwn(payload, "x")) next.x = number(payload.x, "x");
     if (Object.hasOwn(payload, "y")) next.y = number(payload.y, "y");
+    const maximumStoredOffset = Number(entry?.geometry?.maximumStoredOffset);
+    if (Number.isFinite(maximumStoredOffset) && [next.x, next.y].some((value) => Math.abs(value) > maximumStoredOffset)) {
+      throw Object.assign(new Error(`Verschiebung muss innerhalb von ±${maximumStoredOffset} DIP bleiben.`), { code: "electron_editor_message_invalid" });
+    }
   } else if (operation === "resize") {
     const keys = Object.keys(payload); if (!keys.length || keys.some((key) => !["width", "height"].includes(key))) throw new Error("resize-Payload ist ungültig.");
     if (Object.hasOwn(payload, "width")) next.width = number(payload.width, "width", { positive: true });
@@ -102,6 +106,11 @@ function desiredState(previous, operation, payload) {
   } else if (operation === "textResize") {
     if (Object.keys(payload).length !== 1 || !payload.text || Object.keys(payload.text).length !== 1 || !Object.hasOwn(payload.text, "fontSize")) throw new Error("textResize-Payload ist ungültig.");
     next.fontSize = number(payload.text.fontSize, "fontSize", { positive: true });
+    const minimum = Number(entry?.baseline?.minFontSize);
+    const maximum = Number(entry?.baseline?.maxFontSize);
+    if ((Number.isFinite(minimum) && next.fontSize < minimum) || (Number.isFinite(maximum) && next.fontSize > maximum)) {
+      throw Object.assign(new Error("Schriftgröße liegt außerhalb der freigegebenen Ziel-App-Grenzen."), { code: "electron_editor_message_invalid" });
+    }
   } else if (operation === "setVisibility") {
     if (Object.keys(payload).length !== 1 || typeof payload.visible !== "boolean") throw new Error("setVisibility-Payload ist ungültig.");
     next.visible = payload.visible;
@@ -330,7 +339,7 @@ function submitChange(changeRequest, scopeId) {
       throw Object.assign(new Error("Kontrollierter Diagnosefehler."), { code: "electron_change_apply_failed" });
     }
     const confirmation = confirmedRisk(request);
-    let desired = desiredState(previous, request.operation, request.payload);
+    let desired = desiredState(previous, entry, request.operation, request.payload);
     if (confirmation && [RISK_ACTIONS.CLAMP_TO_GROUP, RISK_ACTIONS.CLAMP_TO_AREA].includes(confirmation.action)) desired = clampDesiredState(desired, confirmation.risk, confirmation.action);
     if (confirmation?.action === RISK_ACTIONS.PRESERVE_SPACE || confirmation?.action === RISK_ACTIONS.SHRINK_GROUP) {
       desired.spacing = { ...(desired.spacing || {}), reservedWidth: Number(desired.spacing?.reservedWidth || 0) + Number(confirmation.risk.technicalDetails?.freedWidth || 0) };
