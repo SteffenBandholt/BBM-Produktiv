@@ -53,7 +53,10 @@ async function runM827RemainingIndicatorTests(run) {
   await run("M82.7 BBM 03: Breite und Hoehe bleiben fuer beide Anzeigen gesperrt", () => IDS.forEach((id) => { assert.equal(byId.get(id).allowedOps.includes("resizeWidth"), false); assert.equal(byId.get(id).allowedOps.includes("resizeHeight"), false); }));
   await run("M82.7 BBM 04: produktive CSS-Schriftgroesse ist als Pixelbaseline abgebildet", () => IDS.forEach((id) => assert.equal(byId.get(id).baseline.fontSize, 8.667)));
   await run("M82.7 BBM 05: Schriftgrenzen passen in die vorhandene 30-px-Kopfspalte", () => IDS.forEach((id) => assert.deepEqual([byId.get(id).baseline.minFontSize, byId.get(id).baseline.maxFontSize], [6, 10])));
-  await run("M82.7 BBM 06: Verschiebung bleibt innerhalb der vorhandenen Kopfzeile begrenzt", () => IDS.forEach((id) => assert.deepEqual(byId.get(id).geometry, { maximumOffset: 12, maximumStoredOffset: 12 })));
+  await run("M82.7.1 BBM 06: Restzeichenanzeigen verwenden nur die allgemeine technische Speichergrenze", () => IDS.forEach((id) => {
+    assert.deepEqual(byId.get(id).geometry, { maximumStoredOffset: 2400 });
+    assert.equal(Object.hasOwn(byId.get(id).geometry, "maximumOffset"), false);
+  }));
   await run("M82.7 BBM 07: Parent-Zuordnungen bleiben unveraendert", () => { assert.equal(byId.get(IDS[0]).parentId, "restarbeiten.edit.short.headerZone"); assert.equal(byId.get(IDS[1]).parentId, "restarbeiten.edit.long.headerZone"); });
   await run("M82.7 BBM 08: vorhandene Spans werden ohne neuen DOM-Knoten registriert", () => { assert.match(editboxSource, /registerM80Ref\(`\$\{editorGroupId\}\.remaining`, remaining\)/); assert.doesNotMatch(editboxSource.slice(editboxSource.indexOf("registerM80Ref(`${editorGroupId}.remaining`")), /createElement/); });
   await run("M82.7 BBM 09: Zeichenlimits bleiben 87 und 400", () => { assert.match(editboxSource, /maxLength:\s*87/); assert.match(editboxSource, /maxLength:\s*400/); });
@@ -111,7 +114,52 @@ async function runM827RemainingIndicatorTests(run) {
     await run("M82.7 BBM 24: Nachbarelemente erhalten weder Transform noch Schriftstil", () => { assert.equal(nodes.get("restarbeiten.edit.short.dictation").style.translate || "", ""); assert.equal(nodes.get("restarbeiten.edit.class").style.fontSize || "", ""); });
     await run("M82.7 BBM 25: keine Scroll- oder Fachoperation wurde freigegeben", () => IDS.forEach((id) => byId.get(id).allowedOps.forEach((operation) => assert.equal(["move", "textResize", "setVisibility"].includes(operation), true))));
     await run("M82.7 BBM 26: Schriftgroessen ausserhalb der CSS-Grenzen werden sicher abgewiesen", () => { const result = host.handleM80EditorRequest({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "m827-font-limit", elementId: IDS[0], operation: "textResize", payload: { text: { fontSize: 11 } }, source: "m82-7-test" } }).changeResult; assert.equal(result.success, false); assert.equal(result.rollbackSucceeded, true); });
-    await run("M82.7 BBM 27: Offset ausserhalb der Kopfzeilengrenze wird sicher abgewiesen", () => { const result = host.handleM80EditorRequest({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "m827-move-limit", elementId: IDS[0], operation: "move", payload: { x: -13 }, source: "m82-7-test" } }).changeResult; assert.equal(result.success, false); assert.equal(result.rollbackSucceeded, true); });
+    const submitMove = (elementId, payload, changeId) => host.handleM80EditorRequest({
+      action: "submitChange", scopeId: "restarbeiten.edit.root",
+      changeRequest: { changeId, elementId, operation: "move", payload, source: "m82-7-1-test" },
+    }).changeResult;
+    const resetRemaining = (elementId) => refs.applyM80State(elementId, { ...refs.snapshotM80State(elementId), ...byId.get(elementId).baseline });
+    const moveRepeatedly = (elementId, axis, step, count, prefix) => {
+      for (let index = 0; index < count; index += 1) {
+        const current = refs.snapshotM80State(elementId);
+        const result = submitMove(elementId, { [axis]: current[axis] + step }, `${prefix}-${index + 1}`);
+        assert.equal(result.success, true, result.message);
+      }
+      return refs.snapshotM80State(elementId);
+    };
+
+    await run("M82.7.1 BBM 27: zehn 5-DIP-Schritte nach links werden zu minus 50 kumuliert", () => { resetRemaining(IDS[0]); assert.equal(moveRepeatedly(IDS[0], "x", -5, 10, "short-left").x, -50); });
+    await run("M82.7.1 BBM 28: zehn 5-DIP-Schritte nach rechts stellen den Ausgangswert wieder her", () => assert.equal(moveRepeatedly(IDS[0], "x", 5, 10, "short-right").x, 0));
+    await run("M82.7.1 BBM 29: Schrittweite 1 bleibt wiederholt kumulativ", () => { resetRemaining(IDS[0]); assert.equal(moveRepeatedly(IDS[0], "x", -1, 10, "short-step-1").x, -10); });
+    await run("M82.7.1 BBM 30: Schrittweite 10 bleibt wiederholt kumulativ", () => { resetRemaining(IDS[0]); assert.equal(moveRepeatedly(IDS[0], "y", 10, 5, "short-step-10").y, 50); });
+    await run("M82.7.1 BBM 31: freie Schrittweite bleibt wiederholt kumulativ", () => { resetRemaining(IDS[0]); assert.equal(moveRepeatedly(IDS[0], "x", 7, 4, "short-free-step").x, 28); });
+    await run("M82.7.1 BBM 32: direkte X- und Y-Werte werden gemeinsam wirksam", () => { resetRemaining(IDS[0]); assert.equal(submitMove(IDS[0], { x: -75 }, "short-direct-x").success, true); assert.equal(submitMove(IDS[0], { y: 35 }, "short-direct-y").success, true); const state = refs.snapshotM80State(IDS[0]); assert.deepEqual([state.x, state.y], [-75, 35]); });
+    await run("M82.7.1 BBM 33: positive und negative Werte sind nicht an die Gruppe geklemmt", () => { assert.equal(submitMove(IDS[0], { x: 125, y: -95 }, "short-signed").success, true); const state = refs.snapshotM80State(IDS[0]); assert.deepEqual([state.x, state.y], [125, -95]); });
+    await run("M82.7.1 BBM 34: die allgemeine technische Speichergrenze bleibt erhalten", () => { assert.equal(submitMove(IDS[0], { x: 2400 }, "short-limit-valid").success, true); const blocked = submitMove(IDS[0], { x: 2401 }, "short-limit-blocked"); assert.equal(blocked.success, false); assert.equal(blocked.rollbackSucceeded, true); assert.match(blocked.message, /±2400 DIP/); assert.equal(refs.snapshotM80State(IDS[0]).x, 2400); });
+    await run("M82.7.1 BBM 35: NaN und Infinity werden ohne Zustandsaenderung blockiert", () => { resetRemaining(IDS[0]); const before = refs.snapshotM80State(IDS[0]); for (const value of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) { const blocked = submitMove(IDS[0], { x: value }, `short-invalid-${String(value)}`); assert.equal(blocked.success, false); assert.equal(blocked.rollbackSucceeded, true); assert.deepEqual(refs.snapshotM80State(IDS[0]), before); } });
+    await run("M82.7.1 BBM 36: nicht unterstuetzte Operation bleibt ohne Layoutwirkung", () => { const before = refs.snapshotM80State(IDS[0]); const blocked = host.handleM80EditorRequest({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "short-width-blocked", elementId: IDS[0], operation: "resizeWidth", payload: { width: 40 }, source: "m82-7-1-test" } }).changeResult; assert.equal(blocked.success, false); assert.deepEqual(refs.snapshotM80State(IDS[0]), before); });
+    await run("M82.7.1 BBM 37: Langtextanzeige erreicht ebenfalls kumulativ plus und minus 50 DIP", () => { resetRemaining(IDS[1]); assert.equal(moveRepeatedly(IDS[1], "x", -5, 10, "long-left").x, -50); assert.equal(moveRepeatedly(IDS[1], "x", 5, 20, "long-right").x, 50); });
+    await run("M82.7.1 BBM 38: Langtextanzeige akzeptiert direkte X- und Y-Werte", () => { assert.equal(submitMove(IDS[1], { x: -75 }, "long-direct-x").success, true); assert.equal(submitMove(IDS[1], { y: 35 }, "long-direct-y").success, true); const state = refs.snapshotM80State(IDS[1]); assert.deepEqual([state.x, state.y], [-75, 35]); });
+    await run("M82.7.1 BBM 39: mehrere Schritte lassen sich exakt rueckgaengig machen", () => { resetRemaining(IDS[0]); const states = [refs.snapshotM80State(IDS[0])]; for (let index = 0; index < 4; index += 1) { moveRepeatedly(IDS[0], "x", -5, 1, `short-undo-${index}`); states.push(refs.snapshotM80State(IDS[0])); } for (let index = states.length - 2; index >= 0; index -= 1) refs.applyM80State(IDS[0], states[index]); assert.equal(refs.snapshotM80State(IDS[0]).x, 0); });
+    await run("M82.7.1 BBM 40: Save- und Neustart-Restore behalten den exakten kumulierten Offset", () => { resetRemaining(IDS[1]); moveRepeatedly(IDS[1], "x", -5, 10, "long-save"); submitMove(IDS[1], { y: 35 }, "long-save-y"); const saved = { ...refs.snapshotM80State(IDS[1]), elementId: IDS[1] }; resetRemaining(IDS[1]); for (const item of host.createM80StartupRequests("restarbeiten.edit.root", saved)) { const result = host.handleM80EditorRequest({ action: "submitChange", scopeId: item.scopeId, changeRequest: item.request }).changeResult; assert.equal(result.success, true, result.message); } const restored = refs.snapshotM80State(IDS[1]); assert.deepEqual([restored.x, restored.y], [-50, 35]); });
+    await run("M82.7.1 BBM 41: Reset stellt beide Restzeichenanzeigen auf die Registrybaseline", () => { IDS.forEach((id) => resetRemaining(id)); IDS.forEach((id) => assert.deepEqual([refs.snapshotM80State(id).x, refs.snapshotM80State(id).y], [0, 0])); });
+    await run("M82.7.1 BBM 42: Registryrefresh ueberschreibt einen angewandten Offset nicht", () => { submitMove(IDS[0], { x: -50, y: 35 }, "short-refresh"); refs.completeM80PilotRender(); assert.deepEqual([refs.snapshotM80State(IDS[0]).x, refs.snapshotM80State(IDS[0]).y], [-50, 35]); });
+    await run("M82.7.1 BBM 43: alle neuen Move-Wege behalten Topologie und Nachbarn", () => { assert.equal(refs.compareM80Topology(topology).ok, true); assert.deepEqual(refs.snapshotM80State("restarbeiten.edit.short.dictation"), dictationBefore); assert.deepEqual(refs.snapshotM80State("restarbeiten.edit.class"), classBefore); });
+    await run("M82.7.1 BBM 44: reines Restore-Move schreibt keine vorlaeufige Schriftbaseline fest", () => {
+      refs.resetM80PilotWorkingStatesForDiagnostic();
+      refs.beginM80PilotRender();
+      for (const entry of editScope.elements) refs.registerM80Ref(entry.id, nodes.get(entry.id));
+      shortNode.dataset.uiEditorX = "0";
+      shortNode.dataset.uiEditorY = "0";
+      shortNode.style.translate = "0px 0px";
+      shortNode.style.fontSize = "16px";
+      refs.completeM80PilotRender();
+      assert.equal(submitMove(IDS[0], { x: -50 }, "short-operation-scoped-restore").success, true);
+      shortNode.style.fontSize = "8.667px";
+      refs.completeM80PilotRender();
+      assert.equal(shortNode.style.fontSize, "8.667px");
+      assert.equal(refs.snapshotM80State(IDS[0]).x, -50);
+    });
   } finally {
     refs.resetM80PilotWorkingStatesForDiagnostic();
     global.document = previous.document;
