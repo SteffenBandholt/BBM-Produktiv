@@ -1,5 +1,13 @@
 # STATUS.md — BBM-Produktiv
 
+### M82.7 – Restzeichenanzeigen wirksam feintunen
+
+- Status: `[A] abgenommen`; Implementierung, Pflichtprüfungen und sichtbare isolierte Diagnostic-Abnahme sind abgeschlossen.
+- `restarbeiten.edit.short.remaining` und `restarbeiten.edit.long.remaining` behalten ihre vorhandenen Refs und Parents. Freigegeben sind exakt `move`, `textResize` und `setVisibility`; Breite, Höhe und Tabellenfunktionen bleiben gesperrt.
+- Schrift, Position, Sichtbarkeit, Undo, Save, Neustart-Restore und Originalzustand wirken über den vorhandenen HostAdapter-/Profilweg. Textwerte, Zeichenlimits, Zählerlogik, Diktatbuttons, Klassensteuerung und Nachbarelemente bleiben unverändert.
+- Der sichtbare Diagnostic-Lauf verwendete nur einen isolierten `user-data-dir`, zeigte „Entwicklungsversion – Testlizenz“ und bestätigte stabilen Scrollbesitz, HTML-Ausgabevorschau und unveränderten Protokoll-TopScreen. Der sichtbare 97-Knoten-Fingerprint blieb bei Reset/Undo identisch.
+- Detaildokument: `docs/M82_7_BBM_RESTZEICHENANZEIGEN.md`.
+
 ### M82.6 – TopScreen-Regressionsreparatur und Modulabschluss
 
 - Status: `[A] abgenommen`; Reparatur, produktive Protokoll-Ziel-App-Anbindung, automatisierte Regression und sichtbare Diagnostic-Abnahme sind abgeschlossen.
