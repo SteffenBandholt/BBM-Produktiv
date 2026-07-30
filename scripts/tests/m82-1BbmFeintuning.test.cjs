@@ -24,10 +24,10 @@ async function runM821BbmFeintuningTests(run) {
   const editbox = read("src/renderer/modules/restarbeiten/RestarbeitenEditbox.js");
   const css = read("src/renderer/modules/restarbeiten/styles/restarbeiten.css");
 
-  await run("M82.1 BBM 01: Registryversion bleibt konsistent", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 7));
+  await run("M82.1 BBM 01: Registryversion bleibt konsistent", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 9));
   await run("M82.1 BBM 02: Manifestversion folgt der Registry", () => assert.equal(manifest.registryVersion, registry.BBM_M80_REGISTRY_VERSION));
   await run("M82.1 BBM 03: Manifestfingerprint ist aktuell", () => assert.equal(manifest.registryFingerprint, createRegistryFingerprint(scopes)));
-  await run("M82.1 BBM 04: genau drei Restarbeiten-Scopes bleiben aktiv", () => assert.deepEqual(registry.BBM_M80_ACTIVE_SCOPES, ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]));
+  await run("M82.1/M82.6 BBM 04: beide Referenzmodule besitzen je drei aktive Scopes", () => assert.deepEqual(registry.BBM_M80_ACTIVE_SCOPES, ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root", "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root"]));
   await run("M82.1 BBM 05: Header behält 31 Elemente", () => assert.equal(byId.has("restarbeiten.header.root") && scopes.find((scope) => scope.scopeId === "restarbeiten.header.root").elements.length, 31));
   await run("M82.1 BBM 06: Editbox besitzt 53 explizite Elemente", () => assert.equal(scopes.find((scope) => scope.scopeId === "restarbeiten.edit.root").elements.length, 53));
   await run("M82.1 BBM 07: Editbox-Root ist nur höhen- und sichtbarkeitsfähig", () => assert.deepEqual(byId.get("restarbeiten.edit.root").allowedOps, ["resizeHeight", "setVisibility"]));

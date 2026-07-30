@@ -25,17 +25,13 @@ export function buildRestarbeitenMainBody(options = {}) {
   const table = createEl("div", {
     className: "bbm-restarbeiten-table",
   });
-  const viewport = createEl("div", { className: "bbm-restarbeiten-table-viewport" });
-  const scrollArea = createEl("div", { className: "bbm-restarbeiten-table-scroll-area" });
   const header = buildRestarbeitenTableHeader();
   const records = buildRestarbeitenList(options);
 
   registerM80Ref("restarbeiten.list.root", main);
   registerM80Ref("restarbeiten.list.area", sheet);
   registerM80Ref("restarbeiten.list.paper", paper);
-  registerM80Ref("restarbeiten.list.viewport", viewport);
-  registerM80Ref("restarbeiten.list.scrollArea", scrollArea);
-  registerM80TableRef("restarbeiten.list.table", table, viewport, scrollArea);
+  registerM80TableRef("restarbeiten.list.table", table, table);
   registerM80Ref("restarbeiten.list.table.header", header);
   registerM80Ref("restarbeiten.list.table.body", records);
   registerM80Ref("restarbeiten.list.table.row", records._m80Rows[0] || records, { targets: records._m80Rows });
@@ -44,7 +40,7 @@ export function buildRestarbeitenMainBody(options = {}) {
     header.children[0],
     records._m80ColumnCells[0],
     table,
-    viewport,
+    table,
     "--bbm-restarbeiten-number-column",
     82
   );
@@ -53,7 +49,7 @@ export function buildRestarbeitenMainBody(options = {}) {
     header.children[1],
     records._m80ColumnCells[1],
     table,
-    viewport,
+    table,
     "--bbm-restarbeiten-subject-column",
     560
   );
@@ -62,15 +58,13 @@ export function buildRestarbeitenMainBody(options = {}) {
     header.children[2],
     records._m80ColumnCells[2],
     table,
-    viewport,
+    table,
     "--bbm-restarbeiten-meta-column",
     172
   );
 
   table.append(header, records);
-  scrollArea.appendChild(table);
-  viewport.appendChild(scrollArea);
-  paper.appendChild(viewport);
+  paper.appendChild(table);
   sheet.appendChild(paper);
   main.appendChild(sheet);
   return main;

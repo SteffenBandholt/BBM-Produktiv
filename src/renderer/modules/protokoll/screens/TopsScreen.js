@@ -38,6 +38,11 @@ import {
   cleanupPopupHandlers,
 } from "../../../ui/popupCommon.js";
 import { OVERLAY_TOP } from "../../../ui/zIndex.js";
+import {
+  beginM80PilotRender,
+  completeM80PilotRender,
+  registerM80Ref,
+} from "../../../ui-editor/m80Refs.js";
 
 function buildInitialProtocolScreenState({ projectId = null, meetingId = null } = {}) {
   return {
@@ -159,6 +164,7 @@ export default class TopsScreen {
   // ---------------------------------------------------------------------------
 
   _buildShell() {
+    beginM80PilotRender();
     ensureProtokollModuleStyles();
     const root = document.createElement("div");
     root.setAttribute("data-bbm-tops-screen", "true");
@@ -192,7 +198,59 @@ export default class TopsScreen {
     sheetArea.appendChild(sheetCanvas);
     editArea.appendChild(editCanvas);
     root.append(this.header.root, sheetArea, editArea, this.quicklane.root);
+    this._registerUiEditorRefs();
+    completeM80PilotRender();
+  }
 
+  _registerUiEditorRefs() {
+    const header = this.header;
+    const workbench = this.workbench;
+    const editbox = workbench?.sharedEditboxCore?.editbox;
+    const meta = workbench?.metaColumn;
+    const status = meta?.statusAmpelBridge?.field;
+    const responsible = meta?.responsibleBridge?.field;
+
+    registerM80Ref("protokoll.screen.root", this.root);
+    registerM80Ref("protokoll.header", header.root);
+    registerM80Ref("protokoll.header.titleGroup", header.titleWrap);
+    registerM80Ref("protokoll.header.title", header.line1El);
+    registerM80Ref("protokoll.header.keyword", header.line2El);
+    registerM80Ref("protokoll.header.context", header.line3El);
+    registerM80Ref("protokoll.header.meta", header.metaLegend);
+    registerM80Ref("protokoll.header.meta.due", header.metaLegendDue);
+    registerM80Ref("protokoll.header.meta.status", header.metaLegendStatus);
+    registerM80Ref("protokoll.header.meta.responsible", header.metaLegendResponsible);
+    registerM80Ref("protokoll.topsScreen.quicklane", this.quicklane.root);
+
+    registerM80Ref("protokoll.list.root", this.sheetArea);
+    registerM80Ref("protokoll.list.canvas", this.sheetCanvas);
+    registerM80Ref("protokoll.list.paper", this.sheetPaper);
+    registerM80Ref("protokoll.list.table", this.topsList.root);
+
+    registerM80Ref("protokoll.edit.root", this.editArea);
+    registerM80Ref("protokoll.edit.canvas", this.editCanvas);
+    registerM80Ref("protokoll.edit.workbench", workbench.root);
+    registerM80Ref("protokoll.edit.header", workbench.header);
+    registerM80Ref("protokoll.edit.header.label", workbench.leftHeaderTitle);
+    registerM80Ref("protokoll.edit.text", workbench.sharedEditboxCore.root);
+    registerM80Ref("protokoll.edit.short", editbox.shortWrap);
+    registerM80Ref("protokoll.edit.short.label", editbox.shortLabel);
+    registerM80Ref("protokoll.edit.short.field", editbox.shortInput);
+    registerM80Ref("protokoll.edit.long", editbox.longWrap);
+    registerM80Ref("protokoll.edit.long.label", editbox.longLabel);
+    registerM80Ref("protokoll.edit.long.field", editbox.longInput);
+    registerM80Ref("protokoll.edit.meta", meta.root);
+    registerM80Ref("protokoll.edit.flags", meta.flagsMetaRow);
+    registerM80Ref("protokoll.edit.status", status.statusWrap);
+    registerM80Ref("protokoll.edit.status.label", status.statusLabel);
+    registerM80Ref("protokoll.edit.status.field", status.statusSelect);
+    registerM80Ref("protokoll.edit.due", status.dueWrap);
+    registerM80Ref("protokoll.edit.due.label", status.dueLabel);
+    registerM80Ref("protokoll.edit.due.field", status.dueInput);
+    registerM80Ref("protokoll.edit.responsible", responsible.root);
+    registerM80Ref("protokoll.edit.responsible.label", responsible.labelTextEl);
+    registerM80Ref("protokoll.edit.responsible.field", responsible.selectEl);
+    registerM80Ref("protokoll.edit.ampel", status.trafficWrap);
   }
 
   _buildProtocolScreenRegions() {
@@ -738,13 +796,6 @@ export default class TopsScreen {
     this._topRulesOverlay = null;
   }
 
-  destroy() {
-    if (this._onTableLayoutChanged && typeof window?.removeEventListener === "function") {
-      window.removeEventListener("bbm:tableLayoutChanged", this._onTableLayoutChanged);
-    }
-    this._onTableLayoutChanged = null;
-  }
-
   _syncListState() {
     if (!(this.topsList instanceof TopsList)) return;
     this.topsList.setItems(
@@ -752,6 +803,7 @@ export default class TopsScreen {
         collapsedLevel1Ids: this._getCollapsedLevel1Ids(),
       })
     );
+    completeM80PilotRender();
   }
 
   _getTopListLayoutApi() {
@@ -1640,6 +1692,10 @@ export default class TopsScreen {
   // ---------------------------------------------------------------------------
 
   async destroy() {
+    if (this._onTableLayoutChanged && typeof window?.removeEventListener === "function") {
+      window.removeEventListener("bbm:tableLayoutChanged", this._onTableLayoutChanged);
+    }
+    this._onTableLayoutChanged = null;
     await this.closeFlow?.destroy?.();
     this._destroyAudioFeature?.();
     this._destroyDictationController?.();

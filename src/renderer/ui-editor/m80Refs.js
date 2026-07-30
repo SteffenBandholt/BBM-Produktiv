@@ -4,11 +4,17 @@ import {
   measureTableLayout,
   normalizeTableLayout,
 } from "../../../node_modules/ui-editor-kit/dist/table-layout-contract.mjs";
+import {
+  compareUiTopology,
+  createUiTopologyFingerprint,
+} from "../../../node_modules/ui-editor-kit/dist/ui-topology-fingerprint.mjs";
 
 const refs = new Map();
 const elementIds = new WeakMap();
 const workingStates = new Map();
+const persistentWorkingStateIds = new Set();
 const tableColumnRuntimeBindings = new Map();
+const tableRuntimeBindings = new Map();
 const HIDDEN_CLASS = "bbm-ui-editor-hidden";
 
 function finite(value, fallback = 0) { return Number.isFinite(Number(value)) ? Number(value) : fallback; }
@@ -35,6 +41,60 @@ function bindElementId(target, id) {
   const ids = elementIds.get(target) || new Set();
   ids.add(id);
   elementIds.set(target, ids);
+}
+
+function topologyStableId(element, fallback) {
+  return String(element?.getAttribute?.("data-ui-editor-id") || element?.dataset?.uiEditorId || element?.id || fallback || "").trim();
+}
+
+function isDynamicTopologyElement(element, stableId) {
+  if (stableId.startsWith("restarbeiten.record.") || stableId.startsWith("protokoll.record.")) return true;
+  let current = element;
+  while (current) {
+    const names = String(current.className || "").split(/\s+/);
+    if (names.includes("bbm-restarbeiten-record") || names.includes("bbm-tops-list-row")) return true;
+    current = current.parentElement;
+  }
+  return false;
+}
+
+export function snapshotM80Topology() {
+  const byElement = new Map();
+  for (const ref of refs.values()) {
+    const element = ref.element;
+    if (!isElementRef(element) || byElement.has(element)) continue;
+    const stableId = topologyStableId(element, ref.id);
+    if (!stableId || isDynamicTopologyElement(element, stableId)) continue;
+    byElement.set(element, { element, stableId, kind: String(element.tagName || element.nodeName || element.constructor?.name || "Element") });
+  }
+  const roots = [...byElement.values()].filter((item) => {
+    let ancestor = item.element.parentElement;
+    while (ancestor && !byElement.has(ancestor)) ancestor = ancestor.parentElement;
+    return !ancestor;
+  }).map((item) => item.element);
+  const nodes = [...byElement.values()].map((candidate, fallbackOrder) => {
+    let parent = candidate.element.parentElement;
+    while (parent && !byElement.has(parent)) parent = parent.parentElement;
+    const parentCandidate = parent ? byElement.get(parent) : null;
+    const siblings = parentCandidate
+      ? Array.from(parentCandidate.element.children || []).filter((child) => byElement.has(child))
+      : roots;
+    const order = siblings.indexOf(candidate.element);
+    return {
+      kind: candidate.kind,
+      stableId: candidate.stableId,
+      parentId: parentCandidate?.stableId || null,
+      order: order >= 0 ? order : fallbackOrder,
+    };
+  });
+  return Object.freeze({ nodes: Object.freeze(nodes), fingerprint: createUiTopologyFingerprint(nodes) });
+}
+
+export function compareM80Topology(before) {
+  const previous = Array.isArray(before) ? before : before?.nodes;
+  if (!Array.isArray(previous)) throw new TypeError("Vorheriger BBM-Topologiesnapshot fehlt.");
+  const current = snapshotM80Topology();
+  return Object.freeze({ ...compareUiTopology(previous, current.nodes), current });
 }
 function readSpacing(element) {
   try {
@@ -111,12 +171,15 @@ function applyGeneric(element, state, entry) {
 export function beginM80PilotRender() {
   refs.clear();
   tableColumnRuntimeBindings.clear();
+  tableRuntimeBindings.clear();
 }
 
 export function resetM80PilotWorkingStatesForDiagnostic() {
   refs.clear();
   tableColumnRuntimeBindings.clear();
+  tableRuntimeBindings.clear();
   workingStates.clear();
+  persistentWorkingStateIds.clear();
 }
 
 export function registerM80Ref(id, element, custom = {}) {
@@ -134,18 +197,18 @@ export function registerM80Ref(id, element, custom = {}) {
   };
   refs.set(id, ref);
   targets.forEach((target) => bindElementId(target, id));
-  if (workingStates.has(id)) ref.apply(workingStates.get(id));
+  if (persistentWorkingStateIds.has(id) && workingStates.has(id)) ref.apply(workingStates.get(id));
   return element;
 }
 
 export function completeM80PilotRender() {
   for (const ref of refs.values()) {
     if (typeof ref.element.isConnected === "boolean" && !ref.element.isConnected) continue;
-    if (workingStates.has(ref.id)) ref.apply(workingStates.get(ref.id));
+    if (persistentWorkingStateIds.has(ref.id) && workingStates.has(ref.id)) ref.apply(workingStates.get(ref.id));
     const current = ref.read();
-    if (!workingStates.has(ref.id)) workingStates.set(ref.id, { ...current });
+    if (!persistentWorkingStateIds.has(ref.id)) workingStates.set(ref.id, { ...current });
   }
-  if (typeof window?.dispatchEvent === "function") {
+  if (typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
     const event = typeof CustomEvent === "function" ? new CustomEvent("bbm:m80-pilot-render-complete") : { type: "bbm:m80-pilot-render-complete" };
     window.dispatchEvent(event);
   }
@@ -179,11 +242,11 @@ function applyColumnTextMode(targets, tableState) {
   }
 }
 
-export function registerM80TableColumnRef(id, headerCell, dataCells, tableElement, viewportElement, cssVariable, initialWidth) {
+export function registerM80TableColumnRef(id, headerCell, dataCells, tableElement, layoutBoundsElement, cssVariable, initialWidth) {
   const entry = getM80RegistryEntry(id);
   const layout = entry.tableColumnLayout;
   const targets = [headerCell, ...(Array.isArray(dataCells) ? dataCells : [])];
-  tableColumnRuntimeBindings.set(id, { entry, headerCell, tableElement, viewportElement, cssVariable, initialWidth });
+  tableColumnRuntimeBindings.set(id, { entry, headerCell, tableElement, layoutBoundsElement, cssVariable, initialWidth });
   const baselineTable = {
     tableId: entry.tableBinding.tableId, columnId: id, widthMode: layout.widthMode,
     wrapMode: layout.wrapMode, overflowMode: layout.overflowMode,
@@ -196,7 +259,7 @@ export function registerM80TableColumnRef(id, headerCell, dataCells, tableElemen
       const table = storedColumnState(tableElement, id, baselineTable);
       const configured = parseFloat(getCustomProperty(tableElement.style, cssVariable));
       const width = positive(configured, positive(rect.width, initialWidth));
-      const metrics = runtimeTableMetrics(entry.tableBinding.tableId, tableElement, viewportElement);
+      const metrics = runtimeTableMetrics(entry.tableBinding.tableId, tableElement, layoutBoundsElement);
       return {
         elementId: id, x: 0, y: 0, width, height: positive(rect.height, 1),
         textOffsetX: finite(headerCell.dataset.uiEditorTextX, finite(parseFloat(style.paddingLeft))),
@@ -224,18 +287,18 @@ export function registerM80TableColumnRef(id, headerCell, dataCells, tableElemen
     },
   });
   registerM80Ref(layout.headerElementId, headerCell, { targets: [headerCell] });
-  registerM80Ref(layout.dataCellTemplateId, dataCells?.[0] || viewportElement, {
+  registerM80Ref(layout.dataCellTemplateId, dataCells?.[0] || tableElement, {
     targets: dataCells,
     applyPrimaryAttributes: Boolean(dataCells?.length),
   });
   return headerCell;
 }
 
-function runtimeTableMetrics(tableId, tableElement, viewportElement) {
+function runtimeTableMetrics(tableId, tableElement, layoutBoundsElement) {
   const tableEntry = getM80RegistryEntry(tableId);
   if (!tableEntry?.tableLayout) return {};
   const tableRect = rectOf(tableElement);
-  const viewportRect = rectOf(viewportElement);
+  const viewportRect = rectOf(layoutBoundsElement);
   const columns = tableEntry.tableLayout.columns.map((column) => {
     const binding = tableColumnRuntimeBindings.get(column.columnId);
     const columnState = storedColumnState(tableElement, column.columnId, column);
@@ -264,9 +327,9 @@ function runtimeTableMetrics(tableId, tableElement, viewportElement) {
   };
 }
 
-function runtimeTableLayout(entry, tableElement, viewportElement) {
+function runtimeTableLayout(entry, tableElement, layoutBoundsElement) {
   const tableRect = rectOf(tableElement);
-  const viewportRect = rectOf(viewportElement);
+  const viewportRect = rectOf(layoutBoundsElement);
   const columns = entry.tableLayout.columns.map((column) => {
     const state = getM80Ref(column.columnId)?.read();
     return { ...column, currentWidth: positive(state?.width, column.currentWidth), widthMode: state?.table?.widthMode || column.widthMode, wrapMode: state?.table?.wrapMode || column.wrapMode, overflowMode: state?.table?.overflowMode || column.overflowMode, visibility: state?.visible !== false };
@@ -282,24 +345,21 @@ function runtimeTableLayout(entry, tableElement, viewportElement) {
   });
 }
 
-export function registerM80TableRef(id, tableElement, viewportElement, scrollAreaElement) {
+export function registerM80TableRef(id, tableElement, layoutBoundsElement = tableElement) {
   const entry = getM80RegistryEntry(id);
+  tableRuntimeBindings.set(id, { tableElement, layoutBoundsElement });
   return registerM80Ref(id, tableElement, {
     read: () => {
       const generic = readGeneric(tableElement, id);
-      const layout = runtimeTableLayout(entry, tableElement, viewportElement);
+      const layout = runtimeTableLayout(entry, tableElement, layoutBoundsElement);
       const metrics = measureTableLayout(layout);
       return { ...generic, table: { tableId: id, horizontalOverflowMode: layout.horizontalOverflowMode, rowHeightMode: layout.rowHeightMode, viewportWidth: metrics.viewportWidth, tableWidth: metrics.tableWidth, overflow: metrics.overflow, overflowColumnIds: [...metrics.overflowColumnIds] } };
     },
     apply: (state) => {
       applyGeneric(tableElement, state, entry);
       const table = state.table || {};
-      const horizontal = table.horizontalOverflowMode || entry.tableLayout.horizontalOverflowMode;
       const rowHeight = table.rowHeightMode || entry.tableLayout.rowHeightMode;
-      tableElement.dataset.uiEditorHorizontalOverflowMode = horizontal;
       tableElement.dataset.uiEditorRowHeightMode = rowHeight;
-      scrollAreaElement.style.overflowX = horizontal === "scroll" ? "scroll" : horizontal === "none" || horizontal === "fitViewport" ? "hidden" : "auto";
-      tableElement.style.maxWidth = horizontal === "fitViewport" ? "100%" : "none";
     },
   });
 }
@@ -308,7 +368,8 @@ export function fitM80Table(id, selectedColumnId = "") {
   const entry = getM80RegistryEntry(id);
   const ref = getM80Ref(id);
   if (!entry?.tableLayout || !ref) throw Object.assign(new Error("Tabellenreferenz fehlt."), { code: "electron_element_not_found" });
-  const layout = runtimeTableLayout(entry, ref.element, getM80Ref("restarbeiten.list.viewport")?.element || ref.element);
+  const binding = tableRuntimeBindings.get(id);
+  const layout = runtimeTableLayout(entry, binding?.tableElement || ref.element, binding?.layoutBoundsElement || ref.element);
   const result = fitTableToViewport(layout, selectedColumnId ? { selectedColumnId } : {});
   if (!result.ok) throw Object.assign(new Error("Tabelle kann nicht an den sichtbaren Bereich angepasst werden."), { code: "electron_invalid_geometry" });
   const affectedStates = [];
@@ -395,6 +456,7 @@ export function applyM80State(id, state) {
   if (!ref) throw Object.assign(new Error("Explizite Elementreferenz fehlt."), { code: "electron_element_not_found" });
   ref.apply(state);
   const readback = ref.read();
+  persistentWorkingStateIds.add(id);
   workingStates.set(id, { ...readback });
   return { ...readback };
 }

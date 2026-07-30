@@ -113,15 +113,14 @@ async function runM80ElectronUiEditorTests(run) {
     assert.match(main, /BBM_M80_EDITOR_DIAGNOSTIC/);
   });
 
-  await run("M80 Registry: drei aktive Restarbeiten-Scopes und explizit gesperrte Restbereiche", () => {
-    assert.deepEqual(scopes.filter((scope) => scope.status === "complete").map((scope) => scope.scopeId), ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
-    assert.ok(scopes.some((scope) => scope.scopeId === "bbm.protokoll" && scope.status === "blocked"));
+  await run("M80/M82.6 Registry: Restarbeiten und Protokoll sind explizit, Restbereiche bleiben gesperrt", () => {
+    assert.deepEqual(scopes.filter((scope) => scope.status === "complete").map((scope) => scope.scopeId), ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root", "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root"]);
     assert.ok(scopes.some((scope) => scope.scopeId === "restarbeiten.layout.root" && scope.status === "blocked"));
     assert.equal(entries.some((entry) => entry.id === "restarbeiten.layout.split"), false);
     assert.equal(new Set(entries.map((entry) => entry.id)).size, entries.length);
     const ids = new Set(entries.map((entry) => entry.id));
     entries.filter((entry) => entry.parentId).forEach((entry) => assert.ok(ids.has(entry.parentId), entry.id));
-    assert.equal(entries.some((entry) => /protokoll|projektverwaltung|firma/i.test(entry.id)), false);
+    assert.equal(entries.some((entry) => /projektverwaltung|firma/i.test(entry.id)), false);
   });
 
   await run("M80 Registry: Label und Feld bleiben getrennte explizite Ziele", () => {

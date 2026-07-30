@@ -7,13 +7,16 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 7,
-  "registryFingerprint": "sha256:755b22065dc4cc23ad8274521e5f1e59be5750014e805e2bd9593554827d0c37",
+  "registryVersion": 9,
+  "registryFingerprint": "sha256:67f588857d18ac613b2bd01482fc528ca1f7ce82e286996fc82c40a083d17d6b",
   "registryStatus": "incomplete",
   "activeScopes": [
     "restarbeiten.header.root",
     "restarbeiten.list.root",
-    "restarbeiten.edit.root"
+    "restarbeiten.edit.root",
+    "protokoll.screen.root",
+    "protokoll.list.root",
+    "protokoll.edit.root"
   ],
   "uiCapability": "layout",
   "pdfCapability": "available",
@@ -32,7 +35,6 @@
     "spacingReset",
     "fitTableToViewport",
     "resizeColumnsProportionally",
-    "setHorizontalOverflowMode",
     "setColumnWidthMode",
     "setColumnWrapMode",
     "setColumnOverflowMode",
@@ -46,8 +48,11 @@
   "transportProtocolVersion": "1.0",
   "scopes": [
     { "scopeId": "restarbeiten.header.root", "status": "complete", "reason": null, "elementCount": 31, "missingReferenceCount": 0 },
-    { "scopeId": "restarbeiten.list.root", "status": "complete", "reason": null, "elementCount": 18, "missingReferenceCount": 0 },
+    { "scopeId": "restarbeiten.list.root", "status": "complete", "reason": null, "elementCount": 16, "missingReferenceCount": 0 },
     { "scopeId": "restarbeiten.edit.root", "status": "complete", "reason": null, "elementCount": 53, "missingReferenceCount": 0 },
+    { "scopeId": "protokoll.screen.root", "status": "complete", "reason": null, "elementCount": 25, "missingReferenceCount": 0 },
+    { "scopeId": "protokoll.list.root", "status": "complete", "reason": null, "elementCount": 7, "missingReferenceCount": 0 },
+    { "scopeId": "protokoll.edit.root", "status": "complete", "reason": null, "elementCount": 24, "missingReferenceCount": 0 },
     { "scopeId": "bbm.remaining", "status": "blocked", "reason": "registration_inventory_pending", "elementCount": 0, "missingReferenceCount": 0 },
     { "scopeId": "pdf.bbm.protocol", "status": "complete", "reason": null, "elementCount": 28, "missingReferenceCount": 0 }
   ],

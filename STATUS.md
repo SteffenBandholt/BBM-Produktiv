@@ -1,5 +1,18 @@
 # STATUS.md — BBM-Produktiv
 
+### M82.6 – TopScreen-Regressionsreparatur und Modulabschluss
+
+- Status: `[A] abgenommen`; Reparatur, produktive Protokoll-Ziel-App-Anbindung, automatisierte Regression und sichtbare Diagnostic-Abnahme sind abgeschlossen.
+- Die M82.4-Knoten `.bbm-restarbeiten-table-viewport` und `.bbm-restarbeiten-table-scroll-area` samt eigener Overflow-Regeln und Registryeinträgen wurden entfernt. Die Tabelle liegt wieder direkt im vorhandenen `paper`.
+- Der vorhandene Restarbeiten-`main` ist wieder einziger vertikaler Scrollbesitzer; Filter und Editbox bleiben außerhalb. Der Protokoll-TopScreen wurde strukturell nicht geändert.
+- BBM erzeugt weiterhin allein seine Registry. Drei vollständige Protokoll-Scopes registrieren 25 Screen-, 7 Listen- und 24 Editboxziele ausschließlich über vorhandene Objekt- und Mehrfach-Refs. Logische Tabellenziele benötigen keine zusätzliche UI.
+- Der HostAdapter schützt Layoutänderungen und Registry-Refreshes mit einem explizit aus registrierten Refs gebildeten Topologie-Fingerprint. Protokoll (`sha256:5ff4…d8f0f`) und Restarbeiten (`sha256:3569…57a3`) blieben in der sichtbaren Abnahme stabil.
+- Die sichtbare Diagnostic-Abnahme hat zusätzlich einen Laufzeitfehler im Neu-Rendern aufgedeckt: reine gemessene Baseline-Geometrie wurde wie eine ausdrückliche Editoränderung auf den nächsten fachlichen Render übertragen. Nur ausdrücklich angewandte Editorzustände bleiben jetzt renderübergreifend erhalten; Filter, Liste und Editbox bleiben dadurch auch mit echten Projektdaten kompakt und ohne zusätzliche Laufleiste.
+- Die interne Lizenz `bbm-internal-development-license-v1` ist im Diagnostic-Paket sichtbar aktiv. Die Release-EXE blieb auch mit gesetzten DEV-Umgebungsvariablen gesperrt und zeigte keine Development-Kennzeichnung.
+- Protokoll und Restarbeiten bestanden Direktauswahl, Feintuning, Undo, Speichern, Elementreset/Recovery und Neustart-Restore. Der echte Protokoll-Vorabzug wurde vierseitig erzeugt; Restarbeiten behält ausdrücklich seine vorhandene HTML-Ausgabevorschau ohne PDF-Erzeugung.
+- Lizenz, produktive Datenbank und `docs/licensing.md` blieben hashgleich. Fachwerte wurden nicht verändert.
+- Detaildokument: `docs/M82_6_BBM_TOPSCREEN_MODULABSCHLUSS.md`.
+
 ### M82.5 – Radikal vereinfachter Einfachmodus
 
 - Status: `[A] abgenommen`; Implementierung, vollständige Pflichtläufe und sichtbare paketierte UI-/PDF-Abnahme sind abgeschlossen.

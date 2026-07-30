@@ -161,10 +161,14 @@ class ElectronUiEditorSessionController {
 
   #validateTargetManifest(contract) {
     const { manifest, manifestPath } = this.#readTargetManifest();
+    const declaredScopes = Array.isArray(manifest.activeScopes) ? manifest.activeScopes.map(String) : [];
+    const activeScopes = Array.isArray(contract.activeScopes) ? contract.activeScopes.map(String) : [];
+    const usesCompleteInventory = JSON.stringify(declaredScopes) === JSON.stringify(activeScopes);
     if (manifest.schemaVersion !== 2 || manifest.applicationId !== APPLICATION_ID || manifest.framework !== "electron" ||
         manifest.contractVersion !== contract.contractVersion || manifest.adapterVersion !== contract.adapterVersion ||
-        manifest.registryVersion !== contract.registryVersion || manifest.registryFingerprint !== contract.registryFingerprint ||
-        JSON.stringify(manifest.activeScopes) !== JSON.stringify(contract.activeScopes)) {
+        manifest.registryVersion !== contract.registryVersion ||
+        activeScopes.length === 0 || activeScopes.some((scopeId) => !declaredScopes.includes(scopeId)) ||
+        (usesCompleteInventory && manifest.registryFingerprint !== contract.registryFingerprint)) {
       throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_INCOMPATIBLE, "Ziel-App-Manifest und aktive Registry stimmen nicht überein.");
     }
     return manifestPath;

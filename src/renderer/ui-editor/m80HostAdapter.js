@@ -1,5 +1,5 @@
 import {
-  BBM_M80_ACTIVE_SCOPES,
+  BBM_M80_ACTIVE_SCOPE_GROUPS,
   BBM_M80_REGISTRY_STATUS,
   BBM_M80_REGISTRY_VERSION,
   getM80RegistryEntry,
@@ -18,6 +18,8 @@ import {
   fitM80Table,
   resetM80Table,
   resetM80PilotWorkingStatesForDiagnostic,
+  snapshotM80Topology,
+  compareM80Topology,
   snapshotM80State,
   snapshotM80Geometry,
 } from "./m80Refs.js";
@@ -320,6 +322,7 @@ function submitChange(changeRequest, scopeId) {
   let groupRestore = null;
   const tableRestore = new Map();
   try {
+    const beforeTopology = snapshotM80Topology();
     const beforeGeometry = snapshotM80Geometry();
     const ref = getM80Ref(entry.id);
     if (ref?.element?.dataset?.uiEditorFailNextApply === "true") {
@@ -383,6 +386,8 @@ function submitChange(changeRequest, scopeId) {
     }
     clearGeometryRiskPreview();
     if (confirmation) pendingGeometryRisks.delete(confirmation.risk.operationId);
+    const topology = compareM80Topology(beforeTopology);
+    if (!topology.ok) throw Object.assign(new Error("Die Layoutaenderung wuerde die produktive UI-Topologie veraendern."), { code: topology.errorCode });
     return { success: true, changeId: request.changeId, elementId: entry.id, operation: request.operation, effectScope: affected.effect, affectedElementIds: [...affected.ids], affectedStates, errorCode: null, message: confirmation?.action === RISK_ACTIONS.PRESERVE_SPACE ? "Elementbreite geändert; frei gewordener Platz bleibt reserviert." : "Layoutänderung angewandt, geometrisch geprüft und zurückgelesen.", previousState: previous, newState: readback, rollbackSucceeded: true };
   } catch (error) {
     try {
@@ -410,9 +415,23 @@ function layoutPayload() {
   }));
 }
 
+function mountedActiveScopeGroup() {
+  return BBM_M80_ACTIVE_SCOPE_GROUPS.find((scopeIds) => getM80Ref(scopeIds[0])) || Object.freeze([]);
+}
+
 export function createM80RegistrationDescriptor() {
+  const mountedScopes = mountedActiveScopeGroup();
   const registryScopes = listM80RegistryScopes().map((scope) => {
     if (scope.status !== "complete") return scope;
+    if (!mountedScopes.includes(scope.scopeId)) {
+      return {
+        ...scope,
+        status: "blocked",
+        reason: "registry_reference_not_mounted",
+        expectedElementIds: [],
+        elements: [],
+      };
+    }
     const elements = scope.elements.map((entry) => {
       const resolved = { ...entry, ...getM80ReferenceStatus(entry.id), capturedBaseline: capturedRuntimeBaseline(entry) };
       if (diagnosticRegistryRevision > 0 && entry.id === "restarbeiten.edit.validation") {
@@ -434,7 +453,7 @@ export function createM80RegistrationDescriptor() {
       elements,
     };
   });
-  const activeScopes = BBM_M80_ACTIVE_SCOPES.filter((scopeId) => registryScopes.some((scope) => scope.scopeId === scopeId && scope.status === "complete"));
+  const activeScopes = mountedScopes.filter((scopeId) => registryScopes.some((scope) => scope.scopeId === scopeId && scope.status === "complete"));
   return {
     applicationId: "bbm-produktiv",
     displayName: "BBM",
@@ -665,7 +684,11 @@ export function createM80StartupRequests(scopeId, element, explicitOperations = 
   for (const target of entry.spacingTargets || []) {
     const desiredValue = Number(desiredSpacing[target] || 0);
     const currentValue = Number(current.spacing?.[target] || 0);
-    if (Math.abs(desiredValue - currentValue) > 0.01 && entry.allowedOps.includes("spacingSet")) {
+    const spacingWasExplicit = explicit === null ||
+      ["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"].some((operation) => explicit.has(operation)) ||
+      (target === "reservedWidth" && explicit.has("resizeWidth")) ||
+      (target === "reservedHeight" && explicit.has("resizeHeight"));
+    if (spacingWasExplicit && Math.abs(desiredValue - currentValue) > 0.01 && entry.allowedOps.includes("spacingSet")) {
       requests.push({ changeId: `startup-${requests.length + 1}-${entry.id}`, elementId: entry.id, operation: "spacingSet", payload: { spacing: { target, value: desiredValue } }, source: "target-app-start" });
     }
   }
@@ -689,7 +712,8 @@ export function restoreM80StartupLayout() {
       return startupRestoreStatus;
     }
     const registration = createM80RegistrationDescriptor();
-    if (registration.activeScopes.length !== BBM_M80_ACTIVE_SCOPES.length) {
+    const requiredScopes = mountedActiveScopeGroup();
+    if (!requiredScopes.length || registration.activeScopes.length !== requiredScopes.length) {
       startupRestoreStatus = { state: "waitingForRegistry", applied: false, code: "registry_reference_missing", editorProcessRequired: false };
       return startupRestoreStatus;
     }

@@ -1748,7 +1748,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(css.includes("grid-template-rows: auto minmax(0, 1fr);"), true);
     assert.equal(css.includes("flex-direction: column;"), true);
     assert.equal(css.includes("--bbm-restarbeiten-list-height"), false);
-    assert.equal(css.includes(".bbm-restarbeiten-main {\n  min-height: 0;\n  overflow: auto;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-main {\n  min-height: 0;\n  overflow-x: hidden;\n  overflow-y: auto;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-screen {\n  min-height: 0;\n  height: 100%;\n  max-height: 100%;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-record__number {\n  font-size: 8.5pt;\n  font-weight: 600;\n  line-height: 1.15;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-record__short {\n  font-size: 8.5pt;\n  line-height: 1.35;\n  font-weight: 500;"), true);
