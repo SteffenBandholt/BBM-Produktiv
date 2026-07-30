@@ -47,7 +47,7 @@ async function runM823BbmSpacerCompactUiTests(run) {
     groupWidthEditable,
   });
 
-  await run("M82.3 BBM 01: Registryversion bleibt konsistent", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 7));
+  await run("M82.3 BBM 01: Registryversion bleibt konsistent", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 9));
   await run("M82.3 BBM 02: Manifest folgt Registry und Fingerprint", () => { assert.equal(manifest.registryVersion, registry.BBM_M80_REGISTRY_VERSION); assert.equal(manifest.registryFingerprint, createRegistryFingerprint(scopes)); });
   await run("M82.3 BBM 03: Kurztextbezeichnung besitzt reservierte Breite", () => assert.deepEqual(label.baseline.spacing, { reservedWidth: 40 }));
   await run("M82.3 BBM 04: Kurztextbezeichnung erlaubt Spacer davor und danach", () => assert.deepEqual(label.spacingTargets, ["beforeElement", "afterElement", "reservedWidth"]));
@@ -107,6 +107,12 @@ async function runM823BbmSpacerCompactUiTests(run) {
     }, { [label.id]: ["resizeWidth"] });
     assert.deepEqual(startup.map((item) => item.request.operation), ["resizeWidth", "spacingSet"]);
     assert.deepEqual(startup[1].request.payload.spacing, { target: "reservedWidth", value: 100 });
+  });
+  await run("M82.3 BBM 29b: Start-Restore wendet gemessenes Spacing ohne explizite Operation nicht an", () => {
+    const startup = hostModule.createM80StartupRequests("restarbeiten.edit.root", {
+      ...refs.readM80State(label.id), spacing: { reservedWidth: 100 },
+    }, {});
+    assert.deepEqual(startup, []);
   });
   await run("M82.3 BBM 30: Fachwerte sind weiterhin verboten", () => assert.match(host, /FORBIDDEN_KEYS[\s\S]*businessData[\s\S]*domainData/));
   await run("M82.3 BBM 31: docs/licensing.md bleibt hashgleich", () => assert.equal(crypto.createHash("sha256").update(fs.readFileSync(path.join(ROOT, "docs/licensing.md"))).digest("hex").toUpperCase(), "02AE66A8873C74869539F13F734B7CE43BC63B6EF37DA553A40C27A4F514D784"));

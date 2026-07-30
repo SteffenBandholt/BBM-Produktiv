@@ -48,8 +48,6 @@ async function runM825BbmSimpleEditorModeTests(run) {
   refs.resetM80PilotWorkingStatesForDiagnostic();
   refs.beginM80PilotRender();
   const root = new FakeElement(900, 700);
-  const viewport = new FakeElement(718, 680);
-  const scrollArea = new FakeElement(718, 680);
   const table = new FakeElement(718, 680);
   const tableHeaders = [new FakeElement(82, 28), new FakeElement(464, 28), new FakeElement(172, 28)];
   const cells = [new FakeElement(82, 80), new FakeElement(464, 80), new FakeElement(172, 80)];
@@ -59,9 +57,9 @@ async function runM825BbmSimpleEditorModeTests(run) {
   tableHeaders[2]._leftSource = () => tableHeaders[0].getBoundingClientRect().width + tableHeaders[1].getBoundingClientRect().width;
   cells.forEach((element, index) => { element._widthSource = tableHeaders[index]._widthSource; element._leftSource = tableHeaders[index]._leftSource; });
   refs.registerM80Ref("restarbeiten.list.root", root);
-  refs.registerM80TableRef("restarbeiten.list.table", table, viewport, scrollArea);
+  refs.registerM80TableRef("restarbeiten.list.table", table, table);
   ["number", "subject", "meta"].forEach((key, index) => refs.registerM80TableColumnRef(
-    `restarbeiten.list.table.${key}`, tableHeaders[index], [cells[index]], table, viewport, variables[index], tableHeaders[index]._rect.width));
+    `restarbeiten.list.table.${key}`, tableHeaders[index], [cells[index]], table, table, variables[index], tableHeaders[index]._rect.width));
   const header = new FakeElement(560, 28);
   refs.registerM80Ref("restarbeiten.list.table.subject.header", header);
   refs.completeM80PilotRender();

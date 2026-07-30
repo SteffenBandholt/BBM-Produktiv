@@ -48,9 +48,7 @@ async function createRuntime(refs, host) {
   const root = new FakeElement(900, 700);
   const area = new FakeElement(900, 700);
   const paper = new FakeElement(900, 720);
-  const viewport = new FakeElement(600, 680);
-  const scrollArea = new FakeElement(600, 680);
-  const table = new FakeElement(858, 680);
+  const table = new FakeElement(600, 680);
   const header = new FakeElement(858, 28);
   const body = new FakeElement(858, 400);
   const row = new FakeElement(858, 80);
@@ -62,7 +60,7 @@ async function createRuntime(refs, host) {
     element._widthSource = () => {
       const value = table.style[variables[index]];
       if (!value) return element._rect.width;
-      if (String(value).startsWith("minmax")) return Math.max(minimums[index], viewport._rect.width - 44 - headers.filter((_item, candidate) => candidate !== index).reduce((sum, other, candidate) => {
+        if (String(value).startsWith("minmax")) return Math.max(minimums[index], table._rect.width - 44 - headers.filter((_item, candidate) => candidate !== index).reduce((sum, other, candidate) => {
         const actualIndex = candidate >= index ? candidate + 1 : candidate;
         const configured = parseFloat(table.style[variables[actualIndex]]);
         return sum + (Number.isFinite(configured) ? configured : other._rect.width);
@@ -74,21 +72,19 @@ async function createRuntime(refs, host) {
   refs.registerM80Ref("restarbeiten.list.root", root);
   refs.registerM80Ref("restarbeiten.list.area", area);
   refs.registerM80Ref("restarbeiten.list.paper", paper);
-  refs.registerM80Ref("restarbeiten.list.viewport", viewport);
-  refs.registerM80Ref("restarbeiten.list.scrollArea", scrollArea);
-  refs.registerM80TableRef("restarbeiten.list.table", table, viewport, scrollArea);
+  refs.registerM80TableRef("restarbeiten.list.table", table, table);
   refs.registerM80Ref("restarbeiten.list.table.header", header);
   refs.registerM80Ref("restarbeiten.list.table.body", body);
   refs.registerM80Ref("restarbeiten.list.table.row", row);
   const ids = ["number", "subject", "meta"];
-  ids.forEach((key, index) => refs.registerM80TableColumnRef(`restarbeiten.list.table.${key}`, headers[index], [cells[index]], table, viewport, variables[index], headers[index]._rect.width));
+  ids.forEach((key, index) => refs.registerM80TableColumnRef(`restarbeiten.list.table.${key}`, headers[index], [cells[index]], table, table, variables[index], headers[index]._rect.width));
   refs.completeM80PilotRender();
 
   const submit = (elementId, operation, payload, changeId = `${elementId}-${operation}`, source = "target-app-start") => host.handleM80EditorRequest({
     action: "submitChange", scopeId: "restarbeiten.list.root",
     changeRequest: { changeId, elementId, operation, payload, source },
   }).changeResult;
-  return { table, viewport, scrollArea, headers, cells, submit, cleanup: () => { refs.resetM80PilotWorkingStatesForDiagnostic(); global.document = previous.document; global.window = previous.window; global.Element = previous.Element; } };
+  return { table, headers, cells, submit, cleanup: () => { refs.resetM80PilotWorkingStatesForDiagnostic(); global.document = previous.document; global.window = previous.window; global.Element = previous.Element; } };
 }
 
 async function runM824BbmTableColumnEditingTests(run) {
@@ -102,15 +98,15 @@ async function runM824BbmTableColumnEditingTests(run) {
 
   await run("M82.4 BBM 01: bestaetigte Restarbeiten-Liste ist UI-Inhaltstabelle", () => assert.equal(tableEntry.role, "contentTable"));
   await run("M82.4 BBM 02: exakt drei bestaetigte Hauptspalten bleiben erhalten", () => assert.deepEqual(columns.map((entry) => entry.name), ["Nr. / Datum / Klasse / Fotos", "Gegenstand – Verortung / Kurztext / Langtext", "Fertig bis / Ampel / Status / Verantwortlich"]));
-  await run("M82.4 BBM 03: Tabelle besitzt Viewport und horizontalen Scrollbereich", () => { assert.equal(byId.get("restarbeiten.list.viewport").type, "tableViewport"); assert.equal(byId.get("restarbeiten.list.scrollArea").type, "horizontalScrollArea"); });
+  await run("M82.4 BBM 03: Tabelle bleibt logisches Ziel ohne Editor-Wrapper", () => { assert.equal(byId.has("restarbeiten.list.viewport"), false); assert.equal(byId.has("restarbeiten.list.scrollArea"), false); assert.equal(tableEntry.parentId, "restarbeiten.list.paper"); });
   await run("M82.4 BBM 04: Tabellenvertrag ist fachneutral gueltig", () => assert.equal(validateTableLayout(tableEntry.tableLayout).ok, true));
   await run("M82.4 BBM 05: Header und Datenbereiche nutzen dieselbe Breitenquelle", () => assert.equal(validateTableElementBindings(scope.elements).ok, true));
   await run("M82.4 BBM 06: Tabellenkopf, Body, Zeile und Zellen sind direkt registriert", () => ["tableHeader", "tableBody", "tableRow", "tableHeaderCell", "tableDataCell"].forEach((type) => assert.ok(scope.elements.some((entry) => entry.type === type), type)));
   await run("M82.4 BBM 07: bestehende Unterelemente bleiben im Renderer einzeln markiert", () => { const source = read("src/renderer/modules/restarbeiten/RestarbeitenList.js"); assert.match(source, /restarbeiten\.record\.number/); assert.match(source, /restarbeiten\.record\.shortText/); assert.match(source, /restarbeiten\.record\.responsible/); });
   await run("M82.4 BBM 08: keine neue Tabellenansicht wird eingefuehrt", () => assert.match(read("src/renderer/modules/restarbeiten/RestarbeitenMainBody.js"), /buildRestarbeitenList\(options\)/));
   await run("M82.4 BBM 09: Kopf und Datenzeilen verwenden dieselben drei CSS-Variablen", () => { const css = read("src/renderer/modules/restarbeiten/styles/restarbeiten.css"); assert.equal((css.match(/grid-template-columns: var\(--bbm-restarbeiten-number-column\) var\(--bbm-restarbeiten-subject-column\) var\(--bbm-restarbeiten-meta-column\)/g) || []).length, 2); });
-  await run("M82.4 BBM 10: sichtbarer Inhaltsbereich begrenzt die Listenbreite", () => assert.match(read("src/renderer/modules/restarbeiten/styles/restarbeiten.css"), /\.bbm-restarbeiten-table-viewport[\s\S]*max-width:\s*100%[\s\S]*overflow:\s*hidden/));
-  await run("M82.4 BBM 10a: JavaScript- und WPF-Fingerprint stimmen fuer alle Tabellenrollen ueberein", () => assert.equal(createUiScopeFingerprint(scope), "sha256:caa59d5066b584e6b7a5354156ed269341db52184d1f3f85a645019f92fd8f15"));
+  await run("M82.4 BBM 10: vorhandene Tabelle bleibt direkt unter dem Listenblatt", () => { const source = read("src/renderer/modules/restarbeiten/RestarbeitenMainBody.js"); assert.match(source, /paper\.appendChild\(table\)/); assert.doesNotMatch(source, /table-viewport|table-scroll-area/); });
+  await run("M82.4 BBM 10a: Registry-Fingerprint bleibt reproduzierbar", () => { const fingerprint = createUiScopeFingerprint(scope); assert.match(fingerprint, /^sha256:[0-9a-f]{64}$/); assert.equal(fingerprint, createUiScopeFingerprint(scope)); });
 
   const runtime = await createRuntime(refs, host);
   try {
@@ -123,10 +119,10 @@ async function runM824BbmTableColumnEditingTests(run) {
     await run("M82.4 BBM 16: Fit ohne bestaetigte Vorschau wird abgewiesen", () => assert.equal(runtime.submit("restarbeiten.list.table", "fitTableToViewport", { table: { strategy: "fit" } }).errorCode, "electron_editor_message_invalid"));
     await run("M82.4 BBM 17: Fit mit bestaetigter Vorschau begrenzt auf den Viewport", () => { runtime.submit("restarbeiten.list.table.subject", "resetTableColumn", { table: {} }); const result = runtime.submit("restarbeiten.list.table", "fitTableToViewport", { table: { strategy: "fit", previewAccepted: true } }); assert.equal(result.success, true); assert.ok(result.newState.table.overflow <= 0.5); });
     await run("M82.4 BBM 18: flexible Hauptspalte traegt den Fit vor festen Spalten", () => { assert.equal(refs.snapshotM80State("restarbeiten.list.table.number").width, 82); assert.equal(refs.snapshotM80State("restarbeiten.list.table.meta").width, 172); });
-    await run("M82.4 BBM 19: horizontaler Scrollmodus bleibt explizit steuerbar", () => { const result = runtime.submit("restarbeiten.list.table", "setHorizontalOverflowMode", { table: { horizontalOverflowMode: "scroll" } }); assert.equal(result.success, true); assert.equal(runtime.scrollArea.style.overflowX, "scroll"); });
+    await run("M82.4 BBM 19: horizontaler Scrollmodus ist fuer BBM nicht freigegeben", () => { const result = runtime.submit("restarbeiten.list.table", "setHorizontalOverflowMode", { table: { horizontalOverflowMode: "scroll" } }); assert.equal(result.success, false); assert.equal(result.errorCode, "electron_operation_not_allowed"); assert.equal(runtime.table.style.overflowX || "", ""); });
     await run("M82.4 BBM 20: ungueltiger Modus wird ohne Zustandsaenderung abgewiesen", () => { const before = refs.snapshotM80State("restarbeiten.list.table.subject"); const result = runtime.submit("restarbeiten.list.table.subject", "setColumnWidthMode", { table: { widthMode: "domain" } }); assert.equal(result.success, false); assert.deepEqual(refs.snapshotM80State("restarbeiten.list.table.subject").table, before.table); });
     await run("M82.4 BBM 21: Spaltenreset stellt Breiten- und Textmodus wieder her", () => { const result = runtime.submit("restarbeiten.list.table.subject", "resetTableColumn", { table: {} }); assert.equal(result.success, true); assert.equal(result.newState.table.widthMode, "proportional"); assert.equal(result.newState.table.wrapMode, "wordWrap"); assert.equal(result.newState.table.overflowMode, "clip"); });
-    await run("M82.4 BBM 22: Tabellenreset stellt alle drei Spalten und Tabellenmodi wieder her", () => { const result = runtime.submit("restarbeiten.list.table", "resetTable", { table: {} }); assert.equal(result.success, true); assert.equal(result.affectedStates.length, 3); assert.equal(result.newState.table.horizontalOverflowMode, "auto"); assert.equal(result.newState.table.rowHeightMode, "bounded"); });
+    await run("M82.4 BBM 22: Tabellenreset stellt alle drei Spalten und Tabellenmodi wieder her", () => { const result = runtime.submit("restarbeiten.list.table", "resetTable", { table: {} }); assert.equal(result.success, true); assert.equal(result.affectedStates.length, 3); assert.equal(result.newState.table.horizontalOverflowMode, "fitViewport"); assert.equal(result.newState.table.rowHeightMode, "bounded"); });
     await run("M82.4 BBM 22a: interaktiver Tabellenreset vertraut der validierten Ziel-App-Baseline", () => { runtime.table._rect.width = 1224; const result = runtime.submit("restarbeiten.list.table", "resetTable", { table: {} }, "interactive-table-reset", "ui-editor-panel"); assert.equal(result.success, true); assert.equal(result.errorCode, null); assert.equal(result.affectedStates.length, 3); assert.equal(refs.snapshotM80State("restarbeiten.list.table.subject").table.wrapMode, "wordWrap"); });
     await run("M82.4 BBM 22b: interaktiver Fit nutzt die bestaetigte Tabellenvorschau", () => { runtime.table._rect.width = 1224; const result = runtime.submit("restarbeiten.list.table", "fitTableToViewport", { table: { strategy: "fitViewport", previewAccepted: true } }, "interactive-table-fit", "ui-editor-panel"); assert.equal(result.success, true); assert.equal(result.errorCode, null); assert.ok(result.newState.table.overflow <= 0.5); });
     await run("M82.4 BBM 23: Start-Restore erzeugt nur explizite Tabellenmodus-Requests", () => { const requests = host.createM80StartupRequests("restarbeiten.list.root", { elementId: "restarbeiten.list.table.subject", width: 360, table: { tableId: "restarbeiten.list.table", columnId: "restarbeiten.list.table.subject", widthMode: "fixed", wrapMode: "ellipsis", overflowMode: "ellipsis" } }); assert.ok(requests.some((item) => item.request.operation === "resizeWidth")); assert.ok(requests.some((item) => item.request.operation === "setColumnWrapMode")); assert.ok(requests.some((item) => item.request.operation === "setColumnOverflowMode")); });

@@ -3,6 +3,34 @@ import {
   normalizeTopShortText,
 } from "../../shared/text/topTextPresentation.js";
 import { applyProtokollTopsUiLayout } from "../../../shared/tableLayouts/protokollTopsLayout.js";
+import { completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
+
+const PROTOKOLL_LIST_COLUMN_REFS = Object.freeze([
+  Object.freeze({ id: "protokoll.list.column.number", key: "number", widthVariable: "--bbm-tops-list-number-col", minimumWidth: 40, maximumWidth: 220 }),
+  Object.freeze({ id: "protokoll.list.column.text", key: "text", widthVariable: "--bbm-tops-list-text-col", minimumWidth: 180, maximumWidth: 1400 }),
+  Object.freeze({ id: "protokoll.list.column.meta", key: "meta", widthVariable: "--bbm-tops-list-meta-col", minimumWidth: 50, maximumWidth: 420 }),
+]);
+
+function finite(value, fallback = 0) {
+  return Number.isFinite(Number(value)) ? Number(value) : fallback;
+}
+
+function readLogicalColumnState(id, element) {
+  const rect = element.getBoundingClientRect();
+  const style = globalThis.window?.getComputedStyle?.(element) || element.style || {};
+  return {
+    elementId: id,
+    x: 0,
+    y: 0,
+    width: finite(rect.width, 1),
+    height: finite(rect.height, 1),
+    textOffsetX: finite(parseFloat(style.paddingLeft)),
+    textOffsetY: finite(parseFloat(style.paddingTop)),
+    fontSize: finite(parseFloat(style.fontSize), 12),
+    visible: true,
+    spacing: {},
+  };
+}
 
 function getAssetBaseUrl() {
   if (typeof window !== "undefined" && window?.location?.href) return window.location.href;
@@ -57,6 +85,7 @@ export class TopsList {
       enabled: false,
       activeZone: null,
     };
+    this._uiEditorColumnRefs = { number: [], text: [], meta: [] };
     this.root = document.createElement("ul");
     this.root.setAttribute("data-bbm-tops-list-v2", "true");
     applyProtokollTopsUiLayout(this.root, this.tableLayout);
@@ -108,9 +137,28 @@ export class TopsList {
       this.root.innerHTML = "";
     }
     const rows = Array.isArray(items) ? items : [];
+    this._uiEditorColumnRefs = { number: [], text: [], meta: [] };
     for (const item of rows) {
       this.root.appendChild(this._renderRow(item));
     }
+    this._registerUiEditorColumnRefs();
+  }
+
+  _registerUiEditorColumnRefs() {
+    for (const column of PROTOKOLL_LIST_COLUMN_REFS) {
+      const targets = this._uiEditorColumnRefs[column.key] || [];
+      const primary = targets[0];
+      if (!primary) continue;
+      registerM80Ref(column.id, primary, {
+        targets,
+        read: () => readLogicalColumnState(column.id, primary),
+        apply: (state) => {
+          const width = Math.min(column.maximumWidth, Math.max(column.minimumWidth, finite(state.width, column.minimumWidth)));
+          this.root.style.setProperty(column.widthVariable, `${width}px`);
+        },
+      });
+    }
+    completeM80PilotRender();
   }
 
   _renderRow(item = {}) {
@@ -266,6 +314,9 @@ export class TopsList {
     }
 
     row.append(num, text, meta);
+    this._uiEditorColumnRefs.number.push(num);
+    this._uiEditorColumnRefs.text.push(text);
+    this._uiEditorColumnRefs.meta.push(meta);
     rowEl.appendChild(row);
 
     rowEl.onclick = async () => {

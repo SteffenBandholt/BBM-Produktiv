@@ -1,4 +1,5 @@
 import { getTopFilterBadge, getTopFilterLabel, normalizeTopFilterMode } from "./topFilterMode.js";
+import { completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
 
 const ICON_CLASS = "bbm-tops-screen-quicklane-icon";
 const AMPEL_STATUS_ICON_URL = "./assets/icons/ampel-status.svg";
@@ -213,6 +214,36 @@ export class TopsScreenQuicklane {
     );
 
     this.root.append(navigation, visibility, filter, output);
+    this._registerUiEditorRefs({ navigation, visibility, filter, output });
+  }
+
+  _registerUiEditorRefs({ navigation, visibility, filter, output }) {
+    registerM80Ref("protokoll.topsScreen.quicklane", this.root);
+    const groups = [
+      ["protokoll.topsScreen.quicklane.group.navigation", navigation, [
+        "protokoll.topsScreen.quicklane.pin",
+        "protokoll.topsScreen.quicklane.action.project",
+        "protokoll.topsScreen.quicklane.action.firms",
+        "protokoll.topsScreen.quicklane.action.participants",
+      ]],
+      ["protokoll.topsScreen.quicklane.group.visibility", visibility, [
+        "protokoll.topsScreen.quicklane.action.ampel",
+        "protokoll.topsScreen.quicklane.action.longtext",
+      ]],
+      ["protokoll.topsScreen.quicklane.group.filter", filter, [
+        "protokoll.topsScreen.quicklane.action.topFilter",
+      ]],
+      ["protokoll.topsScreen.quicklane.group.output", output, [
+        "protokoll.topsScreen.quicklane.action.preview",
+        "protokoll.topsScreen.quicklane.action.print",
+        "protokoll.topsScreen.quicklane.action.mail",
+      ]],
+    ];
+    for (const [groupId, group, buttonIds] of groups) {
+      registerM80Ref(groupId, group);
+      buttonIds.forEach((buttonId, index) => registerM80Ref(buttonId, group.children[index]));
+    }
+    completeM80PilotRender();
   }
 
   _toggleFilterMenu(currentMode) {

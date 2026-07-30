@@ -83,13 +83,13 @@ async function runM801RegistrationRefreshTests(run) {
       document.body.appendChild(rendered.root);
       const registration = rendered.registration;
       runtimeRegistration = structuredClone(registration);
-      assert.equal(registration.registryVersion, 7);
+      assert.equal(registration.registryVersion, 9);
       assert.equal(registration.registryStatus, "incomplete");
       assert.deepEqual(registration.activeScopes, ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
       const complete = registration.registryScopes.filter((scope) => scope.status === "complete");
       const blocked = registration.registryScopes.filter((scope) => scope.status === "blocked");
       assert.equal(complete.length, 3);
-      assert.ok(blocked.some((scope) => scope.scopeId === "bbm.protokoll"));
+      assert.ok(blocked.some((scope) => scope.scopeId === "protokoll.screen.root" && scope.reason === "registry_reference_not_mounted" && scope.elements.length === 0));
       assert.ok(blocked.some((scope) => scope.scopeId === "restarbeiten.layout.root" && scope.reason === "M80_2_split_removed"));
       for (const scope of complete) {
         assert.equal(scope.expectedElementIds.length, scope.elements.length, scope.scopeId);

@@ -1,4 +1,4 @@
-export const BBM_M80_REGISTRY_VERSION = 7;
+export const BBM_M80_REGISTRY_VERSION = 9;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 const GROUP_LAYOUT = Object.freeze(["move", "setVisibility"]);
@@ -7,7 +7,7 @@ const TEXT_LAYOUT = Object.freeze(["move", "resizeWidth", "resizeHeight", "textR
 const FIELD_LAYOUT = Object.freeze(["move", "resizeWidth", "resizeHeight", "textResize", "setVisibility"]);
 const BUTTON_LAYOUT = Object.freeze(["move", "resizeWidth", "resizeHeight", "setVisibility"]);
 const ICON_LAYOUT = Object.freeze(["resizeWidth", "resizeHeight", "setVisibility"]);
-const TABLE_LAYOUT = Object.freeze(["resizeHeight", "setVisibility", "fitTableToViewport", "resizeColumnsProportionally", "setHorizontalOverflowMode", "setRowHeightMode", "resetTable"]);
+const TABLE_LAYOUT = Object.freeze(["resizeHeight", "setVisibility", "fitTableToViewport", "resizeColumnsProportionally", "setRowHeightMode", "resetTable"]);
 const COLUMN_LAYOUT = Object.freeze(["resizeWidth", "textResize", "setVisibility", "setColumnWidthMode", "setColumnWrapMode", "setColumnOverflowMode", "resetTableColumn"]);
 const SPACING_LAYOUT = Object.freeze(["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"]);
 const DOMAIN_LOCKS = Object.freeze(["executeTargetAction", "modifyDomainData", "createRecord", "deleteRecord"]);
@@ -135,9 +135,9 @@ const listTableLayout = Object.freeze({
   bounds: Object.freeze({ left: 0, top: 0, width: 858, height: 680 }),
   viewportBounds: Object.freeze({ left: 0, top: 0, width: 858, height: 680 }),
   contentBounds: Object.freeze({ left: 0, top: 0, width: 858, height: 680 }),
-  parentId: "restarbeiten.list.scrollArea",
+  parentId: "restarbeiten.list.paper",
   columnIds: Object.freeze(listTableColumns.map((column) => column.columnId)),
-  rowTemplateId: "restarbeiten.list.table.row", horizontalOverflowMode: "auto", verticalOverflowMode: "auto",
+  rowTemplateId: "restarbeiten.list.table.row", horizontalOverflowMode: "fitViewport", verticalOverflowMode: "none",
   widthPolicy: "bounded", minimumWidth: 320, maximumWidth: 1600, reservedWidth: 44, scrollbarWidth: 0,
   rowHeightMode: "bounded", minimumRowHeight: 54, maximumRowHeight: 180, columns: listTableColumns,
 });
@@ -150,9 +150,7 @@ const listElements = [
   element({ id: "restarbeiten.list.root", name: "Restarbeiten · Liste", type: "root", role: "scopeRoot", parentId: null, order: 0, editable: false, allowedOps: [], componentKind: "scope" }),
   element({ id: "restarbeiten.list.area", name: "Restarbeiten-Liste", type: "area", role: "contentArea", parentId: "restarbeiten.list.root", order: 10, allowedOps: GROUP_LAYOUT, componentKind: "contentArea", baseline: { width: 900, height: 420, minWidth: 320, minHeight: 180 } }),
   element({ id: "restarbeiten.list.paper", name: "Gruppe Listenblatt", type: "group", role: "layoutGroup", parentId: "restarbeiten.list.area", order: 20, allowedOps: GROUP_LAYOUT, componentKind: "paper", baseline: { width: 900, height: 720, minWidth: 320, minHeight: 240 } }),
-  element({ id: "restarbeiten.list.viewport", name: "Sichtbarer Inhaltsbereich der Restarbeiten-Liste", type: "tableViewport", role: "tableViewport", parentId: "restarbeiten.list.paper", order: 21, allowedOps: [], componentKind: "tableViewport" }),
-  element({ id: "restarbeiten.list.scrollArea", name: "Horizontaler Scrollbereich der Restarbeiten-Liste", type: "horizontalScrollArea", role: "horizontalScrollArea", parentId: "restarbeiten.list.viewport", order: 22, allowedOps: [], componentKind: "scrollArea" }),
-  element({ id: "restarbeiten.list.table", name: "Restarbeiten-Hauptliste", type: "table", role: "contentTable", parentId: "restarbeiten.list.scrollArea", order: 30, allowedOps: TABLE_LAYOUT, componentKind: "contentTable", tableLayout: listTableLayout, baseline: { width: 858, height: 680, minWidth: 320, maxWidth: 1600, minHeight: 160, maxHeight: 12000 } }),
+  element({ id: "restarbeiten.list.table", name: "Restarbeiten-Hauptliste", type: "table", role: "contentTable", parentId: "restarbeiten.list.paper", order: 30, allowedOps: TABLE_LAYOUT, componentKind: "contentTable", tableLayout: listTableLayout, baseline: { width: 858, height: 680, minWidth: 320, maxWidth: 1600, minHeight: 160, maxHeight: 12000 } }),
   ...listTableColumns.map((column, index) => element({ id: column.columnId, name: column.displayName, type: "tableColumn", role: index === 2 ? "metaColumn" : "contentColumn", parentId: "restarbeiten.list.table", order: 31 + index, allowedOps: COLUMN_LAYOUT, columnRole: index === 2 ? "metaColumn" : "contentColumn", tableColumnLayout: column, tableBinding: tableBinding(column.columnId, "column"), baseline: { width: column.currentWidth, height: 28, minWidth: column.minimumWidth, maxWidth: column.maximumWidth } })),
   element({ id: "restarbeiten.list.table.header", name: "Tabellenkopf der Restarbeiten-Liste", type: "tableHeader", role: "tableHeader", parentId: "restarbeiten.list.table", order: 40, allowedOps: [], componentKind: "tableHeader" }),
   element({ id: "restarbeiten.list.table.body", name: "Datenbereich der Restarbeiten-Liste", type: "tableBody", role: "tableBody", parentId: "restarbeiten.list.table", order: 50, allowedOps: [], componentKind: "tableBody" }),
@@ -212,23 +210,109 @@ const editElements = [
   domainButton({ id: "restarbeiten.edit.action.note", name: "Notizbutton", parentId: "restarbeiten.edit.meta", order: 102, actionKind: "domainNote" }),
 ];
 
+const PROTOKOLL_GROUP_LAYOUT = Object.freeze(["move", "resizeWidth", "resizeHeight"]);
+const PROTOKOLL_COLUMN_LAYOUT = Object.freeze(["resizeWidth"]);
+
+const protokollScreenElements = [
+  element({ id: "protokoll.screen.root", name: "Protokoll-TopScreen", type: "root", role: "scopeRoot", parentId: null, order: 0, allowedOps: [], componentKind: "screen" }),
+  element({ id: "protokoll.header", name: "Protokoll-Kopfbereich", type: "area", role: "contentArea", parentId: "protokoll.screen.root", order: 10, allowedOps: GROUP_LAYOUT, componentKind: "header" }),
+  element({ id: "protokoll.header.titleGroup", name: "Gruppe Protokollbezeichnung", type: "group", role: "layoutGroup", parentId: "protokoll.header", order: 20, allowedOps: PROTOKOLL_GROUP_LAYOUT, componentKind: "titleGroup" }),
+  element({ id: "protokoll.header.title", name: "Bezeichnung Protokoll", type: "label", role: "fieldLabel", parentId: "protokoll.header.titleGroup", order: 21, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
+  element({ id: "protokoll.header.keyword", name: "Schlagwort", type: "label", role: "dataFieldLayout", parentId: "protokoll.header.titleGroup", order: 22, allowedOps: TEXT_LAYOUT, componentKind: "interactiveLabel", lockedOps: DOMAIN_LOCKS }),
+  element({ id: "protokoll.header.context", name: "Protokollkontext", type: "label", role: "status", parentId: "protokoll.header.titleGroup", order: 23, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
+  element({ id: "protokoll.header.meta", name: "Gruppe Listenbezeichnungen", type: "group", role: "layoutGroup", parentId: "protokoll.header", order: 30, allowedOps: GROUP_LAYOUT, componentKind: "tableLegend" }),
+  element({ id: "protokoll.header.meta.due", name: "Bezeichnung Fertig bis", type: "label", role: "fieldLabel", parentId: "protokoll.header.meta", order: 31, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
+  element({ id: "protokoll.header.meta.status", name: "Bezeichnung Status", type: "label", role: "fieldLabel", parentId: "protokoll.header.meta", order: 32, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
+  element({ id: "protokoll.header.meta.responsible", name: "Bezeichnung Verantwortlich", type: "label", role: "fieldLabel", parentId: "protokoll.header.meta", order: 33, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
+  element({ id: "protokoll.topsScreen.quicklane", name: "Protokoll-Quicklane", type: "area", role: "layout", parentId: "protokoll.screen.root", order: 40, allowedOps: PROTOKOLL_GROUP_LAYOUT, componentKind: "toolbar" }),
+  ...[
+    ["navigation", "Navigation", 41],
+    ["visibility", "Sichtbarkeit", 42],
+    ["filter", "TOP-Filter", 43],
+    ["output", "Ausgabe", 44],
+  ].map(([key, name, order]) => element({ id: `protokoll.topsScreen.quicklane.group.${key}`, name: `Gruppe ${name}`, type: "group", role: "layoutGroup", parentId: "protokoll.topsScreen.quicklane", order, allowedOps: GROUP_LAYOUT, componentKind: "toolbarGroup" })),
+  ...[
+    ["pin", "Fixieren", "navigation", 50],
+    ["action.project", "Projekt", "navigation", 51],
+    ["action.firms", "Firmen", "navigation", 52],
+    ["action.participants", "Teilnehmer", "navigation", 53],
+    ["action.ampel", "Ampel", "visibility", 54],
+    ["action.longtext", "Langtext", "visibility", 55],
+    ["action.topFilter", "TOP-Filter", "filter", 56],
+    ["action.preview", "PDF-Vorschau", "output", 57],
+    ["action.print", "Drucken", "output", 58],
+    ["action.mail", "E-Mail", "output", 59],
+  ].map(([key, name, group, order]) => domainButton({ id: `protokoll.topsScreen.quicklane.${key}`, name, parentId: `protokoll.topsScreen.quicklane.group.${group}`, order, actionKind: "domainAction" })),
+];
+
+const protokollListColumns = Object.freeze([
+  Object.freeze({ id: "protokoll.list.column.number", name: "TOP / Nummer", currentWidth: 64, minimumWidth: 40, maximumWidth: 220, widthSourceId: "--bbm-tops-list-number-col", order: 31, role: "metaColumn" }),
+  Object.freeze({ id: "protokoll.list.column.text", name: "Gegenstand / Kurztext / Langtext", currentWidth: 650, minimumWidth: 180, maximumWidth: 1400, widthSourceId: "--bbm-tops-list-text-col", order: 32, role: "contentColumn" }),
+  Object.freeze({ id: "protokoll.list.column.meta", name: "Status / Fertig bis / Verantwortlich", currentWidth: 74, minimumWidth: 50, maximumWidth: 420, widthSourceId: "--bbm-tops-list-meta-col", order: 33, role: "metaColumn" }),
+]);
+
+const protokollListElements = [
+  element({ id: "protokoll.list.root", name: "Protokoll-Listenbereich", type: "root", role: "scopeRoot", parentId: null, order: 0, allowedOps: [], componentKind: "sheetScrollOwner" }),
+  element({ id: "protokoll.list.canvas", name: "Protokoll-Dokumentfläche", type: "area", role: "contentArea", parentId: "protokoll.list.root", order: 10, allowedOps: [], componentKind: "documentCanvas" }),
+  element({ id: "protokoll.list.paper", name: "Protokoll-Dokumentblatt", type: "group", role: "layoutGroup", parentId: "protokoll.list.canvas", order: 20, allowedOps: [], componentKind: "documentPaper" }),
+  element({ id: "protokoll.list.table", name: "Protokoll-TOP-Liste", type: "group", role: "contentTable", parentId: "protokoll.list.paper", order: 30, allowedOps: [], componentKind: "existingContentTable" }),
+  ...protokollListColumns.map((column) => element({ id: column.id, name: column.name, type: "group", role: column.role, parentId: "protokoll.list.table", order: column.order, allowedOps: PROTOKOLL_COLUMN_LAYOUT, columnRole: column.role, componentKind: "logicalColumn", baseline: { width: column.currentWidth, minWidth: column.minimumWidth, maxWidth: column.maximumWidth } })),
+];
+
+const protokollEditElements = [
+  element({ id: "protokoll.edit.root", name: "Protokoll-Eingabebereich", type: "root", role: "scopeRoot", parentId: null, order: 0, allowedOps: ZONE_HEIGHT_LAYOUT, componentKind: "fixedEditArea", baseline: { width: 940, height: 300, minWidth: 320, maxWidth: 1880, minHeight: 160, maxHeight: 720 } }),
+  element({ id: "protokoll.edit.canvas", name: "Protokoll-Eingabefläche", type: "area", role: "formArea", parentId: "protokoll.edit.root", order: 10, allowedOps: [], componentKind: "editCanvas" }),
+  element({ id: "protokoll.edit.workbench", name: "Gruppe TOP-Bearbeitung", type: "group", role: "layoutGroup", parentId: "protokoll.edit.canvas", order: 20, allowedOps: PROTOKOLL_GROUP_LAYOUT, componentKind: "workbench" }),
+  element({ id: "protokoll.edit.header", name: "Gruppe TOP-Bearbeitungskopf", type: "group", role: "layoutGroup", parentId: "protokoll.edit.workbench", order: 30, allowedOps: GROUP_LAYOUT, componentKind: "header" }),
+  element({ id: "protokoll.edit.header.label", name: "Bezeichnung TOP bearbeiten", type: "label", role: "fieldLabel", parentId: "protokoll.edit.header", order: 31, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
+  element({ id: "protokoll.edit.text", name: "Gruppe Textbearbeitung", type: "group", role: "fieldCollection", parentId: "protokoll.edit.workbench", order: 40, allowedOps: PROTOKOLL_GROUP_LAYOUT, componentKind: "editbox" }),
+  element({ id: "protokoll.edit.short", name: "Gruppe Kurztext", type: "fieldGroup", role: "formFieldGroup", parentId: "protokoll.edit.text", order: 41, allowedOps: PROTOKOLL_GROUP_LAYOUT, componentKind: "fieldGroup" }),
+  element({ id: "protokoll.edit.short.label", name: "Bezeichnung Kurztext", type: "label", role: "fieldLabel", parentId: "protokoll.edit.short", order: 42, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
+  element({ id: "protokoll.edit.short.field", name: "Eingabefeld Kurztext", type: "field", role: "dataFieldLayout", parentId: "protokoll.edit.short", order: 43, allowedOps: FIELD_LAYOUT, fieldKind: "text", componentKind: "input" }),
+  element({ id: "protokoll.edit.long", name: "Gruppe Langtext", type: "fieldGroup", role: "formFieldGroup", parentId: "protokoll.edit.text", order: 50, allowedOps: PROTOKOLL_GROUP_LAYOUT, componentKind: "fieldGroup" }),
+  element({ id: "protokoll.edit.long.label", name: "Bezeichnung Langtext", type: "label", role: "fieldLabel", parentId: "protokoll.edit.long", order: 51, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
+  element({ id: "protokoll.edit.long.field", name: "Eingabefeld Langtext", type: "field", role: "dataFieldLayout", parentId: "protokoll.edit.long", order: 52, allowedOps: FIELD_LAYOUT, fieldKind: "multilineText", componentKind: "textarea" }),
+  element({ id: "protokoll.edit.meta", name: "Gruppe Status und Zuordnung", type: "group", role: "fieldCollection", parentId: "protokoll.edit.workbench", order: 60, allowedOps: PROTOKOLL_GROUP_LAYOUT, componentKind: "metaPanel" }),
+  element({ id: "protokoll.edit.flags", name: "Gruppe Kennzeichnungen", type: "group", role: "layoutGroup", parentId: "protokoll.edit.meta", order: 61, allowedOps: PROTOKOLL_GROUP_LAYOUT, componentKind: "flagGroup" }),
+  ...[
+    ["status", "Status", "select", 70],
+    ["due", "Fertig bis", "date", 80],
+    ["responsible", "Verantwortlich", "select", 90],
+  ].flatMap(([key, name, fieldKind, order]) => [
+    element({ id: `protokoll.edit.${key}`, name: `Gruppe ${name}`, type: "fieldGroup", role: "formFieldGroup", parentId: "protokoll.edit.meta", order, allowedOps: PROTOKOLL_GROUP_LAYOUT, componentKind: "fieldGroup" }),
+    element({ id: `protokoll.edit.${key}.label`, name: `Bezeichnung ${name}`, type: "label", role: "fieldLabel", parentId: `protokoll.edit.${key}`, order: order + 1, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
+    element({ id: `protokoll.edit.${key}.field`, name: `Eingabefeld ${name}`, type: "field", role: "dataFieldLayout", parentId: `protokoll.edit.${key}`, order: order + 2, allowedOps: FIELD_LAYOUT, fieldKind, componentKind: fieldKind === "date" ? "dateInput" : "select" }),
+  ]),
+  element({ id: "protokoll.edit.ampel", name: "Statussymbol Ampel", type: "statusIndicator", role: "status", parentId: "protokoll.edit.meta", order: 100, allowedOps: ICON_LAYOUT, componentKind: "statusIndicator" }),
+];
+
 export const BBM_M80_ACTIVE_SCOPES = Object.freeze([
   "restarbeiten.header.root",
   "restarbeiten.list.root",
   "restarbeiten.edit.root",
+  "protokoll.screen.root",
+  "protokoll.list.root",
+  "protokoll.edit.root",
+]);
+
+export const BBM_M80_ACTIVE_SCOPE_GROUPS = Object.freeze([
+  Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]),
+  Object.freeze(["protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root"]),
 ]);
 
 export const BBM_M80_REGISTRY_SCOPES = Object.freeze([
   completeScope("restarbeiten.header.root", headerElements),
   completeScope("restarbeiten.list.root", listElements),
   completeScope("restarbeiten.edit.root", editElements),
+  completeScope("protokoll.screen.root", protokollScreenElements),
+  completeScope("protokoll.list.root", protokollListElements),
+  completeScope("protokoll.edit.root", protokollEditElements),
   blockedScope("bbm.shell", "Shell und Hauptnavigation"),
   blockedScope("bbm.home", "Start"),
   blockedScope("bbm.projects", "Projektverwaltung"),
   blockedScope("bbm.project-workspace", "Projektarbeitsplatz"),
   blockedScope("bbm.firms", "Firmen und Personen"),
   blockedScope("bbm.project-firms", "Projektfirmen und Projektpersonen"),
-  blockedScope("bbm.protokoll", "Protokoll"),
   blockedScope("bbm.settings", "Einstellungen"),
   blockedScope("bbm.help", "Hilfe"),
   blockedScope("bbm.dialogs", "Produktive Dialoge"),
