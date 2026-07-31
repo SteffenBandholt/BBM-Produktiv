@@ -12,7 +12,7 @@ async function runTestHarnessOrchestrationTests(run) {
   await run("Testharness: alle bisherigen Suite-Einstiege sind genau einmal gruppiert", () => {
     const suites = TEST_GROUPS.flatMap((group) => group.suites.map(([moduleName, exportName]) => `${moduleName}#${exportName}`));
     assert.equal(TEST_GROUPS.length, 8);
-    assert.equal(suites.length, 111, "111 Suite-Einstiege einschließlich Entwicklungs-Lizenz sowie M82.4 bis M82.7.3-Isolation");
+    assert.equal(suites.length, 112, "112 Suite-Einstiege einschließlich Entwicklungs-Lizenz sowie M82.4 bis M82.7.4-Isolation");
     assert.equal(new Set(suites).size, suites.length);
     for (const suite of suites) assert.equal(fs.existsSync(path.resolve(__dirname, suite.split("#")[0])), true, suite);
     assert.equal(TEST_GROUPS.filter((group) => group.includeStoragePathTests).length, 1);

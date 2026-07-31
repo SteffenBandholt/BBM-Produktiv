@@ -1,5 +1,14 @@
 # STATUS.md — BBM-Produktiv
 
+### M82.7.4 – Ampelsymbol generisch editorfähig
+
+- Status: `[A] abgenommen`; Ref-Korrektur, generischer Nachbarfilter, automatisierte Regression und sichtbare isolierte Zwei-Start-Abnahme sind abgeschlossen.
+- `restarbeiten.edit.meta.ampel` zeigt direkt auf das vorhandene innere 12×12-Symbol. Der äußere Grid-/Flex-Container bleibt unverändert; freigegeben sind nur Breite, Höhe und Sichtbarkeit, nicht Verschieben.
+- Der BBM-HostAdapter filtert nur nicht messbare beziehungsweise layoutinaktive Geometriekandidaten vor dem unverändert strengen gemeinsamen Geometry-Core. Sichtbare positive Nachbarn werden einbezogen und echte Kollisionen bleiben blockiert.
+- Sichtbar bestätigt sind Zielwahl, ausgeblendete Verschiebegruppe, Breite/Höhe +5 DIP, Sichtbarkeit, Undo, Original, Save und Neustart-Restore ohne `invalid_geometry`, Topologie- oder Scrolländerung.
+- Der bekannte False-Dirty-Startzustand, Fachlogik, Fachwerte und PDF-Funktionen wurden nicht geändert.
+- Detaildokument: `docs/M82_7_4_BBM_AMPELSYMBOL.md`.
+
 ### M82.7.3 – textResize-Istwert und isolierte Entwicklungsabnahme
 
 - Status: `[A] abgenommen`; Istwertkorrektur, forensische Datenbankklärung, automatisierte Regression und sichtbare Zwei-Start-Abnahme sind abgeschlossen.

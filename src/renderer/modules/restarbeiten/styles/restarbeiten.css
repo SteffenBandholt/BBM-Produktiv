@@ -655,6 +655,7 @@
 
 .bbm-restarbeiten-ampel {
   display: inline-block;
+  flex: 0 0 auto;
   width: 12px;
   height: 12px;
   border-radius: 999px;
