@@ -1,5 +1,14 @@
 # STATUS.md — BBM-Produktiv
 
+### M82.7.3 – textResize-Istwert und isolierte Entwicklungsabnahme
+
+- Status: `[A] abgenommen`; Istwertkorrektur, forensische Datenbankklärung, automatisierte Regression und sichtbare Zwei-Start-Abnahme sind abgeschlossen.
+- `npm run start:ui-editor:acceptance` setzt `userData` und `sessionData` vor jedem Datenbank-/IPC-Import auf ein markiertes Temp-Profil, startet zweimal gegen dasselbe isolierte Profil und entfernt dieses im `finally`. Normaler `npm start` bleibt unverändert.
+- Der Schalter wird in paketierten Builds abgewiesen. Freie Umgebungsvariablen aktivieren weder den isolierten Pfad noch eine Release-Freischaltung; verwendet wird ausschließlich der bestehende interne Provider `bbm-internal-development-license-v1` mit `DEV / development-diagnostic`.
+- Die sichtbare Abnahme bestätigte realen Schrift-Istwert, Kleiner/Größer, direkte Eingabe, Undo, Reset, Kurz-/Langtext, normale Bezeichnung, Feld, Bewegung, Sichtbarkeit sowie Save-/Neustart-Restore ohne Topologie- oder Scrolländerung.
+- Der forensische Vergleich von Kopien der echten `app.db` und `app.db.bak` ergab genau einen technischen Zeitstempelunterschied in `restarbeiten_items`; Fachwerte, Schema, Primärschlüssel und Zeilenzahlen sind identisch. Es wurde nichts zurückgespielt.
+- Detaildokument: `docs/M82_7_3_BBM_TEXTRESIZE_ISTWERT_UND_ISOLIERUNG.md`.
+
 ### M82.7.1 – Willkürliche Verschiebegrenze entfernen
 
 - Status: `[A] abgenommen`; gezielte Reparatur, Pflichtprüfungen und sichtbare isolierte Diagnostic-Abnahme sind abgeschlossen.
