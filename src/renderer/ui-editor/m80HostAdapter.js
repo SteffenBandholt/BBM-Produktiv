@@ -224,6 +224,27 @@ export function isM80GeometryNeighborActive(candidate, beforeGeometry, afterGeom
   if (!ref?.element || ref.element.isConnected === false || !isLayoutEffective(ref.element)) return false;
   return finitePositiveBounds(beforeGeometry.get(candidate.id)) && finitePositiveBounds(afterGeometry.get(candidate.id));
 }
+const STARTUP_GEOMETRY_OPERATIONS = new Set(["move", "resize", "resizeWidth", "resizeHeight"]);
+function nextM80LayoutFrame() {
+  return new Promise((resolve) => {
+    if (typeof globalThis.window?.requestAnimationFrame === "function") globalThis.window.requestAnimationFrame(() => resolve());
+    else setTimeout(resolve, 16);
+  });
+}
+export async function waitForM80StartupGeometry(items, maximumFrames = 60) {
+  const targetIds = [...new Set((items || []).map((item) => item?.request || item)
+    .filter((request) => request?.elementId && STARTUP_GEOMETRY_OPERATIONS.has(request.operation))
+    .map((request) => request.elementId))];
+  if (!targetIds.length) return true;
+  const ready = () => targetIds.every((id) => {
+    const element = getM80Ref(id)?.element;
+    if (!element || element.isConnected === false || typeof element.getBoundingClientRect !== "function") return false;
+    const rect = element.getBoundingClientRect();
+    return finitePositiveBounds({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+  });
+  for (let frame = 0; frame < maximumFrames && !ready(); frame += 1) await nextM80LayoutFrame();
+  return ready();
+}
 export function collectM80GeometryNeighbors(entry, beforeGeometry, afterGeometry, unexpected = []) {
   const parent = entry.parentId ? getM80RegistryEntry(entry.parentId) : null;
   const contextId = parent?.parentId || entry.parentId;
@@ -768,13 +789,14 @@ export function restoreM80StartupLayout() {
     }
     const original = new Map(listM80Refs().map((ref) => [ref.id, snapshotM80State(ref.id)]));
     try {
-      for (const scope of loaded.scopes) {
-        for (const element of scope.elements) {
-          for (const item of createM80StartupRequests(scope.scopeId, element, scope.explicitOperations)) {
-            const result = submitChange(item.request, item.scopeId);
-            if (!result.success) throw Object.assign(new Error(`${item.request.elementId}/${item.request.operation}: ${result.message}`), { code: result.errorCode || "startup_layout_apply_failed" });
-          }
-        }
+      const initialRequests = loaded.scopes.flatMap((scope) => scope.elements.flatMap((element) =>
+        createM80StartupRequests(scope.scopeId, element, scope.explicitOperations)));
+      await waitForM80StartupGeometry(initialRequests);
+      const startupRequests = loaded.scopes.flatMap((scope) => scope.elements.flatMap((element) =>
+        createM80StartupRequests(scope.scopeId, element, scope.explicitOperations)));
+      for (const item of startupRequests) {
+        const result = submitChange(item.request, item.scopeId);
+        if (!result.success) throw Object.assign(new Error(`${item.request.elementId}/${item.request.operation}: ${result.message}`), { code: result.errorCode || "startup_layout_apply_failed" });
       }
       const completion = await api.completeStartupLayout({ ok: true, profileSha256: loaded.profileSha256 });
       if (!completion?.ok) throw Object.assign(new Error("Startlayout konnte nicht bestätigt werden."), { code: completion?.code || "startup_layout_apply_failed" });
