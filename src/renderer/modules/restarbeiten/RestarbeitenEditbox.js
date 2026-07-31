@@ -386,12 +386,12 @@ export function buildRestarbeitenEditbox({
   });
   ampelWrap.hidden = showAmpel === false;
   ampelWrap.style.display = showAmpel === false ? "none" : "";
-  registerM80Ref("restarbeiten.edit.meta.ampel", ampelWrap);
   const ampel = createEl("span", {
     className: "bbm-restarbeiten-ampel",
   });
   ampel.dataset.state = draft.ampelState || "neutral";
   ampelWrap.appendChild(ampel);
+  registerM80Ref("restarbeiten.edit.meta.ampel", ampel);
   const dueDateField = createField({
     label: "Fertig bis",
     labelUiId: "restarbeiten.editbox.meta.dueDate.label",

@@ -210,13 +210,27 @@ function isAncestor(candidateId, elementId) {
   while (current?.parentId) { if (current.parentId === candidateId) return true; current = getM80RegistryEntry(current.parentId); }
   return false;
 }
+function finitePositiveBounds(bounds) {
+  return bounds && [bounds.left, bounds.top, bounds.width, bounds.height].every((value) => Number.isFinite(Number(value))) &&
+    Number(bounds.width) > 0 && Number(bounds.height) > 0;
+}
+function isLayoutEffective(element) {
+  if (!element || element.hidden === true) return false;
+  const style = globalThis.window?.getComputedStyle?.(element) || element.style || {};
+  return String(style.display || "").trim().toLowerCase() !== "none";
+}
+export function isM80GeometryNeighborActive(candidate, beforeGeometry, afterGeometry) {
+  const ref = candidate?.id ? getM80Ref(candidate.id) : null;
+  if (!ref?.element || ref.element.isConnected === false || !isLayoutEffective(ref.element)) return false;
+  return finitePositiveBounds(beforeGeometry.get(candidate.id)) && finitePositiveBounds(afterGeometry.get(candidate.id));
+}
 export function collectM80GeometryNeighbors(entry, beforeGeometry, afterGeometry, unexpected = []) {
   const parent = entry.parentId ? getM80RegistryEntry(entry.parentId) : null;
   const contextId = parent?.parentId || entry.parentId;
   const flowGroup = ancestor(entry, (candidate) => ["group", "fieldGroup"].includes(candidate.type));
   return allEntries().filter((candidate) => {
     if (candidate.id === entry.id || isAncestor(candidate.id, entry.id) || isAncestor(entry.id, candidate.id)) return false;
-    if (!beforeGeometry.get(candidate.id) || !afterGeometry.get(candidate.id)) return false;
+    if (!isM80GeometryNeighborActive(candidate, beforeGeometry, afterGeometry)) return false;
     return unexpected.includes(candidate.id) || candidate.parentId === entry.parentId || candidate.parentId === contextId ||
       candidate.id === contextId || (flowGroup && isAncestor(flowGroup.id, candidate.id));
   }).map((candidate) => ({

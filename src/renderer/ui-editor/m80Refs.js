@@ -485,7 +485,8 @@ export function listM80CurrentStates(scopeId) {
 }
 export function getM80ReferenceStatus(id) {
   const ref = getM80Ref(id);
-  return { refKey: String(id || ""), referenceResolved: Boolean(ref && (typeof ref.element.isConnected !== "boolean" || ref.element.isConnected)) };
+  const entry = ref?.entry || getM80RegistryEntry(id);
+  return { refKey: String(entry?.refKey || id || ""), referenceResolved: Boolean(ref && (typeof ref.element.isConnected !== "boolean" || ref.element.isConnected)) };
 }
 export function clearM80VisualState() {
   document.querySelector("[data-bbm-ui-editor-overlay]")?.remove();
