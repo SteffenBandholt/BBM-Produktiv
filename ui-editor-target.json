@@ -8,7 +8,7 @@
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
   "registryVersion": 11,
-  "registryFingerprint": "sha256:943e87d57a95e905b598fb5bcff00e142eff588726c4be7781b7ce9297c1a054",
+  "registryFingerprint": "sha256:82f2f558cf253b63115f6e46bcbf05dd94c9ce4e9ed970a2915161ab9e9ebf7f",
   "registryStatus": "incomplete",
   "activeScopes": [
     "restarbeiten.header.root",

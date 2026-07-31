@@ -1,5 +1,14 @@
 # STATUS.md — BBM-Produktiv
 
+### M82.7.4.1 – Ampelsymbol verschiebbar
+
+- Status: `[A] abgenommen`; generischer Move-Weg, automatisierte Regression und sichtbare isolierte Zwei-Start-Abnahme sind abgeschlossen.
+- `restarbeiten.edit.meta.ampel` erlaubt zusätzlich `move` mit der expliziten Baseline `X=0`, `Y=0`. Ref und Layoutwirkung bleiben auf das vorhandene innere `span.bbm-restarbeiten-ampel` begrenzt; der äußere Container wird nicht verschoben.
+- Pfeilschritte, direkte X-/Y-Werte, Undo, Original, Save und Neustart-Restore verwenden den vorhandenen HostAdapter-/Profilweg. Der Startup-Restore wartet für Geometrieoperationen generisch auf messbare Ziel-Bounds, ohne Ampel-ID oder Core-Sonderlogik.
+- Sichtbar bestätigt sind Schrittweite 5, Links/Rechts `0 → -5 → 0`, Oben/Unten `0 → -5 → 0`, Direkteingabe `X=15/Y=-10`, Undo, Reset sowie gespeicherter Neustart-Restore `X=-5/Y=-5` mit `startup_layout_applied`.
+- Breite, Höhe und Sichtbarkeit bleiben wirksam; äußerer Container, Topologie, Scrollstruktur und Fachwerte bleiben unverändert.
+- Detaildokument: `docs/M82_7_4_BBM_AMPELSYMBOL.md`.
+
 ### M82.7.4 – Ampelsymbol generisch editorfähig
 
 - Status: `[A] abgenommen`; Ref-Korrektur, generischer Nachbarfilter, automatisierte Regression und sichtbare isolierte Zwei-Start-Abnahme sind abgeschlossen.
