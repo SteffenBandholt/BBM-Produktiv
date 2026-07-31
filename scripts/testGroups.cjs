@@ -154,6 +154,8 @@ const TEST_GROUPS = Object.freeze([
       ["m82-6TopScreenModuleClosure.test.cjs", "runM826TopScreenModuleClosureTests"],
       ["m82-7RemainingIndicators.test.cjs", "runM827RemainingIndicatorTests"],
       ["m82-7-2GenericTextResize.test.cjs", "runM8272GenericTextResizeTests"],
+      ["m82-7-3TextResizeCurrentValue.test.cjs", "runM8273TextResizeCurrentValueTests"],
+      ["uiEditorAcceptanceIsolation.test.cjs", "runUiEditorAcceptanceIsolationTests"],
       ["testHarnessOrchestration.test.cjs", "runTestHarnessOrchestrationTests"],
     ]),
   }),

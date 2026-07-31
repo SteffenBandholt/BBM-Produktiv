@@ -7,6 +7,13 @@ const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require("electron")
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
+const { configureUiEditorAcceptanceProfile } = require("./startup/uiEditorAcceptanceProfile");
+
+const uiEditorAcceptanceProfile = configureUiEditorAcceptanceProfile({ electronApp: app });
+if (uiEditorAcceptanceProfile.enabled) {
+  console.log("[ui-editor-acceptance] userData", uiEditorAcceptanceProfile.userDataPath);
+  console.log("[ui-editor-acceptance] sessionData", uiEditorAcceptanceProfile.sessionDataPath);
+}
 
 // IPCs
 const { registerProjectsIpc } = require("./ipc/projectsIpc");

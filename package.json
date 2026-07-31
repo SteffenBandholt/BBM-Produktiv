@@ -6,8 +6,9 @@
   "main": "src/main/main.js",
   "type": "commonjs",
   "scripts": {
-    "start": "npm run fix:electron-deps && npm run start:raw",
+    "start": "npm run fix:electron-deps && npm run prepare:ui-editor && npm run start:raw",
     "start:raw": "set ELECTRON_RUN_AS_NODE=&& electron .",
+    "start:ui-editor:acceptance": "npm run fix:electron-deps && npm run prepare:ui-editor && node scripts/runIsolatedUiEditorAcceptance.cjs",
     "prepare:ui-editor": "node scripts/prepareUiEditorManager.cjs",
     "pack": "npm run fix:electron-deps && npm run prepare:ui-editor && electron-builder --dir",
     "pack:diagnostic": "npm run fix:electron-deps && npm run prepare:ui-editor && node scripts/dist.cjs --diagnostic --dir",
