@@ -38,6 +38,10 @@ import {
   RISK_ACTIONS,
   evaluateGeometryRisk,
 } from "../../../node_modules/ui-editor-kit/dist/geometry-risk-contract.mjs";
+import {
+  normalizeTextResizeIntent,
+  verifyTextResizeReadback,
+} from "../../../node_modules/ui-editor-kit/dist/text-resize-contract.mjs";
 
 const ALLOWED_ACTIONS = new Set(["getRegistry", "getLayoutState", "submitChange"]);
 const SUPPORTED_OPERATIONS = Object.freeze(["move", "resize", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility", "spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset", ...TABLE_LAYOUT_OPERATIONS]);
@@ -67,8 +71,8 @@ function hasForbidden(value) {
   if (!value || typeof value !== "object") return false;
   return Object.entries(value).some(([key, nested]) => FORBIDDEN_KEYS.has(key) || hasForbidden(nested));
 }
-function failure(request, errorCode, message, previousState = null, rollbackSucceeded = true, geometryRisk = null) {
-  return { success: false, changeId: String(request?.changeId || ""), elementId: String(request?.elementId || ""), operation: String(request?.operation || ""), errorCode, message, previousState, newState: previousState, rollbackSucceeded, geometryRisk };
+function failure(request, errorCode, message, previousState = null, rollbackSucceeded = true, geometryRisk = null, textResize = null) {
+  return { success: false, changeId: String(request?.changeId || ""), elementId: String(request?.elementId || ""), operation: String(request?.operation || ""), errorCode, message, previousState, newState: previousState, rollbackSucceeded, geometryRisk, textResize };
 }
 function number(value, field, { positive = false, nonNegative = false } = {}) {
   const result = Number(value);
@@ -76,7 +80,7 @@ function number(value, field, { positive = false, nonNegative = false } = {}) {
   return result;
 }
 
-function desiredState(previous, entry, operation, payload) {
+function desiredState(previous, entry, operation, payload, textResizeIntent = null) {
   const next = { ...previous, spacing: { ...(previous.spacing || {}) } };
   if (!payload || typeof payload !== "object" || Array.isArray(payload) || hasForbidden(payload)) throw Object.assign(new Error("Layout-Payload ist ungültig."), { code: "electron_editor_message_invalid" });
   if (operation === "move") {
@@ -104,13 +108,8 @@ function desiredState(previous, entry, operation, payload) {
     if (Object.hasOwn(payload.text, "offsetX")) next.textOffsetX = number(payload.text.offsetX, "offsetX", { nonNegative: true });
     if (Object.hasOwn(payload.text, "offsetY")) next.textOffsetY = number(payload.text.offsetY, "offsetY", { nonNegative: true });
   } else if (operation === "textResize") {
-    if (Object.keys(payload).length !== 1 || !payload.text || Object.keys(payload.text).length !== 1 || !Object.hasOwn(payload.text, "fontSize")) throw new Error("textResize-Payload ist ungültig.");
-    next.fontSize = number(payload.text.fontSize, "fontSize", { positive: true });
-    const minimum = Number(entry?.baseline?.minFontSize);
-    const maximum = Number(entry?.baseline?.maxFontSize);
-    if ((Number.isFinite(minimum) && next.fontSize < minimum) || (Number.isFinite(maximum) && next.fontSize > maximum)) {
-      throw Object.assign(new Error("Schriftgröße liegt außerhalb der freigegebenen Ziel-App-Grenzen."), { code: "electron_editor_message_invalid" });
-    }
+    if (!textResizeIntent) throw Object.assign(new Error("textResize-Payload ist ungültig."), { code: "text_resize_invalid_intent" });
+    next.fontSize = textResizeIntent.requestedFontSize;
   } else if (operation === "setVisibility") {
     if (Object.keys(payload).length !== 1 || typeof payload.visible !== "boolean") throw new Error("setVisibility-Payload ist ungültig.");
     next.visible = payload.visible;
@@ -330,6 +329,7 @@ function submitChange(changeRequest, scopeId) {
   if (!previous) return failure(request, "electron_element_not_found", "Explizite Elementreferenz fehlt.");
   let groupRestore = null;
   const tableRestore = new Map();
+  let textResizeVerification = null;
   try {
     const beforeTopology = snapshotM80Topology();
     const beforeGeometry = snapshotM80Geometry();
@@ -339,7 +339,17 @@ function submitChange(changeRequest, scopeId) {
       throw Object.assign(new Error("Kontrollierter Diagnosefehler."), { code: "electron_change_apply_failed" });
     }
     const confirmation = confirmedRisk(request);
-    let desired = desiredState(previous, entry, request.operation, request.payload);
+    let textResizeIntent = null;
+    if (request.operation === "textResize") {
+      const normalized = normalizeTextResizeIntent(request.payload, {
+        minimumFontSize: entry?.baseline?.minFontSize,
+        maximumFontSize: entry?.baseline?.maxFontSize,
+        currentFontSize: previous.fontSize,
+      });
+      if (!normalized.ok) throw Object.assign(new Error(normalized.message), { code: normalized.code, textResize: normalized.readback });
+      textResizeIntent = normalized.intent;
+    }
+    let desired = desiredState(previous, entry, request.operation, request.payload, textResizeIntent);
     if (confirmation && [RISK_ACTIONS.CLAMP_TO_GROUP, RISK_ACTIONS.CLAMP_TO_AREA].includes(confirmation.action)) desired = clampDesiredState(desired, confirmation.risk, confirmation.action);
     if (confirmation?.action === RISK_ACTIONS.PRESERVE_SPACE || confirmation?.action === RISK_ACTIONS.SHRINK_GROUP) {
       desired.spacing = { ...(desired.spacing || {}), reservedWidth: Number(desired.spacing?.reservedWidth || 0) + Number(confirmation.risk.technicalDetails?.freedWidth || 0) };
@@ -363,6 +373,17 @@ function submitChange(changeRequest, scopeId) {
       readback = applyM80State(entry.id, { ...previous, width: baseline.currentWidth, visible: baseline.visibility, table: { tableId: entry.tableBinding.tableId, columnId: entry.id, widthMode: baseline.widthMode, wrapMode: baseline.wrapMode, overflowMode: baseline.overflowMode } });
     } else {
       readback = applyM80State(entry.id, desired, request.operation);
+    }
+    if (textResizeIntent) {
+      const verified = verifyTextResizeReadback({
+        requestedFontSize: textResizeIntent.requestedFontSize,
+        expectedCurrentFontSize: textResizeIntent.expectedCurrentFontSize,
+        previousFontSize: previous.fontSize,
+        appliedFontSize: readback?.fontSize,
+        tolerance: textResizeIntent.tolerance,
+      });
+      textResizeVerification = verified.readback;
+      if (!verified.ok) throw Object.assign(new Error(verified.message), { code: verified.code, textResize: verified.readback });
     }
     if (confirmation?.action === RISK_ACTIONS.SHRINK_GROUP) {
       const groupEntry = ancestor(entry, (candidate) => ["group", "fieldGroup"].includes(candidate.type));
@@ -397,13 +418,13 @@ function submitChange(changeRequest, scopeId) {
     if (confirmation) pendingGeometryRisks.delete(confirmation.risk.operationId);
     const topology = compareM80Topology(beforeTopology);
     if (!topology.ok) throw Object.assign(new Error("Die Layoutaenderung wuerde die produktive UI-Topologie veraendern."), { code: topology.errorCode });
-    return { success: true, changeId: request.changeId, elementId: entry.id, operation: request.operation, effectScope: affected.effect, affectedElementIds: [...affected.ids], affectedStates, errorCode: null, message: confirmation?.action === RISK_ACTIONS.PRESERVE_SPACE ? "Elementbreite geändert; frei gewordener Platz bleibt reserviert." : "Layoutänderung angewandt, geometrisch geprüft und zurückgelesen.", previousState: previous, newState: readback, rollbackSucceeded: true };
+    return { success: true, changeId: request.changeId, elementId: entry.id, operation: request.operation, effectScope: affected.effect, affectedElementIds: [...affected.ids], affectedStates, errorCode: null, message: confirmation?.action === RISK_ACTIONS.PRESERVE_SPACE ? "Elementbreite geändert; frei gewordener Platz bleibt reserviert." : "Layoutänderung angewandt, geometrisch geprüft und zurückgelesen.", previousState: previous, newState: readback, rollbackSucceeded: true, textResize: textResizeVerification };
   } catch (error) {
     try {
       if (groupRestore?.state) applyM80State(groupRestore.id, groupRestore.state);
       for (const [id, state] of [...tableRestore].reverse()) if (state) applyM80State(id, state);
       const restored = applyM80State(entry.id, previous);
-      return failure(request, error?.code || "electron_change_apply_failed", `Layoutänderung wurde sicher abgewiesen und zurückgerollt: ${error?.message || "Unbekannte Geometrieverletzung."}`, restored, true);
+      return failure(request, error?.code || "electron_change_apply_failed", `Layoutänderung wurde sicher abgewiesen und zurückgerollt: ${error?.message || "Unbekannte Geometrieverletzung."}`, restored, true, null, error?.textResize || textResizeVerification);
     } catch (_rollbackError) {
       return failure(request, "electron_change_rollback_failed", "Layoutänderung und Rollback sind fehlgeschlagen.", previous, false);
     }

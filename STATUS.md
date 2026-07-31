@@ -3601,3 +3601,14 @@ Wichtig:
 - Tabellenmetriken und betroffene Spaltenzustände bleiben im Editorprozess erhalten; Tabellenrollen erzeugen in JavaScript und WPF denselben Scope-Fingerprint. Ein gespeichertes Tabellenprofil wird beim Neustart ohne Recovery-Marker einmalig wiederhergestellt.
 - `docs/licensing.md` bleibt Fremdänderung und unangetastet.
 - Commit/PR: keiner; gemäß Nutzeranweisung wurde weder committet noch gepusht.
+## M82.7.2 – Generischer textResize-Weg für alle registrierten Textelemente
+
+- Status: `[A]`; zentrale Reparatur, Pflichtprüfungen und sichtbare paketierte Diagnostic-Abnahme sind abgeschlossen.
+- BBM inventarisiert 59 `textResize`-Ziele in fünf produktiven Restarbeiten-/Protokoll-Scopes; alle nutzen denselben expliziten Ref-/Computed-Style-Weg.
+- Der Host meldet Erfolg nur nach realer Änderung und passendem zurückgelesenem Istwert; Konflikt, Mismatch und No-op bleiben ohne Dirty, Undo oder Save.
+- Kurz-/Lang-Restzeichen, weitere Restarbeiten-Texte und drei echte Protokoll-Texte wurden sichtbar mit kleiner, größer, direkt, Undo, Save, Neustart-Restore und Reset geprüft.
+- Registryrefresh, Datensatz- und Modulwechsel erhielten explizite Werte ohne Doppelanwendung; freie Bewegung, Sichtbarkeit, Topologie und Scrollbesitzer blieben stabil.
+- `npm test` und `npm run test:node` liefen jeweils mit 8/8 Gruppen; gezieltes ESLint ist sauber; Diagnostic- und Release-Pack sind grün.
+- Globales Lint bleibt mit 16 bestehenden Fehlern und 371 Warnungen rot; M82.7.2 erzeugt keinen neuen Befund und es erfolgte keine Altbereinigung.
+- `docs/licensing.md` und Benutzerdateien blieben unangetastet.
+- Commit/PR: keiner; gemäß Nutzeranweisung wurde weder committet noch gepusht.
