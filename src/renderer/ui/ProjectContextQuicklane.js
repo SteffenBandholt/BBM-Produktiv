@@ -650,9 +650,8 @@ export default class ProjectContextQuicklane {
       await this.router?.openClosedProtocolSelector?.({ mode: "mail" });
       this._setOutputOpen(false);
     };
-    const outputPrint = createOutputAction("Drucken", "Drucken noch nicht verfügbar", runOutputPrint, {
+    const outputPrint = createOutputAction("Drucken", "Drucken", runOutputPrint, {
       compact: true,
-      disabled: true,
       icon: "🖨",
       ariaLabel: "Drucken",
     });

@@ -18,7 +18,8 @@
     "lint:fix": "eslint \"src/**/*.js\" --fix",
     "fix:electron-deps": "node scripts/nativeDepsAbi.cjs electron",
     "postinstall": "node scripts/nativeDepsAbi.cjs electron",
-    "test:node": "node scripts/runNodeTestsWithAbi.cjs"
+    "test:node": "node scripts/runNodeTestsWithAbi.cjs",
+    "test:m85:pdf": "node scripts/tests/m85PdfSatzvertrag.test.cjs"
   },
   "devDependencies": {
     "electron": "^30.0.0",

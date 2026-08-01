@@ -19,6 +19,15 @@ export function renderV2FullHeader({ data, pageNo, totalPages, modeLabel } = {})
   }
 
   const right = headerUtils.el("div", "v2HeaderRight");
+  const mode = String(data?.mode || "").trim().toLowerCase();
+  if (["protocol", "preview", "vorabzug", "restarbeiten"].includes(mode)) {
+    const pageCounter = headerUtils.el("div", "v2FullPageCounter");
+    pageCounter.append(
+      headerUtils.el("span", "v2MiniPageLabel", "Seite "),
+      headerUtils.el("span", "v2MiniPageValue", pageNo + " / " + totalPages)
+    );
+    right.appendChild(pageCounter);
+  }
   const name1 = String(settings["pdf.footerName1"] || "").trim();
   const name2 = String(settings["pdf.footerName2"] || "").trim();
   const street = String(settings["pdf.footerStreet"] || "").trim();

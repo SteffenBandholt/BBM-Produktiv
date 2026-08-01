@@ -874,6 +874,27 @@ Wenn Tabellen, Metaspalten, Buttons oder Fachaktionen nicht sauber klassifiziert
 In diesem Fall darf keine UI- oder PDF-Struktur als fertig gemeldet werden.
 <!-- UI-EDITOR-KIT:END -->
 
+## Verbindliche Regel für Arbeiten am V2-PDF-Satz
+
+Vor jeder Änderung an PDF-Renderer, Paginierung, Kopf, Fuß, Tabellen,
+Schriftgrößen, Spaltenbreiten oder Seitenrändern gilt:
+
+1. `docs/PDF_SATZVERTRAG_V2.md` vollständig lesen.
+2. Die betroffenen PDF-Vertrags-IDs vor der Änderung nennen.
+3. Die zugehörigen Golden-Fixtures ausführen.
+4. Seitenzahl und strukturellen Snapshot vergleichen.
+5. Jede gewollte Vertragsänderung ausdrücklich dokumentieren.
+6. Keine Satz- oder Umbruchregel stillschweigend ändern.
+7. Optisches Feintuning und Satzlogik in getrennten Paketen behandeln.
+8. Für jede neue Dokumentart eigene dokumentartspezifische Regeln festlegen.
+9. Protokollregeln nie ungeprüft auf eine andere PDF-Art übertragen.
+10. Eine PDF-Aufgabe nicht als fertig melden, solange zugehörige Guardrails
+    fehlen oder bekannte offene Satzverstöße als grün maskiert werden.
+
+Seitenzuweisung, Datensatzteilung, Fortsetzungslogik, Tabellenkopfwiederholung,
+Kopfart und Fußreserve bleiben Eigentum des BBM-Renderers. Sie dürfen nicht als
+Editoroperation freigegeben werden. `setPageBreakRule` bleibt gesperrt.
+
 ## Pflichtregel: komponentenbasierte Vollregistrierung
 
 Eine neue oder strukturell geänderte editorfähige BBM-Komponente ist nur zusammen mit ihrem vollständigen, komponentennahen Editorvertrag fertig. Der Vertrag deklariert stabile `componentId`, Scope, alle tatsächlich vorhandenen verpflichtenden Slots, stabile Element-IDs, Parents, Ref-Keys, Single-/Multi-Ref-Semantik, Typ/Rolle/Auswahlart, Baselines, Grenzen, erlaubte und gesperrte Operationen sowie Operationseffekte. Die produktive Komponente stellt gleichzeitig die explizite Ref-Auflösung bereit. `m80Registry.js` aggregiert Komponentenverträge und darf Unterziele weder zentral als zweite Handliste pflegen noch aus DOM oder Fachwerten ableiten. Komponenten- und gemountete Ref-Guardrails müssen grün sein; eine spätere manuelle Einzelregistrierung ist kein regulärer Meilenstein.

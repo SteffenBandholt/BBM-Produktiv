@@ -12,10 +12,8 @@ import { toRestarbeitenListItems, getRestarbeitenAmpelState } from "../viewModel
 import { buildRestarbeitenFilterbar } from "../RestarbeitenFilterbar.js";
 import { buildRestarbeitenMainBody } from "../RestarbeitenMainBody.js";
 import { buildRestarbeitenEditbox } from "../RestarbeitenEditbox.js";
-import { buildRestarbeitenOutputPreview } from "../RestarbeitenOutputPreview.js";
 import { buildRestarbeitenQuicklane } from "../RestarbeitenQuicklane.js";
 import { ensureRestarbeitenStyles } from "../styles.js";
-import { toRestarbeitenOutputRows } from "../viewModel/restarbeitenOutputViewModel.js";
 import { beginM80PilotRender, completeM80PilotRender, registerM80Ref } from "../../../ui-editor/m80Refs.js";
 import {
   canPersistRestarbeitDraft,
@@ -216,14 +214,52 @@ export default class RestarbeitenScreen {
     this._publishQuicklaneState();
   }
 
-  openRestarbeitenPreview() {
-    this.outputPreviewOpen = true;
-    this.error = null;
-    this._renderShell();
+  _buildRestarbeitenPdfPayload() {
+    const restarbeitenRows = this._getFilteredItems()
+      .filter((row) => !normalizeText(row?.deleted_at))
+      .map((row) => ({ ...row }));
+    return {
+      mode: "restarbeiten",
+      orientation: "landscape",
+      projectId: this.projectId,
+      restarbeitenRows,
+      restarbeitenLocationLabels: {
+        level_1_label: normalizeText(this.settings?.level_1_label) || "Haus",
+        level_2_label: normalizeText(this.settings?.level_2_label) || "Geschoss",
+        level_3_label: normalizeText(this.settings?.level_3_label) || "Einheit",
+        level_4_label: normalizeText(this.settings?.level_4_label) || "Raum",
+      },
+      showAmpelInList: this.showAmpelInList,
+      previewTitle: "Restarbeitenliste",
+    };
   }
 
-  openRestarbeitenOutput() {
-    this.openRestarbeitenPreview();
+  async openRestarbeitenPreview() {
+    const printPdfAndPreviewInternal = window?.bbmPrint?.printPdfAndPreviewInternal;
+    if (typeof printPdfAndPreviewInternal !== "function") {
+      this._setStubMessage("Interne PDF-Vorschau ist nicht verfügbar.");
+      return { ok: false, error: "printPdfAndPreviewInternal fehlt" };
+    }
+    this.error = "Restarbeiten-PDF wird erzeugt ...";
+    this._renderShell();
+    try {
+      const result = await printPdfAndPreviewInternal(this._buildRestarbeitenPdfPayload());
+      if (result?.ok !== true) {
+        this._setStubMessage(result?.error || "Restarbeiten-PDF konnte nicht erzeugt werden.");
+        return result || { ok: false, error: "Leere PDF-Antwort" };
+      }
+      this.error = null;
+      this._renderShell();
+      return result;
+    } catch (error) {
+      this._setStubMessage(error?.message || String(error));
+      return { ok: false, error: error?.message || String(error) };
+    }
+  }
+
+  async openRestarbeitenOutput({ mode = "print" } = {}) {
+    if (mode !== "print") return { ok: false, error: `Ausgabeart ${String(mode)} ist nicht verfügbar.` };
+    return this.openRestarbeitenPreview();
   }
 
   closeRestarbeitenPreview() {
@@ -543,6 +579,7 @@ export default class RestarbeitenScreen {
         onAmpelToggle: () => this.toggleAmpelDisplay(),
         onLongtextToggle: () => this.toggleLongtextDisplay(),
         onPreview: () => this.openRestarbeitenPreview(),
+        onPrint: () => this.openRestarbeitenOutput({ mode: "print" }),
       });
     const filterbar = buildRestarbeitenFilterbar({
         settings: this.settings,
@@ -560,13 +597,7 @@ export default class RestarbeitenScreen {
     registerM80Ref("restarbeiten.header.root", header);
     this.root.append(header, quicklane);
 
-    if (this.outputPreviewOpen) {
-      this.root.appendChild(buildRestarbeitenOutputPreview({
-            items: toRestarbeitenOutputRows(filteredRows),
-            projectName: normalizeText(this.project?.name || this.project?.project_name || this.project?.title),
-            onClose: () => this.closeRestarbeitenPreview(),
-          }));
-    } else {
+    if (!this.outputPreviewOpen) {
       const main = buildRestarbeitenMainBody({
         items: this.viewItems,
         selectedId: this.selectedId,

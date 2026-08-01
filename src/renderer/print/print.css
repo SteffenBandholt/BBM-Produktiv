@@ -107,7 +107,8 @@ body[data-orientation="portrait"] .measureRoot,
 .topsTable,
 .firmsTable,
 .firmsCardsTable,
-.todoTable {
+.todoTable,
+.restarbeitenTable {
   width: 100%;
   margin: 0;
   border-collapse: collapse;
@@ -121,7 +122,9 @@ body[data-orientation="portrait"] .measureRoot,
 .firmsCardsTable th,
 .firmsCardsTable td,
 .todoTable th,
-.todoTable td {
+.todoTable td,
+.restarbeitenTable th,
+.restarbeitenTable td {
   border-bottom: 1px solid #ddd;
   padding: 2mm 1mm;
   text-align: left;
@@ -131,7 +134,8 @@ body[data-orientation="portrait"] .measureRoot,
 .topsTable th,
 .firmsTable th,
 .firmsCardsTable th,
-.todoTable th {
+.todoTable th,
+.restarbeitenTable th {
   background: #f3f3f3;
   font-weight: 700;
 }
@@ -208,9 +212,51 @@ body[data-orientation="portrait"] .measureRoot,
 }
 
 .firmsTable td,
-.todoTable td {
+.todoTable td,
+.restarbeitenTable td {
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.restarbeitenTable {
+  max-width: 100%;
+  font-size: 6.2pt;
+  line-height: 1.18;
+}
+
+.restarbeitenTable th,
+.restarbeitenTable td {
+  padding: 0.8mm 0.55mm;
+  hyphens: auto;
+}
+
+.restarbeitenTable th {
+  font-size: 6pt;
+  line-height: 1.12;
+}
+
+.restarbeitenTable .restarbeitItemRow {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.restarbeitenTable .restarbeitNumber,
+.restarbeitenTable .restarbeitContinuationLabel {
+  display: block;
+}
+
+.restarbeitenTable .restarbeitContinuationLabel {
+  margin-top: 0.5mm;
+  font-size: 5.3pt;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.restarbeitenTable .restarbeitStatusWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7mm;
+  max-width: 100%;
 }
 
 .todoAmpelCell .ampelDot {

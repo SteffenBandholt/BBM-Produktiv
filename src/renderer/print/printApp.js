@@ -1,4 +1,9 @@
-import { renderPrint } from "./layout/PrintShell.js";
+import {
+  buildRestarbeitenColGroup,
+  buildRestarbeitenRow,
+  buildRestarbeitenTableHead,
+  renderPrint,
+} from "./layout/PrintShell.js";
 import { computeAmpelColorForTop, computeAmpelMapForTops } from "../../shared/ampel/pdfAmpelRule.js";
 import { renderHeaderTestPages } from "./headerTest/HeaderTestPages.js";
 import { renderV2GlobalHeader } from "./v2/header/GlobalHeader.js";
@@ -6,6 +11,7 @@ import { renderV2FullHeader } from "./v2/header/FullHeader.js";
 import { renderV2MiniHeader } from "./v2/header/MiniHeader.js";
 import { applyBbmPdfEditorLayout, collectBbmPdfPreviewMetadata, prepareBbmPdfEditorLayout } from "./pdfEditorLayout.js";
 import { V2_LAYOUT } from "./v2/v2LayoutConfig.js";
+import { buildPdfSatzvertragSnapshot, PDF_SATZVERTRAG_IDS } from "./v2/pdfSatzvertragV2.js";
 import {
   normalizeTopLongText,
   normalizeTopShortText,
@@ -699,6 +705,8 @@ function _buildTopRowElement(row) {
 }
 
 function _buildGenericRowElement(row) {
+  if (row?.kind === "restarbeitItem") return buildRestarbeitenRow(row);
+
   if (row?.kind === "todoGroup") {
     const tr = document.createElement("tr");
     tr.className = "firmGroupRow todoGroupRow";
@@ -903,6 +911,9 @@ function _buildPageHeaderForMeasure(projectLabel, docLabel) {
 }
 
 function _buildTableHeadForMeasure(type, topsLayout) {
+  if (type === "restarbeiten") {
+    return buildRestarbeitenTableHead(globalThis.__bbmRestarbeitenLocationLabels || {});
+  }
   if (type === "firmsCards") return null;
   const thead = document.createElement("thead");
   const tr = document.createElement("tr");
@@ -928,6 +939,7 @@ function _buildTableHeadForMeasure(type, topsLayout) {
 }
 
 function _buildColGroup(type, topsLayout) {
+  if (type === "restarbeiten") return buildRestarbeitenColGroup();
   if (type !== "tops") return null;
   const colgroup = document.createElement("colgroup");
   const { number, text, meta } = topsLayout.pdf.columns;
@@ -1035,7 +1047,7 @@ function _buildParticipantsIntroData(data) {
   const mode = String(data?.mode || "").trim().toLowerCase();
   if (!["protocol", "preview", "vorabzug"].includes(mode)) return null;
   const src = Array.isArray(data?.participants) ? data.participants : [];
-  const rows = src.map((p) => {
+  const rows = src.map((p, sourceIndex) => {
     const name = String(p?.name || "").trim();
     const role = String(p?.rolle || p?.role || "").trim();
     const firm = String(p?.firm || "").trim();
@@ -1046,6 +1058,8 @@ function _buildParticipantsIntroData(data) {
     const isPresent = Number(p?.isPresent ?? p?.is_present ?? 0) === 1;
     const isInDistribution = Number(p?.isInDistribution ?? p?.is_in_distribution ?? 0) === 1;
     return {
+      sourceIndex,
+      participantSegment: "complete",
       name,
       role,
       firm,
@@ -1099,15 +1113,27 @@ function _buildParticipantsIntroElement(intro) {
   } else {
     rows.forEach((row) => {
       const tr = document.createElement("tr");
+      const isContinuation = ["continuation", "end"].includes(String(row?.participantSegment || ""));
+      const emptyValue = isContinuation ? "" : "-";
       const contactTd = _el("td", "v2PartColContact");
       const contactStack = _el("div", "v2PartContactStack");
-      contactStack.append(_el("div", "v2PartContactRow", row.phone || "-"), _el("div", "v2PartContactRow", row.email || "-"));
+      contactStack.append(
+        _el("div", "v2PartContactRow", row.phone || emptyValue),
+        _el("div", "v2PartContactRow", row.email || emptyValue)
+      );
       contactTd.appendChild(contactStack);
-      tr.append(_el("td", "v2PartColName", row.name || ""), _el("td", "v2PartColRole", row.role || ""), _el("td", "v2PartColFirm", row.firm || ""));
+      tr.append(
+        _el("td", "v2PartColName", `${isContinuation ? "Fortsetzung: " : ""}${row.name || ""}`),
+        _el("td", "v2PartColRole", row.role || ""),
+        _el("td", "v2PartColFirm", row.firm || "")
+      );
       tr.appendChild(contactTd);
       const marksTd = _el("td", "v2PartColMarks");
       const marks = _el("div", "v2PartMarks");
-      marks.append(_el("div", "v2PartMarkRow", row.presentMark || "-"), _el("div", "v2PartMarkRow", row.distributionMark || "-"));
+      marks.append(
+        _el("div", "v2PartMarkRow", isContinuation ? "" : row.presentMark || "-"),
+        _el("div", "v2PartMarkRow", isContinuation ? "" : row.distributionMark || "-")
+      );
       marksTd.appendChild(marks);
       tr.appendChild(marksTd);
       tbody.appendChild(tr);
@@ -1165,6 +1191,66 @@ function _measurePreRemarksHeight(ctx, preRemarks) {
   return Math.max(0, h);
 }
 
+function _preRemarksContinuationTitle(title) {
+  const base = String(title || DEFAULT_V2_PRE_REMARKS_TITLE).replace(/\s*:\s*$/, "").trim();
+  return `${base} (Fortsetzung):`;
+}
+
+function _preRemarksWordBoundaries(text) {
+  const boundaries = [];
+  const matcher = /\S+(?:\s+|$)/g;
+  while (matcher.exec(text) !== null) boundaries.push(matcher.lastIndex);
+  return boundaries;
+}
+
+function _fitPreRemarksSegment({ ctx, preRemarks, text, maxHeight, isContinuation }) {
+  const source = String(text || "");
+  if (!ctx || !source || maxHeight <= 0) return null;
+  const boundaries = _preRemarksWordBoundaries(source);
+  if (!boundaries.length) return null;
+  const title = isContinuation
+    ? _preRemarksContinuationTitle(preRemarks?.title)
+    : preRemarks?.title || DEFAULT_V2_PRE_REMARKS_TITLE;
+  let low = 0;
+  let high = boundaries.length - 1;
+  let bestBoundary = -1;
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    const candidate = {
+      ...preRemarks,
+      title,
+      text: source.slice(0, boundaries[mid]).trimEnd(),
+      segment: isContinuation ? "continuation" : "start",
+    };
+    if (_measurePreRemarksHeight(ctx, candidate) <= maxHeight) {
+      bestBoundary = boundaries[mid];
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  if (bestBoundary <= 0) return null;
+  const segmentText = source.slice(0, bestBoundary).trimEnd();
+  const remainingText = source.slice(bestBoundary).trimStart();
+  const segment = {
+    ...preRemarks,
+    title,
+    text: segmentText,
+    segment: remainingText
+      ? isContinuation
+        ? "continuation"
+        : "start"
+      : isContinuation
+        ? "end"
+        : "complete",
+  };
+  return {
+    segment,
+    remainingText,
+    height: _measurePreRemarksHeight(ctx, segment),
+  };
+}
+
 function _measureIntroHeight(ctx, intro) {
   if (!ctx || !intro) return 0;
   const introEl = _buildParticipantsIntroElement(intro);
@@ -1180,6 +1266,73 @@ function _measureIntroHeight(ctx, intro) {
   return Math.max(0, h);
 }
 
+const PARTICIPANT_TEXT_FIELDS = Object.freeze(["name", "role", "firm", "phone", "email"]);
+
+function _participantMeasureRow(row, field, text) {
+  const measured = { ...row, participantSegment: "continuation" };
+  for (const key of PARTICIPANT_TEXT_FIELDS) measured[key] = key === field ? text : "";
+  return measured;
+}
+
+function _splitParticipantField({ intro, row, field, ctx, cap }) {
+  let remainingText = String(row?.[field] || "");
+  if (!remainingText) return [""];
+  const chunks = [];
+  while (remainingText) {
+    let low = 1;
+    let high = remainingText.length;
+    let best = 0;
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      const candidate = _participantMeasureRow(row, field, remainingText.slice(0, mid));
+      const height = _measureIntroHeight(ctx, { ...intro, rows: [candidate] });
+      if (height <= cap) {
+        best = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+    if (best <= 0) {
+      throw new Error(`PDF-V2-PROT-001: Teilnehmerfeld ${field} passt nicht in ein Seitensegment.`);
+    }
+    let cut = best;
+    if (best < remainingText.length) {
+      const wordBoundary = remainingText.lastIndexOf(" ", best - 1);
+      if (wordBoundary > 0) cut = wordBoundary;
+    }
+    chunks.push(remainingText.slice(0, cut).trimEnd());
+    remainingText = remainingText.slice(cut).trimStart();
+  }
+  return chunks;
+}
+
+function _splitOversizedParticipantRow({ intro, row, ctx, cap }) {
+  const chunksByField = Object.fromEntries(
+    PARTICIPANT_TEXT_FIELDS.map((field) => [field, _splitParticipantField({ intro, row, field, ctx, cap })])
+  );
+  const segmentCount = Math.max(...Object.values(chunksByField).map((chunks) => chunks.length));
+  const segments = Array.from({ length: segmentCount }, (_value, segmentIndex) => {
+    const segment = { ...row };
+    for (const field of PARTICIPANT_TEXT_FIELDS) segment[field] = chunksByField[field][segmentIndex] || "";
+    segment.participantSegment = segmentCount === 1
+      ? "complete"
+      : segmentIndex === 0
+        ? "start"
+        : segmentIndex === segmentCount - 1
+          ? "end"
+          : "continuation";
+    return segment;
+  });
+  for (const segment of segments) {
+    const height = _measureIntroHeight(ctx, { ...intro, rows: [segment] });
+    if (height > cap) {
+      throw new Error("PDF-V2-PROT-001: Teilnehmer-Sondersegment überschreitet die Seitenkapazität.");
+    }
+  }
+  return segments;
+}
+
 function _buildParticipantsIntroPlan({ intro, ctxFirst, ctxNext, firstCap, nextCap }) {
   if (!intro) return { chunks: [], heights: [] };
   const rows = Array.isArray(intro.rows) ? intro.rows : [];
@@ -1190,29 +1343,29 @@ function _buildParticipantsIntroPlan({ intro, ctxFirst, ctxNext, firstCap, nextC
 
   const chunks = [];
   const heights = [];
+  const workingRows = rows.slice();
   let idx = 0;
   let pageNo = 0;
 
-  while (idx < rows.length) {
+  while (idx < workingRows.length) {
     const cap = pageNo === 0 ? firstCap : nextCap;
     const ctx = pageNo === 0 ? ctxFirst : ctxNext || ctxFirst;
     const chunkRows = [];
     let lastGoodHeight = 0;
-    while (idx < rows.length) {
-      const candidateRows = chunkRows.concat(rows[idx]);
+    while (idx < workingRows.length) {
+      const candidateRows = chunkRows.concat(workingRows[idx]);
       const candidateIntro = { ...intro, rows: candidateRows };
       const candidateHeight = _measureIntroHeight(ctx, candidateIntro);
       if (candidateHeight <= cap) {
-        chunkRows.push(rows[idx]);
+        chunkRows.push(workingRows[idx]);
         lastGoodHeight = candidateHeight;
         idx += 1;
         continue;
       }
       if (!chunkRows.length) {
-        // Eine einzelne Zeile passt nie in den Intro-Block: trotzdem nicht verlieren.
-        chunkRows.push(rows[idx]);
-        lastGoodHeight = candidateHeight;
-        idx += 1;
+        const segments = _splitOversizedParticipantRow({ intro, row: workingRows[idx], ctx, cap });
+        workingRows.splice(idx, 1, ...segments);
+        continue;
       }
       break;
     }
@@ -1227,6 +1380,10 @@ function _buildParticipantsIntroPlan({ intro, ctxFirst, ctxNext, firstCap, nextC
 
 function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind = "legacy" }) {
   const root = _buildMeasureRoot();
+  root.dataset.orientation = String(data?.orientation || "portrait").toLowerCase() === "landscape"
+    ? "landscape"
+    : "portrait";
+  globalThis.__bbmRestarbeitenLocationLabels = data?.restarbeitenLocationLabels || null;
   _applyV2VarsForMeasure(root, data);
   const page = _el("div", "page");
   root.appendChild(page);
@@ -1253,6 +1410,8 @@ function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind 
       ? "firmsTable"
       : type === "firmsCards"
       ? "firmsCardsTable"
+      : type === "restarbeiten"
+      ? "restarbeitenTable"
       : "todoTable";
   const colgroup = _buildColGroup(type, topsLayout);
   if (colgroup) table.appendChild(colgroup);
@@ -1346,12 +1505,13 @@ function _paginateTops(data) {
     nextCap,
   });
   const preRemarks = _buildPreRemarksData(data);
-  const preRemarksHeight = _measurePreRemarksHeight(ctxNext || ctxFirst, preRemarks);
   let preRemarksPending = !!preRemarks;
+  let preRemarksRemainingText = String(preRemarks?.text || "");
+  let preRemarksContinuation = false;
   const introChunks = introPlan.chunks;
   const introHeights = introPlan.heights;
   let pageIndex = 0;
-  let firstPageBodyHeight = Math.max(0, firstCap - (introHeights[0] || 0));
+  const firstPageBodyHeight = Math.max(0, firstCap - (introHeights[0] || 0));
 
   const tops = Array.isArray(data.tops) ? data.tops : [];
   const ampelMap = computeAmpelMapForTops({
@@ -1422,49 +1582,84 @@ function _paginateTops(data) {
     remaining -= rowHeight;
   };
 
+  const pageHasContent = () => Boolean(
+    currentPage.intro || currentPage.preRemarks || currentPage.table.rows.length
+  );
+
+  const ensureParticipantChunksPlaced = () => {
+    while (pageIndex < introChunks.length - 1) pushPage();
+  };
+
   const ensurePreRemarksPlaced = () => {
     if (!preRemarksPending) return;
     while (preRemarksPending) {
       if (currentPage.table.rows.length) return;
-      const pageCap = pageIndex === 0 ? firstCap : nextCap;
-      if (preRemarksHeight > pageCap) {
-        currentPage.preRemarks = preRemarks;
-        remaining = Math.max(0, remaining - preRemarksHeight);
-        preRemarksPending = false;
-        return;
+      if (pageIndex < introChunks.length - 1) {
+        pushPage();
+        continue;
       }
-      if (remaining >= preRemarksHeight) {
-        currentPage.preRemarks = preRemarks;
-        remaining -= preRemarksHeight;
-        preRemarksPending = false;
-        return;
+      const measureCtx = pageIndex === 0 ? ctxFirst : ctxNext || ctxFirst;
+      const fitted = _fitPreRemarksSegment({
+        ctx: measureCtx,
+        preRemarks,
+        text: preRemarksRemainingText,
+        maxHeight: remaining,
+        isContinuation: preRemarksContinuation,
+      });
+      if (fitted) {
+        currentPage.preRemarks = fitted.segment;
+        remaining = Math.max(0, remaining - fitted.height);
+        preRemarksRemainingText = fitted.remainingText;
+        if (!preRemarksRemainingText) {
+          preRemarksPending = false;
+          return;
+        }
+        preRemarksContinuation = true;
+        pushPage();
+        continue;
       }
-      pushPage();
+      if (pageHasContent()) {
+        pushPage();
+        continue;
+      }
+      throw new Error("PDF-V2-PROT-002: Kein Wort der Vorbemerkung passt in die Seitenkapazität.");
     }
   };
 
   const MIN_LINES_PAGE_END = 3;
   const MIN_LINES_NEXT_PAGE = 3;
 
+  ensureParticipantChunksPlaced();
+
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     const level = item.fullRow.level;
     ensurePreRemarksPlaced();
+
+    if (level === 1) {
+      const nextItem = items[i + 1] || null;
+      const nextMinimumHeight = nextItem
+        ? nextItem.fullRow.level === 1 || !nextItem.fullRow.longtext
+          ? nextItem.fullHeight
+          : Math.min(nextItem.fullHeight, nextItem.baseHeight + MIN_LINES_NEXT_PAGE * nextItem.lineHeight)
+        : 0;
+      const keepTogetherHeight = item.fullHeight + nextMinimumHeight;
+      while (keepTogetherHeight > remaining && pageHasContent()) pushPage();
+      if (keepTogetherHeight > remaining) {
+        throw new Error("PDF-V2-SATZ-010: Level-1-Titel passt nicht mit dem nächsten Datensatzteil auf eine Seite.");
+      }
+      addRow(item.fullRow, item.fullHeight);
+      continue;
+    }
 
     if (item.fullHeight <= remaining) {
       addRow(item.fullRow, item.fullHeight);
       continue;
     }
 
-    if (level === 1) {
-      if (currentPage.table.rows.length) pushPage();
-      addRow(item.fullRow, item.fullHeight);
-      continue;
-    }
-
     const minSplitHeight = item.baseHeight + MIN_LINES_PAGE_END * item.lineHeight;
     if (remaining < minSplitHeight) {
-      if (currentPage.table.rows.length) pushPage();
+      if (pageHasContent()) pushPage();
     }
 
     let text = item.fullRow.longtext;
@@ -1480,7 +1675,7 @@ function _paginateTops(data) {
 
       const minHeight = item.baseHeight + MIN_LINES_PAGE_END * item.lineHeight;
       if (remaining < minHeight) {
-        if (!currentPage.table.rows.length) {
+        if (!pageHasContent()) {
           addRow(rowData, rowHeight);
           break;
         }
@@ -1491,7 +1686,7 @@ function _paginateTops(data) {
       const allowedLines = Math.max(MIN_LINES_PAGE_END, Math.floor((remaining - item.baseHeight) / item.lineHeight));
       const part1 = _findSplitText(rowMeasureCtx, rowData, allowedLines);
       if (!part1) {
-        if (currentPage.table.rows.length) pushPage();
+        if (pageHasContent()) pushPage();
         continue;
       }
 
@@ -1501,7 +1696,7 @@ function _paginateTops(data) {
       const part2Data = _buildTopRowData(item.top, part2Text, item.ampelColor);
       const part2Measure = rowMeasureCtx.measureRow(_buildTopRowElement(part2Data));
       if (part1Measure.longLines < MIN_LINES_PAGE_END || part2Measure.longLines < MIN_LINES_NEXT_PAGE) {
-        if (!currentPage.table.rows.length) {
+        if (!pageHasContent()) {
           addRow(rowData, rowHeight);
           break;
         }
@@ -1522,7 +1717,7 @@ function _paginateTops(data) {
     pages.push({
       header: { projectLabel, docLabel },
       intro: introChunks[0] || null,
-      preRemarks: preRemarksPending ? preRemarks : null,
+      preRemarks: preRemarksPending ? { ...preRemarks, text: preRemarksRemainingText } : null,
       table: { type: "tops", rows: [] },
     });
   }
@@ -1562,7 +1757,8 @@ function _paginateTops(data) {
     const page = pages[lastTopsIdx];
     const cap = pageCapAt(lastTopsIdx);
     const introH = introHeightAt(lastTopsIdx, page);
-    const preRemarksH = page?.preRemarks ? preRemarksHeight : 0;
+    const measureCtx = lastTopsIdx === 0 ? ctxFirst : ctxNext || ctxFirst;
+    const preRemarksH = page?.preRemarks ? _measurePreRemarksHeight(measureCtx, page.preRemarks) : 0;
     const usedWithTail = rowsHeightAt(page) + tailHeight;
     const allowed = Math.max(0, cap - introH - preRemarksH);
     if (usedWithTail <= allowed) break;
@@ -1572,14 +1768,17 @@ function _paginateTops(data) {
       break;
     }
 
-    const movedRow = page.table.rows.pop();
+    const movedRows = [page.table.rows.pop()];
+    if (Number(page.table.rows.at(-1)?.level || 0) === 1) {
+      movedRows.unshift(page.table.rows.pop());
+    }
     const insertIdx = lastTopsIdx + 1;
     let nextPage = pages[insertIdx];
     if (String(nextPage?.table?.type || "") !== "tops") {
       nextPage = makeEmptyTopsPage();
       pages.splice(insertIdx, 0, nextPage);
     }
-    nextPage.table.rows.unshift(movedRow);
+    nextPage.table.rows.unshift(...movedRows);
     lastTopsIdx = findLastTopsIdx();
   }
 
@@ -1605,8 +1804,80 @@ function _paginateTops(data) {
   return pages;
 }
 
+const RESTARBEITEN_SPLITTABLE_CELL_INDEXES = Object.freeze([2, 3, 12]);
+
+function _restarbeitenSplitCellIndex(row, ctx) {
+  const cells = Array.isArray(row?.cells) ? row.cells : [];
+  return RESTARBEITEN_SPLITTABLE_CELL_INDEXES.reduce((best, index) => {
+    const candidateCells = [...cells];
+    for (const splitIndex of RESTARBEITEN_SPLITTABLE_CELL_INDEXES) {
+      if (splitIndex !== index) candidateCells[splitIndex] = "";
+    }
+    const height = ctx.measureRow(buildRestarbeitenRow({
+      ...row,
+      cells: candidateCells,
+      segment: "start",
+    })).height;
+    return height > best.height ? { index, height } : best;
+  }, { index: -1, height: -1 }).index;
+}
+
+function _fitRestarbeitenTextSegment({ ctx, row, cellIndex, text, maxHeight, firstSegment }) {
+  const source = String(text || "");
+  const tokens = source.match(/\S+\s*/g) || [];
+  const segmentKind = firstSegment ? "start" : "continuation";
+  const measureCandidate = (candidateText) => {
+    const cells = [...(row.cells || [])];
+    cells[cellIndex] = candidateText;
+    const candidate = { ...row, cells, segment: segmentKind };
+    return ctx.measureRow(buildRestarbeitenRow(candidate)).height;
+  };
+  const findTokenCount = () => {
+    let low = 1;
+    let high = tokens.length;
+    let best = 0;
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      const candidateText = tokens.slice(0, mid).join("").trimEnd();
+      if (measureCandidate(candidateText) <= maxHeight) {
+        best = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+    return best;
+  };
+
+  const tokenCount = findTokenCount();
+  if (tokenCount > 0) {
+    return {
+      segmentText: tokens.slice(0, tokenCount).join("").trimEnd(),
+      remainingText: tokens.slice(tokenCount).join("").trimStart(),
+    };
+  }
+
+  let low = 1;
+  let high = source.length;
+  let best = 0;
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    if (measureCandidate(source.slice(0, mid)) <= maxHeight) {
+      best = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  if (best < 1) return null;
+  return {
+    segmentText: source.slice(0, best).trimEnd(),
+    remainingText: source.slice(best).trimStart(),
+  };
+}
+
 function _paginateGeneric({ rows, type, projectLabel, docLabel, data }) {
-  const useV2HeaderPaging = type === "firmsCards" || type === "todo";
+  const useV2HeaderPaging = type === "firmsCards" || type === "todo" || type === "restarbeiten";
   const ctx = useV2HeaderPaging
     ? _createMeasureContext({ type, projectLabel, docLabel, data, headerKind: "full" })
     : _createMeasureContext({ type, projectLabel, docLabel });
@@ -1626,10 +1897,11 @@ function _paginateGeneric({ rows, type, projectLabel, docLabel, data }) {
     remaining = pageNo === 1 ? ctx.maxBodyHeight : ctxNext?.maxBodyHeight || ctx.maxBodyHeight;
   };
 
+  const contextForPage = () => pageNo === 1 ? ctx : ctxNext || ctx;
   const rowHeightAt = (idx) => {
     if (heightCache.has(idx)) return heightCache.get(idx);
     const rowEl = _buildGenericRowElement(rows[idx]);
-    const h = (ctxNext || ctx).measureRow(rowEl).height;
+    const h = contextForPage().measureRow(rowEl).height;
     heightCache.set(idx, h);
     return h;
   };
@@ -1637,6 +1909,48 @@ function _paginateGeneric({ rows, type, projectLabel, docLabel, data }) {
   for (let i = 0; i < rows.length; i += 1) {
     const row = rows[i];
     const h = rowHeightAt(i);
+
+    if (type === "restarbeiten") {
+      const pageCapacity = contextForPage().maxBodyHeight;
+      if (h <= pageCapacity) {
+        if (h > remaining && currentPage.table.rows.length) pushPage();
+        currentPage.table.rows.push({ ...row, segment: "complete" });
+        remaining -= contextForPage().measureRow(buildRestarbeitenRow({ ...row, segment: "complete" })).height;
+        continue;
+      }
+
+      const cellIndex = _restarbeitenSplitCellIndex(row, contextForPage());
+      let remainingText = String(row?.cells?.[cellIndex] || "");
+      let firstSegment = true;
+      if (currentPage.table.rows.length) pushPage();
+      while (remainingText) {
+        const pageContext = contextForPage();
+        const fitted = _fitRestarbeitenTextSegment({
+          ctx: pageContext,
+          row,
+          cellIndex,
+          text: remainingText,
+          maxHeight: remaining,
+          firstSegment,
+        });
+        if (!fitted) {
+          throw new Error(`${PDF_SATZVERTRAG_IDS.restarbeitenRecord}: Restarbeiten-Datensatz ${String(row.sourceId || "-")} ist nicht segmentierbar.`);
+        }
+        const cells = [...row.cells];
+        cells[cellIndex] = fitted.segmentText;
+        const segment = firstSegment
+          ? (fitted.remainingText ? "start" : "complete")
+          : (fitted.remainingText ? "continuation" : "end");
+        const segmentRow = { ...row, cells, segment };
+        const segmentHeight = pageContext.measureRow(buildRestarbeitenRow(segmentRow)).height;
+        currentPage.table.rows.push(segmentRow);
+        remaining -= segmentHeight;
+        remainingText = fitted.remainingText;
+        firstSegment = false;
+        if (remainingText) pushPage();
+      }
+      continue;
+    }
 
     // Kategorie-Zeile nie alleine: zusammen mit erster Firmenkachel auf die nächste Seite schieben.
     if (type === "firmsCards" && row?.kind === "firmGroup") {
@@ -1736,10 +2050,13 @@ function _buildPages(data) {
   }
   if (mode === "restarbeiten") {
     const rows = [];
-    for (const r of data.restarbeitenItems || []) {
+    for (const r of (data.restarbeitenItems || []).filter((entry) => !String(entry?.deleted_at || "").trim())) {
       const showAmpelInList = data?.showAmpelInList !== false;
       rows.push({
         kind: "restarbeitItem",
+        sourceId: String(r.id || r.running_number || ""),
+        sourceOrder: rows.length,
+        segment: "complete",
         ampelState: getRestarbeitenAmpelState({
           status: r.status || "",
           due_date: r.due_date || "",
@@ -1793,6 +2110,14 @@ async function handleInit(payload) {
         if (chRes?.ok) data.buildChannel = chRes.channel || "";
       } catch (_e) {}
     }
+    if (["protocol", "preview", "vorabzug", "restarbeiten"].includes(String(data.mode || "").trim().toLowerCase()) && document.fonts?.load) {
+      try {
+        await Promise.all([
+          document.fonts.load('400 11pt "Noto Sans"'),
+          document.fonts.load('700 11pt "Noto Sans"'),
+        ]);
+      } catch (_e) {}
+    }
     if (document.fonts && document.fonts.ready) {
       try {
         await document.fonts.ready;
@@ -1833,6 +2158,15 @@ async function handleInit(payload) {
     }
     app.innerHTML = "";
     app.appendChild(root);
+
+    if (payload?.pdfSatzvertragSnapshot === true) {
+      globalThis.__bbmPdfSatzvertragSnapshot = buildPdfSatzvertragSnapshot({
+        fixtureId: payload.fixtureId,
+        pages,
+        data,
+        root,
+      });
+    }
 
     // Ensure stored ToDo table layout is applied to the print root (PDF + preview),
     // so width/inset/font settings take effect for the real output.
