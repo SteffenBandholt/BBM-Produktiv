@@ -1,4 +1,4 @@
-export const BBM_M80_REGISTRY_VERSION = 11;
+export const BBM_M80_REGISTRY_VERSION = 12;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 const GROUP_LAYOUT = Object.freeze(["move", "setVisibility"]);
@@ -159,6 +159,13 @@ const listElements = [
     element({ id: column.headerElementId, name: `${column.displayName} · Überschrift`, type: "tableHeaderCell", role: "tableHeaderCell", parentId: column.columnId, order: 60 + index * 2, allowedOps: ["textResize"], componentKind: "tableHeaderCell", tableBinding: tableBinding(column.columnId, "header"), baseline: { fontSize: 12, minFontSize: 8, maxFontSize: 32 } }),
     element({ id: column.dataCellTemplateId, name: `${column.displayName} · Datenbereich`, type: "tableDataCell", role: "tableDataCell", parentId: column.columnId, order: 61 + index * 2, allowedOps: [], componentKind: "dataCellTemplate", tableBinding: tableBinding(column.columnId, "data") }),
   ]),
+  element({ id: "restarbeiten.main.tableHeader.dueDate", name: "Fertig bis · Überschrift", type: "label", role: "fieldLabel", parentId: "restarbeiten.list.table.meta.header", order: 70, allowedOps: ["move", "textResize", "setVisibility"], componentKind: "tableHeaderLabel", baseline: { x: 0, y: 0, fontSize: 8.667, minFontSize: 6, maxFontSize: 24 } }),
+  element({ id: "restarbeiten.main.tableHeader.status", name: "Status · Überschrift", type: "label", role: "fieldLabel", parentId: "restarbeiten.list.table.meta.header", order: 71, allowedOps: ["move", "textResize", "setVisibility"], componentKind: "tableHeaderLabel", baseline: { x: 0, y: 0, fontSize: 8.667, minFontSize: 6, maxFontSize: 24 } }),
+  element({ id: "restarbeiten.main.tableHeader.responsible", name: "Verantwortlich · Überschrift", type: "label", role: "fieldLabel", parentId: "restarbeiten.list.table.meta.header", order: 72, allowedOps: ["move", "textResize", "setVisibility"], componentKind: "tableHeaderLabel", baseline: { x: 0, y: 0, fontSize: 8.667, minFontSize: 6, maxFontSize: 24 } }),
+  element({ id: "restarbeiten.record.dueDate", name: "Fertig bis · Listeneinträge", type: "label", role: "date", parentId: "restarbeiten.list.table.meta.cells", order: 73, allowedOps: ["move", "textResize", "setVisibility"], componentKind: "staticMultiRef", baseline: { x: 0, y: 0, fontSize: 10.667, minFontSize: 7, maxFontSize: 32 } }),
+  element({ id: "restarbeiten.record.ampel", name: "Ampel · Listeneinträge", type: "statusIndicator", role: "status", parentId: "restarbeiten.list.table.meta.cells", order: 74, allowedOps: ["move", ...ICON_LAYOUT], componentKind: "staticMultiRef", baseline: { x: 0, y: 0, width: 12, height: 12, minWidth: 7, maxWidth: 48, minHeight: 7, maxHeight: 48 } }),
+  element({ id: "restarbeiten.record.status", name: "Status · Listeneinträge", type: "label", role: "status", parentId: "restarbeiten.list.table.meta.cells", order: 75, allowedOps: ["move", "textResize", "setVisibility"], componentKind: "staticMultiRef", baseline: { x: 0, y: 0, fontSize: 10.667, minFontSize: 7, maxFontSize: 32 } }),
+  element({ id: "restarbeiten.record.responsible", name: "Verantwortlich · Listeneinträge", type: "label", role: "responsible", parentId: "restarbeiten.list.table.meta.cells", order: 76, allowedOps: ["move", "textResize", "setVisibility"], componentKind: "staticMultiRef", baseline: { x: 0, y: 0, fontSize: 10.667, minFontSize: 7, maxFontSize: 32 } }),
 ];
 
 const editElements = [

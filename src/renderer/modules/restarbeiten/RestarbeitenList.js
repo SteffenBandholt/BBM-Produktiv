@@ -28,9 +28,10 @@ export function buildRestarbeitenTableHeader() {
     uiId: "restarbeiten.main.tableHeader.subject",
   });
   const meta = createEl("div", { className: "bbm-restarbeiten-table-header__meta" });
-  appendText(meta, "", "Fertig bis", "restarbeiten.main.tableHeader.dueDate");
-  appendText(meta, "", "Status", "restarbeiten.main.tableHeader.status");
-  appendText(meta, "", "Verantw.", "restarbeiten.main.tableHeader.responsible");
+  const dueDate = appendText(meta, "", "Fertig bis", "restarbeiten.main.tableHeader.dueDate");
+  const status = appendText(meta, "", "Status", "restarbeiten.main.tableHeader.status");
+  const responsible = appendText(meta, "", "Verantw.", "restarbeiten.main.tableHeader.responsible");
+  header._m80MetaHeaderParts = { dueDate, status, responsible };
   header.append(number, subject, meta);
   return header;
 }
@@ -49,8 +50,10 @@ export function buildRestarbeitenList({
   });
   const rows = [];
   const columnCells = [[], [], []];
+  const metaParts = { dueDate: [], ampel: [], status: [], responsible: [] };
   records._m80Rows = rows;
   records._m80ColumnCells = columnCells;
+  records._m80MetaParts = metaParts;
 
   if (!items.length) {
     records.appendChild(
@@ -103,13 +106,15 @@ export function buildRestarbeitenList({
     dueLine.className = "bbm-restarbeiten-record__due";
     dueLine.textContent = item.dueDateLabel;
     metaColumn.appendChild(dueLine);
+    metaParts.dueDate.push(dueLine);
     if (showAmpel) {
       const ampel = createEl("span", { className: "bbm-restarbeiten-ampel", uiId: "restarbeiten.record.ampel" });
       ampel.dataset.state = item.ampelState || "neutral";
       metaColumn.appendChild(ampel);
+      metaParts.ampel.push(ampel);
     }
-    appendText(metaColumn, "", item.statusLabel, "restarbeiten.record.status");
-    appendText(metaColumn, "", item.responsibleLabel, "restarbeiten.record.responsible");
+    metaParts.status.push(appendText(metaColumn, "", item.statusLabel, "restarbeiten.record.status"));
+    metaParts.responsible.push(appendText(metaColumn, "", item.responsibleLabel, "restarbeiten.record.responsible"));
     if (item.requiredFieldSummary) {
       appendText(metaColumn, "bbm-restarbeiten-record__required", item.requiredFieldSummary);
     }

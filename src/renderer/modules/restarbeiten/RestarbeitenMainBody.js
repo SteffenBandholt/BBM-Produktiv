@@ -1,5 +1,5 @@
 import { buildRestarbeitenList, buildRestarbeitenTableHeader } from "./RestarbeitenList.js";
-import { registerM80Ref, registerM80TableColumnRef, registerM80TableRef } from "../../ui-editor/m80Refs.js";
+import { registerM80MultiRef, registerM80Ref, registerM80TableColumnRef, registerM80TableRef } from "../../ui-editor/m80Refs.js";
 
 function createEl(tag, { className = "", uiId = "" } = {}) {
   const el = document.createElement(tag);
@@ -62,6 +62,15 @@ export function buildRestarbeitenMainBody(options = {}) {
     "--bbm-restarbeiten-meta-column",
     172
   );
+  const headerMeta = header._m80MetaHeaderParts;
+  const recordMeta = records._m80MetaParts;
+  registerM80Ref("restarbeiten.main.tableHeader.dueDate", headerMeta.dueDate);
+  registerM80Ref("restarbeiten.main.tableHeader.status", headerMeta.status);
+  registerM80Ref("restarbeiten.main.tableHeader.responsible", headerMeta.responsible);
+  registerM80MultiRef("restarbeiten.record.dueDate", recordMeta.dueDate, records);
+  registerM80MultiRef("restarbeiten.record.ampel", recordMeta.ampel, records);
+  registerM80MultiRef("restarbeiten.record.status", recordMeta.status, records);
+  registerM80MultiRef("restarbeiten.record.responsible", recordMeta.responsible, records);
 
   table.append(header, records);
   paper.appendChild(table);

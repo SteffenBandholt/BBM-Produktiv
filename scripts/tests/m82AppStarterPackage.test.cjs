@@ -46,7 +46,7 @@ async function runM82AppStarterPackageTests(run) {
     assert.equal(byId.get("restarbeiten.header.root").status, "complete");
     assert.equal(byId.get("restarbeiten.header.root").elementCount, 31);
     assert.equal(byId.get("restarbeiten.list.root").status, "complete");
-    assert.equal(byId.get("restarbeiten.list.root").elementCount, 16);
+    assert.equal(byId.get("restarbeiten.list.root").elementCount, 23);
     assert.equal(byId.get("restarbeiten.edit.root").status, "complete");
     assert.equal(byId.get("restarbeiten.edit.root").elementCount, 53);
     assert.equal(byId.get("bbm.remaining").status, "blocked");

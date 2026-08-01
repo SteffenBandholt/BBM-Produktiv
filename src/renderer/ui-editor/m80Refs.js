@@ -207,9 +207,40 @@ export function registerM80Ref(id, element, custom = {}) {
     apply: custom.apply || ((state, requestedOperation = null) => applyGeneric(element, state, entry, requestedOperation)),
   };
   refs.set(id, ref);
-  targets.forEach((target) => bindElementId(target, id));
+  const bindingTargets = Array.isArray(custom.bindingTargets) ? custom.bindingTargets : targets;
+  bindingTargets.filter(isElementRef).forEach((target) => bindElementId(target, id));
   if (persistentWorkingStateIds.has(id) && workingStates.has(id)) applyPersistentWorkingState(ref);
   return element;
+}
+
+export function registerM80MultiRef(id, elements, fallbackElement) {
+  const entry = getM80RegistryEntry(id);
+  const targets = [...new Set((Array.isArray(elements) ? elements : []).filter(isElementRef))];
+  const primary = targets[0] || fallbackElement;
+  if (!entry || !isElementRef(primary)) throw new Error(`UngÃ¼ltige explizite M80-Multireferenz: ${id}`);
+  targets.forEach((target) => applyAttributes(target, id));
+  let logicalState = {
+    elementId: id,
+    x: finite(entry.baseline?.x),
+    y: finite(entry.baseline?.y),
+    width: positive(entry.baseline?.width, 1),
+    height: positive(entry.baseline?.height, 1),
+    textOffsetX: finite(entry.baseline?.textOffsetX),
+    textOffsetY: finite(entry.baseline?.textOffsetY),
+    fontSize: positive(entry.baseline?.fontSize, 12),
+    visible: entry.baseline?.visible !== false,
+    spacing: { ...(entry.baseline?.spacing || {}) },
+  };
+  return registerM80Ref(id, primary, {
+    targets,
+    bindingTargets: targets,
+    applyPrimaryAttributes: false,
+    read: () => targets.length ? readGeneric(targets[0], id) : { ...logicalState, spacing: { ...logicalState.spacing } },
+    apply: (state, requestedOperation = null) => {
+      logicalState = { ...logicalState, ...state, elementId: id, spacing: { ...(state.spacing || logicalState.spacing || {}) } };
+      targets.forEach((target) => applyGeneric(target, logicalState, entry, requestedOperation));
+    },
+  });
 }
 
 export function completeM80PilotRender() {
@@ -476,6 +507,28 @@ export function applyM80State(id, state, requestedOperation = null) {
   return { ...readback };
 }
 export function snapshotM80State(id) { return readM80State(id); }
+export function captureM80WorkingStates() {
+  return new Map([...refs.values()].map((ref) => {
+    const state = ref.read();
+    return [ref.id, { ...state, spacing: { ...(state.spacing || {}) } }];
+  }));
+}
+export function restoreM80WorkingStates(states) {
+  if (!(states instanceof Map)) throw new TypeError("Gespeicherter Editor-Sitzungszustand fehlt.");
+  for (const [id, state] of states) {
+    const value = { ...state, spacing: { ...(state?.spacing || {}) } };
+    const ref = refs.get(id);
+    if (ref) {
+      ref.apply(value);
+      workingStates.set(id, { ...ref.read() });
+    } else {
+      workingStates.set(id, value);
+    }
+    persistentWorkingStateIds.add(id);
+    persistentWorkingStateOperations.set(id, new Set(["*"]));
+  }
+  return states.size;
+}
 export function listM80CurrentStates(scopeId) {
   return [...refs.values()].filter((ref) => {
       let entry = ref.entry;
