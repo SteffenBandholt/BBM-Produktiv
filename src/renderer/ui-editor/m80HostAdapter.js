@@ -8,6 +8,7 @@ import {
 import {
   applyM80State,
   beginM80PilotRender,
+  captureM80WorkingStates,
   clearM80VisualState,
   completeM80PilotRender,
   getM80IdsFromTarget,
@@ -15,6 +16,8 @@ import {
   getM80Ref,
   listM80Refs,
   registerM80Ref,
+  registerM80MultiRef,
+  restoreM80WorkingStates,
   fitM80Table,
   resetM80Table,
   resetM80PilotWorkingStatesForDiagnostic,
@@ -53,6 +56,7 @@ let hoverCandidates = [];
 let hoverIndex = 0;
 let startupRestorePromise = null;
 let startupRestoreStatus = { state: "pending", applied: false, editorProcessRequired: false };
+let editorSessionBoundary = null;
 let diagnosticRegistryRevision = 0;
 const pendingGeometryRisks = new Map();
 const capturedRuntimeBaselines = new Map();
@@ -695,7 +699,15 @@ export function handleM80EditorEvent(event = {}) {
   if (action === "cancelTargetSelection") { stopSelection({ clearHover: true }); clearGeometryRiskPreview(); return { ok: true }; }
   if (action === "highlightElement") { clearGeometryRiskPreview(); highlightM80Element(event.elementId); return { ok: true }; }
   if (action === "clearGeometryPreview") { clearGeometryRiskPreview(); return { ok: true }; }
-  if (action === "editorClosed") { stopSelection(); selectedId = null; pendingGeometryRisks.clear(); clearGeometryRiskPreview(); clearM80VisualState(); return { ok: true }; }
+  if (action === "editorClosed") {
+    const disposition = ["clean", "saved", "discarded"].includes(event.disposition) ? event.disposition : "unknown";
+    const restoredElementCount = disposition === "discarded" && editorSessionBoundary
+      ? restoreM80WorkingStates(editorSessionBoundary)
+      : 0;
+    editorSessionBoundary = null;
+    stopSelection(); selectedId = null; pendingGeometryRisks.clear(); clearGeometryRiskPreview(); clearM80VisualState();
+    return { ok: true, disposition, restoredElementCount };
+  }
   return { ok: false, errorCode: "electron_editor_message_invalid" };
 }
 
@@ -703,6 +715,7 @@ export function handleM80EditorRequest(request = {}) {
   const action = String(request.action || "");
   if (!ALLOWED_ACTIONS.has(action)) throw Object.assign(new Error("Unbekannte Editoranfrage."), { code: "electron_editor_message_invalid" });
   if (action === "getRegistry") {
+    editorSessionBoundary ??= captureM80WorkingStates();
     const registration = createM80RegistrationDescriptor();
     return {
       registryVersion: registration.registryVersion,
@@ -828,5 +841,5 @@ export async function refreshM80StartupLayoutAfterRegistryMount() {
 }
 
 export function clearM80EditorInteraction() { stopSelection(); selectedId = null; pendingGeometryRisks.clear(); clearGeometryRiskPreview(); clearM80VisualState(); }
-export function getM80InteractionStatus() { return { selectionMode, selectedId, hoverElementIds: hoverCandidates.map((candidate) => candidate.entry.id), hoverIndex, startupRestoreStatus: { ...startupRestoreStatus }, scopeStates: layoutPayload() }; }
-export { beginM80PilotRender, completeM80PilotRender, registerM80Ref, resetM80PilotWorkingStatesForDiagnostic };
+export function getM80InteractionStatus() { return { selectionMode, selectedId, hoverElementIds: hoverCandidates.map((candidate) => candidate.entry.id), hoverIndex, startupRestoreStatus: { ...startupRestoreStatus }, editorSessionBoundaryElementCount: editorSessionBoundary?.size || 0, scopeStates: layoutPayload() }; }
+export { beginM80PilotRender, completeM80PilotRender, registerM80MultiRef, registerM80Ref, resetM80PilotWorkingStatesForDiagnostic };

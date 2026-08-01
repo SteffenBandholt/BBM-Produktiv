@@ -1,5 +1,15 @@
 # STATUS.md — BBM-Produktiv
 
+### M82.7.5 – Gespeichertes Layout und Meta-Elemente
+
+- Status: `[A] abgenommen`; Lebenszykluskorrektur, explizite Meta-Registrierung, automatisierte Regression und sichtbare isolierte Zwei-Start-Abnahme sind abgeschlossen.
+- Der bestehende atomare Profilstore bleibt die einzige Persistenzquelle. Gespeicherte und saubere Sitzungen behalten den angewandten Zustand; „Ohne Speichern“ stellt exakt die beim Öffnen erfasste Sitzungsgrenze wieder her. Rerender, Datensatzwechsel, Modulwechsel und Neustart verwenden denselben Arbeitszustands-/Startup-Restore-Weg.
+- Drei vorhandene Meta-Headertexte und vier vorhandene logische Zeilenbestandteile sind mit stabilen IDs einzeln registriert. Die Zeilenziele verwenden statische Multi-Refs über alle sichtbaren Karten; es wurden keine Wrapper, DOM-Knoten oder Fachwert-IDs ergänzt.
+- Sichtbar bestätigt sind „Fertig bis · Überschrift“ mit 9,667 DIP, „Status · Listeneinträge“ mit X=-5 und „Ampel · Listeneinträge“ mit 17×12 DIP nach Save, Editor-Close, Datensatz-Rerender, Modulwechsel und zweitem isoliertem Start.
+- Der Editor-Close wird nur einmal weitergereicht; zerstörte Electron-Fenster werden vor dem Zugriff auf `webContents` erkannt. Der Acceptance-Runner entfernte sein isoliertes Profil vollständig.
+- Topologie, Scrollstruktur, Fachlogik, Benutzerdateien und `docs/licensing.md` bleiben unverändert.
+- Detaildokument: `docs/M82_7_5_BBM_PERSISTENZ_UND_META_ELEMENTE.md`.
+
 ### M82.7.4.1 – Ampelsymbol verschiebbar
 
 - Status: `[A] abgenommen`; generischer Move-Weg, automatisierte Regression und sichtbare isolierte Zwei-Start-Abnahme sind abgeschlossen.

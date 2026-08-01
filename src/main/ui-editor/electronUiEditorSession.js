@@ -411,8 +411,11 @@ class ElectronUiEditorSessionController {
     }
     if (message.messageType === "event" && NATIVE_EVENT_ACTIONS.has(action)) {
       if (action === "activateTarget") this.getMainWindow?.()?.focus?.();
+      if (action === "editorClosed") {
+        void this.#disposeSession("editor_closed", false, message.payload);
+        return;
+      }
       this.getMainWindow?.()?.webContents?.send?.("uiEditor:event", message.payload);
-      if (action === "editorClosed") void this.#disposeSession("editor_closed", false);
     }
   }
 
@@ -520,7 +523,7 @@ class ElectronUiEditorSessionController {
     this.heartbeat.unref?.();
   }
 
-  async #disposeSession(reason, stopProcess) {
+  async #disposeSession(reason, stopProcess, closePayload = null) {
     if (this.stopping) return;
     this.stopping = true;
     clearInterval(this.heartbeat);
@@ -544,7 +547,16 @@ class ElectronUiEditorSessionController {
       ]);
       if (child.exitCode === null || child.exitCode === undefined) child.kill();
     }
-    this.getMainWindow?.()?.webContents?.send?.("uiEditor:event", { action: "editorClosed", reason });
+    const window = this.getMainWindow?.();
+    if (window && !window.isDestroyed?.()) {
+      const webContents = window.webContents;
+      if (webContents && !webContents.isDestroyed?.()) {
+        const disposition = ["clean", "saved", "discarded"].includes(closePayload?.disposition)
+          ? closePayload.disposition
+          : "unknown";
+        webContents.send("uiEditor:event", { action: "editorClosed", reason, disposition });
+      }
+    }
     this.stopping = false;
   }
 }
