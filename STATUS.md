@@ -3659,3 +3659,20 @@ Wichtig:
 - Globales Lint bleibt mit 16 bestehenden Fehlern und 371 Warnungen rot; M82.7.2 erzeugt keinen neuen Befund und es erfolgte keine Altbereinigung.
 - `docs/licensing.md` und Benutzerdateien blieben unangetastet.
 - Commit/PR: keiner; gemäß Nutzeranweisung wurde weder committet noch gepusht.
+## M84.0 – Restarbeiten am Protokoll-Leitdesign ausrichten
+
+- Status: `[A]`; Restarbeiten-Umsetzung, Komponentenvertrags-Prüfungen und die
+  vollständige isolierte sichtbare Abnahme sind durchgeführt.
+- Filter, Liste und Editbox folgen nun derselben ruhigen hellen
+  Produktfamilie wie das Protokoll, ohne dessen Modulstruktur zu kopieren.
+- Die Editbox nutzt den vorhandenen BBM-`resizeHeight`-Vertrag, ist standardmäßig
+  248 statt 276 DIP hoch und bleibt an ihrer Unterkante verankert.
+- Bei 1920 × 1080, 1600 × 900 und 1366 × 768 blieb die bestehende
+  Scrollstruktur erhalten; es wurde keine horizontale Scrollleiste ergänzt.
+- Save, Editor-Close und der zweite isolierte Acceptance-Start bestätigten die
+  Wiederherstellung im temporären Profil.
+- Der isolierte Acceptance-Launcher startet Restarbeiten oder Protokoll
+  ausschließlich mit expliziter Modulwahl; der sichtbare Protokoll-Gegencheck
+  bei 1920 × 1080, 1600 × 900 und 1366 × 768 ist grün.
+- `docs/licensing.md`, Benutzerlizenz, `app.db` und `app.db.bak` blieben
+  unangetastet. Commit/PR: keiner.

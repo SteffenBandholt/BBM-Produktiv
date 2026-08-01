@@ -10,6 +10,17 @@ const { spawn } = require("child_process");
 const { configureUiEditorAcceptanceProfile } = require("./startup/uiEditorAcceptanceProfile");
 
 const uiEditorAcceptanceProfile = configureUiEditorAcceptanceProfile({ electronApp: app });
+const UI_EDITOR_ACCEPTANCE_MODULE_SWITCH = "--bbm-ui-editor-acceptance-module=";
+const UI_EDITOR_ACCEPTANCE_MODULES = new Set(["restarbeiten", "protokoll"]);
+
+function getUiEditorAcceptanceModule(argv = process.argv) {
+  if (!uiEditorAcceptanceProfile.enabled) return null;
+  const arg = argv.find((value) => String(value || "").startsWith(UI_EDITOR_ACCEPTANCE_MODULE_SWITCH));
+  const moduleId = String(arg || "").slice(UI_EDITOR_ACCEPTANCE_MODULE_SWITCH.length).trim().toLowerCase();
+  return UI_EDITOR_ACCEPTANCE_MODULES.has(moduleId) ? moduleId : "restarbeiten";
+}
+
+const uiEditorAcceptanceModule = getUiEditorAcceptanceModule();
 if (uiEditorAcceptanceProfile.enabled) {
   console.log("[ui-editor-acceptance] userData", uiEditorAcceptanceProfile.userDataPath);
   console.log("[ui-editor-acceptance] sessionData", uiEditorAcceptanceProfile.sessionDataPath);
@@ -575,6 +586,7 @@ app.whenReady().then(async () => {
     enabled: process.env.BBM_M80_EDITOR_DIAGNOSTIC === "1" ||
       process.argv.includes("--bbm-electron-editor-diagnostic") ||
       app.commandLine.hasSwitch("bbm-electron-editor-diagnostic"),
+    startModule: uiEditorAcceptanceModule,
   }));
 
   // ============================================================

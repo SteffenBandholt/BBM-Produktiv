@@ -28,6 +28,16 @@ const REMOVED_ENV_KEYS = Object.freeze([
   "BBM_WHISPER_SERVER_HOST",
   "BBM_WHISPER_SERVER_PORT",
 ]);
+const ACCEPTANCE_MODULES = Object.freeze(new Set(["restarbeiten", "protokoll"]));
+const ACCEPTANCE_MODULE_SWITCH = "--bbm-ui-editor-acceptance-module=";
+
+function parseAcceptanceModule(argv = process.argv) {
+  const requested = argv.find((value) => String(value || "").startsWith("--module="));
+  if (!requested) return "restarbeiten";
+  const moduleId = String(requested).slice("--module=".length).trim().toLowerCase();
+  if (!ACCEPTANCE_MODULES.has(moduleId)) throw new Error("UI_EDITOR_ACCEPTANCE_MODULE_INVALID");
+  return moduleId;
+}
 
 function createSanitizedEnvironment(source = process.env) {
   const result = { ...source };
@@ -58,11 +68,13 @@ function createAcceptanceProfile({ fsImpl = fs, osImpl = os, pathImpl = path } =
   return Object.freeze({ rootPath, userDataPath, sessionDataPath, marker });
 }
 
-function buildElectronArguments({ repoRoot, profileRoot }) {
+function buildElectronArguments({ repoRoot, profileRoot, module = "restarbeiten" }) {
+  if (!ACCEPTANCE_MODULES.has(module)) throw new Error("UI_EDITOR_ACCEPTANCE_MODULE_INVALID");
   return Object.freeze([
     repoRoot,
     `${ACCEPTANCE_SWITCH}${profileRoot}`,
     "--bbm-electron-editor-diagnostic",
+    `${ACCEPTANCE_MODULE_SWITCH}${module}`,
   ]);
 }
 
@@ -94,18 +106,19 @@ function removeAcceptanceProfile(profileRoot, { fsImpl = fs, osImpl = os, pathIm
   fsImpl.rmSync(resolvedRoot, { recursive: true, force: true });
 }
 
-async function runAcceptance({ runs = 2 } = {}) {
+async function runAcceptance({ runs = 2, module = parseAcceptanceModule() } = {}) {
   if (runs !== 2) throw new Error("UI_EDITOR_ACCEPTANCE_REQUIRES_TWO_RUNS");
   const repoRoot = path.resolve(__dirname, "..");
   const profile = createAcceptanceProfile();
   const dbPath = path.join(profile.userDataPath, "app.db");
   const electronExecutable = require("electron");
-  const args = buildElectronArguments({ repoRoot, profileRoot: profile.rootPath });
+  const args = buildElectronArguments({ repoRoot, profileRoot: profile.rootPath, module });
   const env = createSanitizedEnvironment();
   let exitCode = 0;
 
   console.log(`[ui-editor-acceptance] isolated root: ${profile.rootPath}`);
   console.log(`[ui-editor-acceptance] identity: ${DEVELOPMENT_BUILD_CHANNEL} / ${DEVELOPMENT_BUILD_FLAVOR}`);
+  console.log(`[ui-editor-acceptance] module: ${module}`);
   console.log(`[ui-editor-acceptance] license provider: ${DEVELOPMENT_LICENSE_PROVIDER_ID}`);
   console.log("[ui-editor-acceptance] two runs use the same isolated profile for restart/restore.");
 
@@ -140,6 +153,9 @@ if (require.main === module) void main();
 module.exports = Object.freeze({
   REMOVED_ENV_KEYS,
   createSanitizedEnvironment,
+  ACCEPTANCE_MODULES,
+  ACCEPTANCE_MODULE_SWITCH,
+  parseAcceptanceModule,
   createAcceptanceProfile,
   buildElectronArguments,
   hashFileOrMissing,

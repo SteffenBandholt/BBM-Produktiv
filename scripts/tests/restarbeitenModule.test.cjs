@@ -1050,8 +1050,8 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(css.includes(".bbm-restarbeiten-screen,\n.bbm-restarbeiten-screen button,\n.bbm-restarbeiten-screen input,\n.bbm-restarbeiten-screen select,\n.bbm-restarbeiten-screen textarea {\n  font-family: var(--bbm-rest-font-family);"), true);
       assert.equal(css.includes(".bbm-restarbeiten-filterbar [data-ui-editor-id=\"restarbeiten.filterbar.group.meta\"] .bbm-restarbeiten-field span,\n.bbm-restarbeiten-filterbar [data-ui-editor-id=\"restarbeiten.filterbar.group.meta\"] .bbm-restarbeiten-field input,\n.bbm-restarbeiten-filterbar [data-ui-editor-id=\"restarbeiten.filterbar.group.meta\"] .bbm-restarbeiten-field select {\n  color: var(--bbm-muted);\n  font-size: 6.5pt;\n  font-weight: 400;\n  line-height: 1.1;"), true);
       assert.equal(css.includes(".bbm-restarbeiten-filter-group {\n  grid-auto-flow: column;\n  grid-auto-columns: minmax(104px, auto);\n  align-items: center;"), true);
-      assert.equal(css.includes(".bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle {\n  justify-content: center;\n  gap: 0;"), true);
-      assert.equal(css.includes(".bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle button {\n  display: block;\n  margin: 0;\n  padding: 0;\n  min-height: 0;\n  height: auto;\n  line-height: 0.95;"), true);
+      assert.equal(css.includes(".bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle {\n  flex-direction: row;\n  align-items: center;\n  justify-content: center;\n  gap: 4px;"), true);
+      assert.equal(css.includes(".bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle button {\n  min-height: var(--bbm-rest-control-height);\n  margin: 0;\n  padding: 4px 7px;"), true);
     } finally {
       globalThis.document = prevDocument;
     }
@@ -1761,14 +1761,14 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(css.includes(".bbm-restarbeiten-editbox__actions--inline {\n  margin-left: 0;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-class-field--inline {\n  display: inline-flex;\n  align-items: center;\n  min-width: 0;\n  margin-left: 0;"), true);
     assert.equal(css.includes("grid-template-columns: minmax(260px, 1fr) 98px 98px;"), true);
-    assert.equal(css.includes("gap: 8px 6px;"), true);
+    assert.equal(css.includes("gap: 6px;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group {\n  grid-template-columns: minmax(0, 1fr);\n  align-content: start;\n  gap: 4px;\n  min-height: 0;\n  justify-self: end;\n  width: 96px;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group .bbm-restarbeiten-field {\n  width: 92px;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-editbox [data-ui-editor-id=\"restarbeiten.editbox.meta.dueDate\"] {\n  display: grid;\n  grid-template-columns: minmax(0, 1fr) auto;\n  column-gap: 5px;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-remaining {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  min-width: 18px;\n  border: 1px solid var(--bbm-line);\n  border-radius: 999px;\n  padding: 0 5px;\n  color: var(--bbm-muted);\n  font-family: var(--bbm-rest-font-family);\n  font-size: 6.5pt;\n  font-weight: 400;\n  line-height: 1.2;"), true);
     assert.equal(css.includes('.bbm-restarbeiten-dictation-button[data-bbm-dictation-state="ready"] [data-bbm-dictation-icon="recording"],'), true);
     assert.equal(css.includes('.bbm-restarbeiten-dictation-button[data-bbm-dictation-state="recording"] [data-bbm-dictation-icon="ready"]'), true);
-    assert.equal(css.includes(".bbm-restarbeiten-note {\n  width: 24px;\n  height: 24px;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  padding: 0;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-note {\n  width: var(--bbm-rest-control-height);\n  height: var(--bbm-rest-control-height);\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  padding: 0;"), true);
   });
 
   await run("Restarbeiten: Ampellogik nutzt 10-Tage-Warnfenster und erledigt ist neutral", async () => {

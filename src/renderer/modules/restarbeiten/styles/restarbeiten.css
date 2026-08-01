@@ -24,6 +24,11 @@
   --bbm-rest-button-font-size: 7.5pt;
   --bbm-rest-number-font-size: 10.6pt;
   --bbm-rest-line-height: 1.35;
+  --bbm-rest-accent: #1d4ed8;
+  --bbm-rest-radius-panel: 8px;
+  --bbm-rest-radius-control: 6px;
+  --bbm-rest-control-height: 28px;
+  --bbm-rest-panel-gap: 8px;
 }
 
 .bbm-restarbeiten-screen {
@@ -71,9 +76,11 @@
 }
 
 .bbm-restarbeiten-workspace__edit {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   max-height: calc(100% - 180px);
   overflow: auto;
+  display: flex;
+  align-items: flex-end;
 }
 
 .bbm-restarbeiten-workspace__list > .bbm-restarbeiten-main {
@@ -108,16 +115,17 @@
 
 .bbm-restarbeiten-filterbar {
   margin: 0 72px 6px 16px;
-  padding: 8px 10px;
+  padding: 9px 12px;
   box-sizing: border-box;
   height: auto;
   max-height: 220px;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   display: flex;
-  flex-wrap: nowrap;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: var(--bbm-rest-panel-gap);
   align-items: center;
-  border-radius: 8px;
+  border-radius: var(--bbm-rest-radius-panel);
 }
 
 .bbm-restarbeiten-filter-group,
@@ -177,13 +185,14 @@
 .bbm-restarbeiten-field textarea {
   min-width: 0;
   border: 1px solid var(--bbm-line);
-  border-radius: 6px;
+  border-radius: var(--bbm-rest-radius-control);
   padding: 4px 6px;
   background: var(--bbm-surface-soft);
   color: var(--bbm-text);
   font-family: var(--bbm-rest-font-family);
   font-size: 9pt;
   line-height: 1.2;
+  min-height: var(--bbm-rest-control-height);
 }
 
 .bbm-restarbeiten-filterbar .bbm-restarbeiten-field {
@@ -207,17 +216,22 @@
 }
 
 .bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle {
+  flex-direction: row;
+  align-items: center;
   justify-content: center;
-  gap: 0;
+  gap: 4px;
 }
 
 .bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle button {
-  display: block;
+  min-height: var(--bbm-rest-control-height);
   margin: 0;
-  padding: 0;
-  min-height: 0;
-  height: auto;
-  line-height: 0.95;
+  padding: 4px 7px;
+  border: 1px solid var(--bbm-line);
+  border-radius: var(--bbm-rest-radius-control);
+  background: var(--bbm-panel);
+  color: var(--bbm-muted);
+  font-size: var(--bbm-rest-label-font-size);
+  line-height: 1.1;
 }
 
 .bbm-restarbeiten-class-toggle {
@@ -235,7 +249,7 @@
 .bbm-restarbeiten-button,
 .bbm-restarbeiten-icon-button {
   border: 1px solid var(--bbm-line);
-  border-radius: 6px;
+  border-radius: var(--bbm-rest-radius-control);
   background: #fff;
   color: var(--bbm-text);
   cursor: pointer;
@@ -260,12 +274,33 @@
 .bbm-restarbeiten-class-toggle button[aria-pressed="true"] {
   background: transparent;
   border-color: transparent;
-  color: #1d4ed8;
+  color: var(--bbm-rest-accent);
   font-weight: 650;
 }
 
+.bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle button[aria-pressed="true"] {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: var(--bbm-rest-accent);
+  font-weight: 700;
+}
+
 .bbm-restarbeiten-button {
-  padding: 5px 8px;
+  min-height: var(--bbm-rest-control-height);
+  padding: 4px 9px;
+}
+
+.bbm-restarbeiten-button:hover:not(:disabled),
+.bbm-restarbeiten-button:focus-visible,
+.bbm-restarbeiten-icon-button:focus-visible {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.bbm-restarbeiten-button:focus-visible,
+.bbm-restarbeiten-icon-button:focus-visible {
+  outline: 2px solid rgba(29, 78, 216, 0.22);
+  outline-offset: 1px;
 }
 
 .bbm-restarbeiten-quicklane {
@@ -430,6 +465,7 @@
   border: 1px solid var(--bbm-line);
   border-radius: 8px;
   background: var(--bbm-surface-soft);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
   cursor: pointer;
   color: var(--bbm-text);
   font-family: var(--bbm-rest-font-family);
@@ -456,8 +492,9 @@
 }
 
 .bbm-restarbeiten-record[aria-selected="true"] {
-  border-color: #87bfff;
-  box-shadow: 0 0 0 2px rgba(135, 191, 255, 0.26);
+  border-color: #7aa7ff;
+  background: #eaf3ff;
+  box-shadow: 0 0 0 2px rgba(122, 167, 255, 0.16);
 }
 
 .bbm-restarbeiten-record[data-fachlich-vollstaendig="false"] {
@@ -675,15 +712,15 @@
 }
 
 .bbm-restarbeiten-editbox {
-  margin: 8px 72px 14px 16px;
-  border-radius: 8px;
-  padding: 9px 10px;
+  margin: 6px 72px 12px 16px;
+  border-radius: var(--bbm-rest-radius-panel);
+  padding: 8px 10px;
   box-sizing: border-box;
   min-width: 320px;
-  height: 276px;
+  height: 248px;
   min-height: 190px;
   max-width: calc(100% - 88px);
-  max-height: min(520px, calc(100vh - 360px));
+  max-height: min(480px, calc(100vh - 360px));
   overflow: hidden;
   display: block;
 }
@@ -694,7 +731,7 @@
   display: grid;
   grid-template-columns: minmax(260px, 1fr) 98px 98px;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 8px 6px;
+  gap: 6px;
   overflow: auto;
 }
 
@@ -741,13 +778,14 @@
 .bbm-restarbeiten-text-field > textarea {
   min-width: 0;
   border: 1px solid var(--bbm-line);
-  border-radius: 6px;
+  border-radius: var(--bbm-rest-radius-control);
   padding: 3px 5px;
   background: var(--bbm-surface-soft);
   color: var(--bbm-text);
   font-family: var(--bbm-rest-font-family);
   font-size: 8pt;
   line-height: 1.15;
+  min-height: var(--bbm-rest-control-height);
 }
 
 .bbm-restarbeiten-text-label__row {
@@ -824,8 +862,8 @@
 }
 
 .bbm-restarbeiten-icon-button {
-  width: 22px;
-  height: 22px;
+  width: var(--bbm-rest-control-height);
+  height: var(--bbm-rest-control-height);
   padding: 0;
   font-size: var(--bbm-rest-button-font-size);
   flex: 0 0 auto;
@@ -938,6 +976,33 @@
   grid-column: 1 / -1;
 }
 
+@media (max-height: 850px) {
+  .bbm-restarbeiten-filterbar {
+    gap: 5px;
+    padding: 6px 10px;
+  }
+
+  .bbm-restarbeiten-filter-group {
+    gap: 2px 5px;
+  }
+
+  .bbm-restarbeiten-filterbar .bbm-restarbeiten-field {
+    gap: 1px;
+  }
+
+  .bbm-restarbeiten-filterbar .bbm-restarbeiten-field input,
+  .bbm-restarbeiten-filterbar .bbm-restarbeiten-field select,
+  .bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle button {
+    min-height: 24px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+
+  .bbm-restarbeiten-editbox {
+    height: 220px;
+  }
+}
+
 .bbm-restarbeiten-validation {
   align-self: center;
   color: var(--bbm-error);
@@ -953,8 +1018,8 @@
 }
 
 .bbm-restarbeiten-note {
-  width: 24px;
-  height: 24px;
+  width: var(--bbm-rest-control-height);
+  height: var(--bbm-rest-control-height);
   display: inline-flex;
   align-items: center;
   justify-content: center;

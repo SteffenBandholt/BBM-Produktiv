@@ -15,6 +15,7 @@ const {
   createSanitizedEnvironment,
   createAcceptanceProfile,
   buildElectronArguments,
+  parseAcceptanceModule,
   hashFileOrMissing,
   removeAcceptanceProfile,
 } = require("../runIsolatedUiEditorAcceptance.cjs");
@@ -76,11 +77,18 @@ async function runUiEditorAcceptanceIsolationTests(run) {
   });
 
   await run("M82.7.3 Isolation: Startargumente aktivieren Diagnose ohne vorzeitigen Editorstart", () => {
-    const args = buildElectronArguments({ repoRoot: "C:\\repo", profileRoot: "C:\\temp\\profile" });
+    const args = buildElectronArguments({ repoRoot: "C:\\repo", profileRoot: "C:\\temp\\profile", module: "protokoll" });
     assert.equal(args[0], "C:\\repo");
     assert.equal(args.includes("--bbm-electron-editor-diagnostic"), true);
     assert.equal(args.includes("--open-ui-editor"), false);
     assert.equal(args.some((arg) => arg === `${ACCEPTANCE_SWITCH}C:\\temp\\profile`), true);
+    assert.equal(args.includes("--bbm-ui-editor-acceptance-module=protokoll"), true);
+  });
+
+  await run("M84.0 Isolation: Acceptance-Modul ist auf Restarbeiten und Protokoll begrenzt", () => {
+    assert.equal(parseAcceptanceModule(["node", "runner"]), "restarbeiten");
+    assert.equal(parseAcceptanceModule(["node", "runner", "--module=protokoll"]), "protokoll");
+    assert.throws(() => parseAcceptanceModule(["node", "runner", "--module=settings"]), /UI_EDITOR_ACCEPTANCE_MODULE_INVALID/);
   });
 
   await run("M82.7.3 Isolation: Sentinel-Benutzerdateien bleiben bei isoliertem DB-Schreiben bytegleich", () => {
@@ -117,7 +125,7 @@ async function runUiEditorAcceptanceIsolationTests(run) {
     const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8"));
     assert.equal(pkg.scripts["start:ui-editor:acceptance"], "npm run fix:electron-deps && npm run prepare:ui-editor && node scripts/runIsolatedUiEditorAcceptance.cjs");
     const runner = fs.readFileSync(path.join(process.cwd(), "scripts/runIsolatedUiEditorAcceptance.cjs"), "utf8");
-    assert.match(runner, /async function runAcceptance\(\{ runs = 2 \}/);
+    assert.match(runner, /async function runAcceptance\(\{ runs = 2, module = parseAcceptanceModule\(\) \}/);
     assert.match(runner, /UI_EDITOR_ACCEPTANCE_REQUIRES_TWO_RUNS/);
   });
 }
