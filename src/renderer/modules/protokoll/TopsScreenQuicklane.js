@@ -1,5 +1,5 @@
 import { getTopFilterBadge, getTopFilterLabel, normalizeTopFilterMode } from "./topFilterMode.js";
-import { completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
+import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
 
 const ICON_CLASS = "bbm-tops-screen-quicklane-icon";
 const AMPEL_STATUS_ICON_URL = "./assets/icons/ampel-status.svg";
@@ -218,6 +218,7 @@ export class TopsScreenQuicklane {
   }
 
   _registerUiEditorRefs({ navigation, visibility, filter, output }) {
+    beginM83ComponentBinding("bbm.protokoll.quicklane");
     registerM80Ref("protokoll.topsScreen.quicklane", this.root);
     const groups = [
       ["protokoll.topsScreen.quicklane.group.navigation", navigation, [

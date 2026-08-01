@@ -1,4 +1,8 @@
-import { getM80RegistryEntry, m80EditorAttributes } from "./m80Registry.js";
+import { getM80RegistryEntry, getM83ComponentContract, listM80RegistryScopes, listM83ComponentContracts, m80EditorAttributes } from "./m80Registry.js";
+import {
+  orderUiComponentSelectionTargetIds,
+  validateUiComponentReferenceBindings,
+} from "../../../node_modules/ui-editor-kit/dist/ui-component-contract.mjs";
 import {
   fitTableToViewport,
   measureTableLayout,
@@ -177,6 +181,17 @@ export function beginM80PilotRender() {
   tableRuntimeBindings.clear();
 }
 
+export function beginM83ComponentBinding(componentId) {
+  const contract = getM83ComponentContract(componentId);
+  if (!contract) throw Object.assign(new Error(`Unbekannter Komponentenvertrag: ${componentId}`), { code: "component_contract_missing", componentId });
+  for (const slot of contract.slots) {
+    refs.delete(slot.element.id);
+    tableColumnRuntimeBindings.delete(slot.element.id);
+    tableRuntimeBindings.delete(slot.element.id);
+  }
+  return contract;
+}
+
 export function resetM80PilotWorkingStatesForDiagnostic() {
   refs.clear();
   tableColumnRuntimeBindings.clear();
@@ -198,11 +213,24 @@ export function registerM80Ref(id, element, custom = {}) {
   if (!entry || !isElementRef(element)) throw new Error(`Ungültige explizite M80-Referenz: ${id}`);
   if (custom.applyPrimaryAttributes !== false) applyAttributes(element, id);
   const targets = [...new Set([element, ...(Array.isArray(custom.targets) ? custom.targets : [])].filter(isElementRef))];
+  const contractTargets = [...new Set((Array.isArray(custom.contractTargets) ? custom.contractTargets : targets).filter(isElementRef))];
+  const existing = refs.get(id);
+  if (entry.referenceKind === "single" && (contractTargets.length !== 1 || (existing && existing.element !== element))) {
+    throw Object.assign(new Error(`Einzel-Ref loest nicht genau ein Ziel auf: ${id}`), {
+      code: "component_single_ref_duplicate",
+      elementId: id,
+      targetCount: existing && existing.element !== element ? contractTargets.length + 1 : contractTargets.length,
+    });
+  }
   const ref = {
     id,
     entry,
     element,
     targets,
+    contractTargets,
+    contractMountedInstanceCount: Number.isFinite(Number(custom.contractMountedInstanceCount))
+      ? Number(custom.contractMountedInstanceCount)
+      : contractTargets.length,
     read: custom.read || (() => readGeneric(element, id)),
     apply: custom.apply || ((state, requestedOperation = null) => applyGeneric(element, state, entry, requestedOperation)),
   };
@@ -213,7 +241,7 @@ export function registerM80Ref(id, element, custom = {}) {
   return element;
 }
 
-export function registerM80MultiRef(id, elements, fallbackElement) {
+export function registerM80MultiRef(id, elements, fallbackElement, options = {}) {
   const entry = getM80RegistryEntry(id);
   const targets = [...new Set((Array.isArray(elements) ? elements : []).filter(isElementRef))];
   const primary = targets[0] || fallbackElement;
@@ -233,6 +261,8 @@ export function registerM80MultiRef(id, elements, fallbackElement) {
   };
   return registerM80Ref(id, primary, {
     targets,
+    contractTargets: targets,
+    contractMountedInstanceCount: Number.isFinite(Number(options.mountedInstanceCount)) ? Number(options.mountedInstanceCount) : targets.length,
     bindingTargets: targets,
     applyPrimaryAttributes: false,
     read: () => targets.length ? readGeneric(targets[0], id) : { ...logicalState, spacing: { ...logicalState.spacing } },
@@ -295,6 +325,8 @@ export function registerM80TableColumnRef(id, headerCell, dataCells, tableElemen
   };
   registerM80Ref(id, headerCell, {
     targets,
+    contractTargets: targets,
+    contractMountedInstanceCount: targets.length,
     read: () => {
       const style = styleOf(headerCell);
       const rect = rectOf(headerCell);
@@ -328,9 +360,11 @@ export function registerM80TableColumnRef(id, headerCell, dataCells, tableElemen
       targets.forEach((target) => toggleClass(target, HIDDEN_CLASS, state.visible === false));
     },
   });
-  registerM80Ref(layout.headerElementId, headerCell, { targets: [headerCell] });
+  registerM80Ref(layout.headerElementId, headerCell, { targets: [headerCell], contractTargets: [headerCell], contractMountedInstanceCount: 1 });
   registerM80Ref(layout.dataCellTemplateId, dataCells?.[0] || tableElement, {
     targets: dataCells,
+    contractTargets: dataCells,
+    contractMountedInstanceCount: dataCells?.length || 0,
     applyPrimaryAttributes: Boolean(dataCells?.length),
   });
   return headerCell;
@@ -481,7 +515,10 @@ export function getM80IdsFromTarget(target) {
   let current = isElementRef(target) ? target : null;
   while (current) {
     const ids = elementIds.get(current);
-    if (ids?.size) return [...ids];
+    if (ids?.size) {
+      const elements = listM80RegistryScopes().flatMap((scope) => scope.elements);
+      return orderUiComponentSelectionTargetIds(elements, [...ids]);
+    }
     current = current.parentElement;
   }
   return [];
@@ -539,7 +576,40 @@ export function listM80CurrentStates(scopeId) {
 export function getM80ReferenceStatus(id) {
   const ref = getM80Ref(id);
   const entry = ref?.entry || getM80RegistryEntry(id);
-  return { refKey: String(entry?.refKey || id || ""), referenceResolved: Boolean(ref && (typeof ref.element.isConnected !== "boolean" || ref.element.isConnected)) };
+  const targets = (ref?.contractTargets || []).filter((target) => typeof target.isConnected !== "boolean" || target.isConnected);
+  return {
+    refKey: String(entry?.refKey || id || ""),
+    referenceResolved: Boolean(ref && (targets.length > 0 || (entry?.referenceKind === "multi" && (ref.contractMountedInstanceCount || 0) === 0))),
+    targetCount: targets.length,
+    mountedInstanceCount: ref?.contractMountedInstanceCount || 0,
+  };
+}
+
+export function validateM83ComponentReferences(componentIds = null) {
+  const contracts = listM83ComponentContracts();
+  const selectedIds = Array.isArray(componentIds) ? componentIds : contracts.map((component) => component.componentId);
+  const bindings = contracts
+    .filter((component) => selectedIds.includes(component.componentId))
+    .flatMap((component) => component.slots.flatMap((slot) => {
+      const ref = refs.get(slot.element.id);
+      if (!ref) return [];
+      const targets = (ref?.contractTargets || []).filter((target) => typeof target.isConnected !== "boolean" || target.isConnected);
+      return [{
+        componentId: component.componentId,
+        slotId: slot.slotId,
+        elementId: slot.element.id,
+        targetCount: targets.length,
+        mountedInstanceCount: ref?.contractMountedInstanceCount || 0,
+        referenceResolved: targets.length > 0,
+        selectionTargetIds: targets.length > 0 ? getM80IdsFromTarget(targets[0]) : [],
+      }];
+    }));
+  const result = validateUiComponentReferenceBindings({ components: contracts, bindings, componentIds: selectedIds });
+  if (!result.ok) {
+    const details = result.errors.map((entry) => `${entry.code}: ${entry.componentId || "?"}/${entry.slotId || entry.elementId || "?"}`).join("; ");
+    throw Object.assign(new Error(`BBM-Komponenten-Refs unvollstaendig: ${details}`), { code: "component_reference_contract_invalid", details: result.errors });
+  }
+  return result;
 }
 export function clearM80VisualState() {
   document.querySelector("[data-bbm-ui-editor-overlay]")?.remove();

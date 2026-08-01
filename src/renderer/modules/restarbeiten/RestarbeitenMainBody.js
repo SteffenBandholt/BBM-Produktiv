@@ -1,5 +1,5 @@
 import { buildRestarbeitenList, buildRestarbeitenTableHeader } from "./RestarbeitenList.js";
-import { registerM80MultiRef, registerM80Ref, registerM80TableColumnRef, registerM80TableRef } from "../../ui-editor/m80Refs.js";
+import { beginM83ComponentBinding, registerM80MultiRef, registerM80Ref, registerM80TableColumnRef, registerM80TableRef } from "../../ui-editor/m80Refs.js";
 
 function createEl(tag, { className = "", uiId = "" } = {}) {
   const el = document.createElement(tag);
@@ -9,6 +9,7 @@ function createEl(tag, { className = "", uiId = "" } = {}) {
 }
 
 export function buildRestarbeitenMainBody(options = {}) {
+  beginM83ComponentBinding("bbm.restarbeiten.list");
   const main = createEl("main", {
     className: "bbm-restarbeiten-main",
     uiId: "restarbeiten.main",
@@ -34,7 +35,7 @@ export function buildRestarbeitenMainBody(options = {}) {
   registerM80TableRef("restarbeiten.list.table", table, table);
   registerM80Ref("restarbeiten.list.table.header", header);
   registerM80Ref("restarbeiten.list.table.body", records);
-  registerM80Ref("restarbeiten.list.table.row", records._m80Rows[0] || records, { targets: records._m80Rows });
+  registerM80MultiRef("restarbeiten.list.table.row", records._m80Rows, records, { mountedInstanceCount: records._m80Rows.length });
   registerM80TableColumnRef(
     "restarbeiten.list.table.number",
     header.children[0],
@@ -63,14 +64,25 @@ export function buildRestarbeitenMainBody(options = {}) {
     172
   );
   const headerMeta = header._m80MetaHeaderParts;
-  const recordMeta = records._m80MetaParts;
+  const componentParts = records._m83ComponentParts;
   registerM80Ref("restarbeiten.main.tableHeader.dueDate", headerMeta.dueDate);
   registerM80Ref("restarbeiten.main.tableHeader.status", headerMeta.status);
   registerM80Ref("restarbeiten.main.tableHeader.responsible", headerMeta.responsible);
-  registerM80MultiRef("restarbeiten.record.dueDate", recordMeta.dueDate, records);
-  registerM80MultiRef("restarbeiten.record.ampel", recordMeta.ampel, records);
-  registerM80MultiRef("restarbeiten.record.status", recordMeta.status, records);
-  registerM80MultiRef("restarbeiten.record.responsible", recordMeta.responsible, records);
+  for (const [id, key] of [
+    ["restarbeiten.record.number", "number"],
+    ["restarbeiten.record.createdAt", "createdAt"],
+    ["restarbeiten.record.itemClass", "itemClass"],
+    ["restarbeiten.record.aftercare", "aftercare"],
+    ["restarbeiten.record.photos", "photos"],
+    ["restarbeiten.record.location", "location"],
+    ["restarbeiten.record.shortText", "shortText"],
+    ["restarbeiten.record.longText", "longText"],
+    ["restarbeiten.record.dueDate", "dueDate"],
+    ["restarbeiten.record.ampel", "ampel"],
+    ["restarbeiten.record.status", "status"],
+    ["restarbeiten.record.responsible", "responsible"],
+    ["restarbeiten.record.requiredSummary", "requiredSummary"],
+  ]) registerM80MultiRef(id, componentParts[key], records, { mountedInstanceCount: componentParts[key].length });
 
   table.append(header, records);
   paper.appendChild(table);

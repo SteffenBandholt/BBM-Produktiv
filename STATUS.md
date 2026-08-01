@@ -1,5 +1,15 @@
 # STATUS.md — BBM-Produktiv
 
+### M83.0 – Komponentenbasierte Vollregistrierung
+
+- Status: `[A]` abgenommen; Komponentenmechanismus, Vollständigkeits-Guardrails, automatisierte Runtime-Nachweise und die sichtbare isolierte Electron-Acceptance sind grün.
+- Acht komponentennahe Verträge ersetzen die zentrale Unterelement-Handliste für alle sechs offiziell editorfähigen Restarbeiten- und Protokoll-Scopes.
+- Die Restarbeiten-Liste registriert 32 Ziele, darunter Nr., Datum, Klasse, Nachpflege, Fotos, Verortung, Kurz-/Langtext und die vorhandenen End-Metaziele als getrennte Single-/Multi-Ref-Ziele.
+- Der reale Runtime-Harness belegt getrennte Auswahl, Kindwirkung, Rerender-Persistenz, vollständige gemountete Ref-Auflösung und benannte Fehler bei fehlenden oder doppelten Refs.
+- Zeilentopologie, drei vorhandene Spalten und Scrollstruktur bleiben unverändert; es wurden keine Wrapper oder Fachlogik ergänzt.
+- `docs/licensing.md` bleibt Fremdänderung und unangetastet.
+- Sichtbar bestätigt sind Meta-Spalte, Nr., Datum und Klasse als getrennte stabile Ziele, Kind-Isolation, Ampel-Multi-Ref über alle sichtbaren Zeilen, Rerender-Übernahme, Speichern und automatischer Zweitstart mit Restore ohne neue Scrollleiste oder Topologieänderung.
+
 ### M82.7.5 – Gespeichertes Layout und Meta-Elemente
 
 - Status: `[A] abgenommen`; Lebenszykluskorrektur, explizite Meta-Registrierung, automatisierte Regression und sichtbare isolierte Zwei-Start-Abnahme sind abgeschlossen.

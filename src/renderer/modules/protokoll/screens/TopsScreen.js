@@ -40,6 +40,7 @@ import {
 import { OVERLAY_TOP } from "../../../ui/zIndex.js";
 import {
   beginM80PilotRender,
+  beginM83ComponentBinding,
   completeM80PilotRender,
   registerM80Ref,
 } from "../../../ui-editor/m80Refs.js";
@@ -203,6 +204,9 @@ export default class TopsScreen {
   }
 
   _registerUiEditorRefs() {
+    beginM83ComponentBinding("bbm.protokoll.screen");
+    beginM83ComponentBinding("bbm.protokoll.list.shell");
+    beginM83ComponentBinding("bbm.protokoll.editbox");
     const header = this.header;
     const workbench = this.workbench;
     const editbox = workbench?.sharedEditboxCore?.editbox;
@@ -220,8 +224,6 @@ export default class TopsScreen {
     registerM80Ref("protokoll.header.meta.due", header.metaLegendDue);
     registerM80Ref("protokoll.header.meta.status", header.metaLegendStatus);
     registerM80Ref("protokoll.header.meta.responsible", header.metaLegendResponsible);
-    registerM80Ref("protokoll.topsScreen.quicklane", this.quicklane.root);
-
     registerM80Ref("protokoll.list.root", this.sheetArea);
     registerM80Ref("protokoll.list.canvas", this.sheetCanvas);
     registerM80Ref("protokoll.list.paper", this.sheetPaper);

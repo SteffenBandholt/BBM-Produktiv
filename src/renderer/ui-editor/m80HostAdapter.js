@@ -25,6 +25,7 @@ import {
   compareM80Topology,
   snapshotM80State,
   snapshotM80Geometry,
+  validateM83ComponentReferences,
 } from "./m80Refs.js";
 import {
   TABLE_LAYOUT_OPERATIONS,
@@ -490,6 +491,15 @@ function mountedActiveScopeGroup() {
 
 export function createM80RegistrationDescriptor() {
   const mountedScopes = mountedActiveScopeGroup();
+  const mountedComponentIds = listM80RegistryScopes()
+    .filter((scope) => mountedScopes.includes(scope.scopeId))
+    .flatMap((scope) => scope.componentIds || []);
+  let componentReferenceErrors = [];
+  try {
+    if (mountedComponentIds.length) validateM83ComponentReferences(mountedComponentIds);
+  } catch (error) {
+    componentReferenceErrors = Array.isArray(error?.details) ? error.details : [{ code: error?.code || "component_reference_contract_invalid", message: error?.message || String(error) }];
+  }
   const registryScopes = listM80RegistryScopes().map((scope) => {
     if (scope.status !== "complete") return scope;
     if (!mountedScopes.includes(scope.scopeId)) {
@@ -514,11 +524,14 @@ export function createM80RegistrationDescriptor() {
       }
       return resolved;
     });
-    const referenceComplete = elements.every((entry) => entry.referenceResolved === true);
+    const scopeComponentIds = new Set(scope.componentIds || []);
+    const scopeReferenceErrors = componentReferenceErrors.filter((entry) => !entry.componentId || scopeComponentIds.has(entry.componentId));
+    const referenceComplete = elements.every((entry) => entry.referenceResolved === true) && scopeReferenceErrors.length === 0;
     return {
       ...scope,
       status: referenceComplete ? "complete" : "blocked",
-      reason: referenceComplete ? null : "registry_reference_missing",
+      reason: referenceComplete ? null : scopeReferenceErrors[0]?.code || "registry_reference_missing",
+      componentReferenceErrors: scopeReferenceErrors,
       elements,
     };
   });

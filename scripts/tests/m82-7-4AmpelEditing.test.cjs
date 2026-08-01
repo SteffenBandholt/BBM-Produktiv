@@ -115,7 +115,7 @@ async function runM8274AmpelEditingTests(run) {
     const topology = refs.snapshotM80Topology();
     await run("M82.7.4 BBM 08: Ref zeigt direkt auf das innere sichtbare Symbol", () => assert.strictEqual(refs.getM80Ref(AMPEL_ID).element, symbol));
     await run("M82.7.4 BBM 09: Ref wird genau einmal aufgeloest", () => assert.equal(refs.listM80Refs().filter((ref) => ref.id === AMPEL_ID).length, 1));
-    await run("M82.7.4 BBM 10: refKey und referenceResolved werden korrekt gemeldet", () => assert.deepEqual(refs.getM80ReferenceStatus(AMPEL_ID), { refKey: entry.refKey, referenceResolved: true }));
+    await run("M82.7.4 BBM 10: Ref-Status meldet Schluessel, Aufloesung und Zielanzahl", () => assert.deepEqual(refs.getM80ReferenceStatus(AMPEL_ID), { refKey: entry.refKey, referenceResolved: true, targetCount: 1, mountedInstanceCount: 1 }));
     await run("M82.7.4 BBM 11: reale Ausgangsbounds sind 12 mal 12 px", () => assert.deepEqual([baseline.width, baseline.height], [12, 12]));
     await run("M82.7.4.1 BBM 11a: links bewegt nur das innere Symbol auf X minus 5", () => { const result = submit(host, "move", { x: -5 }, "move-left"); assert.equal(result.success, true, result.message); assert.deepEqual([refs.snapshotM80State(AMPEL_ID).x, refs.snapshotM80State(AMPEL_ID).y], [-5, 0]); assert.equal(symbol.style.translate, "-5px 0px"); });
     await run("M82.7.4.1 BBM 11b: rechts stellt X 0 wieder her", () => { assert.equal(submit(host, "move", { x: 0 }, "move-right").success, true); assert.deepEqual([refs.snapshotM80State(AMPEL_ID).x, refs.snapshotM80State(AMPEL_ID).y], [0, 0]); });

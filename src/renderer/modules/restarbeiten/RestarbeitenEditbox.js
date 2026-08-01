@@ -5,7 +5,7 @@ import {
   getRestarbeitRequiredFieldSummary,
   normalizeRestarbeitStatus,
 } from "./domain/restarbeitenRules.js";
-import { registerM80FlowLabelRef, registerM80Ref } from "../../ui-editor/m80Refs.js";
+import { beginM83ComponentBinding, registerM80FlowLabelRef, registerM80Ref } from "../../ui-editor/m80Refs.js";
 
 function createEl(tag, { className = "", text = "", uiId = "" } = {}) {
   const el = document.createElement(tag);
@@ -247,6 +247,7 @@ export function buildRestarbeitenEditbox({
   onNote,
   onAutoSave,
 } = {}) {
+  beginM83ComponentBinding("bbm.restarbeiten.editbox");
   const labels = resolveLocationLabels(settings);
   const missingRequiredFields = getMissingRestarbeitRequiredFields(draft);
   const validationText = getValidationText(draft);
