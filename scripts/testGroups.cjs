@@ -90,6 +90,7 @@ const TEST_GROUPS = Object.freeze([
       ["printOrientation.test.cjs", "runPrintOrientationTests"],
       ["printModes.test.cjs", "runPrintModesTests"],
       ["printTableLayouts.test.cjs", "runPrintTableLayoutsTests"],
+      ["m85PdfSatzvertrag.test.cjs", "runM85PdfSatzvertragTests"],
       ["tableLayoutsResolver.test.cjs", "runTableLayoutsResolverTests"],
       ["tableLayoutsRepo.test.cjs", "runTableLayoutsRepoTests"],
       ["tableLayoutsIpc.test.cjs", "runTableLayoutsIpcTests"],

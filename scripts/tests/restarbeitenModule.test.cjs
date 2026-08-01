@@ -337,10 +337,17 @@ async function renderRouteScreen({ keepGlobals = false } = {}) {
   const prevWindow = globalThis.window;
   const doc = createFakeDocument();
   const contentRoot = doc.createElement("main");
+  const printCalls = [];
   globalThis.document = doc;
   globalThis.window = {
     localStorage: { getItem: () => "" },
     bbmDb: buildBbmDbStub(),
+    bbmPrint: {
+      async printPdfAndPreviewInternal(payload) {
+        printCalls.push(structuredClone(payload));
+        return { ok: true, filePath: "isolated-restarbeiten.pdf" };
+      },
+    },
     dispatchEvent() {},
     addEventListener() {},
     getComputedStyle: () => ({
@@ -369,6 +376,8 @@ async function renderRouteScreen({ keepGlobals = false } = {}) {
       quicklaneRoot: findByUiId(contentRoot, "restarbeiten.quicklane"),
       pageTitle: router.context.ui.pageTitle,
       sidebarVisible: router._lastSidebarVisible,
+      activeView: router.activeView,
+      printCalls,
       restoreGlobals() {
         globalThis.document = prevDocument;
         globalThis.window = prevWindow;
@@ -800,7 +809,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(firmsAction.getAttribute("aria-label"), "Firmen");
     assert.equal(previewAction.title, "Ausgabevorschau");
     assert.equal(previewAction.getAttribute("aria-label"), "Ausgabevorschau");
-    assert.equal(printAction.title, "Drucken noch nicht verfügbar");
+    assert.equal(printAction.title, "Drucken");
     assert.equal(printAction.getAttribute("aria-label"), "Drucken");
     assert.equal(mailAction.title, "E-Mail noch nicht verfügbar");
     assert.equal(mailAction.getAttribute("aria-label"), "E-Mail");
@@ -818,9 +827,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(quicklaneAmpelIcon.tagName, "IMG");
     assert.equal(String(quicklaneAmpelIcon.src || "").endsWith("assets/icons/ampel-status.svg"), true);
     assert.equal(findQuicklaneIcon(findByUiId(quicklaneRoot, "restarbeiten.quicklane.action.longtext")).children.length, 4);
-    assert.equal(printAction.getAttribute("aria-disabled"), "true");
-    assert.equal(printAction.tabIndex, -1);
-    assert.equal(printAction.onclick, undefined);
+    assert.notEqual(printAction.getAttribute("aria-disabled"), "true");
+    assert.equal(Array.isArray(printAction._listeners?.click), true);
     assert.equal(mailAction.getAttribute("aria-disabled"), "true");
     assert.equal(mailAction.tabIndex, -1);
     assert.equal(mailAction.onclick, undefined);
@@ -954,39 +962,36 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(rows[2].ampelLabel, "neutral");
   });
 
-  await run("Restarbeiten M28: Ausgabevorschau zeigt nur lesende Liste und keine Editbox", async () => {
+  await run("Restarbeiten M85.2: Produktvorschau nutzt gefilterte Reihenfolge und internen V2-PDF-Weg", async () => {
     const rendered = await renderRouteScreen({ keepGlobals: true });
     try {
+      rendered.activeView.filters = { ...rendered.activeView.filters, itemClass: "rest" };
       const previewAction = findByUiId(rendered.root, "restarbeiten.quicklane.action.pdfPreview");
       previewAction.dispatchEvent({ type: "click", preventDefault() {} });
+      await flush();
+      await flush();
+      assert.equal(rendered.printCalls.length, 1);
+      const payload = rendered.printCalls[0];
+      assert.equal(payload.mode, "restarbeiten");
+      assert.equal(payload.orientation, "landscape");
+      assert.equal(payload.projectId, "p-1");
+      assert.deepEqual(payload.restarbeitenRows.map((row) => row.id), ["ra-2"]);
+      assert.deepEqual(payload.restarbeitenLocationLabels, {
+        level_1_label: "Haus",
+        level_2_label: "Geschoss",
+        level_3_label: "Einheit",
+        level_4_label: "Raum",
+      });
+      assert.equal(payload.showAmpelInList, true);
+      assert.equal(findByData(rendered.root, "data-bbm-restarbeiten-output-preview", "true"), null);
+      assert.equal(Boolean(findByUiId(rendered.root, "restarbeiten.editbox")), true);
 
-      const preview = findByData(rendered.root, "data-bbm-restarbeiten-output-preview", "true");
-      const screenRoot = findByUiId(rendered.root, "restarbeiten.root");
-      assert.equal(Boolean(preview), true, "output preview");
-      assert.equal(screenRoot.getAttribute("data-output-preview"), "true");
-      assert.equal(findByUiId(rendered.root, "restarbeiten.editbox"), null);
-
-      const text = collectText(preview);
-      for (const expected of [
-        "Nr.",
-        "Kurztext",
-        "Ort/Bereich",
-        "Verantwortlich",
-        "Fertig bis",
-        "Status",
-        "Ampel",
-        "Hinweis",
-        "Abdichtung im Bad fehlt",
-        "Mueller Trockenbau",
-        "offen",
-      ]) {
-        assert.equal(text.includes(expected), true, expected);
-      }
-
-      const rows = findNodes(preview, (entry) => entry.getAttribute?.("data-bbm-restarbeiten-output-row") === "true");
-      assert.equal(rows.length >= 1, true);
-      assert.equal(rows.every((row) => row.getAttribute("data-bbm-restarbeiten-output-complete") === "true"), true);
-      assert.equal(typeof rendered.root.querySelector("[data-bbm-restarbeiten-output-preview=\"true\"]"), "object");
+      const printAction = findByUiId(rendered.root, "restarbeiten.quicklane.output.print");
+      printAction.dispatchEvent({ type: "click", preventDefault() {} });
+      await flush();
+      await flush();
+      assert.equal(rendered.printCalls.length, 2);
+      assert.deepEqual(rendered.printCalls[1].restarbeitenRows.map((row) => row.id), ["ra-2"]);
     } finally {
       rendered.restoreGlobals();
     }

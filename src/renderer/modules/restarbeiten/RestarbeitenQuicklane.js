@@ -146,6 +146,7 @@ export function buildRestarbeitenQuicklane({
   onAmpelToggle = null,
   onLongtextToggle = null,
   onPreview = null,
+  onPrint = null,
 } = {}) {
   const root = document.createElement("aside");
   root.className = "bbm-restarbeiten-quicklane";
@@ -218,9 +219,9 @@ export function buildRestarbeitenQuicklane({
     createButton({
       id: "restarbeiten.quicklane.output.print",
       icon: "🖨",
-      title: "Drucken noch nicht verfügbar",
+      title: "Drucken",
       ariaLabel: "Drucken",
-      disabled: true,
+      onClick: onPrint,
     }),
     createButton({
       id: "restarbeiten.quicklane.output.email",

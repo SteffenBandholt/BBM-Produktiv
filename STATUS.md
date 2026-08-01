@@ -1,5 +1,92 @@
 # STATUS.md — BBM-Produktiv
 
+### M85.2 – Restarbeiten-PDF-Satzweg vervollständigen und verriegeln
+
+- Status: `[A] abgenommen`; Restarbeiten verwendet aus Vorschau und Drucken
+  denselben produktiven V2-PDF-Weg bis zur internen BBM-PDF-Vorschau.
+- A4-Querformat ist für `mode=restarbeiten` fest vorgegeben. Die 13 sichtbaren
+  Spalten bleiben vollständig erhalten und verwenden gemeinsam in Messung und
+  Rendering 273 mm Tabellenbreite innerhalb der 12-mm-Seitenränder.
+- Vollständig passende Datensätze bleiben zusammen. Nur ein für eine leere
+  Seite selbst zu hohes Kurztext-, Langtext- oder Notizfeld wird an Wortgrenzen
+  geteilt; Quell-ID bleibt stabil und Folgezeilen sind sichtbar als
+  `Fortsetzung` gekennzeichnet. Tabellenkopf und Seitenzähler werden auf jeder
+  Folgeseite wiederholt, die 12-mm-Fußreserve bleibt frei.
+- Der Produktaufrufer übergibt ausschließlich die aktuell sichtbaren,
+  gefilterten und nicht gelöschten Zeilen in exakt der Listenreihenfolge. Der
+  PDF-Pfad sortiert nicht erneut; Fotos und Anhänge werden nicht übergeben.
+- 13 zusätzliche Restarbeiten-Fixtures erweitern den Satzvertrag auf 47 Fälle,
+  davon 22 Restarbeiten-Fälle. Struktursnapshots verriegeln Orientierung,
+  Tabellen-/Spaltenbreiten, Datensatz- und Segmentfolge, Kopf, Höhen,
+  Fußreserve, Leerzustand und Fortsetzungskennzeichnung.
+- Sichtbar geprüft wurden zehn neutrale Restarbeiten-PDFs mit 20 Seiten, fünf
+  unveränderte Protokoll-PDFs mit 16 Seiten sowie der echte dreiseitige
+  Produktweg über `Ausgabevorschau` und `Drucken` bis zur internen
+  PDF-Vorschau. Keine Seite
+  war horizontal/vertikal beschnitten; keine leere Zusatzseite entstand.
+- Keine neue Engine, kein zweiter Renderer, keine neue Registry und kein
+  vollständiger Restarbeiten-PDF-Editor. Commit/Push/PR/Merge: keiner.
+- Schutzabweichung der lokalen Abnahme: Ein erster manueller Acceptance-Start
+  verwendete versehentlich einen falschen Schalternamen und startete Electron
+  kurz mit dem normalen `userData`-Pfad. Der Prozess wurde sofort ohne
+  UI-Aktion beendet. Benutzerlizenz und Datenbanken wurden nicht direkt
+  geöffnet oder geprüft; eine automatische Berührung durch diesen kurzen Start
+  kann nicht zweifelsfrei ausgeschlossen werden. Deshalb wird keine
+  Bytegleichheit von Benutzerlizenz, `app.db` oder `app.db.bak` behauptet.
+
+### M85.1 – Bestehende Protokoll-PDF-Satzfehler beheben
+
+- Status: `[A] abgenommen`; die vier beauftragten Protokoll-Satzlücken sind
+  minimal im vorhandenen V2-Renderer/Pager geschlossen und sichtbar geprüft.
+- Der FullHeader zeigt auf Seite 1 denselben sichtbaren Zähler `Seite n / gesamt`
+  wie der MiniHeader auf Folgeseiten. Ein DOM-Guard bestätigt zusätzlich, dass
+  der Zähler vollständig innerhalb der A4-Seitenbox liegt.
+- Level-1-Titel bleiben mit ihrem unmittelbar folgenden ersten zulässigen
+  Unterpunkt zusammen. Reicht der gemessene Restplatz nicht, wechseln beide
+  gemeinsam auf die Folgeseite.
+- Teilnehmer werden an vollständigen Tabellenzeilen paginiert; Überschrift und
+  Tabellenkopf werden wiederholt. Nur eine einzelne, selbst für eine leere
+  Seite zu hohe Zeile wird deterministisch an Wortgrenzen mit stabiler Quell-ID
+  und `Fortsetzung:` segmentiert.
+- Vorbemerkungen werden ausschließlich an Wortgrenzen fortgesetzt. Folgeblöcke
+  tragen `Vorbemerkung (Fortsetzung):`; die Snapshots prüfen vollständige und
+  genau einmalige Wortübernahme.
+- Sieben zusätzliche neutrale Fixtures erweitern den Satzvertrag auf insgesamt
+  34 Fälle. Die sichtbare Prüfung von acht echten, neutralen Protokoll-PDFs mit
+  insgesamt 23 Seiten bestätigt Zähler, Level-1-Kopplung, vollständige
+  Teilnehmerzeilen, Vorbemerkungsfortsetzungen, TOPs und Schlusszone.
+- Restarbeiten-PDF, Registry, Fachwerte, UI-Editor-kit und Benutzerdateien
+  bleiben unverändert. `docs/licensing.md` bleibt unangetastete Fremdänderung.
+  Commit/Push/PR/Merge: keiner.
+
+### M85.0 – Bestehenden V2-PDF-Satzvertrag erfassen und verriegeln
+
+- Status: `[A] abgenommen`; Bestandsinventar, zentraler Satzvertrag, 47 neutrale
+  Electron-Fixtures, reproduzierbare Struktursnapshots und die harten
+  Architektur-/Editorguardrails für Protokoll und Restarbeiten sind umgesetzt
+  und gemeinsam sichtbar geprüft.
+- Der produktive Protokollweg bleibt unverändert bei `getPrintData` →
+  `printApp`/bestehende Paginierung → `PrintShell` → PDF-Editorlayout → dem
+  einzigen `webContents.printToPDF`-Aufruf. Es wurden weder Renderer noch
+  Paginierungsengine oder Profilstore ergänzt.
+- Fest verriegelt sind Vollkopf auf Seite 1, Mini-Kopf auf Folgeseiten,
+  Fußreserve, Tabellenkopf je Datenseite, Seitenzahlen/Strukturhashes,
+  Datensatzreihenfolge, TOP-Fortsetzungen, Abschluss auf der letzten TOP-Seite,
+  28 Registryelemente sowie die Sperren für `setPageBreakRule` und
+  Fachoperationen.
+- M85.1 hat die vier Protokoll-Lücken sichtbar abgenommen geschlossen. M85.2
+  schließt den abweichenden Restarbeiten-Messkontext, den horizontalen und
+  vertikalen Überlauf, die Datensatzfortsetzung, die Filterreihenfolge und den
+  zuvor nicht angebundenen Produktweg. Das 13-Spalten-Layout ist als fester
+  Satzvertrag verriegelt und bewusst noch kein Editorlayout.
+- Die vollständige Regression ist mit `npm test` und `npm run test:node`
+  jeweils 8/8 grün. 47 Golden-Snapshots sowie 39 vollständig angesehene
+  PDF-Seiten bestätigen beide Dokumentarten einschließlich Produktweg.
+- Detaildokumente: `docs/PDF_SATZVERTRAG_V2.md` und
+  `docs/M85_0_PDF_SATZVERTRAG_UND_GUARDRAILS.md`.
+- `docs/licensing.md` bleibt Fremdänderung und unangetastet; Benutzerdateien
+  werden nicht geöffnet. Commit/Push/PR/Merge: keiner.
+
 ### M83.0 – Komponentenbasierte Vollregistrierung
 
 - Status: `[A]` abgenommen; Komponentenmechanismus, Vollständigkeits-Guardrails, automatisierte Runtime-Nachweise und die sichtbare isolierte Electron-Acceptance sind grün.

@@ -178,6 +178,14 @@
   transform: translateX(20mm);
 }
 
+.printV2Root .v2FullPageCounter {
+  align-self: flex-start;
+  white-space: nowrap;
+  font-size: 8pt;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
 .printV2Root .v2HeaderRightMeta {
   display: flex;
   flex-direction: column;
@@ -409,6 +417,11 @@
 .printV2Root .v2ParticipantsTable th {
   background: #efefef;
   font-weight: 700;
+}
+
+.printV2Root .v2ParticipantsTable tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .printV2Root .v2PartColName {
@@ -747,5 +760,3 @@
     print-color-adjust: exact;
   }
 }
-
-

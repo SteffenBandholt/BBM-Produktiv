@@ -75,11 +75,14 @@ function buildPrintToPdfOptions({ orientation } = {}) {
 }
 
 function _resolveRequestedOrientation(payload = {}) {
-  return resolvePrintRequestedOrientation({
+  const requested = resolvePrintRequestedOrientation({
     orientation: payload.orientation,
     testOrientation: payload.testOrientation,
     smokeOrientation: process.env.BBM_PRINT_SMOKE_ORIENTATION,
   });
+  return String(payload.mode || "").trim().toLowerCase() === "restarbeiten"
+    ? "landscape"
+    : requested;
 }
 
 function _readLayoutCalibrationEnabled() {

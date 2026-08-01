@@ -31,6 +31,88 @@ function _el(tag, className, text) {
   return el;
 }
 
+export const RESTARBEITEN_PDF_COLUMNS = Object.freeze([
+  Object.freeze({ key: "number", label: "Nr.", widthMm: 9, minMm: 7, maxMm: 12 }),
+  Object.freeze({ key: "class", label: "Klasse", widthMm: 10, minMm: 8, maxMm: 14 }),
+  Object.freeze({ key: "shortText", label: "Kurztext", widthMm: 31, minMm: 24, maxMm: 42 }),
+  Object.freeze({ key: "longText", label: "Langtext", widthMm: 46, minMm: 34, maxMm: 60 }),
+  Object.freeze({ key: "location1", labelKey: "level_1_label", fallbackLabel: "Haus", widthMm: 17, minMm: 13, maxMm: 24 }),
+  Object.freeze({ key: "location2", labelKey: "level_2_label", fallbackLabel: "Geschoss", widthMm: 17, minMm: 13, maxMm: 24 }),
+  Object.freeze({ key: "location3", labelKey: "level_3_label", fallbackLabel: "Einheit", widthMm: 18, minMm: 13, maxMm: 24 }),
+  Object.freeze({ key: "location4", labelKey: "level_4_label", fallbackLabel: "Raum", widthMm: 18, minMm: 13, maxMm: 24 }),
+  Object.freeze({ key: "status", label: "Status", widthMm: 19, minMm: 15, maxMm: 25 }),
+  Object.freeze({ key: "dueDate", label: "Fertig bis", widthMm: 20, minMm: 17, maxMm: 24 }),
+  Object.freeze({ key: "responsible", label: "Verantwortlich", widthMm: 25, minMm: 19, maxMm: 34 }),
+  Object.freeze({ key: "completedAt", label: "erledigt am", widthMm: 20, minMm: 17, maxMm: 24 }),
+  Object.freeze({ key: "completionNote", label: "Notiz/Maßnahmen", widthMm: 23, minMm: 18, maxMm: 34 }),
+]);
+
+function _restarbeitenColumnLabel(column, labels = {}) {
+  if (column.labelKey) {
+    return String(labels?.[column.labelKey] || "").trim() || column.fallbackLabel;
+  }
+  return column.label;
+}
+
+export function buildRestarbeitenTableHead(labels = {}) {
+  const thead = document.createElement("thead");
+  const tr = document.createElement("tr");
+  tr.className = "tableHeadRow restarbeitenTableHeadRow";
+  for (const column of RESTARBEITEN_PDF_COLUMNS) {
+    const th = _el("th", `restarbeitenCol restarbeitenCol--${column.key}`, _restarbeitenColumnLabel(column, labels));
+    th.dataset.restarbeitenColumn = column.key;
+    tr.appendChild(th);
+  }
+  thead.appendChild(tr);
+  return thead;
+}
+
+export function buildRestarbeitenColGroup() {
+  const colgroup = document.createElement("colgroup");
+  for (const column of RESTARBEITEN_PDF_COLUMNS) {
+    const col = document.createElement("col");
+    col.className = `restarbeitenCol restarbeitenCol--${column.key}`;
+    col.dataset.restarbeitenColumn = column.key;
+    col.dataset.minWidthMm = String(column.minMm);
+    col.dataset.maxWidthMm = String(column.maxMm);
+    col.style.width = `${column.widthMm}mm`;
+    colgroup.appendChild(col);
+  }
+  return colgroup;
+}
+
+export function buildRestarbeitenRow(row = {}) {
+  const tr = document.createElement("tr");
+  tr.className = "restarbeitItemRow";
+  const segment = String(row.segment || "complete");
+  tr.dataset.restarbeitenSourceId = String(row.sourceId || "");
+  tr.dataset.restarbeitenSegment = segment;
+  const cells = Array.isArray(row.cells) ? row.cells : [];
+  for (let index = 0; index < RESTARBEITEN_PDF_COLUMNS.length; index += 1) {
+    const column = RESTARBEITEN_PDF_COLUMNS[index];
+    const cell = cells[index] ?? "";
+    const td = _el("td", `restarbeitenCol restarbeitenCol--${column.key}`);
+    if (index === 0) {
+      td.appendChild(_el("span", "restarbeitNumber", cell));
+      if (segment !== "complete" && segment !== "start") {
+        td.appendChild(_el("span", "restarbeitContinuationLabel", "Fortsetzung"));
+      }
+    } else if (index === 8) {
+      const statusWrap = _el("span", "restarbeitStatusWrap", cell);
+      const shouldShowAmpel = row.showAmpelInList !== false && row.ampelState;
+      const ampelClassMap = { rot: "red", gruen: "green", orange: "orange", neutral: "neutral" };
+      if (shouldShowAmpel) {
+        statusWrap.appendChild(_el("span", `ampelDot ${ampelClassMap[row.ampelState] || "neutral"}`));
+      }
+      td.appendChild(statusWrap);
+    } else {
+      td.textContent = String(cell || "");
+    }
+    tr.appendChild(td);
+  }
+  return tr;
+}
+
 function _buildStarIcon() {
   const wrap = _el("div", "newStar");
   wrap.innerHTML = `
@@ -94,12 +176,7 @@ function _buildTableHead(type, topsLayout) {
   } else if (type === "todo") {
     tr.innerHTML = `<th>TOP</th><th>Kurztext</th><th>Status</th><th>Fertig bis</th><th>Ampel</th>`;
   } else if (type === "restarbeiten") {
-    const labels = globalThis.__bbmRestarbeitenLocationLabels || {};
-    const level1 = String(labels.level_1_label || "").trim() || "Haus";
-    const level2 = String(labels.level_2_label || "").trim() || "Geschoss";
-    const level3 = String(labels.level_3_label || "").trim() || "Einheit";
-    const level4 = String(labels.level_4_label || "").trim() || "Raum";
-    tr.innerHTML = `<th>Nr.</th><th>Klasse</th><th>Kurztext</th><th>Langtext</th><th>${level1}</th><th>${level2}</th><th>${level3}</th><th>${level4}</th><th>Status</th><th>Fertig bis</th><th>Verantwortlich</th><th>erledigt am</th><th>Notiz/Maßnahmen</th>`;
+    return buildRestarbeitenTableHead(globalThis.__bbmRestarbeitenLocationLabels || {});
   }
 
   thead.appendChild(tr);
@@ -223,34 +300,7 @@ function _buildGenericRow(row) {
     tr.appendChild(tdAmpel);
     return tr;
   }
-  if (row?.kind === "restarbeitItem") {
-    const tr = document.createElement("tr");
-    tr.className = "restarbeitItemRow";
-    const cells = Array.isArray(row.cells) ? row.cells : [];
-    for (let i = 0; i < cells.length; i += 1) {
-      const cell = cells[i];
-      if (i === 8) {
-        const tdStatus = _el("td", "", "");
-        const statusWrap = _el("span", "restarbeitStatusWrap", cell || "");
-        const shouldShowAmpel = row.showAmpelInList !== false && row.ampelState;
-        const ampelClassMap = {
-          rot: "red",
-          gruen: "green",
-          orange: "orange",
-          neutral: "neutral",
-        };
-        if (shouldShowAmpel) {
-          const dot = _el("span", `ampelDot ${ampelClassMap[row.ampelState] || "neutral"}`);
-          statusWrap.appendChild(dot);
-        }
-        tdStatus.appendChild(statusWrap);
-        tr.appendChild(tdStatus);
-        continue;
-      }
-      tr.appendChild(_el("td", "", cell || ""));
-    }
-    return tr;
-  }
+  if (row?.kind === "restarbeitItem") return buildRestarbeitenRow(row);
 
   if (row?.kind === "firmGroup") {
     const tr = document.createElement("tr");
@@ -342,6 +392,7 @@ function _buildGenericRow(row) {
 }
 
 function _buildColGroup(type, topsLayout) {
+  if (type === "restarbeiten") return buildRestarbeitenColGroup();
   if (type !== "tops") return null;
   const colgroup = document.createElement("colgroup");
   const { number, text, meta } = topsLayout.pdf.columns;
