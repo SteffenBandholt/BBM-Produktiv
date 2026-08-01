@@ -52,7 +52,7 @@ async function runM802HeaderEditboxLayoutTests(run) {
     assert.equal(edit.elements[0].allowedOps.includes("resizeWidth"), false);
     assert.equal(edit.elements[0].baseline.minWidth, 320);
     assert.equal(edit.elements[0].baseline.minHeight, 190);
-    assert.equal(edit.elements[0].baseline.maxHeight, 520);
+    assert.equal(edit.elements[0].baseline.maxHeight, 480);
     for (const id of [
       "restarbeiten.edit.short.field",
       "restarbeiten.edit.long.field",

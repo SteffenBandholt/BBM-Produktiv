@@ -173,7 +173,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     while (!router.currentView && Date.now() < expiresAt) {
       await new Promise((resolve) => setTimeout(resolve, 25));
     }
-    installBbmM80DiagnosticPilot({ router });
+    await installBbmM80DiagnosticPilot({ router, module: m80Diagnostic.startModule });
   }
 
   try {

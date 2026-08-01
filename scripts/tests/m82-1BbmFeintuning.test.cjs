@@ -31,14 +31,14 @@ async function runM821BbmFeintuningTests(run) {
   await run("M82.1 BBM 05: Header behält 31 Elemente", () => assert.equal(byId.has("restarbeiten.header.root") && scopes.find((scope) => scope.scopeId === "restarbeiten.header.root").elements.length, 31));
   await run("M82.1 BBM 06: Editbox besitzt 53 explizite Elemente", () => assert.equal(scopes.find((scope) => scope.scopeId === "restarbeiten.edit.root").elements.length, 53));
   await run("M82.1 BBM 07: Editbox-Root ist nur höhen- und sichtbarkeitsfähig", () => assert.deepEqual(byId.get("restarbeiten.edit.root").allowedOps, ["resizeHeight", "setVisibility"]));
-  await run("M82.1 BBM 08: Editbox-Baseline beträgt 276 px", () => assert.equal(byId.get("restarbeiten.edit.root").baseline.height, 276));
+  await run("M84.0 BBM 08: Editbox-Baseline beträgt kompakte 248 px", () => assert.equal(byId.get("restarbeiten.edit.root").baseline.height, 248));
   await run("M82.1 BBM 09: sichere Editbox- und reale Kleinlabel-Grenzen sind deklariert", () => {
     assert.equal(byId.get("restarbeiten.edit.root").baseline.minHeight, 190);
     assert.equal(byId.get("restarbeiten.edit.location.1.label").baseline.minHeight, 8);
     assert.equal(byId.get("restarbeiten.list.table").baseline.maxHeight, 12000);
   });
   await run("M82.1 BBM 10: sichere maximale Editbox-Höhe und flexibler Listen-Root sind deklariert", () => {
-    assert.equal(byId.get("restarbeiten.edit.root").baseline.maxHeight, 520);
+    assert.equal(byId.get("restarbeiten.edit.root").baseline.maxHeight, 480);
     assert.deepEqual(byId.get("restarbeiten.edit.root").operationAffectedIds.resizeHeight, ["restarbeiten.edit.area", "restarbeiten.list.root"]);
   });
   await run("M82.1 BBM 11: kurzer Beschreibungsheader ist separat registriert", () => assert.equal(byId.get("restarbeiten.edit.short.headerZone").selectionKind, "layoutZone"));
@@ -76,6 +76,12 @@ async function runM821BbmFeintuningTests(run) {
   await run("M82.1 BBM 28: Geometriewirkungen werden vor Annahme geprüft", () => { assert.match(host, /inspectGeometryEffect/); assert.match(host, /electron_unexpected_layout_effect/); });
   await run("M82.1 BBM 29: generisches Anwenden friert Flexelemente nicht mehr ein", () => { assert.doesNotMatch(refs, /flexShrink\s*=\s*"0"/); assert.match(refs, /allowedOps/); });
   await run("M82.1 BBM 30: Layout und Icon-Trennung sind real im Renderer verankert", () => { assert.match(editbox, /\.headerZone/); assert.match(editbox, /dictation\.icon/); assert.match(css, /min-height:\s*190px/); assert.match(css, /overflow:\s*auto/); });
+  await run("M84.0 BBM 30a: Editbox bleibt im bestehenden Flex-Arbeitsbereich unten und gibt Höhe an die Liste frei", () => {
+    assert.match(css, /\.bbm-restarbeiten-workspace__list\s*\{[\s\S]*flex:\s*1 1 0/);
+    assert.match(css, /\.bbm-restarbeiten-workspace__edit\s*\{[\s\S]*flex:\s*0 0 auto[\s\S]*align-items:\s*flex-end/);
+    assert.match(css, /\.bbm-restarbeiten-editbox\s*\{[\s\S]*height:\s*248px[\s\S]*min-height:\s*190px/);
+    assert.match(css, /@media \(max-height:\s*850px\)[\s\S]*\.bbm-restarbeiten-editbox\s*\{[\s\S]*height:\s*220px/);
+  });
 
   await run("M82.1 BBM 31: kompatibles Profil wird im echten BBM-Startdienst ohne Editorprozess geladen", async () => {
     const profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-m82-1-startup-"));
