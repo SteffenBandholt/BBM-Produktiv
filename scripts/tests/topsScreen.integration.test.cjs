@@ -800,6 +800,7 @@ async function runTopsScreenIntegrationTests(run) {
       assert.equal(screen.topsList.root.style["--bbm-tops-list-number-col"], "72px");
       assert.equal(screen.topsList.root.style["--bbm-tops-list-text-col"], "minmax(0, 1.2fr)");
       assert.equal(screen.topsList.root.style["--bbm-tops-list-meta-col"], "84px");
+      assert.equal(screen.header.root.style["--bbm-tops-header-meta-width"], "max(96px, 84px)");
       assert.equal(screen.topsList.root.style["--bbm-top-col-nr-width"], undefined);
     } finally {
       globalThis.document = prevDocument;
@@ -842,13 +843,38 @@ async function runTopsScreenIntegrationTests(run) {
       ]);
       assert.equal(screen.topsList.root.dataset.tableKey, "protokoll_tops");
       assert.equal(screen.topsList.root.dataset.layoutVariant, "portrait");
-      assert.equal(screen.topsList.root.style["--bbm-tops-list-number-col"], "64px");
-      assert.equal(screen.topsList.root.style["--bbm-tops-list-text-col"], "minmax(0, 1fr)");
-      assert.equal(screen.topsList.root.style["--bbm-tops-list-meta-col"], "74px");
+      assert.equal(screen.topsList.root.style["--bbm-tops-list-number-col"], "13fr");
+      assert.equal(screen.topsList.root.style["--bbm-tops-list-text-col"], "65fr");
+      assert.equal(screen.topsList.root.style["--bbm-tops-list-meta-col"], "22fr");
+      assert.equal(screen.header.root.style["--bbm-tops-header-meta-width"], "22%");
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;
     }
+  });
+
+  await run("Tops v2 Integration: alle sichtbaren TOP-Zeilen verwenden den gemeinsamen Dreispalten-Descriptor", () => {
+    const topsCss = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/protokoll/styles/tops.css"),
+      "utf8"
+    );
+    const sharedLayout = fs.readFileSync(
+      path.join(__dirname, "../../src/shared/tableLayouts/protokollTopsLayout.js"),
+      "utf8"
+    );
+
+    assert.match(
+      sharedLayout,
+      /gridTemplateColumns:\s*\n\s*"minmax\(48px, var\(--bbm-tops-list-number-col, 13fr\)\) minmax\(0, var\(--bbm-tops-list-text-col, 65fr\)\) minmax\(96px, var\(--bbm-tops-list-meta-col, 22fr\)\)"/
+    );
+    assert.match(
+      topsCss,
+      /\.bbm-tops-list-row-grid\s*\{[\s\S]*?grid-template-columns:\s*var\(\s*--bbm-tops-list-grid-columns,/
+    );
+    assert.doesNotMatch(
+      topsCss,
+      /grid-template-columns:\s*var\(--bbm-tops-list-number-col, 64px\) minmax\(0, 1fr\)/
+    );
   });
 
   await run("Tops v2 Integration: Titel mit created_at zeigt keine Datumslinie", () => {

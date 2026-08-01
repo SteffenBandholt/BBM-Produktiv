@@ -19,14 +19,14 @@ const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
 const DEFAULT_V2_PRE_REMARKS_ENABLED = true;
 const PRINT_LAYOUT_MM_LIMITS = {
-  "print.v2.pagePadTopMm": { min: 0, max: 40, step: 1, fallback: 2 },
+  "print.v2.pagePadTopMm": { min: 0, max: 40, step: 1, fallback: 5 },
   "print.v2.pagePadLeftMm": { min: 0, max: 30, step: 1, fallback: 12 },
   "print.v2.pagePadRightMm": { min: 0, max: 30, step: 1, fallback: 12 },
   "print.v2.pagePadBottomMm": { min: 0, max: 30, step: 1, fallback: 0 },
   "print.v2.footerReserveMm": { min: 0, max: 30, step: 1, fallback: 12 },
 };
 const PRINT_LAYOUT_DEFAULT_VALUES = {
-  "print.v2.pagePadTopMm": "2",
+  "print.v2.pagePadTopMm": "5",
   "print.v2.pagePadLeftMm": "12",
   "print.v2.pagePadRightMm": "12",
   "print.v2.pagePadBottomMm": "0",
@@ -441,7 +441,7 @@ export default class SettingsView {
       .join("\n")
       .trim();
     if (!normalized) return "";
-    return normalized.length > 300 ? normalized.slice(0, 300) : normalized;
+    return normalized.length > 500 ? normalized.slice(0, 500) : normalized;
   }
 
   async _openPdfPreRemarksPopup() {
@@ -514,7 +514,7 @@ export default class SettingsView {
     infoRow.style.gap = "10px";
 
     const help = document.createElement("div");
-    help.textContent = "(max 300 Zeichen in 5 Zeilen)";
+    help.textContent = "(max 500 Zeichen in 5 Zeilen)";
     help.style.fontSize = "12px";
     help.style.opacity = "0.75";
 
@@ -534,7 +534,7 @@ export default class SettingsView {
 
     const ta = document.createElement("textarea");
     ta.rows = 5;
-    ta.maxLength = 300;
+    ta.maxLength = 500;
     ta.style.width = "100%";
     ta.style.resize = "vertical";
     ta.style.fontFamily = "var(--bbm-font-ui)";
@@ -546,9 +546,9 @@ export default class SettingsView {
       let v = String(ta.value || "").replace(/\r\n?/g, "\n");
       const lines = v.split("\n");
       if (lines.length > 5) v = lines.slice(0, 5).join("\n");
-      if (v.length > 300) v = v.slice(0, 300);
+      if (v.length > 500) v = v.slice(0, 500);
       if (v !== ta.value) ta.value = v;
-      badge.textContent = String(Math.max(0, 300 - ta.value.length));
+      badge.textContent = String(Math.max(0, 500 - ta.value.length));
     };
     normalizeLocal();
     ta.addEventListener("input", normalizeLocal);

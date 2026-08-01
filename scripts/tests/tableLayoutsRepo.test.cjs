@@ -108,7 +108,7 @@ async function runTableLayoutsRepoTests(run) {
         orientation: "portrait",
       });
       assert.equal(fallbackAfterReset.source, "default");
-      assert.equal(fallbackAfterReset.effectiveLayout.ui.rootVars["--bbm-tops-list-number-col"], "64px");
+      assert.equal(fallbackAfterReset.effectiveLayout.ui.rootVars["--bbm-tops-list-number-col"], "13fr");
     });
   });
 
@@ -356,7 +356,7 @@ async function runTableLayoutsRepoTests(run) {
 
       assert.equal(resolved.ok, true);
       assert.equal(resolved.source, "default");
-      assert.equal(resolved.effectiveLayout.ui.rootVars["--bbm-tops-list-number-col"], "64px");
+      assert.equal(resolved.effectiveLayout.ui.rootVars["--bbm-tops-list-number-col"], "13fr");
       assert.equal(resolved.effectiveLayout.labels.top, "TOP");
     });
   });

@@ -753,14 +753,32 @@ function _loadSettings(db) {
 }
 
 function _buildV2Layout(settings, logos) {
-  const adaptive = _parseBool(settings?.["print.v2.globalHeaderAdaptive"]);
+  const activeLogos = (Array.isArray(logos) ? logos : []).filter(
+    (logo) => !!logo?.enabled && !!String(logo?.dataUrl || "").trim()
+  );
+  const maxLogoBottomMm = activeLogos.reduce((maximum, logo) => {
+    const sizeMm = _logoSizeToHeightMm(logo?.size);
+    const vAlign = _normalizeLogoVAlign(logo?.vAlign);
+    const topOffsetMm = vAlign === "top"
+      ? 0
+      : vAlign === "middle"
+        ? Math.max(0, (45 - sizeMm) / 2)
+        : Math.max(0, 45 - sizeMm);
+    return Math.max(maximum, topOffsetMm + sizeMm);
+  }, 0);
+  const lineReserveMm = Math.max(0.2, 1 / 3.78);
+  const hasActiveLogo = activeLogos.length > 0;
   return {
-    globalHeaderAdaptive: adaptive,
-    globalLogoBoxHeightMm: 45,
-    globalHeaderHeightMm: 50,
+    // M86.2: the product header is always geometry-driven. The historical
+    // setting remains readable for compatibility, but must not reintroduce a
+    // fixed 50-mm empty area when the PDF contains no logo.
+    globalHeaderAdaptive: true,
+    globalHeaderAdaptiveRequested: _parseBool(settings?.["print.v2.globalHeaderAdaptive"]),
+    globalLogoBoxHeightMm: hasActiveLogo ? maxLogoBottomMm : 0,
+    globalHeaderHeightMm: hasActiveLogo ? maxLogoBottomMm + 3 + lineReserveMm : 8,
     pagePadLeftMm: _clampNumber(settings?.["print.v2.pagePadLeftMm"], 0, 30, 12),
     pagePadRightMm: _clampNumber(settings?.["print.v2.pagePadRightMm"], 0, 30, 12),
-    pagePadTopMm: _clampNumber(settings?.["print.v2.pagePadTopMm"], 0, 40, 2),
+    pagePadTopMm: _clampNumber(settings?.["print.v2.pagePadTopMm"], 0, 40, 5),
     // Keep bottom page padding at 0mm; only footer reserve should limit the printable area.
     pagePadBottomMm: 0,
     footerReserveMm: _clampNumber(settings?.["print.v2.footerReserveMm"], 0, 30, 12),

@@ -82,7 +82,7 @@ function collectRecordOccurrences(pages) {
   return totals;
 }
 
-function collectAppliedDesign(root) {
+function collectAppliedDesign(root, data = {}) {
   const firstTops = root?.querySelector?.(".topsTable") || null;
   const firstRestarbeiten = root?.querySelector?.(".restarbeitenTable") || null;
   const font = (selector) => {
@@ -107,6 +107,11 @@ function collectAppliedDesign(root) {
       }))
     : [];
   return {
+    globalHeaderHeightMm: Number(data?.v2Layout?.globalHeaderHeightMm) || null,
+    globalLogoBoxHeightMm: Number(data?.v2Layout?.globalLogoBoxHeightMm) || 0,
+    pagePadTopMm: Number(data?.v2Layout?.pagePadTopMm) || null,
+    globalHeaderLogoCount: root?.querySelectorAll?.(".v2GlobalHeader .v2LogoBox")?.length || 0,
+    logoPlaceholderTextPresent: String(root?.textContent || "").includes("Logo optional - Einstellungen > Drucken > Logos"),
     topsColumnWidthsPercent: firstTops ? {
       number: width(firstTops, "thead .colNr"),
       text: width(firstTops, "thead .colText"),
@@ -241,6 +246,6 @@ export function buildPdfSatzvertragSnapshot({ fixtureId, pages, data, root } = {
         ...pageMetrics(element, orientation),
       };
     }),
-    appliedDesign: collectAppliedDesign(root),
+    appliedDesign: collectAppliedDesign(root, data),
   };
 }

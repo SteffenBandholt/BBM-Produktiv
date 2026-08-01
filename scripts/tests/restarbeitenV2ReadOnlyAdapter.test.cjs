@@ -106,6 +106,7 @@ async function runRestarbeitenV2ReadOnlyAdapterTests(run) {
     "src/main/ipc/restarbeitenIpc.js",
     "src/main/ipc/uiEditorIpc.js",
     "src/main/main.js",
+    "src/main/print/printData.js",
     "src/main/licensing/developmentLicenseLoader.js",
     "src/main/licensing/featureGuard.js",
     "src/main/licensing/licenseService.js",

@@ -67,7 +67,7 @@ function _logoMetrics(logo) {
   };
 }
 
-function _buildLogoBox(logo, labelNo, { adaptive = false, maxBottomMm = 45, metric = null, showPlaceholderText = true } = {}) {
+function _buildLogoBox(logo, labelNo, { adaptive = false, maxBottomMm = 45, metric = null } = {}) {
   const box = headerUtils.el("div", "v2LogoBox");
   box.classList.add(_logoClassBySize(_normalizeLogoSize(logo?.size)));
   box.classList.add(_logoClassByAlign(_normalizeLogoAlign(logo?.align)));
@@ -88,11 +88,6 @@ function _buildLogoBox(logo, labelNo, { adaptive = false, maxBottomMm = 45, metr
     return box;
   }
 
-  const placeholder = headerUtils.el("div", "v2LogoPlaceholder");
-  if (showPlaceholderText) {
-    placeholder.textContent = "Logo optional - Einstellungen > Drucken > Logos";
-  }
-  box.appendChild(placeholder);
   return box;
 }
 
@@ -119,27 +114,28 @@ export function renderV2GlobalHeader({ data } = {}) {
   const maxBottomMm = anyLogoSelected
     ? metrics.reduce((max, m) => Math.max(max, Number(m?.bottomMm || 0)), 0)
     : 45;
-  if (adaptive && anyLogoSelected) {
-    const gapLogoToLineMm = Number(V2_LAYOUT?.global?.gapLogoToLineMm || 3);
-    const lineReserveMm = Number(V2_LAYOUT?.global?.lineThicknessPx || 1) / 3.78;
-    header.style.height = String(maxBottomMm + gapLogoToLineMm + Math.max(0.2, lineReserveMm)) + "mm";
-  }
-
-  for (let i = 0; i < maxLogos; i++) {
-    logoRow.appendChild(
-      _buildLogoBox(ordered[i], labelByPos[i], {
-        adaptive: adaptive && anyLogoSelected,
-        maxBottomMm,
-        metric: metrics[i],
-        showPlaceholderText: !anyLogoSelected,
-      })
-    );
+  if (anyLogoSelected) {
+    for (let i = 0; i < maxLogos; i++) {
+      if (!metrics[i]?.active) continue;
+      logoRow.appendChild(
+        _buildLogoBox(ordered[i], labelByPos[i], {
+          adaptive,
+          maxBottomMm,
+          metric: metrics[i],
+        })
+      );
+    }
   }
 
   const line1 = headerUtils.el("div", "v2Divider v2GlobalLine");
   line1.setAttribute("data-v2", "line1");
 
-  header.append(logoRow, headerUtils.el("div", "v2GlobalGapLogoLine"), line1);
+  if (anyLogoSelected) {
+    header.append(logoRow, headerUtils.el("div", "v2GlobalGapLogoLine"));
+  } else {
+    header.classList.add("v2GlobalHeaderNoLogo");
+  }
+  header.appendChild(line1);
   wrap.appendChild(header);
   return wrap;
 }

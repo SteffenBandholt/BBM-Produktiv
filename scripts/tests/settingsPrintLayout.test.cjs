@@ -67,7 +67,7 @@ async function runSettingsPrintLayoutTests(run) {
         title: inputs.get("pdf.protocolTitle").value,
       },
       {
-        top: "2",
+        top: "5",
         left: "12",
         right: "12",
         bottom: "0",
@@ -75,6 +75,15 @@ async function runSettingsPrintLayoutTests(run) {
         title: "Bleibt unveraendert",
       }
     );
+  });
+
+  await run("SettingsView: Vorbemerkung behaelt fuenf Eingabezeilen und 500 Zeichen", () => {
+    const view = new SettingsView({});
+    assert.equal(view._normalizePdfPreRemarks("x".repeat(500)).length, 500);
+    assert.equal(view._normalizePdfPreRemarks("x".repeat(501)).length, 500);
+    assert.equal(view._normalizePdfPreRemarks("1\n2\n3\n4\n5\n6"), "1\n2\n3\n4\n5");
+    assert.equal(settingsSource.includes("max 500 Zeichen in 5 Zeilen"), true);
+    assert.equal(settingsSource.includes("ta.maxLength = 500"), true);
   });
 }
 

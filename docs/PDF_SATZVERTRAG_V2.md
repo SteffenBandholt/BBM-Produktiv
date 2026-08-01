@@ -148,6 +148,13 @@ M85.2 führt dafür weder Registryeinträge noch einen Profilwert ein.
 
 ## C. Editorfähige Designwerte
 
+M86.2 präzisiert die bestehenden, editorfähigen Designbaselines ohne die
+Satzträger zu öffnen: Der logo-lose globale Kopf verwendet 8 mm, aktive Logos
+bestimmen die Kopfgeometrie, der obere Seitenrand beträgt 5 mm und die
+Protokoll-TOP-Spalten verwenden bei 186 mm 24,18/120,90/40,92 mm (13/65/22).
+`setPageBreakRule`, Paginierung, Mindestzeilen und Fußreserve bleiben davon
+unberührt und gesperrt.
+
 Alle Werte stammen aus `bbmPdfAdapter.cjs`. `min/max` meint die dort tatsächlich validierten Grenzen, nicht eine gewünschte Gestaltung. Nach jeder erfolgreichen Änderung wird die Vorschau „veraltet“ und muss explizit über denselben PDF-Weg neu erzeugt werden. Apply-Fehler und ungültige Spaltensummen lassen den vorherigen Zustand als Rollback stehen.
 
 Abkürzungen: `mm` = Millimeter, `pt` = Punkt, `×` = Breite × Höhe. Für Textgröße und Zeilenabstand ist nur `> 0` kodiert; es gibt keinen kodierten Höchstwert. Positions-/Größenlimits werden zusätzlich durch A4 und die jeweilige Area begrenzt.

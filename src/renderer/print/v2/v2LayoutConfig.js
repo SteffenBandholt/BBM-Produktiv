@@ -1,6 +1,6 @@
 export const V2_LAYOUT = {
   page: {
-    padTopMm: 2,
+    padTopMm: 5,
     padXmm: 12,
     padBottomMm: 0,
   },
@@ -10,7 +10,8 @@ export const V2_LAYOUT = {
     logoBoxHeightMm: 45,
     logoGapMm: 3,
     maxLogos: 3,
-    heightMm: 50,
+    heightMm: 8,
+    emptyHeightMm: 8,
     gapLogoToLineMm: 3,
     lineThicknessPx: 1,
   },
@@ -22,7 +23,7 @@ export const V2_LAYOUT = {
     gapLineToBodyMm: 3,
     lineThicknessPx: 1,
     projectFontPt: 16,
-    protocolFontPt: 14,
+    protocolFontPt: 12.5,
   },
   mini: {
     gapTextToLineMm: 3,

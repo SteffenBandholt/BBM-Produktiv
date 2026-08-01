@@ -42,7 +42,7 @@ const CONTRACT = Object.freeze({
   singleProfile: "PDF-V2-ARCH-003",
   historical: "PDF-V2-ARCH-004",
 });
-const M85_1_PROTOCOL_MANIFEST_SHA256 = "e0f938b189abbadb8c955fb8c45218aacac086364ecb0d2e6499beb8554178be";
+const M85_1_PROTOCOL_MANIFEST_SHA256 = "9315e0fb70dc91940e1e26b461625d4cbe8f7a3c4b94ecb363d24be461f1d3e5";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
@@ -141,6 +141,16 @@ async function runM85PdfSatzvertragTests(run) {
     }
   });
 
+  await run("M86.2 Leitdesign: der logo-lose Produktkopf bleibt flach und ohne Platzhalter", () => {
+    const byId = resultMap(rendered);
+    for (const result of byId.values()) {
+      assert.equal(result.snapshot.appliedDesign.logoPlaceholderTextPresent, false, `${result.id}:kein Logo-Platzhalter`);
+      assert.equal(result.snapshot.appliedDesign.globalHeaderLogoCount, 0, `${result.id}:keine leeren Logo-Slots`);
+      assert.equal(result.snapshot.appliedDesign.globalHeaderHeightMm, 8, `${result.id}:flacher Kopf`);
+      assert.equal(result.snapshot.appliedDesign.pagePadTopMm, 5, `${result.id}:oberer Rand`);
+    }
+  });
+
   await run("M85 Satzvertrag: Tabellenkopf, Reihenfolge, Grenzfall und TOP-Fortsetzung bleiben stabil", () => {
     const byId = resultMap(rendered);
     for (const fixture of FIXTURES) {
@@ -160,7 +170,7 @@ async function runM85PdfSatzvertragTests(run) {
     assert.ok(byId.get("p04-just-fits-first").snapshot.pages[0].remainingHeightMm >= 0, `${CONTRACT.recordFit}:p04`);
     assert.deepEqual(
       byId.get("p05-just-misses-first").snapshot.pages[1].records.map((record) => record.id),
-      ["top:1.7"],
+      ["top:2.11"],
       `${CONTRACT.recordFit}:p05`
     );
     for (const id of ["p08-very-long-longtext", "p09-continuation"]) {
@@ -272,7 +282,7 @@ async function runM85PdfSatzvertragTests(run) {
     );
     assert.deepEqual(
       byId.get("p29-participants-miss-boundary").snapshot.pages.filter((page) => page.participantsPresent).map((page) => page.participantRowCount),
-      [11, 1],
+      [15, 1],
       `${CONTRACT.participants}:knapp-nicht-passend`
     );
     const threePageParticipantPages = byId.get("p30-participants-three-pages").snapshot.pages.filter((page) => page.participantsPresent);
@@ -294,7 +304,7 @@ async function runM85PdfSatzvertragTests(run) {
     const byId = resultMap(rendered);
     const cases = [
       ["p13-short-preremarks", 3, ["complete"]],
-      ["p32-preremarks-over-boundary", 205, ["start", "end"]],
+      ["p32-preremarks-over-boundary", 320, ["start", "end"]],
       ["p33-preremarks-multiple-pages", 900, ["start", "continuation", "continuation", "end"]],
       ["p34-participants-preremarks-tops", 420, ["start", "end"]],
     ];
