@@ -60,8 +60,7 @@ async function runM825BbmSimpleEditorModeTests(run) {
   refs.registerM80TableRef("restarbeiten.list.table", table, table);
   ["number", "subject", "meta"].forEach((key, index) => refs.registerM80TableColumnRef(
     `restarbeiten.list.table.${key}`, tableHeaders[index], [cells[index]], table, table, variables[index], tableHeaders[index]._rect.width));
-  const header = new FakeElement(560, 28);
-  refs.registerM80Ref("restarbeiten.list.table.subject.header", header);
+  const header = tableHeaders[1];
   refs.completeM80PilotRender();
   try {
     await run("M82.5 BBM 06: Direktauswahl markiert die verständliche Überschrift", () => assert.equal(header.attributes["data-ui-inspector-id"], "restarbeiten.list.table.subject.header"));
@@ -70,7 +69,7 @@ async function runM825BbmSimpleEditorModeTests(run) {
       changeRequest: { changeId: "m82-5-header-font", elementId: "restarbeiten.list.table.subject.header", operation: "textResize", payload: { text: { fontSize: 18 } }, source: "target-app-start" },
     }).changeResult;
     await run("M82.5 BBM 07: Überschrift nimmt direkte Schriftgröße an", () => { assert.equal(result.success, true); assert.equal(header.style.fontSize, "18px"); });
-    await run("M82.5 BBM 08: Schriftänderung verändert keine Spaltenbreite", () => assert.equal(header.getBoundingClientRect().width, 560));
+    await run("M82.5 BBM 08: Schriftänderung verändert keine Spaltenbreite", () => assert.equal(header.getBoundingClientRect().width, 464));
     await run("M82.5 BBM 09: Rücklesung liefert die neue Schriftgröße", () => assert.equal(refs.snapshotM80State("restarbeiten.list.table.subject.header").fontSize, 18));
     await run("M82.5 BBM 10: Änderung enthält keine Fachwerte", () => assert.equal(["recordId", "dueDate", "responsible", "status"].some((key) => key in result.newState), false));
     const request = { changeId: "m82-5-confirmed-width", elementId: "restarbeiten.list.table.subject", operation: "resizeWidth", payload: { width: 369 }, source: "ui-editor-panel" };

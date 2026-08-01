@@ -3,7 +3,7 @@ import {
   normalizeTopShortText,
 } from "../../shared/text/topTextPresentation.js";
 import { applyProtokollTopsUiLayout } from "../../../shared/tableLayouts/protokollTopsLayout.js";
-import { completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
+import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
 
 const PROTOKOLL_LIST_COLUMN_REFS = Object.freeze([
   Object.freeze({ id: "protokoll.list.column.number", key: "number", widthVariable: "--bbm-tops-list-number-col", minimumWidth: 40, maximumWidth: 220 }),
@@ -145,6 +145,7 @@ export class TopsList {
   }
 
   _registerUiEditorColumnRefs() {
+    beginM83ComponentBinding("bbm.protokoll.list.columns");
     for (const column of PROTOKOLL_LIST_COLUMN_REFS) {
       const targets = this._uiEditorColumnRefs[column.key] || [];
       const primary = targets[0];

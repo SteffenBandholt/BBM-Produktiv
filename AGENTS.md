@@ -873,3 +873,7 @@ Wenn Tabellen, Metaspalten, Buttons oder Fachaktionen nicht sauber klassifiziert
 
 In diesem Fall darf keine UI- oder PDF-Struktur als fertig gemeldet werden.
 <!-- UI-EDITOR-KIT:END -->
+
+## Pflichtregel: komponentenbasierte Vollregistrierung
+
+Eine neue oder strukturell geänderte editorfähige BBM-Komponente ist nur zusammen mit ihrem vollständigen, komponentennahen Editorvertrag fertig. Der Vertrag deklariert stabile `componentId`, Scope, alle tatsächlich vorhandenen verpflichtenden Slots, stabile Element-IDs, Parents, Ref-Keys, Single-/Multi-Ref-Semantik, Typ/Rolle/Auswahlart, Baselines, Grenzen, erlaubte und gesperrte Operationen sowie Operationseffekte. Die produktive Komponente stellt gleichzeitig die explizite Ref-Auflösung bereit. `m80Registry.js` aggregiert Komponentenverträge und darf Unterziele weder zentral als zweite Handliste pflegen noch aus DOM oder Fachwerten ableiten. Komponenten- und gemountete Ref-Guardrails müssen grün sein; eine spätere manuelle Einzelregistrierung ist kein regulärer Meilenstein.

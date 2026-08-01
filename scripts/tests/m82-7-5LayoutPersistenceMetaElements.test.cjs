@@ -55,8 +55,8 @@ async function runM8275LayoutPersistenceMetaElementsTests(run) {
   global.window = { getComputedStyle: computedStyle, dispatchEvent() {}, uiEditor: {} };
 
   try {
-    await run("M82.7.5 BBM 01: Registryversion kennzeichnet den erweiterten Vertrag", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 12));
-    await run("M82.7.5 BBM 02: Listenscope enthaelt die sieben neuen logischen Ziele", () => assert.equal(scope.elements.length, 23));
+    await run("M82.7.5 BBM 01: Registryversion kennzeichnet den erweiterten Vertrag", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 13));
+    await run("M82.7.5 BBM 02: Listenscope enthaelt den vollstaendigen Komponentenvertrag", () => assert.equal(scope.elements.length, 32));
     await run("M82.7.5 BBM 03: alle bestaetigten stabilen IDs sind exakt registriert", () => [...headerIds, ...rowIds].forEach((id) => assert.ok(byId.has(id), id)));
     await run("M82.7.5 BBM 04: Header-Kinder besitzen den existierenden Meta-Header als Parent", () => headerIds.forEach((id) => assert.equal(byId.get(id).parentId, "restarbeiten.list.table.meta.header")));
     await run("M82.7.5 BBM 05: Zeilenkinder besitzen den existierenden Meta-Datenbereich als Parent", () => rowIds.forEach((id) => assert.equal(byId.get(id).parentId, "restarbeiten.list.table.meta.cells")));
@@ -68,9 +68,9 @@ async function runM8275LayoutPersistenceMetaElementsTests(run) {
     const header = listModule.buildRestarbeitenTableHeader();
     const records = listModule.buildRestarbeitenList({ items: [{ id: 1, numberLine: "1", dateLine: "01.01.26", itemClassLabel: "Rest", locationLine: "A", shortTextLine: "Kurz", longTextLine: "Lang", dueDateLabel: "02.01.26", ampelState: "green", statusLabel: "offen", responsibleLabel: "B" }, { id: 2, numberLine: "2", dateLine: "01.01.26", itemClassLabel: "Mangel", locationLine: "C", shortTextLine: "Kurz", longTextLine: "Lang", dueDateLabel: "03.01.26", ampelState: "red", statusLabel: "offen", responsibleLabel: "D" }] });
     await run("M82.7.5 BBM 10: vorhandene Header-DOM-Knoten werden inventarisiert", () => assert.deepEqual(Object.keys(header._m80MetaHeaderParts), ["dueDate", "status", "responsible"]));
-    await run("M82.7.5 BBM 11: vorhandene Zeilen-DOM-Knoten werden ohne Wrapper inventarisiert", () => assert.deepEqual(Object.fromEntries(Object.entries(records._m80MetaParts).map(([key, values]) => [key, values.length])), { dueDate: 2, ampel: 2, status: 2, responsible: 2 }));
+    await run("M82.7.5 BBM 11: vorhandene Zeilen-DOM-Knoten werden ohne Wrapper inventarisiert", () => assert.deepEqual(Object.fromEntries(["dueDate", "ampel", "status", "responsible"].map((key) => [key, records._m83ComponentParts[key].length])), { dueDate: 2, ampel: 2, status: 2, responsible: 2 }));
     await run("M82.7.5 BBM 12: Renderer erzeugt keine neue Tabellenansicht", () => { const source = read("src/renderer/modules/restarbeiten/RestarbeitenList.js"); assert.doesNotMatch(source, /m82-7-5|meta-wrapper|editor-wrapper/i); });
-    await run("M82.7.5 BBM 13: Header- und Zeileninventar enthalten keine Fachwert-IDs", () => [...Object.values(header._m80MetaHeaderParts), ...Object.values(records._m80MetaParts).flat()].forEach((element) => assert.doesNotMatch(element.getAttribute("data-ui-editor-id") || "", /\b\d+\b|green|red|offen/)));
+    await run("M82.7.5 BBM 13: Header- und Zeileninventar enthalten keine Fachwert-IDs", () => [...Object.values(header._m80MetaHeaderParts), ...Object.values(records._m83ComponentParts).flat()].forEach((element) => assert.doesNotMatch(element.getAttribute("data-ui-editor-id") || "", /\b\d+\b|green|red|offen/)));
 
     refs.resetM80PilotWorkingStatesForDiagnostic(); refs.beginM80PilotRender();
     const fallback = new FakeElement("DIV", 172, 100);

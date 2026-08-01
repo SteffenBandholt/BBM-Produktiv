@@ -1,5 +1,5 @@
 import { RESTARBEITEN_STATUS_OPTIONS } from "./domain/restarbeitenRules.js";
-import { registerM80Ref } from "../../ui-editor/m80Refs.js";
+import { beginM83ComponentBinding, registerM80Ref } from "../../ui-editor/m80Refs.js";
 
 const DEFAULT_LOCATION_LABELS = ["Haus", "Geschoss", "Einheit", "Raum"];
 
@@ -63,6 +63,7 @@ export function buildRestarbeitenFilterbar({
   onFilterChange,
   onClose,
 } = {}) {
+  beginM83ComponentBinding("bbm.restarbeiten.filterbar");
   const labels = resolveLocationLabels(settings);
   const root = createEl("section", {
     className: "bbm-restarbeiten-filterbar",

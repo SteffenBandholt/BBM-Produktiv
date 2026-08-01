@@ -50,10 +50,14 @@ export function buildRestarbeitenList({
   });
   const rows = [];
   const columnCells = [[], [], []];
-  const metaParts = { dueDate: [], ampel: [], status: [], responsible: [] };
+  const componentParts = {
+    number: [], createdAt: [], itemClass: [], aftercare: [], photos: [],
+    location: [], shortText: [], longText: [], dueDate: [], ampel: [], status: [],
+    responsible: [], requiredSummary: [],
+  };
   records._m80Rows = rows;
   records._m80ColumnCells = columnCells;
-  records._m80MetaParts = metaParts;
+  records._m83ComponentParts = componentParts;
 
   if (!items.length) {
     records.appendChild(
@@ -75,16 +79,16 @@ export function buildRestarbeitenList({
     row.addEventListener("click", () => onSelect?.(item.id));
 
     const numberColumn = createEl("div", { uiId: "restarbeiten.record.numberColumn" });
-    appendText(
+    componentParts.number.push(appendText(
       numberColumn,
       "bbm-restarbeiten-record__number",
       item.numberLine === "\u2014" ? item.numberLine : `#${item.numberLine}`,
       "restarbeiten.record.number"
-    );
-    appendText(numberColumn, "bbm-restarbeiten-record__date", item.dateLine, "restarbeiten.record.createdAt");
-    appendText(numberColumn, "bbm-restarbeiten-record__class", item.itemClassLabel, "restarbeiten.record.itemClass");
+    ));
+    componentParts.createdAt.push(appendText(numberColumn, "bbm-restarbeiten-record__date", item.dateLine, "restarbeiten.record.createdAt"));
+    componentParts.itemClass.push(appendText(numberColumn, "bbm-restarbeiten-record__class", item.itemClassLabel, "restarbeiten.record.itemClass"));
     if (item.nachpflegeLabel) {
-      appendText(numberColumn, "bbm-restarbeiten-record__nachpflege", item.nachpflegeLabel);
+      componentParts.aftercare.push(appendText(numberColumn, "bbm-restarbeiten-record__nachpflege", item.nachpflegeLabel, "restarbeiten.record.aftercare"));
     }
     const photos = appendText(numberColumn, "bbm-restarbeiten-record__photos", "Fotos", "restarbeiten.record.photos");
     photos.setAttribute("role", "button");
@@ -93,12 +97,13 @@ export function buildRestarbeitenList({
       event?.stopPropagation?.();
       onPhotos?.(item.id);
     });
+    componentParts.photos.push(photos);
 
     const contentColumn = createEl("div", { uiId: "restarbeiten.record.contentColumn" });
-    appendText(contentColumn, "bbm-restarbeiten-record__location", item.locationLine, "restarbeiten.record.location");
-    appendText(contentColumn, "bbm-restarbeiten-record__short", item.shortTextLine || item.workLine1, "restarbeiten.record.shortText");
+    componentParts.location.push(appendText(contentColumn, "bbm-restarbeiten-record__location", item.locationLine, "restarbeiten.record.location"));
+    componentParts.shortText.push(appendText(contentColumn, "bbm-restarbeiten-record__short", item.shortTextLine || item.workLine1, "restarbeiten.record.shortText"));
     if (showLongtext) {
-      appendText(contentColumn, "bbm-restarbeiten-record__long", item.longTextLine || item.workLine2, "restarbeiten.record.longText");
+      componentParts.longText.push(appendText(contentColumn, "bbm-restarbeiten-record__long", item.longTextLine || item.workLine2, "restarbeiten.record.longText"));
     }
 
     const metaColumn = createEl("div", { className: "bbm-restarbeiten-record__meta", uiId: "restarbeiten.record.metaColumn" });
@@ -106,17 +111,17 @@ export function buildRestarbeitenList({
     dueLine.className = "bbm-restarbeiten-record__due";
     dueLine.textContent = item.dueDateLabel;
     metaColumn.appendChild(dueLine);
-    metaParts.dueDate.push(dueLine);
+    componentParts.dueDate.push(dueLine);
     if (showAmpel) {
       const ampel = createEl("span", { className: "bbm-restarbeiten-ampel", uiId: "restarbeiten.record.ampel" });
       ampel.dataset.state = item.ampelState || "neutral";
       metaColumn.appendChild(ampel);
-      metaParts.ampel.push(ampel);
+      componentParts.ampel.push(ampel);
     }
-    metaParts.status.push(appendText(metaColumn, "", item.statusLabel, "restarbeiten.record.status"));
-    metaParts.responsible.push(appendText(metaColumn, "", item.responsibleLabel, "restarbeiten.record.responsible"));
+    componentParts.status.push(appendText(metaColumn, "", item.statusLabel, "restarbeiten.record.status"));
+    componentParts.responsible.push(appendText(metaColumn, "", item.responsibleLabel, "restarbeiten.record.responsible"));
     if (item.requiredFieldSummary) {
-      appendText(metaColumn, "bbm-restarbeiten-record__required", item.requiredFieldSummary);
+      componentParts.requiredSummary.push(appendText(metaColumn, "bbm-restarbeiten-record__required", item.requiredFieldSummary, "restarbeiten.record.requiredSummary"));
     }
 
     row.append(numberColumn, contentColumn, metaColumn);

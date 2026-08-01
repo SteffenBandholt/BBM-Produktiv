@@ -7,8 +7,8 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 12,
-  "registryFingerprint": "sha256:4d0a4c27786d64e6c80cfe5d6e57c1c32da1193cda307553334e588e0606241e",
+  "registryVersion": 13,
+  "registryFingerprint": "sha256:244a24360305f44467a07f4d7239547d3717989ada19a1cc5864fb652cc749a4",
   "registryStatus": "incomplete",
   "activeScopes": [
     "restarbeiten.header.root",
@@ -48,7 +48,7 @@
   "transportProtocolVersion": "1.0",
   "scopes": [
     { "scopeId": "restarbeiten.header.root", "status": "complete", "reason": null, "elementCount": 31, "missingReferenceCount": 0 },
-    { "scopeId": "restarbeiten.list.root", "status": "complete", "reason": null, "elementCount": 23, "missingReferenceCount": 0 },
+    { "scopeId": "restarbeiten.list.root", "status": "complete", "reason": null, "elementCount": 32, "missingReferenceCount": 0 },
     { "scopeId": "restarbeiten.edit.root", "status": "complete", "reason": null, "elementCount": 53, "missingReferenceCount": 0 },
     { "scopeId": "protokoll.screen.root", "status": "complete", "reason": null, "elementCount": 25, "missingReferenceCount": 0 },
     { "scopeId": "protokoll.list.root", "status": "complete", "reason": null, "elementCount": 7, "missingReferenceCount": 0 },
