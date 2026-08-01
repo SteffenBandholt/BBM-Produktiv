@@ -339,9 +339,9 @@
 
 .bbm-tops-header-meta-legend {
   display: none;
-  width: var(--bbm-tops-meta-col-max);
+  width: var(--bbm-tops-header-meta-width, var(--bbm-tops-meta-col-max));
   min-width: var(--bbm-tops-meta-col-min);
-  flex: 0 0 var(--bbm-tops-meta-col-max);
+  flex: 0 0 var(--bbm-tops-header-meta-width, var(--bbm-tops-meta-col-max));
   font-size: 7pt;
   line-height: 1.2;
   font-weight: 600;
@@ -601,9 +601,11 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   background: var(--bbm-tops-surface-soft);
   border: 1px solid var(--bbm-tops-line);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  /* Ensure the meta column stays as the right-most grid column in the normal UI list. */
-  --bbm-tops-list-grid-columns: var(--bbm-tops-list-number-col, 64px) minmax(0, 1fr)
-    minmax(var(--bbm-tops-list-meta-col, 25mm), 40mm);
+  /*
+    The effective three-column descriptor is applied by
+    applyProtokollTopsUiLayout. Do not define a competing descriptor here:
+    the persisted table layout is the single source for all list rows.
+  */
   /* Ensure the list uses the full available paper width so the meta column can "stick" to the right edge. */
   width: 100%;
   box-sizing: border-box;
@@ -732,19 +734,11 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
 .bbm-tops-list-row-grid {
   display: grid;
-  /*
-    IMPORTANT (UI hotfix):
-    Keep the TOP list as a stable 3-column grid:
-    1) number (fixed)
-    2) text (flexible, fills remaining space)
-    3) meta (fixed/min width)
-
-    We intentionally DO NOT use --bbm-tops-list-grid-columns / --bbm-tops-list-text-col here,
-    because persisted layout values may turn the text track into a fixed width which prevents
-    the meta column from sticking to the right edge.
-  */
-  grid-template-columns: var(--bbm-tops-list-number-col, 64px) minmax(0, 1fr)
-    minmax(50px, var(--bbm-tops-list-meta-col, 74px));
+  /* One inherited descriptor for TOP (including expander/star/date), text, and meta. */
+  grid-template-columns: var(
+    --bbm-tops-list-grid-columns,
+    minmax(48px, var(--bbm-tops-list-number-col, 13fr)) minmax(0, var(--bbm-tops-list-text-col, 65fr)) minmax(96px, var(--bbm-tops-list-meta-col, 22fr))
+  );
   gap: 8px;
   align-items: start;
   width: 100%;

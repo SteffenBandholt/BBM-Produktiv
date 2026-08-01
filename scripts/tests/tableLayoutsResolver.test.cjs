@@ -53,7 +53,7 @@ async function runTableLayoutsResolverTests(run) {
 
       assert.equal(resolved.ok, true);
       assert.equal(resolved.source, "default");
-      assert.equal(resolved.effectiveLayout.ui.rootVars["--bbm-tops-list-number-col"], "64px");
+      assert.equal(resolved.effectiveLayout.ui.rootVars["--bbm-tops-list-number-col"], "13fr");
       assert.equal(resolved.effectiveLayout.labels.text, "Gegenstand");
     });
   });
@@ -192,7 +192,7 @@ async function runTableLayoutsResolverTests(run) {
 
       assert.equal(resolved.ok, true);
       assert.equal(resolved.source, "default");
-      assert.equal(resolved.effectiveLayout.ui.rootVars["--bbm-tops-list-number-col"], "64px");
+      assert.equal(resolved.effectiveLayout.ui.rootVars["--bbm-tops-list-number-col"], "13fr");
       assert.equal(resolved.effectiveLayout.labels.top, "TOP");
     });
   });
@@ -236,7 +236,7 @@ async function runTableLayoutsResolverTests(run) {
       assert.equal(resolved.ok, true);
       assert.equal(resolved.source, "default");
       assert.notEqual(resolved.parseError, "");
-      assert.equal(resolved.effectiveLayout.ui.rootVars["--bbm-tops-list-number-col"], "64px");
+      assert.equal(resolved.effectiveLayout.ui.rootVars["--bbm-tops-list-number-col"], "13fr");
     });
   });
 

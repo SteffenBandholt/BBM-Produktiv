@@ -96,12 +96,12 @@ function baseData(mode = "protocol") {
     showAmpelInList: true,
     logos: [],
     v2Layout: {
-      globalHeaderAdaptive: false,
-      globalLogoBoxHeightMm: 45,
-      globalHeaderHeightMm: 50,
+      globalHeaderAdaptive: true,
+      globalLogoBoxHeightMm: 0,
+      globalHeaderHeightMm: 8,
       pagePadLeftMm: 12,
       pagePadRightMm: 12,
-      pagePadTopMm: 2,
+      pagePadTopMm: 5,
       pagePadBottomMm: 0,
       footerReserveMm: 12,
     },
@@ -167,8 +167,8 @@ const FIXTURES = Object.freeze([
     data.tops.push(top(6, { longtext: words(30, "g") }));
   }),
   protocolFixture("p05-just-misses-first", "Datensatz passt knapp nicht mehr auf Seite 1", (data) => {
-    addTopSeries(data, 6, { longtextWords: 10 });
-    data.tops.push(top(7, { longtext: words(30, "g") }));
+    addTopSeries(data, 10, { longtextWords: 10 });
+    data.tops.push(top(11, { longtext: words(30, "g") }));
   }),
   protocolFixture("p06-level-one-near-end", "Level-1-TOP nahe Seitenende", (data) => {
     addTopSeries(data, 7, { longtextWords: 10 });
@@ -211,9 +211,9 @@ const FIXTURES = Object.freeze([
   protocolFixture("p16-changed-columns", "Veränderte TOP-Spaltenbreiten", (data) => {
     addTopSeries(data, 20, { longtextWords: 24 });
     attachEditorLayout(data, [
-      { elementId: "pdf.bbm.protocol.tops.column.text", operation: "resizeWidth", payload: { width: 125 } },
-      { elementId: "pdf.bbm.protocol.tops.column.number", operation: "resizeWidth", payload: { width: 28 } },
       { elementId: "pdf.bbm.protocol.tops.column.meta", operation: "resizeWidth", payload: { width: 33 } },
+      { elementId: "pdf.bbm.protocol.tops.column.number", operation: "resizeWidth", payload: { width: 28 } },
+      { elementId: "pdf.bbm.protocol.tops.column.text", operation: "resizeWidth", payload: { width: 125 } },
     ]);
   }),
   protocolFixture("p17-changed-font", "Veränderte Schriftgröße", (data) => {
@@ -241,7 +241,7 @@ const FIXTURES = Object.freeze([
   }),
   restarbeitenFixture("r25-just-misses-end", "Restarbeit knapp nicht mehr passend", (data) => {
     addRestarbeitenSeries(data, 12, { longtextWords: 8 });
-    data.restarbeitenItems.push(restarbeit(13, { longText: words(40, "rest-wechsel") }));
+    data.restarbeitenItems.push(restarbeit(13, { longText: words(90, "rest-wechsel") }));
   }),
   restarbeitenFixture("r26-many-short", "Viele kurze Restarbeiten", (data) => addRestarbeitenSeries(data, 70, { longtextWords: 2 })),
   restarbeitenFixture("r27-columns-unsupported", "Verriegelte Restarbeiten-Spaltenbreiten", (data) => {
@@ -252,7 +252,7 @@ const FIXTURES = Object.freeze([
     data.participants = Array.from({ length: 11 }, (_value, index) => participant(index + 1));
   }),
   protocolFixture("p29-participants-miss-boundary", "Letzte Teilnehmerzeile passt knapp nicht mehr", (data) => {
-    data.participants = Array.from({ length: 12 }, (_value, index) => participant(index + 1));
+    data.participants = Array.from({ length: 16 }, (_value, index) => participant(index + 1));
   }),
   protocolFixture("p30-participants-three-pages", "Teilnehmerblock über mindestens drei Seiten", (data) => {
     data.participants = Array.from({ length: 40 }, (_value, index) => participant(index + 1));
@@ -265,7 +265,7 @@ const FIXTURES = Object.freeze([
   }),
   protocolFixture("p32-preremarks-over-boundary", "Vorbemerkung knapp über Seitengrenze", (data) => {
     data.settings["print.preRemarks.enabled"] = "true";
-    data.settings["pdf.preRemarks"] = words(205, "vorbemerkung");
+    data.settings["pdf.preRemarks"] = words(320, "vorbemerkung");
   }),
   protocolFixture("p33-preremarks-multiple-pages", "Vorbemerkung über mehrere Seiten", (data) => {
     data.settings["print.preRemarks.enabled"] = "true";

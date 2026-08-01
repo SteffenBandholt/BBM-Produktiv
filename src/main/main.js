@@ -587,6 +587,7 @@ app.whenReady().then(async () => {
       process.argv.includes("--bbm-electron-editor-diagnostic") ||
       app.commandLine.hasSwitch("bbm-electron-editor-diagnostic"),
     startModule: uiEditorAcceptanceModule,
+    isolatedAcceptance: uiEditorAcceptanceProfile.enabled === true,
   }));
 
   // ============================================================

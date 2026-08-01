@@ -60,7 +60,7 @@ async function runM81BbmPdfAdapterTests(run) {
     assert.equal(submit(`${SCOPE_ID}.header.title`, "setLineSpacing", { lineSpacing: 1.4 }).newState.lineSpacing, 1.4);
     assert.equal(submit(`${SCOPE_ID}.closing`, "setVisibility", { visible: false }).newState.visible, false);
     assert.equal(submit(`${SCOPE_ID}.page-template`, "setPageMargins", { marginTop: 5, marginRight: 12, marginBottom: 8, marginLeft: 12 }).newState.marginTop, 5);
-    assert.equal(submit(`${SCOPE_ID}.tops.column.text`, "resizeWidth", { width: 130 }).newState.width, 130);
+    assert.equal(submit(`${SCOPE_ID}.tops.column.text`, "resizeWidth", { width: 120 }).newState.width, 120);
     assert.equal(submit(`${SCOPE_ID}.tops.column.text`, "setVisibility", { visible: false }).errorCode, "pdf_operation_locked");
   });
 

@@ -283,7 +283,7 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printV2CssSource.includes(".printV2Root .v2MiniDraftNotice {\n  position: absolute;"), true);
     assert.equal(printV2CssSource.includes("font-size: 10pt;"), true);
     assert.equal(printV2CssSource.includes(".printV2Root .v2Page {\n  font-size: 8pt;"), true);
-    assert.equal(printV2CssSource.includes(".printV2Root .v2ProtocolFooterTitle {\n  font-weight: 500;"), true);
+    assert.equal(printV2CssSource.includes(".printV2Root .v2ProtocolFooterTitle {\n  font-weight: 600;"), true);
   });
 
   await run("Ausgabe: Legacy-PDF-Logo-Pfad ist nicht mehr aktiv", () => {

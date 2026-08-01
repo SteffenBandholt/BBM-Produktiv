@@ -1,17 +1,17 @@
 ﻿const PROTOKOLL_TOPS_EDITOR_DEFAULTS = Object.freeze({
   orientation: "portrait",
-  uiNumberWidth: "64px",
+  uiNumberWidth: "13fr",
   uiNumberInset: "5px",
   uiNumberFontSize: "11px",
-  uiTextTrack: "minmax(0, 1fr)",
+  uiTextTrack: "65fr",
   uiTextInset: "5px",
   uiTextFontSize: "11px",
-  uiMetaWidth: "74px",
+  uiMetaWidth: "22fr",
   uiMetaInset: "4px",
   uiMetaFontSize: "11px",
-  pdfNumberWidth: "23mm",
-  pdfTextWidth: "auto",
-  pdfMetaWidth: "15ch",
+  pdfNumberWidth: "24.18mm",
+  pdfTextWidth: "120.9mm",
+  pdfMetaWidth: "40.92mm",
   pdfNumberInset: "1mm",
   pdfNumberFontSize: "8.5pt",
   pdfTextPaddingLeft: "0mm",
@@ -52,7 +52,7 @@ export const PROTOKOLL_TOPS_COLUMNS = Object.freeze([
     label: "TOP",
     uiWidth: PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberWidth,
     pdfWidth: PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberWidth,
-    weight: 2,
+    weight: 13,
     required: true,
     previewValue: "1",
     previewField: "topNumber",
@@ -63,7 +63,7 @@ export const PROTOKOLL_TOPS_COLUMNS = Object.freeze([
     label: "Gegenstand",
     uiWidth: PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextTrack,
     pdfWidth: PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextWidth,
-    weight: 6,
+    weight: 65,
     required: true,
     previewValue: "Beispielthema fuer die Vorschau",
     previewField: "shortText",
@@ -74,7 +74,7 @@ export const PROTOKOLL_TOPS_COLUMNS = Object.freeze([
     label: "Status",
     uiWidth: PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaWidth,
     pdfWidth: PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaWidth,
-    weight: 1,
+    weight: 22,
     required: true,
     previewValue: "offen",
     previewField: "meta",
@@ -152,34 +152,34 @@ const PROTOKOLL_TOPS_LAYOUT = Object.freeze({
   ]),
   notes: Object.freeze([
     "Pilot table for the first central layout definition.",
-    "UI and PDF keep the current portrait widths and labels.",
+    "UI and PDF derive their default widths from the shared 13/65/22 logical ratio.",
     "Long text stays in the text area and is not a separate column.",
     "No editor UI, database, header, footer, or second PDF logic here.",
   ]),
   ui: Object.freeze({
     rootVars: Object.freeze({
-      "--bbm-tops-list-number-col": "64px",
+      "--bbm-tops-list-number-col": "13fr",
       "--bbm-tops-list-number-padding-inline": "5px",
       "--bbm-tops-list-number-font-size": "11px",
-      "--bbm-tops-list-text-col": "minmax(0, 1fr)",
+      "--bbm-tops-list-text-col": "65fr",
       "--bbm-tops-list-text-padding-inline": "5px",
       "--bbm-tops-list-text-font-size": "11px",
-      "--bbm-tops-list-meta-col": "74px",
+      "--bbm-tops-list-meta-col": "22fr",
       "--bbm-tops-list-meta-padding-inline": "4px",
       "--bbm-tops-list-meta-font-size": "11px",
     }),
     gridTemplateColumns:
-      "var(--bbm-tops-list-number-col, 64px) var(--bbm-tops-list-text-col, minmax(0, 1fr)) minmax(50px, var(--bbm-tops-list-meta-col, 74px))",
+      "minmax(48px, var(--bbm-tops-list-number-col, 13fr)) minmax(0, var(--bbm-tops-list-text-col, 65fr)) minmax(96px, var(--bbm-tops-list-meta-col, 22fr))",
   }),
   pdf: Object.freeze({
     rootVars: Object.freeze({
-      "--bbm-top-col-nr-width": "23mm",
+      "--bbm-top-col-nr-width": "24.18mm",
       "--bbm-top-col-nr-padding-left": "1mm",
       "--bbm-top-col-nr-font-size": "8.5pt",
       "--bbm-top-col-text-padding-left": "0",
       "--bbm-top-col-text-padding-right": "1.5mm",
       "--bbm-top-col-text-font-size": "9pt",
-      "--bbm-top-col-meta-width": "15ch",
+      "--bbm-top-col-meta-width": "40.92mm",
       "--bbm-top-col-meta-padding-left": "5mm",
       "--bbm-top-col-meta-font-size": "6.5pt",
       "--bbm-top-col-meta-head-font-size": "8pt",
@@ -188,20 +188,20 @@ const PROTOKOLL_TOPS_LAYOUT = Object.freeze({
       number: Object.freeze({
         key: "top",
         className: "colNr",
-        width: "23mm",
-        source: "src/renderer/print/print.css .topsTable .colNr",
+        width: "24.18mm",
+        source: "shared 13/65/22 baseline at 186mm usable PDF width",
       }),
       text: Object.freeze({
         key: "text",
         className: "colText",
-        width: "auto",
-        source: "src/renderer/print/print.css .topsTable .colText",
+        width: "120.9mm",
+        source: "shared 13/65/22 baseline at 186mm usable PDF width",
       }),
       meta: Object.freeze({
         key: "meta",
         className: "colMeta",
-        width: "15ch",
-        source: "src/renderer/print/print.css .topsTable .colMeta",
+        width: "40.92mm",
+        source: "shared 13/65/22 baseline at 186mm usable PDF width",
       }),
     }),
   }),
@@ -593,6 +593,31 @@ export function applyProtokollTopsUiLayout(target, layoutOverride) {
   } else {
     target.style.removeProperty?.("--bbm-tops-list-grid-columns");
   }
+}
+
+export function resolveProtokollTopsUiMetaHeaderWidth(layoutOverride) {
+  const layout = layoutOverride && typeof layoutOverride === "object" ? layoutOverride : PROTOKOLL_TOPS_LAYOUT;
+  const rootVars = layout?.ui?.rootVars || PROTOKOLL_TOPS_LAYOUT.ui.rootVars;
+  const tracks = [
+    rootVars["--bbm-tops-list-number-col"],
+    rootVars["--bbm-tops-list-text-col"],
+    rootVars["--bbm-tops-list-meta-col"],
+  ].map((value) => String(value || "").trim());
+  const frTracks = tracks.map((value) => {
+    const match = /^(\d+(?:\.\d+)?)fr$/.exec(value);
+    return match ? Number(match[1]) : null;
+  });
+
+  if (frTracks.every((value) => Number.isFinite(value))) {
+    const total = frTracks.reduce((sum, value) => sum + value, 0);
+    if (total > 0) return `${(frTracks[2] / total) * 100}%`;
+  }
+
+  const metaTrack = tracks[2];
+  if (/^(?:\d+(?:\.\d+)?)(?:px|mm|rem|em|%)$/.test(metaTrack)) {
+    return `max(96px, ${metaTrack})`;
+  }
+  return "22%";
 }
 
 export function applyProtokollTopsPdfLayout(target, layoutOverride) {

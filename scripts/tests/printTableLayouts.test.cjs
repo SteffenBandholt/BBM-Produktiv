@@ -190,13 +190,54 @@ async function runPrintTableLayoutsTests(run) {
       assert.equal(data.tableLayouts.protokoll_tops.ok, true);
       assert.equal(
         data.tableLayouts.protokoll_tops.effectiveLayout.ui.rootVars["--bbm-tops-list-number-col"],
-        "64px"
+        "13fr"
       );
-      assert.equal(data.tableLayouts.protokoll_tops.effectiveLayout.pdf.columns.number.width, "23mm");
-      assert.equal(data.tableLayouts.protokoll_tops.effectiveLayout.pdf.columns.text.width, "auto");
-      assert.equal(data.tableLayouts.protokoll_tops.effectiveLayout.pdf.columns.meta.width, "15ch");
+      assert.equal(data.tableLayouts.protokoll_tops.effectiveLayout.pdf.columns.number.width, "24.18mm");
+      assert.equal(data.tableLayouts.protokoll_tops.effectiveLayout.pdf.columns.text.width, "120.9mm");
+      assert.equal(data.tableLayouts.protokoll_tops.effectiveLayout.pdf.columns.meta.width, "40.92mm");
       assert.equal(data.tableLayouts.protokoll_tops.effectiveLayout.labels.top, "TOP");
       assert.equal(data.tableLayouts.protokoll_tops.source, "default");
+    });
+  });
+
+  await run("PrintData: M86.2 leitet Kopfhoehe fuer keine, kleine, mittlere und drei Logos aus der Geometrie ab", () => {
+    return withTempPrintData(async ({ db, getPrintData }) => {
+      db.initDatabase();
+      const base = { "print.v2.pagePadTopMm": "5" };
+      const noLogo = await getPrintData({ mode: "topsAll", orientation: "portrait", settingsOverride: base });
+      assert.equal(noLogo.v2Layout.globalHeaderHeightMm, 8);
+      assert.equal(noLogo.v2Layout.globalLogoBoxHeightMm, 0);
+      assert.equal(noLogo.v2Layout.pagePadTopMm, 5);
+
+      const logoDataUrl = "data:image/png;base64,AA==";
+      const small = await getPrintData({
+        mode: "topsAll",
+        orientation: "portrait",
+        settingsOverride: { ...base, "print.logo1.enabled": "true", "print.logo1.pngDataUrl": logoDataUrl, "print.logo1.size": "small", "print.logo1.vAlign": "top" },
+      });
+      assert.ok(Math.abs(small.v2Layout.globalHeaderHeightMm - 25.264550264550266) < 0.001);
+      assert.equal(small.v2Layout.globalLogoBoxHeightMm, 22);
+
+      const medium = await getPrintData({
+        mode: "topsAll",
+        orientation: "portrait",
+        settingsOverride: { ...base, "print.logo1.enabled": "true", "print.logo1.pngDataUrl": logoDataUrl, "print.logo1.size": "medium", "print.logo1.vAlign": "middle" },
+      });
+      assert.ok(Math.abs(medium.v2Layout.globalHeaderHeightMm - 40.764550264550266) < 0.001);
+      assert.equal(medium.v2Layout.globalLogoBoxHeightMm, 37.5);
+
+      const three = await getPrintData({
+        mode: "topsAll",
+        orientation: "portrait",
+        settingsOverride: {
+          ...base,
+          "print.logo1.enabled": "true", "print.logo1.pngDataUrl": logoDataUrl, "print.logo1.size": "small", "print.logo1.vAlign": "top",
+          "print.logo2.enabled": "true", "print.logo2.pngDataUrl": logoDataUrl, "print.logo2.size": "medium", "print.logo2.vAlign": "middle",
+          "print.logo3.enabled": "true", "print.logo3.pngDataUrl": logoDataUrl, "print.logo3.size": "large", "print.logo3.vAlign": "bottom",
+        },
+      });
+      assert.ok(Math.abs(three.v2Layout.globalHeaderHeightMm - 48.264550264550266) < 0.001);
+      assert.equal(three.v2Layout.globalLogoBoxHeightMm, 45);
     });
   });
 
@@ -278,8 +319,8 @@ async function runPrintTableLayoutsTests(run) {
         assert.ok(table);
         assert.equal(table.dataset.tableKey, "protokoll_tops");
         assert.equal(table.dataset.layoutVariant, "portrait");
-        assert.equal(table.style["--bbm-top-col-nr-width"], "23mm");
-        assert.equal(table.style["--bbm-top-col-meta-width"], "15ch");
+        assert.equal(table.style["--bbm-top-col-nr-width"], "24.18mm");
+        assert.equal(table.style["--bbm-top-col-meta-width"], "40.92mm");
         assert.equal(table.style["--bbm-tops-list-number-col"], undefined);
         assert.equal(data.tableLayouts.protokoll_tops.effectiveLayout.pdf.columns.number.width, "25mm");
         assert.equal(data.tableLayouts.protokoll_tops.effectiveLayout.pdf.columns.meta.width, "18ch");
@@ -344,10 +385,10 @@ async function runPrintTableLayoutsTests(run) {
         const table = findNodeByTag(root, "table");
         const colgroup = findNodeByTag(table, "colgroup");
         assert.ok(table);
-        assert.equal(table.style["--bbm-top-col-nr-width"], "23mm");
-        assert.equal(table.style["--bbm-top-col-meta-width"], "15ch");
-        assert.equal(String(colgroup._innerHTML || "").includes("23mm"), true);
-        assert.equal(String(colgroup._innerHTML || "").includes("15ch"), true);
+        assert.equal(table.style["--bbm-top-col-nr-width"], "24.18mm");
+        assert.equal(table.style["--bbm-top-col-meta-width"], "40.92mm");
+        assert.equal(String(colgroup._innerHTML || "").includes("24.18mm"), true);
+        assert.equal(String(colgroup._innerHTML || "").includes("40.92mm"), true);
       } finally {
         global.document = prevDocument;
         global.window = prevWindow;

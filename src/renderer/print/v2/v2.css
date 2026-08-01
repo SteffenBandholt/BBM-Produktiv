@@ -41,11 +41,12 @@
 
 /* GlobalHeader (page 1 only) */
 .printV2Root .v2GlobalHeader {
-  height: var(--v2-global-height, 50mm);
+  height: var(--v2-global-height, 8mm);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  justify-content: flex-end;
 }
 
 .printV2Root .v2LogoRow {
@@ -164,7 +165,9 @@
 }
 
 .printV2Root .v2FullLeftWrap {
-  padding-top: 1.5mm;
+  position: relative;
+  border-left: 2mm solid #1565c0;
+  padding: 1.5mm 0 0 4mm;
   min-width: 0;
 }
 
@@ -175,7 +178,7 @@
   justify-content: flex-end;
   min-width: 0;
   width: var(--v2-userbox-w, 55mm);
-  transform: translateX(20mm);
+  transform: none;
 }
 
 .printV2Root .v2FullPageCounter {
@@ -194,25 +197,27 @@
 }
 
 .printV2Root .v2Project {
-  font-size: 10pt;
-  font-weight: 400;
+  font-size: 9pt;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .printV2Root .v2ProjectName {
-  font-size: 15pt;
+  font-size: 16pt;
   font-weight: 700;
-  margin-top: 2mm;
-  margin-left: 13mm;
+  margin-top: 1.5mm;
+  margin-left: 0;
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
 .printV2Root .v2ProtocolTitle {
-  font-size: 12pt;
+  font-size: 12.5pt;
   font-weight: 600;
-  margin-top: 3mm;
-  margin-left: 13mm;
+  margin-top: 2.5mm;
+  margin-left: 0;
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -220,8 +225,8 @@
 
 .printV2Root .v2ListStand {
   font-size: 10pt;
-  margin-top: 2mm;
-  margin-left: 13mm;
+  margin-top: 1.5mm;
+  margin-left: 0;
   color: #222;
   white-space: normal;
   overflow-wrap: anywhere;
@@ -255,6 +260,10 @@
   text-transform: none;
   letter-spacing: 0;
   white-space: nowrap;
+}
+
+.printV2Root .v2FullDivider {
+  border-bottom-color: #1565c0;
 }
 
 .printV2Root .v2Page {
@@ -348,6 +357,8 @@
   flex-direction: column;
   gap: 2mm;
   min-width: 0;
+  border-left: 1.2mm solid #1565c0;
+  padding-left: 2mm;
 }
 
 .printV2Root .v2MiniProject {
@@ -405,17 +416,18 @@
 
 .printV2Root .v2ParticipantsTable th,
 .printV2Root .v2ParticipantsTable td {
-  border-bottom: 1px solid #cfd8dc;
-  padding: 1.5mm 1.4mm;
+  border-bottom: 0.2mm solid #d6dde3;
+  padding: 1.1mm 1.4mm;
   text-align: left;
   vertical-align: top;
-  font-size: 9.3pt;
+  font-size: 9pt;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
 .printV2Root .v2ParticipantsTable th {
-  background: #efefef;
+  background: #f4f7f9;
+  font-size: 8.5pt;
   font-weight: 700;
 }
 
@@ -430,16 +442,15 @@
 }
 
 /* DEV-Layout preview: apply inset/font overrides with higher specificity than the generic th/td rule. */
-.printV2Root .v2ParticipantsTable th.v2PartColName,
 .printV2Root .v2ParticipantsTable td.v2PartColName {
   padding-left: var(--bbm-part-col-name-padding-inline, 1.4mm);
   padding-right: var(--bbm-part-col-name-padding-inline, 1.4mm);
-  font-size: var(--bbm-part-col-name-font-size, 9.3pt);
+  font-size: var(--bbm-part-col-name-font-size, 9pt);
 }
 
 .printV2Root .v2PartColRole {
-  width: 35mm;
-  width: var(--bbm-part-col-role-width, 35mm);
+  width: 32mm;
+  width: var(--bbm-part-col-role-width, 32mm);
 }
 
 .printV2Root .v2PartColFirm {
@@ -448,43 +459,39 @@
 }
 
 .printV2Root .v2PartColContact {
-  width: 55.12mm;
-  width: var(--bbm-part-col-contact-width, 55.12mm);
+  width: 72mm;
+  width: var(--bbm-part-col-contact-width, 72mm);
 }
 
 .printV2Root .v2PartColMarks {
-  width: 14.88mm;
-  width: var(--bbm-part-col-marks-width, 14.88mm);
+  width: 18mm;
+  width: var(--bbm-part-col-marks-width, 18mm);
   text-align: center !important;
 }
 
 /* DEV-Layout preview: per-column inset/font overrides (higher specificity than generic th/td rule). */
-.printV2Root .v2ParticipantsTable th.v2PartColRole,
 .printV2Root .v2ParticipantsTable td.v2PartColRole {
   padding-left: var(--bbm-part-col-role-padding-inline, 1.4mm);
   padding-right: var(--bbm-part-col-role-padding-inline, 1.4mm);
-  font-size: var(--bbm-part-col-role-font-size, 9.3pt);
+  font-size: var(--bbm-part-col-role-font-size, 9pt);
 }
 
-.printV2Root .v2ParticipantsTable th.v2PartColFirm,
 .printV2Root .v2ParticipantsTable td.v2PartColFirm {
   padding-left: var(--bbm-part-col-firm-padding-inline, 1.4mm);
   padding-right: var(--bbm-part-col-firm-padding-inline, 1.4mm);
-  font-size: var(--bbm-part-col-firm-font-size, 9.3pt);
+  font-size: var(--bbm-part-col-firm-font-size, 9pt);
 }
 
-.printV2Root .v2ParticipantsTable th.v2PartColContact,
 .printV2Root .v2ParticipantsTable td.v2PartColContact {
   padding-left: var(--bbm-part-col-contact-padding-inline, 1.4mm);
   padding-right: var(--bbm-part-col-contact-padding-inline, 1.4mm);
-  font-size: var(--bbm-part-col-contact-font-size, 9.3pt);
+  font-size: var(--bbm-part-col-contact-font-size, 9pt);
 }
 
-.printV2Root .v2ParticipantsTable th.v2PartColMarks,
 .printV2Root .v2ParticipantsTable td.v2PartColMarks {
   padding-left: var(--bbm-part-col-marks-padding-inline, 1.4mm);
   padding-right: var(--bbm-part-col-marks-padding-inline, 1.4mm);
-  font-size: var(--bbm-part-col-marks-font-size, 9.3pt);
+  font-size: var(--bbm-part-col-marks-font-size, 9pt);
 }
 
 .printV2Root .v2PartMarksHead {
@@ -580,15 +587,17 @@
 }
 
 .printV2Root .v2ProtocolFooter {
-  margin-top: 10mm;
+  margin-top: 6mm;
+  padding-top: 1.5mm;
+  border-top: 0.2mm solid #d6dde3;
   text-align: left;
-  font-size: 10pt;
+  font-size: 9pt;
   font-weight: 500;
   line-height: 1.35;
 }
 
 .printV2Root .v2ProtocolFooterTitle {
-  font-weight: 500;
+  font-weight: 600;
   margin: 0 0 1mm 0;
 }
 

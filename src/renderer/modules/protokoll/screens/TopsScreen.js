@@ -18,6 +18,7 @@ import {
 import {
   buildProtokollTopsLayoutOverlay,
   extractProtokollTopsEditorValues,
+  resolveProtokollTopsUiMetaHeaderWidth,
 } from "../../../../shared/tableLayouts/protokollTopsLayout.js";
 import { editorFromTop } from "../editorFromTop.js";
 import { buildPatchFromDraft } from "../buildPatchFromDraft.js";
@@ -830,6 +831,10 @@ export default class TopsScreen {
     if (this.topsList instanceof TopsList) {
       this.topsList.setTableLayout(this._topListLayout);
     }
+    this.header?.root?.style?.setProperty(
+      "--bbm-tops-header-meta-width",
+      resolveProtokollTopsUiMetaHeaderWidth(this._topListLayout)
+    );
     this._syncDevLayoutMetaWidthFromLayout(this._topListLayout);
   }
 

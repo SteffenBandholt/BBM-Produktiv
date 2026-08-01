@@ -1,5 +1,32 @@
 # STATUS.md — BBM-Produktiv
 
+### M86.2 – Protokoll-PDF-Leitdesign
+
+- Status: `[A] abgenommen`; technische Umsetzung, automatisierter
+  Satznachweis und die vollständige isolierte sichtbare Protokoll-/PDF-/
+  Editor-Abnahme sind grün.
+- M86.2.2 stellt für `npm run start:ui-editor:acceptance -- --module=protokoll`
+  nun einen echten, gespeicherten und ausschließlich im validierten
+  temporären Acceptance-Profil erzeugten Fachzustand bereit: neutrales
+  Diagnoseprojekt, zwei Besprechungen für eine reale TOP-Übernahme,
+  acht Teilnehmer und zehn TOPs im ausgewählten Protokoll.
+- Der bisherige Renderer-Fake wurde entfernt. Der Acceptance-Start verwendet
+  die vorhandenen IPC-/Service-/Repository-Wege und öffnet den normalen
+  Protokollscreen über `router.showTops`; `getPrintData` ist mit demselben
+  isolierten Datenbestand automatisiert geprüft.
+- Die sichtbare Abnahme belegte den echten Protokollscreen, die interne
+  zweiseitige Vorschau mit FullHeader/MiniHeader und Abschlussbereich sowie
+  die erneute Erzeugung über V2-Paginierung, `PrintShell` und
+  `webContents.printToPDF`. Der PDF-Editor zeigte alle 28 registrierten
+  Elemente und beide Seiten.
+- UI-Editor-Änderung, Undo, Reset, Save, Neustart-Restore und Discard wurden
+  im isolierten Acceptance-Profil sichtbar geprüft; der gespeicherte Zustand
+  wurde beim zweiten Start genau einmal wiederhergestellt.
+- Variante B ist im bestehenden V2-Weg umgesetzt: keine gedruckten
+  Logo-Platzhalter, 8-mm-Kopf ohne Logo, geometrischer Logo-Kopf, 5-mm-Rand,
+  blauer Titelakzent, Teilnehmer 34/32/30/72/18 mm, Vorbemerkung 500 Zeichen
+  und gemeinsame TOP-Baseline 13/65/22.
+
 ### M85.2 – Restarbeiten-PDF-Satzweg vervollständigen und verriegeln
 
 - Status: `[A] abgenommen`; Restarbeiten verwendet aus Vorschau und Drucken
