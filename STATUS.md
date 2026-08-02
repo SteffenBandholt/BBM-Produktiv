@@ -1,5 +1,12 @@
 # STATUS.md — BBM-Produktiv
 
+### M86.6 – Richtungskorrekte Breitenänderung der Protokoll-Metagruppe
+
+- Status: `[A]`; die bestehende generische Breitenoperation setzt bei `content-box` wieder die sichtbare Außenbreite als bestätigten Zielwert um.
+- Ursache war nicht das Vorzeichen im UI-Editor-kit: Der Controller sendete bereits den korrekten absoluten Zielwert. Der BBM-Apply-Weg schrieb ihn jedoch als Inhaltsbreite und addierte damit statisches Padding/Rand-Chrome bei jedem Schritt erneut; `−` und `+` vergrößerten beide sichtbar.
+- Der generische Apply-Weg zieht nun nur bei `content-box` das aus aktuellem Readback ermittelte horizontale Chrome ab. Registry, IDs, Parents, Refs, DOM, CSS-Struktur, Scroll, PDF, Restarbeiten und Fachlogik bleiben unverändert; bestehende Bounds und Host-Readback gelten weiter.
+- Sichtprüfung im isolierten Protokollprofil: drei Minus, zwei Plus, Rückgängig, Mindestgrenze, Speichern, zweiter automatischer Start, Original und Verwerfen bestanden; der Acceptance-Launcher beendete beide Läufe mit Exit 0 und entfernte das temporäre Profil. `npm test` und `npm run test:node` sind jeweils 8/8 grün. Commit/Push/PR/Merge: keiner.
+
 ### M86.2 – Protokoll-PDF-Leitdesign
 
 - Status: `[A] abgenommen`; technische Umsetzung, automatisierter

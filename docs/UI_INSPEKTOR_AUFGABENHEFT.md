@@ -74,6 +74,17 @@ Aktueller Stand:
 - [x] M86.3 Einheitlicher Editor-Start und Protokoll-Metaspalte reparieren
 - [x] M86.4 Globalen Klickblocker reproduzieren und reparieren
 - [x] M86.5 Protokoll-Layout im flexiblen Screenrahmen reparieren
+- [x] M86.6 Breiten-Schritt der Protokoll-Metagruppe richtungskorrekt anwenden
+
+## Statusupdate M86.6
+
+- Status: `[A]`. Die registrierte Protokoll-Metagruppe `Gruppe Status und Zuordnung` und ihre bestehenden Feldgruppen behalten unverändert Registry, IDs, Parents, Refs, DOM-Struktur, CSS-Layout, Scrollbesitz und Fachlogik.
+- Ursache: Der UI-Editor-kit-Controller berechnete und sendete bereits den korrekten signierten absoluten Zielwert. Der generische BBM-Apply-Weg setzte bei `content-box` jedoch die sichtbare Außenbreite direkt als Inhaltsbreite. Das statische Padding/Rand-Chrome wurde dadurch jedes Mal zusätzlich addiert: sowohl `−` als auch `+` vergrößerten sichtbar.
+- Reparatur: Der bestehende generische Breitenweg ermittelt vor dem Schreiben ausschließlich für `content-box` die aktuelle Differenz aus Außen- und Inhaltsbreite und zieht sie vom bestätigten Zielwert ab. `border-box`, vorhandene Registry-Bounds, Host-Readback und die signierte Delta-Berechnung bleiben unverändert; es gibt keine neue willkürliche Begrenzung und keine Vorzeichenumkehr.
+- Neuer Regressionstest: `M86.6 BBM 28` deckt `protokoll.edit.meta` mit realistischem content-box-Chrome ab und prüft Minus, Plus, sichtbaren tatsächlichen Readback sowie die bestehenden Min-/Max-Bounds. Der vorhandene M82.3-Guardrail prüft nun denselben generischen Außenbreitenvertrag statt der überholten Padding-Formel.
+- Sichtabnahme im isolierten Protokollprofil: In der bestehenden Metagruppe ergaben drei Minus und zwei Plus vom Startwert `92,396614…` netto `91,372177…`; Rückgängig ergab `90,375938…`, das direkte Unterschreiten der Grenze wurde auf `7,998119…` begrenzt. Speichern, automatischer zweiter Start mit geladenem Layout, Original/Verwerfen und die automatische Profilbereinigung liefen durchgehend mit `run 1/2 exit=0` und `run 2/2 exit=0`.
+- Keine Registry-, PDF-, Fachlogik-, Restarbeiten- oder UI-Editor-kit-Änderung. `npm test` und `npm run test:node` liefen jeweils 8/8 grün; Vertrags-, Host-, Persistenz- und Diff-Prüfungen sind grün. Der globale Lintbestand bleibt mit 16 fremden Fehlern rot, die geänderte Ziel-Datei lintet fehlerfrei.
+- Commit/Push/PR/Merge: keiner.
 
 ## Statusupdate M86.5
 
