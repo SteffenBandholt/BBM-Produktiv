@@ -1403,7 +1403,10 @@ async function runTopsScreenIntegrationTests(run) {
       );
       assert.match(topsCss, /\.bbm-tops-screen-quicklane\s*\{[\s\S]*inline-size:\s*64px;/);
       assert.match(topsCss, /\.bbm-tops-screen-quicklane\s*\{[\s\S]*transform:\s*translateX\(46px\);/);
-      assert.match(topsCss, /\.bbm-tops-screen-quicklane:hover,\s*\.bbm-tops-screen-quicklane\[data-open="true"\]/);
+      assert.match(
+        topsCss,
+        /\.bbm-tops-screen-quicklane:hover,\s*\.bbm-tops-screen-quicklane:focus-within,\s*\.bbm-tops-screen-quicklane\[data-open="true"\]/
+      );
 
       for (const id of [
         "protokoll.topsScreen.quicklane.group.navigation",

@@ -44,6 +44,12 @@
   font-family: var(--bbm-top-text-font-family);
 }
 
+@media (max-width: 1100px) {
+  [data-bbm-tops-screen="true"] {
+    padding-inline-end: 64px;
+  }
+}
+
 [data-bbm-tops-screen-area="sheet"] {
   flex: 1 1 auto;
   min-height: 0;
@@ -414,7 +420,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
 .bbm-tops-screen-quicklane {
   position: fixed;
-  inset-block-start: 104px;
+  inset-block-start: 102px;
   inset-inline-end: 0;
   inset-block-end: 16px;
   z-index: 12030;
@@ -436,6 +442,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-screen-quicklane:hover,
+.bbm-tops-screen-quicklane:focus-within,
 .bbm-tops-screen-quicklane[data-open="true"] {
   transform: translateX(0);
   border-color: rgba(29, 78, 216, 0.42);
@@ -592,6 +599,67 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 .bbm-tops-screen-quicklane-filter-menu button[data-active="true"] {
   border-color: #93c5fd;
   background: #eff6ff;
+}
+
+@media (max-height: 520px) {
+  .bbm-tops-screen-quicklane {
+    inset-block-start: 72px;
+    inset-block-end: 8px;
+    gap: 4px;
+    padding-block: 4px;
+  }
+
+  .bbm-tops-screen-quicklane__group {
+    gap: 3px;
+    padding-block-end: 4px;
+  }
+
+  .bbm-tops-screen-quicklane__button {
+    inline-size: 28px;
+    block-size: 28px;
+  }
+
+  .bbm-tops-screen-quicklane-icon {
+    min-inline-size: 20px;
+    min-block-size: 20px;
+    font-size: 17px;
+  }
+
+  .bbm-tops-screen-quicklane-icon--ampel {
+    block-size: 26px;
+    min-block-size: 26px;
+  }
+}
+
+@media (max-height: 420px) {
+  .bbm-tops-screen-quicklane {
+    inset-block-start: 69px;
+    inset-block-end: 0;
+    gap: 3px;
+    padding-block: 3px;
+  }
+
+  .bbm-tops-screen-quicklane__group {
+    gap: 2px;
+    padding-block-end: 3px;
+  }
+
+  .bbm-tops-screen-quicklane__button {
+    inline-size: 22px;
+    block-size: 22px;
+    border-radius: 6px;
+  }
+
+  .bbm-tops-screen-quicklane-icon {
+    min-inline-size: 18px;
+    min-block-size: 18px;
+    font-size: 15px;
+  }
+
+  .bbm-tops-screen-quicklane-icon--ampel {
+    block-size: 20px;
+    min-block-size: 20px;
+  }
 }
 
 [data-bbm-tops-list-v2="true"] {
@@ -1524,14 +1592,6 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
   .bbm-tops-list-row-meta {
     grid-column: 1 / -1;
-  }
-
-  .bbm-tops-workbench-body {
-    grid-template-columns: 1fr;
-  }
-
-  .bbm-tops-workbench-gutter {
-    display: none;
   }
 
   .bbm-tops-meta-field-date .bbm-tops-input {
