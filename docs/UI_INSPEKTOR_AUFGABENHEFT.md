@@ -71,6 +71,13 @@ Aktueller Stand:
 - [x] M63B M51/M52-Auswahl read-only an EditorScopeInspector anbinden
 - [x] M63C Kleine Layout-Bedienkonsole fuer ausgewaehltes Element
 - [x] M80.2 Restarbeiten-Header und Editbox direkt editierbar; Split gesperrt, Liste flexibel
+- [x] M86.3 Einheitlicher Editor-Start und Protokoll-Metaspalte reparieren
+
+## Statusupdate M86.3
+
+- Status: `[A] abgenommen`; automatisierte Guardrails und die vollständige isolierte lokale Electron-Abnahme für Protokoll und Restarbeiten sind grün.
+- Der gemeinsame DEV-Launcher bleibt außerhalb der Registry. Es wurden keine IDs, Parents, Baselines, Bounds oder erlaubten Operationen geändert.
+- M86.3.1 entfernt den nicht-interaktiven Registry-Hinweis zeitgesteuert, hält die bestehende Quicklane bei allen drei Zielgrößen erreichbar und reserviert bei schmalen Viewports ihre vorhandene Breite ohne neue DOM- oder Scrollstruktur.
 
 ## Statusupdate M80.2
 

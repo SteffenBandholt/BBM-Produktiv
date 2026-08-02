@@ -160,6 +160,7 @@ const TEST_GROUPS = Object.freeze([
       ["m82-7-4AmpelEditing.test.cjs", "runM8274AmpelEditingTests"],
       ["m82-7-5LayoutPersistenceMetaElements.test.cjs", "runM8275LayoutPersistenceMetaElementsTests"],
       ["m83-0ComponentContracts.test.cjs", "runM830ComponentContractTests"],
+      ["m86-3EditorStartMetaRepair.test.cjs", "runM863EditorStartMetaRepairTests"],
       ["uiEditorAcceptanceIsolation.test.cjs", "runUiEditorAcceptanceIsolationTests"],
       ["testHarnessOrchestration.test.cjs", "runTestHarnessOrchestrationTests"],
     ]),

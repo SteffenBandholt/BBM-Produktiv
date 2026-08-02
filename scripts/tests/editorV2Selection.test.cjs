@@ -279,6 +279,7 @@ async function runEditorV2SelectionTests(run) {
   const allowedProtokollUiDiffs = new Set([
     "src/renderer/modules/protokoll/TopsScreenQuicklane.js",
     "src/renderer/modules/protokoll/TopsList.js",
+    "src/renderer/modules/protokoll/TopsHeader.js",
     "src/renderer/modules/protokoll/screens/TopsScreen.js",
     "src/renderer/modules/protokoll/styles/tops.css",
     "src/renderer/modules/protokoll/uiEditor/protokollUiElements.js",

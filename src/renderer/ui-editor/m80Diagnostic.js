@@ -37,6 +37,7 @@ export async function installBbmM80DiagnosticPilot({ router, module = "restarbei
 export async function installBbmM80DiagnosticModule({ router, module = "restarbeiten", isolatedAcceptance = false } = {}) {
   if (module === "protokoll") return installProtokollAcceptancePilot({ router, isolatedAcceptance });
   if (!router?.contentRoot) throw new Error("M80-Diagnose braucht den vorhandenen BBM-Inhaltsbereich.");
+  router._setSidebarVisibility?.(false);
   const screen = new RestarbeitenScreen({
     router: null,
     projectId: null,

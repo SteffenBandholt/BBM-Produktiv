@@ -1,23 +1,50 @@
 import { createM80RegistrationDescriptor } from "../ui-editor/m80HostAdapter.js";
 
+const REGISTRY_STATUS_SUCCESS_DURATION_MS = 2400;
+const REGISTRY_STATUS_ERROR_DURATION_MS = 6000;
+let registryStatusRemovalTimer = null;
+
 function showRegistryRefreshStatus(message, state = "checking") {
   const doc = globalThis.document;
   if (!doc?.body || typeof doc.createElement !== "function") return;
+  if (registryStatusRemovalTimer) {
+    clearTimeout(registryStatusRemovalTimer);
+    registryStatusRemovalTimer = null;
+  }
   let status = doc.querySelector?.("[data-bbm-ui-editor-registry-status]");
   if (!status) {
     status = doc.createElement("div");
     status.setAttribute("data-bbm-ui-editor-registry-status", "true");
     status.setAttribute("role", "status");
     status.setAttribute("aria-live", "polite");
-    status.style.cssText = "position:fixed;right:18px;bottom:18px;z-index:2147482000;padding:9px 12px;border-radius:8px;background:#172033;color:#fff;box-shadow:0 8px 24px rgba(15,23,42,.24);font:600 12px/1.3 system-ui,sans-serif";
+    status.style.cssText = "position:fixed;right:18px;bottom:18px;z-index:2147482000;pointer-events:none;padding:9px 12px;border-radius:8px;background:#172033;color:#fff;box-shadow:0 8px 24px rgba(15,23,42,.24);font:600 12px/1.3 system-ui,sans-serif";
     doc.body.appendChild(status);
   }
   status.dataset.state = state;
   status.textContent = message;
+  if (state !== "checking") {
+    const duration = state === "blocked" ? REGISTRY_STATUS_ERROR_DURATION_MS : REGISTRY_STATUS_SUCCESS_DURATION_MS;
+    registryStatusRemovalTimer = setTimeout(() => {
+      status.remove?.();
+      registryStatusRemovalTimer = null;
+    }, duration);
+  }
+}
+
+export const DEVELOPMENT_UI_EDITOR_BUTTON_LABEL = "UI-Editor öffnen";
+
+export async function isDevelopmentUiEditorBuild({ api = globalThis.window?.bbmDb } = {}) {
+  if (typeof api?.appGetBuildChannel !== "function") return false;
+  try {
+    const result = await api.appGetBuildChannel();
+    return result?.ok === true && String(result?.channel || "").trim().toUpperCase() === "DEV";
+  } catch (_error) {
+    return false;
+  }
 }
 
 export async function openNativeUiEditor(context = {}) {
-  const api = window.uiEditor;
+  const api = context?.api || window.uiEditor;
   if (!api || typeof api.open !== "function") {
     alert("Der separate UI-Editor ist nicht installiert oder die sichere BBM-Brücke ist nicht verfügbar.");
     return { ok: false, errorCode: "electron_editor_not_installed" };
@@ -25,8 +52,17 @@ export async function openNativeUiEditor(context = {}) {
   if (typeof api.preparePdfContext === "function" && context?.projectId && context?.meetingId) {
     await api.preparePdfContext({ projectId: context?.projectId || null, meetingId: context?.meetingId || null });
   }
+  const registration = createM80RegistrationDescriptor();
+  const activeScopeId = String(context?.scopeId || "").trim();
+  if (activeScopeId && !registration.activeScopes.includes(activeScopeId)) {
+    const message = "Der UI-Editor kann für den aktuellen Entwicklungsbereich nicht geöffnet werden, weil der erwartete Scope nicht vollständig registriert ist.";
+    showRegistryRefreshStatus(message, "blocked");
+    alert(message);
+    return { ok: false, errorCode: "electron_editor_scope_not_active" };
+  }
+
   showRegistryRefreshStatus("UI-Registry wird geprüft …", "checking");
-  const result = await api.open(createM80RegistrationDescriptor());
+  const result = await api.open(registration);
   if (result?.ok) {
     showRegistryRefreshStatus(result.registryRefreshStatus === "changed" ? "UI-Registry aktualisiert." : "UI-Registry ist aktuell.", result.registryRefreshStatus || "current");
   } else {
@@ -35,7 +71,49 @@ export async function openNativeUiEditor(context = {}) {
   if (!result?.ok && result?.errorCode !== "electron_profile_user_cancelled") {
     alert(result?.message || "Der separate UI-Editor konnte nicht gestartet werden.");
   }
+
+  if (result?.ok && activeScopeId) {
+    const scopeResult = typeof api.sendTargetEvent === "function"
+      ? await api.sendTargetEvent({ action: "scopeChanged", scopeId: activeScopeId, registration })
+      : { ok: false, errorCode: "electron_editor_scope_activation_unavailable" };
+    if (!scopeResult?.ok) {
+      const message = "Der UI-Editor wurde geöffnet, aber der aktuelle Entwicklungsbereich konnte nicht aktiviert werden.";
+      showRegistryRefreshStatus(message, "blocked");
+      alert(message);
+      return { ok: false, errorCode: scopeResult?.errorCode || "electron_editor_scope_activation_failed" };
+    }
+  }
+
   return result;
+}
+
+export async function installDevelopmentUiEditorOpenButton({
+  host,
+  scopeId,
+  doc = globalThis.document,
+  buildApi = globalThis.window?.bbmDb,
+  uiEditorApi = globalThis.window?.uiEditor,
+} = {}) {
+  if (!host || !doc?.createElement || !await isDevelopmentUiEditorBuild({ api: buildApi })) return null;
+  if (host.querySelector?.('[data-bbm-development-ui-editor-open="true"]')) return null;
+
+  const button = doc.createElement("button");
+  button.type = "button";
+  button.className = "bbm-development-ui-editor-open-button";
+  button.textContent = DEVELOPMENT_UI_EDITOR_BUTTON_LABEL;
+  button.setAttribute("data-bbm-development-ui-editor-open", "true");
+  button.style.cssText = "display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:4px 9px;border:1px solid #d3dfec;border-radius:7px;background:#f5f8fc;color:#1f344a;font:600 8.5pt/1.2 var(--bbm-font-ui,system-ui,sans-serif);white-space:nowrap;cursor:pointer;";
+  button.addEventListener("click", async () => {
+    if (button.disabled) return;
+    button.disabled = true;
+    try {
+      await openNativeUiEditor({ scopeId, api: uiEditorApi });
+    } finally {
+      button.disabled = false;
+    }
+  });
+  host.appendChild(button);
+  return button;
 }
 
 export function createCoreShellNavigationRouteDefs(router) {

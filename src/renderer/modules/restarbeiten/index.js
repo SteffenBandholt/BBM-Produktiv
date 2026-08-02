@@ -33,7 +33,7 @@ export function getRestarbeitenModuleEntry() {
     screens: buildRestarbeitenModuleScreens(),
     navigation: buildRestarbeitenModuleNavigation(),
     shell: Object.freeze({
-      hideSidebar: false,
+      hideSidebar: true,
     }),
   });
 }

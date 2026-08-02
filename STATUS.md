@@ -27,6 +27,16 @@
   blauer Titelakzent, Teilnehmer 34/32/30/72/18 mm, Vorbemerkung 500 Zeichen
   und gemeinsame TOP-Baseline 13/65/22.
 
+### M86.3 – Einheitlicher Editor-Start und Protokoll-Metaspalte
+
+- Status: `[A] abgenommen`; automatisierte Guardrails und die vollständige isolierte lokale Electron-Sichtabnahme sind grün.
+- Protokoll bleibt ohne Sidebar; Restarbeiten verwendet nun ebenfalls den bestehenden modulgebundenen Router-Shellvertrag ohne Sidebar und stellt beim Modulwechsel den jeweiligen Zielzustand wieder her.
+- Der gemeinsame Header-Launcher `UI-Editor öffnen` wird nur bei explizitem DEV-Buildkanal erzeugt, erzeugt/prüft vor dem Öffnen die bestehende Registry und aktiviert danach den bestehenden Modulscope.
+- Die Protokoll-Metaspalte bleibt im vorhandenen Workbench-Grid rechts neben Kurz-/Langtext. Entfernt wurde ausschließlich der frühere vertikale Responsive-Fallback; Registry, Baselines, PDF und Fachlogik bleiben unverändert.
+- M86.3.1 beseitigt den dauerhaft blockierenden Registry-Statushinweis, macht ihn nicht-interzeptierend und entfernt ihn zeitgesteuert. Die vorhandene Quicklane ist bei kurzen Viewports kompakt, per Fokus erreichbar und erhält bei schmalen Breiten einen reservierten 64-Pixel-Bereich ohne Überdeckung.
+- Sichtbar geprüft wurden drei Zeilen, Level-1 ein/aus, Text und Restzeichen, Meta-Felder, alle vorhandenen Workbenchaktionen, Headerdialoge/Tabfolge, Listenende, Editor öffnen/fokussieren sowie 1920×1080, 1600×900, 1366×768 und manuelles Verkleinern/Vergrößern.
+- Restarbeiten bestand die Kurzregression mit ausgeblendeter Sidebar, bedienbarem Editorbutton und entferntem Statushinweis. `npm test` und `npm run test:node` sind jeweils 8/8 grün; Commit/Push/PR/Merge: keiner.
+
 ### M85.2 – Restarbeiten-PDF-Satzweg vervollständigen und verriegeln
 
 - Status: `[A] abgenommen`; Restarbeiten verwendet aus Vorschau und Drucken
