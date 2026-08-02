@@ -1400,6 +1400,7 @@ export default class TopsScreen {
       this._syncScreenState();
     } finally {
       this.store.setState({ isWriting: false });
+      this._syncScreenState();
     }
   }
 

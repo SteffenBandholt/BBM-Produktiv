@@ -72,6 +72,18 @@ Aktueller Stand:
 - [x] M63C Kleine Layout-Bedienkonsole fuer ausgewaehltes Element
 - [x] M80.2 Restarbeiten-Header und Editbox direkt editierbar; Split gesperrt, Liste flexibel
 - [x] M86.3 Einheitlicher Editor-Start und Protokoll-Metaspalte reparieren
+- [x] M86.4 Globalen Klickblocker reproduzieren und reparieren
+
+## Statusupdate M86.4
+
+- Status: `[A]`. Der flächige Klickausfall wurde auf dem unveränderten Main-Ausgangspunkt nach `TOP wählen → +TOP → Schieben → Papierkorb` reproduziert.
+- Blockierender Zustand war kein Overlay, Backdrop, Root-`inert`, globales `pointer-events: none` oder Editorfokus, sondern ein veralteter gerenderter `disabled`-Zustand: Der Store war nach dem Löschen bereits wieder bei `isWriting: false`, der Screen war danach aber nicht erneut synchronisiert worden.
+- `_handleWorkbenchDelete()` ruft nach dem Zurücksetzen des Schreibzustands jetzt den vorhandenen `_syncScreenState()`-Weg auf. Es wurden keine Registry-, Komponentenvertrags-, Parent-, ID-, UI-Struktur-, PDF- oder Fachlogikänderungen vorgenommen.
+- Der neue M86.4-Guardrail reproduzierte die fehlende Freigabesynchronisierung vor der Reparatur rot und prüft danach zusätzlich Kernbutton-Hit-Tests, Registry-Hinweis/Entfernung, Dialog-/Backdrop-Grundzustand, Editorlauncher sowie Zwei-Start-/Restarbeiten-Regeln.
+- Sichtprüfung: vollständige Protokollmatrix und Restarbeiten-Kurzregression nach nativem Editorfokus bei 1920×1080, 1600×900 und 1366×768. Alle erfassten Fachklicks waren vertrauenswürdig und nicht verhindert; `Rückgängig` wurde im nativen Editor praktisch ausgeführt.
+- Der vorgesehene zweifache Acceptance-Start lief mit demselben isolierten Profil zweimal mit Exit 0; beide Läufe bestanden `Zeile → +TOP → Papierkorb`, und die temporäre Profilwurzel wurde entfernt.
+- `npm test` und `npm run test:node` liefen jeweils 8/8 grün. Restarbeiten-, M86.3-, M83-, Vertrags-, ESLint- und Diff-Prüfungen sind grün. `docs/licensing.md` blieb mit dem verbindlichen Schutz-Hash unangetastet.
+- Commit/Push/PR/Merge: keiner. Für M86.4 ist kein weiterer Schritt offen.
 
 ## Statusupdate M86.3
 
