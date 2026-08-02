@@ -37,6 +37,20 @@
 - Sichtbar geprüft wurden drei Zeilen, Level-1 ein/aus, Text und Restzeichen, Meta-Felder, alle vorhandenen Workbenchaktionen, Headerdialoge/Tabfolge, Listenende, Editor öffnen/fokussieren sowie 1920×1080, 1600×900, 1366×768 und manuelles Verkleinern/Vergrößern.
 - Restarbeiten bestand die Kurzregression mit ausgeblendeter Sidebar, bedienbarem Editorbutton und entferntem Statushinweis. `npm test` und `npm run test:node` sind jeweils 8/8 grün; Commit/Push/PR/Merge: keiner.
 
+### M86.4 – Globaler Klickblocker
+
+- Status: `[A]`; der Fehler wurde auf dem unveränderten Ausgangsstand `ed2cbd2031f44a8df0dbbd78e440a75886ec175e` reproduziert und anschließend minimal repariert.
+- Reproduktion: Nach `TOP 2.6 wählen → +TOP → Schieben aktivieren → Papierkorb` blieb der gerenderte Protokollscreen im Schreibzustand. Header-, Workbench- und Quicklane-Aktionen trugen weiter `disabled`, obwohl der Store bereits `isWriting: false` enthielt. Der UI-Editor-Launcher blieb als getrennte Entwicklungsaktion enabled.
+- Ursache: `_handleWorkbenchDelete()` synchronisierte den Screen noch während `isWriting: true`; der `finally`-Block setzte nur den Store zurück. Ohne abschließendes `_syncScreenState()` blieb der DOM-Zustand veraltet. Es gab kein blockierendes Overlay, keinen verwaisten Backdrop, kein Root-`inert`, kein globales `pointer-events: none` und keinen dauerhaft abfangenden Capture-Listener.
+- Reparatur: Direkt nach `this.store.setState({ isWriting: false })` wird einmal der bestehende Screen-Synchronisationsweg aufgerufen. Registry, Komponentenverträge, IDs, Parent-Struktur, PDF und Fachlogik blieben unverändert.
+- Vorher traf `elementFromPoint` die betroffenen Buttons weiterhin, aber `disabled` verhinderte ihre Fachaktivierung; nachher treffen die Mittelpunkte von `UI-Editor öffnen`, `Protokoll beenden`, `+TOP`, `Papierkorb` und sichtbaren Listenzeilen jeweils den Button oder ein zulässiges Kind. Alle Ketten bis `HTML` sind sichtbar, nicht inert und haben `pointer-events: auto`.
+- Der unveränderte Acceptance-Launcher lief mit demselben isolierten Profil zweimal (`run 1/2 exit=0`, `run 2/2 exit=0`). In beiden Läufen bestand nach dem nativen Editorfokus der kritische Ablauf `Zeile → +TOP → Papierkorb`; die temporäre Wurzel wurde anschließend automatisch entfernt.
+- Die vollständige Protokoll-Bedienmatrix wurde nach Editorfokus bei 1920×1080, 1600×900 und 1366×768 wiederholt: Header, drei Listenzeilen, Status, Termin, Verantwortlich, +Titel, +TOP, Schieben, Papierkorb, Level-1 auf/zu, Abbruchdialog, Schließen und Quicklane. Die protokollierten Klicks waren vertrauenswürdig und nicht verhindert. `Rückgängig` wurde im nativen Editor nach einer reversiblen 1-DIP-Änderung ausgeführt.
+- Restarbeiten bestand bei denselben drei Viewports die Kurzregression mit UI-Editor, Filter, Listenzeile, `Neu` und Quicklane; nach Editorfokus blieben Root und Fachscreen ohne `inert` und ohne aktiven Backdrop.
+- Neuer Guardrail: `scripts/tests/m86-4GlobalClickBlocker.test.cjs` sichert den Schreibzustands-Lebenszyklus, Kernbutton-Hit-Tests, Registry-Hinweis, Hinweisentfernung, Dialog-/Backdrop-Grundzustand, Editorlauncher und Zwei-Start-/Restarbeiten-Regeln ab.
+- Prüfung: Protokoll-Integration, Restarbeiten-Modultest, M86.3, M83, `npm test` und `npm run test:node` jeweils 8/8, gezieltes ESLint ohne Fehler, UI-Editor-Vertragscheck und `git diff --check` grün. `docs/licensing.md` blieb unangetastet mit SHA-256 `02AE66A8873C74869539F13F734B7CE43BC63B6EF37DA553A40C27A4F514D784`.
+- Commit/Push/PR/Merge: keiner. Nächster offener Schritt: keiner für M86.4.
+
 ### M85.2 – Restarbeiten-PDF-Satzweg vervollständigen und verriegeln
 
 - Status: `[A] abgenommen`; Restarbeiten verwendet aus Vorschau und Drucken
