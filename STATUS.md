@@ -51,6 +51,15 @@
 - Prüfung: Protokoll-Integration, Restarbeiten-Modultest, M86.3, M83, `npm test` und `npm run test:node` jeweils 8/8, gezieltes ESLint ohne Fehler, UI-Editor-Vertragscheck und `git diff --check` grün. `docs/licensing.md` blieb unangetastet mit SHA-256 `02AE66A8873C74869539F13F734B7CE43BC63B6EF37DA553A40C27A4F514D784`.
 - Commit/Push/PR/Merge: keiner. Nächster offener Schritt: keiner für M86.4.
 
+### M86.5 – Protokoll-Layout-Reparatur
+
+- Status: `[A]`; der Protokollscreen erhält eine sichere Flex-Aufteilung aus Header, Liste und Editbox.
+- Ursache: Der Listenbereich hatte keine feste flexible Basis, die Editbox durfte über unpassende Höhenwerte bis 720 px wachsen und die Workbench-Kopfzeile verwendete starre Mindestspalten. Dadurch konnten Liste, Editbox und Aktionsgruppen bei engem Platz gegeneinander kollabieren.
+- Reparatur: `sheet` bleibt der einzige vertikale Scrollbesitzer; Screen und Liste verwenden `flex: 1 1 0`. Die Editbox ist regulär auf 190–300 px begrenzt und wird nur in der vorhandenen niedrigen Höhenstufe auf 160 px kompakt dargestellt; die Workbench bleibt dabei geschützt und der Header verwendet eine flexible statt starrer Mindestspalten. Für 900×430 wird ausschließlich die bestehende Header-/Workbench-Geometrie verdichtet; die Meta-Felder bleiben rechts neben Kurz- und Langtext und vollständig sichtbar.
+- Unverändert: Registrystruktur, IDs, Parents, Fachlogik, PDF/Druck und Restarbeiten.
+- Neuer Guardrail: `scripts/tests/m86-5ProtokollLayoutRepair.test.cjs`.
+- Commit/Push/PR/Merge: keiner.
+
 ### M85.2 – Restarbeiten-PDF-Satzweg vervollständigen und verriegeln
 
 - Status: `[A] abgenommen`; Restarbeiten verwendet aus Vorschau und Drucken
