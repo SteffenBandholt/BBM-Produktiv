@@ -11,8 +11,12 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 async function runTestHarnessOrchestrationTests(run) {
   await run("Testharness: alle bisherigen Suite-Einstiege sind genau einmal gruppiert", () => {
     const suites = TEST_GROUPS.flatMap((group) => group.suites.map(([moduleName, exportName]) => `${moduleName}#${exportName}`));
+    /* Historischer Suite-Umfang vor M86.8:
     assert.equal(TEST_GROUPS.length, 8);
     assert.equal(suites.length, 120, "120 Suite-Einstiege einschließlich M86.7-Protokollbuttonverträge");
+    */
+    assert.equal(TEST_GROUPS.length, 8);
+    assert.equal(suites.length, 121, "121 Suite-Einstiege einschlieÃŸlich M86.8-Protokollvollvertrag");
     assert.equal(new Set(suites).size, suites.length);
     for (const suite of suites) assert.equal(fs.existsSync(path.resolve(__dirname, suite.split("#")[0])), true, suite);
     assert.equal(TEST_GROUPS.filter((group) => group.includeStoragePathTests).length, 1);

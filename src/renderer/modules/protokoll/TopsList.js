@@ -3,7 +3,7 @@ import {
   normalizeTopShortText,
 } from "../../shared/text/topTextPresentation.js";
 import { applyProtokollTopsUiLayout } from "../../../shared/tableLayouts/protokollTopsLayout.js";
-import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
+import { beginM83ComponentBinding, completeM80PilotRender, registerM80MultiRef } from "../../ui-editor/m80Refs.js";
 
 const PROTOKOLL_LIST_COLUMN_REFS = Object.freeze([
   Object.freeze({ id: "protokoll.list.column.number", key: "number", widthVariable: "--bbm-tops-list-number-col", minimumWidth: 40, maximumWidth: 220 }),
@@ -85,7 +85,7 @@ export class TopsList {
       enabled: false,
       activeZone: null,
     };
-    this._uiEditorColumnRefs = { number: [], text: [], meta: [] };
+    this._uiEditorRefs = this._createUiEditorRefs();
     this.root = document.createElement("ul");
     this.root.setAttribute("data-bbm-tops-list-v2", "true");
     applyProtokollTopsUiLayout(this.root, this.tableLayout);
@@ -137,7 +137,7 @@ export class TopsList {
       this.root.innerHTML = "";
     }
     const rows = Array.isArray(items) ? items : [];
-    this._uiEditorColumnRefs = { number: [], text: [], meta: [] };
+    this._uiEditorRefs = this._createUiEditorRefs();
     for (const item of rows) {
       this.root.appendChild(this._renderRow(item));
     }
@@ -147,11 +147,10 @@ export class TopsList {
   _registerUiEditorColumnRefs() {
     beginM83ComponentBinding("bbm.protokoll.list.columns");
     for (const column of PROTOKOLL_LIST_COLUMN_REFS) {
-      const targets = this._uiEditorColumnRefs[column.key] || [];
-      const primary = targets[0];
-      if (!primary) continue;
-      registerM80Ref(column.id, primary, {
-        targets,
+      const targets = this._uiEditorRefs[column.key] || [];
+      const primary = targets[0] || this.root;
+      registerM80MultiRef(column.id, targets, this.root, {
+        mountedInstanceCount: targets.length,
         read: () => readLogicalColumnState(column.id, primary),
         apply: (state) => {
           const width = Math.min(column.maximumWidth, Math.max(column.minimumWidth, finite(state.width, column.minimumWidth)));
@@ -159,7 +158,21 @@ export class TopsList {
         },
       });
     }
+    for (const id of [
+      "protokoll.list.row", "protokoll.list.row.level1Toggle", "protokoll.list.row.number", "protokoll.list.row.marker",
+      "protokoll.list.row.createdAt", "protokoll.list.row.short", "protokoll.list.row.long", "protokoll.list.row.due",
+      "protokoll.list.row.status", "protokoll.list.row.responsible", "protokoll.list.row.ampel", "protokoll.list.row.todo", "protokoll.list.row.decision",
+    ]) registerM80MultiRef(id, this._uiEditorRefs[id] || [], this.root, { mountedInstanceCount: (this._uiEditorRefs[id] || []).length });
     completeM80PilotRender();
+  }
+
+  _createUiEditorRefs() {
+    return {
+      number: [], text: [], meta: [],
+      "protokoll.list.row": [], "protokoll.list.row.level1Toggle": [], "protokoll.list.row.number": [], "protokoll.list.row.marker": [],
+      "protokoll.list.row.createdAt": [], "protokoll.list.row.short": [], "protokoll.list.row.long": [], "protokoll.list.row.due": [],
+      "protokoll.list.row.status": [], "protokoll.list.row.responsible": [], "protokoll.list.row.ampel": [], "protokoll.list.row.todo": [], "protokoll.list.row.decision": [],
+    };
   }
 
   _renderRow(item = {}) {
@@ -213,6 +226,7 @@ export class TopsList {
         if (this.onLevel1Toggle) this.onLevel1Toggle(item);
       };
       numLine.appendChild(collapseButton);
+      this._uiEditorRefs["protokoll.list.row.level1Toggle"].push(collapseButton);
     }
 
     this._decorateLayoutZone(num, "number");
@@ -221,6 +235,7 @@ export class TopsList {
     numLabel.className = "bbm-tops-list-row-number-value";
     numLabel.textContent = `${item.number || ""}`;
     numLine.appendChild(numLabel);
+    this._uiEditorRefs["protokoll.list.row.number"].push(numLabel);
     num.appendChild(numLine);
 
     if (item.showStar) {
@@ -228,6 +243,7 @@ export class TopsList {
       star.className = "bbm-tops-list-row-star";
       star.textContent = "*";
       numLabel.append(" ", star);
+      this._uiEditorRefs["protokoll.list.row.marker"].push(star);
     }
 
     const createdAt = String(item.createdAt || "").trim();
@@ -236,6 +252,7 @@ export class TopsList {
       createdAtLine.className = "bbm-tops-list-row-number-date";
       createdAtLine.textContent = createdAt;
       num.appendChild(createdAtLine);
+      this._uiEditorRefs["protokoll.list.row.createdAt"].push(createdAtLine);
     }
 
     const text = document.createElement("div");
@@ -248,6 +265,7 @@ export class TopsList {
     title.dataset.important = item.isImportant ? "true" : "false";
     title.dataset.completed = item.isCompleted ? "true" : "false";
     title.textContent = normalizeTopShortText(item.title);
+    this._uiEditorRefs["protokoll.list.row.short"].push(title);
 
     const preview = document.createElement("div");
     preview.className = "bbm-tops-list-row-preview";
@@ -260,13 +278,14 @@ export class TopsList {
     text.append(title);
     if (item.showLongtextInList !== false && previewText) {
       text.append(preview);
+      this._uiEditorRefs["protokoll.list.row.long"].push(preview);
     }
 
     const meta = document.createElement("div");
     meta.className = "bbm-tops-list-row-meta";
     this._decorateLayoutZone(meta, "meta");
     const statusTokens = new Set(["-", "offen", "in arbeit", "erledigt", "blockiert", "verzug"]);
-    for (const line of item.meta || []) {
+    for (const [metaIndex, line] of (item.meta || []).entries()) {
       const el = document.createElement("div");
       el.className = "bbm-tops-list-row-meta-line";
       const value = String(line || "").trim();
@@ -282,6 +301,8 @@ export class TopsList {
       text.className = "bbm-tops-list-row-meta-text";
       text.textContent = line;
       el.appendChild(text);
+      const metaRefId = ["protokoll.list.row.due", "protokoll.list.row.status", "protokoll.list.row.responsible"][metaIndex];
+      if (metaRefId) this._uiEditorRefs[metaRefId].push(el);
       if (statusTokens.has(normalized)) {
         const ampelSlot = document.createElement("span");
         ampelSlot.className = "bbm-tops-list-row-meta-ampel-slot";
@@ -294,6 +315,7 @@ export class TopsList {
           img.title = "Beschluss";
           img.dataset.symbol = "decision";
           ampelSlot.appendChild(img);
+          this._uiEditorRefs["protokoll.list.row.decision"].push(img);
         } else if (symbolType === "task") {
           const img = document.createElement("img");
           img.className = "bbm-tops-list-row-meta-symbol";
@@ -302,12 +324,14 @@ export class TopsList {
           img.title = "ToDo";
           img.dataset.symbol = "task";
           ampelSlot.appendChild(img);
+          this._uiEditorRefs["protokoll.list.row.todo"].push(img);
         } else if (item.showAmpelInList !== false && item.ampelColor) {
           const dot = document.createElement("span");
           dot.className = "bbm-tops-list-row-ampel";
           dot.dataset.color = String(item.ampelColor || "");
           dot.setAttribute("aria-label", `Ampel ${item.ampelColor}`);
           ampelSlot.appendChild(dot);
+          this._uiEditorRefs["protokoll.list.row.ampel"].push(dot);
         }
         el.appendChild(ampelSlot);
       }
@@ -315,9 +339,10 @@ export class TopsList {
     }
 
     row.append(num, text, meta);
-    this._uiEditorColumnRefs.number.push(num);
-    this._uiEditorColumnRefs.text.push(text);
-    this._uiEditorColumnRefs.meta.push(meta);
+    this._uiEditorRefs.number.push(num);
+    this._uiEditorRefs.text.push(text);
+    this._uiEditorRefs.meta.push(meta);
+    this._uiEditorRefs["protokoll.list.row"].push(rowEl);
     rowEl.appendChild(row);
 
     rowEl.onclick = async () => {

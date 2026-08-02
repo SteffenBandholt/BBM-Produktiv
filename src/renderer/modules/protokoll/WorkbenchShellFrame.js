@@ -35,8 +35,9 @@ export class WorkbenchShellFrame {
     this.gutter.setAttribute("aria-hidden", "true");
   }
 
-  mount(rightColumnRoot) {
-    this.body.append(this.left, this.gutter, rightColumnRoot);
+  mount(rightColumnRoot = null) {
+    this.body.append(this.left, this.gutter);
+    if (rightColumnRoot) this.body.appendChild(rightColumnRoot);
     this.root.append(this.header, this.body);
   }
 }

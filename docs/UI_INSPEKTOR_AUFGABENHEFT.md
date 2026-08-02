@@ -75,6 +75,15 @@ Aktueller Stand:
 - [x] M86.4 Globalen Klickblocker reproduzieren und reparieren
 - [x] M86.5 Protokoll-Layout im flexiblen Screenrahmen reparieren
 - [x] M86.6 Breiten-Schritt der Protokoll-Metagruppe richtungskorrekt anwenden
+- [x] M86.8 Protokoll-Listenvertrag vollstaendig machen und Workbench-Anordnung absichern
+
+## Statusupdate M86.8
+
+- Status: `[A]`. Der komponentennahe Protokoll-Listenvertrag umfasst bestehende Dokumentflaeche, Tabelle, Tabellenkoerper, Spalten und die wiederholbaren Listenziele: Zeile, Level-1-Schalter, Nummer, Stern, Erstelldatum, Kurz-/Langtext, Termin, Status, Verantwortlich, Ampel, Aufgabe und Beschluss.
+- Die produktive `TopsList` liefert direkte Mehrfach-Refs auf die tatsaechlich sichtbaren Elemente und erneuert diese bei jedem Rendern. IDs sind stabil und datenunabhaengig; es gibt keine automatische DOM-Erkennung, keine neue Sammelregistry, keine neuen Wrapper und keine Fachaktion als Editor-Ziel.
+- Die vorhandene Editbox ordnet Kurztext oberhalb von Langtext links und Meta rechts an. Der bestehende Meta-Slot ist der einzige Mountpunkt; es existiert weder ein weiterer Parent noch eine dritte visuelle Layoutzeile. Kurztext, Langtext und Meta bleiben einzeln editorfaehig.
+- Der M86.8-Guardrail prueft Vollstaendigkeit, direkte Refs, Mehrfach-Refs, erneutes Rendern, Parents, Baselines, Bounds, IDs, Editierbarkeit, Operationsgrenzen und die Entwicklungs-/Release-Abgrenzung. Er rendert die echte TopsList mit Titel-, Langtext-, Ampel-, Aufgabe- und Beschlussvarianten, verlangt direkte Ziele fuer jeden Listenslot und prueft den Multi-Ref-Rerender. `npm test` und `npm run test:node` sind jeweils 8/8 gruen. Die sichtbare Layoutpruefung bei 1920x1080, 1600x900, 1366x768 und 900x430 war ohne dritte Zeile oder sichtbare Ueberlagerung. Kurztext, Langtext, Termin und Status waren im isolierten Editor direkt auswaehlbar; Kurztext pruefte Verschieben, Undo, Kleiner, Groesser und Original. Save und der zweite sichtbare Start liefen.
+- Commit/Push/PR/Merge: keiner.
 
 ## Statusupdate M86.6
 
