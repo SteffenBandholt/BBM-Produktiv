@@ -6,7 +6,7 @@ import { protokollListColumnsUiEditorContract, protokollListUiEditorContract } f
 import { protokollEditUiEditorContract } from "../modules/protokoll/TopsWorkbench.uiEditorContract.js";
 import { aggregateBbmM83Components } from "./m83ComponentContract.js";
 
-export const BBM_M80_REGISTRY_VERSION = 13;
+export const BBM_M80_REGISTRY_VERSION = 15;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([

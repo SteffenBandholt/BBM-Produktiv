@@ -1,5 +1,5 @@
 import { getTopFilterBadge, getTopFilterLabel, normalizeTopFilterMode } from "./topFilterMode.js";
-import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
+import { beginM83ComponentBinding, completeM80PilotRender, registerM80MultiRef, registerM80Ref } from "../../ui-editor/m80Refs.js";
 
 const ICON_CLASS = "bbm-tops-screen-quicklane-icon";
 const AMPEL_STATUS_ICON_URL = "./assets/icons/ampel-status.svg";
@@ -244,6 +244,8 @@ export class TopsScreenQuicklane {
       registerM80Ref(groupId, group);
       buttonIds.forEach((buttonId, index) => registerM80Ref(buttonId, group.children[index]));
     }
+    registerM80MultiRef("protokoll.topsScreen.quicklane.filter.menu", [], this.root);
+    FILTER_OPTIONS.forEach((option) => registerM80MultiRef(`protokoll.topsScreen.quicklane.filter.option.${option.mode}`, [], this.root));
     completeM80PilotRender();
   }
 
@@ -272,6 +274,11 @@ export class TopsScreenQuicklane {
     }
     this.filterMenu = menu;
     this.root.appendChild(menu);
+    registerM80Ref("protokoll.topsScreen.quicklane.filter.menu", menu);
+    FILTER_OPTIONS.forEach((option, index) => {
+      registerM80Ref(`protokoll.topsScreen.quicklane.filter.option.${option.mode}`, menu.children[index]);
+    });
+    completeM80PilotRender();
   }
 
   _togglePinned() {

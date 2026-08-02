@@ -347,10 +347,13 @@ class ElectronUiEditorSessionController {
       });
       this.child.once("exit", () => { void this.#disposeSession("editor_process_exited", false); });
       this.child.once("error", (error) => { void this.#disposeSession(error?.code || "editor_process_error", false); });
+      // The native peer requests the registry as part of its initial handshake.
+      // Make the immutable snapshot available before opening that pipe so the
+      // renderer response is validated against this very session.
+      this.currentRegistration = registrationSnapshot;
       this.client = await this.#connectWithRetry(identifiers, contract);
       this.client.on("disconnect", () => { void this.#disposeSession("editor_disconnected", false); });
       this.client.on("connectionError", (_error) => { void _error; });
-      this.currentRegistration = registrationSnapshot;
       this.#startHeartbeat();
       return { ok: true, started: true, focused: false, sessionId: identifiers.sessionId, registryRefreshStatus: "changed" };
     } catch (error) {

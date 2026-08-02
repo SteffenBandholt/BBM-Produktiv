@@ -7,8 +7,8 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 13,
-  "registryFingerprint": "sha256:efbfce1737d4690b96d4add9cfee129db742c44e9fdd7512e4b8db252cf681d5",
+  "registryVersion": 15,
+  "registryFingerprint": "sha256:e0161dc468095ec8dee69c9caf0d6468959a9f3691b06096c1951fb3ed98ccf8",
   "registryStatus": "incomplete",
   "activeScopes": [
     "restarbeiten.header.root",
@@ -50,9 +50,9 @@
     { "scopeId": "restarbeiten.header.root", "status": "complete", "reason": null, "elementCount": 31, "missingReferenceCount": 0 },
     { "scopeId": "restarbeiten.list.root", "status": "complete", "reason": null, "elementCount": 32, "missingReferenceCount": 0 },
     { "scopeId": "restarbeiten.edit.root", "status": "complete", "reason": null, "elementCount": 53, "missingReferenceCount": 0 },
-    { "scopeId": "protokoll.screen.root", "status": "complete", "reason": null, "elementCount": 25, "missingReferenceCount": 0 },
+    { "scopeId": "protokoll.screen.root", "status": "complete", "reason": null, "elementCount": 33, "missingReferenceCount": 0 },
     { "scopeId": "protokoll.list.root", "status": "complete", "reason": null, "elementCount": 7, "missingReferenceCount": 0 },
-    { "scopeId": "protokoll.edit.root", "status": "complete", "reason": null, "elementCount": 24, "missingReferenceCount": 0 },
+    { "scopeId": "protokoll.edit.root", "status": "complete", "reason": null, "elementCount": 36, "missingReferenceCount": 0 },
     { "scopeId": "bbm.remaining", "status": "blocked", "reason": "registration_inventory_pending", "elementCount": 0, "missingReferenceCount": 0 },
     { "scopeId": "pdf.bbm.protocol", "status": "complete", "reason": null, "elementCount": 28, "missingReferenceCount": 0 }
   ],
@@ -65,5 +65,5 @@
     ]
   },
   "installedAt": "2026-07-27T00:00:00+00:00",
-  "updatedAt": "2026-07-27T00:00:00+00:00"
+  "updatedAt": "2026-08-02T00:00:00+00:00"
 }

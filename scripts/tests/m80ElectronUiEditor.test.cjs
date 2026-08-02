@@ -49,8 +49,8 @@ class MockChild extends EventEmitter {
   kill() { this.exit(0); return true; }
 }
 class MockClient extends EventEmitter {
-  constructor() { super(); this.connected = false; this.handshaken = false; this.events = []; this.requests = []; this.child = null; }
-  async connect() { this.connected = true; this.handshaken = true; return { action: "handshakeAccepted" }; }
+  constructor() { super(); this.connected = false; this.handshaken = false; this.events = []; this.requests = []; this.child = null; this.onConnect = null; }
+  async connect() { this.connected = true; this.handshaken = true; this.connectProbe = this.onConnect?.(); return { action: "handshakeAccepted" }; }
   sendEvent(action, payload = {}) { this.events.push({ action, ...payload }); if (action === "shutdownEditor") setImmediate(() => this.child?.exit()); return this.connected; }
   request(action) { this.requests.push(action); return Promise.resolve({ action: `${action}Accepted` }); }
   respond(message, payload, error) { this.response = { message, payload, error }; return true; }
@@ -204,8 +204,15 @@ async function runM80ElectronUiEditorTests(run) {
       profileRootResolver: () => "C:\\trusted\\profiles", ensureDirectory: () => {},
     });
     controller.registerIpc();
+    client.onConnect = () => {
+      client.emit("message", { messageType: "request", messageId: "initial-registry", payload: { action: "getRegistry" } });
+      return handlers.get("uiEditor:respond")(null, { requestId: "initial-registry", ok: true, payload: { registryScopes: registrationScopes } });
+    };
     const first = await handlers.get("uiEditor:open")(null, registration); const second = await handlers.get("uiEditor:open")(null, registration);
+    await client.connectProbe;
     assert.equal(first.started, true); assert.equal(second.focused, true); assert.equal(spawns, 1);
+    assert.equal(client.response.error, undefined, "Die Erstregistrierung muss bereits im Pipe-Handshake gegen den Session-Snapshot validiert werden.");
+    assert.equal(client.response.payload.registryScopes.length, registrationScopes.length);
     assert.equal(client.events.filter((event) => event.action === "activateEditor").length, 1);
 
     client.emit("message", { messageType: "request", messageId: "request-0001", payload: { action: "getRegistry" } });
