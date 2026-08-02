@@ -73,6 +73,15 @@ Aktueller Stand:
 - [x] M80.2 Restarbeiten-Header und Editbox direkt editierbar; Split gesperrt, Liste flexibel
 - [x] M86.3 Einheitlicher Editor-Start und Protokoll-Metaspalte reparieren
 - [x] M86.4 Globalen Klickblocker reproduzieren und reparieren
+- [x] M86.5 Protokoll-Layout im flexiblen Screenrahmen reparieren
+
+## Statusupdate M86.5
+
+- Status: `[A]`. Die vorhandene Protokollstruktur blieb unverändert; korrigiert wurden ausschließlich Flex-Basis, sichere Editbox-Höhen und die starre Workbench-Header-Geometrie. Die 900×430-Abnahme verdichtet ausschließlich diese vorhandenen Bereiche; Meta-Felder bleiben vollständig rechts neben Kurz- und Langtext sichtbar.
+- Der Listenbereich ist der einzige vertikale Scrollbesitzer. Header, Workbench, Meta-Spalte und Quicklane behalten ihre bestehenden Rollen und Eltern.
+- Der Renderer begrenzt die sichtbare Editbox auf sichere Höhen; bestehende Registry-Bounds, IDs und gespeicherte Layoutformate bleiben unverändert, damit kein Registry-/Manifestwechsel entsteht.
+- Restarbeiten, Registrystruktur, IDs, Parents, PDF/Druck und Fachaktionen wurden nicht geändert. Der neue M86.5-Guardrail sowie M83, M86.3 und M86.4 prüfen die Abgrenzung.
+- Commit/Push/PR/Merge: keiner.
 
 ## Statusupdate M86.4
 
