@@ -41,7 +41,7 @@ async function runM830ComponentContractTests(run) {
 
   await run("M83.0 BBM 01: alle offiziellen Scopes stammen aus acht komponentennahen Vertraegen", () => {
     assert.equal(contracts.length, 8); assert.deepEqual([...contractIds].sort(), [...registryIds].sort()); assert.equal(new Set(contractIds).size, contractIds.length);
-    for (const component of contracts) assert.deepEqual([...component.requiredSlots].sort(), component.slots.map((slot) => slot.slotId).sort(), component.componentId);
+    for (const component of contracts) assert.deepEqual([...component.requiredSlots].sort(), component.slots.filter((slot) => slot.required).map((slot) => slot.slotId).sort(), component.componentId);
   });
   await run("M83.0 BBM 02: Meta-Startspalte deklariert Spalte, Kopf, Nr., Datum, Klasse und reale Zusatzinhalte", () => {
     const ids = new Set(listContract.slots.map((slot) => slot.element.id));
@@ -55,7 +55,7 @@ async function runM830ComponentContractTests(run) {
     assert.doesNotMatch(source, /data-bbm-restarbeiten-record-id|app\.db|item\.id|databaseId|recordId/); assert.ok(contractIds.every((id) => !/(?:^|\.)\d{4,}(?:\.|$)|[0-9a-f]{8}-[0-9a-f-]{27,}/i.test(id)));
   });
   await run("M83.0 BBM 05: Restarbeiten-Liste, Editbox und Protokoll sind vollstaendig gebuendelt", () => {
-    assert.deepEqual(Object.fromEntries(contracts.map((component) => [component.componentId, component.slots.length])), { "bbm.restarbeiten.filterbar": 31, "bbm.restarbeiten.list": 32, "bbm.restarbeiten.editbox": 53, "bbm.protokoll.screen": 10, "bbm.protokoll.quicklane": 15, "bbm.protokoll.list.shell": 4, "bbm.protokoll.list.columns": 3, "bbm.protokoll.editbox": 24 });
+    assert.deepEqual(Object.fromEntries(contracts.map((component) => [component.componentId, component.slots.length])), { "bbm.restarbeiten.filterbar": 31, "bbm.restarbeiten.list": 32, "bbm.restarbeiten.editbox": 53, "bbm.protokoll.screen": 14, "bbm.protokoll.quicklane": 19, "bbm.protokoll.list.shell": 4, "bbm.protokoll.list.columns": 3, "bbm.protokoll.editbox": 36 });
   });
 
   const previous = { document: global.document, window: global.window, Element: global.Element, CustomEvent: global.CustomEvent };

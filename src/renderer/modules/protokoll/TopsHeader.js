@@ -81,9 +81,13 @@ export class TopsHeader {
     };
 
     this.actionsWrap.append(this.btnEndMeeting, this.btnClose);
-    void installDevelopmentUiEditorOpenButton({
+    this.uiEditorOpenButton = null;
+    this.uiEditorOpenButtonReady = installDevelopmentUiEditorOpenButton({
       host: this.actionsWrap,
       scopeId: "protokoll.screen.root",
+    }).then((button) => {
+      this.uiEditorOpenButton = button;
+      return button;
     });
     this.root.append(
       this.titleWrap,

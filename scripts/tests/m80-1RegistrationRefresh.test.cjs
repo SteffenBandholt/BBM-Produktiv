@@ -83,7 +83,7 @@ async function runM801RegistrationRefreshTests(run) {
       document.body.appendChild(rendered.root);
       const registration = rendered.registration;
       runtimeRegistration = structuredClone(registration);
-      assert.equal(registration.registryVersion, 13);
+      assert.equal(registration.registryVersion, 15);
       assert.equal(registration.registryStatus, "incomplete");
       assert.deepEqual(registration.activeScopes, ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
       const complete = registration.registryScopes.filter((scope) => scope.status === "complete");

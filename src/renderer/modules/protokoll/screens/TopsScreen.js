@@ -43,6 +43,7 @@ import {
   beginM80PilotRender,
   beginM83ComponentBinding,
   completeM80PilotRender,
+  registerM80MultiRef,
   registerM80Ref,
 } from "../../../ui-editor/m80Refs.js";
 
@@ -225,6 +226,15 @@ export default class TopsScreen {
     registerM80Ref("protokoll.header.meta.due", header.metaLegendDue);
     registerM80Ref("protokoll.header.meta.status", header.metaLegendStatus);
     registerM80Ref("protokoll.header.meta.responsible", header.metaLegendResponsible);
+    registerM80Ref("protokoll.header.actions", header.actionsWrap);
+    registerM80Ref("protokoll.header.action.endMeeting", header.btnEndMeeting);
+    registerM80Ref("protokoll.header.action.close", header.btnClose);
+    registerM80MultiRef("protokoll.header.action.openUiEditor", header.uiEditorOpenButton ? [header.uiEditorOpenButton] : [], header.actionsWrap);
+    void header.uiEditorOpenButtonReady?.then((button) => {
+      if (!button || this.header !== header) return;
+      registerM80Ref("protokoll.header.action.openUiEditor", button);
+      completeM80PilotRender();
+    });
     registerM80Ref("protokoll.list.root", this.sheetArea);
     registerM80Ref("protokoll.list.canvas", this.sheetCanvas);
     registerM80Ref("protokoll.list.paper", this.sheetPaper);
@@ -235,6 +245,12 @@ export default class TopsScreen {
     registerM80Ref("protokoll.edit.workbench", workbench.root);
     registerM80Ref("protokoll.edit.header", workbench.header);
     registerM80Ref("protokoll.edit.header.label", workbench.leftHeaderTitle);
+    registerM80Ref("protokoll.edit.header.addActions", workbench.headerAddActions);
+    registerM80Ref("protokoll.edit.header.action.addTitle", workbench.btnL1);
+    registerM80Ref("protokoll.edit.header.action.addTop", workbench.btnChild);
+    registerM80Ref("protokoll.edit.header.primaryActions", workbench.headerPrimaryActions);
+    registerM80Ref("protokoll.edit.header.action.move", workbench.btnMove);
+    registerM80Ref("protokoll.edit.header.action.delete", workbench.btnDelete);
     registerM80Ref("protokoll.edit.text", workbench.sharedEditboxCore.root);
     registerM80Ref("protokoll.edit.short", editbox.shortWrap);
     registerM80Ref("protokoll.edit.short.label", editbox.shortLabel);
@@ -242,6 +258,12 @@ export default class TopsScreen {
     registerM80Ref("protokoll.edit.long", editbox.longWrap);
     registerM80Ref("protokoll.edit.long.label", editbox.longLabel);
     registerM80Ref("protokoll.edit.long.field", editbox.longInput);
+    registerM80Ref("protokoll.edit.short.action.dictation", workbench.sharedEditboxCore.shortDictateButton);
+    registerM80Ref("protokoll.edit.long.action.dictation", workbench.sharedEditboxCore.longDictateButton);
+    registerM80Ref("protokoll.edit.dictation.status", workbench.sharedEditboxCore.dictationStatusBar);
+    registerM80Ref("protokoll.edit.dictation.status.action.undo", workbench.sharedEditboxCore.dictationUndoButton);
+    registerM80Ref("protokoll.edit.long.correction", workbench.sharedEditboxCore.dictionaryCorrectionBar);
+    registerM80Ref("protokoll.edit.long.correction.action.open", workbench.sharedEditboxCore.dictionaryCorrectionButton);
     registerM80Ref("protokoll.edit.meta", meta.root);
     registerM80Ref("protokoll.edit.flags", meta.flagsMetaRow);
     registerM80Ref("protokoll.edit.status", status.statusWrap);
