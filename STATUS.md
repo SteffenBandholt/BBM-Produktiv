@@ -3778,6 +3778,13 @@ Wichtig:
   - Praktische Computer-Use-/Electron-UI-Abnahme ist in dieser Umgebung nicht verfügbar und muss lokal/auf Zielsystem nachgeholt werden.
   - Im aktuellen Checkout ist kein Git-Remote `origin` eingerichtet; Veröffentlichung/PR hängt vom verfügbaren PR-Werkzeug ab.
 
+### M86.8 - Komponentenvertrag fuer Protokoll-Liste und Workbench
+
+- Status: `[A]`; der Protokoll-Listenvertrag ist komponentennah vollstaendig. Er deklariert die bestehende Dokumentflaeche, Tabelle, logischen Tabellenkoerper und Spalten sowie direkte Mehrfach-Refs fuer Zeilen, Level-1-Schalter, Nummer, Stern, Erstelldatum, Kurz-/Langtext, Termin, Status, Verantwortlich, Ampel, Aufgabe und Beschluss. Es gibt keine datenabhaengigen IDs, keine DOM-Erkennung und keine zweite Sammelregistry.
+- Die Workbench nutzt unveraendert vorhandene Elemente: Kurztext liegt als erste visuelle Zeile ueber Langtext links und Meta rechts. Die existierende Meta-Slot-Node des EditboxShell ist der einzige Mountpunkt; es gibt keine neue Wrapper-, Parent-, Scrollcontainer- oder dritte Layoutzeile. Fachaktionen bleiben keine Editor-Ziele.
+- Guardrails pruefen Vollstaendigkeit, stabile IDs/Parents/Refs, Mehrfach-Ref-Registrierung bei wiederholtem Rendern, fehlende und doppelte IDs, Baselines/Bounds und die Workbench-Struktur. Der M86.8-Lauf rendert die echte TopsList mit allen Varianten, validiert jeden direkten sichtbaren Multi-Ref und prueft die Zustandsuebernahme beim Rerender. `npm test` und `npm run test:node` sind jeweils 8/8 gruen. Die sichtbare Layoutpruefung lief bei 1920x1080, 1600x900, 1366x768 und 900x430. Kurztext, Langtext, Termin und Status wurden im isolierten Editor ausgewaehlt; Kurztext erhielt Verschieben, Undo, Kleiner, Groesser und Original. Save und der sichtbare zweite Start liefen.
+- Commit/Push/PR/Merge: keiner.
+
 ## M82.3 - Lokale Breitenwirkung und kompakte Editoroberflaeche
 
 - Status: `[A]`; Implementierung, Pflichtpruefungen und sichtbare native UI-/PDF-Abnahme sind abgeschlossen.

@@ -239,6 +239,7 @@ export default class TopsScreen {
     registerM80Ref("protokoll.list.canvas", this.sheetCanvas);
     registerM80Ref("protokoll.list.paper", this.sheetPaper);
     registerM80Ref("protokoll.list.table", this.topsList.root);
+    registerM80Ref("protokoll.list.table.body", this.topsList.root);
 
     registerM80Ref("protokoll.edit.root", this.editArea);
     registerM80Ref("protokoll.edit.canvas", this.editCanvas);

@@ -99,7 +99,10 @@ export class TopsWorkbench {
   }
 
   _assembleWorkbenchShell() {
-    this.workbenchShell.mount(this.metaColumn.root);
+    // Der vorhandene Meta-Slot des Editbox-Kerns bildet die zweite Zeile neben
+    // dem Langtext. Es werden keine neuen Elemente oder Wrapper erzeugt.
+    this.sharedEditboxCore.editbox.metaCol.appendChild(this.metaColumn.root);
+    this.workbenchShell.mount();
   }
 
   // Gemeinsamer Bearbeitungskern:

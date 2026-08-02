@@ -65,9 +65,9 @@ async function runM863EditorStartMetaRepairTests(run) {
     assert.doesNotMatch(restarbeitenHeader, /data-ui-editor-id.*UI-Editor/);
   });
 
-  await run("M86.3 Workbench: die rechte Meta-Spalte bleibt auch unterhalb des alten Responsive-Breakpoints im bestehenden Grid", () => {
+  await run("M86.3 Workbench: die rechte Meta-Spalte bleibt in der bestehenden Editbox-Geometrie", () => {
     const css = read("src/renderer/modules/protokoll/styles/tops.css");
-    assert.match(css, /grid-template-columns:\s*minmax\(0, 1fr\) clamp\(12px, 2\.2vw, 30px\) minmax\(180px, 214px\)/);
+    assert.match(css, /grid-template-columns:\s*minmax\(0, 1fr\) clamp\(180px, 22vw, 214px\)/);
     assert.doesNotMatch(css, /@media \(max-width: 640px\)[\s\S]*?\.bbm-tops-workbench-body\s*\{\s*grid-template-columns:\s*1fr/s);
   });
 

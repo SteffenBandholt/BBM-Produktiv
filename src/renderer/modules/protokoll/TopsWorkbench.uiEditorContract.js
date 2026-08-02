@@ -24,7 +24,7 @@ const elements = [
   m83Element({ id: "protokoll.edit.header.primaryActions", name: "Gruppe TOP-Aktionen", type: "group", role: "layoutGroup", parentId: "protokoll.edit.header", order: 35, allowedOps: GROUP_LAYOUT, componentKind: "actionGroup" }),
   m83DomainButton({ id: "protokoll.edit.header.action.move", name: "Schieben", parentId: "protokoll.edit.header.primaryActions", order: 36, actionKind: "moveTop" }),
   m83DomainButton({ id: "protokoll.edit.header.action.delete", name: "Papierkorb", parentId: "protokoll.edit.header.primaryActions", order: 37, actionKind: "deleteTop" }),
-  m83Element({ id: "protokoll.edit.text", name: "Gruppe Textbearbeitung", type: "group", role: "fieldCollection", parentId: "protokoll.edit.workbench", order: 40, allowedOps: groupLayout, componentKind: "editbox" }),
+  m83Element({ id: "protokoll.edit.text", name: "Gruppe Textbearbeitung", type: "group", role: "fieldCollection", parentId: "protokoll.edit.workbench", order: 40, allowedOps: groupLayout, componentKind: "editbox", preserveTarget: true, layoutStructure: Object.freeze({ shortAbove: Object.freeze(["protokoll.edit.long", "protokoll.edit.meta"]), sideBySide: Object.freeze(["protokoll.edit.long", "protokoll.edit.meta"]), noThirdLayoutRow: true }) }),
   ...[["short", "Kurztext", "text", 41], ["long", "Langtext", "multilineText", 50]].flatMap(([key, name, fieldKind, order]) => [
     m83Element({ id: `protokoll.edit.${key}`, name: `Gruppe ${name}`, type: "fieldGroup", role: "formFieldGroup", parentId: "protokoll.edit.text", order, allowedOps: groupLayout, componentKind: "fieldGroup" }),
     m83Element({ id: `protokoll.edit.${key}.label`, name: `Bezeichnung ${name}`, type: "label", role: "fieldLabel", parentId: `protokoll.edit.${key}`, order: order + 1, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
@@ -36,7 +36,7 @@ const elements = [
   m83DomainButton({ id: "protokoll.edit.dictation.status.action.undo", name: "Rückgängig", parentId: "protokoll.edit.dictation.status", order: 56, actionKind: "dictationUndo" }),
   m83Element({ id: "protokoll.edit.long.correction", name: "Gruppe Diktatkorrektur", type: "group", role: "layoutGroup", parentId: "protokoll.edit.long.label", order: 57, allowedOps: groupLayout, componentKind: "dictionaryCorrection" }),
   m83DomainButton({ id: "protokoll.edit.long.correction.action.open", name: "Korrektur", parentId: "protokoll.edit.long.correction", order: 58, actionKind: "dictionaryCorrection" }),
-  m83Element({ id: "protokoll.edit.meta", name: "Gruppe Status und Zuordnung", type: "group", role: "fieldCollection", parentId: "protokoll.edit.workbench", order: 60, allowedOps: groupLayout, componentKind: "metaPanel" }),
+  m83Element({ id: "protokoll.edit.meta", name: "Gruppe Status und Zuordnung", type: "group", role: "fieldCollection", parentId: "protokoll.edit.text", order: 60, allowedOps: groupLayout, componentKind: "metaPanel", preserveTarget: true, layoutPosition: "besideLongBelowShort" }),
   m83Element({ id: "protokoll.edit.flags", name: "Gruppe Kennzeichnungen", type: "group", role: "layoutGroup", parentId: "protokoll.edit.meta", order: 61, allowedOps: groupLayout, componentKind: "flagGroup" }),
   ...[["status", "Status", "select", 70], ["due", "Fertig bis", "date", 80], ["responsible", "Verantwortlich", "select", 90]].flatMap(([key, name, fieldKind, order]) => [
     m83Element({ id: `protokoll.edit.${key}`, name: `Gruppe ${name}`, type: "fieldGroup", role: "formFieldGroup", parentId: "protokoll.edit.meta", order, allowedOps: groupLayout, componentKind: "fieldGroup" }),

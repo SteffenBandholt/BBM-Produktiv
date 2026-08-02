@@ -108,6 +108,11 @@
 
 **Begründung:** Der bisherige Pfad wird nicht weiter repariert. Ein klarer Neustart trennt die neue Architektur sauber von alten Sonderwegen und fuehrt zuerst ueber EditorLab.
 
+## Entscheidung 022
+**Beschluss:** Die vorhandene Meta-Slot-Node des `EditboxShell` ist im Protokoll der ausschliessliche Mountpunkt fuer die bestehende Meta-Spalte. Das vorhandene Editbox-Layout ordnet Kurztext oberhalb von Langtext links und Meta rechts an.
+
+**Begruendung:** Diese explizite Komponentenentscheidung erfuellt den Layoutvertrag ohne neue DOM-Knoten, Wrapper, Parents, Scrollcontainer oder eine zentrale zweite Registry. Kurztext, Langtext und Meta bleiben einzeln mit ihren komponentennahen Vertrags-IDs bearbeitbar; Fachaktionen bleiben gesperrt.
+
 ## Entscheidung 021
 **Beschluss:** M80.2 entfernt die gekoppelte Restarbeiten-Splitoperation aus der produktiven Registry. Der tatsächliche Filter-Header und der stabile Editbox-Root sind unabhängig größenfähig; die Hauptliste füllt den verbleibenden Bereich flexibel und scrollt innerhalb ihres eigenen Containers.
 
