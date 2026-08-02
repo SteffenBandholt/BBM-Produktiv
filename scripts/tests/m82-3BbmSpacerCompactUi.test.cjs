@@ -59,7 +59,7 @@ async function runM823BbmSpacerCompactUiTests(run) {
   await run("M82.3 BBM 10: Electron-Abbildung speichert Spacing-Intent", () => assert.match(refSource, /uiEditorSpacing/));
   await run("M82.3 BBM 11: reservierter Platz wird zur Trackbreite addiert", () => assert.match(refSource, /elementWidth = bounded[\s\S]*slotWidth = elementWidth \+ reservedWidth/));
   await run("M82.3 BBM 12: generische Gruppenabstände bilden Padding und Gap ab", () => assert.match(refSource, /paddingLeft[\s\S]*columnGap[\s\S]*rowGap/));
-  await run("M82.3 BBM 12a: Gruppenpadding wird ohne fremdes Boxmodell von der Inhaltsbreite abgezogen", () => assert.match(refSource, /horizontalPadding[\s\S]*desiredWidth - horizontalPadding/));
+  await run("M82.3 BBM 12a: content-box-Gruppen erhalten die sichtbare Außenbreite trotz Padding und Rand", () => assert.match(refSource, /currentBounds[\s\S]*horizontalChrome[\s\S]*desiredWidth - horizontalChrome/));
   await run("M82.3 BBM 12b: responsive Gruppenbaseline wird vor dem Start-Restore einmalig erfasst", () => assert.match(host, /capturedRuntimeBaselines[\s\S]*snapshotM80State[\s\S]*capturedBaseline/));
   await run("M82.3 BBM 13: Freier Platz ist Standardentscheidung", () => assert.equal(widthRisk().suggestedActions[0], RISK_ACTIONS.PRESERVE_SPACE));
   await run("M82.3 BBM 14: Nachrücken ist separate Entscheidung", () => assert.ok(widthRisk().suggestedActions.includes(RISK_ACTIONS.REFLOW_NEIGHBORS)));

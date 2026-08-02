@@ -146,8 +146,13 @@ function applyGeneric(element, state, entry, requestedOperation = null) {
   }
   if ((operations.has("resize") || operations.has("resizeWidth")) && applies("resize", "resizeWidth")) {
     const desiredWidth = bounded(entry, "width", state.width, 1);
-    const horizontalPadding = finite(state.spacing?.groupPaddingLeft) + finite(state.spacing?.groupPaddingRight);
-    const contentWidth = styleOf(element).boxSizing === "border-box" ? desiredWidth : Math.max(1, desiredWidth - horizontalPadding);
+    const style = styleOf(element);
+    const currentBounds = rectOf(element);
+    const currentContentWidth = Number.parseFloat(style.width);
+    const horizontalChrome = style.boxSizing === "border-box" || !Number.isFinite(currentContentWidth)
+      ? 0
+      : Math.max(0, currentBounds.width - currentContentWidth);
+    const contentWidth = style.boxSizing === "border-box" ? desiredWidth : Math.max(1, desiredWidth - horizontalChrome);
     element.style.width = px(contentWidth);
   }
   if ((operations.has("resize") || operations.has("resizeHeight")) && applies("resize", "resizeHeight")) element.style.height = px(bounded(entry, "height", state.height, 1));

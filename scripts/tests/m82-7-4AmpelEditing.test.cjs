@@ -21,6 +21,7 @@ class FakeElement {
     this.hidden = false;
     this.isConnected = true;
     this._rect = { left: 0, top: 0, width: 96, height: 24, ...rect };
+    this._horizontalChrome = Number(rect.horizontalChrome) || 0;
     this.style = { setProperty(name, value) { this[name] = value; }, getPropertyValue(name) { return this[name] || ""; } };
     this.classList = {
       contains: (name) => this.className.split(/\s+/).includes(name),
@@ -37,7 +38,8 @@ class FakeElement {
   appendChild(child) { this.append(child); return child; }
   replaceChildren(...children) { this.children = []; this.append(...children); }
   getBoundingClientRect() {
-    const width = Number.parseFloat(this.style.width) || this._rect.width;
+    const configuredWidth = Number.parseFloat(this.style.width);
+    const width = Number.isFinite(configuredWidth) ? configuredWidth + this._horizontalChrome : this._rect.width;
     const height = Number.parseFloat(this.style.height) || this._rect.height;
     return { left: this._rect.left, top: this._rect.top, width, height, right: this._rect.left + width, bottom: this._rect.top + height };
   }
@@ -57,7 +59,7 @@ function createDocument() {
 
 function computedStyle(element) {
   const bounds = element.getBoundingClientRect();
-  return { ...element.style, display: element.style.display || "", width: `${bounds.width}px`, height: `${bounds.height}px`, paddingLeft: "0px", paddingTop: "0px", fontSize: "12px", boxSizing: "border-box" };
+  return { ...element.style, display: element.style.display || "", width: element.style.width || `${bounds.width - element._horizontalChrome}px`, height: `${bounds.height}px`, paddingLeft: "0px", paddingTop: "0px", fontSize: "12px", boxSizing: element.style.boxSizing || "border-box" };
 }
 
 function submit(host, operation, payload, changeId, source = "m82-7-4-test") {
@@ -139,6 +141,33 @@ async function runM8274AmpelEditingTests(run) {
     await run("M82.7.4 BBM 25: sichtbarer positiver Nachbar wird wieder einbezogen", () => { refs.applyM80State(AMPEL_ID, { ...refs.snapshotM80State(AMPEL_ID), width: 12 }, "resizeWidth"); validation._rect.height = 12; const geometry = refs.snapshotM80Geometry(); assert.equal(host.collectM80GeometryNeighbors(entry, geometry, geometry).some((item) => item.elementId === VALIDATION_ID), true); });
     await run("M82.7.4 BBM 26: detached, display-none, NaN und Infinity sind inaktiv", () => { const candidate = byId.get(VALIDATION_ID); const before = refs.snapshotM80Geometry(); const after = refs.snapshotM80Geometry(); validation.isConnected = false; assert.equal(host.isM80GeometryNeighborActive(candidate, before, after), false); validation.isConnected = true; validation.style.display = "none"; assert.equal(host.isM80GeometryNeighborActive(candidate, before, after), false); validation.style.display = ""; before.set(VALIDATION_ID, { left: 0, top: 0, width: Number.NaN, height: 12 }); assert.equal(host.isM80GeometryNeighborActive(candidate, before, after), false); before.set(VALIDATION_ID, { left: 0, top: 0, width: Number.POSITIVE_INFINITY, height: 12 }); assert.equal(host.isM80GeometryNeighborActive(candidate, before, after), false); });
     await run("M82.7.4 BBM 27: echte sichtbare Kollision bleibt blockiert", () => { refs.applyM80State(AMPEL_ID, { ...refs.snapshotM80State(AMPEL_ID), width: 12 }, "resizeWidth"); const result = submit(host, "resizeWidth", { width: 17 }, "real-collision", "ui-editor-panel"); assert.equal(result.success, false); assert.equal(result.errorCode, "geometry_risk_confirmation_required"); assert.equal(result.geometryRisk.affectedNeighbors.some((item) => item.elementId === VALIDATION_ID && item.overlapBounds), true); assert.equal(refs.snapshotM80State(AMPEL_ID).width, 12); });
+    await run("M86.6 BBM 28: generische content-box-Breite verwendet die sichtbare aktuelle Breite ohne Richtungsumkehr", () => {
+      const meta = new FakeElement("DIV", { width: 213.99435424804688, height: 134.3984832763672, horizontalChrome: 20.19735717773438 });
+      meta.style.boxSizing = "content-box";
+      refs.registerM80Ref("protokoll.edit.meta", meta);
+      refs.completeM80PilotRender();
+      const original = refs.snapshotM80State("protokoll.edit.meta").width;
+      const minusTarget = Math.max(160, original - 1);
+      const minus = host.handleM80EditorRequest({ action: "submitChange", scopeId: "protokoll.edit.root", changeRequest: { changeId: "m86-6-minus", elementId: "protokoll.edit.meta", operation: "resizeWidth", payload: { width: minusTarget }, source: "target-app-start" } }).changeResult;
+      assert.equal(minus.success, true, minus.message);
+      assert.ok(Math.abs(minus.newState.width - minusTarget) <= 0.01);
+      assert.ok(minus.newState.width < original);
+      const plusTarget = Math.min(420, minus.newState.width + 1);
+      const plus = host.handleM80EditorRequest({ action: "submitChange", scopeId: "protokoll.edit.root", changeRequest: { changeId: "m86-6-plus", elementId: "protokoll.edit.meta", operation: "resizeWidth", payload: { width: plusTarget }, source: "target-app-start" } }).changeResult;
+      assert.equal(plus.success, true, plus.message);
+      assert.ok(Math.abs(plus.newState.width - plusTarget) <= 0.01);
+      assert.ok(plus.newState.width > minus.newState.width);
+      assert.ok(Math.abs(refs.snapshotM80State("protokoll.edit.meta").width - plusTarget) <= 0.01);
+      assert.ok(Math.abs(meta.getBoundingClientRect().width - plusTarget) <= 0.01);
+      const minimum = host.handleM80EditorRequest({ action: "submitChange", scopeId: "protokoll.edit.root", changeRequest: { changeId: "m86-6-minimum", elementId: "protokoll.edit.meta", operation: "resizeWidth", payload: { width: 1 }, source: "target-app-start" } }).changeResult;
+      assert.equal(minimum.success, true, minimum.message);
+      assert.ok(minimum.newState.width >= 8);
+      assert.ok(minimum.newState.width < plus.newState.width);
+      assert.ok(Math.abs(meta.getBoundingClientRect().width - minimum.newState.width) <= 0.01);
+      const maximum = host.handleM80EditorRequest({ action: "submitChange", scopeId: "protokoll.edit.root", changeRequest: { changeId: "m86-6-maximum", elementId: "protokoll.edit.meta", operation: "resizeWidth", payload: { width: 9999 }, source: "target-app-start" } }).changeResult;
+      assert.equal(maximum.success, true, maximum.message);
+      assert.ok(Math.abs(maximum.newState.width - 2400) <= 0.01);
+    });
     await run("M82.7.4 BBM 28: licensing-Dokumentation hat weiterhin den Schutz-Hash", () => { const hash = crypto.createHash("sha256").update(fs.readFileSync(path.join(ROOT, "docs/licensing.md"))).digest("hex").toUpperCase(); assert.equal(hash, "02AE66A8873C74869539F13F734B7CE43BC63B6EF37DA553A40C27A4F514D784"); });
   } finally {
     refs.resetM80PilotWorkingStatesForDiagnostic();
