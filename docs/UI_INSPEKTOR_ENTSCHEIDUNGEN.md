@@ -142,3 +142,8 @@
 **Beschluss:** M80.2 entfernt die gekoppelte Restarbeiten-Splitoperation aus der produktiven Registry. Der tatsächliche Filter-Header und der stabile Editbox-Root sind unabhängig größenfähig; die Hauptliste füllt den verbleibenden Bereich flexibel und scrollt innerhalb ihres eigenen Containers.
 
 **Begründung:** Eine freie Split- oder Positionssteuerung würde den sicheren Überlagerungsschutz schwächen. Direkte, begrenzte Größenoperationen an den beiden festen Bereichen bilden den Nutzerbedarf mit dem vorhandenen Editor-Core ab. Quicklane, Fachaktionen, Daten und PDF bleiben außerhalb dieses Layoutvertrags.
+
+## Entscheidung 028
+**Beschluss:** Der vorhandene `MainHeader` bleibt die alleinige gemeinsame Quelle fuer den sichtbaren Modulheader. Er ordnet BBM-Version und `Plan` in der ersten sowie Aktiv-Kontext und Entwicklungsmarker in der zweiten Headerzeile an. Der Entwicklungsmarker ist ein reguläres rechtes Grid-Element der zweiten Zeile, nicht absolut ausserhalb der Headerstruktur.
+
+**Begruendung:** Protokoll, Restarbeiten und weitere produktive CoreShell-Ansichten erhalten damit denselben kompakten Header ohne Modulkopie oder modulspezifische Sonderposition. Bestehende Headerrefs und der UI-Editorvertrag bleiben unveraendert. Die fuenf vorhandenen `__bbm`-Treffer in nicht geaenderten PDF-/Druckdateien bleiben dokumentierter Altbestand; der diff-bezogene KREBS-Check verhindert neue oder veraenderte Treffer und Event-Hacks.

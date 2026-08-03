@@ -11,7 +11,6 @@ const read = (relativePath) => fs.readFileSync(path.join(ROOT, relativePath), "u
 const BUTTONS = Object.freeze([
   ["protokoll.header.action.endMeeting", "protokoll.header.actions", "btnEndMeeting"],
   ["protokoll.header.action.close", "protokoll.header.actions", "btnClose"],
-  ["protokoll.header.action.openUiEditor", "protokoll.header.actions", "uiEditorOpenButton"],
   ["protokoll.edit.header.action.addTitle", "protokoll.edit.header.addActions", "btnL1"],
   ["protokoll.edit.header.action.addTop", "protokoll.edit.header.addActions", "btnChild"],
   ["protokoll.edit.header.action.move", "protokoll.edit.header.primaryActions", "btnMove"],
@@ -77,12 +76,11 @@ async function runM867ProtokollButtonContractTests(run) {
     assert.doesNotMatch(screenSource.slice(screenSource.indexOf("  _registerUiEditorRefs() {"), screenSource.indexOf("  _buildProtocolScreenRegions() {")), /createElement|appendChild|insertBefore|querySelector/);
   });
 
-  await run("M86.7 03: DEV-Button ist bedingt, Release bleibt ohne unvollständigen Slot und DEV-Ref ist direkt", () => {
-    const slot = registry.getM83ComponentContract("bbm.protokoll.screen").slots.find((entry) => entry.slotId === "protokoll.header.action.openUiEditor");
-    assert.deepEqual({ required: slot.required, referenceKind: slot.referenceKind, presence: slot.presence, directSelection: slot.requirements.directSelection }, { required: false, referenceKind: "multi", presence: "whenVisibleInstances", directSelection: true });
-    assert.match(read("src/renderer/modules/protokoll/TopsHeader.js"), /this\.uiEditorOpenButtonReady = installDevelopmentUiEditorOpenButton/);
-    assert.match(screenSource, /registerM80Ref\("protokoll\.header\.action\.openUiEditor", button\)/);
-    assert.match(screenSource, /registerM80MultiRef\("protokoll\.header\.action\.openUiEditor", header\.uiEditorOpenButton \? \[header\.uiEditorOpenButton\] : \[\], header\.actionsWrap\)/);
+  await run("M86.7 03: DEV-Button liegt nur im gemeinsamen Header und bleibt aus dem Protokollvertrag heraus", () => {
+    const slots = registry.getM83ComponentContract("bbm.protokoll.screen").slots;
+    assert.equal(slots.some((entry) => entry.slotId === "protokoll.header.action.openUiEditor"), false);
+    assert.doesNotMatch(read("src/renderer/modules/protokoll/TopsHeader.js"), /installDevelopmentUiEditorOpenButton/);
+    assert.doesNotMatch(screenSource, /protokoll\.header\.action\.openUiEditor/);
     assert.match(quicklaneSource, /registerM80MultiRef\("protokoll\.topsScreen\.quicklane\.filter\.menu", \[\], this\.root\)/);
   });
 

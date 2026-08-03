@@ -81,6 +81,13 @@ Aktueller Stand:
 - [x] M86.11 Protokoll-TOP-Zeile sichtbar wie Restarbeiten strukturieren und vollstaendig editorfaehig absichern
 - [x] M86.11b Produktive M86.11-Dreispaltenstruktur ausdruecklich beibehalten und hart gegen Blockfluss-Rueckfall absichern
 - [x] M86.12 Tatsaechlichen Dreispaltenfehler im normalen Source-Start messen und reparieren
+- [x] M86.13 Einheitlichen zweizeiligen MainHeader und unteren Entwicklungsmarker herstellen
+
+## Statusupdate M86.13
+
+- Status: `[A]`. Protokoll, Restarbeiten und weitere produktive CoreShell-Ansichten verwenden weiterhin ausschliesslich `MainHeader`; es gibt weder Modulkopien noch neue Header-Editorziele.
+- Der zentrale Header zeigt Version und `Plan` in der ersten sowie Aktiv-Kontext und den DEV-Marker in der zweiten Zeile. Der Marker ist ein Grid-Element innerhalb des Headers und nicht mehr absolut oberhalb davon platziert.
+- Die fuenf vorbestehenden `__bbm`-Treffer in unveraenderten PDF-/Druckdateien sind dokumentierter Altbestand. Der KREBS-Check ist diff-bezogen: keine neuen oder veraenderten Treffer und keine Event-Hacks im Diff.
 
 ## Statusupdate M86.12
 

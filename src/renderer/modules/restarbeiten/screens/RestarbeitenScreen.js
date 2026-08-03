@@ -125,6 +125,7 @@ export default class RestarbeitenScreen {
     this.projectId = projectId || null;
     this.project = project || null;
     this.moduleId = moduleId || "restarbeiten";
+    this.uiEditorScopeId = "restarbeiten.header.root";
 
     this.root = null;
     this.items = [];

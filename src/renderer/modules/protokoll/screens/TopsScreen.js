@@ -89,6 +89,7 @@ export default class TopsScreen {
     this.projectId = options.projectId || null;
     this.meetingId = options.meetingId || null;
     this.returnContext = options.returnContext || null;
+    this.uiEditorScopeId = "protokoll.screen.root";
 
     this.root = null;
     this.header = null;
@@ -226,12 +227,6 @@ export default class TopsScreen {
     registerM80Ref("protokoll.header.actions", header.actionsWrap);
     registerM80Ref("protokoll.header.action.endMeeting", header.btnEndMeeting);
     registerM80Ref("protokoll.header.action.close", header.btnClose);
-    registerM80MultiRef("protokoll.header.action.openUiEditor", header.uiEditorOpenButton ? [header.uiEditorOpenButton] : [], header.actionsWrap);
-    void header.uiEditorOpenButtonReady?.then((button) => {
-      if (!button || this.header !== header) return;
-      registerM80Ref("protokoll.header.action.openUiEditor", button);
-      completeM80PilotRender();
-    });
     registerM80Ref("protokoll.list.root", this.sheetArea);
     registerM80Ref("protokoll.list.canvas", this.sheetCanvas);
     registerM80Ref("protokoll.list.paper", this.sheetPaper);

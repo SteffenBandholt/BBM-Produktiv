@@ -1,5 +1,3 @@
-import { installDevelopmentUiEditorOpenButton } from "../../app/coreShellNavigation.js";
-
 export class TopsHeader {
   constructor({
     onClose,
@@ -81,14 +79,6 @@ export class TopsHeader {
     };
 
     this.actionsWrap.append(this.btnEndMeeting, this.btnClose);
-    this.uiEditorOpenButton = null;
-    this.uiEditorOpenButtonReady = installDevelopmentUiEditorOpenButton({
-      host: this.actionsWrap,
-      scopeId: "protokoll.screen.root",
-    }).then((button) => {
-      this.uiEditorOpenButton = button;
-      return button;
-    });
     this.root.append(
       this.titleWrap,
       this.spacer,

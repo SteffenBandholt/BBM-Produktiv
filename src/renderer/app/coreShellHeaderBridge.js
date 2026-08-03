@@ -22,10 +22,7 @@ export function registerCoreShellHeaderBridge({
     if (typeof applyThemeFromRouterContext === "function") {
       applyThemeFromRouterContext();
     }
-    const isTopsView = !!router?.context?.ui?.isTopsView;
-    if (root) {
-      root.style.display = isTopsView ? "none" : "";
-    }
+    if (root) root.style.display = "";
     header.refresh();
   };
 

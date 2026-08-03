@@ -1,6 +1,5 @@
 import { RESTARBEITEN_STATUS_OPTIONS } from "./domain/restarbeitenRules.js";
 import { beginM83ComponentBinding, registerM80Ref } from "../../ui-editor/m80Refs.js";
-import { installDevelopmentUiEditorOpenButton } from "../../app/coreShellNavigation.js";
 
 const DEFAULT_LOCATION_LABELS = ["Haus", "Geschoss", "Einheit", "Raum"];
 
@@ -154,10 +153,6 @@ export function buildRestarbeitenFilterbar({
   });
   registerM80Ref("restarbeiten.filterbar.actions", actions);
   actions.appendChild(closeBtn);
-  void installDevelopmentUiEditorOpenButton({
-    host: actions,
-    scopeId: "restarbeiten.header.root",
-  });
 
   root.append(locationGroup, classGroup, metaGroup, actions);
   registerM80Ref("restarbeiten.filterbar", root);

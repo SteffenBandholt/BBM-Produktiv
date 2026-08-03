@@ -78,10 +78,12 @@ async function runM80ElectronUiEditorTests(run) {
     registryScopes: registrationScopes,
   };
 
-  await run("M80 Sidebar: echte Aktion UI-Editor öffnen ist keine Screenroute", () => {
+  await run("M80 Header: echte Aktion UI-Editor öffnen ist eine scope-gebundene Development-Aktion", () => {
     const navigation = read("src/renderer/app/coreShellNavigation.js");
-    assert.match(navigation, /kind:\s*"action"/);
-    assert.match(navigation, /label:\s*"UI-Editor öffnen"/);
+    const mainHeader = read("src/renderer/ui/MainHeader.js");
+    assert.match(mainHeader, /installDevelopmentUiEditorOpenButton/);
+    assert.match(mainHeader, /uiEditorScopeId/);
+    assert.doesNotMatch(navigation, /key:\s*"uiEditor"/);
     assert.doesNotMatch(navigation, /UI-Editor Status/);
     assert.doesNotMatch(navigation, /router\.showUiEditor\(\)/);
   });

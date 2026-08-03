@@ -55,12 +55,23 @@ async function runM863EditorStartMetaRepairTests(run) {
     assert.match(source, /scopeId:\s*activeScopeId/);
   });
 
-  await run("M86.3 Module: beide Header verwenden dieselbe nicht editorregistrierte Entwicklungsaktion", () => {
+  await run("M86.3 Module: der gemeinsame Header nutzt die expliziten Entwicklungs-Scopes", () => {
     const protokollHeader = read("src/renderer/modules/protokoll/TopsHeader.js");
     const restarbeitenHeader = read("src/renderer/modules/restarbeiten/RestarbeitenFilterbar.js");
-    for (const source of [protokollHeader, restarbeitenHeader]) assert.match(source, /installDevelopmentUiEditorOpenButton/);
-    assert.match(protokollHeader, /scopeId:\s*"protokoll\.screen\.root"/);
-    assert.match(restarbeitenHeader, /scopeId:\s*"restarbeiten\.header\.root"/);
+    const mainHeader = read("src/renderer/ui/MainHeader.js");
+    const router = read("src/renderer/app/Router.js");
+    const navigation = read("src/renderer/app/coreShellNavigation.js");
+    const protokollScreen = read("src/renderer/modules/protokoll/screens/TopsScreen.js");
+    const restarbeitenScreen = read("src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
+    assert.doesNotMatch(protokollHeader, /installDevelopmentUiEditorOpenButton/);
+    assert.doesNotMatch(restarbeitenHeader, /installDevelopmentUiEditorOpenButton/);
+    assert.match(mainHeader, /installDevelopmentUiEditorOpenButton/);
+    assert.match(mainHeader, /this\.elDevControls/);
+    assert.match(mainHeader, /_syncDevelopmentUiEditorLauncher\(\)/);
+    assert.match(router, /context\.ui\.uiEditorScopeId\s*=\s*String\(v\?\.uiEditorScopeId/);
+    assert.doesNotMatch(navigation, /key:\s*"uiEditor"/);
+    assert.match(protokollScreen, /uiEditorScopeId\s*=\s*"protokoll\.screen\.root"/);
+    assert.match(restarbeitenScreen, /uiEditorScopeId\s*=\s*"restarbeiten\.header\.root"/);
     assert.doesNotMatch(protokollHeader, /data-ui-editor-id.*UI-Editor/);
     assert.doesNotMatch(restarbeitenHeader, /data-ui-editor-id.*UI-Editor/);
   });

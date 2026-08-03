@@ -21,7 +21,6 @@ const screenElements = [
   m83Element({ id: "protokoll.header.actions", name: "Gruppe Protokoll-Aktionen", type: "group", role: "layoutGroup", parentId: "protokoll.header", order: 40, allowedOps: GROUP_LAYOUT, componentKind: "actionGroup" }),
   m83DomainButton({ id: "protokoll.header.action.endMeeting", name: "Protokoll beenden", parentId: "protokoll.header.actions", order: 41, actionKind: "endMeeting" }),
   m83DomainButton({ id: "protokoll.header.action.close", name: "Schliessen", parentId: "protokoll.header.actions", order: 42, actionKind: "close" }),
-  m83DomainButton({ id: "protokoll.header.action.openUiEditor", name: "UI-Editor öffnen", parentId: "protokoll.header.actions", order: 43, actionKind: "developmentOpenUiEditor" }),
 ];
 
 const quicklaneElements = [
@@ -37,7 +36,7 @@ const quicklaneElements = [
 ];
 
 const elements = [...screenElements, ...quicklaneElements];
-const optionalScreenSlotIds = new Set(["protokoll.header.action.openUiEditor"]);
+const optionalScreenSlotIds = new Set();
 const optionalQuicklaneSlotIds = new Set([
   "protokoll.topsScreen.quicklane.filter.menu",
   "protokoll.topsScreen.quicklane.filter.option.all",

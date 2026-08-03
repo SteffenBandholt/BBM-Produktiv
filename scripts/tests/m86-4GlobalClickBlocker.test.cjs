@@ -276,11 +276,15 @@ async function runM864GlobalClickBlockerTests(run) {
     const acceptanceRunner = read("scripts/runIsolatedUiEditorAcceptance.cjs");
     const restarbeitenModule = read("src/renderer/modules/restarbeiten/index.js");
     const restarbeitenFilterbar = read("src/renderer/modules/restarbeiten/RestarbeitenFilterbar.js");
+    const restarbeitenScreen = read("src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
+    const mainHeader = read("src/renderer/ui/MainHeader.js");
     assert.match(acceptanceRunner, /async function runAcceptance\(\{ runs = 2,/);
     assert.match(acceptanceRunner, /if \(runs !== 2\) throw new Error\("UI_EDITOR_ACCEPTANCE_REQUIRES_TWO_RUNS"\)/);
     assert.match(restarbeitenModule, /hideSidebar:\s*true/);
-    assert.match(restarbeitenFilterbar, /installDevelopmentUiEditorOpenButton/);
+    assert.match(restarbeitenScreen, /uiEditorScopeId\s*=\s*"restarbeiten\.header\.root"/);
+    assert.match(mainHeader, /installDevelopmentUiEditorOpenButton/);
     assert.doesNotMatch(`${restarbeitenModule}\n${restarbeitenFilterbar}`, /\.inert\s*=|pointer-events\s*:\s*none/);
+    assert.doesNotMatch(mainHeader, /\.inert\s*=/);
   });
 }
 

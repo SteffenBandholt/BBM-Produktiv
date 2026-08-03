@@ -1,5 +1,12 @@
 # STATUS.md — BBM-Produktiv
 
+### M86.13 – Einheitlicher zweizeiliger Modulheader
+
+- Status: `[A]`; `src/renderer/ui/MainHeader.js` bleibt die einzige gemeinsame Headerquelle fuer Protokoll, Restarbeiten und weitere CoreShell-Ansichten.
+- Zeile 1 zeigt links die BBM-Version und rechts `Plan`. Zeile 2 zeigt links den vorhandenen Aktiv-Kontext `aktiv: <Modul> | <Projekt>` und im DEV-Build rechts den roten Marker `Entwicklungsversion – Testlizenz`.
+- Der Marker ist ein reguläres Grid-Element der zweiten gemeinsamen Headerzeile, nicht absolut oberhalb davon. Headerrefs, Registry und Fachlogik bleiben unveraendert.
+- Die fuenf `__bbm`-Treffer in unveränderten PDF-/Druckdateien sind dokumentierter Altbestand. Der M86.13-KREBS-Check ist diff-bezogen: keine neuen oder veraenderten Treffer und keine Event-Hacks im Diff. Commit/Push/PR/Merge: keiner.
+
 ### M86.6 – Richtungskorrekte Breitenänderung der Protokoll-Metagruppe
 
 - Status: `[A]`; die bestehende generische Breitenoperation setzt bei `content-box` wieder die sichtbare Außenbreite als bestätigten Zielwert um.

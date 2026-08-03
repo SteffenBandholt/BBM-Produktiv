@@ -478,6 +478,7 @@ export default class Router {
     this.context.ui = this.context.ui || {};
     this.context.ui.isTopsView = !!isTopsView;
     this.context.ui.pageTitle = pageTitle;
+    this.context.ui.uiEditorScopeId = String(v?.uiEditorScopeId || "").trim();
     if (!isTopsView) {
       this.context.ui.onTopFilterChange = null;
       this.context.ui.onAmpelToggle = null;

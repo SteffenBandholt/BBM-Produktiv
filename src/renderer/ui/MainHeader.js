@@ -9,6 +9,7 @@ import { openClosedProtocolSelector } from "./react/ClosedProtocolSelector.js";
 import { resolveProtocolsDir } from "../utils/pdfProtocolsDir.js";
 import { PROTOKOLL_MODULE_ID } from "../app/modules/index.js";
 import { isModuleActive, refreshCachedActiveModuleAccess } from "../app/modules/moduleAccessState.js";
+import { installDevelopmentUiEditorOpenButton } from "../app/coreShellNavigation.js";
 import { getVisiblePrintDialogActions } from "../../shared/print/printModes.mjs";
 
 const PROTOCOL_DISABLED_MESSAGE = "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.";
@@ -59,6 +60,8 @@ export default class MainHeader {
     this.elRightInfo = null;
     this.elTrialInfo = null;
     this.elDevBadge = null;
+    this.elDevControls = null;
+    this._uiEditorLauncherScopeId = "";
     this.elUiEditorWrap = null;
     this.elUiEditorBtn = null;
     this.elUiEditorStatus = null;
@@ -174,7 +177,7 @@ export default class MainHeader {
     // fixed-ish layout, PDF-nah
     root.style.display = "grid";
     root.style.gridTemplateColumns = "1fr auto 1fr";
-    root.style.gridTemplateRows = "auto auto auto";
+    root.style.gridTemplateRows = "auto auto auto auto";
     root.style.columnGap = "12px";
     root.style.rowGap = "4px";
     root.style.alignItems = "start";
@@ -254,28 +257,11 @@ export default class MainHeader {
 
     leftIdentity.append(elVersion, elActive);
 
-    // Right info (license/customer line) bottom-right
-    const rightInfo = document.createElement("div");
-    rightInfo.style.position = "absolute";
-    rightInfo.style.top = `${headerPadding}px`;
-    rightInfo.style.right = `${this.padding}px`;
-    rightInfo.style.display = "block";
-    rightInfo.style.minWidth = "160px";
-    rightInfo.style.maxWidth = "100%";
-    rightInfo.style.textAlign = "right";
-    rightInfo.style.fontSize = "12px";
-    rightInfo.style.lineHeight = "15px";
-    rightInfo.style.fontWeight = "500";
-    rightInfo.style.whiteSpace = "nowrap";
-    rightInfo.style.overflow = "hidden";
-    rightInfo.style.textOverflow = "ellipsis";
-    rightInfo.style.userSelect = "none";
-
     logoGroup.append(logoWrap);
 
     const actionWrap = document.createElement("div");
     actionWrap.style.gridColumn = "1 / span 3";
-    actionWrap.style.gridRow = "2";
+    actionWrap.style.gridRow = "3";
     actionWrap.style.justifySelf = "center";
     actionWrap.style.alignSelf = "end";
     actionWrap.style.display = "inline-flex";
@@ -296,12 +282,21 @@ export default class MainHeader {
     trialInfo.style.justifySelf = "center";
     trialInfo.style.alignSelf = "start";
 
-    // DEV Badge (rot oben rechts)
+    // Development controls share the second header row; the launcher is only
+    // mounted for an explicitly declared, editor-enabled screen scope.
+    const devControls = document.createElement("div");
+    devControls.style.gridColumn = "3";
+    devControls.style.gridRow = "2";
+    devControls.style.justifySelf = "end";
+    devControls.style.alignSelf = "center";
+    devControls.style.display = "flex";
+    devControls.style.flexDirection = "row-reverse";
+    devControls.style.alignItems = "center";
+    devControls.style.gap = "8px";
+
+    // DEV Badge: zentrale zweite Headerzeile rechts.
     const devBadge = document.createElement("div");
     devBadge.textContent = "Entwicklungsversion – Testlizenz";
-    devBadge.style.position = "absolute";
-    devBadge.style.top = "8px";
-    devBadge.style.right = "10px";
     devBadge.style.background = "#dc2626";
     devBadge.style.color = "#fff";
     devBadge.style.fontSize = "11px";
@@ -312,6 +307,7 @@ export default class MainHeader {
     devBadge.style.display = "none";
     devBadge.style.userSelect = "none";
     devBadge.style.pointerEvents = "none";
+    devControls.append(devBadge);
 
     const applyActionTextButtonStyle = (btn) => {
       if (!btn) return;
@@ -769,7 +765,7 @@ export default class MainHeader {
 
     const stickyNotice = document.createElement("div");
     stickyNotice.style.gridColumn = "1 / span 3";
-    stickyNotice.style.gridRow = "3";
+    stickyNotice.style.gridRow = "4";
     stickyNotice.style.display = "none";
     stickyNotice.style.alignItems = "center";
     stickyNotice.style.gap = "10px";
@@ -797,7 +793,7 @@ export default class MainHeader {
     stickyNotice.append(stickyNoticeText, stickyNoticeClose);
 
     if (this._isNewUi) {
-      root.style.gridTemplateRows = "auto auto auto";
+      root.style.gridTemplateRows = "auto auto auto auto";
       root.style.rowGap = "5px";
       elCenterTitle.style.fontSize = "20px";
       elCenterTitle.style.lineHeight = "24px";
@@ -811,7 +807,7 @@ export default class MainHeader {
       leftIdentity.style.maxWidth = "100%";
 
       actionWrap.style.gridColumn = "1 / span 3";
-      actionWrap.style.gridRow = "2";
+      actionWrap.style.gridRow = "3";
       actionWrap.style.justifySelf = "center";
       actionWrap.style.alignSelf = "end";
       actionWrap.style.paddingRight = "0px";
@@ -824,10 +820,10 @@ export default class MainHeader {
 
       trialInfo.style.gridRow = "1";
       trialInfo.style.marginBottom = "0";
-      stickyNotice.style.gridRow = "3";
+      stickyNotice.style.gridRow = "4";
     }
 
-    root.append(logoGroup, trialInfo, elCenterTitle, leftIdentity, rightInfo, actionWrap, stickyNotice, devBadge);
+    root.append(logoGroup, trialInfo, elCenterTitle, leftIdentity, actionWrap, stickyNotice, devControls);
 
     this.root = root;
 
@@ -836,11 +832,12 @@ export default class MainHeader {
     this.elActive = elActive;
     this.elHeaderIdentity = leftIdentity;
 
-    this.elUserName = rightInfo;
+    this.elUserName = null;
     this.elUserCompany = null;
-    this.elRightInfo = rightInfo;
+    this.elRightInfo = null;
     this.elTrialInfo = trialInfo;
     this.elDevBadge = devBadge;
+    this.elDevControls = devControls;
 
     this.elPrintBtn = printBtn;
     this.elPrintWrap = printWrap;
@@ -1089,11 +1086,6 @@ export default class MainHeader {
       this.elActive.textContent = projectPart ? `aktiv: ${moduleText} | ${projectPart}` : `aktiv: ${moduleText}`;
     }
 
-    if (this.elRightInfo) {
-      const customerText = this._getHeaderCustomerText(this.router?.context?.settings || {});
-      this.elRightInfo.textContent = customerText;
-      this.elRightInfo.title = customerText;
-    }
   }
 
   _setActiveText(val) {
@@ -1670,6 +1662,21 @@ export default class MainHeader {
     }
   }
 
+  _syncDevelopmentUiEditorLauncher() {
+    const host = this.elDevControls;
+    const scopeId = String(this.router?.context?.ui?.uiEditorScopeId || "").trim();
+    if (!host) return;
+    if (scopeId === this._uiEditorLauncherScopeId) return;
+
+    host.querySelector?.('[data-bbm-development-ui-editor-open="true"]')?.remove?.();
+    this._uiEditorLauncherScopeId = scopeId;
+    if (!scopeId) return;
+
+    void installDevelopmentUiEditorOpenButton({ host, scopeId }).then((button) => {
+      if (scopeId !== this._uiEditorLauncherScopeId) button?.remove?.();
+    });
+  }
+
   setUiEditorSelectionMode() {
     return false;
   }
@@ -1836,6 +1843,7 @@ export default class MainHeader {
     }
     this._applyEditorLabButtonState();
     this._applyRestarbeitenV2ButtonState();
+    this._syncDevelopmentUiEditorLauncher();
 
     let stickyFromContext = this.router?.context?.ui?.stickyNotice || "";
     if (/^hinweis:\s*klick-blocker entfernt/i.test(String(stickyFromContext))) {

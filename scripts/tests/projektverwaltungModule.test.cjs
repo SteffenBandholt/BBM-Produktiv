@@ -219,6 +219,8 @@ async function runProjektverwaltungModuleTests(run) {
   const coreShellNavigationSource = read("src/renderer/app/coreShellNavigation.js");
   const coreShellStylesSource = read("src/renderer/app/coreShellStyles.js");
   const mainHeaderSource = read("src/renderer/ui/MainHeader.js");
+  const restarbeitenScreenSource = read("src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
+  const protokollScreenSource = read("src/renderer/modules/protokoll/screens/TopsScreen.js");
   const projectContextQuicklaneSource = read("src/renderer/ui/ProjectContextQuicklane.js");
   const projectFirmsViewSource = read("src/renderer/views/ProjectFirmsView.js");
   const firmsPoolViewSource = read("src/renderer/views/FirmsPoolView.js");
@@ -948,6 +950,8 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellHeaderBridgeSource.includes("bbm:header-refresh"), true);
     assert.equal(coreShellHeaderBridgeSource.includes("bbm:theme-refresh"), true);
     assert.equal(coreShellHeaderBridgeSource.includes("bbm:sticky-notice"), true);
+    assert.equal(coreShellHeaderBridgeSource.includes('root.style.display = isTopsView ? "none" : ""'), false);
+    assert.equal(coreShellHeaderBridgeSource.includes('root.style.display = ""'), true);
     assert.equal(coreShellHeaderBridgeSource.includes("getActiveProjectModuleNavigation"), false);
     assert.equal(coreShellHeaderBridgeSource.includes("PROTOKOLL_MODULE_ID"), false);
     assert.equal(coreShellHeaderBridgeSource.includes("projectFirms"), false);
@@ -966,17 +970,32 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(mainHeaderSource.includes("user_zip"), true);
     assert.equal(mainHeaderSource.includes("user_city"), true);
     assert.equal(mainHeaderSource.includes("user_company"), true);
-    assert.equal(mainHeaderSource.includes("rightInfo.style.position = \"absolute\""), true);
+    assert.equal(mainHeaderSource.includes("rightInfo.style.position = \"absolute\""), false);
     assert.equal(mainHeaderSource.includes("activeModuleLabel"), true);
     assert.equal(mainHeaderSource.includes("_syncHeaderIdentity"), true);
     assert.equal(mainHeaderSource.includes("_getHeaderModuleText"), true);
     assert.equal(mainHeaderSource.includes("_getHeaderProjectText"), true);
-    assert.equal(mainHeaderSource.includes("actionWrap.style.gridRow = \"2\""), true);
-    assert.equal(mainHeaderSource.includes("stickyNotice.style.gridRow = \"3\""), true);
-    assert.equal(mainHeaderSource.includes("actionWrap.style.gridRow = \"3\""), false);
+    assert.equal(mainHeaderSource.includes('rightInfo.textContent = "Plan"'), false);
+    assert.equal(mainHeaderSource.includes('devBadge.style.gridRow = "2"'), true);
+    assert.equal(mainHeaderSource.includes('devBadge.style.position = "absolute"'), false);
+    assert.equal(mainHeaderSource.includes('devBadge.style.top = "8px"'), false);
+    assert.equal(mainHeaderSource.includes("actionWrap.style.gridRow = \"3\""), true);
+    assert.equal(mainHeaderSource.includes("stickyNotice.style.gridRow = \"4\""), true);
   });
 
-  await run("Projektverwaltung: MainHeader rendert Version, Aktiv-Kontext und Kundentext", async () => {
+  await run("M86.13: Protokoll und Restarbeiten erhalten den einen zweizeiligen MainHeader", () => {
+    assert.equal(coreShellSource.includes('import MainHeader from "../ui/MainHeader.js"'), true);
+    assert.equal(coreShellSource.includes("const header = new MainHeader({"), true);
+    assert.equal(restarbeitenScreenSource.includes("Entwicklungsversion – Testlizenz"), false);
+    assert.equal(protokollScreenSource.includes("Entwicklungsversion – Testlizenz"), false);
+    assert.equal(mainHeaderSource.includes('rightInfo.textContent = "Plan"'), false);
+    assert.equal(mainHeaderSource.includes('devBadge.style.gridColumn = "3"'), true);
+    assert.equal(mainHeaderSource.includes('devBadge.style.gridRow = "2"'), true);
+    assert.equal(mainHeaderSource.includes('devBadge.style.position = "absolute"'), false);
+    assert.equal(mainHeaderSource.includes('devBadge.style.top = "8px"'), false);
+  });
+
+  await run("Projektverwaltung: MainHeader rendert zwei gemeinsame Zeilen mit Plan und DEV-Marker", async () => {
     const previousDocument = global.document;
     const previousWindow = global.window;
     const fakeDocument = createFakeDocumentWithBubbling();
@@ -1023,10 +1042,11 @@ async function runProjektverwaltungModuleTests(run) {
 
       assert.equal(header.elVersion.textContent, "BBM 1.5.0");
       assert.equal(header.elActive.textContent, "aktiv: Protokoll | 04-2026 - UI-Polish für BBM");
-      assert.equal(header.elRightInfo.textContent, "Planungsbüro Steffen Bandholt, 22880 Wedel");
-      assert.equal(header.elRightInfo.style.position, "absolute");
-      assert.equal(header.elRightInfo.style.top, "10px");
-      assert.equal(header.root.style.gridTemplateRows, "auto auto auto");
+      assert.equal(header.elRightInfo, null);
+      assert.equal(header.elDevBadge.style.gridColumn, "3");
+      assert.equal(header.elDevBadge.style.gridRow, "2");
+      assert.equal(header.elDevBadge.style.position, undefined);
+      assert.equal(header.root.style.gridTemplateRows, "auto auto auto auto");
       assert.equal(["4px", "5px"].includes(header.root.style.rowGap), true);
       assert.equal(header.root.style.padding, "10px 12px 7px");
       assert.equal(header.elVersion.style.fontSize, "12px");
