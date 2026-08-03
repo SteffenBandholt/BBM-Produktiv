@@ -18,10 +18,6 @@ const screenElements = [
   m83Element({ id: "protokoll.header.title", name: "Bezeichnung Protokoll", type: "label", role: "fieldLabel", parentId: "protokoll.header.titleGroup", order: 21, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
   m83Element({ id: "protokoll.header.keyword", name: "Schlagwort", type: "label", role: "dataFieldLayout", parentId: "protokoll.header.titleGroup", order: 22, allowedOps: TEXT_LAYOUT, componentKind: "interactiveLabel", lockedOps: DOMAIN_LOCKS }),
   m83Element({ id: "protokoll.header.context", name: "Protokollkontext", type: "label", role: "status", parentId: "protokoll.header.titleGroup", order: 23, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
-  m83Element({ id: "protokoll.header.meta", name: "Gruppe Listenbezeichnungen", type: "group", role: "layoutGroup", parentId: "protokoll.header", order: 30, allowedOps: GROUP_LAYOUT, componentKind: "tableLegend" }),
-  m83Element({ id: "protokoll.header.meta.due", name: "Bezeichnung Fertig bis", type: "label", role: "fieldLabel", parentId: "protokoll.header.meta", order: 31, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
-  m83Element({ id: "protokoll.header.meta.status", name: "Bezeichnung Status", type: "label", role: "fieldLabel", parentId: "protokoll.header.meta", order: 32, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
-  m83Element({ id: "protokoll.header.meta.responsible", name: "Bezeichnung Verantwortlich", type: "label", role: "fieldLabel", parentId: "protokoll.header.meta", order: 33, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
   m83Element({ id: "protokoll.header.actions", name: "Gruppe Protokoll-Aktionen", type: "group", role: "layoutGroup", parentId: "protokoll.header", order: 40, allowedOps: GROUP_LAYOUT, componentKind: "actionGroup" }),
   m83DomainButton({ id: "protokoll.header.action.endMeeting", name: "Protokoll beenden", parentId: "protokoll.header.actions", order: 41, actionKind: "endMeeting" }),
   m83DomainButton({ id: "protokoll.header.action.close", name: "Schliessen", parentId: "protokoll.header.actions", order: 42, actionKind: "close" }),
@@ -51,7 +47,6 @@ const optionalQuicklaneSlotIds = new Set([
 
 export const PROTOKOLL_SCREEN_REQUIRED_SLOTS = Object.freeze([
   scopeId, "protokoll.header", "protokoll.header.titleGroup", "protokoll.header.title", "protokoll.header.keyword", "protokoll.header.context",
-  "protokoll.header.meta", "protokoll.header.meta.due", "protokoll.header.meta.status", "protokoll.header.meta.responsible",
   "protokoll.header.actions", "protokoll.header.action.endMeeting", "protokoll.header.action.close",
 ]);
 export const PROTOKOLL_QUICKLANE_REQUIRED_SLOTS = Object.freeze([

@@ -287,6 +287,7 @@ async function runEditorV2SelectionTests(run) {
     "src/renderer/modules/protokoll/screens/TopsScreen.uiEditorContract.js",
     "src/renderer/modules/protokoll/styles/tops.css",
     "src/renderer/modules/protokoll/uiEditor/protokollUiElements.js",
+    "src/renderer/modules/protokoll/viewmodel/TopsScreenViewModel.js",
   ]);
   assert.equal(
     diffFiles.some(

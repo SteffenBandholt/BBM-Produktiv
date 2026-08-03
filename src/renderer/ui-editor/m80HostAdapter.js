@@ -238,6 +238,12 @@ function requireMountedTarget(entry) {
     });
   }
 }
+function isLogicalConditionalStartup(entry, request) {
+  if (request?.source !== "target-app-start" || entry?.referenceKind !== "multi" || entry?.componentKind !== "conditionalMultiRef") return false;
+  const ref = getM80Ref(entry.id);
+  const targets = (ref?.contractTargets || []).filter((target) => target?.isConnected !== false);
+  return Boolean(ref) && targets.length === 0;
+}
 function isLayoutEffective(element) {
   if (!element || element.hidden === true) return false;
   const style = globalThis.window?.getComputedStyle?.(element) || element.style || {};
@@ -394,8 +400,11 @@ function submitChange(changeRequest, scopeId) {
   try {
     const beforeTopology = snapshotM80Topology();
     const beforeGeometry = snapshotM80Geometry();
-    requireMountedTarget(entry);
-    requirePositiveTargetGeometry(entry, beforeGeometry);
+    const logicalConditionalStartup = isLogicalConditionalStartup(entry, request);
+    if (!logicalConditionalStartup) {
+      requireMountedTarget(entry);
+      requirePositiveTargetGeometry(entry, beforeGeometry);
+    }
     const ref = getM80Ref(entry.id);
     if (ref?.element?.dataset?.uiEditorFailNextApply === "true") {
       delete ref.element.dataset.uiEditorFailNextApply;
@@ -607,11 +616,71 @@ function directChildCount(id) {
   return listM80RegistryScopes().flatMap((scope) => scope.elements).filter((entry) => entry.parentId === id).length;
 }
 
-function selectionCandidates(ids) {
+function positiveClientRect(element) {
+  if (!element || element.isConnected === false || typeof element.getBoundingClientRect !== "function") return null;
+  const rect = element.getBoundingClientRect();
+  if (![rect?.left, rect?.top, rect?.width, rect?.height].every((value) => Number.isFinite(Number(value)))) return null;
+  if (Number(rect.width) <= 0 || Number(rect.height) <= 0) return null;
+  const style = globalThis.window?.getComputedStyle?.(element) || element.style || {};
+  if (String(style.display || "").trim().toLowerCase() === "none") return null;
+  if (["hidden", "collapse"].includes(String(style.visibility || "").trim().toLowerCase())) return null;
+
+  let left = Number(rect.left);
+  let top = Number(rect.top);
+  let right = Number(rect.right ?? (left + Number(rect.width)));
+  let bottom = Number(rect.bottom ?? (top + Number(rect.height)));
+  const viewportWidth = Number(globalThis.window?.innerWidth);
+  const viewportHeight = Number(globalThis.window?.innerHeight);
+  if (Number.isFinite(viewportWidth) && viewportWidth > 0) {
+    left = Math.max(left, 0);
+    right = Math.min(right, viewportWidth);
+  }
+  if (Number.isFinite(viewportHeight) && viewportHeight > 0) {
+    top = Math.max(top, 0);
+    bottom = Math.min(bottom, viewportHeight);
+  }
+
+  let ancestor = element.parentElement;
+  while (ancestor) {
+    const ancestorStyle = globalThis.window?.getComputedStyle?.(ancestor) || ancestor.style || {};
+    const overflow = String(ancestorStyle.overflow || "").trim().toLowerCase();
+    const overflowX = String(ancestorStyle.overflowX || overflow).trim().toLowerCase();
+    const overflowY = String(ancestorStyle.overflowY || overflow).trim().toLowerCase();
+    const clipsX = ["auto", "hidden", "scroll", "clip"].includes(overflowX);
+    const clipsY = ["auto", "hidden", "scroll", "clip"].includes(overflowY);
+    if ((clipsX || clipsY) && typeof ancestor.getBoundingClientRect === "function") {
+      const ancestorRect = ancestor.getBoundingClientRect();
+      if (clipsX) {
+        left = Math.max(left, Number(ancestorRect.left));
+        right = Math.min(right, Number(ancestorRect.right ?? (Number(ancestorRect.left) + Number(ancestorRect.width))));
+      }
+      if (clipsY) {
+        top = Math.max(top, Number(ancestorRect.top));
+        bottom = Math.min(bottom, Number(ancestorRect.bottom ?? (Number(ancestorRect.top) + Number(ancestorRect.height))));
+      }
+    }
+    ancestor = ancestor.parentElement;
+  }
+  return right > left && bottom > top ? rect : null;
+}
+
+function visibleRefTarget(ref, sourceElement = null) {
+  if (!ref) return null;
+  const targets = [...new Set((ref.contractTargets || []).filter((target) => target?.isConnected !== false))];
+  if (!targets.length) return null;
+  if (sourceElement) {
+    const sourceTarget = targets.find((target) => target === sourceElement || (typeof target.contains === "function" && target.contains(sourceElement)));
+    if (positiveClientRect(sourceTarget)) return sourceTarget;
+  }
+  return targets.find((target) => positiveClientRect(target)) || null;
+}
+
+function selectionCandidates(ids, sourceElement = null) {
   const seen = new Set();
   return (Array.isArray(ids) ? ids : [ids]).flatMap((id) =>
     createDirectSelectionHierarchy(listM80RegistryScopes().flatMap((scope) => scope.elements), id))
-    .filter((candidate) => getM80Ref(candidate.entry.id) && !seen.has(candidate.entry.id) && seen.add(candidate.entry.id));
+    .map((candidate) => ({ ...candidate, visualElement: visibleRefTarget(getM80Ref(candidate.entry.id), sourceElement) }))
+    .filter((candidate) => candidate.visualElement && !seen.has(candidate.entry.id) && seen.add(candidate.entry.id));
 }
 
 function frameStyle(level) {
@@ -627,29 +696,37 @@ function renderSelectionFrames(candidates, activeIndex = 0, persistent = false) 
   const value = overlay();
   if (typeof value.replaceChildren === "function") value.replaceChildren();
   else value.children = [];
-  if (!candidates.length) { value.style.display = "none"; return; }
-  candidates.forEach((candidate, index) => {
-    const rect = getM80Ref(candidate.entry.id).element.getBoundingClientRect();
+  const resolved = candidates
+    .map((candidate) => ({ ...candidate, visualElement: candidate.visualElement || visibleRefTarget(getM80Ref(candidate.entry.id)) }))
+    .filter((candidate) => candidate.visualElement);
+  if (!resolved.length) { value.style.display = "none"; return false; }
+  const activeId = candidates[activeIndex]?.entry?.id;
+  const resolvedActiveIndex = Math.max(0, resolved.findIndex((candidate) => candidate.entry.id === activeId));
+  resolved.forEach((candidate, index) => {
+    const rect = candidate.visualElement.getBoundingClientRect();
     const style = frameStyle(candidate.level);
     const frame = document.createElement("div");
     frame.dataset.selectionLevel = candidate.level;
-    frame.dataset.selectionActive = String(index === activeIndex);
+    frame.dataset.selectionActive = String(index === resolvedActiveIndex);
     frame.style.cssText = `position:fixed;left:${rect.left - style.inset}px;top:${rect.top - style.inset}px;width:${rect.width + style.inset * 2}px;height:${rect.height + style.inset * 2}px;border:${style.border};background:${style.background};box-sizing:border-box;`;
     const badge = document.createElement("span");
     badge.textContent = describeDirectSelection(candidate, directChildCount(candidate.entry.id));
-    badge.style.cssText = `position:absolute;left:-2px;top:${index === activeIndex ? "-29px" : "2px"};max-width:420px;padding:3px 7px;border:2px ${candidate.level === "Gruppe" ? "dashed" : candidate.level === "Bereich" ? "double" : "solid"} #111827;border-radius:4px;background:${index === activeIndex ? "#111827" : "#fff"};color:${index === activeIndex ? "#fff" : "#111827"};font:600 12px/1.25 sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;`;
+    badge.style.cssText = `position:absolute;left:-2px;top:${index === resolvedActiveIndex ? "-29px" : "2px"};max-width:420px;padding:3px 7px;border:2px ${candidate.level === "Gruppe" ? "dashed" : candidate.level === "Bereich" ? "double" : "solid"} #111827;border-radius:4px;background:${index === resolvedActiveIndex ? "#111827" : "#fff"};color:${index === resolvedActiveIndex ? "#fff" : "#111827"};font:600 12px/1.25 sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;`;
     frame.appendChild(badge);
     value.appendChild(frame);
   });
   value.dataset.persistent = String(persistent);
   value.style.display = "block";
+  return true;
 }
 
 export function highlightM80Element(elementId) {
   const ref = getM80Ref(elementId);
   if (!ref) throw Object.assign(new Error("Element kann nicht markiert werden."), { code: "electron_highlight_failed" });
+  const visualElement = visibleRefTarget(ref);
+  if (!visualElement) throw Object.assign(new Error("Element besitzt derzeit keine sichtbare Geometrie."), { code: "electron_invalid_geometry" });
   selectedId = elementId;
-  renderSelectionFrames([{ entry: getM80RegistryEntry(elementId), level: "Element" }], 0, true);
+  renderSelectionFrames([{ entry: getM80RegistryEntry(elementId), level: "Element", visualElement }], 0, true);
   return true;
 }
 
@@ -667,7 +744,7 @@ function onSelectionHover(event) {
   if (!selectionMode) return;
   const ids = getM80IdsFromTarget(event.target);
   if (!ids.length) { hoverCandidates = []; renderSelectionFrames([]); return; }
-  const candidates = selectionCandidates(ids);
+  const candidates = selectionCandidates(ids, event.target);
   const same = candidates.map((candidate) => candidate.entry.id).join("|") === hoverCandidates.map((candidate) => candidate.entry.id).join("|");
   hoverCandidates = candidates;
   if (!same) hoverIndex = 0;
@@ -677,8 +754,9 @@ function onSelectionHover(event) {
 async function commitHoverSelection() {
   const candidate = hoverCandidates[hoverIndex];
   if (!candidate) return false;
-  const ref = getM80Ref(candidate.entry.id);
-  const rect = ref.element.getBoundingClientRect();
+  const visualElement = candidate.visualElement || visibleRefTarget(getM80Ref(candidate.entry.id));
+  if (!visualElement) return false;
+  const rect = visualElement.getBoundingClientRect();
   stopSelection();
   selectedId = candidate.entry.id;
   renderSelectionFrames([candidate], 0, true);

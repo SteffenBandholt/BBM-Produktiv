@@ -15,7 +15,7 @@ async function runM802HeaderEditboxLayoutTests(run) {
   const elements = complete.flatMap((scope) => scope.elements);
 
   await run("M80.2 Registry: Header, Liste und Editbox sind direkt aktiv; Split ist gesperrt", () => {
-    assert.equal(registryModule.BBM_M80_REGISTRY_VERSION, 16);
+    assert.equal(registryModule.BBM_M80_REGISTRY_VERSION, 17);
     assert.deepEqual(registryModule.BBM_M80_ACTIVE_SCOPES, [
       "restarbeiten.header.root",
       "restarbeiten.list.root",

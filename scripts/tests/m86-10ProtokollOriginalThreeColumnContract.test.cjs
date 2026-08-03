@@ -13,11 +13,19 @@ const COLUMN_IDS = Object.freeze([
   "protokoll.list.column.meta",
 ]);
 const CHILD_IDS = Object.freeze([
-  "protokoll.list.row.level1Toggle", "protokoll.list.row.number", "protokoll.list.row.createdAt", "protokoll.list.row.marker",
+  "protokoll.list.row.level1Toggle", "protokoll.list.row.number", "protokoll.list.row.createdAt", "protokoll.list.row.class", "protokoll.list.row.marker",
   "protokoll.list.row.short", "protokoll.list.row.long", "protokoll.list.row.due", "protokoll.list.row.status",
   "protokoll.list.row.ampel", "protokoll.list.row.todo", "protokoll.list.row.decision", "protokoll.list.row.responsible",
 ]);
+const HEADER_IDS = Object.freeze([
+  "protokoll.list.column.number.header", "protokoll.list.column.text.header", "protokoll.list.column.meta.header",
+  "protokoll.list.header.due", "protokoll.list.header.status", "protokoll.list.header.responsible",
+]);
+const DATA_CELL_IDS = Object.freeze([
+  "protokoll.list.column.number.cells", "protokoll.list.column.text.cells", "protokoll.list.column.meta.cells",
+]);
 const EDITOR_IDS = Object.freeze(["protokoll.list.row", ...COLUMN_IDS, ...CHILD_IDS]);
+const CONTRACT_IDS = Object.freeze([...HEADER_IDS, ...DATA_CELL_IDS, ...EDITOR_IDS]);
 
 class FakeElement {
   constructor(tagName = "DIV", rect = {}) {
@@ -77,10 +85,10 @@ function fullRows({ selectedId = 2 } = {}) {
   ];
 }
 
-function submit(host, elementId, operation, payload, changeId) {
+function submit(host, elementId, operation, payload, changeId, source = "target-app-start") {
   return host.handleM80EditorRequest({
     action: "submitChange", scopeId: "protokoll.list.root",
-    changeRequest: { changeId, elementId, operation, payload, source: "target-app-start" },
+    changeRequest: { changeId, elementId, operation, payload, source },
   }).changeResult;
 }
 
@@ -111,31 +119,34 @@ async function runM8610ProtokollOriginalThreeColumnContractTests(run) {
       assert.doesNotMatch(compactCss, /bbm-tops-list-row-grid|bbm-tops-list-row-meta\s*\{/);
     });
 
-    await run("M86.10 02: vollständiger Listenvertrag deklariert Tabelle, drei logische Spalten, Zeilenvorlage und 16 direkte Editorziele", () => {
+    await run("M86.10 02: vollständiger Listenvertrag deklariert echten Tabellenvertrag, drei logische Spalten und 26 direkte Bindungen", () => {
       const table = entries.get("protokoll.list.table");
-      assert.equal(table.listLayout.rowTemplateId, "protokoll.list.row");
-      assert.equal(table.listLayout.bodyElementId, "protokoll.list.table.body");
-      assert.deepEqual(table.listLayout.columnIds, COLUMN_IDS);
-      assert.equal(table.listLayout.horizontalOverflowMode, "fitViewport");
-      assert.equal(component.slots.filter((slot) => EDITOR_IDS.includes(slot.slotId)).length, 16);
-      for (const id of EDITOR_IDS) {
+      assert.equal(table.tableLayout.rowTemplateId, "protokoll.list.row");
+      assert.deepEqual(table.tableLayout.columnIds, COLUMN_IDS);
+      assert.equal(table.tableLayout.horizontalOverflowMode, "fitViewport");
+      assert.equal(component.slots.filter((slot) => CONTRACT_IDS.includes(slot.slotId)).length, 26);
+      for (const id of CONTRACT_IDS) {
         const slot = component.slots.find((candidate) => candidate.slotId === id);
         const entry = entries.get(id);
-        assert.ok(slot && entry, id); assert.equal(slot.referenceKind, "multi", id);
-        assert.equal(entry.editable, true, id); assert.ok(entry.allowedOps.length > 0, id);
+        assert.ok(slot && entry, id);
+        assert.equal(slot.referenceKind, HEADER_IDS.includes(id) ? "single" : "multi", id);
+        assert.equal(entry.editable, !DATA_CELL_IDS.includes(id), id);
+        assert.equal(entry.allowedOps.length > 0, !DATA_CELL_IDS.includes(id), id);
         assert.ok(entry.baseline?.minWidth > 0 && entry.baseline?.minHeight > 0, id);
       }
-      assert.deepEqual(COLUMN_IDS.map((id) => entries.get(id).type), ["group", "group", "group"]);
-      assert.deepEqual(COLUMN_IDS.map((id) => entries.get(id).allowedOps), [["resizeWidth"], ["resizeWidth"], ["resizeWidth"]]);
-      assert.deepEqual(COLUMN_IDS.map((id) => entries.get(id).listColumnBinding.dataRefKey), COLUMN_IDS);
+      assert.deepEqual(COLUMN_IDS.map((id) => entries.get(id).type), ["tableColumn", "tableColumn", "tableColumn"]);
+      assert.ok(COLUMN_IDS.every((id) => entries.get(id).allowedOps.includes("resizeWidth")));
+      assert.deepEqual(COLUMN_IDS.map((id) => entries.get(id).tableBinding.widthSourceId), COLUMN_IDS);
+      assert.deepEqual(COLUMN_IDS.map((id) => entries.get(id).tableColumnLayout.dataCellTemplateId), DATA_CELL_IDS);
+      assert.deepEqual(DATA_CELL_IDS.map((id) => entries.get(id).type), ["tableDataCell", "tableDataCell", "tableDataCell"]);
       assert.deepEqual(entries.get("protokoll.list.row").allowedOps, ["resizeHeight"]);
     });
 
     await run("M86.10 03: alle Kinder besitzen den fachlich richtigen Spaltenparent und keine Fachoperation", () => {
       const parents = {
-        "protokoll.list.column.number": CHILD_IDS.slice(0, 4),
-        "protokoll.list.column.text": CHILD_IDS.slice(4, 6),
-        "protokoll.list.column.meta": CHILD_IDS.slice(6),
+        "protokoll.list.column.number.cells": CHILD_IDS.slice(0, 5),
+        "protokoll.list.column.text.cells": CHILD_IDS.slice(5, 7),
+        "protokoll.list.column.meta.cells": CHILD_IDS.slice(7),
       };
       for (const [parentId, ids] of Object.entries(parents)) for (const id of ids) {
         const entry = entries.get(id);
@@ -165,13 +176,13 @@ async function runM8610ProtokollOriginalThreeColumnContractTests(run) {
       assert.equal(toggleCount, 1);
     });
 
-    await run("M86.10 05: 16 Ziele lösen direkt auf sichtbare Knoten auf; die leere Level-1-Metazelle wird nie Primärziel", () => {
+    await run("M86.10 05: 26 Bindungen lösen direkt auf sichtbare Knoten auf; die leere Level-1-Metazelle wird nie Primärziel", () => {
       assert.equal(refs.validateM83ComponentReferences(["bbm.protokoll.list.columns"]).ok, true);
-      for (const id of EDITOR_IDS) {
+      for (const id of CONTRACT_IDS) {
         const ref = refs.getM80Ref(id);
         assert.ok(ref?.contractTargets?.length, id);
         assert.ok(ref.contractTargets.every((target) => target !== list.root), `${id}/fallback`);
-        assert.equal(ref.contractTargets[0].getAttribute("data-ui-inspector-id"), id, `${id}/attribute`);
+        if (!COLUMN_IDS.includes(id)) assert.equal(ref.contractTargets[0].getAttribute("data-ui-inspector-id"), id, `${id}/attribute`);
       }
       const meta = refs.getM80Ref("protokoll.list.column.meta");
       assert.ok(meta.element.getBoundingClientRect().height > 0);
@@ -188,7 +199,8 @@ async function runM8610ProtokollOriginalThreeColumnContractTests(run) {
       assert.ok(initialWidth > 0, "current column width must be readable before the first editor change");
       const result = submit(host, metaRef.id, "resizeWidth", { width: initialWidth - 10 }, "m86-10-column-width");
       assert.equal(result.success, true, result.message);
-      assert.equal(list.root.style["--bbm-tops-list-meta-col"], `${initialWidth - 10}px`);
+      assert.equal(list.table.style["--bbm-ui-editor-tops-list-meta-col"], `${initialWidth - 10}px`);
+      assert.equal(list.root.style["--bbm-ui-editor-tops-list-meta-col"], undefined);
       assert.ok(metaRef.contractTargets.every((target) => target.style.width === undefined));
       list.root.children.forEach((row, index) => assert.deepEqual([...row.children[0].children], rowsBefore[index]));
     });
@@ -222,11 +234,11 @@ async function runM8610ProtokollOriginalThreeColumnContractTests(run) {
       assert.equal(refs.getM80Ref("protokoll.list.row.number").contractTargets[0].style.fontSize, "13px");
       assert.equal(refs.getM80Ref("protokoll.list.row.ampel").contractTargets[0].style.width, "18px");
       assert.equal(refs.getM80Ref("protokoll.list.row").contractTargets[0].style.height, "60px");
-      assert.ok(Number.parseFloat(list.root.style["--bbm-tops-list-meta-col"]) > 0);
+      assert.ok(Number.parseFloat(list.table.style["--bbm-ui-editor-tops-list-meta-col"]) > 0);
     });
 
     await run("M86.10 09: fehlender Ref oder reale Nullgeometrie blockiert statt auf Root oder Ersatzlayout auszuweichen", () => {
-      const missing = submit(host, "protokoll.list.row.todo", "resizeWidth", { width: 20 }, "m86-10-missing-target");
+      const missing = submit(host, "protokoll.list.row.todo", "resizeWidth", { width: 20 }, "m86-10-missing-target", "ui-editor-panel");
       assert.equal(missing.success, false); assert.equal(missing.errorCode, "electron_element_not_found");
       const due = refs.getM80Ref("protokoll.list.row.due").contractTargets[0];
       due._rect.width = 0; due._rect.height = 0;
@@ -267,23 +279,16 @@ async function runM8610ProtokollOriginalThreeColumnContractTests(run) {
       }
     });
 
-    await run("M86.10 14: Startup-Restore wartet auf echte Multi-Refs statt auf den Fallback-Root", async () => {
+    await run("M86.10 14: Startup-Geometrie nutzt bei leerer Liste den echten Tabellenkopf und ergänzt Datenzellen erst beim Rerender", async () => {
       list.setItems([]);
-      assert.equal(refs.getM80Ref("protokoll.list.column.meta").contractTargets.length, 0);
-      const previousAnimationFrame = global.window.requestAnimationFrame;
-      let frames = 0;
-      global.window.requestAnimationFrame = (callback) => setTimeout(() => {
-        frames += 1;
-        if (frames === 2) list.setItems(fullRows());
-        callback();
-      }, 0);
-      try {
-        assert.equal(await host.waitForM80StartupGeometry([{ request: { elementId: "protokoll.list.column.meta", operation: "resizeWidth" } }], 4), true);
-        assert.equal(frames, 2);
-        assert.ok(refs.getM80Ref("protokoll.list.column.meta").contractTargets.length > 0);
-      } finally {
-        global.window.requestAnimationFrame = previousAnimationFrame;
-      }
+      const emptyColumn = refs.getM80Ref("protokoll.list.column.meta");
+      assert.equal(emptyColumn.contractTargets.length, 1);
+      assert.strictEqual(emptyColumn.contractTargets[0], list.headerMeta);
+      assert.equal(refs.getM80Ref("protokoll.list.column.meta.cells").contractTargets.length, 0);
+      assert.equal(await host.waitForM80StartupGeometry([{ request: { elementId: "protokoll.list.column.meta", operation: "resizeWidth" } }], 4), true);
+      list.setItems(fullRows());
+      assert.ok(refs.getM80Ref("protokoll.list.column.meta").contractTargets.length > 1);
+      assert.ok(refs.getM80Ref("protokoll.list.column.meta.cells").contractTargets.length > 0);
     });
 
     await run("M86.10 15: Verwerfen rollt nur beruehrte Operationen zurueck und schreibt keine unbeteiligte Zeilenhoehe", async () => {

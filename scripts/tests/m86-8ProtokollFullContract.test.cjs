@@ -53,7 +53,7 @@ async function runM868ProtokollFullContractTests(run) {
   await run("M86.8 02: Renderer sammelt nur bekannte direkte Teile, registriert sie als Multi-Refs und behält sie beim Rerender", () => {
     const source = read("src/renderer/modules/protokoll/TopsList.js");
     assert.match(source, /this\._uiEditorRefs\s*=\s*this\._createUiEditorRefs\(\)/);
-    assert.match(source, /registerM80MultiRef\(column\.id, targets, this\.root/);
+    assert.match(source, /registerM80TableColumnRef\([\s\S]*?column\.id,[\s\S]*?this\._uiEditorRefs\[column\.key\] \|\| \[\],[\s\S]*?this\.table/s);
     for (const id of LIST_IDS) assert.match(source, new RegExp(`"${id.replace(/\./g, "\\.")}"`), id);
     assert.doesNotMatch(source, /querySelector|querySelectorAll|MutationObserver|data-ui-editor-id.*item\.id/);
   });

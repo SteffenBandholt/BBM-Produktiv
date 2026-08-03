@@ -45,6 +45,7 @@ import {
   completeM80PilotRender,
   registerM80MultiRef,
   registerM80Ref,
+  registerM80TableRef,
 } from "../../../ui-editor/m80Refs.js";
 
 function buildInitialProtocolScreenState({ projectId = null, meetingId = null } = {}) {
@@ -222,10 +223,6 @@ export default class TopsScreen {
     registerM80Ref("protokoll.header.title", header.line1El);
     registerM80Ref("protokoll.header.keyword", header.line2El);
     registerM80Ref("protokoll.header.context", header.line3El);
-    registerM80Ref("protokoll.header.meta", header.metaLegend);
-    registerM80Ref("protokoll.header.meta.due", header.metaLegendDue);
-    registerM80Ref("protokoll.header.meta.status", header.metaLegendStatus);
-    registerM80Ref("protokoll.header.meta.responsible", header.metaLegendResponsible);
     registerM80Ref("protokoll.header.actions", header.actionsWrap);
     registerM80Ref("protokoll.header.action.endMeeting", header.btnEndMeeting);
     registerM80Ref("protokoll.header.action.close", header.btnClose);
@@ -238,7 +235,8 @@ export default class TopsScreen {
     registerM80Ref("protokoll.list.root", this.sheetArea);
     registerM80Ref("protokoll.list.canvas", this.sheetCanvas);
     registerM80Ref("protokoll.list.paper", this.sheetPaper);
-    registerM80Ref("protokoll.list.table", this.topsList.root);
+    registerM80TableRef("protokoll.list.table", this.topsList.table, this.topsList.table);
+    registerM80Ref("protokoll.list.table.header", this.topsList.header);
     registerM80Ref("protokoll.list.table.body", this.topsList.root);
 
     registerM80Ref("protokoll.edit.root", this.editArea);
@@ -322,7 +320,7 @@ export default class TopsScreen {
       onLevel1Toggle: async (item) => this._toggleLevel1Collapsed(item?.id),
       onLayoutZoneClick: (zoneKey) => this._setDevLayoutZone(zoneKey),
     });
-    this.sheetPaper.appendChild(this.topsList.root);
+    this.sheetPaper.appendChild(this.topsList.table);
     this._bindTableLayoutChangeListener();
     void this._loadTopListLayout();
   }
@@ -658,7 +656,7 @@ export default class TopsScreen {
       canEndMeeting: !!state.meetingId,
       isBusy: !!state.isLoading || !!state.isWriting,
       canEditKeyword: !!state.meetingId,
-      showMetaLegend: !!state.meetingId,
+      showMetaLegend: false,
     });
   }
 

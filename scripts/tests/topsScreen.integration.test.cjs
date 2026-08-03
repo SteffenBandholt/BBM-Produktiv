@@ -557,10 +557,12 @@ async function runTopsScreenIntegrationTests(run) {
       const row = list.root.children[0];
       const grid = row.children[0];
       const numberCell = grid.children[0];
-      assert.equal(numberCell.children.length, 2);
+      assert.equal(numberCell.children.length, 3);
       assert.equal(numberCell.children[0].children[0].textContent, "7.");
       assert.equal(numberCell.children[1].textContent, "27.04.2026");
       assert.equal(numberCell.children[1].className, "bbm-tops-list-row-number-date");
+      assert.equal(numberCell.children[2].textContent, "TOP");
+      assert.equal(numberCell.children[2].className, "bbm-tops-list-row-class");
 
       list.setItems(datedRows);
       const datedRow = list.root.children[list.root.children.length - 1];
@@ -715,7 +717,7 @@ async function runTopsScreenIntegrationTests(run) {
     }
   });
 
-  await run("Tops v2 Integration: Ohne TOP-Anlagedatum bleibt die Nummernspalte einzeilig", () => {
+  await run("Tops v2 Integration: Ohne TOP-Anlagedatum bleibt die Datumszeile aus und die Klasse sichtbar", () => {
     const prevDocument = globalThis.document;
     globalThis.document = createFakeDocument();
     try {
@@ -734,8 +736,10 @@ async function runTopsScreenIntegrationTests(run) {
       const row = list.root.children[0];
       const grid = row.children[0];
       const numberCell = grid.children[0];
-      assert.equal(numberCell.children.length, 1);
+      assert.equal(numberCell.children.length, 2);
       assert.equal(numberCell.children[0].children[0].textContent, "8.");
+      assert.equal(numberCell.children[1].textContent, "TOP");
+      assert.equal(numberCell.children[1].className, "bbm-tops-list-row-class");
     } finally {
       globalThis.document = prevDocument;
     }
@@ -795,11 +799,11 @@ async function runTopsScreenIntegrationTests(run) {
           orientation: "portrait",
         },
       ]);
-      assert.equal(screen.topsList.root.dataset.tableKey, "protokoll_tops");
-      assert.equal(screen.topsList.root.dataset.layoutVariant, "portrait");
-      assert.equal(screen.topsList.root.style["--bbm-tops-list-number-col"], "72px");
-      assert.equal(screen.topsList.root.style["--bbm-tops-list-text-col"], "minmax(0, 1.2fr)");
-      assert.equal(screen.topsList.root.style["--bbm-tops-list-meta-col"], "84px");
+      assert.equal(screen.topsList.table.dataset.tableKey, "protokoll_tops");
+      assert.equal(screen.topsList.table.dataset.layoutVariant, "portrait");
+      assert.equal(screen.topsList.table.style["--bbm-tops-list-number-col"], "72px");
+      assert.equal(screen.topsList.table.style["--bbm-tops-list-text-col"], "minmax(0, 1.2fr)");
+      assert.equal(screen.topsList.table.style["--bbm-tops-list-meta-col"], "84px");
       assert.equal(screen.header.root.style["--bbm-tops-header-meta-width"], "max(96px, 84px)");
       assert.equal(screen.topsList.root.style["--bbm-top-col-nr-width"], undefined);
     } finally {
@@ -841,11 +845,11 @@ async function runTopsScreenIntegrationTests(run) {
           orientation: "portrait",
         },
       ]);
-      assert.equal(screen.topsList.root.dataset.tableKey, "protokoll_tops");
-      assert.equal(screen.topsList.root.dataset.layoutVariant, "portrait");
-      assert.equal(screen.topsList.root.style["--bbm-tops-list-number-col"], "13fr");
-      assert.equal(screen.topsList.root.style["--bbm-tops-list-text-col"], "65fr");
-      assert.equal(screen.topsList.root.style["--bbm-tops-list-meta-col"], "22fr");
+      assert.equal(screen.topsList.table.dataset.tableKey, "protokoll_tops");
+      assert.equal(screen.topsList.table.dataset.layoutVariant, "portrait");
+      assert.equal(screen.topsList.table.style["--bbm-tops-list-number-col"], "13fr");
+      assert.equal(screen.topsList.table.style["--bbm-tops-list-text-col"], "65fr");
+      assert.equal(screen.topsList.table.style["--bbm-tops-list-meta-col"], "22fr");
       assert.equal(screen.header.root.style["--bbm-tops-header-meta-width"], "22%");
     } finally {
       globalThis.document = prevDocument;
@@ -869,7 +873,7 @@ async function runTopsScreenIntegrationTests(run) {
     );
     assert.match(
       topsCss,
-      /\.bbm-tops-list-row-grid\s*\{[\s\S]*?grid-template-columns:\s*var\(\s*--bbm-tops-list-grid-columns,/
+      /\.bbm-tops-list-row-grid\s*\{[\s\S]*?grid-template-columns:[\s\S]*?--bbm-ui-editor-tops-list-number-col[\s\S]*?--bbm-ui-editor-tops-list-text-col[\s\S]*?--bbm-ui-editor-tops-list-meta-col/
     );
     assert.doesNotMatch(
       topsCss,
@@ -877,7 +881,7 @@ async function runTopsScreenIntegrationTests(run) {
     );
   });
 
-  await run("Tops v2 Integration: Titel mit created_at zeigt keine Datumslinie", () => {
+  await run("Tops v2 Integration: Titel zeigt vorhandenes Anlagedatum und bestehende Level-Klasse", () => {
     const rows = buildListItemsFromState({
       tops: [
         {
@@ -892,7 +896,8 @@ async function runTopsScreenIntegrationTests(run) {
     });
 
     assert.equal(rows[0].isTitle, true);
-    assert.equal(rows[0].createdAt, "");
+    assert.equal(rows[0].createdAt, "27.04.2026");
+    assert.equal(rows[0].itemClass, "Titel");
     assert.equal(rows[0].meta.length, 0);
     assert.equal(rows[0].ampelColor, null);
 
@@ -905,8 +910,10 @@ async function runTopsScreenIntegrationTests(run) {
       const row = list.root.children[0];
       const grid = row.children[0];
       const numberCell = grid.children[0];
-      assert.equal(numberCell.children.length, 1);
+      assert.equal(numberCell.children.length, 3);
       assert.equal(numberCell.children[0].children[0].textContent, "1.");
+      assert.equal(numberCell.children[1].textContent, "27.04.2026");
+      assert.equal(numberCell.children[2].textContent, "Titel");
     } finally {
       globalThis.document = prevDocument;
     }

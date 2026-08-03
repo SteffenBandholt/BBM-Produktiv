@@ -245,7 +245,7 @@ export function buildListItemsFromState(state, options = {}) {
     const dueDisplay = formatDateToDdMmYyyy(due);
     const createdAtRaw =
       top?.created_at ?? top?.createdAt ?? top?.top_created_at ?? top?.topCreatedAt ?? "";
-    const createdAt = !isTitle ? formatDateToDdMmYyyy(createdAtRaw) : "";
+    const createdAt = formatDateToDdMmYyyy(createdAtRaw);
     const status = (top?.status || "").toString().trim();
     const isCompleted = !isTitle && isCompletedStatus(status);
     const ampelColor =
@@ -304,6 +304,10 @@ export function buildListItemsFromState(state, options = {}) {
       number: `${top?.displayNumber ?? top?.number ?? ""}.`,
       preview: showLongtextInList ? normalizeTopLongText(top?.longtext) : "",
       createdAt,
+      itemClass: isTitle ? "Titel" : "TOP",
+      due: !isTitle ? (dueDisplay || due) : "",
+      status: !isTitle ? status : "",
+      responsible: !isTitle ? responsible : "",
       meta,
       isSelected: String(top?.id) === String(selectedId ?? ""),
       isMoveMode: !!state?.isMoveMode,

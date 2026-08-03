@@ -9,6 +9,7 @@ const ALLOWED_PROTOKOLL_UI_DIFFS = new Set([
   "src/renderer/modules/protokoll/screens/TopsScreen.uiEditorContract.js",
   "src/renderer/modules/protokoll/styles/tops.css",
   "src/renderer/modules/protokoll/uiEditor/protokollUiElements.js",
+  "src/renderer/modules/protokoll/viewmodel/TopsScreenViewModel.js",
 ]);
 
 function isUnexpectedProtokollDiff(file) {

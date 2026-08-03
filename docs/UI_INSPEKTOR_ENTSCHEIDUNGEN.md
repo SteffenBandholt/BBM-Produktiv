@@ -123,6 +123,16 @@
 
 **Begruendung:** Das uebernimmt das bewaehrte technische Prinzip der Restarbeiten-Liste, ohne deren Fachmodell oder konkrete Layoutwerte zu kopieren. Der UI-Editor bleibt Abbild und begrenztes Werkzeug fuer vorhandene Ziele; er darf keine Wrapper, Parents, DOM-Reihenfolge, Grid-/Flextopologie, responsive Stapelung oder Ersatzgeometrie erzeugen. Fehlender Ref oder fehlende positive Geometrie fuehrt zum Abbruch der Operation.
 
+## Entscheidung 025
+**Beschluss:** Direktauswahl und Auswahlrahmen duerfen fuer bedingte Multi-Refs nur tatsaechlich sichtbare, positive und innerhalb ihrer Clipping-Vorfahren liegende Zielgeometrie verwenden. Ein gespeichertes Startprofil darf einen expliziten Layoutwert fuer ein aktuell ausgeblendetes bedingtes Multi-Ref logisch vormerken; die Anwendung erfolgt beim naechsten sichtbaren komponentennahen Rerender auf die echten Zielknoten. Die Vertrags-Baseline muss dem realen CSS-DIP-Ausgangswert entsprechen.
+
+**Begruendung:** Damit entstehen weder falsche Root-/Containerrahmen noch unvollstaendige Save-/Restore-Vertraege. Ausgeblendete Elemente bleiben interaktiv unselektierbar, waehrend ein zuvor sichtbar bearbeiteter und gespeicherter Wert den automatischen Neustart sicher ueberlebt. Angezeigter Istwert, Plus/Minus, Readback und Baseline bleiben dieselbe Wahrheit.
+
+## Entscheidung 026
+**Beschluss:** Die produktive Protokoll-TOP-Liste besitzt dauerhaft eine eigene Tabellen-/Zeilenstruktur mit sichtbarem Tabellenkopf, gemeinsamem Zeilenbereich und drei nebeneinanderliegenden Hauptspalten fuer `Nr. / Datum / Klasse`, `Gegenstand` und `Fertig bis / Status / Verantwortlich`. Diese Struktur ist Produktcode und darf nicht als vom UI-Editor erzeugter Wrapper oder als nur im Entwicklungsmodus vorhandene Hilfsstruktur entfernt werden. Restarbeiten bleibt die sichtbare und technische Referenz, ohne dass dessen Fachmodell, IDs oder konkrete Werte uebernommen werden.
+
+**Begruendung:** Nur die produktive Struktur garantiert fuer Header und Zeilen gemeinsame Breitenquellen, stabile Parents und die verbindliche Anordnung links/mittig/rechts. Der UI-Editor darf diese vorhandenen Ziele feinjustieren, aber weder Spaltenzahl, Parent-/Child-Struktur, Reihenfolge, `display`, Grid-/Flex-Topologie noch Scrollverantwortung veraendern. Ein Rueckfall in normalen Blockfluss ist ein Produktfehler und wird durch den M86.11b-Geometrieguardrail blockiert.
+
 ## Entscheidung 021
 **Beschluss:** M80.2 entfernt die gekoppelte Restarbeiten-Splitoperation aus der produktiven Registry. Der tatsächliche Filter-Header und der stabile Editbox-Root sind unabhängig größenfähig; die Hauptliste füllt den verbleibenden Bereich flexibel und scrollt innerhalb ihres eigenen Containers.
 
