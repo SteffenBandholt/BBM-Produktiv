@@ -78,7 +78,7 @@ async function runM821BbmFeintuningTests(run) {
   await run("M82.1 BBM 30: Layout und Icon-Trennung sind real im Renderer verankert", () => { assert.match(editbox, /\.headerZone/); assert.match(editbox, /dictation\.icon/); assert.match(css, /min-height:\s*190px/); assert.match(css, /overflow:\s*auto/); });
   await run("M84.0 BBM 30a: Editbox bleibt im bestehenden Flex-Arbeitsbereich unten und gibt Höhe an die Liste frei", () => {
     assert.match(css, /\.bbm-restarbeiten-workspace__list\s*\{[\s\S]*flex:\s*1 1 0/);
-    assert.match(css, /\.bbm-restarbeiten-workspace__edit\s*\{[\s\S]*flex:\s*0 0 auto[\s\S]*align-items:\s*flex-end/);
+    assert.match(css, /\.bbm-restarbeiten-workspace__edit\s*\{[\s\S]*flex:\s*0 0 auto[\s\S]*align-items:\s*center/);
     assert.match(css, /\.bbm-restarbeiten-editbox\s*\{[\s\S]*height:\s*248px[\s\S]*min-height:\s*190px/);
     assert.match(css, /@media \(max-height:\s*850px\)[\s\S]*\.bbm-restarbeiten-editbox\s*\{[\s\S]*height:\s*220px/);
   });
