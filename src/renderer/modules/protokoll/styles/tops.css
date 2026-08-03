@@ -685,7 +685,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   display: grid;
   grid-template-columns:
     var(--bbm-ui-editor-tops-list-number-col, minmax(48px, var(--bbm-tops-list-number-col, 13fr)))
-    var(--bbm-ui-editor-tops-list-text-col, minmax(0, var(--bbm-tops-list-text-col, 65fr)))
+    var(--bbm-ui-editor-tops-list-text-col, var(--bbm-tops-list-text-col, minmax(0, 65fr)))
     var(--bbm-ui-editor-tops-list-meta-col, minmax(96px, var(--bbm-tops-list-meta-col, 22fr)));
   gap: 8px;
   padding: 0 10px 6px;
@@ -858,7 +858,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   /* One inherited descriptor for TOP (including expander/star/date), text, and meta. */
   grid-template-columns:
     var(--bbm-ui-editor-tops-list-number-col, minmax(48px, var(--bbm-tops-list-number-col, 13fr)))
-    var(--bbm-ui-editor-tops-list-text-col, minmax(0, var(--bbm-tops-list-text-col, 65fr)))
+    var(--bbm-ui-editor-tops-list-text-col, var(--bbm-tops-list-text-col, minmax(0, 65fr)))
     var(--bbm-ui-editor-tops-list-meta-col, minmax(96px, var(--bbm-tops-list-meta-col, 22fr)));
   gap: 8px;
   align-items: start;

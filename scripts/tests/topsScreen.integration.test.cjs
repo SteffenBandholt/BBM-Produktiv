@@ -869,8 +869,9 @@ async function runTopsScreenIntegrationTests(run) {
 
     assert.match(
       sharedLayout,
-      /gridTemplateColumns:\s*\n\s*"minmax\(48px, var\(--bbm-tops-list-number-col, 13fr\)\) minmax\(0, var\(--bbm-tops-list-text-col, 65fr\)\) minmax\(96px, var\(--bbm-tops-list-meta-col, 22fr\)\)"/
+      /PROTOKOLL_TOPS_UI_GRID_TEMPLATE_COLUMNS\s*=\s*\n\s*"minmax\(48px, var\(--bbm-tops-list-number-col, 13fr\)\) var\(--bbm-tops-list-text-col, minmax\(0, 65fr\)\) minmax\(96px, var\(--bbm-tops-list-meta-col, 22fr\)\)"/
     );
+    assert.doesNotMatch(sharedLayout, /minmax\(0, var\(--bbm-tops-list-text-col/);
     assert.match(
       topsCss,
       /\.bbm-tops-list-row-grid\s*\{[\s\S]*?grid-template-columns:[\s\S]*?--bbm-ui-editor-tops-list-number-col[\s\S]*?--bbm-ui-editor-tops-list-text-col[\s\S]*?--bbm-ui-editor-tops-list-meta-col/

@@ -133,6 +133,11 @@
 
 **Begruendung:** Nur die produktive Struktur garantiert fuer Header und Zeilen gemeinsame Breitenquellen, stabile Parents und die verbindliche Anordnung links/mittig/rechts. Der UI-Editor darf diese vorhandenen Ziele feinjustieren, aber weder Spaltenzahl, Parent-/Child-Struktur, Reihenfolge, `display`, Grid-/Flex-Topologie noch Scrollverantwortung veraendern. Ein Rueckfall in normalen Blockfluss ist ein Produktfehler und wird durch den M86.11b-Geometrieguardrail blockiert.
 
+## Entscheidung 027
+**Beschluss:** Persistierte Protokoll-Spaltenwerte werden im normalen Source-Runtimepfad ausschliesslich als validierte vollstaendige CSS-Tracks angewandt. Positive numerische Breiten werden zu `px`; ungueltige, leere oder gefaehrliche Alttracks fallen auf die komponentennahen Defaults zurueck. Ein persistierter kompletter Grid-Descriptor ist keine zweite Wahrheitsquelle. Ein bereits vollstaendiger Text-Track wie `minmax(0, 1fr)` wird direkt in die gemeinsame Header-/Zeilen-Trackliste eingesetzt und nicht erneut mit `minmax()` umschlossen.
+
+**Begruendung:** Eine doppelte `minmax()`-Verschachtelung machte trotz korrekter DOM-Struktur, Klassen und Vererbung die gesamte produktive `grid-template-columns`-Deklaration ungueltig. Chromium erzeugte daraufhin nur einen impliziten Track und stellte die drei Bereiche untereinander. Der M86.12-Guardrail laesst die produktive CSS-Regel deshalb durch Chromium berechnen und prueft neben Vertragswerten auch drei reale X-Positionen, Nichtueberlagerung sowie die Behandlung gueltiger und ungueltiger gespeicherter Werte.
+
 ## Entscheidung 021
 **Beschluss:** M80.2 entfernt die gekoppelte Restarbeiten-Splitoperation aus der produktiven Registry. Der tatsächliche Filter-Header und der stabile Editbox-Root sind unabhängig größenfähig; die Hauptliste füllt den verbleibenden Bereich flexibel und scrollt innerhalb ihres eigenen Containers.
 

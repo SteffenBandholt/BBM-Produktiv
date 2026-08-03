@@ -26,6 +26,15 @@
   labelMeta3: "verantw",
 });
 
+const PROTOKOLL_TOPS_UI_GRID_TEMPLATE_COLUMNS =
+  "minmax(48px, var(--bbm-tops-list-number-col, 13fr)) var(--bbm-tops-list-text-col, minmax(0, 65fr)) minmax(96px, var(--bbm-tops-list-meta-col, 22fr))";
+
+const PROTOKOLL_TOPS_UI_TRACK_DEFAULTS = Object.freeze({
+  "--bbm-tops-list-number-col": PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberWidth,
+  "--bbm-tops-list-text-col": PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextTrack,
+  "--bbm-tops-list-meta-col": PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaWidth,
+});
+
 export const PROTOKOLL_TOPS_EDIT_FIELDS = Object.freeze([
   Object.freeze({ key: "uiNumberWidth", label: "UI TOP-Spalte", path: "ui.rootVars.--bbm-tops-list-number-col", type: "gridTrack", required: true }),
   Object.freeze({ key: "uiNumberInset", label: "UI TOP-Innenabstand", path: "ui.rootVars.--bbm-tops-list-number-padding-inline", type: "gridTrack", required: true }),
@@ -168,8 +177,7 @@ const PROTOKOLL_TOPS_LAYOUT = Object.freeze({
       "--bbm-tops-list-meta-padding-inline": "4px",
       "--bbm-tops-list-meta-font-size": "11px",
     }),
-    gridTemplateColumns:
-      "minmax(48px, var(--bbm-tops-list-number-col, 13fr)) minmax(0, var(--bbm-tops-list-text-col, 65fr)) minmax(96px, var(--bbm-tops-list-meta-col, 22fr))",
+    gridTemplateColumns: PROTOKOLL_TOPS_UI_GRID_TEMPLATE_COLUMNS,
   }),
   pdf: Object.freeze({
     rootVars: Object.freeze({
@@ -229,6 +237,16 @@ function _isAllowedGridTrack(text) {
   if (/^minmax\(\s*0\s*,\s*\d+(?:\.\d+)?fr\s*\)$/.test(text)) return true;
   if (/^minmax\(\s*\d+(?:\.\d+)?(?:px|mm|ch)\s*,\s*\d+(?:\.\d+)?(?:px|mm|ch|fr)\s*\)$/.test(text)) return true;
   return false;
+}
+
+function _normalizeProtokollTopsUiTrack(name, value) {
+  const fallback = PROTOKOLL_TOPS_UI_TRACK_DEFAULTS[name];
+  if (!fallback) return value;
+  if (typeof value === "number") {
+    return Number.isFinite(value) && value > 0 ? `${value}px` : fallback;
+  }
+  const text = _normalizeText(value);
+  return _isAllowedGridTrack(text) ? text : fallback;
 }
 
 function _isAllowedHeadingText(text) {
@@ -586,13 +604,16 @@ export function applyProtokollTopsUiLayout(target, layoutOverride) {
   target.dataset.layoutVariant = layout.variant;
   const uiLayout = layout.ui || PROTOKOLL_TOPS_LAYOUT.ui;
   for (const [key, value] of Object.entries(uiLayout.rootVars || {})) {
-    target.style.setProperty(key, value);
+    target.style.setProperty(key, _normalizeProtokollTopsUiTrack(key, value));
   }
-  if (typeof uiLayout.gridTemplateColumns === "string" && uiLayout.gridTemplateColumns.trim()) {
-    target.style.setProperty("--bbm-tops-list-grid-columns", uiLayout.gridTemplateColumns.trim());
-  } else {
-    target.style.removeProperty?.("--bbm-tops-list-grid-columns");
+  for (const [key, fallback] of Object.entries(PROTOKOLL_TOPS_UI_TRACK_DEFAULTS)) {
+    if (!Object.prototype.hasOwnProperty.call(uiLayout.rootVars || {}, key)) {
+      target.style.setProperty(key, fallback);
+    }
   }
+  // Persisted legacy descriptors are not trusted: the three validated tracks
+  // above are the only source for the productive header and row grid.
+  target.style.setProperty("--bbm-tops-list-grid-columns", PROTOKOLL_TOPS_UI_GRID_TEMPLATE_COLUMNS);
 }
 
 export function resolveProtokollTopsUiMetaHeaderWidth(layoutOverride) {
