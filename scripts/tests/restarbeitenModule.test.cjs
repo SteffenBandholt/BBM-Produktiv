@@ -1054,9 +1054,9 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(css.includes('--bbm-rest-font-family: "Noto Sans", Arial, sans-serif;'), true);
       assert.equal(css.includes(".bbm-restarbeiten-screen,\n.bbm-restarbeiten-screen button,\n.bbm-restarbeiten-screen input,\n.bbm-restarbeiten-screen select,\n.bbm-restarbeiten-screen textarea {\n  font-family: var(--bbm-rest-font-family);"), true);
       assert.equal(css.includes(".bbm-restarbeiten-filterbar [data-ui-editor-id=\"restarbeiten.filterbar.group.meta\"] .bbm-restarbeiten-field span,\n.bbm-restarbeiten-filterbar [data-ui-editor-id=\"restarbeiten.filterbar.group.meta\"] .bbm-restarbeiten-field input,\n.bbm-restarbeiten-filterbar [data-ui-editor-id=\"restarbeiten.filterbar.group.meta\"] .bbm-restarbeiten-field select {\n  color: var(--bbm-muted);\n  font-size: 6.5pt;\n  font-weight: 400;\n  line-height: 1.1;"), true);
-      assert.equal(css.includes(".bbm-restarbeiten-filter-group {\n  grid-auto-flow: column;\n  grid-auto-columns: minmax(104px, auto);\n  align-items: center;"), true);
-      assert.equal(css.includes(".bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle {\n  flex-direction: row;\n  align-items: center;\n  justify-content: center;\n  gap: 4px;"), true);
-      assert.equal(css.includes(".bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle button {\n  min-height: var(--bbm-rest-control-height);\n  margin: 0;\n  padding: 4px 7px;"), true);
+      assert.equal(css.includes(".bbm-restarbeiten-filter-group {\n  grid-auto-flow: column;\n  grid-auto-columns: minmax(94px, auto);\n  align-items: center;"), true);
+      assert.equal(css.includes(".bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle {\n  flex-direction: row;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;"), true);
+      assert.equal(css.includes(".bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle button {\n  min-width: 46px;\n  min-height: 26px;\n  margin: 0;\n  padding: 2px 6px;"), true);
     } finally {
       globalThis.document = prevDocument;
     }
@@ -1753,6 +1753,14 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(css.includes("grid-template-rows: auto minmax(0, 1fr);"), true);
     assert.equal(css.includes("flex-direction: column;"), true);
     assert.equal(css.includes("--bbm-restarbeiten-list-height"), false);
+    assert.equal(css.includes("--bbm-restarbeiten-content-width: min(900px, calc(100vw - 88px));"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-filterbar {\n  width: var(--bbm-restarbeiten-content-width);"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-paper {\n  width: var(--bbm-restarbeiten-content-width);"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-editbox {\n  width: var(--bbm-restarbeiten-content-width);"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-workspace__edit {\n  flex: 0 0 auto;\n  max-height: calc(100% - 180px);\n  overflow: auto;\n  scrollbar-gutter: stable both-edges;\n  display: flex;\n  align-items: center;"), true);
+    assert.equal(css.includes("overflow-y: auto;\n  scrollbar-gutter: stable both-edges;\n  padding: 10px 0 12px;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle button {\n  min-width: 46px;\n  min-height: 26px;"), true);
+    assert.equal(css.includes("@media (max-height: 520px)"), true);
     assert.equal(css.includes(".bbm-restarbeiten-main {\n  min-height: 0;\n  overflow-x: hidden;\n  overflow-y: auto;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-screen {\n  min-height: 0;\n  height: 100%;\n  max-height: 100%;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-record__number {\n  font-size: 8.5pt;\n  font-weight: 600;\n  line-height: 1.15;"), true);

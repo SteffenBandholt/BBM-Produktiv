@@ -47,7 +47,10 @@ async function runM826TopScreenModuleClosureTests(run) {
   await run("M82.6 BBM 10: alte Overflow-Regeln sind entfernt", () => assert.doesNotMatch(css, /bbm-restarbeiten-table-(viewport|scroll-area)/));
   await run("M82.6 BBM 11: nur die vorhandene Mitte scrollt vertikal", () => assert.match(css, /\.bbm-restarbeiten-main\s*\{[\s\S]*?overflow-x:\s*hidden;[\s\S]*?overflow-y:\s*auto;/));
   await run("M82.6 BBM 12: TopScreen behaelt Kopf, Liste und Editbox", () => ["bbm-restarbeiten-header", "bbm-restarbeiten-workspace__list", "bbm-restarbeiten-workspace__edit"].forEach((name) => assert.match(screen, new RegExp(name))));
-  await run("M82.6 BBM 13: A4-nahe Listenblattbreite bleibt 900 px", () => assert.match(css, /\.bbm-restarbeiten-paper\s*\{[\s\S]*?width:\s*min\(100%,\s*900px\)/));
+  await run("M82.6 BBM 13: A4-nahe Listenblattbreite nutzt den gemeinsamen 900-px-Breitenanker", () => {
+    assert.match(css, /--bbm-restarbeiten-content-width:\s*min\(900px,\s*calc\(100vw - 88px\)\)/);
+    assert.match(css, /\.bbm-restarbeiten-paper\s*\{[\s\S]*?width:\s*var\(--bbm-restarbeiten-content-width\)/);
+  });
   await run("M82.6 BBM 14: Protokoll-TopsScreen blieb bytegleich", () => assert.equal(sha256("src/renderer/views/TopsScreen.js"), "0826FDC88D2D454D384F0D64CC6678AC356E2BFD73041B9336E89266EF57D1B3"));
   await run("M82.6 BBM 15: Protokoll-TopScreen-CSS blieb bytegleich", () => assert.equal(sha256("src/renderer/tops/styles/tops.css"), "93863CA66367BF145DD4E5E50F78811A784BFE8AE70BBE50996249306DF084CB"));
   await run("M82.6 BBM 16: Protokoll besitzt weiterhin genau den mittleren Sheet-Scrollbereich", () => { const protocolCss = read("src/renderer/tops/styles/tops.css"); assert.match(protocolCss, /\[data-bbm-tops-screen-area="sheet"\][\s\S]*?overflow:\s*auto/); assert.match(protocolCss, /\[data-bbm-tops-screen-area="edit"\][\s\S]*?flex:\s*0 0 auto/); });

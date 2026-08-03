@@ -29,6 +29,7 @@
   --bbm-rest-radius-control: 6px;
   --bbm-rest-control-height: 28px;
   --bbm-rest-panel-gap: 8px;
+  --bbm-restarbeiten-content-width: min(900px, calc(100vw - 88px));
 }
 
 .bbm-restarbeiten-screen {
@@ -52,6 +53,9 @@
   max-width: 100%;
   max-height: 240px;
   overflow: auto;
+  display: grid;
+  justify-items: center;
+  align-content: start;
 }
 
 .bbm-restarbeiten-workspace {
@@ -79,8 +83,9 @@
   flex: 0 0 auto;
   max-height: calc(100% - 180px);
   overflow: auto;
+  scrollbar-gutter: stable both-edges;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
 }
 
 .bbm-restarbeiten-workspace__list > .bbm-restarbeiten-main {
@@ -114,8 +119,9 @@
 }
 
 .bbm-restarbeiten-filterbar {
-  margin: 0 72px 6px 16px;
-  padding: 9px 12px;
+  width: var(--bbm-restarbeiten-content-width);
+  margin: 0 auto 6px;
+  padding: 8px 10px;
   box-sizing: border-box;
   height: auto;
   max-height: 220px;
@@ -124,6 +130,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--bbm-rest-panel-gap);
+  justify-content: center;
   align-items: center;
   border-radius: var(--bbm-rest-radius-panel);
 }
@@ -137,9 +144,9 @@
 
 .bbm-restarbeiten-filter-group {
   grid-auto-flow: column;
-  grid-auto-columns: minmax(104px, auto);
+  grid-auto-columns: minmax(94px, auto);
   align-items: center;
-  gap: 4px 7px;
+  gap: 4px 6px;
   align-self: center;
 }
 
@@ -153,7 +160,7 @@
 }
 
 .bbm-restarbeiten-filterbar [data-ui-editor-id="restarbeiten.filterbar.meta.responsible"] {
-  min-width: 132px;
+  min-width: 118px;
 }
 
 .bbm-restarbeiten-filter-group__title,
@@ -219,19 +226,21 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle button {
-  min-height: var(--bbm-rest-control-height);
+  min-width: 46px;
+  min-height: 26px;
   margin: 0;
-  padding: 4px 7px;
+  padding: 2px 6px;
   border: 1px solid var(--bbm-line);
   border-radius: var(--bbm-rest-radius-control);
   background: var(--bbm-panel);
   color: var(--bbm-muted);
-  font-size: var(--bbm-rest-label-font-size);
+  font-size: 7pt;
   line-height: 1.1;
+  text-align: center;
 }
 
 .bbm-restarbeiten-class-toggle {
@@ -397,16 +406,18 @@
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 10px 72px 12px 16px;
+  scrollbar-gutter: stable both-edges;
+  padding: 10px 0 12px;
 }
 
 .bbm-restarbeiten-sheet {
   display: grid;
-  justify-content: center;
+  justify-items: center;
+  width: 100%;
 }
 
 .bbm-restarbeiten-paper {
-  width: min(100%, 900px);
+  width: var(--bbm-restarbeiten-content-width);
   min-width: 0;
   min-height: 720px;
   aspect-ratio: 210 / 297;
@@ -712,14 +723,14 @@
 }
 
 .bbm-restarbeiten-editbox {
-  margin: 6px 72px 12px 16px;
+  width: var(--bbm-restarbeiten-content-width);
+  margin: 6px auto 12px;
   border-radius: var(--bbm-rest-radius-panel);
   padding: 8px 10px;
   box-sizing: border-box;
   min-width: 320px;
   height: 248px;
   min-height: 190px;
-  max-width: calc(100% - 88px);
   max-height: min(480px, calc(100vh - 360px));
   overflow: hidden;
   display: block;
@@ -1000,6 +1011,55 @@
 
   .bbm-restarbeiten-editbox {
     height: 220px;
+  }
+}
+
+@media (max-height: 520px) {
+  .bbm-restarbeiten-header {
+    min-height: 0;
+    max-height: 116px;
+  }
+
+  .bbm-restarbeiten-filterbar {
+    gap: 4px;
+    padding: 4px 8px;
+    margin-bottom: 4px;
+  }
+
+  .bbm-restarbeiten-filter-group {
+    grid-auto-columns: minmax(82px, auto);
+    gap: 2px 5px;
+  }
+
+  .bbm-restarbeiten-filterbar [data-ui-editor-id="restarbeiten.filterbar.meta.responsible"] {
+    min-width: 104px;
+  }
+
+  .bbm-restarbeiten-workspace__list {
+    min-height: 96px;
+  }
+
+  .bbm-restarbeiten-workspace__edit {
+    max-height: calc(100% - 96px);
+  }
+
+  .bbm-restarbeiten-main {
+    padding-top: 4px;
+    padding-bottom: 6px;
+  }
+
+  .bbm-restarbeiten-editbox {
+    height: 136px;
+    min-height: 132px;
+    max-height: 136px;
+    margin-top: 3px;
+    margin-bottom: 3px;
+    padding: 6px 8px;
+  }
+
+  .bbm-restarbeiten-editbox__editor-area {
+    grid-template-columns: minmax(220px, 1fr) 90px 90px;
+    gap: 4px;
   }
 }
 
