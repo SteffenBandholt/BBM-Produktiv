@@ -80,6 +80,16 @@ Aktueller Stand:
 - [x] M86.10 Urspruengliche Dreispalten-TOP-Zeile wiederherstellen und vollstaendig editorfaehig machen
 - [x] M86.11 Protokoll-TOP-Zeile sichtbar wie Restarbeiten strukturieren und vollstaendig editorfaehig absichern
 - [x] M86.11b Produktive M86.11-Dreispaltenstruktur ausdruecklich beibehalten und hart gegen Blockfluss-Rueckfall absichern
+- [x] M86.12 Tatsaechlichen Dreispaltenfehler im normalen Source-Start messen und reparieren
+
+## Statusupdate M86.12
+
+- Status: `[A]`. Der Nutzer hatte die untereinander stehenden Header- und Zeilenbereiche bereits im normalen `npm start` auf dem aktuellen Source-Stand nachgewiesen. Dieser Befund wurde vor der Aenderung im normalen lokalen Profil reproduziert und vermessen; alte EXEs, Installer oder Packaging waren nicht Ursache und nicht Gegenstand des Pakets.
+- Der produktive Tabellencontainer besass die richtigen Klassen, Parents, direkten Kinder und gespeicherten Einzelwerte. `tops.css` war genau einmal geladen und lieferte als einzige relevante Regel `display: grid` und die Trackliste. Der gueltige vollstaendige Text-Track `minmax(0, 1fr)` wurde dort ein zweites Mal in `minmax(0, ...)` eingeschlossen. Chromium verwarf die so entstehende verschachtelte Trackliste und auto-platzierte alle drei Kinder in einem impliziten Vollbreitentrack.
+- Verbindliche Runtime-Regel: Nummer-, Text- und Meta-Wert sind jeweils vollstaendige CSS-Tracks. Positive Zahlen werden vor dem Setzen in `px` ueberfuehrt; ungueltige, leere oder gefaehrliche Altwerte werden nicht angewandt, sondern durch den jeweiligen Vertragsdefault ersetzt. Ein persistierter kompletter Alt-Descriptor darf die aus den validierten Einzeltracks gebildete produktive Quelle nicht ersetzen. Insbesondere darf ein bereits vollstaendiger `minmax()`-Texttrack nicht nochmals verschachtelt werden.
+- Die isolierten M86.11b-Pruefungen hatten den Fehler nicht erkannt, weil ihr Fake-Layout bei blossem Vorhandensein der drei Variablennamen bereits drei Rechtecke vorgab und keine echte CSS-Syntaxberechnung ausfuehrte. M86.12 ergaenzt deshalb eine echte versteckte Chromium-Probe mit produktivem `tops.css`, normalem gespeichertem Profil und abweichenden gueltigen Profilwerten.
+- Sichtabnahme ausschliesslich im normalen `npm start`: Header und normale TOP-Zeile besitzen drei deutlich getrennte X-Positionen; links stehen Nummer/Datum/Klasse, mittig Kurztext/Langtext und rechts Fertig bis/Status/Ampel/Verantwortlich. Im Editorbaum wurden alle drei Spalten und die neun geforderten Einzelziele ausgewaehlt. `+10 DIP` auf der linken Spalte und anschliessendes Undo erhielten das Dreispaltenraster; es wurde nicht gespeichert.
+- Tests: M86.12 3/3, M86.11b 5/5, M86.11 11/11, M86.10 15/15, M86.9 7/7, M86.8 4/4; `npm test` 8/8, `npm run test:node` 8/8, Vertrags-Selbsttest gruen, gezieltes ESLint 0 Fehler mit drei bestehenden Warnungen, `git diff --check` sauber. Keine PDF-, Fachlogik-, Restarbeiten- oder Registry-Topologieaenderung. Commit/Push/PR/Merge: keiner.
 
 ## Statusupdate M86.11b
 
