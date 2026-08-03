@@ -113,6 +113,16 @@
 
 **Begruendung:** Diese explizite Komponentenentscheidung erfuellt den Layoutvertrag ohne neue DOM-Knoten, Wrapper, Parents, Scrollcontainer oder eine zentrale zweite Registry. Kurztext, Langtext und Meta bleiben einzeln mit ihren komponentennahen Vertrags-IDs bearbeitbar; Fachaktionen bleiben gesperrt.
 
+## Entscheidung 023
+**Beschluss:** Die vorhandene rechte Meta-Spalte der Protokoll-Liste bleibt Eigentum der fachlichen Zeilen-CSS. Der Editor referenziert fuer Fertig bis, Status und Verantwortlich ausschliesslich die bereits sichtbaren Textkinder; er darf daraus weder eine eigene Anordnung noch einen Ersatz-Container ableiten.
+
+**Begruendung:** Damit bleiben Auswahlrahmen, Apply und Rerender auf das tatsaechliche sichtbare Ziel begrenzt. Grid, Flex, Reihenfolge, Parent und Scrollbesitz bleiben ausserhalb der erlaubten Editoroperationen. Fehlende positive Zielgeometrie blockiert den Apply-Weg.
+
+## Entscheidung 024
+**Beschluss:** Die Protokoll-TOP-Zeile besitzt im produktiven Zielcode genau drei logische Hauptspalten: Struktur links, Gegenstand mit Kurztext ueber Langtext in der Mitte und Meta rechts. Der komponentennahe Editorvertrag bildet Zeile, Spalten und sichtbare Kinder mit expliziten direkten Multi-Refs ab; gemeinsame Spaltenbreiten duerfen nur die vorhandenen Protokoll-CSS-Variablen veraendern.
+
+**Begruendung:** Das uebernimmt das bewaehrte technische Prinzip der Restarbeiten-Liste, ohne deren Fachmodell oder konkrete Layoutwerte zu kopieren. Der UI-Editor bleibt Abbild und begrenztes Werkzeug fuer vorhandene Ziele; er darf keine Wrapper, Parents, DOM-Reihenfolge, Grid-/Flextopologie, responsive Stapelung oder Ersatzgeometrie erzeugen. Fehlender Ref oder fehlende positive Geometrie fuehrt zum Abbruch der Operation.
+
 ## Entscheidung 021
 **Beschluss:** M80.2 entfernt die gekoppelte Restarbeiten-Splitoperation aus der produktiven Registry. Der tatsächliche Filter-Header und der stabile Editbox-Root sind unabhängig größenfähig; die Hauptliste füllt den verbleibenden Bereich flexibel und scrollt innerhalb ihres eigenen Containers.
 

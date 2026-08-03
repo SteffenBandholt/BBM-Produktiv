@@ -6,30 +6,44 @@ import { applyProtokollTopsUiLayout } from "../../../shared/tableLayouts/protoko
 import { beginM83ComponentBinding, completeM80PilotRender, registerM80MultiRef } from "../../ui-editor/m80Refs.js";
 
 const PROTOKOLL_LIST_COLUMN_REFS = Object.freeze([
-  Object.freeze({ id: "protokoll.list.column.number", key: "number", widthVariable: "--bbm-tops-list-number-col", minimumWidth: 40, maximumWidth: 220 }),
+  Object.freeze({ id: "protokoll.list.column.number", key: "number", widthVariable: "--bbm-tops-list-number-col", minimumWidth: 48, maximumWidth: 220 }),
   Object.freeze({ id: "protokoll.list.column.text", key: "text", widthVariable: "--bbm-tops-list-text-col", minimumWidth: 180, maximumWidth: 1400 }),
-  Object.freeze({ id: "protokoll.list.column.meta", key: "meta", widthVariable: "--bbm-tops-list-meta-col", minimumWidth: 50, maximumWidth: 420 }),
+  Object.freeze({ id: "protokoll.list.column.meta", key: "meta", widthVariable: "--bbm-tops-list-meta-col", minimumWidth: 96, maximumWidth: 420 }),
 ]);
 
 function finite(value, fallback = 0) {
   return Number.isFinite(Number(value)) ? Number(value) : fallback;
 }
 
-function readLogicalColumnState(id, element) {
+function readLogicalColumnState(id, element, widthOwner = null, widthVariable = "") {
   const rect = element.getBoundingClientRect();
   const style = globalThis.window?.getComputedStyle?.(element) || element.style || {};
+  const configuredWidth = String(widthOwner?.style?.getPropertyValue?.(widthVariable) || "").trim();
+  const fixedWidth = /^\d+(?:\.\d+)?px$/.test(configuredWidth) ? Number.parseFloat(configuredWidth) : null;
   return {
     elementId: id,
     x: 0,
     y: 0,
-    width: finite(rect.width, 1),
-    height: finite(rect.height, 1),
+    width: fixedWidth !== null ? fixedWidth : finite(rect.width),
+    height: finite(rect.height),
     textOffsetX: finite(parseFloat(style.paddingLeft)),
     textOffsetY: finite(parseFloat(style.paddingTop)),
     fontSize: finite(parseFloat(style.fontSize), 12),
     visible: true,
     spacing: {},
   };
+}
+
+function hasPositiveGeometry(element) {
+  if (!element || typeof element.getBoundingClientRect !== "function") return false;
+  const rect = element.getBoundingClientRect();
+  return [rect.left, rect.top, rect.width, rect.height].every((value) => Number.isFinite(Number(value))) &&
+    Number(rect.width) > 0 && Number(rect.height) > 0;
+}
+
+function visiblePrimaryFirst(targets = []) {
+  const primary = targets.find(hasPositiveGeometry);
+  return primary ? [primary, ...targets.filter((target) => target !== primary)] : [...targets];
 }
 
 function getAssetBaseUrl() {
@@ -147,11 +161,11 @@ export class TopsList {
   _registerUiEditorColumnRefs() {
     beginM83ComponentBinding("bbm.protokoll.list.columns");
     for (const column of PROTOKOLL_LIST_COLUMN_REFS) {
-      const targets = this._uiEditorRefs[column.key] || [];
+      const targets = visiblePrimaryFirst(this._uiEditorRefs[column.key] || []);
       const primary = targets[0] || this.root;
       registerM80MultiRef(column.id, targets, this.root, {
         mountedInstanceCount: targets.length,
-        read: () => readLogicalColumnState(column.id, primary),
+        read: () => readLogicalColumnState(column.id, primary, this.root, column.widthVariable),
         apply: (state) => {
           const width = Math.min(column.maximumWidth, Math.max(column.minimumWidth, finite(state.width, column.minimumWidth)));
           this.root.style.setProperty(column.widthVariable, `${width}px`);
@@ -301,8 +315,12 @@ export class TopsList {
       text.className = "bbm-tops-list-row-meta-text";
       text.textContent = line;
       el.appendChild(text);
+      // The editor must select the actual visible value, never the enclosing
+      // meta line.  The line keeps the historical list layout (including a
+      // possible status symbol); its text child is the independently editable
+      // target for due date, status and responsible party.
       const metaRefId = ["protokoll.list.row.due", "protokoll.list.row.status", "protokoll.list.row.responsible"][metaIndex];
-      if (metaRefId) this._uiEditorRefs[metaRefId].push(el);
+      if (metaRefId) this._uiEditorRefs[metaRefId].push(text);
       if (statusTokens.has(normalized)) {
         const ampelSlot = document.createElement("span");
         ampelSlot.className = "bbm-tops-list-row-meta-ampel-slot";

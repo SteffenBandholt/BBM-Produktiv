@@ -822,6 +822,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   );
   gap: 8px;
   align-items: start;
+  min-width: 0;
   width: 100%;
   box-sizing: border-box;
 }
@@ -839,6 +840,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   font-weight: 600;
   line-height: 1.15;
   padding-inline: var(--bbm-tops-list-number-padding-inline, 0);
+  min-width: 0;
 }
 
 .bbm-tops-list-row-number-line {
@@ -974,6 +976,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
 .bbm-tops-list-row-text {
   width: 100%;
+  min-width: 0;
   max-inline-size: min(100%, var(--bbm-top-long-measure));
   padding-left: var(--bbm-tops-list-text-padding-inline, var(--bbm-top-text-pad-x));
   padding-right: var(--bbm-tops-list-text-padding-inline, var(--bbm-top-text-pad-x));
@@ -1632,18 +1635,11 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   opacity: 0.72;
 }
 
-/* Keep meta column on the right for normal window sizes; only collapse on very small widths. */
+/* Header details may compact, but the productive TOP row never changes its
+   three-column topology. Number, subject and meta always stay side by side. */
 @media (max-width: 640px) {
   .bbm-tops-header-meta-legend {
     display: none !important;
-  }
-
-  .bbm-tops-list-row-grid {
-    grid-template-columns: 56px minmax(0, 1fr);
-  }
-
-  .bbm-tops-list-row-meta {
-    grid-column: 1 / -1;
   }
 
   .bbm-tops-meta-field-date .bbm-tops-input {

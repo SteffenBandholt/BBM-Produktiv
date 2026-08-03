@@ -20,6 +20,7 @@ const persistentWorkingStateIds = new Set();
 const persistentWorkingStateOperations = new Map();
 const tableColumnRuntimeBindings = new Map();
 const tableRuntimeBindings = new Map();
+let workingStateOperationObserver = null;
 const HIDDEN_CLASS = "bbm-ui-editor-hidden";
 
 function finite(value, fallback = 0) { return Number.isFinite(Number(value)) ? Number(value) : fallback; }
@@ -204,6 +205,11 @@ export function resetM80PilotWorkingStatesForDiagnostic() {
   workingStates.clear();
   persistentWorkingStateIds.clear();
   persistentWorkingStateOperations.clear();
+  workingStateOperationObserver = null;
+}
+
+export function setM80WorkingStateOperationObserver(observer = null) {
+  workingStateOperationObserver = typeof observer === "function" ? observer : null;
 }
 
 function applyPersistentWorkingState(ref) {
@@ -270,10 +276,11 @@ export function registerM80MultiRef(id, elements, fallbackElement, options = {})
     contractMountedInstanceCount: Number.isFinite(Number(options.mountedInstanceCount)) ? Number(options.mountedInstanceCount) : targets.length,
     bindingTargets: targets,
     applyPrimaryAttributes: false,
-    read: () => targets.length ? readGeneric(targets[0], id) : { ...logicalState, spacing: { ...logicalState.spacing } },
+    read: options.read || (() => targets.length ? readGeneric(targets[0], id) : { ...logicalState, spacing: { ...logicalState.spacing } }),
     apply: (state, requestedOperation = null) => {
       logicalState = { ...logicalState, ...state, elementId: id, spacing: { ...(state.spacing || logicalState.spacing || {}) } };
-      targets.forEach((target) => applyGeneric(target, logicalState, entry, requestedOperation));
+      if (typeof options.apply === "function") options.apply(logicalState, requestedOperation, targets);
+      else targets.forEach((target) => applyGeneric(target, logicalState, entry, requestedOperation));
     },
   });
 }
@@ -546,6 +553,7 @@ export function applyM80State(id, state, requestedOperation = null) {
   else operations.add("*");
   persistentWorkingStateOperations.set(id, operations);
   workingStates.set(id, { ...readback });
+  workingStateOperationObserver?.(id, requestedOperation || "*");
   return { ...readback };
 }
 export function snapshotM80State(id) { return readM80State(id); }
@@ -555,21 +563,27 @@ export function captureM80WorkingStates() {
     return [ref.id, { ...state, spacing: { ...(state.spacing || {}) } }];
   }));
 }
-export function restoreM80WorkingStates(states) {
+export function restoreM80WorkingStates(states, operationsById = null) {
   if (!(states instanceof Map)) throw new TypeError("Gespeicherter Editor-Sitzungszustand fehlt.");
+  const selective = operationsById instanceof Map;
+  let restored = 0;
   for (const [id, state] of states) {
+    const requestedOperations = selective ? operationsById.get(id) : null;
+    if (selective && (!requestedOperations || requestedOperations.size === 0)) continue;
     const value = { ...state, spacing: { ...(state?.spacing || {}) } };
     const ref = refs.get(id);
     if (ref) {
-      ref.apply(value);
+      if (selective) for (const operation of requestedOperations) ref.apply(value, operation);
+      else ref.apply(value);
       workingStates.set(id, { ...ref.read() });
     } else {
       workingStates.set(id, value);
     }
     persistentWorkingStateIds.add(id);
-    persistentWorkingStateOperations.set(id, new Set(["*"]));
+    persistentWorkingStateOperations.set(id, selective ? new Set(requestedOperations) : new Set(["*"]));
+    restored += 1;
   }
-  return states.size;
+  return restored;
 }
 export function listM80CurrentStates(scopeId) {
   return [...refs.values()].filter((ref) => {
