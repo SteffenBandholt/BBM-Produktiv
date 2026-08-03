@@ -2,18 +2,32 @@ import { COMPACT_TEXT_LAYOUT, ICON_LAYOUT, m83Component, m83Element, m83Slot } f
 
 const scopeId = "protokoll.list.root";
 const columns = Object.freeze([
-  Object.freeze({ id: "protokoll.list.column.number", name: "TOP / Nummer", currentWidth: 64, minimumWidth: 40, maximumWidth: 220, widthSourceId: "--bbm-tops-list-number-col", order: 31, role: "metaColumn" }),
-  Object.freeze({ id: "protokoll.list.column.text", name: "Gegenstand / Kurztext / Langtext", currentWidth: 650, minimumWidth: 180, maximumWidth: 1400, widthSourceId: "--bbm-tops-list-text-col", order: 32, role: "contentColumn" }),
-  Object.freeze({ id: "protokoll.list.column.meta", name: "Status / Fertig bis / Verantwortlich", currentWidth: 74, minimumWidth: 50, maximumWidth: 420, widthSourceId: "--bbm-tops-list-meta-col", order: 33, role: "metaColumn" }),
+  Object.freeze({ id: "protokoll.list.column.number", name: "Struktur links: TOP / Datum / Kennzeichnung", currentWidth: 64, minimumWidth: 48, maximumWidth: 220, widthSourceId: "--bbm-tops-list-number-col", headerRefKey: null, dataRefKey: "protokoll.list.column.number", order: 31, role: "contentColumn" }),
+  Object.freeze({ id: "protokoll.list.column.text", name: "Gegenstand Mitte: Kurztext / Langtext", currentWidth: 650, minimumWidth: 180, maximumWidth: 1400, widthSourceId: "--bbm-tops-list-text-col", headerRefKey: null, dataRefKey: "protokoll.list.column.text", order: 32, role: "contentColumn" }),
+  Object.freeze({ id: "protokoll.list.column.meta", name: "Meta rechts: Fertig bis / Status / Kennzeichnung / Verantwortlich", currentWidth: 172, minimumWidth: 96, maximumWidth: 420, widthSourceId: "--bbm-tops-list-meta-col", headerRefKey: "protokoll.header.meta", dataRefKey: "protokoll.list.column.meta", order: 33, role: "metaColumn" }),
 ]);
+const listLayout = Object.freeze({
+  listId: "protokoll.list.table",
+  bodyElementId: "protokoll.list.table.body",
+  columnIds: Object.freeze(columns.map((column) => column.id)),
+  rowTemplateId: "protokoll.list.row",
+  headerMode: "existingExternalMetaLegend",
+  horizontalOverflowMode: "fitViewport",
+  columns: Object.freeze(columns.map((column) => Object.freeze({
+    columnId: column.id,
+    headerRefKey: column.headerRefKey,
+    dataRefKey: column.dataRefKey,
+    widthSourceId: column.widthSourceId,
+  }))),
+});
 const elements = [
   m83Element({ id: scopeId, name: "Protokoll-Listenbereich", type: "root", role: "scopeRoot", parentId: null, order: 0, allowedOps: [], componentKind: "sheetScrollOwner" }),
   m83Element({ id: "protokoll.list.canvas", name: "Protokoll-Dokumentfläche", type: "area", role: "contentArea", parentId: scopeId, order: 10, allowedOps: [], componentKind: "documentCanvas" }),
   m83Element({ id: "protokoll.list.paper", name: "Protokoll-Dokumentblatt", type: "group", role: "layoutGroup", parentId: "protokoll.list.canvas", order: 20, allowedOps: [], componentKind: "documentPaper" }),
-  m83Element({ id: "protokoll.list.table", name: "Protokoll-TOP-Liste", type: "table", role: "contentTable", parentId: "protokoll.list.paper", order: 30, allowedOps: [], componentKind: "existingContentTable" }),
+  m83Element({ id: "protokoll.list.table", name: "Protokoll-TOP-Liste", type: "table", role: "contentTable", parentId: "protokoll.list.paper", order: 30, allowedOps: [], componentKind: "existingContentTable", listLayout }),
   m83Element({ id: "protokoll.list.table.body", name: "Datenbereich der Protokoll-TOP-Liste", type: "tableBody", role: "tableBody", parentId: "protokoll.list.table", order: 34, allowedOps: [], componentKind: "existingTableBody" }),
-  ...columns.map((column) => m83Element({ id: column.id, name: column.name, type: "group", role: column.role, parentId: "protokoll.list.table", order: column.order, allowedOps: ["resizeWidth"], columnRole: column.role, componentKind: "logicalColumn", baseline: { width: column.currentWidth, minWidth: column.minimumWidth, maxWidth: column.maximumWidth } })),
-  m83Element({ id: "protokoll.list.row", refKey: "protokoll.list.row", name: "Protokoll-TOP-Zeile", type: "tableRow", role: "tableRow", parentId: "protokoll.list.table.body", order: 40, allowedOps: [], componentKind: "rowTemplate", baseline: { height: 48, minHeight: 28, maxHeight: 360 } }),
+  ...columns.map((column) => m83Element({ id: column.id, name: column.name, type: "group", role: column.role, parentId: "protokoll.list.table", order: column.order, allowedOps: ["resizeWidth"], columnRole: column.role, componentKind: "logicalColumn", listColumnBinding: { listId: "protokoll.list.table", dataRefKey: column.dataRefKey, headerRefKey: column.headerRefKey, widthSourceId: column.widthSourceId }, baseline: { width: column.currentWidth, minWidth: column.minimumWidth, maxWidth: column.maximumWidth } })),
+  m83Element({ id: "protokoll.list.row", refKey: "protokoll.list.row", name: "Protokoll-TOP-Zeile", type: "tableRow", role: "tableRow", parentId: "protokoll.list.table.body", order: 40, allowedOps: ["resizeHeight"], componentKind: "rowTemplate", rowLayout: { heightMode: "bounded", minimumHeight: 28, maximumHeight: 360 }, baseline: { height: 48, minHeight: 28, maxHeight: 360 } }),
   m83Element({ id: "protokoll.list.row.level1Toggle", refKey: "protokoll.list.row.level1Toggle", name: "Ebene 1 auf- oder zuklappen", type: "button", role: "navigation", parentId: "protokoll.list.column.number", order: 41, allowedOps: COMPACT_TEXT_LAYOUT, lockedOps: ["executeTargetAction", "modifyDomainData", "createRecord", "deleteRecord"], componentKind: "conditionalMultiRef", baseline: { fontSize: 12, minFontSize: 7, maxFontSize: 28 } }),
   m83Element({ id: "protokoll.list.row.number", refKey: "protokoll.list.row.number", name: "TOP-Nummer", type: "label", role: "structure", parentId: "protokoll.list.column.number", order: 42, allowedOps: COMPACT_TEXT_LAYOUT, componentKind: "staticMultiRef", baseline: { fontSize: 11, minFontSize: 7, maxFontSize: 32 } }),
   m83Element({ id: "protokoll.list.row.marker", refKey: "protokoll.list.row.marker", name: "Neu-Markierung", type: "statusIndicator", role: "status", parentId: "protokoll.list.column.number", order: 43, allowedOps: ICON_LAYOUT, componentKind: "conditionalMultiRef", baseline: { width: 10, height: 12, minWidth: 6, maxWidth: 36, minHeight: 7, maxHeight: 36 } }),

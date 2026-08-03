@@ -165,6 +165,8 @@ const TEST_GROUPS = Object.freeze([
       ["m86-5ProtokollLayoutRepair.test.cjs", "runM865ProtokollLayoutRepairTests"],
       ["m86-7ProtokollButtonContracts.test.cjs", "runM867ProtokollButtonContractTests"],
       ["m86-8ProtokollFullContract.test.cjs", "runM868ProtokollFullContractTests"],
+      ["m86-9ProtokollMetaTargetContract.test.cjs", "runM869ProtokollMetaTargetContractTests"],
+      ["m86-10ProtokollOriginalThreeColumnContract.test.cjs", "runM8610ProtokollOriginalThreeColumnContractTests"],
       ["uiEditorAcceptanceIsolation.test.cjs", "runUiEditorAcceptanceIsolationTests"],
       ["testHarnessOrchestration.test.cjs", "runTestHarnessOrchestrationTests"],
     ]),

@@ -3785,6 +3785,23 @@ Wichtig:
 - Guardrails pruefen Vollstaendigkeit, stabile IDs/Parents/Refs, Mehrfach-Ref-Registrierung bei wiederholtem Rendern, fehlende und doppelte IDs, Baselines/Bounds und die Workbench-Struktur. Der M86.8-Lauf rendert die echte TopsList mit allen Varianten, validiert jeden direkten sichtbaren Multi-Ref und prueft die Zustandsuebernahme beim Rerender. `npm test` und `npm run test:node` sind jeweils 8/8 gruen. Die sichtbare Layoutpruefung lief bei 1920x1080, 1600x900, 1366x768 und 900x430. Kurztext, Langtext, Termin und Status wurden im isolierten Editor ausgewaehlt; Kurztext erhielt Verschieben, Undo, Kleiner, Groesser und Original. Save und der sichtbare zweite Start liefen.
 - Commit/Push/PR/Merge: keiner.
 
+### M86.9 - Protokoll-Metazielvertrag
+
+- Status: `[A]`; die historische TOP-Zeilenstruktur ist nachgewiesen und mit M86.10 vollstaendig sichtbar abgenommen: Struktur links, Gegenstand mittig und die vorhandene Meta-Spalte rechts. Die Anordnung bleibt Eigentum der fachlichen Protokoll-CSS und wurde nicht aus dem UI-Editor abgeleitet.
+- Die Listenziele `Fertig bis`, `Status` und `Verantwortlich` referenzieren nun jeweils ihren sichtbaren Textknoten statt der umschliessenden Layoutzeile. Ampel, ToDo und Beschluss bleiben die bereits vorhandenen inneren Symbolziele. Es gibt keine neue Registry, keine DOM-Erkennung, keine neuen Wrapper, Parents, Scrollcontainer oder fachliche Aenderung.
+- Der generische Apply-Weg weist Aenderungen ohne positive Zielgeometrie vor dem Schreiben zurueck. Der neue M86.9-Guardrail prueft direkte Multi-Refs, Parents, Baselines/Bounds, elementisolierte erlaubte Operationen, unveraenderte Grid-/Flex-/Order-/Parent-Struktur sowie Rerender und fehlende Geometrie. `npm test` und `npm run test:node` sind jeweils 8/8 gruen.
+- Sichtbar bestaetigt: alle 16 M86.10-Listen- und Spaltenziele sind elementgenau auswaehlbar; Meta-Ziele liegen direkt auf ihrem sichtbaren Text oder Symbol. Die vier Fensterformate, Multi-Ref-Rerender, Save/Zweitstart, Undo, Original, Verwerfen und Gesamtreset sind abgeschlossen.
+- Commit/Push/PR/Merge: keiner.
+
+### M86.10 - Urspruengliche Protokoll-TOP-Zeile und vollstaendiger Editorvertrag
+
+- Status: `[A]`; jede Level-1- und Unterpunktzeile verwendet sichtbar genau ein Dreispaltenraster: Struktur links, Kurztext ueber Langtext in der breiten Mitte und Termin/Status/Kennzeichnung/Verantwortlich rechts. Das produktive Protokoll-CSS besitzt Raster, Reihenfolge, Umbruch und Ausrichtung; es gibt keine responsive Ersatzstapelung, keine vierte Hauptspalte und keine neue DOM-Ebene.
+- Der komponentennahe Listenvertrag beschreibt Tabelle, Datenbereich, Zeilenvorlage und drei logische Spalten mit gemeinsamen expliziten Breitenquellen. Die 16 geforderten Ziele besitzen stabile datenunabhaengige IDs, richtige Parents, reale Baselines/Bounds und direkte Multi-Refs. Der Editor darf nur freigegebene vorhandene Ziele bearbeiten; fehlender Ref oder fehlende positive Geometrie blockiert ohne Root- oder Layoutfallback.
+- Das technische Prinzip entspricht der bestehenden Restarbeiten-Liste (explizite logische Spalten, Zeilenvorlage, Multi-Refs und Rerender-Uebernahme), ohne Restarbeiten-Breiten, -Bezeichnungen, -Felder oder -Code zu veraendern. Spaltenbreiten schreiben ausschliesslich die vorhandenen Protokoll-CSS-Variablen und koennen weder DOM-Reihenfolge noch Grid-/Flextopologie oder Parents aendern.
+- Sichtpruefung: 1920x1080, 1600x900, 1366x768 und 900x430 zeigen drei nebeneinanderliegende Hauptspalten ohne Meta-Stapelung, Ueberlagerung oder horizontalen Scrollbalken. Alle 16 Ziele wurden einzeln ausgewaehlt. TOP-Nummer, Kurztext, Langtext, Fertig bis, Status, Verantwortlich und Ampel wurden sichtbar veraendert; Ein-/Ausklappen, ToDo-/Alle-Filter, Auswahlwechsel und Rerender erhielten die logischen Werte.
+- Die getrennte Workbench blieb bei Kurztext oben sowie Langtext links und Meta rechts. Im ersten isolierten Acceptance-Start wurden Spaltenbreite und Textwert geaendert und gespeichert; der zweite Start lud das Profil genau einmal. Undo, Original, Verwerfen und Gesamtreset wurden sichtbar geprueft. Beide Acceptance-Laeufe endeten mit Exitcode 0 und entfernten ihr isoliertes Profil.
+- Die M86.10-, M86.9-, M86.8-, M86.7-, M83-, Ampel- und Profil-Guardrails sind gruen. PDF, Fachlogik und Restarbeiten wurden nicht geaendert. `docs/licensing.md` und `design-reference/` blieben unangetastet. Commit/Push/PR/Merge: keiner.
+
 ## M82.3 - Lokale Breitenwirkung und kompakte Editoroberflaeche
 
 - Status: `[A]`; Implementierung, Pflichtpruefungen und sichtbare native UI-/PDF-Abnahme sind abgeschlossen.

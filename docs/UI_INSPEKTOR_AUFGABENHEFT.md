@@ -76,6 +76,24 @@ Aktueller Stand:
 - [x] M86.5 Protokoll-Layout im flexiblen Screenrahmen reparieren
 - [x] M86.6 Breiten-Schritt der Protokoll-Metagruppe richtungskorrekt anwenden
 - [x] M86.8 Protokoll-Listenvertrag vollstaendig machen und Workbench-Anordnung absichern
+- [x] M86.9 Protokoll-Metazielvertrag auf sichtbare innere Listenziele begrenzen und vollstaendig sichtbar abnehmen
+- [x] M86.10 Urspruengliche Dreispalten-TOP-Zeile wiederherstellen und vollstaendig editorfaehig machen
+
+## Statusupdate M86.10
+
+- Status: `[A]`. Level 1 und Unterpunkte verwenden dieselbe produktive Dreispaltenzeile: Struktur links, Kurztext ueber Langtext in der Mitte und Termin/Status/Kennzeichnung/Verantwortlich rechts. Das Protokoll-CSS besitzt das Zielbild; der Editor erzeugt keine Topologie, neue Wrapper, Parents, DOM-Ebenen oder responsive Ersatzstapelung.
+- Tabelle, Datenbereich, Zeilenvorlage und die drei logischen Spalten sind komponentennah beschrieben. Alle 16 geforderten Ziele besitzen stabile IDs, direkte Multi-Refs, richtige Parents, Baselines/Bounds und nur passende Layoutoperationen. Gemeinsame Spaltenwerte schreiben ausschliesslich vorhandene CSS-Variablen. Fehlende echte Refs oder positive Geometrie blockieren ohne Root- oder Ersatzlayout.
+- Die Technik folgt dem bestehenden Restarbeiten-Prinzip aus expliziten Spalten, Zeilenvorlage, direkten Multi-Refs und Rerender-Uebernahme, ohne Restarbeiten-spezifische Breiten, Felder, Bezeichnungen oder Code zu aendern. Die Workbench blieb getrennt: Kurztext oben, Langtext links und Meta rechts.
+- Sichtabnahme: 1920x1080, 1600x900, 1366x768 und 900x430 sind ohne Meta-Stapelung, Ueberlagerung oder horizontalen Scrollbalken. Alle 16 Ziele wurden einzeln ausgewaehlt. Aenderungen an TOP-Nummer, Kurztext, Langtext, Fertig bis, Status, Verantwortlich und Ampel blieben nach Ein-/Ausklappen, ToDo-/Alle-Filter, Auswahlwechsel und Rerender erhalten.
+- Save und automatischer Zweitstart, Undo, Original, Verwerfen und Gesamtreset wurden sichtbar geprueft; beide isolierten Acceptance-Starts endeten mit Exitcode 0. M86.7 bis M86.10, M83, Ampel- und Profil-Guardrails sind gruen. Keine PDF-, Fachlogik- oder Restarbeiten-Aenderung; Commit/Push/PR/Merge: keiner.
+
+## Statusupdate M86.9
+
+- Status: `[A]`. Die historische Zielstruktur der TOP-Liste ist mit M86.10 vollstaendig sichtbar belegt: Struktur links, Gegenstand mittig und die bestehende rechte Meta-Spalte. Ihre Anordnung bleibt fachliche Protokoll-CSS und ist kein durch den UI-Editor erzeugtes Ersatzlayout.
+- `Fertig bis`, `Status` und `Verantwortlich` verwenden nun direkte Multi-Refs auf die sichtbaren Textkinder, nicht auf die umschliessende Metazeile. Ampel, ToDo und Beschluss bleiben direkte sichtbare Symbolziele. Alle Ziele behalten stabile IDs, vorhandenen Parent `protokoll.list.column.meta`, Baselines, Bounds und ausschliesslich elementisolierte sichere Operationen.
+- Der M86.9-Guardrail sichert die Kette Registry -> Editor-Anforderung -> HostAdapter -> Ref-Apply -> DOM: kein Schreiben von display/flex/grid/order/Parent, keine Ersatzgeometrie bei fehlenden Bounds, keine Gruppenreorganisation und Rerender nur auf die neuen echten Ziele. M83, M86.3, M86.5, M86.7, M86.8 sowie `npm test` und `npm run test:node` sind jeweils gruen.
+- Sichtbar bestaetigt wurden alle 16 M86.10-Listen- und Spaltenziele, alle vier Fensterformate, Multi-Ref-Rerender sowie Undo, Original, Save, Zweitstart, Verwerfen und Gesamtreset.
+- Commit/Push/PR/Merge: keiner.
 
 ## Statusupdate M86.8
 

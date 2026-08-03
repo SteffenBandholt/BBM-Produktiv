@@ -21,6 +21,7 @@ import {
   fitM80Table,
   resetM80Table,
   resetM80PilotWorkingStatesForDiagnostic,
+  setM80WorkingStateOperationObserver,
   snapshotM80Topology,
   compareM80Topology,
   snapshotM80State,
@@ -58,6 +59,7 @@ let hoverIndex = 0;
 let startupRestorePromise = null;
 let startupRestoreStatus = { state: "pending", applied: false, editorProcessRequired: false };
 let editorSessionBoundary = null;
+let editorSessionOperations = new Map();
 let diagnosticRegistryRevision = 0;
 const pendingGeometryRisks = new Map();
 const capturedRuntimeBaselines = new Map();
@@ -219,6 +221,23 @@ function finitePositiveBounds(bounds) {
   return bounds && [bounds.left, bounds.top, bounds.width, bounds.height].every((value) => Number.isFinite(Number(value))) &&
     Number(bounds.width) > 0 && Number(bounds.height) > 0;
 }
+function requirePositiveTargetGeometry(entry, geometry) {
+  const bounds = geometry.get(entry.id);
+  if (!finitePositiveBounds(bounds)) {
+    throw Object.assign(new Error(`Zielgeometrie von '${entry.name}' fehlt oder ist ungueltig.`), {
+      code: "electron_invalid_geometry",
+    });
+  }
+}
+function requireMountedTarget(entry) {
+  const ref = getM80Ref(entry.id);
+  const targets = (ref?.contractTargets || []).filter((target) => target?.isConnected !== false);
+  if (!ref || targets.length === 0) {
+    throw Object.assign(new Error(`Direktes Ziel von '${entry.name}' fehlt.`), {
+      code: "electron_element_not_found",
+    });
+  }
+}
 function isLayoutEffective(element) {
   if (!element || element.hidden === true) return false;
   const style = globalThis.window?.getComputedStyle?.(element) || element.style || {};
@@ -242,8 +261,10 @@ export async function waitForM80StartupGeometry(items, maximumFrames = 60) {
     .map((request) => request.elementId))];
   if (!targetIds.length) return true;
   const ready = () => targetIds.every((id) => {
-    const element = getM80Ref(id)?.element;
-    if (!element || element.isConnected === false || typeof element.getBoundingClientRect !== "function") return false;
+    const ref = getM80Ref(id);
+    const targets = (ref?.contractTargets || []).filter((target) => target?.isConnected !== false);
+    const element = ref?.element;
+    if (!targets.length || !targets.includes(element) || typeof element.getBoundingClientRect !== "function") return false;
     const rect = element.getBoundingClientRect();
     return finitePositiveBounds({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
   });
@@ -373,6 +394,8 @@ function submitChange(changeRequest, scopeId) {
   try {
     const beforeTopology = snapshotM80Topology();
     const beforeGeometry = snapshotM80Geometry();
+    requireMountedTarget(entry);
+    requirePositiveTargetGeometry(entry, beforeGeometry);
     const ref = getM80Ref(entry.id);
     if (ref?.element?.dataset?.uiEditorFailNextApply === "true") {
       delete ref.element.dataset.uiEditorFailNextApply;
@@ -714,10 +737,12 @@ export function handleM80EditorEvent(event = {}) {
   if (action === "clearGeometryPreview") { clearGeometryRiskPreview(); return { ok: true }; }
   if (action === "editorClosed") {
     const disposition = ["clean", "saved", "discarded"].includes(event.disposition) ? event.disposition : "unknown";
+    setM80WorkingStateOperationObserver(null);
     const restoredElementCount = disposition === "discarded" && editorSessionBoundary
-      ? restoreM80WorkingStates(editorSessionBoundary)
+      ? restoreM80WorkingStates(editorSessionBoundary, editorSessionOperations)
       : 0;
     editorSessionBoundary = null;
+    editorSessionOperations = new Map();
     stopSelection(); selectedId = null; pendingGeometryRisks.clear(); clearGeometryRiskPreview(); clearM80VisualState();
     return { ok: true, disposition, restoredElementCount };
   }
@@ -728,7 +753,15 @@ export function handleM80EditorRequest(request = {}) {
   const action = String(request.action || "");
   if (!ALLOWED_ACTIONS.has(action)) throw Object.assign(new Error("Unbekannte Editoranfrage."), { code: "electron_editor_message_invalid" });
   if (action === "getRegistry") {
-    editorSessionBoundary ??= captureM80WorkingStates();
+    if (!editorSessionBoundary) {
+      editorSessionBoundary = captureM80WorkingStates();
+      editorSessionOperations = new Map();
+      setM80WorkingStateOperationObserver((elementId, operation) => {
+        const operations = editorSessionOperations.get(elementId) || new Set();
+        operations.add(operation);
+        editorSessionOperations.set(elementId, operations);
+      });
+    }
     const registration = createM80RegistrationDescriptor();
     return {
       registryVersion: registration.registryVersion,
@@ -738,11 +771,18 @@ export function handleM80EditorRequest(request = {}) {
     };
   }
   if (action === "getLayoutState") return { scopeStates: layoutPayload() };
-  return { changeResult: submitChange({
+  const changeRequest = {
     ...(request.changeRequest || {}),
     editMode: request.editMode,
     riskConfirmation: request.riskConfirmation,
-  }, request.scopeId) };
+  };
+  const changeResult = submitChange(changeRequest, request.scopeId);
+  if (changeResult.success && editorSessionBoundary && changeRequest.source !== "target-app-start") {
+    const operations = editorSessionOperations.get(changeRequest.elementId) || new Set();
+    operations.add(changeRequest.operation);
+    editorSessionOperations.set(changeRequest.elementId, operations);
+  }
+  return { changeResult };
 }
 
 export function createM80StartupRequests(scopeId, element, explicitOperations = null) {
