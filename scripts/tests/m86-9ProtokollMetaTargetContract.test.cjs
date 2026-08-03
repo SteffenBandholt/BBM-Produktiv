@@ -86,16 +86,17 @@ async function runM869ProtokollMetaTargetContractTests(run) {
     await run("M86.9 01: Die historische TOP-Zeile bleibt ein dreispaltiges Grid mit rechter Meta-Spalte", () => {
       assert.match(css, /\.bbm-tops-list-row-grid\s*\{[\s\S]*?grid-template-columns:\s*var\([\s\S]*?--bbm-tops-list-meta-col/s);
       assert.match(css, /\.bbm-tops-list-row-meta\s*\{[\s\S]*?display:\s*grid/s);
-      assert.match(css, /\.bbm-tops-list-row-meta-line\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) 12px/s);
+      assert.match(css, /\.bbm-tops-list-row-meta-line\s*\{[\s\S]*?display:\s*flex/s);
+      assert.doesNotMatch(css, /\.bbm-tops-list-row-meta-line\s*\{[^}]*grid-template-columns/s);
     });
     await run("M86.9 02: Der Renderer referenziert sichtbare Metawerte, nicht ihre Layoutzeilen", () => {
-      assert.match(source, /if \(metaRefId\) this\._uiEditorRefs\[metaRefId\]\.push\(text\);/);
-      assert.doesNotMatch(source, /if \(metaRefId\) this\._uiEditorRefs\[metaRefId\]\.push\(el\);/);
+      assert.match(source, /this\._uiEditorRefs\[line\.refId\]\.push\(text\);/);
+      assert.doesNotMatch(source, /this\._uiEditorRefs\[line\.refId\]\.push\(el\);/);
     });
     await run("M86.9 03: Meta-Kinder haben stabile Parents, Bounds und ausschließlich sichere Einzeloperationen", () => {
       for (const id of META_IDS) {
         const entry = entries.get(id);
-        assert.ok(entry, id); assert.equal(entry.parentId, "protokoll.list.column.meta", id);
+        assert.ok(entry, id); assert.equal(entry.parentId, "protokoll.list.column.meta.cells", id);
         assert.equal(entry.referenceKind, "multi", id);
         assert.ok(entry.baseline && entry.baseline.minWidth > 0 && entry.baseline.minHeight > 0, id);
         for (const operation of entry.allowedOps) assert.equal(entry.operationEffects[operation], "elementOnly", `${id}/${operation}`);

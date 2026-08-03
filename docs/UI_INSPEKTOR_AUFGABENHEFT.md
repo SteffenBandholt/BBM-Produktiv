@@ -78,6 +78,25 @@ Aktueller Stand:
 - [x] M86.8 Protokoll-Listenvertrag vollstaendig machen und Workbench-Anordnung absichern
 - [x] M86.9 Protokoll-Metazielvertrag auf sichtbare innere Listenziele begrenzen und vollstaendig sichtbar abnehmen
 - [x] M86.10 Urspruengliche Dreispalten-TOP-Zeile wiederherstellen und vollstaendig editorfaehig machen
+- [x] M86.11 Protokoll-TOP-Zeile sichtbar wie Restarbeiten strukturieren und vollstaendig editorfaehig absichern
+- [x] M86.11b Produktive M86.11-Dreispaltenstruktur ausdruecklich beibehalten und hart gegen Blockfluss-Rueckfall absichern
+
+## Statusupdate M86.11b
+
+- Status: `[A]`. Im tatsaechlichen Arbeitsbaum war kein separater M86.11a-Rueckbau vorhanden; die sichtbar erfolgreiche produktive M86.11-Struktur bestand bereits aus Tabellencontainer, Tabellenkopf, gemeinsamem Zeilenbereich und drei festen Hauptzonen. Deshalb wurde kein funktionierender M86.11-Bestand zurueckgebaut oder erneut erzeugt.
+- Der produktive Tabellenkopf bezeichnet die drei Zonen eindeutig als `Nr. / Datum / Klasse`, `Gegenstand` und `Fertig bis / Status / Verantw.`. Normale Zeilen zeigen links Nummer, Datum und Klasse untereinander, mittig Kurztext ueber Langtext und rechts Fertig bis, Status mit Ampel/ToDo/Beschluss sowie Verantwortlich. Die Zonen stehen in jeder geprueften Zeile nebeneinander und teilen ihre Breitenquellen mit dem Header.
+- Der UI-Editor erzeugt weder Tabelle noch Zeile, Spalten, Parents, Reihenfolge oder Scrollcontainer. Er arbeitet weiterhin ausschliesslich auf den komponentennah deklarierten direkten Produkt-Refs. Zeile und Spalten sowie Toggle, Nummer, Datum, Klasse, Markierung, Kurztext, Langtext, Fertig bis, Status, Ampel, ToDo, Beschluss und Verantwortlich behalten ihre stabilen IDs, Single-/Multi-Ref-Semantik, Baselines, Bounds und begrenzten Operationen.
+- Sichtpruefung: Restarbeiten-Referenz und Protokoll im Vollbild, Protokoll bei 1600x900, 1366x768 und 900x430 DIP sowie mit geoeffnetem Editor. Auch nach Plus/Minus, Verschieben, Undo, Original, Save/Restore, Verwerfen, Ein-/Ausklappen und Rerender blieb die Dreispaltentopologie erhalten. Die abschliessenden zwei isolierten Acceptance-Starts endeten mit Exitcode 0; das Profil wurde entfernt.
+- Der M86.11b-Guardrail prueft reale DOM-Rechtecke, echte sichtbare Refs, Parent-/Spaltenzuordnung, Inhaltsreihenfolge, Tabellenkopf, gemeinsame Breitenquellen, fehlende Ersatzstapelung und unveraenderte Restarbeiten-Referenz. M86.11b 5/5, M86.11 11/11, M86.10 15/15, M86.9 7/7, M86.8 4/4, M83 16/16, Restarbeiten-Modul und `ui-editor-m51-m80` gruen; `npm test` und `npm run test:node` jeweils 8/8; Vertrags-Selbsttest gruen; gezieltes ESLint ohne Fehler. Keine PDF-, Fachlogik-, Restarbeiten- oder Registry-Topologieaenderung. Commit/Push/PR/Merge: keiner.
+
+## Statusupdate M86.11
+
+- Status: `[A]`. Die Protokoll-TOP-Liste verwendet sichtbar dieselbe logische Zeile wie Restarbeiten: links Nummer, Anlagedatum, Klasse, Markierung und vorhandener Ebene-1-Schalter untereinander; mittig Kurztext ueber Langtext; rechts Termin, Status mit vorhandener Kennzeichnung und Verantwortlich untereinander. Das Protokoll behaelt eigene IDs, Inhalte und CSS-Werte; Restarbeiten wurde nicht geaendert.
+- Der komponentennahe Vertrag beschreibt echten Tabellenkopf, Datenbereich, Zeilenvorlage und genau drei logische Spalten. Zeile, Spalten und alle sichtbaren Einzelziele besitzen stabile datenunabhaengige IDs, richtige Parents, direkte Single-/Multi-Refs, Baselines/Bounds und nur passende Layoutoperationen. Direktauswahl und Rahmen verwenden ausschliesslich sichtbare echte Ziele; es gibt keinen Listen-Root- oder Ersatzrahmen.
+- Bedingt ausgeblendete Multi-Refs nehmen gespeicherte Startwerte logisch entgegen und wenden sie beim naechsten sichtbaren Rerender auf die echten Knoten an. Interaktive Operationen bleiben ohne sichtbares Ziel blockiert. Die Vertrags-Baselines entsprechen den realen CSS-DIP-Werten, sodass angezeigter Istwert sowie Plus/Minus uebereinstimmen.
+- Sichtabnahme: Referenz Restarbeiten sowie Protokoll bei 1920x1080, 1600x900, 1366x768 und 900x430; keine Meta-Stapelung, Ueberlagerung oder horizontale Scrollleiste. Alle Zeilen-, Spalten- und Einzelziele wurden elementgenau ausgewaehlt. Ein-/Ausklappen, ToDo-/Alle-Filter und Rerender blieben stabil.
+- Langtext wurde sichtbar von `12,667 DIP` auf `13,667 DIP` vergroessert, wieder verkleinert, verschoben und per Undo zurueckgenommen. Save stellte `13,667 DIP` im automatischen zweiten Start wieder her; eine ungespeicherte Aenderung auf `14,667 DIP` wurde ueber `Ohne Speichern fortfahren` verworfen und beim erneuten Oeffnen wieder als `13,667 DIP` gelesen. Beide Acceptance-Starts: Exitcode 0, Startprofil im zweiten Lauf `startup_layout_applied`.
+- Der neue M86.11-Guardrail umfasst 11 Geometrie-, Vertrags-, Ref-, Sichtbarkeits- und Start-Restore-Pruefungen. `ui-editor-m51-m80`, `npm test` und `npm run test:node` sind gruen; die beiden Gesamtsuiten liefen jeweils 8/8. Keine PDF-, Fachlogik- oder Restarbeiten-Aenderung. `docs/licensing.md` und `design-reference/` blieben unangetastet. Commit/Push/PR/Merge: keiner.
 
 ## Statusupdate M86.10
 

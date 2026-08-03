@@ -3,57 +3,19 @@ import {
   normalizeTopShortText,
 } from "../../shared/text/topTextPresentation.js";
 import { applyProtokollTopsUiLayout } from "../../../shared/tableLayouts/protokollTopsLayout.js";
-import { beginM83ComponentBinding, completeM80PilotRender, registerM80MultiRef } from "../../ui-editor/m80Refs.js";
+import {
+  beginM83ComponentBinding,
+  completeM80PilotRender,
+  registerM80MultiRef,
+  registerM80Ref,
+  registerM80TableColumnRef,
+} from "../../ui-editor/m80Refs.js";
 
 const PROTOKOLL_LIST_COLUMN_REFS = Object.freeze([
-  Object.freeze({ id: "protokoll.list.column.number", key: "number", widthVariable: "--bbm-tops-list-number-col", minimumWidth: 48, maximumWidth: 220 }),
-  Object.freeze({ id: "protokoll.list.column.text", key: "text", widthVariable: "--bbm-tops-list-text-col", minimumWidth: 180, maximumWidth: 1400 }),
-  Object.freeze({ id: "protokoll.list.column.meta", key: "meta", widthVariable: "--bbm-tops-list-meta-col", minimumWidth: 96, maximumWidth: 420 }),
+  Object.freeze({ id: "protokoll.list.column.number", key: "number", headerKey: "headerNumber", widthVariable: "--bbm-ui-editor-tops-list-number-col", initialWidth: 64 }),
+  Object.freeze({ id: "protokoll.list.column.text", key: "text", headerKey: "headerText", widthVariable: "--bbm-ui-editor-tops-list-text-col", initialWidth: 650 }),
+  Object.freeze({ id: "protokoll.list.column.meta", key: "meta", headerKey: "headerMeta", widthVariable: "--bbm-ui-editor-tops-list-meta-col", initialWidth: 172 }),
 ]);
-
-function finite(value, fallback = 0) {
-  return Number.isFinite(Number(value)) ? Number(value) : fallback;
-}
-
-function readLogicalColumnState(id, element, widthOwner = null, widthVariable = "") {
-  const rect = element.getBoundingClientRect();
-  const style = globalThis.window?.getComputedStyle?.(element) || element.style || {};
-  const configuredWidth = String(widthOwner?.style?.getPropertyValue?.(widthVariable) || "").trim();
-  const fixedWidth = /^\d+(?:\.\d+)?px$/.test(configuredWidth) ? Number.parseFloat(configuredWidth) : null;
-  return {
-    elementId: id,
-    x: 0,
-    y: 0,
-    width: fixedWidth !== null ? fixedWidth : finite(rect.width),
-    height: finite(rect.height),
-    textOffsetX: finite(parseFloat(style.paddingLeft)),
-    textOffsetY: finite(parseFloat(style.paddingTop)),
-    fontSize: finite(parseFloat(style.fontSize), 12),
-    visible: true,
-    spacing: {},
-  };
-}
-
-function hasPositiveGeometry(element) {
-  if (!element || typeof element.getBoundingClientRect !== "function") return false;
-  const rect = element.getBoundingClientRect();
-  return [rect.left, rect.top, rect.width, rect.height].every((value) => Number.isFinite(Number(value))) &&
-    Number(rect.width) > 0 && Number(rect.height) > 0;
-}
-
-function visiblePrimaryFirst(targets = []) {
-  const primary = targets.find(hasPositiveGeometry);
-  return primary ? [primary, ...targets.filter((target) => target !== primary)] : [...targets];
-}
-
-function getAssetBaseUrl() {
-  if (typeof window !== "undefined" && window?.location?.href) return window.location.href;
-  if (typeof process !== "undefined" && typeof process.cwd === "function") {
-    const cwdUrl = `file:///${process.cwd().replace(/\\/g, "/").replace(/^\/+/, "")}/`;
-    return new URL("./", cwdUrl).href;
-  }
-  return "file:///";
-}
 
 function resolveModuleAsset(relativePath) {
   const spec = String(relativePath || "");
@@ -85,8 +47,7 @@ function resolveModuleAsset(relativePath) {
   }
 }
 
-const ASSET_BASE_URL = getAssetBaseUrl();
-const TODO_PNG = new URL("../../assets/todo.png", ASSET_BASE_URL).href;
+const TODO_PNG = resolveModuleAsset("../../assets/todo.png");
 const RED_FLAG_PNG = resolveModuleAsset("../../assets/icons/redFlag.png");
 
 export class TopsList {
@@ -100,15 +61,52 @@ export class TopsList {
       activeZone: null,
     };
     this._uiEditorRefs = this._createUiEditorRefs();
+    this.table = document.createElement("div");
+    this.table.className = "bbm-tops-list-table";
+    this.table.setAttribute("data-bbm-tops-list-table", "true");
+    this.header = this._buildTableHeader();
     this.root = document.createElement("ul");
     this.root.setAttribute("data-bbm-tops-list-v2", "true");
-    applyProtokollTopsUiLayout(this.root, this.tableLayout);
+    this.table.append(this.header, this.root);
+    applyProtokollTopsUiLayout(this.table, this.tableLayout);
     this._applyDevOnlyLayoutVarsGate();
+  }
+
+  _buildTableHeader() {
+    const header = document.createElement("div");
+    header.className = "bbm-tops-list-table-header";
+
+    const number = document.createElement("div");
+    number.className = "bbm-tops-list-table-header-number";
+    number.textContent = "Nr. / Datum / Klasse";
+
+    const text = document.createElement("div");
+    text.className = "bbm-tops-list-table-header-text";
+    text.textContent = "Gegenstand";
+
+    const meta = document.createElement("div");
+    meta.className = "bbm-tops-list-table-header-meta";
+    const due = document.createElement("div");
+    due.textContent = "Fertig bis";
+    const status = document.createElement("div");
+    status.textContent = "Status";
+    const responsible = document.createElement("div");
+    responsible.textContent = "Verantw.";
+    meta.append(due, status, responsible);
+    header.append(number, text, meta);
+
+    this.headerNumber = number;
+    this.headerText = text;
+    this.headerMeta = meta;
+    this.headerDue = due;
+    this.headerStatus = status;
+    this.headerResponsible = responsible;
+    return header;
   }
 
   setTableLayout(tableLayout) {
     this.tableLayout = tableLayout && typeof tableLayout === "object" ? tableLayout : null;
-    applyProtokollTopsUiLayout(this.root, this.tableLayout);
+    applyProtokollTopsUiLayout(this.table, this.tableLayout);
     this._applyDevOnlyLayoutVarsGate();
   }
 
@@ -122,12 +120,12 @@ export class TopsList {
     if (this.root?.removeAttribute) {
       this.root.removeAttribute("data-dev-layout-mode");
     }
-    applyProtokollTopsUiLayout(this.root, this.tableLayout);
+    applyProtokollTopsUiLayout(this.table, this.tableLayout);
     this._applyDevOnlyLayoutVarsGate();
   }
 
   _applyDevOnlyLayoutVarsGate() {
-    if (!this.root?.style) return;
+    if (!this.table?.style) return;
     if (this.devLayoutMode?.enabled) return;
 
     const devOnlyVars = [
@@ -140,7 +138,7 @@ export class TopsList {
     ];
 
     for (const key of devOnlyVars) {
-      this.root.style.removeProperty(key);
+      this.table.style.removeProperty(key);
     }
   }
 
@@ -161,19 +159,21 @@ export class TopsList {
   _registerUiEditorColumnRefs() {
     beginM83ComponentBinding("bbm.protokoll.list.columns");
     for (const column of PROTOKOLL_LIST_COLUMN_REFS) {
-      const targets = visiblePrimaryFirst(this._uiEditorRefs[column.key] || []);
-      const primary = targets[0] || this.root;
-      registerM80MultiRef(column.id, targets, this.root, {
-        mountedInstanceCount: targets.length,
-        read: () => readLogicalColumnState(column.id, primary, this.root, column.widthVariable),
-        apply: (state) => {
-          const width = Math.min(column.maximumWidth, Math.max(column.minimumWidth, finite(state.width, column.minimumWidth)));
-          this.root.style.setProperty(column.widthVariable, `${width}px`);
-        },
-      });
+      registerM80TableColumnRef(
+        column.id,
+        this[column.headerKey],
+        this._uiEditorRefs[column.key] || [],
+        this.table,
+        this.table,
+        column.widthVariable,
+        column.initialWidth
+      );
     }
+    registerM80Ref("protokoll.list.header.due", this.headerDue);
+    registerM80Ref("protokoll.list.header.status", this.headerStatus);
+    registerM80Ref("protokoll.list.header.responsible", this.headerResponsible);
     for (const id of [
-      "protokoll.list.row", "protokoll.list.row.level1Toggle", "protokoll.list.row.number", "protokoll.list.row.marker",
+      "protokoll.list.row", "protokoll.list.row.level1Toggle", "protokoll.list.row.number", "protokoll.list.row.class", "protokoll.list.row.marker",
       "protokoll.list.row.createdAt", "protokoll.list.row.short", "protokoll.list.row.long", "protokoll.list.row.due",
       "protokoll.list.row.status", "protokoll.list.row.responsible", "protokoll.list.row.ampel", "protokoll.list.row.todo", "protokoll.list.row.decision",
     ]) registerM80MultiRef(id, this._uiEditorRefs[id] || [], this.root, { mountedInstanceCount: (this._uiEditorRefs[id] || []).length });
@@ -183,7 +183,7 @@ export class TopsList {
   _createUiEditorRefs() {
     return {
       number: [], text: [], meta: [],
-      "protokoll.list.row": [], "protokoll.list.row.level1Toggle": [], "protokoll.list.row.number": [], "protokoll.list.row.marker": [],
+      "protokoll.list.row": [], "protokoll.list.row.level1Toggle": [], "protokoll.list.row.number": [], "protokoll.list.row.class": [], "protokoll.list.row.marker": [],
       "protokoll.list.row.createdAt": [], "protokoll.list.row.short": [], "protokoll.list.row.long": [], "protokoll.list.row.due": [],
       "protokoll.list.row.status": [], "protokoll.list.row.responsible": [], "protokoll.list.row.ampel": [], "protokoll.list.row.todo": [], "protokoll.list.row.decision": [],
     };
@@ -261,13 +261,19 @@ export class TopsList {
     }
 
     const createdAt = String(item.createdAt || "").trim();
-    if (createdAt && !item.isTitle) {
+    if (createdAt) {
       const createdAtLine = document.createElement("div");
       createdAtLine.className = "bbm-tops-list-row-number-date";
       createdAtLine.textContent = createdAt;
       num.appendChild(createdAtLine);
       this._uiEditorRefs["protokoll.list.row.createdAt"].push(createdAtLine);
     }
+
+    const itemClass = document.createElement("div");
+    itemClass.className = "bbm-tops-list-row-class";
+    itemClass.textContent = String(item.itemClass || (item.isTitle ? "Titel" : "TOP"));
+    num.appendChild(itemClass);
+    this._uiEditorRefs["protokoll.list.row.class"].push(itemClass);
 
     const text = document.createElement("div");
     text.className = "bbm-tops-list-row-text";
@@ -298,30 +304,32 @@ export class TopsList {
     const meta = document.createElement("div");
     meta.className = "bbm-tops-list-row-meta";
     this._decorateLayoutZone(meta, "meta");
-    const statusTokens = new Set(["-", "offen", "in arbeit", "erledigt", "blockiert", "verzug"]);
-    for (const [metaIndex, line] of (item.meta || []).entries()) {
+    const legacyMeta = Array.isArray(item.meta) ? item.meta : [];
+    const metaLines = [
+      { refId: "protokoll.list.row.due", value: item.due ?? legacyMeta[0] ?? "", kind: "due" },
+      { refId: "protokoll.list.row.status", value: item.status ?? legacyMeta[1] ?? "", kind: "status" },
+      { refId: "protokoll.list.row.responsible", value: item.responsible ?? legacyMeta[2] ?? "", kind: "responsible" },
+    ];
+    for (const line of metaLines) {
+      const value = String(line.value || "").trim();
+      if (!value) continue;
       const el = document.createElement("div");
       el.className = "bbm-tops-list-row-meta-line";
-      const value = String(line || "").trim();
-      const normalized = value.toLowerCase();
-      const isIsoDate = /^\d{4}-\d{2}-\d{2}$/.test(value);
-      const isDeDate = /^\d{2}\.\d{2}\.\d{4}$/.test(value);
-      if (statusTokens.has(normalized)) {
+      if (line.kind === "status") {
         el.classList.add("bbm-tops-list-row-meta-line-status");
-      } else if (!isIsoDate && !isDeDate) {
+      } else if (line.kind === "responsible") {
         el.classList.add("bbm-tops-list-row-meta-line-responsible");
       }
       const text = document.createElement("span");
       text.className = "bbm-tops-list-row-meta-text";
-      text.textContent = line;
+      text.textContent = value;
       el.appendChild(text);
       // The editor must select the actual visible value, never the enclosing
       // meta line.  The line keeps the historical list layout (including a
       // possible status symbol); its text child is the independently editable
       // target for due date, status and responsible party.
-      const metaRefId = ["protokoll.list.row.due", "protokoll.list.row.status", "protokoll.list.row.responsible"][metaIndex];
-      if (metaRefId) this._uiEditorRefs[metaRefId].push(text);
-      if (statusTokens.has(normalized)) {
+      this._uiEditorRefs[line.refId].push(text);
+      if (line.kind === "status") {
         const ampelSlot = document.createElement("span");
         ampelSlot.className = "bbm-tops-list-row-meta-ampel-slot";
         const symbolType = String(item.metaSymbolType || "");
