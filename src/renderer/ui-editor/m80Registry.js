@@ -1,20 +1,28 @@
 import { restarbeitenFilterbarUiEditorContract } from "../modules/restarbeiten/RestarbeitenFilterbar.uiEditorContract.js";
+import { restarbeitenQuicklaneUiEditorContract } from "../modules/restarbeiten/RestarbeitenQuicklane.uiEditorContract.js";
 import { restarbeitenListUiEditorContract } from "../modules/restarbeiten/RestarbeitenList.uiEditorContract.js";
 import { restarbeitenEditboxUiEditorContract } from "../modules/restarbeiten/RestarbeitenEditbox.uiEditorContract.js";
 import { protokollQuicklaneUiEditorContract, protokollScreenUiEditorContract } from "../modules/protokoll/screens/TopsScreen.uiEditorContract.js";
 import { protokollListColumnsUiEditorContract, protokollListUiEditorContract } from "../modules/protokoll/TopsList.uiEditorContract.js";
 import { protokollEditUiEditorContract } from "../modules/protokoll/TopsWorkbench.uiEditorContract.js";
+import {
+  protokollMainHeaderLauncherUiEditorContract,
+  restarbeitenMainHeaderLauncherUiEditorContract,
+} from "../ui/MainHeader.uiEditorContract.js";
 import { aggregateBbmM83Components } from "./m83ComponentContract.js";
 
-export const BBM_M80_REGISTRY_VERSION = 17;
+export const BBM_M80_REGISTRY_VERSION = 19;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
   restarbeitenFilterbarUiEditorContract,
+  restarbeitenQuicklaneUiEditorContract,
   restarbeitenListUiEditorContract,
   restarbeitenEditboxUiEditorContract,
+  restarbeitenMainHeaderLauncherUiEditorContract,
   protokollScreenUiEditorContract,
   protokollQuicklaneUiEditorContract,
+  protokollMainHeaderLauncherUiEditorContract,
   protokollListUiEditorContract,
   protokollListColumnsUiEditorContract,
   protokollEditUiEditorContract,
@@ -61,7 +69,6 @@ export const BBM_M80_REGISTRY_SCOPES = Object.freeze([
   blockedScope("bbm.help", "Hilfe"),
   blockedScope("bbm.dialogs", "Produktive Dialoge"),
   blockedScope("restarbeiten.layout.root", "Restarbeiten · technischer Alt-Layoutcontainer", "M80_2_split_removed"),
-  blockedScope("restarbeiten.quicklane", "Restarbeiten · Quicklane"),
   blockedScope("restarbeiten.notes", "Restarbeiten · Notizdialog"),
   blockedScope("restarbeiten.output-preview", "Restarbeiten · Ausgabevorschau", "M81_pdf_excluded"),
 ]);

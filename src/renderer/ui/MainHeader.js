@@ -9,7 +9,7 @@ import { openClosedProtocolSelector } from "./react/ClosedProtocolSelector.js";
 import { resolveProtocolsDir } from "../utils/pdfProtocolsDir.js";
 import { PROTOKOLL_MODULE_ID } from "../app/modules/index.js";
 import { isModuleActive, refreshCachedActiveModuleAccess } from "../app/modules/moduleAccessState.js";
-import { installDevelopmentUiEditorOpenButton } from "../app/coreShellNavigation.js";
+import { bindDevelopmentUiEditorOpenButtonRef, clearDevelopmentUiEditorOpenButtonRefs, installDevelopmentUiEditorOpenButton } from "../app/coreShellNavigation.js";
 import { getVisiblePrintDialogActions } from "../../shared/print/printModes.mjs";
 
 const PROTOCOL_DISABLED_MESSAGE = "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.";
@@ -1666,8 +1666,13 @@ export default class MainHeader {
     const host = this.elDevControls;
     const scopeId = String(this.router?.context?.ui?.uiEditorScopeId || "").trim();
     if (!host) return;
-    if (scopeId === this._uiEditorLauncherScopeId) return;
+    if (scopeId === this._uiEditorLauncherScopeId) {
+      const existingButton = host.querySelector?.('[data-bbm-development-ui-editor-open="true"]') || null;
+      if (existingButton) bindDevelopmentUiEditorOpenButtonRef({ scopeId, button: existingButton });
+      return;
+    }
 
+    clearDevelopmentUiEditorOpenButtonRefs();
     host.querySelector?.('[data-bbm-development-ui-editor-open="true"]')?.remove?.();
     this._uiEditorLauncherScopeId = scopeId;
     if (!scopeId) return;

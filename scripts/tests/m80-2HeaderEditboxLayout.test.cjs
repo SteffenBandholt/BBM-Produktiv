@@ -15,7 +15,7 @@ async function runM802HeaderEditboxLayoutTests(run) {
   const elements = complete.flatMap((scope) => scope.elements);
 
   await run("M80.2 Registry: Header, Liste und Editbox sind direkt aktiv; Split ist gesperrt", () => {
-    assert.equal(registryModule.BBM_M80_REGISTRY_VERSION, 17);
+    assert.equal(registryModule.BBM_M80_REGISTRY_VERSION, 19);
     assert.deepEqual(registryModule.BBM_M80_ACTIVE_SCOPES, [
       "restarbeiten.header.root",
       "restarbeiten.list.root",
@@ -33,7 +33,7 @@ async function runM802HeaderEditboxLayoutTests(run) {
   await run("M80.2 Registry: Header vollständig, Editbox direkt größenfähig und Alt-Kind-IDs stabil", () => {
     const header = complete.find((scope) => scope.scopeId === "restarbeiten.header.root");
     const edit = complete.find((scope) => scope.scopeId === "restarbeiten.edit.root");
-    assert.equal(header.elements.length, 31);
+    assert.equal(header.elements.length, 44);
     assert.equal(edit.elements.length, 53);
     assert.equal(header.elements.find((entry) => entry.id === "restarbeiten.filterbar").type, "area");
     const nativeTypes = new Set(["root", "area", "group", "fieldGroup", "label", "field", "button", "table", "tableHeader", "tableBody", "tableRow", "tableColumn", "tableHeaderCell", "tableDataCell", "tableViewport", "horizontalScrollArea", "statusIndicator", "componentPart"]);
@@ -43,13 +43,12 @@ async function runM802HeaderEditboxLayoutTests(run) {
       assert.equal(entry.lockedOps.every((operation) => nativeLockedOps.has(operation)), true, `${entry.id}: native lockedOps`);
     }
     for (const root of [header.elements[0], edit.elements[0]]) {
+      assert.ok(root.allowedOps.includes("move"));
+      assert.ok(root.allowedOps.includes("resizeWidth"));
       assert.ok(root.allowedOps.includes("resizeHeight"));
       assert.ok(root.allowedOps.includes("setVisibility"));
-      assert.equal(root.allowedOps.includes("move"), false);
       assert.equal(root.lockedOps.includes("move"), false);
     }
-    assert.equal(header.elements[0].allowedOps.includes("resizeWidth"), false);
-    assert.equal(edit.elements[0].allowedOps.includes("resizeWidth"), false);
     assert.equal(edit.elements[0].baseline.minWidth, 320);
     assert.equal(edit.elements[0].baseline.minHeight, 190);
     assert.equal(edit.elements[0].baseline.maxHeight, 480);
@@ -89,7 +88,7 @@ async function runM802HeaderEditboxLayoutTests(run) {
   await run("M80.2 Sicherheitsgrenze: Header-Fachbuttons bleiben Layoutobjekte", () => {
     const header = complete.find((scope) => scope.scopeId === "restarbeiten.header.root");
     const buttons = header.elements.filter((entry) => entry.type === "button");
-    assert.equal(buttons.length, 4);
+    assert.equal(buttons.length, 13);
     for (const button of buttons) {
       assert.ok(button.lockedOps.includes("executeTargetAction"), button.id);
       assert.ok(button.lockedOps.includes("modifyDomainData"), button.id);

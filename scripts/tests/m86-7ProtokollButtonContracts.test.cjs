@@ -60,7 +60,7 @@ async function runM867ProtokollButtonContractTests(run) {
       assert.equal(entry.parentId, parentId, id);
       assert.equal(entries.has(parentId), true, `${id} -> ${parentId}`);
       assert.equal(entry.editable, true, id);
-      assert.deepEqual(entry.allowedOps, ["move", "resizeWidth", "resizeHeight", "setVisibility"], id);
+      assert.deepEqual(entry.allowedOps, ["move", "resizeWidth", "resizeHeight", "setVisibility", "textResize"], id);
       assert.equal(entry.baseline.minWidth > 0 && entry.baseline.maxWidth >= entry.baseline.minWidth, true, id);
       assert.equal(entry.baseline.minHeight > 0 && entry.baseline.maxHeight >= entry.baseline.minHeight, true, id);
       for (const locked of ["executeTargetAction", "modifyDomainData", "createRecord", "deleteRecord"]) assert.equal(entry.lockedOps.includes(locked), true, `${id}: ${locked}`);

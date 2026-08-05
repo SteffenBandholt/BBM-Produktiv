@@ -36,7 +36,15 @@ class FakeElement {
   setAttribute(name, value) { this.attributes[name] = String(value); if (name === "data-ui-editor-id") this.dataset.uiEditorId = String(value); }
   getAttribute(name) { return this.attributes[name] || null; }
   appendChild(child) { child.parentElement = this; this.children.push(child); return child; }
-  getBoundingClientRect() { return { ...this._rect }; }
+  getBoundingClientRect() {
+    const width = Number.parseFloat(this.style.width);
+    const height = Number.parseFloat(this.style.height);
+    return {
+      ...this._rect,
+      width: Number.isFinite(width) ? width : this._rect.width,
+      height: Number.isFinite(height) ? height : this._rect.height,
+    };
+  }
 }
 
 async function runM827RemainingIndicatorTests(run) {
@@ -48,9 +56,9 @@ async function runM827RemainingIndicatorTests(run) {
   const editboxSource = read("src/renderer/modules/restarbeiten/RestarbeitenEditbox.js");
   const css = read("src/renderer/modules/restarbeiten/styles/restarbeiten.css");
 
-  await run("M82.7 BBM 01: Kurztext-Restzeichenanzeige erlaubt move, textResize und setVisibility", () => assert.deepEqual(byId.get(IDS[0]).allowedOps, ["move", "textResize", "setVisibility"]));
-  await run("M82.7 BBM 02: Langtext-Restzeichenanzeige erlaubt move, textResize und setVisibility", () => assert.deepEqual(byId.get(IDS[1]).allowedOps, ["move", "textResize", "setVisibility"]));
-  await run("M82.7 BBM 03: Breite und Hoehe bleiben fuer beide Anzeigen gesperrt", () => IDS.forEach((id) => { assert.equal(byId.get(id).allowedOps.includes("resizeWidth"), false); assert.equal(byId.get(id).allowedOps.includes("resizeHeight"), false); }));
+  await run("M82.7 BBM 01: Kurztext-Restzeichenanzeige folgt dem universellen Textvertrag", () => assert.deepEqual(byId.get(IDS[0]).allowedOps, ["move", "resizeWidth", "resizeHeight", "setVisibility", "textResize"]));
+  await run("M82.7 BBM 02: Langtext-Restzeichenanzeige folgt dem universellen Textvertrag", () => assert.deepEqual(byId.get(IDS[1]).allowedOps, ["move", "resizeWidth", "resizeHeight", "setVisibility", "textResize"]));
+  await run("M82.7 BBM 03: Breite und Hoehe sind fuer beide Anzeigen freigegeben", () => IDS.forEach((id) => { assert.equal(byId.get(id).allowedOps.includes("resizeWidth"), true); assert.equal(byId.get(id).allowedOps.includes("resizeHeight"), true); }));
   await run("M82.7 BBM 04: produktive CSS-Schriftgroesse ist als Pixelbaseline abgebildet", () => IDS.forEach((id) => assert.equal(byId.get(id).baseline.fontSize, 8.667)));
   await run("M82.7 BBM 05: Schriftgrenzen passen in die vorhandene 30-px-Kopfspalte", () => IDS.forEach((id) => assert.deepEqual([byId.get(id).baseline.minFontSize, byId.get(id).baseline.maxFontSize], [6, 10])));
   await run("M82.7.1 BBM 06: Restzeichenanzeigen verwenden nur die allgemeine technische Speichergrenze", () => IDS.forEach((id) => {
@@ -107,12 +115,12 @@ async function runM827RemainingIndicatorTests(run) {
     await run("M82.7 BBM 17: Diktatbutton und Klassensteuerung bleiben geometrisch unveraendert", () => { assert.deepEqual(refs.snapshotM80State("restarbeiten.edit.short.dictation"), dictationBefore); assert.deepEqual(refs.snapshotM80State("restarbeiten.edit.class"), classBefore); });
     await run("M82.7 BBM 18: Undo kann den exakten vorherigen Zustand ueber denselben Apply-Weg herstellen", () => { refs.applyM80State(IDS[0], shortBefore); assert.equal(refs.snapshotM80State(IDS[0]).fontSize, shortBefore.fontSize); assert.equal(refs.snapshotM80State(IDS[0]).x, shortBefore.x); assert.equal(refs.snapshotM80State(IDS[0]).y, shortBefore.y); });
     await run("M82.7 BBM 19: Langtextanzeige nutzt denselben wirksamen HostAdapter-Weg", () => { const result = host.handleM80EditorRequest({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "m827-long", elementId: IDS[1], operation: "move", payload: { x: -5, y: -1 }, source: "m82-7-test" } }).changeResult; assert.equal(result.success, true, result.message); assert.equal(longNode.style.translate, "-5px -1px"); });
-    await run("M82.7 BBM 20: Save-Restore erzeugt nur freigegebene deterministische Requests", () => { const saved = { ...refs.snapshotM80State(IDS[1]), elementId: IDS[1], x: -5, y: -1, fontSize: 7.667, visible: false }; refs.applyM80State(IDS[1], { ...saved, ...byId.get(IDS[1]).baseline }); const requests = host.createM80StartupRequests("restarbeiten.edit.root", saved).map((item) => item.request.operation); assert.deepEqual(requests, ["move", "textResize", "setVisibility"]); });
+    await run("M82.7 BBM 20: Save-Restore erzeugt nur freigegebene deterministische Requests", () => { const saved = { ...refs.snapshotM80State(IDS[1]), elementId: IDS[1], x: -5, y: -1, fontSize: 7.667, visible: false }; refs.applyM80State(IDS[1], { ...saved, ...byId.get(IDS[1]).baseline }); const requests = host.createM80StartupRequests("restarbeiten.edit.root", saved).map((item) => item.request.operation); assert.deepEqual(requests, ["move", "resizeWidth", "resizeHeight", "textResize", "setVisibility"]); });
     await run("M82.7 BBM 21: Reset stellt die deklarierte App-Baseline wieder her", () => { refs.applyM80State(IDS[1], { ...refs.snapshotM80State(IDS[1]), ...byId.get(IDS[1]).baseline }); const reset = refs.snapshotM80State(IDS[1]); assert.equal(reset.x, 0); assert.equal(reset.y, 0); assert.equal(reset.fontSize, 8.667); assert.equal(reset.visible, true); });
     await run("M82.7 BBM 22: alle Layoutschritte behalten den Topologie-Fingerprint", () => assert.equal(refs.compareM80Topology(topology).current.fingerprint, topology.fingerprint));
     await run("M82.7 BBM 23: Registryrefresh erzeugt keine Knoten", () => { refs.completeM80PilotRender(); assert.equal(refs.snapshotM80Topology().nodes.length, nodeCount); assert.equal(refs.compareM80Topology(topology).ok, true); });
     await run("M82.7 BBM 24: Nachbarelemente erhalten weder Transform noch Schriftstil", () => { assert.equal(nodes.get("restarbeiten.edit.short.dictation").style.translate || "", ""); assert.equal(nodes.get("restarbeiten.edit.class").style.fontSize || "", ""); });
-    await run("M82.7 BBM 25: keine Scroll- oder Fachoperation wurde freigegeben", () => IDS.forEach((id) => byId.get(id).allowedOps.forEach((operation) => assert.equal(["move", "textResize", "setVisibility"].includes(operation), true))));
+    await run("M82.7 BBM 25: keine Scroll- oder Fachoperation wurde freigegeben", () => IDS.forEach((id) => byId.get(id).allowedOps.forEach((operation) => assert.equal(["move", "resizeWidth", "resizeHeight", "setVisibility", "textResize"].includes(operation), true))));
     await run("M82.7 BBM 26: Schriftgroessen ausserhalb der CSS-Grenzen werden sicher abgewiesen", () => { const result = host.handleM80EditorRequest({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "m827-font-limit", elementId: IDS[0], operation: "textResize", payload: { text: { fontSize: 11 } }, source: "m82-7-test" } }).changeResult; assert.equal(result.success, false); assert.equal(result.rollbackSucceeded, true); });
     const submitMove = (elementId, payload, changeId) => host.handleM80EditorRequest({
       action: "submitChange", scopeId: "restarbeiten.edit.root",
@@ -137,7 +145,7 @@ async function runM827RemainingIndicatorTests(run) {
     await run("M82.7.1 BBM 33: positive und negative Werte sind nicht an die Gruppe geklemmt", () => { assert.equal(submitMove(IDS[0], { x: 125, y: -95 }, "short-signed").success, true); const state = refs.snapshotM80State(IDS[0]); assert.deepEqual([state.x, state.y], [125, -95]); });
     await run("M82.7.1 BBM 34: die allgemeine technische Speichergrenze bleibt erhalten", () => { assert.equal(submitMove(IDS[0], { x: 2400 }, "short-limit-valid").success, true); const blocked = submitMove(IDS[0], { x: 2401 }, "short-limit-blocked"); assert.equal(blocked.success, false); assert.equal(blocked.rollbackSucceeded, true); assert.match(blocked.message, /±2400 DIP/); assert.equal(refs.snapshotM80State(IDS[0]).x, 2400); });
     await run("M82.7.1 BBM 35: NaN und Infinity werden ohne Zustandsaenderung blockiert", () => { resetRemaining(IDS[0]); const before = refs.snapshotM80State(IDS[0]); for (const value of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) { const blocked = submitMove(IDS[0], { x: value }, `short-invalid-${String(value)}`); assert.equal(blocked.success, false); assert.equal(blocked.rollbackSucceeded, true); assert.deepEqual(refs.snapshotM80State(IDS[0]), before); } });
-    await run("M82.7.1 BBM 36: nicht unterstuetzte Operation bleibt ohne Layoutwirkung", () => { const before = refs.snapshotM80State(IDS[0]); const blocked = host.handleM80EditorRequest({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "short-width-blocked", elementId: IDS[0], operation: "resizeWidth", payload: { width: 40 }, source: "m82-7-1-test" } }).changeResult; assert.equal(blocked.success, false); assert.deepEqual(refs.snapshotM80State(IDS[0]), before); });
+    await run("M82.7.1 BBM 36: Breitenoperation folgt dem universellen Vertrag", () => { const changed = host.handleM80EditorRequest({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "short-width", elementId: IDS[0], operation: "resizeWidth", payload: { width: 40 }, source: "m82-7-1-test" } }).changeResult; assert.equal(changed.success, true, changed.message); assert.equal(changed.newState.width, 40); });
     await run("M82.7.1 BBM 37: Langtextanzeige erreicht ebenfalls kumulativ plus und minus 50 DIP", () => { resetRemaining(IDS[1]); assert.equal(moveRepeatedly(IDS[1], "x", -5, 10, "long-left").x, -50); assert.equal(moveRepeatedly(IDS[1], "x", 5, 20, "long-right").x, 50); });
     await run("M82.7.1 BBM 38: Langtextanzeige akzeptiert direkte X- und Y-Werte", () => { assert.equal(submitMove(IDS[1], { x: -75 }, "long-direct-x").success, true); assert.equal(submitMove(IDS[1], { y: 35 }, "long-direct-y").success, true); const state = refs.snapshotM80State(IDS[1]); assert.deepEqual([state.x, state.y], [-75, 35]); });
     await run("M82.7.1 BBM 39: mehrere Schritte lassen sich exakt rueckgaengig machen", () => { resetRemaining(IDS[0]); const states = [refs.snapshotM80State(IDS[0])]; for (let index = 0; index < 4; index += 1) { moveRepeatedly(IDS[0], "x", -5, 1, `short-undo-${index}`); states.push(refs.snapshotM80State(IDS[0])); } for (let index = states.length - 2; index >= 0; index -= 1) refs.applyM80State(IDS[0], states[index]); assert.equal(refs.snapshotM80State(IDS[0]).x, 0); });

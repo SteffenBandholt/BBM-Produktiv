@@ -109,6 +109,53 @@ function publicError(error) {
 
 function delay(milliseconds) { return new Promise((resolve) => setTimeout(resolve, milliseconds)); }
 
+function createBbmModuleLayoutStorageIdentity(registration = {}) {
+  const activeScopes = Array.isArray(registration.activeScopes)
+    ? registration.activeScopes.map((scopeId) => String(scopeId || "").trim()).filter(Boolean)
+    : [];
+  const moduleIds = [...new Set(activeScopes.map((scopeId) => scopeId.split(".", 1)[0]))];
+  if (moduleIds.length !== 1 || !/^[a-z0-9-]+$/.test(moduleIds[0])) {
+    throw new ElectronEditorError(
+      ELECTRON_EDITOR_ERROR_CODES.REGISTRY_SCOPE_BLOCKED,
+      "Der globale Modullayout-Schlüssel kann nicht eindeutig aus den aktiven Scopes gebildet werden."
+    );
+  }
+  const registryScopes = Array.isArray(registration.registryScopes) ? registration.registryScopes : [];
+  const moduleId = moduleIds[0];
+  return Object.freeze({
+    moduleId,
+    layoutStorageKey: `module-${moduleId}`,
+    registryVersion: Number(registration.registryVersion),
+    registryFingerprint: createRegistryFingerprint(registryScopes),
+  });
+}
+
+function resolveBbmModuleLayoutProfileRoot(baseProfileRoot, registration) {
+  const identity = createBbmModuleLayoutStorageIdentity(registration);
+  return Object.freeze({
+    profileRoot: path.join(path.resolve(baseProfileRoot), identity.layoutStorageKey),
+    identity,
+  });
+}
+
+function migrateCompatibleLegacyLayoutProfile(baseProfileRoot, moduleProfileRoot, registration) {
+  const selectedProfiles = ["standard", "compact"];
+  if (selectedProfiles.some((profileId) => fs.existsSync(path.join(moduleProfileRoot, `${profileId}.layout-profile.json`)))) return;
+  if (!fs.existsSync(baseProfileRoot)) return;
+  const legacy = loadTargetStartupLayout({
+    profileRoot: baseProfileRoot,
+    applicationId: APPLICATION_ID,
+    activeScopes: registration.activeScopes,
+    registryScopes: registration.registryScopes,
+  });
+  if (!legacy.ok || !legacy.found || !selectedProfiles.includes(legacy.profileId)) return;
+  const source = path.join(baseProfileRoot, `${legacy.profileId}.layout-profile.json`);
+  const destination = path.join(moduleProfileRoot, `${legacy.profileId}.layout-profile.json`);
+  if (!fs.existsSync(source) || fs.existsSync(destination)) return;
+  try { fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL); }
+  catch (error) { if (error?.code !== "EEXIST") throw error; }
+}
+
 class ElectronUiEditorSessionController {
   constructor({ app, ipcMain, getMainWindow, pdfAdapter = null, spawnProcess = spawn, clientFactory, pathOptions = {}, executableResolver, runtimeRootResolver, sessionIdentifiersFactory, profileRootResolver, ensureDirectory }) {
     this.app = app;
@@ -129,8 +176,8 @@ class ElectronUiEditorSessionController {
     this.pendingRendererRequests = new Map();
     this.heartbeat = null;
     this.currentRegistration = null;
-    this.pendingStartupLayout = null;
-    this.startupLayoutReceipt = null;
+    this.pendingStartupLayouts = new Map();
+    this.startupLayoutReceipts = new Map();
     this.registered = false;
     this.stopping = false;
   }
@@ -175,11 +222,13 @@ class ElectronUiEditorSessionController {
   }
 
   loadStartupLayout(registration) {
-    const profileRoot = this.profileRootResolver(this.app);
-    this.ensureDirectory(profileRoot);
     console.info(`[ui-editor] startup layout requested: activeScopes=${Array.isArray(registration?.activeScopes) ? registration.activeScopes.length : 0}`);
     try {
-      const snapshot = this.#registrationSnapshot(registration, { sessionId: "startup-layout", profileRoot });
+      const baseProfileRoot = this.profileRootResolver(this.app);
+      const { profileRoot, identity } = resolveBbmModuleLayoutProfileRoot(baseProfileRoot, registration);
+      this.ensureDirectory(profileRoot);
+      migrateCompatibleLegacyLayoutProfile(baseProfileRoot, profileRoot, registration);
+      const snapshot = this.#registrationSnapshot(registration, { sessionId: "startup-layout", profileRoot, identity });
       const manifestPath = this.#validateTargetManifest(snapshot.contract);
       const result = loadTargetStartupLayout({
         profileRoot,
@@ -187,33 +236,37 @@ class ElectronUiEditorSessionController {
         activeScopes: snapshot.contract.activeScopes,
         registryScopes: snapshot.registryScopes,
       });
-      this.pendingStartupLayout = result.ok && result.found ? { ...result, manifestPath } : null;
-      this.startupLayoutReceipt = result.found ? null : {
+      if (result.ok && result.found) this.pendingStartupLayouts.set(identity.layoutStorageKey, { ...result, manifestPath, layoutStorageKey: identity.layoutStorageKey });
+      else this.pendingStartupLayouts.delete(identity.layoutStorageKey);
+      const receipt = result.found ? null : {
         applied: false,
         state: result.state,
         code: result.code,
         profileId: result.profileId,
         editorProcessRequired: false,
       };
+      if (receipt) this.startupLayoutReceipts.set(identity.layoutStorageKey, receipt);
+      else this.startupLayoutReceipts.delete(identity.layoutStorageKey);
       console.info(`[ui-editor] startup layout loaded: ${result.code}, found=${result.found === true}`);
-      return { ...result, manifestPath };
+      return { ...result, manifestPath, layoutStorageKey: identity.layoutStorageKey };
     } catch (error) {
-      this.pendingStartupLayout = null;
-      this.startupLayoutReceipt = { applied: false, state: "baseline", code: error?.code || "startup_layout_failed", editorProcessRequired: false };
-      console.info(`[ui-editor] startup layout rejected: ${this.startupLayoutReceipt.code}`);
+      const receipt = { applied: false, state: "baseline", code: error?.code || "startup_layout_failed", editorProcessRequired: false };
+      console.info(`[ui-editor] startup layout rejected: ${receipt.code}`);
       return { ok: false, found: false, applied: false, state: "baseline", code: error?.code || "startup_layout_failed", message: error?.message || "Startlayout konnte nicht validiert werden.", scopes: [], editorProcessRequired: false };
     }
   }
 
   completeStartupLayout(result = {}) {
-    const pending = this.pendingStartupLayout;
-    this.pendingStartupLayout = null;
+    const layoutStorageKey = String(result.layoutStorageKey || (this.pendingStartupLayouts.size === 1 ? this.pendingStartupLayouts.keys().next().value : ""));
+    const pending = this.pendingStartupLayouts.get(layoutStorageKey);
+    this.pendingStartupLayouts.delete(layoutStorageKey);
     if (!pending || result.ok !== true || result.profileSha256 !== pending.profileSha256) {
-      this.startupLayoutReceipt = { applied: false, state: "baseline", code: String(result.code || "startup_layout_apply_failed"), editorProcessRequired: false };
-      console.info(`[ui-editor] startup layout: ${this.startupLayoutReceipt.code}, applied=false, reason=${String(result.message || "unavailable").replace(/[\r\n]+/g, " ")}`);
-      return { ok: false, code: this.startupLayoutReceipt.code };
+      const receipt = { applied: false, state: "baseline", code: String(result.code || "startup_layout_apply_failed"), editorProcessRequired: false };
+      if (layoutStorageKey) this.startupLayoutReceipts.set(layoutStorageKey, receipt);
+      console.info(`[ui-editor] startup layout: ${receipt.code}, applied=false, reason=${String(result.message || "unavailable").replace(/[\r\n]+/g, " ")}`);
+      return { ok: false, code: receipt.code };
     }
-    this.startupLayoutReceipt = {
+    const receipt = {
       applied: true,
       state: "compatible",
       code: "startup_layout_applied",
@@ -222,8 +275,9 @@ class ElectronUiEditorSessionController {
       profileSha256: pending.profileSha256,
       editorProcessRequired: false,
     };
+    this.startupLayoutReceipts.set(layoutStorageKey, receipt);
     console.info("[ui-editor] startup layout: startup_layout_applied, applied=true");
-    return { ok: true, receipt: { ...this.startupLayoutReceipt } };
+    return { ok: true, receipt: { ...receipt } };
   }
 
   preparePdfContext(context = {}) {
@@ -241,7 +295,7 @@ class ElectronUiEditorSessionController {
     return this.startPromise;
   }
 
-  #registrationSnapshot(registration, { sessionId, profileRoot }) {
+  #registrationSnapshot(registration, { sessionId, profileRoot, identity = createBbmModuleLayoutStorageIdentity(registration) }) {
     ensureSmallPlainObject(registration, "Ziel-App-Registrierung");
     if (registration.applicationId !== APPLICATION_ID || registration.displayName !== DISPLAY_NAME) {
       throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_INCOMPATIBLE, "Ziel-App-Kennung der Registrierung ist ungültig.");
@@ -273,7 +327,8 @@ class ElectronUiEditorSessionController {
         registration.visibilityCapability !== true || contract.adapterVersion !== ELECTRON_TARGET_ADAPTER_VERSION) {
       throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_INCOMPATIBLE, "Ziel-App-Vertrag oder Adapter-Capabilities sind nicht kompatibel.");
     }
-    const snapshot = { contract: { ...contract, startupLayout: this.startupLayoutReceipt ? { ...this.startupLayoutReceipt } : null }, registryScopes };
+    const startupLayoutReceipt = this.startupLayoutReceipts.get(identity.layoutStorageKey) || null;
+    const snapshot = { contract: { ...contract, startupLayout: startupLayoutReceipt ? { ...startupLayoutReceipt } : null }, registryScopes };
     const validation = validateRegistrationSnapshot(snapshot);
     if (!validation.ok) {
       const first = validation.errors[0];
@@ -287,9 +342,11 @@ class ElectronUiEditorSessionController {
     if (!running) return this.#start(registration);
     let candidate;
     try {
+      const { profileRoot, identity } = resolveBbmModuleLayoutProfileRoot(this.profileRootResolver(this.app), registration);
       candidate = this.#registrationSnapshot(registration, {
         sessionId: this.currentRegistration.contract.sessionId,
-        profileRoot: this.currentRegistration.contract.profileRoot,
+        profileRoot,
+        identity,
       });
     } catch (error) {
       throw new ElectronEditorError(error?.code || ELECTRON_EDITOR_ERROR_CODES.REGISTRY_REFRESH_FAILED, error?.message || "Registry-Refresh fehlgeschlagen.");
@@ -298,19 +355,20 @@ class ElectronUiEditorSessionController {
     const previousPdf = this.currentRegistration.contract.pdfContract;
     const nextPdf = candidate.contract.pdfContract;
     const pdfChanged = JSON.stringify(previousPdf) !== JSON.stringify(nextPdf);
+    const profileRootChanged = this.currentRegistration.contract.profileRoot !== candidate.contract.profileRoot;
     const guard = await this.client.request("prepareRegistryRefresh", {
       reason,
       registryVersion: candidate.contract.registryVersion,
       registryFingerprint: candidate.contract.registryFingerprint,
       comparison,
     }, "prepareRegistryRefreshAccepted");
-    if ((comparison.status !== "current" || pdfChanged) && guard?.isDirty === true) {
+    if ((comparison.status !== "current" || pdfChanged || profileRootChanged) && guard?.isDirty === true) {
       throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_PROFILE_CONFLICT, "Ungespeicherte Editoränderungen verhindern den Registry-Refresh.");
     }
     if (comparison.migrationRequiredIds.length) {
       throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.REGISTRY_PROFILE_MIGRATION_REQUIRED, "Geänderte Parents oder Bedeutungen benötigen eine Profilmigration.");
     }
-    if (comparison.status === "current" && !pdfChanged) {
+    if (comparison.status === "current" && !pdfChanged && !profileRootChanged) {
       if (reason === "open" || reason === "focus") this.client.sendEvent("activateEditor");
       return { ok: true, started: false, focused: reason === "open" || reason === "focus", sessionId: this.sessionId, registryRefreshStatus: "current" };
     }
@@ -321,9 +379,11 @@ class ElectronUiEditorSessionController {
 
   async #start(registration) {
     const identifiers = this.sessionIdentifiersFactory();
-    const profileRoot = this.profileRootResolver(this.app);
+    const baseProfileRoot = this.profileRootResolver(this.app);
+    const { profileRoot, identity } = resolveBbmModuleLayoutProfileRoot(baseProfileRoot, registration);
     this.ensureDirectory(profileRoot);
-    const registrationSnapshot = this.#registrationSnapshot(registration, { sessionId: identifiers.sessionId, profileRoot });
+    migrateCompatibleLegacyLayoutProfile(baseProfileRoot, profileRoot, registration);
+    const registrationSnapshot = this.#registrationSnapshot(registration, { sessionId: identifiers.sessionId, profileRoot, identity });
     const contract = registrationSnapshot.contract;
     console.info(`[ui-editor] editor start receipt: ${contract.startupLayout?.code || "none"}, applied=${contract.startupLayout?.applied === true}`);
     const executablePath = this.executableResolver({ app: this.app, ...this.pathOptions });
@@ -568,7 +628,9 @@ module.exports = Object.freeze({
   APPLICATION_ID,
   ACTIVE_SCOPES,
   ElectronUiEditorSessionController,
+  createBbmModuleLayoutStorageIdentity,
   publicError,
+  resolveBbmModuleLayoutProfileRoot,
   resolveEditorRuntimeRoot,
   resolveTrustedEditorExecutable,
   trustedEditorCandidates,

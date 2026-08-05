@@ -33,14 +33,15 @@ async function runM830ComponentContractTests(run) {
   const registry = await importEsmFromFile(path.join(ROOT, "src/renderer/ui-editor/m80Registry.js"));
   const refs = await importEsmFromFile(path.join(ROOT, "src/renderer/ui-editor/m80Refs.js"));
   const mainBody = await importEsmFromFile(path.join(ROOT, "src/renderer/modules/restarbeiten/RestarbeitenMainBody.js"));
+  const quicklaneModule = await importEsmFromFile(path.join(ROOT, "src/renderer/modules/restarbeiten/RestarbeitenQuicklane.js"));
   const contracts = registry.listM83ComponentContracts();
   const scopes = registry.listM80RegistryScopes().filter((scope) => scope.status === "complete");
   const registryIds = scopes.flatMap((scope) => scope.elements.map((entry) => entry.id));
   const contractIds = contracts.flatMap((component) => component.slots.map((slot) => slot.element.id));
   const listContract = contracts.find((component) => component.componentId === "bbm.restarbeiten.list");
 
-  await run("M83.0 BBM 01: alle offiziellen Scopes stammen aus acht komponentennahen Vertraegen", () => {
-    assert.equal(contracts.length, 8); assert.deepEqual([...contractIds].sort(), [...registryIds].sort()); assert.equal(new Set(contractIds).size, contractIds.length);
+  await run("M83.0 BBM 01: alle offiziellen Scopes stammen aus elf komponentennahen Vertraegen", () => {
+    assert.equal(contracts.length, 11); assert.deepEqual([...contractIds].sort(), [...registryIds].sort()); assert.equal(new Set(contractIds).size, contractIds.length);
     for (const component of contracts) assert.deepEqual([...component.requiredSlots].sort(), component.slots.filter((slot) => slot.required).map((slot) => slot.slotId).sort(), component.componentId);
   });
   await run("M83.0 BBM 02: Meta-Startspalte deklariert Spalte, Kopf, Nr., Datum, Klasse und reale Zusatzinhalte", () => {
@@ -55,7 +56,7 @@ async function runM830ComponentContractTests(run) {
     assert.doesNotMatch(source, /data-bbm-restarbeiten-record-id|app\.db|item\.id|databaseId|recordId/); assert.ok(contractIds.every((id) => !/(?:^|\.)\d{4,}(?:\.|$)|[0-9a-f]{8}-[0-9a-f-]{27,}/i.test(id)));
   });
   await run("M83.0 BBM 05: Restarbeiten-Liste, Editbox und Protokoll sind vollstaendig gebuendelt", () => {
-    assert.deepEqual(Object.fromEntries(contracts.map((component) => [component.componentId, component.slots.length])), { "bbm.restarbeiten.filterbar": 31, "bbm.restarbeiten.list": 32, "bbm.restarbeiten.editbox": 53, "bbm.protokoll.screen": 9, "bbm.protokoll.quicklane": 19, "bbm.protokoll.list.shell": 6, "bbm.protokoll.list.columns": 26, "bbm.protokoll.editbox": 36 });
+    assert.deepEqual(Object.fromEntries(contracts.map((component) => [component.componentId, component.slots.length])), { "bbm.restarbeiten.filterbar": 31, "bbm.restarbeiten.quicklane": 12, "bbm.restarbeiten.list": 32, "bbm.restarbeiten.editbox": 53, "bbm.restarbeiten.mainHeaderLauncher": 1, "bbm.protokoll.screen": 9, "bbm.protokoll.quicklane": 19, "bbm.protokoll.mainHeaderLauncher": 1, "bbm.protokoll.list.shell": 6, "bbm.protokoll.list.columns": 26, "bbm.protokoll.editbox": 36 });
   });
 
   const previous = { document: global.document, window: global.window, Element: global.Element, CustomEvent: global.CustomEvent };
@@ -71,6 +72,37 @@ async function runM830ComponentContractTests(run) {
     refs.resetM80PilotWorkingStatesForDiagnostic(); refs.beginM80PilotRender();
     body.appendChild(mainBody.buildRestarbeitenMainBody({ items, showAmpel: true, showLongtext: true }));
     await run("M83.0 BBM 06: reale gemountete Listenkomponente erfuellt alle Einzel- und Multi-Refs", () => assert.equal(refs.validateM83ComponentReferences(["bbm.restarbeiten.list"]).ok, true));
+    await run("M86.15 BBM: produktive Restarbeiten-Quicklane bindet jeden Vertragsslot an den sichtbaren Direkt-Ref", () => {
+      refs.resetM80PilotWorkingStatesForDiagnostic(); refs.beginM80PilotRender();
+      const quicklane = quicklaneModule.buildRestarbeitenQuicklane();
+      body.appendChild(quicklane);
+      refs.completeM80PilotRender();
+      const validation = refs.validateM83ComponentReferences(["bbm.restarbeiten.quicklane"]);
+      assert.equal(validation.ok, true, JSON.stringify(validation.errors));
+      for (const slot of contracts.find((component) => component.componentId === "bbm.restarbeiten.quicklane").slots) {
+        const ref = refs.getM80Ref(slot.element.id);
+        assert.equal(ref.contractTargets.length, 1, slot.element.id);
+        assert.notEqual(ref.contractTargets[0], quicklane.parentElement, slot.element.id);
+        assert.equal(ref.contractTargets[0].getAttribute("data-ui-inspector-id"), slot.element.id, slot.element.id);
+      }
+      const buttonId = "restarbeiten.quicklane.action.ampel";
+      let state = refs.snapshotM80State(buttonId);
+      state = refs.applyM80State(buttonId, { ...state, x: 7, y: -4 }, "move");
+      state = refs.applyM80State(buttonId, { ...state, width: 52 }, "resizeWidth");
+      state = refs.applyM80State(buttonId, { ...state, height: 46 }, "resizeHeight");
+      refs.applyM80State(buttonId, { ...state, fontSize: 15 }, "textResize");
+      refs.beginM80PilotRender();
+      const rerendered = quicklaneModule.buildRestarbeitenQuicklane();
+      body.appendChild(rerendered);
+      refs.completeM80PilotRender();
+      const rerenderedButton = refs.getM80Ref(buttonId).contractTargets[0];
+      assert.equal(rerenderedButton.style.translate, "7px -4px");
+      assert.equal(rerenderedButton.style.width, "52px");
+      assert.equal(rerenderedButton.style.height, "46px");
+      assert.equal(rerenderedButton.style.fontSize, "15px");
+    });
+    refs.resetM80PilotWorkingStatesForDiagnostic(); refs.beginM80PilotRender();
+    body.appendChild(mainBody.buildRestarbeitenMainBody({ items, showAmpel: true, showLongtext: true }));
     await run("M83.0 BBM 07: Nr., Datum und Klasse sind getrennte Multi-Refs und getrennt direkt auswaehlbar", () => {
       const ids = ["restarbeiten.record.number", "restarbeiten.record.createdAt", "restarbeiten.record.itemClass"];
       ids.forEach((id) => { const ref = refs.getM80Ref(id); assert.equal(ref.contractTargets.length, 2); assert.equal(refs.getM80IdFromTarget(ref.contractTargets[0]), id); }); assert.equal(new Set(ids.map((id) => refs.getM80Ref(id).element)).size, 3);

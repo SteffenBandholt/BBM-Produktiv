@@ -72,7 +72,7 @@ async function runM80ElectronUiEditorTests(run) {
   const registration = {
     applicationId: "bbm-produktiv", displayName: "BBM", framework: "electron",
     registryVersion: registryModule.BBM_M80_REGISTRY_VERSION, registryStatus: "incomplete",
-    activeScopes: [...registryModule.BBM_M80_ACTIVE_SCOPES],
+    activeScopes: [...registryModule.BBM_M80_ACTIVE_SCOPE_GROUPS[0]],
     supportedOperations: ["move", "resize", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility"],
     uiCapability: "layout", pdfCapability: "unavailable", labelFieldSeparation: true, visibilityCapability: true,
     registryScopes: registrationScopes,
@@ -273,9 +273,9 @@ async function runM80ElectronUiEditorTests(run) {
       submit(fieldId, "setVisibility", { visible: true });
       assert.equal(submit("restarbeiten.list.table.number", "resizeWidth", { width: 125 }).newState.width, 125);
       assert.equal(submit("restarbeiten.header.root", "resizeHeight", { height: 108 }).newState.height, 108);
-      assert.equal(submit("restarbeiten.edit.root", "resizeWidth", { width: 760 }).errorCode, "electron_operation_not_allowed");
+      assert.equal(submit("restarbeiten.edit.root", "resizeWidth", { width: 760 }).newState.width, 760);
       assert.equal(submit("restarbeiten.edit.root", "resizeHeight", { height: 300 }).newState.height, 300);
-      assert.equal(submit("restarbeiten.header.root", "move", { x: 10 }).errorCode, "electron_operation_not_allowed");
+      assert.equal(submit("restarbeiten.header.root", "move", { x: 10 }).newState.x, 10);
 
       host.handleM80EditorEvent({ action: "highlightElement", elementId: labelId });
       assert.equal(dom.document.querySelector("[data-bbm-ui-editor-overlay]").style.display, "block");

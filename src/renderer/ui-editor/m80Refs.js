@@ -154,9 +154,15 @@ function applyGeneric(element, state, entry, requestedOperation = null) {
       ? 0
       : Math.max(0, currentBounds.width - currentContentWidth);
     const contentWidth = style.boxSizing === "border-box" ? desiredWidth : Math.max(1, desiredWidth - horizontalChrome);
+    element.style.minWidth = px(positive(entry.baseline?.minWidth, 1));
+    element.style.maxWidth = px(positive(entry.baseline?.maxWidth, Number.MAX_SAFE_INTEGER));
     element.style.width = px(contentWidth);
   }
-  if ((operations.has("resize") || operations.has("resizeHeight")) && applies("resize", "resizeHeight")) element.style.height = px(bounded(entry, "height", state.height, 1));
+  if ((operations.has("resize") || operations.has("resizeHeight")) && applies("resize", "resizeHeight")) {
+    element.style.minHeight = px(positive(entry.baseline?.minHeight, 1));
+    element.style.maxHeight = px(positive(entry.baseline?.maxHeight, Number.MAX_SAFE_INTEGER));
+    element.style.height = px(bounded(entry, "height", state.height, 1));
+  }
   if (operations.has("textMove") && applies("textMove") && state.textOffsetX !== null && state.textOffsetX !== undefined) {
     element.dataset.uiEditorTextX = String(state.textOffsetX);
     element.style.paddingLeft = px(Math.max(0, finite(state.textOffsetX)));
@@ -262,8 +268,8 @@ export function registerM80MultiRef(id, elements, fallbackElement, options = {})
     elementId: id,
     x: finite(entry.baseline?.x),
     y: finite(entry.baseline?.y),
-    width: positive(entry.baseline?.width, 1),
-    height: positive(entry.baseline?.height, 1),
+    width: positive(entry.baseline?.width, positive(entry.baseline?.minWidth, 1)),
+    height: positive(entry.baseline?.height, positive(entry.baseline?.minHeight, 1)),
     textOffsetX: finite(entry.baseline?.textOffsetX),
     textOffsetY: finite(entry.baseline?.textOffsetY),
     fontSize: positive(entry.baseline?.fontSize, 12),
@@ -342,43 +348,52 @@ export function registerM80TableColumnRef(id, headerCell, dataCells, tableElemen
     read: () => {
       const style = styleOf(headerCell);
       const rect = rectOf(headerCell);
+      const generic = readGeneric(headerCell, id);
       const table = storedColumnState(tableElement, id, baselineTable);
       const configured = parseFloat(getCustomProperty(tableElement.style, cssVariable));
       const width = positive(configured, positive(rect.width, initialWidth));
       const metrics = runtimeTableMetrics(entry.tableBinding.tableId, tableElement, layoutBoundsElement);
       return {
-        elementId: id, x: 0, y: 0, width, height: positive(rect.height, 1),
+        ...generic, elementId: id, width, height: positive(rect.height, 1),
         textOffsetX: finite(headerCell.dataset.uiEditorTextX, finite(parseFloat(style.paddingLeft))),
         textOffsetY: finite(headerCell.dataset.uiEditorTextY, finite(parseFloat(style.paddingTop))),
         fontSize: positive(parseFloat(style.fontSize), 12), visible: !hasClass(headerCell, HIDDEN_CLASS),
         table: { ...table, ...metrics },
       };
     },
-    apply: (state) => {
+    apply: (state, requestedOperation = null) => {
+      const applies = (...operations) => requestedOperation === null || operations.includes(requestedOperation);
+      const genericOperations = requestedOperation === null
+        ? ["move", "resizeHeight", "textResize"]
+        : [requestedOperation];
+      genericOperations
+        .filter((operation) => ["move", "resizeHeight", "textResize"].includes(operation))
+        .forEach((operation) => targets.forEach((target) => applyGeneric(target, state, entry, operation)));
       const table = { ...baselineTable, ...(state.table || {}) };
-      const width = bounded(entry, "width", state.width, initialWidth);
-      const widthValue = table.widthMode === "proportional"
-        ? `minmax(${px(layout.minimumWidth)}, 1fr)`
-        : table.widthMode === "auto" ? `minmax(${px(layout.minimumWidth)}, max-content)` : px(width);
-      setCustomProperty(tableElement.style, cssVariable, widthValue);
-      writeColumnState(tableElement, id, table);
-      headerCell.dataset.uiEditorTextX = String(finite(state.textOffsetX));
-      headerCell.dataset.uiEditorTextY = String(finite(state.textOffsetY));
-      headerCell.style.paddingLeft = px(Math.max(0, finite(state.textOffsetX)));
-      headerCell.style.paddingTop = px(Math.max(0, finite(state.textOffsetY)));
-      headerCell.style.fontSize = px(positive(state.fontSize, 1));
-      applyColumnTextMode(targets, table);
-      toggleClass(tableElement, `${HIDDEN_CLASS}-${id.split(".").pop()}`, state.visible === false);
-      targets.forEach((target) => toggleClass(target, HIDDEN_CLASS, state.visible === false));
+      if (applies("resizeWidth", "setColumnWidthMode", "resetTableColumn")) {
+        const width = bounded(entry, "width", state.width, initialWidth);
+        const widthValue = table.widthMode === "proportional"
+          ? `minmax(${px(layout.minimumWidth)}, 1fr)`
+          : table.widthMode === "auto" ? `minmax(${px(layout.minimumWidth)}, max-content)` : px(width);
+        setCustomProperty(tableElement.style, cssVariable, widthValue);
+      }
+      if (applies("resizeWidth", "setColumnWidthMode", "setColumnWrapMode", "setColumnOverflowMode", "resetTableColumn")) writeColumnState(tableElement, id, table);
+      if (applies("textMove")) {
+        headerCell.dataset.uiEditorTextX = String(finite(state.textOffsetX));
+        headerCell.dataset.uiEditorTextY = String(finite(state.textOffsetY));
+        headerCell.style.paddingLeft = px(Math.max(0, finite(state.textOffsetX)));
+        headerCell.style.paddingTop = px(Math.max(0, finite(state.textOffsetY)));
+      }
+      if (applies("textResize")) headerCell.style.fontSize = px(positive(state.fontSize, 1));
+      if (applies("setColumnWrapMode", "setColumnOverflowMode", "resetTableColumn")) applyColumnTextMode(targets, table);
+      if (applies("setVisibility")) {
+        toggleClass(tableElement, `${HIDDEN_CLASS}-${id.split(".").pop()}`, state.visible === false);
+        targets.forEach((target) => toggleClass(target, HIDDEN_CLASS, state.visible === false));
+      }
     },
   });
   registerM80Ref(layout.headerElementId, headerCell, { targets: [headerCell], contractTargets: [headerCell], contractMountedInstanceCount: 1 });
-  registerM80Ref(layout.dataCellTemplateId, dataCells?.[0] || tableElement, {
-    targets: dataCells,
-    contractTargets: dataCells,
-    contractMountedInstanceCount: dataCells?.length || 0,
-    applyPrimaryAttributes: Boolean(dataCells?.length),
-  });
+  registerM80MultiRef(layout.dataCellTemplateId, dataCells, tableElement, { mountedInstanceCount: dataCells?.length || 0 });
   return headerCell;
 }
 
@@ -443,11 +458,15 @@ export function registerM80TableRef(id, tableElement, layoutBoundsElement = tabl
       const metrics = measureTableLayout(layout);
       return { ...generic, table: { tableId: id, horizontalOverflowMode: layout.horizontalOverflowMode, rowHeightMode: layout.rowHeightMode, viewportWidth: metrics.viewportWidth, tableWidth: metrics.tableWidth, overflow: metrics.overflow, overflowColumnIds: [...metrics.overflowColumnIds] } };
     },
-    apply: (state) => {
-      applyGeneric(tableElement, state, entry);
-      const table = state.table || {};
-      const rowHeight = table.rowHeightMode || entry.tableLayout.rowHeightMode;
-      tableElement.dataset.uiEditorRowHeightMode = rowHeight;
+    apply: (state, requestedOperation = null) => {
+      if (requestedOperation === null || ["move", "resizeWidth", "resizeHeight", "textResize", "setVisibility"].includes(requestedOperation)) {
+        applyGeneric(tableElement, state, entry, requestedOperation);
+      }
+      if (requestedOperation === null || ["setRowHeightMode", "resetTable"].includes(requestedOperation)) {
+        const table = state.table || {};
+        const rowHeight = table.rowHeightMode || entry.tableLayout.rowHeightMode;
+        tableElement.dataset.uiEditorRowHeightMode = rowHeight;
+      }
     },
   });
 }
@@ -463,7 +482,7 @@ export function fitM80Table(id, selectedColumnId = "") {
   const affectedStates = [];
   for (const column of result.model.columns) {
     const current = snapshotM80State(column.columnId);
-    affectedStates.push(applyM80State(column.columnId, { ...current, width: column.currentWidth, table: { ...current.table, widthMode: column.widthMode } }));
+    affectedStates.push(applyM80State(column.columnId, { ...current, width: column.currentWidth, table: { ...current.table, widthMode: column.widthMode } }, "resizeWidth"));
   }
   return { result, affectedStates };
 }
@@ -473,10 +492,10 @@ export function resetM80Table(id) {
   const affectedStates = [];
   for (const column of entry?.tableLayout?.columns || []) {
     const current = snapshotM80State(column.columnId);
-    affectedStates.push(applyM80State(column.columnId, { ...current, width: column.currentWidth, visible: column.visibility, table: { tableId: id, columnId: column.columnId, widthMode: column.widthMode, wrapMode: column.wrapMode, overflowMode: column.overflowMode } }));
+    affectedStates.push(applyM80State(column.columnId, { ...current, width: column.currentWidth, visible: column.visibility, table: { tableId: id, columnId: column.columnId, widthMode: column.widthMode, wrapMode: column.wrapMode, overflowMode: column.overflowMode } }, "resetTableColumn"));
   }
   const current = snapshotM80State(id);
-  const newState = applyM80State(id, { ...current, table: { tableId: id, horizontalOverflowMode: entry.tableLayout.horizontalOverflowMode, rowHeightMode: entry.tableLayout.rowHeightMode } });
+  const newState = applyM80State(id, { ...current, table: { tableId: id, horizontalOverflowMode: entry.tableLayout.horizontalOverflowMode, rowHeightMode: entry.tableLayout.rowHeightMode } }, "resetTable");
   return { newState, affectedStates };
 }
 

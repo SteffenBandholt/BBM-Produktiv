@@ -1,4 +1,10 @@
 import { createM80RegistrationDescriptor } from "../ui-editor/m80HostAdapter.js";
+import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../ui-editor/m80Refs.js";
+import {
+  PROTOKOLL_MAIN_HEADER_LAUNCHER,
+  RESTARBEITEN_MAIN_HEADER_LAUNCHER,
+  getMainHeaderLauncherContract,
+} from "../ui/MainHeader.uiEditorContract.js";
 
 const REGISTRY_STATUS_SUCCESS_DURATION_MS = 2400;
 const REGISTRY_STATUS_ERROR_DURATION_MS = 6000;
@@ -32,6 +38,24 @@ function showRegistryRefreshStatus(message, state = "checking") {
 }
 
 export const DEVELOPMENT_UI_EDITOR_BUTTON_LABEL = "UI-Editor öffnen";
+
+const MAIN_HEADER_LAUNCHER_COMPONENT_IDS = Object.freeze([
+  RESTARBEITEN_MAIN_HEADER_LAUNCHER.componentId,
+  PROTOKOLL_MAIN_HEADER_LAUNCHER.componentId,
+]);
+
+export function clearDevelopmentUiEditorOpenButtonRefs() {
+  MAIN_HEADER_LAUNCHER_COMPONENT_IDS.forEach((componentId) => beginM83ComponentBinding(componentId));
+}
+
+export function bindDevelopmentUiEditorOpenButtonRef({ scopeId, button } = {}) {
+  const launcher = getMainHeaderLauncherContract(scopeId);
+  if (!launcher || !button || typeof button.setAttribute !== "function") return false;
+  beginM83ComponentBinding(launcher.componentId);
+  registerM80Ref(launcher.elementId, button);
+  completeM80PilotRender();
+  return true;
+}
 
 export async function isDevelopmentUiEditorBuild({ api = globalThis.window?.bbmDb } = {}) {
   if (typeof api?.appGetBuildChannel !== "function") return false;
@@ -113,6 +137,8 @@ export async function installDevelopmentUiEditorOpenButton({
     }
   });
   host.appendChild(button);
+  clearDevelopmentUiEditorOpenButtonRefs();
+  bindDevelopmentUiEditorOpenButtonRef({ scopeId, button });
   return button;
 }
 

@@ -44,7 +44,7 @@ async function runM82AppStarterPackageTests(run) {
   await run("M82 BBM: drei Restarbeiten-Scopes sind vollstaendig und andere Bereiche bleiben blockiert", () => {
     const byId = new Map(manifest.scopes.map((scope) => [scope.scopeId, scope]));
     assert.equal(byId.get("restarbeiten.header.root").status, "complete");
-    assert.equal(byId.get("restarbeiten.header.root").elementCount, 31);
+    assert.equal(byId.get("restarbeiten.header.root").elementCount, 44);
     assert.equal(byId.get("restarbeiten.list.root").status, "complete");
     assert.equal(byId.get("restarbeiten.list.root").elementCount, 32);
     assert.equal(byId.get("restarbeiten.edit.root").status, "complete");

@@ -24,13 +24,13 @@ async function runM821BbmFeintuningTests(run) {
   const editbox = read("src/renderer/modules/restarbeiten/RestarbeitenEditbox.js");
   const css = read("src/renderer/modules/restarbeiten/styles/restarbeiten.css");
 
-  await run("M82.1 BBM 01: Registryversion bleibt konsistent", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 17));
+  await run("M82.1 BBM 01: Registryversion bleibt konsistent", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 19));
   await run("M82.1 BBM 02: Manifestversion folgt der Registry", () => assert.equal(manifest.registryVersion, registry.BBM_M80_REGISTRY_VERSION));
   await run("M82.1 BBM 03: Manifestfingerprint ist aktuell", () => assert.equal(manifest.registryFingerprint, createRegistryFingerprint(scopes)));
   await run("M82.1/M82.6 BBM 04: beide Referenzmodule besitzen je drei aktive Scopes", () => assert.deepEqual(registry.BBM_M80_ACTIVE_SCOPES, ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root", "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root"]));
-  await run("M82.1 BBM 05: Header behält 31 Elemente", () => assert.equal(byId.has("restarbeiten.header.root") && scopes.find((scope) => scope.scopeId === "restarbeiten.header.root").elements.length, 31));
+  await run("M82.1 BBM 05: Header, Quicklane und DEV-Launcher besitzen 44 Elemente", () => assert.equal(byId.has("restarbeiten.header.root") && scopes.find((scope) => scope.scopeId === "restarbeiten.header.root").elements.length, 44));
   await run("M82.1 BBM 06: Editbox besitzt 53 explizite Elemente", () => assert.equal(scopes.find((scope) => scope.scopeId === "restarbeiten.edit.root").elements.length, 53));
-  await run("M82.1 BBM 07: Editbox-Root ist nur höhen- und sichtbarkeitsfähig", () => assert.deepEqual(byId.get("restarbeiten.edit.root").allowedOps, ["resizeHeight", "setVisibility"]));
+  await run("M82.1 BBM 07: Editbox-Root folgt dem universellen Containervertrag", () => assert.deepEqual(byId.get("restarbeiten.edit.root").allowedOps, ["move", "resizeWidth", "resizeHeight", "setVisibility"]));
   await run("M84.0 BBM 08: Editbox-Baseline beträgt kompakte 248 px", () => assert.equal(byId.get("restarbeiten.edit.root").baseline.height, 248));
   await run("M82.1 BBM 09: sichere Editbox- und reale Kleinlabel-Grenzen sind deklariert", () => {
     assert.equal(byId.get("restarbeiten.edit.root").baseline.minHeight, 190);
@@ -86,6 +86,7 @@ async function runM821BbmFeintuningTests(run) {
   await run("M82.1 BBM 31: kompatibles Profil wird im echten BBM-Startdienst ohne Editorprozess geladen", async () => {
     const profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-m82-1-startup-"));
     try {
+      const activeScopes = [...registry.BBM_M80_ACTIVE_SCOPE_GROUPS[0]];
       const registryScopes = scopes.map((scope) => scope.status === "complete"
         ? { ...scope, elements: scope.elements.map((entry) => ({
             ...entry,
@@ -96,7 +97,7 @@ async function runM821BbmFeintuningTests(run) {
       const registration = {
         applicationId: "bbm-produktiv", displayName: "BBM", framework: "electron",
         registryVersion: registry.BBM_M80_REGISTRY_VERSION, registryStatus: "incomplete",
-        activeScopes: [...registry.BBM_M80_ACTIVE_SCOPES],
+        activeScopes,
         supportedOperations: ["move", "resize", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility", "spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset", "fitTableToViewport", "resizeColumnsProportionally", "setHorizontalOverflowMode", "setColumnWidthMode", "setColumnWrapMode", "setColumnOverflowMode", "setRowHeightMode", "resetTableColumn", "resetTable"],
         uiCapability: "layout", pdfCapability: "unavailable", labelFieldSeparation: true, visibilityCapability: true,
         registryScopes,
@@ -105,8 +106,8 @@ async function runM821BbmFeintuningTests(run) {
         const saved = { elementId: entry.id, scopeId };
         const ops = new Set(entry.allowedOps);
         if (ops.has("move")) { saved.x = entry.baseline.x; saved.y = entry.baseline.y; }
-        if (ops.has("resize") || ops.has("resizeWidth")) saved.width = Number.isFinite(entry.baseline.width) ? entry.baseline.width : Math.max(entry.baseline.minWidth || 1, 640);
-        if (ops.has("resize") || ops.has("resizeHeight")) saved.height = Number.isFinite(entry.baseline.height) ? entry.baseline.height : Math.max(entry.baseline.minHeight || 1, 64);
+        if (ops.has("resize") || ops.has("resizeWidth")) saved.width = Number.isFinite(entry.baseline.width) ? entry.baseline.width : Math.min(entry.baseline.maxWidth || 2400, Math.max(entry.baseline.minWidth || 1, 640));
+        if (ops.has("resize") || ops.has("resizeHeight")) saved.height = Number.isFinite(entry.baseline.height) ? entry.baseline.height : Math.min(entry.baseline.maxHeight || 1600, Math.max(entry.baseline.minHeight || 1, 64));
         if (ops.has("textMove")) { saved.textOffsetX = entry.baseline.textOffsetX; saved.textOffsetY = entry.baseline.textOffsetY; }
         if (ops.has("textResize")) saved.fontSize = entry.baseline.fontSize;
         if (ops.has("setVisibility")) saved.visible = entry.baseline.visible;
@@ -117,13 +118,18 @@ async function runM821BbmFeintuningTests(run) {
       };
       const document = {
         schemaVersion: 2, applicationId: "bbm-produktiv", profileId: "standard", savedAt: "2026-07-27T20:00:00.000Z",
-        scopes: registry.BBM_M80_ACTIVE_SCOPES.map((scopeId) => {
+        scopes: activeScopes.map((scopeId) => {
           const scope = registryScopes.find((candidate) => candidate.scopeId === scopeId);
           return { scopeId, registryFingerprint: createUiScopeFingerprint(scope), layoutState: { elements: scope.elements.map((entry) => savedElement(scopeId, entry)) } };
         }),
       };
-      fs.writeFileSync(path.join(profileRoot, "standard.layout-profile.json"), JSON.stringify(document));
-      const { ElectronUiEditorSessionController } = require("../../src/main/ui-editor/electronUiEditorSession.js");
+      const {
+        ElectronUiEditorSessionController,
+        resolveBbmModuleLayoutProfileRoot,
+      } = require("../../src/main/ui-editor/electronUiEditorSession.js");
+      const moduleProfileRoot = resolveBbmModuleLayoutProfileRoot(profileRoot, registration).profileRoot;
+      fs.mkdirSync(moduleProfileRoot, { recursive: true });
+      fs.writeFileSync(path.join(moduleProfileRoot, "standard.layout-profile.json"), JSON.stringify(document));
       let spawned = 0;
       const controller = new ElectronUiEditorSessionController({
         app: { getAppPath: () => ROOT, getVersion: () => "1.5.0", getPath: () => profileRoot },

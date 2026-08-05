@@ -130,8 +130,8 @@ async function runM8610ProtokollOriginalThreeColumnContractTests(run) {
         const entry = entries.get(id);
         assert.ok(slot && entry, id);
         assert.equal(slot.referenceKind, HEADER_IDS.includes(id) ? "single" : "multi", id);
-        assert.equal(entry.editable, !DATA_CELL_IDS.includes(id), id);
-        assert.equal(entry.allowedOps.length > 0, !DATA_CELL_IDS.includes(id), id);
+        assert.equal(entry.editable, true, id);
+        assert.equal(entry.allowedOps.length > 0, true, id);
         assert.ok(entry.baseline?.minWidth > 0 && entry.baseline?.minHeight > 0, id);
       }
       assert.deepEqual(COLUMN_IDS.map((id) => entries.get(id).type), ["tableColumn", "tableColumn", "tableColumn"]);
@@ -139,7 +139,7 @@ async function runM8610ProtokollOriginalThreeColumnContractTests(run) {
       assert.deepEqual(COLUMN_IDS.map((id) => entries.get(id).tableBinding.widthSourceId), COLUMN_IDS);
       assert.deepEqual(COLUMN_IDS.map((id) => entries.get(id).tableColumnLayout.dataCellTemplateId), DATA_CELL_IDS);
       assert.deepEqual(DATA_CELL_IDS.map((id) => entries.get(id).type), ["tableDataCell", "tableDataCell", "tableDataCell"]);
-      assert.deepEqual(entries.get("protokoll.list.row").allowedOps, ["resizeHeight"]);
+      assert.deepEqual(entries.get("protokoll.list.row").allowedOps, ["move", "resizeWidth", "resizeHeight", "setVisibility"]);
     });
 
     await run("M86.10 03: alle Kinder besitzen den fachlich richtigen Spaltenparent und keine Fachoperation", () => {

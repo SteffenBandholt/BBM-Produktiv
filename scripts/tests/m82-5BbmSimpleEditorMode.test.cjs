@@ -29,9 +29,9 @@ async function runM825BbmSimpleEditorModeTests(run) {
   const headerIds = ["number", "subject", "meta"].map((name) => `restarbeiten.list.table.${name}.header`);
 
   await run("M82.5 BBM 01: drei sichtbare Tabellenüberschriften bleiben registriert", () => assert.equal(headerIds.filter((id) => byId.has(id)).length, 3));
-  await run("M82.5 BBM 02: jede Überschrift ist capability-gesteuert textgrößenfähig", () => headerIds.forEach((id) => assert.deepEqual(byId.get(id).allowedOps, ["textResize"])));
+  await run("M82.5 BBM 02: jede Überschrift folgt dem universellen Textvertrag", () => headerIds.forEach((id) => assert.deepEqual(byId.get(id).allowedOps, ["move", "resizeWidth", "resizeHeight", "setVisibility", "textResize"])));
   await run("M82.5 BBM 03: Überschriften bleiben Kinder ihrer bestätigten Hauptspalte", () => headerIds.forEach((id) => assert.equal(byId.get(id).parentId, id.slice(0, -".header".length))));
-  await run("M82.5 BBM 04: Spaltenbreite bleibt eine getrennte Capability", () => headerIds.forEach((id) => assert.equal(byId.get(id).allowedOps.includes("resizeWidth"), false)));
+  await run("M82.5 BBM 04: sichtbare Tabellenköpfe sind direkt in der Breite editierbar", () => headerIds.forEach((id) => assert.equal(byId.get(id).allowedOps.includes("resizeWidth"), true)));
   await run("M82.5 BBM 05: drei bestätigte Spaltennamen bleiben unverändert", () => assert.deepEqual(scope.elements.filter((entry) => entry.type === "tableColumn").map((entry) => entry.name), ["Nr. / Datum / Klasse / Fotos", "Gegenstand – Verortung / Kurztext / Langtext", "Fertig bis / Ampel / Status / Verantwortlich"]));
 
   const previous = { document: global.document, window: global.window, Element: global.Element };

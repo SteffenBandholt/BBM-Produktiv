@@ -55,13 +55,13 @@ async function runM8275LayoutPersistenceMetaElementsTests(run) {
   global.window = { getComputedStyle: computedStyle, dispatchEvent() {}, uiEditor: {} };
 
   try {
-    await run("M82.7.5 BBM 01: Registryversion kennzeichnet den erweiterten Vertrag", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 17));
+    await run("M82.7.5 BBM 01: Registryversion kennzeichnet den erweiterten Vertrag", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 19));
     await run("M82.7.5 BBM 02: Listenscope enthaelt den vollstaendigen Komponentenvertrag", () => assert.equal(scope.elements.length, 32));
     await run("M82.7.5 BBM 03: alle bestaetigten stabilen IDs sind exakt registriert", () => [...headerIds, ...rowIds].forEach((id) => assert.ok(byId.has(id), id)));
     await run("M82.7.5 BBM 04: Header-Kinder besitzen den existierenden Meta-Header als Parent", () => headerIds.forEach((id) => assert.equal(byId.get(id).parentId, "restarbeiten.list.table.meta.header")));
     await run("M82.7.5 BBM 05: Zeilenkinder besitzen den existierenden Meta-Datenbereich als Parent", () => rowIds.forEach((id) => assert.equal(byId.get(id).parentId, "restarbeiten.list.table.meta.cells")));
-    await run("M82.7.5 BBM 06: Headertexte erlauben nur Move, Textgroesse und Sichtbarkeit", () => headerIds.forEach((id) => assert.deepEqual(byId.get(id).allowedOps, ["move", "textResize", "setVisibility"])));
-    await run("M82.7.5 BBM 07: Zeilentexte verwenden denselben generischen Textvertrag", () => [rowIds[0], rowIds[2], rowIds[3]].forEach((id) => assert.deepEqual(byId.get(id).allowedOps, ["move", "textResize", "setVisibility"])));
+    await run("M82.7.5 BBM 06: Headertexte verwenden den universellen Textvertrag", () => headerIds.forEach((id) => assert.deepEqual(byId.get(id).allowedOps, ["move", "resizeWidth", "resizeHeight", "setVisibility", "textResize"])));
+    await run("M82.7.5 BBM 07: Zeilentexte verwenden denselben universellen Textvertrag", () => [rowIds[0], rowIds[2], rowIds[3]].forEach((id) => assert.deepEqual(byId.get(id).allowedOps, ["move", "resizeWidth", "resizeHeight", "setVisibility", "textResize"])));
     await run("M82.7.5 BBM 08: Listenampel bleibt generisch beweglich, skalierbar und sichtbar", () => assert.deepEqual(byId.get(rowIds[1]).allowedOps, ["move", "resizeWidth", "resizeHeight", "setVisibility"]));
     await run("M82.7.5 BBM 09: Baselines und Grenzen sind explizit", () => { assert.deepEqual([byId.get(headerIds[0]).baseline.fontSize, byId.get(headerIds[0]).baseline.minFontSize, byId.get(headerIds[0]).baseline.maxFontSize], [8.667, 6, 24]); assert.deepEqual([byId.get(rowIds[1]).baseline.width, byId.get(rowIds[1]).baseline.height], [12, 12]); });
 
