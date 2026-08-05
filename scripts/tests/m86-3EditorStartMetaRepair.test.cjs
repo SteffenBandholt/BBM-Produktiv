@@ -10,9 +10,9 @@ const read = (file) => fs.readFileSync(path.join(ROOT, file), "utf8");
 
 function createFakeButtonDocument() {
   const makeNode = () => ({
-    children: [], style: {}, attributes: {}, textContent: "", type: "", className: "", disabled: false,
+    children: [], style: {}, attributes: {}, dataset: {}, textContent: "", type: "", className: "", disabled: false,
     appendChild(child) { this.children.push(child); return child; },
-    setAttribute(name, value) { this.attributes[name] = String(value); },
+    setAttribute(name, value) { this.attributes[name] = String(value); if (name.startsWith("data-")) this.dataset[name.slice(5).replace(/-([a-z])/g, (_match, letter) => letter.toUpperCase())] = String(value); },
     getAttribute(name) { return this.attributes[name] || null; },
     addEventListener(type, listener) { this.listeners ||= {}; this.listeners[type] = listener; },
     querySelector(selector) {
@@ -43,6 +43,14 @@ async function runM863EditorStartMetaRepairTests(run) {
     });
     assert.equal(button.textContent, "UI-Editor öffnen");
     assert.equal(button.getAttribute("data-bbm-development-ui-editor-open"), "true");
+    assert.equal(button.getAttribute("data-ui-inspector-id"), "protokoll.header.action.openUiEditor");
+    assert.match(button.getAttribute("data-ui-editor-ops"), /move,resizeWidth,resizeHeight,setVisibility,textResize/);
+    const refs = await importEsmFromFile(path.join(ROOT, "src/renderer/ui-editor/m80Refs.js"));
+    assert.equal(refs.getM80Ref("protokoll.header.action.openUiEditor").element, button);
+    refs.beginM80PilotRender();
+    assert.equal(refs.getM80Ref("protokoll.header.action.openUiEditor"), null);
+    assert.equal(navigation.bindDevelopmentUiEditorOpenButtonRef({ scopeId: "protokoll.screen.root", button }), true);
+    assert.equal(refs.getM80Ref("protokoll.header.action.openUiEditor").element, button);
     assert.equal(typeof button.listeners.click, "function");
     const hidden = await navigation.installDevelopmentUiEditorOpenButton({
       host: doc.createElement("div"), scopeId: "restarbeiten.header.root", doc,

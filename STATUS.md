@@ -3887,3 +3887,22 @@ Wichtig:
   bei 1920 × 1080, 1600 × 900 und 1366 × 768 ist grün.
 - `docs/licensing.md`, Benutzerlizenz, `app.db` und `app.db.bak` blieben
   unangetastet. Commit/PR: keiner.
+
+### M86.14 - Projektuebergreifendes Layout-Restore
+
+- Status: technisch umgesetzt und automatisiert geprueft; die geforderte vollstaendige lokale Bedienabnahme mit Projekten A/B/C bleibt offen, weil in diesem Lauf kein Computer-Use-Werkzeug fuer die Electron-App verfuegbar ist.
+- Ursache: Protokoll und Restarbeiten speicherten beide in derselben Profilwurzel `ui-editor/profiles` unter demselben Profil `standard`; jede Speicherung ersetzte daher den Profilinhalt des anderen Moduls. Zusaetzlich blockierte ein einzelnes rendererweites Restore-Promise nach dem ersten Modul den Restore des zweiten Moduls.
+- Reparatur: Save und Restore leiten ihre Profilwurzel zentral aus der aktiven Scope-Gruppe ab: `module-protokoll` oder `module-restarbeiten`. Projekt-, Besprechungs- und Datensatzkennungen sind ausgeschlossen. Registry-Version, Gesamtfingerprint und Scope-Fingerprints bleiben unveraendert Bestandteil der Vertrags- und Kompatibilitaetspruefung. Ein kompatibles Altprofil wird einmalig verlustfrei in die neue Modulwurzel kopiert.
+- Der Renderer verwaltet Restore-Promise und Restore-Receipt getrennt je Modul. Bestehende persistente Working States werden weiterhin auf neu gemountete Multi-Refs angewandt; normale Projektwechsel und Rerender starten den Restore desselben Moduls nicht erneut.
+- Neuer Guardrail `scripts/tests/m86-14GlobalLayoutRestore.test.cjs`: projektunabhaengiger Schluessel, identischer Save-/Restore-Pfad, getrennte Module, Disk-Restart, Fingerprint-Blockade und Multi-Ref-Rerender sind gruen. Bestehende Persistenz-, Registry-, Refresh- und Vertragspruefungen sind gruen. `npm test` und `npm run test:node` bleiben wegen bereits auf `main` widerspruechlicher Altpruefungen fuer die entfernte zentrale UI-Editor-Navigationsaktion sowie einen DEV-Lizenzmarker rot; die M86.14-Pruefungen selbst sind in beiden Laeufen gruen.
+- Git-Abschluss: gemeinsamer Commit und Push auf `codex/m86-14-globales-layout-restore`; kein PR und kein Merge.
+
+### M86.15-BBM - Gemergten Tabellenzellen-Core uebernommen
+
+- Status: Der lokale `file:../UI-Editor-kit`-Link loest direkt auf den gemergten Core-Commit `77df6de25282cb2466ce316a9bc4941451c4e660` auf. Es gibt keine zweite Core-Kopie und keine BBM-seitige Validatorumgehung.
+- Registry-Preflight, Vertragsvalidierung und Fingerprintpruefung akzeptieren `resizeWidth` fuer `tableHeaderCell` und `tableDataCell`; beide bleiben an dieselbe registrierte Spaltenbreitenquelle gekoppelt. Unbekannte Operationen, abweichende Breitenquellen und ungueltige Breiten bleiben gesperrt.
+- Der BBM-Komponentenvertrag gibt fuer jedes sichtbare registrierte Element `move`, `resizeWidth`, `resizeHeight` und `setVisibility` frei; sichtbare Texte erhalten zusaetzlich `textResize`. Produktnahe Ref-Tests pruefen Ampeln, Buttons, Kurz-/Langtexte, Tabellenzellen und Multi-Ref-Rerender fuer Protokoll und Restarbeiten.
+- Die M86.14-Modulprofile `module-protokoll` und `module-restarbeiten`, der einmalige Restore je Modul sowie Registry-/Scope-Fingerprints bleiben erhalten. Der produktnahe Startprofiltest schreibt und liest ueber dieselbe zentrale Modulwurzel.
+- Core-Gesamtsuite, M86.14/M86.15, Preflight, Komponentenvertraege, Persistenz, UI-Editor-Selbsttest, gezieltes ESLint und `git diff --check` sind gruen. `npm test` und `npm run test:node` bleiben ausschliesslich wegen sieben auf `origin/main` identisch reproduzierten Altpruefungen rot.
+- Normaler `npm start`: Protokoll- und Restarbeiten-Editor wurden jeweils ueber den realen Header-Button sichtbar geoeffnet; beide nativen Fenster waren antwortend und es trat kein `electron_editor_start_failed` auf. Die weitergehende isolierte A/B/C-Langabnahme bleibt ein getrennter Nachweis.
+- Git-Abschluss: gemeinsamer Commit und Push auf `codex/m86-14-globales-layout-restore`; kein PR und kein Merge.

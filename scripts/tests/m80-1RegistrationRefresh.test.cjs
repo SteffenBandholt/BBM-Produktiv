@@ -83,7 +83,7 @@ async function runM801RegistrationRefreshTests(run) {
       document.body.appendChild(rendered.root);
       const registration = rendered.registration;
       runtimeRegistration = structuredClone(registration);
-      assert.equal(registration.registryVersion, 17);
+      assert.equal(registration.registryVersion, 19);
       assert.equal(registration.registryStatus, "incomplete");
       assert.deepEqual(registration.activeScopes, ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
       const complete = registration.registryScopes.filter((scope) => scope.status === "complete");
@@ -139,7 +139,7 @@ async function runM801RegistrationRefreshTests(run) {
       rendered.setDiagnosticRegistryRevision(0);
 
       const header = complete.find((scope) => scope.scopeId === "restarbeiten.header.root");
-      assert.equal(header.elements.length, 31, "sichtbarer Filter-Header ist vollständig inventarisiert");
+      assert.equal(header.elements.length, 44, "sichtbarer Filter-Header samt Quicklane und UI-Editor-Launcher ist vollständig inventarisiert");
       assert.ok(header.elements.every((entry) => entry.referenceResolved));
       assert.equal(header.elements.some((entry) => entry.id === "restarbeiten.layout.split"), false);
       const split = rendered.request({ action: "submitChange", scopeId: "restarbeiten.layout.root", changeRequest: { changeId: "split", elementId: "restarbeiten.layout.split", operation: "resizeHeight", payload: { height: 300 } } }).changeResult;
@@ -151,7 +151,8 @@ async function runM801RegistrationRefreshTests(run) {
       assert.equal(resizeHeader.newState.height, 110);
       const editWidth = rendered.request({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "edit-width", elementId: "restarbeiten.edit.root", operation: "resizeWidth", payload: { width: 760 } } }).changeResult;
       const editHeight = rendered.request({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "edit-height", elementId: "restarbeiten.edit.root", operation: "resizeHeight", payload: { height: 300 } } }).changeResult;
-      assert.equal(editWidth.errorCode, "electron_operation_not_allowed", "Editboxbreite bleibt im flexiblen BBM-Layout verankert");
+      assert.equal(editWidth.success, true, "Editboxbreite folgt dem universellen Containervertrag");
+      assert.equal(editWidth.newState.width, 760);
       assert.equal(editHeight.newState.height, 300);
       const editMinimum = rendered.request({ action: "submitChange", scopeId: "restarbeiten.edit.root", changeRequest: { changeId: "edit-min", elementId: "restarbeiten.edit.root", operation: "resizeHeight", payload: { height: 1 } } }).changeResult;
       assert.equal(editMinimum.newState.height, 190, "Editbox-Mindesthöhe wird eingehalten");

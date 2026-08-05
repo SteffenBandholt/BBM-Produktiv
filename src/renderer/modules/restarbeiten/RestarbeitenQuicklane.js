@@ -1,3 +1,5 @@
+import { beginM83ComponentBinding, registerM80Ref } from "../../ui-editor/m80Refs.js";
+
 const QUICKLANE_ICON_CLASS = "bbm-project-context-quicklane-icon";
 const AMPEL_STATUS_ICON_URL = "./assets/icons/ampel-status.svg";
 
@@ -233,5 +235,27 @@ export function buildRestarbeitenQuicklane({
   );
 
   root.append(navigation, visibility, output);
+  beginM83ComponentBinding("bbm.restarbeiten.quicklane");
+  registerM80Ref("restarbeiten.quicklane", root);
+  const groups = [
+    ["restarbeiten.quicklane.group.navigation", navigation, [
+      "restarbeiten.quicklane.pin",
+      "restarbeiten.quicklane.action.project",
+      "restarbeiten.quicklane.action.firms",
+    ]],
+    ["restarbeiten.quicklane.group.visibility", visibility, [
+      "restarbeiten.quicklane.action.ampel",
+      "restarbeiten.quicklane.action.longtext",
+    ]],
+    ["restarbeiten.quicklane.group.output", output, [
+      "restarbeiten.quicklane.action.pdfPreview",
+      "restarbeiten.quicklane.output.print",
+      "restarbeiten.quicklane.output.email",
+    ]],
+  ];
+  for (const [groupId, group, buttonIds] of groups) {
+    registerM80Ref(groupId, group);
+    buttonIds.forEach((buttonId, index) => registerM80Ref(buttonId, group.children[index]));
+  }
   return root;
 }

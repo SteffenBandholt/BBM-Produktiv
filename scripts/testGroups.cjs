@@ -170,6 +170,8 @@ const TEST_GROUPS = Object.freeze([
       ["m86-11ProtokollRestarbeitenRowGeometry.test.cjs", "runM8611ProtokollRestarbeitenRowGeometryTests"],
       ["m86-11bProtokollProductiveTableStructure.test.cjs", "runM8611bProtokollProductiveTableStructureTests"],
       ["m86-12ProtokollSourceGridRuntime.test.cjs", "runM8612ProtokollSourceGridRuntimeTests"],
+      ["m86-14GlobalLayoutRestore.test.cjs", "runM8614GlobalLayoutRestoreTests"],
+      ["m86-15UniversalEditorContract.test.cjs", "runM8615UniversalEditorContractTests"],
       ["uiEditorAcceptanceIsolation.test.cjs", "runUiEditorAcceptanceIsolationTests"],
       ["testHarnessOrchestration.test.cjs", "runTestHarnessOrchestrationTests"],
     ]),

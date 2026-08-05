@@ -886,3 +886,33 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
   - `scripts/tests/m63cLayoutControlConsole.test.cjs` läuft wieder grün und sichert `allowedOps`, Schrittweite 5 und Richtungspfeile ab.
 - Offen:
   - Vollständiger `npm test` bleibt in der Cloud wegen fehlender Electron-Systembibliothek blockiert.
+
+## M86.14 - Projektuebergreifendes Speichern und Wiederherstellen
+
+- Status: Code und automatisierte Guardrails umgesetzt; praktische Electron-Bedienabnahme A/B/C fuer Protokoll und Restarbeiten noch offen.
+- Nachgewiesene Ursache:
+  - gemeinsame Profilwurzel und gemeinsames Profil `standard` fuer beide Module,
+  - Profil-Save enthaelt nur die aktiven Scopes und verdraengte damit das zuvor gespeicherte andere Modul,
+  - ein einzelnes rendererweites Start-Restore-Promise verhinderte den zweiten Modul-Restore.
+- Umgesetzt:
+  - zentrale projektunabhaengige Modulwurzel `module-protokoll` bzw. `module-restarbeiten` fuer Save und Restore,
+  - getrennte Restore-Promises und Receipts je Modul,
+  - kompatible verlustfreie Uebernahme eines vorhandenen Altprofils,
+  - unveraenderte Registry-/Fingerprint-Blockade,
+  - unveraenderte persistente Multi-Ref-Wiederanwendung bei Rerender.
+- Guardrail: `scripts/tests/m86-14GlobalLayoutRestore.test.cjs`.
+- Nicht geaendert: UI-Elemente, Registry-Topologie, Fachlogik, PDF/Druck, Projektdaten, Lizenzierung und Benutzerdateien.
+- Offen: kompletter sichtbarer Nutzerablauf mit isoliertem Profil und den Projekten A/B/C in beiden Modulen.
+
+## M86.15-BBM - Gemergten Tabellenzellen-Core und Universalvertrag pruefen
+
+- Eingebundener Core: `UI-Editor-kit` auf Commit `77df6de25282cb2466ce316a9bc4941451c4e660`, direkt ueber den vorhandenen lokalen npm-Dateilink.
+- Nachgewiesen:
+  - `tableHeaderCell` und `tableDataCell` akzeptieren `resizeWidth` nur ueber ihre gemeinsame registrierte Spaltenbreitenquelle,
+  - Tabellenreihenfolge, Parents, vorhandene Zellen und Fingerprints bleiben geschuetzt,
+  - alle sichtbaren BBM-Vertragselemente besitzen Position, Breite, Hoehe und Sichtbarkeit; sichtbare Texte zusaetzlich Textgroesse,
+  - neue Multi-Refs uebernehmen den gespeicherten Working State,
+  - Protokoll- und Restarbeiten-Profile bleiben projektuebergreifend und voneinander getrennt.
+- Guardrails: Core-Test `m86-15-table-cell-width-contract`, BBM-Tests `m86-14GlobalLayoutRestore` und `m86-15UniversalEditorContract`, Registry-Preflight, Komponentenvertraege und UI-Editor-Selbsttest.
+- Korrigierter produktnaher Testweg: Der Restarbeiten-Harness montiert den sichtbaren DEV-Launcher wie die reale App; der Startprofiltest nutzt fuer Schreiben und Lesen dieselbe zentrale Modulwurzel und nur Werte innerhalb der Registry-Grenzen.
+- Normaler Startnachweis: Protokoll- und Restarbeiten-Editor wurden ueber die realen Header-Buttons sichtbar und ohne `electron_editor_start_failed` geoeffnet. Die isolierte A/B/C-Langabnahme bleibt getrennt.

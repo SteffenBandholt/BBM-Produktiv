@@ -56,8 +56,8 @@ let selectionMode = false;
 let selectedId = null;
 let hoverCandidates = [];
 let hoverIndex = 0;
-let startupRestorePromise = null;
-let startupRestoreStatus = { state: "pending", applied: false, editorProcessRequired: false };
+const startupRestorePromises = new Map();
+const startupRestoreStatuses = new Map();
 let editorSessionBoundary = null;
 let editorSessionOperations = new Map();
 let diagnosticRegistryRevision = 0;
@@ -442,7 +442,7 @@ function submitChange(changeRequest, scopeId) {
       readback = reset.newState;
     } else if (request.operation === "resetTableColumn") {
       const baseline = entry.tableColumnLayout;
-      readback = applyM80State(entry.id, { ...previous, width: baseline.currentWidth, visible: baseline.visibility, table: { tableId: entry.tableBinding.tableId, columnId: entry.id, widthMode: baseline.widthMode, wrapMode: baseline.wrapMode, overflowMode: baseline.overflowMode } });
+      readback = applyM80State(entry.id, { ...previous, width: baseline.currentWidth, visible: baseline.visibility, table: { tableId: entry.tableBinding.tableId, columnId: entry.id, widthMode: baseline.widthMode, wrapMode: baseline.wrapMode, overflowMode: baseline.overflowMode } }, request.operation);
     } else {
       readback = applyM80State(entry.id, desired, request.operation);
     }
@@ -481,7 +481,7 @@ function submitChange(changeRequest, scopeId) {
       : null;
     if (risk?.hasRisks && !confirmation) {
       for (const [id, state] of [...tableRestore].reverse()) if (state) applyM80State(id, state);
-      const restored = applyM80State(entry.id, previous);
+      const restored = applyM80State(entry.id, previous, request.operation);
       pendingGeometryRisks.set(risk.operationId, { signature: requestSignature(request), risk });
       renderGeometryRiskPreview(risk);
       return failure(request, "geometry_risk_confirmation_required", risk.message, restored, true, risk);
@@ -495,7 +495,7 @@ function submitChange(changeRequest, scopeId) {
     try {
       if (groupRestore?.state) applyM80State(groupRestore.id, groupRestore.state);
       for (const [id, state] of [...tableRestore].reverse()) if (state) applyM80State(id, state);
-      const restored = applyM80State(entry.id, previous);
+      const restored = applyM80State(entry.id, previous, request.operation);
       return failure(request, error?.code || "electron_change_apply_failed", `Layoutänderung wurde sicher abgewiesen und zurückgerollt: ${error?.message || "Unbekannte Geometrieverletzung."}`, restored, true, null, error?.textResize || textResizeVerification);
     } catch (_rollbackError) {
       return failure(request, "electron_change_rollback_failed", "Layoutänderung und Rollback sind fehlgeschlagen.", previous, false);
@@ -912,24 +912,34 @@ export function createM80StartupRequests(scopeId, element, explicitOperations = 
   return requests.map((request) => ({ scopeId, request }));
 }
 
+export function createM80StartupRestoreKey(activeScopes) {
+  const scopeIds = Array.isArray(activeScopes) ? activeScopes.map((scopeId) => String(scopeId || "").trim()).filter(Boolean) : [];
+  const moduleIds = [...new Set(scopeIds.map((scopeId) => scopeId.split(".", 1)[0]))];
+  if (moduleIds.length !== 1 || !/^[a-z0-9-]+$/.test(moduleIds[0])) throw new TypeError("Aktive Scopes ergeben keinen eindeutigen Modulschlüssel.");
+  return `module:${moduleIds[0]}`;
+}
+
 export function restoreM80StartupLayout() {
-  if (startupRestorePromise) return startupRestorePromise;
+  const requiredScopes = mountedActiveScopeGroup();
+  if (!requiredScopes.length) return Promise.resolve({ state: "waitingForRegistry", applied: false, code: "registry_reference_missing", editorProcessRequired: false });
+  const restoreKey = createM80StartupRestoreKey(requiredScopes);
+  if (startupRestorePromises.has(restoreKey)) return startupRestorePromises.get(restoreKey);
+  const setStatus = (status) => {
+    startupRestoreStatuses.set(restoreKey, status);
+    return status;
+  };
   const restore = (async () => {
     const api = window.uiEditor;
     if (typeof api?.loadStartupLayout !== "function") {
-      startupRestoreStatus = { state: "baseline", applied: false, code: "startup_layout_bridge_missing", editorProcessRequired: false };
-      return startupRestoreStatus;
+      return setStatus({ state: "baseline", applied: false, code: "startup_layout_bridge_missing", editorProcessRequired: false });
     }
     const registration = createM80RegistrationDescriptor();
-    const requiredScopes = mountedActiveScopeGroup();
-    if (!requiredScopes.length || registration.activeScopes.length !== requiredScopes.length) {
-      startupRestoreStatus = { state: "waitingForRegistry", applied: false, code: "registry_reference_missing", editorProcessRequired: false };
-      return startupRestoreStatus;
+    if (registration.activeScopes.length !== requiredScopes.length) {
+      return setStatus({ state: "waitingForRegistry", applied: false, code: "registry_reference_missing", editorProcessRequired: false });
     }
     const loaded = await api.loadStartupLayout(registration);
     if (!loaded?.ok || !loaded?.found) {
-      startupRestoreStatus = { state: loaded?.state || "baseline", applied: false, code: loaded?.code || "startup_layout_failed", recoveryMarkerPath: loaded?.recoveryMarkerPath || null, editorProcessRequired: false };
-      return startupRestoreStatus;
+      return setStatus({ state: loaded?.state || "baseline", applied: false, code: loaded?.code || "startup_layout_failed", recoveryMarkerPath: loaded?.recoveryMarkerPath || null, editorProcessRequired: false });
     }
     const original = new Map(listM80Refs().map((ref) => [ref.id, snapshotM80State(ref.id)]));
     try {
@@ -942,35 +952,43 @@ export function restoreM80StartupLayout() {
         const result = submitChange(item.request, item.scopeId);
         if (!result.success) throw Object.assign(new Error(`${item.request.elementId}/${item.request.operation}: ${result.message}`), { code: result.errorCode || "startup_layout_apply_failed" });
       }
-      const completion = await api.completeStartupLayout({ ok: true, profileSha256: loaded.profileSha256 });
+      const completion = await api.completeStartupLayout({ ok: true, profileSha256: loaded.profileSha256, layoutStorageKey: loaded.layoutStorageKey });
       if (!completion?.ok) throw Object.assign(new Error("Startlayout konnte nicht bestätigt werden."), { code: completion?.code || "startup_layout_apply_failed" });
-      startupRestoreStatus = { state: "compatible", applied: true, code: "startup_layout_applied", profileId: loaded.profileId, savedAt: loaded.savedAt, profileSha256: loaded.profileSha256, editorProcessRequired: false };
-      return startupRestoreStatus;
+      return setStatus({ state: "compatible", applied: true, code: "startup_layout_applied", profileId: loaded.profileId, savedAt: loaded.savedAt, profileSha256: loaded.profileSha256, editorProcessRequired: false });
     } catch (error) {
       let rollbackSucceeded = true;
       for (const [id, state] of original) {
         try { applyM80State(id, state); } catch { rollbackSucceeded = false; }
       }
-      await api.completeStartupLayout({ ok: false, profileSha256: loaded.profileSha256, code: error?.code || "startup_layout_apply_failed", message: error?.message || "Startlayout konnte nicht angewandt werden." });
-      startupRestoreStatus = { state: "baseline", applied: false, code: error?.code || "startup_layout_apply_failed", rollbackSucceeded, editorProcessRequired: false };
-      return startupRestoreStatus;
+      await api.completeStartupLayout({ ok: false, profileSha256: loaded.profileSha256, layoutStorageKey: loaded.layoutStorageKey, code: error?.code || "startup_layout_apply_failed", message: error?.message || "Startlayout konnte nicht angewandt werden." });
+      return setStatus({ state: "baseline", applied: false, code: error?.code || "startup_layout_apply_failed", rollbackSucceeded, editorProcessRequired: false });
     }
   })();
-  startupRestorePromise = restore.finally(() => {
-    if (startupRestoreStatus.state === "waitingForRegistry") startupRestorePromise = null;
+  const trackedRestore = restore.finally(() => {
+    if (startupRestoreStatuses.get(restoreKey)?.state === "waitingForRegistry") startupRestorePromises.delete(restoreKey);
   });
-  return startupRestorePromise;
+  startupRestorePromises.set(restoreKey, trackedRestore);
+  return trackedRestore;
 }
 
 export async function refreshM80StartupLayoutAfterRegistryMount() {
-  if (startupRestorePromise) {
-    try { await startupRestorePromise; } catch (_error) { void _error; }
+  const requiredScopes = mountedActiveScopeGroup();
+  if (!requiredScopes.length) return restoreM80StartupLayout();
+  const restoreKey = createM80StartupRestoreKey(requiredScopes);
+  const currentRestore = startupRestorePromises.get(restoreKey);
+  if (currentRestore) {
+    try { await currentRestore; } catch (_error) { void _error; }
   }
-  startupRestorePromise = null;
-  startupRestoreStatus = { state: "pending", applied: false, editorProcessRequired: false };
+  startupRestorePromises.delete(restoreKey);
+  startupRestoreStatuses.set(restoreKey, { state: "pending", applied: false, editorProcessRequired: false });
   return restoreM80StartupLayout();
 }
 
 export function clearM80EditorInteraction() { stopSelection(); selectedId = null; pendingGeometryRisks.clear(); clearGeometryRiskPreview(); clearM80VisualState(); }
-export function getM80InteractionStatus() { return { selectionMode, selectedId, hoverElementIds: hoverCandidates.map((candidate) => candidate.entry.id), hoverIndex, startupRestoreStatus: { ...startupRestoreStatus }, editorSessionBoundaryElementCount: editorSessionBoundary?.size || 0, scopeStates: layoutPayload() }; }
+export function getM80InteractionStatus() {
+  const requiredScopes = mountedActiveScopeGroup();
+  const restoreKey = requiredScopes.length ? createM80StartupRestoreKey(requiredScopes) : "";
+  const startupRestoreStatus = startupRestoreStatuses.get(restoreKey) || { state: "pending", applied: false, editorProcessRequired: false };
+  return { selectionMode, selectedId, hoverElementIds: hoverCandidates.map((candidate) => candidate.entry.id), hoverIndex, startupRestoreStatus: { ...startupRestoreStatus }, editorSessionBoundaryElementCount: editorSessionBoundary?.size || 0, scopeStates: layoutPayload() };
+}
 export { beginM80PilotRender, completeM80PilotRender, registerM80MultiRef, registerM80Ref, resetM80PilotWorkingStatesForDiagnostic };

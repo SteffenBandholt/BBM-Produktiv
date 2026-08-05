@@ -147,3 +147,15 @@
 **Beschluss:** Der vorhandene `MainHeader` bleibt die alleinige gemeinsame Quelle fuer den sichtbaren Modulheader. Er ordnet BBM-Version und `Plan` in der ersten sowie Aktiv-Kontext und Entwicklungsmarker in der zweiten Headerzeile an. Der Entwicklungsmarker ist ein reguläres rechtes Grid-Element der zweiten Zeile, nicht absolut ausserhalb der Headerstruktur.
 
 **Begruendung:** Protokoll, Restarbeiten und weitere produktive CoreShell-Ansichten erhalten damit denselben kompakten Header ohne Modulkopie oder modulspezifische Sonderposition. Bestehende Headerrefs und der UI-Editorvertrag bleiben unveraendert. Die fuenf vorhandenen `__bbm`-Treffer in nicht geaenderten PDF-/Druckdateien bleiben dokumentierter Altbestand; der diff-bezogene KREBS-Check verhindert neue oder veraenderte Treffer und Event-Hacks.
+
+## Entscheidung 029
+
+**Beschluss:** Persistente BBM-UI-Editor-Profile werden projektuebergreifend nach der expliziten aktiven Modul-Scope-Gruppe getrennt. Die zentral abgeleitete Profilwurzel lautet `module-protokoll` beziehungsweise `module-restarbeiten`; Projekt-, Besprechungs-, Datensatz- und temporaere Kennungen duerfen nicht in den Schluessel eingehen. Registry-Version und Fingerprints bleiben Kompatibilitaetspruefungen und werden nicht abgeschaltet.
+
+**Begruendung:** Der UI-Editor speichert jeweils nur die aktiven Scopes eines Moduls. Eine gemeinsame `standard`-Profildatei liess deshalb das zuletzt gespeicherte Modul das andere verdraengen. Getrennte Modulwurzeln erhalten beide Profile, waehrend dieselbe Modulwurzel fuer alle bestehenden und neuen Projekte gilt. Ein Restore-Promise je Modul verhindert sowohl Doppelanwendung im selben Modul als auch das Auslassen des jeweils anderen Moduls.
+
+## Entscheidung 030
+
+**Beschluss:** Jedes sichtbare registrierte BBM-Element erhaelt zentral die Layoutoperationen `move`, `resizeWidth`, `resizeHeight` und `setVisibility`; bei sichtbar klassifiziertem Text kommt `textResize` hinzu. Tabellenkopf- und Tabellendatenzellen duerfen ihre Breite ausschliesslich ueber die im gemeinsamen Core registrierte logische Spaltenquelle aendern.
+
+**Begruendung:** Damit gilt derselbe Bedienvertrag fuer Ampeln, Symbole, Buttons, Felder, Labels, Headerteile, Tabellenzellen und Container, ohne BBM-spezifische Core-Ausnahme. Die bestehende Tabellenstruktur, Parentbindung, Multi-Ref-Semantik, Registry-Vollstaendigkeit und Fingerprintpruefung bleiben unveraendert geschuetzt.
