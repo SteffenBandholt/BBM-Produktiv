@@ -330,13 +330,13 @@
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 10px 22px rgba(31, 41, 55, 0.1);
   overflow: hidden;
-  transform: translateX(46px);
-  transition: transform 160ms ease, box-shadow 140ms ease, border-color 140ms ease;
+  clip-path: inset(0 0 0 46px);
+  transition: clip-path 160ms ease, box-shadow 140ms ease, border-color 140ms ease;
 }
 
 .bbm-restarbeiten-quicklane:hover,
 .bbm-restarbeiten-quicklane[data-open="true"] {
-  transform: translateX(0);
+  clip-path: inset(0);
   border-color: rgba(29, 78, 216, 0.42);
   box-shadow: 0 14px 28px rgba(31, 41, 55, 0.15);
 }
@@ -345,7 +345,8 @@
   content: "";
   position: absolute;
   inset-block-start: 12px;
-  inset-inline-start: 5px;
+  inset-inline-start: auto;
+  inset-inline-end: 5px;
   inline-size: 4px;
   block-size: 56px;
   border-radius: 999px;

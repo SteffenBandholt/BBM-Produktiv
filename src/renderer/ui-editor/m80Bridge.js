@@ -17,6 +17,7 @@ function handlePilotRenderComplete() { void ensureStartupLayout(); }
 export function installBbmM80EditorBridge() {
   if (installed) return;
   installed = true;
+  clearM80EditorInteraction();
   const api = window.uiEditor;
   if (!api || typeof api.onRequest !== "function" || typeof api.respond !== "function") return;
   disposers.push(api.onRequest(async (message) => {

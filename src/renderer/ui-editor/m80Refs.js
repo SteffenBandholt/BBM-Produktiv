@@ -22,6 +22,20 @@ const tableColumnRuntimeBindings = new Map();
 const tableRuntimeBindings = new Map();
 let workingStateOperationObserver = null;
 const HIDDEN_CLASS = "bbm-ui-editor-hidden";
+const TRANSIENT_MARKER_ATTRIBUTES = Object.freeze([
+  "data-ui-editor-selected",
+  "data-ui-editor-hover",
+  "data-ui-editor-hovered",
+  "data-ui-editor-component",
+]);
+const TRANSIENT_MARKER_OUTLINES = new Set([
+  "2px solid #2563eb",
+  "1px dashed #0ea5e9",
+]);
+const TRANSIENT_MARKER_SHADOWS = new Set([
+  "0 0 0 4px rgb(37 99 235 / 18%)",
+  "0 0 0 3px rgb(14 165 233 / 14%)",
+]);
 
 function finite(value, fallback = 0) { return Number.isFinite(Number(value)) ? Number(value) : fallback; }
 function positive(value, fallback) { const number = finite(value, fallback); return number > 0 ? number : fallback; }
@@ -38,6 +52,18 @@ function toggleClass(element, className, enabled) {
   element.className = [...names].join(" ");
 }
 function setCustomProperty(style, name, value) { if (typeof style?.setProperty === "function") style.setProperty(name, value); else if (style) style[name] = value; }
+function setLayoutProperty(style, name, value) {
+  if (!style) return;
+  if (typeof style.setProperty === "function") {
+    style.setProperty(name, value, "important");
+    if (typeof style.getPropertyPriority !== "function" && name.includes("-")) {
+      style[name.replace(/-([a-z])/g, (_match, letter) => letter.toUpperCase())] = value;
+    }
+  } else {
+    style[name] = value;
+    if (name.includes("-")) style[name.replace(/-([a-z])/g, (_match, letter) => letter.toUpperCase())] = value;
+  }
+}
 function getCustomProperty(style, name) { return typeof style?.getPropertyValue === "function" ? style.getPropertyValue(name) : style?.[name]; }
 function applyAttributes(target, id) {
   for (const [name, value] of Object.entries(m80EditorAttributes(id))) target.setAttribute(name, value);
@@ -114,15 +140,18 @@ function writeSpacing(element, spacing = {}) {
   return normalized;
 }
 
-function readGeneric(element, id) {
+function readGeneric(element, id, entry = getM80RegistryEntry(id)) {
   const rect = rectOf(element);
   const style = styleOf(element);
   return {
     elementId: id,
     x: finite(element.dataset.uiEditorX),
     y: finite(element.dataset.uiEditorY),
-    width: positive(rect.width, positive(parseFloat(style.width), 1)),
-    height: positive(rect.height, positive(parseFloat(style.height), 1)),
+    // DOM-Messwerte koennen bei bewusst kompakten, aber sichtbaren Zielen
+    // unter der vertraglichen Persistenzuntergrenze liegen. Das gespeicherte
+    // Layout muss trotzdem stets wieder durch denselben Vertrag lesbar sein.
+    width: bounded(entry, "width", positive(rect.width, positive(parseFloat(style.width), 1)), 1),
+    height: bounded(entry, "height", positive(rect.height, positive(parseFloat(style.height), 1)), 1),
     textOffsetX: finite(element.dataset.uiEditorTextX, finite(parseFloat(style.paddingLeft))),
     textOffsetY: finite(element.dataset.uiEditorTextY, finite(parseFloat(style.paddingTop))),
     fontSize: positive(parseFloat(style.fontSize), 12),
@@ -154,14 +183,35 @@ function applyGeneric(element, state, entry, requestedOperation = null) {
       ? 0
       : Math.max(0, currentBounds.width - currentContentWidth);
     const contentWidth = style.boxSizing === "border-box" ? desiredWidth : Math.max(1, desiredWidth - horizontalChrome);
-    element.style.minWidth = px(positive(entry.baseline?.minWidth, 1));
-    element.style.maxWidth = px(positive(entry.baseline?.maxWidth, Number.MAX_SAFE_INTEGER));
-    element.style.width = px(contentWidth);
+    setLayoutProperty(element.style, "min-width", px(positive(entry.baseline?.minWidth, 1)));
+    setLayoutProperty(element.style, "max-width", px(positive(entry.baseline?.maxWidth, Number.MAX_SAFE_INTEGER)));
+    setLayoutProperty(element.style, "width", px(contentWidth));
+    if (style.display === "inline") setLayoutProperty(element.style, "display", "inline-block");
+    const parentStyle = element.parentElement ? styleOf(element.parentElement) : {};
+    if (String(parentStyle?.display || "").includes("flex")) {
+      if (String(parentStyle?.flexDirection || "row").startsWith("column")) setLayoutProperty(element.style, "align-self", "flex-start");
+      else setLayoutProperty(element.style, "flex", `0 0 ${px(contentWidth)}`);
+    }
   }
   if ((operations.has("resize") || operations.has("resizeHeight")) && applies("resize", "resizeHeight")) {
-    element.style.minHeight = px(positive(entry.baseline?.minHeight, 1));
-    element.style.maxHeight = px(positive(entry.baseline?.maxHeight, Number.MAX_SAFE_INTEGER));
-    element.style.height = px(bounded(entry, "height", state.height, 1));
+    const style = styleOf(element);
+    const currentBounds = rectOf(element);
+    const currentContentHeight = Number.parseFloat(style.height);
+    const measuredVerticalChrome = style.boxSizing === "border-box" || !Number.isFinite(currentContentHeight)
+      ? 0
+      : Math.max(0, currentBounds.height - currentContentHeight);
+    const verticalChrome = measuredVerticalChrome <= 128 ? measuredVerticalChrome : 0;
+    setLayoutProperty(element.style, "min-height", px(positive(entry.baseline?.minHeight, 1)));
+    setLayoutProperty(element.style, "max-height", px(positive(entry.baseline?.maxHeight, Number.MAX_SAFE_INTEGER)));
+    const desiredHeight = bounded(entry, "height", state.height, 1);
+    const contentHeight = style.boxSizing === "border-box" ? desiredHeight : Math.max(1, desiredHeight - verticalChrome);
+    setLayoutProperty(element.style, "height", px(contentHeight));
+    if (style.display === "inline") setLayoutProperty(element.style, "display", "inline-block");
+    const parentStyle = element.parentElement ? styleOf(element.parentElement) : {};
+    if (String(parentStyle?.display || "").includes("flex")) {
+      if (String(parentStyle?.flexDirection || "row").startsWith("column")) setLayoutProperty(element.style, "flex", `0 0 ${px(contentHeight)}`);
+      else setLayoutProperty(element.style, "align-self", "flex-start");
+    }
   }
   if (operations.has("textMove") && applies("textMove") && state.textOffsetX !== null && state.textOffsetX !== undefined) {
     element.dataset.uiEditorTextX = String(state.textOffsetX);
@@ -171,7 +221,7 @@ function applyGeneric(element, state, entry, requestedOperation = null) {
     element.dataset.uiEditorTextY = String(state.textOffsetY);
     element.style.paddingTop = px(Math.max(0, finite(state.textOffsetY)));
   }
-  if (operations.has("textResize") && applies("textResize") && state.fontSize !== null && state.fontSize !== undefined) element.style.fontSize = px(positive(state.fontSize, 1));
+  if (operations.has("textResize") && applies("textResize") && state.fontSize !== null && state.fontSize !== undefined) setLayoutProperty(element.style, "font-size", px(positive(state.fontSize, 1)));
   if (operations.has("setVisibility") && applies("setVisibility")) toggleClass(element, HIDDEN_CLASS, state.visible === false);
   const spacingOperations = ["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"];
   if (spacingOperations.some((operation) => operations.has(operation)) && applies(...spacingOperations)) {
@@ -185,6 +235,22 @@ function applyGeneric(element, state, entry, requestedOperation = null) {
     element.style.columnGap = px(finite(spacing.childGapHorizontal));
     element.style.rowGap = px(finite(spacing.childGapVertical));
   }
+}
+
+function applyGenericTargets(targets, state, entry, requestedOperation = null) {
+  const elements = targets.filter(isElementRef);
+  const dimension = requestedOperation === "resizeWidth" ? "width" : requestedOperation === "resizeHeight" ? "height" : null;
+  if (!dimension || !elements.length) {
+    elements.forEach((target) => applyGeneric(target, state, entry, requestedOperation));
+    return;
+  }
+  const currentStates = elements.map((target) => readGeneric(target, entry.id));
+  const primaryCurrent = currentStates[0][dimension];
+  const desiredPrimary = finite(state[dimension], primaryCurrent);
+  const delta = desiredPrimary - primaryCurrent;
+  elements.forEach((target, index) => {
+    applyGeneric(target, { ...state, [dimension]: currentStates[index][dimension] + delta }, entry, requestedOperation);
+  });
 }
 
 export function beginM80PilotRender() {
@@ -242,6 +308,7 @@ export function registerM80Ref(id, element, custom = {}) {
   const ref = {
     id,
     entry,
+    registeredAt: new Date().toISOString(),
     element,
     targets,
     contractTargets,
@@ -286,7 +353,7 @@ export function registerM80MultiRef(id, elements, fallbackElement, options = {})
     apply: (state, requestedOperation = null) => {
       logicalState = { ...logicalState, ...state, elementId: id, spacing: { ...(state.spacing || logicalState.spacing || {}) } };
       if (typeof options.apply === "function") options.apply(logicalState, requestedOperation, targets);
-      else targets.forEach((target) => applyGeneric(target, logicalState, entry, requestedOperation));
+      else applyGenericTargets(targets, logicalState, entry, requestedOperation);
     },
   });
 }
@@ -368,7 +435,7 @@ export function registerM80TableColumnRef(id, headerCell, dataCells, tableElemen
         : [requestedOperation];
       genericOperations
         .filter((operation) => ["move", "resizeHeight", "textResize"].includes(operation))
-        .forEach((operation) => targets.forEach((target) => applyGeneric(target, state, entry, operation)));
+        .forEach((operation) => applyGenericTargets(targets, state, entry, operation));
       const table = { ...baselineTable, ...(state.table || {}) };
       if (applies("resizeWidth", "setColumnWidthMode", "resetTableColumn")) {
         const width = bounded(entry, "width", state.width, initialWidth);
@@ -384,7 +451,7 @@ export function registerM80TableColumnRef(id, headerCell, dataCells, tableElemen
         headerCell.style.paddingLeft = px(Math.max(0, finite(state.textOffsetX)));
         headerCell.style.paddingTop = px(Math.max(0, finite(state.textOffsetY)));
       }
-      if (applies("textResize")) headerCell.style.fontSize = px(positive(state.fontSize, 1));
+      if (applies("textResize")) setLayoutProperty(headerCell.style, "font-size", px(positive(state.fontSize, 1)));
       if (applies("setColumnWrapMode", "setColumnOverflowMode", "resetTableColumn")) applyColumnTextMode(targets, table);
       if (applies("setVisibility")) {
         toggleClass(tableElement, `${HIDDEN_CLASS}-${id.split(".").pop()}`, state.visible === false);
@@ -533,9 +600,18 @@ export function registerM80FlowLabelRef(id, element, layoutRow, trailingColumns)
 
 export function getM80Ref(id) { return refs.get(String(id || "")) || null; }
 export function listM80Refs() { return [...refs.values()]; }
+function geometryElement(ref) {
+  const candidates = [...new Set([...(ref?.contractTargets || []), ref?.element].filter(isElementRef))];
+  return candidates.find((element) => {
+    const rect = rectOf(element);
+    return Number.isFinite(Number(rect.left)) && Number.isFinite(Number(rect.top)) &&
+      Number.isFinite(Number(rect.width)) && Number.isFinite(Number(rect.height)) &&
+      Number(rect.width) > 0 && Number(rect.height) > 0;
+  }) || ref?.element;
+}
 export function snapshotM80Geometry() {
   return new Map([...refs.values()].map((ref) => {
-    const rect = rectOf(ref.element);
+    const rect = rectOf(geometryElement(ref));
     return [ref.id, { left: finite(rect.left), top: finite(rect.top), width: finite(rect.width), height: finite(rect.height) }];
   }));
 }
@@ -651,6 +727,15 @@ export function validateM83ComponentReferences(componentIds = null) {
 }
 export function clearM80VisualState() {
   document.querySelector("[data-bbm-ui-editor-overlay]")?.remove();
+  if (typeof document.querySelectorAll !== "function") return;
+  const selector = TRANSIENT_MARKER_ATTRIBUTES.map((name) => `[${name}]`).join(",");
+  document.querySelectorAll(selector).forEach((element) => {
+    const outline = String(element.style?.outline || "").trim();
+    const boxShadow = String(element.style?.boxShadow || "").trim();
+    if (TRANSIENT_MARKER_OUTLINES.has(outline)) element.style.outline = "";
+    if (TRANSIENT_MARKER_SHADOWS.has(boxShadow)) element.style.boxShadow = "";
+    TRANSIENT_MARKER_ATTRIBUTES.forEach((name) => element.removeAttribute?.(name));
+  });
 }
 
 export { HIDDEN_CLASS };

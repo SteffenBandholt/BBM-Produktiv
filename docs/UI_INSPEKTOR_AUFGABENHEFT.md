@@ -916,3 +916,48 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
 - Guardrails: Core-Test `m86-15-table-cell-width-contract`, BBM-Tests `m86-14GlobalLayoutRestore` und `m86-15UniversalEditorContract`, Registry-Preflight, Komponentenvertraege und UI-Editor-Selbsttest.
 - Korrigierter produktnaher Testweg: Der Restarbeiten-Harness montiert den sichtbaren DEV-Launcher wie die reale App; der Startprofiltest nutzt fuer Schreiben und Lesen dieselbe zentrale Modulwurzel und nur Werte innerhalb der Registry-Grenzen.
 - Normaler Startnachweis: Protokoll- und Restarbeiten-Editor wurden ueber die realen Header-Buttons sichtbar und ohne `electron_editor_start_failed` geoeffnet. Die isolierte A/B/C-Langabnahme bleibt getrennt.
+
+## M86.16 - Reale Editorwirkung sichtbarer Registry-Ziele
+
+- Status: automatisierte Chromium-Laufzeitpruefung umgesetzt; sichtbare Bedienabnahme des separaten nativen Editorfensters bleibt offen.
+- `scripts/tests/m86-16RealEditorRuntime.test.cjs` montiert die produktiven Restarbeiten- und Protokoll-Screens in Chromium und prueft jede aktuell sichtbare Registry-Ref mit allen freigegebenen Bewegungs-, Breiten-, Hoehen- und Textgroessenrichtungen. Fehlende Richtungsvektoren lassen den Test fehlschlagen; kleine Ziele werden bis zu ihrer Vertragsgrenze geprueft.
+- Die Pruefung deckt 218 sichtbare Ziele ab; acht gemountete optionale oder leere Ziele ohne positive Geometrie werden explizit inventarisiert und nicht als sichtbare Ziele gewertet.
+- Der Test prueft fuer Restarbeiten und Protokoll zusaetzlich Multi-Ref-Rerender, Filter-Ausblendung, neue Zeile und projektuebergreifenden Rerender. Die bestehende M86.14-Pruefung sichert den dauerhaften Modulprofil- und Fingerprint-Restore.
+- Zentrale Korrekturen bleiben auf Ref-Anwendung und Geometrie-Guard beschraenkt; Registry, Parents, Fingerprints, Fachaktionen, PDF und Datenmodell sind unveraendert.
+- Offen: sichtbare Bedienung des nativen Editors fuer beide Module; die Gesamtsuite bleibt ausserhalb von M86.16 an bestehenden Lizenz-/M52-Navigationsguardrails rot.
+
+## M86.21 - Restarbeiten ohne horizontalen Hauptscroll
+
+- Status: `[A]`.
+- Ursache: Der registrierte Quicklane-Root `restarbeiten.quicklane` war im geschlossenen Zustand ueber ein Inline-`translateX(46px)` um 46 DIP ausserhalb des Content-Viewports positioniert. Seine rechte Kante lag im 1920-DIP-Lauf bei 1948 statt maximal 1902 DIP.
+- Umsetzung: Der geschlossene Quicklane-Zustand wird jetzt ueber `clip-path` dargestellt; der Root selbst und seine registrierten Kindziele verbleiben im Viewport. Es wurden weder globale Overflow-Regeln noch Registry-, Parent-, Fingerprint-, Persistenz- oder Restore-Vertraege veraendert.
+- Guardrail: `scripts/tests/m86-21RestarbeitenViewport.test.cjs` mit produktnah gemountetem Restarbeiten-Screen, strukturellen Scrollmessungen, Registry-Bounds und vertikalem Listen-Scrollowner. M86.14, M86.16, M86.19 und M86.20 bleiben gruen.
+- Sichtbarer Nachweis: Normaler Electron-Start, Editor-Save von Position und Breite, vollstaendiger Neustart und erneutes Oeffnen ohne Editor. Filter, Liste und Editbox bleiben geordnet; kein horizontaler Hauptscroll und kein nachtraeglicher Layoutsprung beim Editoroeffnen. Protokoll wurde als unveraenderter Gegencheck einschliesslich erfolgreichem Editorstart geprueft.
+
+## M86.22 - Transiente Editor-Markierungen zentral bereinigen
+
+- Status: Code und automatisierte Guardrails umgesetzt; vollstaendige manuelle Bedienabnahme bleibt unter dem aktuellen `app.db`-Schutz offen.
+- Nachgewiesen: Der lila Doppelrahmen ist die Geometrie-Risikodiagnose fuer die Gruppengrenze; die tuerkise gepunktete Umrandung ist die Diagnose fuer die Bereichsgrenze. Beide wurden beim nichtinteraktiven Startup-Restore erneut gezeichnet, obwohl keine aktive Editorsitzung bestand.
+- Umsetzung: Risiko-Vorschau und ausstehende Risikobestaetigung werden ausschliesslich fuer interaktive Editoranfragen erzeugt. Der bestehende zentrale Interaktions-Cleanup entfernt beim Bridge-Start, Editor-Close, Kontextwechsel und Unload alle M80-Overlays sowie bekannte Selection-, Hover-, Component- und Legacy-Markierungen.
+- Schutz: Der Cleanup entfernt nur bekannte transiente Editorwerte. Fachliche Styles und gespeicherte Geometrie-, Text-, Sichtbarkeits- und Spacingwerte bleiben unangetastet. Protokoll und Restarbeiten verwenden denselben ID-neutralen Weg.
+- Guardrail: `scripts/tests/m86-22EditorMarkerCleanup.test.cjs`; zusaetzlicher Startup-Nachweis in den produktnahen Chromium-Harnesses M86.16 und M86.20.
+- Offen: Der vollstaendige native Klickablauf mit separatem Editorfenster, Save, Close und echtem App-Neustart darf erst mit einem freigegebenen isolierten Profil ausgefuehrt werden, da der vorhandene Acceptance-Launcher eine `app.db` anlegt und prueft.
+
+## M86.23 - Persistenten Save vor Editor-Close bestätigen
+
+- Status: gemeinsamer Core-/BBM-Handshake und gezielter Regressionstest umgesetzt.
+- Vorher: Der atomare Profil-Save wurde im nativen Editor abgewartet, aber BBM erhielt vor dem Fenster-Close keine korrelierte Save-Bestätigung. Die Renderer-Discard-Grenze blieb daher auf dem Sitzungsanfang.
+- Jetzt: Der persistent geschriebene Snapshot erhält eine eindeutige `saveRequestId`. BBM bestätigt ihn erst nach Vergleich mit aktiven Scopes und aktuellem Rendererzustand; erst danach wird die Core-Session clean und der Close darf `saved` melden. Fehler oder Timeout lassen den Editor dirty und offen.
+- `prepareEditorClose` rollt bei `discarded` nur Operationen seit der letzten bestätigten Save-Grenze zurück und führt den zentralen M86.22-Marker-Cleanup vor dem nativen Fenster-Close aus. `editorClosed` ist danach nur noch der idempotente Sitzungsabschluss.
+- Guardrails: Core `M8623SaveCloseAcknowledgementTests`; BBM `scripts/tests/m86-23SaveCloseAcknowledgement.test.cjs` mit produktiven Restarbeiten-/Protokoll-Screens, Close, Discard, Marker-Cleanup und Startup-Restore.
+- Nicht geändert: Registry-/Parentstruktur, Fachaktionen, PDF/Druck, Datenbank, Lizenzierung und produktive Profildaten.
+
+## M86.24 - Sichtbare Verkleinerung und echter Save-and-continue-Pfad
+
+- Status: `[A]`; sichtbare native Bedienabnahme und automatisierter Guardrail abgeschlossen.
+- Protokollziel `protokoll.list.row.due`: drei reale Minus-Klicks reduzieren beide sichtbaren Multi-Refs von 54,521 auf 51,504 DIP; Plus/Minus arbeitet symmetrisch über denselben generischen Apply-Weg.
+- Der sichtbare WPF-Dialogbutton `Speichern und fortfahren` wurde für Protokoll und Restarbeiten physisch betätigt. Der Ablauf ist persistenter Schreibabschluss → korreliertes Acknowledgement → neue Sitzungsgrenze → Close-Vorbereitung/Marker-Cleanup → Fenster-Close.
+- Behobene Verluststelle: Die BBM-Ack-Prüfung bezog uneditierte responsive Layoutwerte ein. Zwei Restarbeiten-Flexbreiten drifteten zwischen Snapshot und Ack um etwa 0,50 DIP und verhinderten so die Bestätigung. Geprüft werden nun die explizit persistierten Editoroperationen; unbekannte Felder/Operationen, falsche IDs und abweichende bearbeitete Werte bleiben gesperrt.
+- Separate Electron-Neustartprozesse laden die getrennten Modulprofile ohne Editoröffnung; gespeicherte Breiten bleiben sichtbar und alle Editor-/Diagnosemarker fehlen.
+- Test: `scripts/tests/m86-24VisibleEditorAcceptance.test.cjs`; ergänzend M86.16, M86.19, M86.20, M86.22 und M86.23.
+- Nicht geändert: UI-/Parent-/Tabellenstruktur, Fachlogik, PDF/Druck, Datenbank, Lizenzierung und produktive Benutzerprofile.

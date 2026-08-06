@@ -21,7 +21,7 @@ const {
 const APPLICATION_ID = "bbm-produktiv";
 const DISPLAY_NAME = "BBM";
 const ACTIVE_SCOPES = Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
-const NATIVE_REQUEST_ACTIONS = new Set(["getRegistry", "getLayoutState", "submitChange"]);
+const NATIVE_REQUEST_ACTIONS = new Set(["getRegistry", "getLayoutState", "submitChange", "acknowledgeLayoutSave", "prepareEditorClose"]);
 const NATIVE_PDF_REQUEST_ACTIONS = new Set([
   "getPdfRegistry",
   "getCurrentPdfLayoutState",
@@ -247,7 +247,7 @@ class ElectronUiEditorSessionController {
       };
       if (receipt) this.startupLayoutReceipts.set(identity.layoutStorageKey, receipt);
       else this.startupLayoutReceipts.delete(identity.layoutStorageKey);
-      console.info(`[ui-editor] startup layout loaded: ${result.code}, found=${result.found === true}`);
+      console.info(`[ui-editor] startup layout loaded: module=${identity.moduleId}, profile=${result.profileId || "standard"}, found=${result.found === true}, code=${result.code}, fingerprint=${result.profileSha256 || "none"}`);
       return { ...result, manifestPath, layoutStorageKey: identity.layoutStorageKey };
     } catch (error) {
       const receipt = { applied: false, state: "baseline", code: error?.code || "startup_layout_failed", editorProcessRequired: false };
@@ -276,7 +276,7 @@ class ElectronUiEditorSessionController {
       editorProcessRequired: false,
     };
     this.startupLayoutReceipts.set(layoutStorageKey, receipt);
-    console.info("[ui-editor] startup layout: startup_layout_applied, applied=true");
+    console.info(`[ui-editor] startup layout: startup_layout_applied, applied=true, moduleKey=${layoutStorageKey}, profile=${receipt.profileId || "standard"}, fingerprint=${receipt.profileSha256}`);
     return { ok: true, receipt: { ...receipt } };
   }
 
@@ -617,7 +617,8 @@ class ElectronUiEditorSessionController {
         const disposition = ["clean", "saved", "discarded"].includes(closePayload?.disposition)
           ? closePayload.disposition
           : "unknown";
-        webContents.send("uiEditor:event", { action: "editorClosed", reason, disposition });
+        const saveRequestId = typeof closePayload?.saveRequestId === "string" ? closePayload.saveRequestId : null;
+        webContents.send("uiEditor:event", { action: "editorClosed", reason, disposition, saveRequestId });
       }
     }
     this.stopping = false;
