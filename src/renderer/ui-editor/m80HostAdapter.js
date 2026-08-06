@@ -2,6 +2,7 @@ import {
   BBM_M80_ACTIVE_SCOPE_GROUPS,
   BBM_M80_REGISTRY_STATUS,
   BBM_M80_REGISTRY_VERSION,
+  getM83ComponentContract,
   getM80RegistryEntry,
   listM80RegistryScopes,
 } from "./m80Registry.js";
@@ -48,10 +49,11 @@ import {
   verifyTextResizeReadback,
 } from "../../../node_modules/ui-editor-kit/dist/text-resize-contract.mjs";
 
-const ALLOWED_ACTIONS = new Set(["getRegistry", "getLayoutState", "submitChange"]);
+const ALLOWED_ACTIONS = new Set(["getRegistry", "getLayoutState", "submitChange", "acknowledgeLayoutSave", "prepareEditorClose"]);
 const SUPPORTED_OPERATIONS = Object.freeze(["move", "resize", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility", "spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset", ...TABLE_LAYOUT_OPERATIONS]);
 const REGISTRY_EVENT_ACTIONS = new Set(["registryChanged", "registryStatusChanged", "scopeAdded", "scopeChanged", "scopeRemoved"]);
 const FORBIDDEN_KEYS = new Set(["fachDaten", "businessData", "domainData", "recordId", "entity", "database", "sql", "status", "responsible", "dueDate", "photos", "rows", "values"]);
+const PERSISTED_LAYOUT_ELEMENT_KEYS = new Set(["elementId", "scopeId", "x", "y", "width", "height", "textOffsetX", "textOffsetY", "fontSize", "visible", "spacing", "table"]);
 let selectionMode = false;
 let selectedId = null;
 let hoverCandidates = [];
@@ -60,9 +62,13 @@ const startupRestorePromises = new Map();
 const startupRestoreStatuses = new Map();
 let editorSessionBoundary = null;
 let editorSessionOperations = new Map();
+let editorSessionSaveAcknowledgements = new Map();
+let preparedEditorClose = null;
 let diagnosticRegistryRevision = 0;
 const pendingGeometryRisks = new Map();
 const capturedRuntimeBaselines = new Map();
+const validatedStartupRequests = new WeakSet();
+let scheduledRegistryMountRestore = null;
 
 function capturedRuntimeBaseline(entry) {
   if (entry?.baseline?.width !== null && entry?.baseline?.height !== null) return null;
@@ -193,7 +199,7 @@ function inspectGeometryEffect(entry, operation, beforeGeometry, afterGeometry) 
     const widthChanged = Math.abs(before.width - after.width) > 0.75;
     if (operation === "resizeHeight" && widthChanged)
       throw Object.assign(new Error(`Breite von '${candidate.name}' darf durch die Höhenänderung nicht verändert werden.`), { code: "electron_unexpected_layout_effect" });
-    if (sizeChanged && (operation === "move" || ["button", "componentPart", "statusIndicator"].includes(candidate.type)))
+    if (sizeChanged && (operation === "move" || (affected.effect === "elementOnly" && ["button", "componentPart", "statusIndicator"].includes(candidate.type))))
       throw Object.assign(new Error(`Größe von '${candidate.name}' darf durch diese Operation nicht verändert werden.`), { code: "electron_unexpected_layout_effect" });
   }
   const target = afterGeometry.get(entry.id);
@@ -364,7 +370,11 @@ function previewFrame(container, bounds, style, label) {
 }
 function clearGeometryRiskPreview() {
   const value = document.querySelector("[data-bbm-ui-editor-risk-preview]");
-  if (value) { value.replaceChildren(); value.style.display = "none"; }
+  if (value) {
+    value.replaceChildren();
+    value.style.display = "none";
+    value.remove?.();
+  }
   document.removeEventListener("keydown", onRiskPreviewKey, true);
 }
 function onRiskPreviewKey(event) { if (event.key === "Escape") clearGeometryRiskPreview(); }
@@ -476,14 +486,17 @@ function submitChange(changeRequest, scopeId) {
     // haengen bleiben.
     const usesValidatedTableGeometry = request.operation === "resetTable" ||
       (["fitTableToViewport", "resizeColumnsProportionally"].includes(request.operation) && request.payload?.table?.previewAccepted === true);
-    const risk = interactive && !usesValidatedTableGeometry
+    const unvalidatedStartupRequest = request.source === "target-app-start" && !validatedStartupRequests.has(request);
+    const risk = (interactive || unvalidatedStartupRequest) && !usesValidatedTableGeometry
       ? geometryRiskFor(entry, request, beforeGeometry, afterGeometry, affected)
       : null;
     if (risk?.hasRisks && !confirmation) {
       for (const [id, state] of [...tableRestore].reverse()) if (state) applyM80State(id, state);
       const restored = applyM80State(entry.id, previous, request.operation);
-      pendingGeometryRisks.set(risk.operationId, { signature: requestSignature(request), risk });
-      renderGeometryRiskPreview(risk);
+      if (interactive) {
+        pendingGeometryRisks.set(risk.operationId, { signature: requestSignature(request), risk });
+        renderGeometryRiskPreview(risk);
+      }
       return failure(request, "geometry_risk_confirmation_required", risk.message, restored, true, risk);
     }
     clearGeometryRiskPreview();
@@ -515,6 +528,120 @@ function layoutPayload() {
     capturedAt: new Date().toISOString(),
     elements: scope.elements.map((entry) => snapshotM80State(entry.id)).filter(Boolean),
   }));
+}
+
+function layoutValueMatches(persisted, current, tolerance = 0.05) {
+  if (persisted === null || persisted === undefined) return true;
+  if (typeof persisted === "number") return typeof current === "number" && Number.isFinite(current) && Math.abs(persisted - current) <= tolerance;
+  if (typeof persisted === "boolean" || typeof persisted === "string") return persisted === current;
+  if (Array.isArray(persisted)) return Array.isArray(current) && persisted.length === current.length && persisted.every((value, index) => layoutValueMatches(value, current[index], tolerance));
+  if (typeof persisted === "object") return current && typeof current === "object" && !Array.isArray(current) &&
+    Object.entries(persisted).every(([key, value]) => layoutValueMatches(value, current[key], tolerance));
+  return false;
+}
+
+function persistedLayoutForOperations(element, operations) {
+  const selected = {};
+  const include = (key) => {
+    if (element?.[key] !== null && element?.[key] !== undefined) selected[key] = element[key];
+  };
+  if (operations.has("move")) { include("x"); include("y"); }
+  if (operations.has("resize") || operations.has("resizeWidth")) include("width");
+  if (operations.has("resize") || operations.has("resizeHeight")) include("height");
+  if (operations.has("textMove")) { include("textOffsetX"); include("textOffsetY"); }
+  if (operations.has("textResize")) include("fontSize");
+  if (operations.has("setVisibility")) include("visible");
+  if (["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"].some((operation) => operations.has(operation))) include("spacing");
+  else if (element?.spacing && typeof element.spacing === "object" && !Array.isArray(element.spacing)) {
+    const spacing = {};
+    if ((operations.has("resize") || operations.has("resizeWidth")) && element.spacing.reservedWidth !== undefined)
+      spacing.reservedWidth = element.spacing.reservedWidth;
+    if ((operations.has("resize") || operations.has("resizeHeight")) && element.spacing.reservedHeight !== undefined)
+      spacing.reservedHeight = element.spacing.reservedHeight;
+    if (Object.keys(spacing).length) selected.spacing = spacing;
+  }
+  if (TABLE_LAYOUT_OPERATIONS.some((operation) => operations.has(operation))) include("table");
+  return selected;
+}
+
+function acknowledgePersistentLayoutSave(request) {
+  const saveRequestId = String(request.saveRequestId || "");
+  const snapshot = request.snapshot;
+  if (!/^[a-f0-9]{32}$/i.test(saveRequestId) || !snapshot || typeof snapshot !== "object" || Array.isArray(snapshot))
+    throw Object.assign(new Error("Save-Snapshot oder requestId fehlt."), { code: "electron_editor_message_invalid" });
+  const serializedSnapshot = JSON.stringify(snapshot);
+  const previous = editorSessionSaveAcknowledgements.get(saveRequestId);
+  if (previous) {
+    if (previous.serializedSnapshot !== serializedSnapshot)
+      throw Object.assign(new Error("Save-requestId wurde mit einem anderen Snapshot wiederverwendet."), { code: "electron_editor_message_invalid" });
+    return previous.acknowledgement;
+  }
+  if (!editorSessionBoundary)
+    throw Object.assign(new Error("Es ist keine aktive Editorsitzung vorhanden."), { code: "electron_editor_session_invalid" });
+  if (snapshot.applicationId !== "bbm-produktiv" || typeof snapshot.profileId !== "string" || !snapshot.profileId ||
+      !Number.isFinite(Date.parse(snapshot.savedAt)) || !Array.isArray(snapshot.scopes))
+    throw Object.assign(new Error("Der persistente Save-Snapshot ist unvollständig."), { code: "electron_editor_message_invalid" });
+
+  const currentScopes = layoutPayload();
+  const currentByScope = new Map(currentScopes.map((scope) => [scope.scopeId, scope]));
+  const persistedScopeIds = new Set(snapshot.scopes.map((scope) => scope?.scopeId));
+  if (snapshot.scopes.length !== currentScopes.length || persistedScopeIds.size !== snapshot.scopes.length)
+    throw Object.assign(new Error("Save-Snapshot und aktive Registry-Scopes stimmen nicht überein."), { code: "electron_editor_message_invalid" });
+  for (const persistedScope of snapshot.scopes) {
+    const currentScope = currentByScope.get(persistedScope?.scopeId);
+    const persistedElements = persistedScope?.layoutState?.elements;
+    if (!currentScope || !Array.isArray(persistedElements) || persistedElements.length !== currentScope.elements.length)
+      throw Object.assign(new Error("Save-Snapshot enthält einen ungültigen Scope."), { code: "electron_editor_message_invalid" });
+    const currentById = new Map(currentScope.elements.map((element) => [element.elementId, element]));
+    const persistedElementIds = new Set(persistedElements.map((element) => element?.elementId));
+    if (persistedElementIds.size !== persistedElements.length)
+      throw Object.assign(new Error("Save-Snapshot enthält doppelte Element-IDs."), { code: "electron_editor_message_invalid" });
+    for (const persistedElement of persistedElements) {
+      const currentElement = currentById.get(persistedElement?.elementId);
+      const persistedScopeId = persistedElement?.scopeId;
+      const operations = new Set(persistedScope?.explicitOperations?.[persistedElement?.elementId] || []);
+      const hasUnknownOperation = [...operations].some((operation) => !SUPPORTED_OPERATIONS.includes(operation));
+      const persistedLayout = persistedLayoutForOperations(persistedElement, operations);
+      const hasTransientOrUnknownField = Object.keys(persistedElement || {}).some((key) => !PERSISTED_LAYOUT_ELEMENT_KEYS.has(key));
+      if (!currentElement || persistedScopeId !== persistedScope.scopeId || hasTransientOrUnknownField || hasUnknownOperation || !layoutValueMatches(persistedLayout, currentElement))
+        throw Object.assign(new Error(`Save-Snapshot stimmt nicht mit dem angewendeten Rendererzustand überein: ${persistedElement?.elementId || "unbekannt"}.`), { code: "electron_editor_message_invalid" });
+    }
+  }
+
+  editorSessionBoundary = captureM80WorkingStates();
+  editorSessionOperations = new Map();
+  const acknowledgement = Object.freeze({
+    accepted: true,
+    persisted: true,
+    saveRequestId,
+    profileId: snapshot.profileId,
+    savedAt: snapshot.savedAt,
+    acknowledgedAt: new Date().toISOString(),
+  });
+  editorSessionSaveAcknowledgements.set(saveRequestId, { serializedSnapshot, acknowledgement });
+  return acknowledgement;
+}
+
+function completeEditorSession(disposition) {
+  setM80WorkingStateOperationObserver(null);
+  const restoredElementCount = disposition === "discarded" && editorSessionBoundary
+    ? restoreM80WorkingStates(editorSessionBoundary, editorSessionOperations)
+    : 0;
+  editorSessionBoundary = null;
+  editorSessionOperations = new Map();
+  editorSessionSaveAcknowledgements = new Map();
+  stopSelection(); selectedId = null; pendingGeometryRisks.clear(); clearGeometryRiskPreview(); clearM80VisualState();
+  return { ok: true, disposition, restoredElementCount };
+}
+
+function prepareEditorClose(request) {
+  const disposition = ["clean", "saved", "discarded"].includes(request.disposition) ? request.disposition : "unknown";
+  const saveRequestId = String(request.saveRequestId || "");
+  if (disposition === "unknown" || disposition === "saved" && !editorSessionSaveAcknowledgements.has(saveRequestId))
+    throw Object.assign(new Error("Editor-Close ist ohne bestätigten Save-Zustand nicht freigegeben."), { code: "electron_editor_session_invalid" });
+  const result = completeEditorSession(disposition);
+  preparedEditorClose = Object.freeze({ disposition, saveRequestId, result });
+  return Object.freeze({ accepted: true, disposition, saveRequestId, restoredElementCount: result.restoredElementCount });
 }
 
 function mountedActiveScopeGroup() {
@@ -581,6 +708,44 @@ export function createM80RegistrationDescriptor() {
     labelFieldSeparation: true,
     visibilityCapability: true,
     registryScopes,
+  };
+}
+
+export function inspectM80ScopeRegistration(scopeId) {
+  const requestedScopeId = String(scopeId || "").trim();
+  const registration = createM80RegistrationDescriptor();
+  const declaredScope = listM80RegistryScopes().find((scope) => scope.scopeId === requestedScopeId) || null;
+  const resolvedScope = registration.registryScopes.find((scope) => scope.scopeId === requestedScopeId) || null;
+  const presentRefs = new Map(listM80Refs().map((ref) => [ref.id, ref]));
+  const expectedElementIds = [...(declaredScope?.expectedElementIds || [])];
+  const presentElementIds = expectedElementIds.filter((id) => presentRefs.has(id));
+  const missingElementIds = expectedElementIds.filter((id) => !getM80ReferenceStatus(id).referenceResolved);
+  const componentByElementId = new Map((declaredScope?.componentIds || []).flatMap((componentId) => {
+    const component = getM83ComponentContract(componentId);
+    return (component?.slots || []).map((slot) => [slot.element.id, componentId]);
+  }));
+  return {
+    capturedAt: new Date().toISOString(),
+    expectedScopeId: requestedScopeId,
+    activeScopeIds: [...registration.activeScopes],
+    expectedElementIds,
+    presentElementIds,
+    missingElementIds,
+    elements: expectedElementIds.map((id) => {
+      const ref = presentRefs.get(id);
+      const status = getM80ReferenceStatus(id);
+      return {
+        id,
+        componentId: componentByElementId.get(id) || null,
+        referenceResolved: status.referenceResolved,
+        referenceKind: getM80RegistryEntry(id)?.referenceKind || null,
+        targetCount: status.targetCount,
+        mountedInstanceCount: status.mountedInstanceCount,
+        registeredAt: ref?.registeredAt || null,
+      };
+    }),
+    registrationReason: resolvedScope?.reason || null,
+    componentReferenceErrors: [...(resolvedScope?.componentReferenceErrors || [])],
   };
 }
 
@@ -814,15 +979,18 @@ export function handleM80EditorEvent(event = {}) {
   if (action === "highlightElement") { clearGeometryRiskPreview(); highlightM80Element(event.elementId); return { ok: true }; }
   if (action === "clearGeometryPreview") { clearGeometryRiskPreview(); return { ok: true }; }
   if (action === "editorClosed") {
-    const disposition = ["clean", "saved", "discarded"].includes(event.disposition) ? event.disposition : "unknown";
-    setM80WorkingStateOperationObserver(null);
-    const restoredElementCount = disposition === "discarded" && editorSessionBoundary
-      ? restoreM80WorkingStates(editorSessionBoundary, editorSessionOperations)
-      : 0;
-    editorSessionBoundary = null;
-    editorSessionOperations = new Map();
-    stopSelection(); selectedId = null; pendingGeometryRisks.clear(); clearGeometryRiskPreview(); clearM80VisualState();
-    return { ok: true, disposition, restoredElementCount };
+    const requestedDisposition = ["clean", "saved", "discarded"].includes(event.disposition) ? event.disposition : "unknown";
+    const saveRequestId = String(event.saveRequestId || "");
+    if (preparedEditorClose && preparedEditorClose.disposition === requestedDisposition && preparedEditorClose.saveRequestId === saveRequestId) {
+      const result = preparedEditorClose.result;
+      preparedEditorClose = null;
+      return result;
+    }
+    const disposition = requestedDisposition === "saved" && !editorSessionSaveAcknowledgements.has(saveRequestId)
+      ? "unknown"
+      : requestedDisposition;
+    preparedEditorClose = null;
+    return completeEditorSession(disposition);
   }
   return { ok: false, errorCode: "electron_editor_message_invalid" };
 }
@@ -834,6 +1002,8 @@ export function handleM80EditorRequest(request = {}) {
     if (!editorSessionBoundary) {
       editorSessionBoundary = captureM80WorkingStates();
       editorSessionOperations = new Map();
+      editorSessionSaveAcknowledgements = new Map();
+      preparedEditorClose = null;
       setM80WorkingStateOperationObserver((elementId, operation) => {
         const operations = editorSessionOperations.get(elementId) || new Set();
         operations.add(operation);
@@ -849,6 +1019,8 @@ export function handleM80EditorRequest(request = {}) {
     };
   }
   if (action === "getLayoutState") return { scopeStates: layoutPayload() };
+  if (action === "acknowledgeLayoutSave") return { saveAcknowledgement: acknowledgePersistentLayoutSave(request) };
+  if (action === "prepareEditorClose") return { closePreparation: prepareEditorClose(request) };
   const changeRequest = {
     ...(request.changeRequest || {}),
     editMode: request.editMode,
@@ -863,19 +1035,24 @@ export function handleM80EditorRequest(request = {}) {
   return { changeResult };
 }
 
-export function createM80StartupRequests(scopeId, element, explicitOperations = null) {
+export function createM80StartupRequests(scopeId, element, explicitOperations = null, trustedPersistentProfile = false) {
   const entry = getM80RegistryEntry(element.elementId);
   if (!entry) throw Object.assign(new Error("Startprofil enthält ein unbekanntes Element."), { code: "electron_element_not_found" });
-  const current = snapshotM80State(entry.id);
-  if (!current) throw Object.assign(new Error("Startprofilziel besitzt keine auflösbare Baseline."), { code: "electron_element_not_found" });
-  const requests = [];
   const explicit = explicitOperations === null || explicitOperations === undefined
     ? null
     : new Set(explicitOperations[element.elementId] || []);
+  if (explicit?.size === 0) return [];
+  const current = snapshotM80State(entry.id);
+  if (!current) throw Object.assign(new Error(`Startprofilziel '${entry.id}' besitzt keine auflösbare Baseline.`), { code: "electron_element_not_found" });
+  const requests = [];
   const present = (value) => value !== null && value !== undefined;
   const changed = (value, baseline) => present(value) && Math.abs(Number(value) - Number(baseline)) > 0.01;
   const push = (operation, payload) => {
-    if (entry.allowedOps.includes(operation) && (explicit === null || explicit.has(operation))) requests.push({ changeId: `startup-${requests.length + 1}-${entry.id}`, elementId: entry.id, operation, payload, source: "target-app-start" });
+    if (entry.allowedOps.includes(operation) && (explicit === null || explicit.has(operation))) {
+      const request = { changeId: `startup-${requests.length + 1}-${entry.id}`, elementId: entry.id, operation, payload, source: "target-app-start" };
+      if (trustedPersistentProfile) validatedStartupRequests.add(request);
+      requests.push(request);
+    }
   };
   const move = {};
   if (changed(element.x, current.x)) move.x = element.x;
@@ -898,7 +1075,9 @@ export function createM80StartupRequests(scopeId, element, explicitOperations = 
       (target === "reservedWidth" && explicit.has("resizeWidth")) ||
       (target === "reservedHeight" && explicit.has("resizeHeight"));
     if (spacingWasExplicit && Math.abs(desiredValue - currentValue) > 0.01 && entry.allowedOps.includes("spacingSet")) {
-      requests.push({ changeId: `startup-${requests.length + 1}-${entry.id}`, elementId: entry.id, operation: "spacingSet", payload: { spacing: { target, value: desiredValue } }, source: "target-app-start" });
+      const request = { changeId: `startup-${requests.length + 1}-${entry.id}`, elementId: entry.id, operation: "spacingSet", payload: { spacing: { target, value: desiredValue } }, source: "target-app-start" };
+      if (trustedPersistentProfile) validatedStartupRequests.add(request);
+      requests.push(request);
     }
   }
   const savedTable = element.table && typeof element.table === "object" && !Array.isArray(element.table) ? element.table : null;
@@ -941,24 +1120,26 @@ export function restoreM80StartupLayout() {
     if (!loaded?.ok || !loaded?.found) {
       return setStatus({ state: loaded?.state || "baseline", applied: false, code: loaded?.code || "startup_layout_failed", recoveryMarkerPath: loaded?.recoveryMarkerPath || null, editorProcessRequired: false });
     }
-    const original = new Map(listM80Refs().map((ref) => [ref.id, snapshotM80State(ref.id)]));
+    const appliedStartupRequests = [];
     try {
+      const trustedPersistentProfile = /^[a-f0-9]{64}$/i.test(String(loaded.profileSha256 || ""));
       const initialRequests = loaded.scopes.flatMap((scope) => scope.elements.flatMap((element) =>
-        createM80StartupRequests(scope.scopeId, element, scope.explicitOperations)));
+        createM80StartupRequests(scope.scopeId, element, scope.explicitOperations, trustedPersistentProfile)));
       await waitForM80StartupGeometry(initialRequests);
       const startupRequests = loaded.scopes.flatMap((scope) => scope.elements.flatMap((element) =>
-        createM80StartupRequests(scope.scopeId, element, scope.explicitOperations)));
+        createM80StartupRequests(scope.scopeId, element, scope.explicitOperations, trustedPersistentProfile)));
       for (const item of startupRequests) {
         const result = submitChange(item.request, item.scopeId);
         if (!result.success) throw Object.assign(new Error(`${item.request.elementId}/${item.request.operation}: ${result.message}`), { code: result.errorCode || "startup_layout_apply_failed" });
+        appliedStartupRequests.push({ id: item.request.elementId, operation: item.request.operation, state: result.previousState });
       }
       const completion = await api.completeStartupLayout({ ok: true, profileSha256: loaded.profileSha256, layoutStorageKey: loaded.layoutStorageKey });
       if (!completion?.ok) throw Object.assign(new Error("Startlayout konnte nicht bestätigt werden."), { code: completion?.code || "startup_layout_apply_failed" });
       return setStatus({ state: "compatible", applied: true, code: "startup_layout_applied", profileId: loaded.profileId, savedAt: loaded.savedAt, profileSha256: loaded.profileSha256, editorProcessRequired: false });
     } catch (error) {
       let rollbackSucceeded = true;
-      for (const [id, state] of original) {
-        try { applyM80State(id, state); } catch { rollbackSucceeded = false; }
+      for (const item of [...appliedStartupRequests].reverse()) {
+        try { applyM80State(item.id, item.state, item.operation); } catch { rollbackSucceeded = false; }
       }
       await api.completeStartupLayout({ ok: false, profileSha256: loaded.profileSha256, layoutStorageKey: loaded.layoutStorageKey, code: error?.code || "startup_layout_apply_failed", message: error?.message || "Startlayout konnte nicht angewandt werden." });
       return setStatus({ state: "baseline", applied: false, code: error?.code || "startup_layout_apply_failed", rollbackSucceeded, editorProcessRequired: false });
@@ -984,11 +1165,32 @@ export async function refreshM80StartupLayoutAfterRegistryMount() {
   return restoreM80StartupLayout();
 }
 
+export function restoreM80StartupLayoutAfterRegistryMount() {
+  if (typeof globalThis.window?.uiEditor?.loadStartupLayout !== "function") {
+    return Promise.resolve({ state: "baseline", applied: false, code: "startup_layout_bridge_missing", editorProcessRequired: false });
+  }
+  if (scheduledRegistryMountRestore) return scheduledRegistryMountRestore;
+  scheduledRegistryMountRestore = Promise.resolve().then(async () => {
+    const initial = await restoreM80StartupLayout();
+    if (initial?.code !== "registry_reference_missing") return initial;
+    return refreshM80StartupLayoutAfterRegistryMount();
+  }).finally(() => {
+    scheduledRegistryMountRestore = null;
+  });
+  return scheduledRegistryMountRestore;
+}
+
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+  window.addEventListener("bbm:m80-pilot-render-complete", () => {
+    void restoreM80StartupLayoutAfterRegistryMount();
+  });
+}
+
 export function clearM80EditorInteraction() { stopSelection(); selectedId = null; pendingGeometryRisks.clear(); clearGeometryRiskPreview(); clearM80VisualState(); }
 export function getM80InteractionStatus() {
   const requiredScopes = mountedActiveScopeGroup();
   const restoreKey = requiredScopes.length ? createM80StartupRestoreKey(requiredScopes) : "";
   const startupRestoreStatus = startupRestoreStatuses.get(restoreKey) || { state: "pending", applied: false, editorProcessRequired: false };
-  return { selectionMode, selectedId, hoverElementIds: hoverCandidates.map((candidate) => candidate.entry.id), hoverIndex, startupRestoreStatus: { ...startupRestoreStatus }, editorSessionBoundaryElementCount: editorSessionBoundary?.size || 0, scopeStates: layoutPayload() };
+  return { selectionMode, selectedId, hoverElementIds: hoverCandidates.map((candidate) => candidate.entry.id), hoverIndex, startupRestoreStatus: { ...startupRestoreStatus }, editorSessionBoundaryElementCount: editorSessionBoundary?.size || 0, editorSessionSaveAcknowledgementCount: editorSessionSaveAcknowledgements.size, scopeStates: layoutPayload() };
 }
 export { beginM80PilotRender, completeM80PilotRender, registerM80MultiRef, registerM80Ref, resetM80PilotWorkingStatesForDiagnostic };

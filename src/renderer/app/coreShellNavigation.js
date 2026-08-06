@@ -1,4 +1,8 @@
-import { createM80RegistrationDescriptor } from "../ui-editor/m80HostAdapter.js";
+import {
+  createM80RegistrationDescriptor,
+  inspectM80ScopeRegistration,
+  refreshM80StartupLayoutAfterRegistryMount,
+} from "../ui-editor/m80HostAdapter.js";
 import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../ui-editor/m80Refs.js";
 import {
   PROTOKOLL_MAIN_HEADER_LAUNCHER,
@@ -76,8 +80,17 @@ export async function openNativeUiEditor(context = {}) {
   if (typeof api.preparePdfContext === "function" && context?.projectId && context?.meetingId) {
     await api.preparePdfContext({ projectId: context?.projectId || null, meetingId: context?.meetingId || null });
   }
-  const registration = createM80RegistrationDescriptor();
   const activeScopeId = String(context?.scopeId || "").trim();
+  if (activeScopeId && context?.launcherButton) {
+    bindDevelopmentUiEditorOpenButtonRef({ scopeId: activeScopeId, button: context.launcherButton });
+  }
+  let registration = createM80RegistrationDescriptor();
+  if (activeScopeId && !registration.activeScopes.includes(activeScopeId)) {
+    console.info("[ui-editor] scope registration before refresh", inspectM80ScopeRegistration(activeScopeId));
+    await refreshM80StartupLayoutAfterRegistryMount();
+    registration = createM80RegistrationDescriptor();
+  }
+  if (activeScopeId) console.info("[ui-editor] scope registration before open", inspectM80ScopeRegistration(activeScopeId));
   if (activeScopeId && !registration.activeScopes.includes(activeScopeId)) {
     const message = "Der UI-Editor kann für den aktuellen Entwicklungsbereich nicht geöffnet werden, weil der erwartete Scope nicht vollständig registriert ist.";
     showRegistryRefreshStatus(message, "blocked");
@@ -131,7 +144,7 @@ export async function installDevelopmentUiEditorOpenButton({
     if (button.disabled) return;
     button.disabled = true;
     try {
-      await openNativeUiEditor({ scopeId, api: uiEditorApi });
+      await openNativeUiEditor({ scopeId, api: uiEditorApi, launcherButton: button });
     } finally {
       button.disabled = false;
     }

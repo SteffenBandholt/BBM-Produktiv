@@ -123,10 +123,23 @@ async function runM8614GlobalLayoutRestoreTests(run) {
       writeProfile(protocolRoot, profileDocument(protocolScope, "protokoll.test.field", 11));
       writeProfile(remainingRoot, profileDocument(remainingScope, "restarbeiten.test.field", 22));
 
+      const protocolFile = path.join(protocolRoot, "standard.layout-profile.json");
+      const remainingFile = path.join(remainingRoot, "standard.layout-profile.json");
+      assert.equal(fs.existsSync(protocolFile), true);
+      assert.equal(fs.existsSync(remainingFile), true);
+      const protocolDocument = JSON.parse(fs.readFileSync(protocolFile, "utf8"));
+      const remainingDocument = JSON.parse(fs.readFileSync(remainingFile, "utf8"));
+      assert.equal(protocolDocument.scopes[0].scopeId, protocolScope.scopeId);
+      assert.equal(remainingDocument.scopes[0].scopeId, remainingScope.scopeId);
+      assert.equal(protocolDocument.scopes[0].registryFingerprint, createUiScopeFingerprint(protocolScope));
+      assert.equal(remainingDocument.scopes[0].registryFingerprint, createUiScopeFingerprint(remainingScope));
+
       const protocolRestart = loadTargetStartupLayout({ profileRoot: protocolRoot, applicationId: "bbm-produktiv", activeScopes: [protocolScope.scopeId], registryScopes: [protocolScope] });
       const remainingRestart = loadTargetStartupLayout({ profileRoot: remainingRoot, applicationId: "bbm-produktiv", activeScopes: [remainingScope.scopeId], registryScopes: [remainingScope] });
       assert.equal(protocolRestart.ok, true);
       assert.equal(remainingRestart.ok, true);
+      assert.equal(protocolRestart.found, true);
+      assert.equal(remainingRestart.found, true);
       assert.equal(protocolRestart.scopes[0].elements[1].x, 11);
       assert.equal(remainingRestart.scopes[0].elements[1].x, 22);
     });

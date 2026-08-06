@@ -581,14 +581,18 @@ app.whenReady().then(async () => {
   registerAudioIpc();
   registerRestarbeitenIpc({ ipcMain });
   uiEditorSessionController = registerUiEditorIpc({ app, ipcMain, getMainWindow: () => mainWindow });
-  ipcMain.handle("uiEditor:getDiagnosticMode", () => ({
-    ok: true,
-    enabled: process.env.BBM_M80_EDITOR_DIAGNOSTIC === "1" ||
-      process.argv.includes("--bbm-electron-editor-diagnostic") ||
-      app.commandLine.hasSwitch("bbm-electron-editor-diagnostic"),
-    startModule: uiEditorAcceptanceModule,
-    isolatedAcceptance: uiEditorAcceptanceProfile.enabled === true,
-  }));
+  ipcMain.handle("uiEditor:getDiagnosticMode", () => {
+    const result = {
+      ok: true,
+      enabled: process.env.BBM_M80_EDITOR_DIAGNOSTIC === "1" ||
+        process.argv.includes("--bbm-electron-editor-diagnostic") ||
+        app.commandLine.hasSwitch("bbm-electron-editor-diagnostic"),
+      startModule: uiEditorAcceptanceModule,
+      isolatedAcceptance: uiEditorAcceptanceProfile.enabled === true,
+    };
+    console.info(`[ui-editor] diagnostic mode requested: enabled=${result.enabled}, module=${result.startModule || "none"}, isolated=${result.isolatedAcceptance}`);
+    return result;
+  });
 
   // ============================================================
   // ✅ Build Channel IPCs

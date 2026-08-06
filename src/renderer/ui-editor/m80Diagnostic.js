@@ -1,6 +1,7 @@
 import RestarbeitenScreen from "../modules/restarbeiten/screens/RestarbeitenScreen.js";
+import { bindDevelopmentUiEditorOpenButtonRef } from "../app/coreShellNavigation.js";
 import { getM80Ref } from "./m80Refs.js";
-import { advanceM80DiagnosticRegistryRevision, emitM80RegistryEvent, refreshM80StartupLayoutAfterRegistryMount } from "./m80HostAdapter.js";
+import { advanceM80DiagnosticRegistryRevision, createM80RegistrationDescriptor, emitM80RegistryEvent, refreshM80StartupLayoutAfterRegistryMount } from "./m80HostAdapter.js";
 import { installProtokollAcceptancePilot } from "./protokollAcceptancePilot.js";
 
 const DIAGNOSTIC_FAILURE_TARGET = "restarbeiten.edit.short.field";
@@ -36,6 +37,7 @@ export async function installBbmM80DiagnosticPilot({ router, module = "restarbei
 
 export async function installBbmM80DiagnosticModule({ router, module = "restarbeiten", isolatedAcceptance = false } = {}) {
   if (module === "protokoll") return installProtokollAcceptancePilot({ router, isolatedAcceptance });
+  console.info(`[ui-editor] restarbeiten diagnostic start: isolated=${isolatedAcceptance === true}`);
   if (!router?.contentRoot) throw new Error("M80-Diagnose braucht den vorhandenen BBM-Inhaltsbereich.");
   router._setSidebarVisibility?.(false);
   const screen = new RestarbeitenScreen({
@@ -52,7 +54,32 @@ export async function installBbmM80DiagnosticModule({ router, module = "restarbe
   screen.root.setAttribute("data-bbm-m80-diagnostic", "true");
   router.contentRoot.replaceChildren(screen.root);
   screen._renderShell();
-  void refreshM80StartupLayoutAfterRegistryMount();
+  if (isolatedAcceptance === true) {
+    const editorLauncher = document.createElement("button");
+    editorLauncher.type = "button";
+    editorLauncher.textContent = "UI-Editor öffnen";
+    editorLauncher.setAttribute("data-bbm-ui-editor-acceptance-launcher", "true");
+    screen.root.prepend(editorLauncher);
+    if (!bindDevelopmentUiEditorOpenButtonRef({ scopeId: "restarbeiten.header.root", button: editorLauncher })) {
+      throw new Error("M86_ACCEPTANCE_UI_EDITOR_LAUNCHER_BIND_FAILED");
+    }
+  }
+  console.info("[ui-editor] restarbeiten diagnostic rendered");
+  const startupRestore = refreshM80StartupLayoutAfterRegistryMount();
+  if (isolatedAcceptance === true) {
+    await startupRestore;
+    console.info("[ui-editor] restarbeiten diagnostic startup restore completed");
+    const registration = createM80RegistrationDescriptor();
+    console.info(`[ui-editor] restarbeiten diagnostic registry: status=${registration.registryStatus}, scopes=${registration.activeScopes.join(",")}`);
+    const missingBaselines = registration.registryScopes.flatMap((scope) => (scope.elements || []).filter((entry) =>
+      (entry?.baseline?.width === null && !(Number(entry?.capturedBaseline?.width) > 0)) ||
+      (entry?.baseline?.height === null && !(Number(entry?.capturedBaseline?.height) > 0))
+    ).map((entry) => entry.id));
+    console.info(`[ui-editor] restarbeiten diagnostic missing baselines: ${missingBaselines.join(",") || "none"}`);
+    const editorResult = await window.uiEditor.open(registration);
+    console.info(`[ui-editor] restarbeiten diagnostic editor open: ok=${editorResult?.ok === true}, code=${editorResult?.errorCode || "none"}`);
+    if (!editorResult?.ok) throw new Error("M86_ACCEPTANCE_UI_EDITOR_OPEN_FAILED");
+  }
   const onControlledFailureKey = (event) => {
     if (!(event.ctrlKey && event.shiftKey && (event.code === "F8" || event.key === "F8"))) return;
     event.preventDefault();

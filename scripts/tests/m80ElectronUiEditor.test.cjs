@@ -104,6 +104,7 @@ async function runM80ElectronUiEditorTests(run) {
     assert.match(diagnostic, /data-bbm-m80-diagnostic/);
     assert.match(diagnostic, /event\.ctrlKey\s*&&\s*event\.shiftKey/);
     assert.match(diagnostic, /uiEditorFailNextApply\s*=\s*"true"/);
+    assert.match(diagnostic, /isolatedAcceptance === true[\s\S]*await startupRestore[\s\S]*const registration = createM80RegistrationDescriptor\(\)[\s\S]*window\.uiEditor\.open\(registration\)/);
     assert.doesNotMatch(diagnostic, /bbmDb|createRestarbeitItem|updateRestarbeitItem|localStorage/);
   });
 

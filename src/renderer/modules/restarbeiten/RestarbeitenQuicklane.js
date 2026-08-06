@@ -26,13 +26,13 @@ function applyQuicklaneRootStyles(root) {
   root.style.background = "rgba(255, 255, 255, 0.96)";
   root.style.boxShadow = "0 10px 22px rgba(31, 41, 55, 0.1)";
   root.style.overflow = "hidden";
-  root.style.transform = "translateX(46px)";
-  root.style.transition = "transform 160ms ease, box-shadow 140ms ease, border-color 140ms ease";
+  root.style.clipPath = "inset(0 0 0 46px)";
+  root.style.transition = "clip-path 160ms ease, box-shadow 140ms ease, border-color 140ms ease";
 }
 
 function setQuicklaneOpen(root, open) {
   root.dataset.open = open ? "true" : "false";
-  root.style.transform = open ? "translateX(0)" : "translateX(46px)";
+  root.style.clipPath = open ? "inset(0)" : "inset(0 0 0 46px)";
   root.style.borderColor = open ? "rgba(29, 78, 216, 0.42)" : "rgba(154, 168, 189, 0.72)";
   root.style.boxShadow = open ? "0 14px 28px rgba(31, 41, 55, 0.15)" : "0 10px 22px rgba(31, 41, 55, 0.1)";
 }
