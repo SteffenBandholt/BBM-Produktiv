@@ -8,9 +8,9 @@ export class TopsWorkbench extends BaseTopsWorkbench {
   }
 
   _installUiEditorCounterBinding() {
-    const root = this.root;
-    const editbox = this.sharedEditboxCore?.editbox;
-    if (!root || !editbox) return;
+    const sharedEditboxCore = this.sharedEditboxCore;
+    const editbox = sharedEditboxCore?.editbox;
+    if (!sharedEditboxCore || !editbox) return;
 
     const registerCounters = () => {
       if (!getM80Ref("protokoll.edit.short.counter")) {
@@ -21,12 +21,12 @@ export class TopsWorkbench extends BaseTopsWorkbench {
       }
     };
 
-    Object.defineProperty(this, "root", {
+    Object.defineProperty(this, "sharedEditboxCore", {
       configurable: true,
       enumerable: true,
       get() {
         registerCounters();
-        return root;
+        return sharedEditboxCore;
       },
     });
   }
