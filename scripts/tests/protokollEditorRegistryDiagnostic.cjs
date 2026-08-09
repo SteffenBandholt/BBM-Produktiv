@@ -3,11 +3,13 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const { pathToFileURL } = require("node:url");
 const { spawnSync } = require("node:child_process");
 const electronBinary = require("electron");
 
 const ROOT = path.resolve(__dirname, "../..");
 const RUNNER = path.join(__dirname, "protokollEditorRegistryDiagnosticRunner.mjs");
+const RUNNER_URL = pathToFileURL(RUNNER).href;
 const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-protokoll-registry-diagnostic-"));
 const resultFile = path.join(temporaryRoot, "result.json");
 const host = path.join(temporaryRoot, "host");
@@ -15,7 +17,7 @@ const host = path.join(temporaryRoot, "host");
 try {
   fs.mkdirSync(host);
   fs.writeFileSync(path.join(host, "package.json"), JSON.stringify({ main: "main.cjs" }), "utf8");
-  fs.writeFileSync(path.join(host, "main.cjs"), `import(${JSON.stringify(RUNNER.replace(/\\/g, "/"))});\n`, "utf8");
+  fs.writeFileSync(path.join(host, "main.cjs"), `import(${JSON.stringify(RUNNER_URL)});\n`, "utf8");
   const env = {
     ...Object.fromEntries(Object.entries(process.env).filter(([key]) => key !== "ELECTRON_RUN_AS_NODE")),
     BBM_PROTOKOLL_REGISTRY_DIAGNOSTIC_RESULT: resultFile,
