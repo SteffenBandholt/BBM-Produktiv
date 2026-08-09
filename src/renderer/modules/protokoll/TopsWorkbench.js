@@ -1,5 +1,5 @@
 import { TopsWorkbench as BaseTopsWorkbench } from "../../tops/components/TopsWorkbench.js";
-import { registerM80Ref } from "../../ui-editor/m80Refs.js";
+import { getM80Ref, registerM80Ref } from "../../ui-editor/m80Refs.js";
 
 export class TopsWorkbench extends BaseTopsWorkbench {
   constructor(options = {}) {
@@ -13,8 +13,12 @@ export class TopsWorkbench extends BaseTopsWorkbench {
     if (!root || !editbox) return;
 
     const registerCounters = () => {
-      registerM80Ref("protokoll.edit.short.counter", editbox.shortCounter);
-      registerM80Ref("protokoll.edit.long.counter", editbox.longCounter);
+      if (!getM80Ref("protokoll.edit.short.counter")) {
+        registerM80Ref("protokoll.edit.short.counter", editbox.shortCounter);
+      }
+      if (!getM80Ref("protokoll.edit.long.counter")) {
+        registerM80Ref("protokoll.edit.long.counter", editbox.longCounter);
+      }
     };
 
     Object.defineProperty(this, "root", {
