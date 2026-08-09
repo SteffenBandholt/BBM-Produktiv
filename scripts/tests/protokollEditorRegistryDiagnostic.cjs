@@ -50,10 +50,10 @@ app.whenReady().then(async () => {
     await win.loadFile(htmlFile);
     win.webContents.setZoomFactor(1);
     const result = await win.webContents.executeJavaScript(
-      \`import(\${JSON.stringify(runnerUrl)}).then(() => true)\`,
+      \`import(\${JSON.stringify(runnerUrl)}).then((module) => module.runProtokollEditorRegistryDiagnostic())\`,
       true
     );
-    void result;
+    fs.writeFileSync(resultFile, JSON.stringify(result, null, 2), "utf8");
   } catch (error) {
     fs.writeFileSync(resultFile, JSON.stringify({ error: error?.stack || String(error) }, null, 2), "utf8");
     process.exitCode = 1;
@@ -66,10 +66,9 @@ app.whenReady().then(async () => {
 
   fs.writeFileSync(path.join(host, "main.cjs"), mainSource, "utf8");
 
-  const env = {
-    ...Object.fromEntries(Object.entries(process.env).filter(([key]) => key !== "ELECTRON_RUN_AS_NODE")),
-    BBM_PROTOKOLL_REGISTRY_DIAGNOSTIC_RESULT: resultFile,
-  };
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([key]) => key !== "ELECTRON_RUN_AS_NODE")
+  );
 
   const child = spawnSync(electronBinary, [host], {
     cwd: ROOT,
