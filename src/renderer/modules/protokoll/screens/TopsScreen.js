@@ -269,7 +269,7 @@ export default class TopsScreen {
     registerM80Ref("protokoll.edit.responsible", responsible.root);
     registerM80Ref("protokoll.edit.responsible.label", responsible.labelTextEl);
     registerM80Ref("protokoll.edit.responsible.field", responsible.selectEl);
-    registerM80Ref("protokoll.edit.ampel", status.trafficWrap);
+    registerM80Ref("protokoll.edit.ampel", status.trafficDot);
   }
 
   _buildProtocolScreenRegions() {

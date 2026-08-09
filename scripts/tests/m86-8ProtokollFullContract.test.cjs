@@ -106,6 +106,18 @@ async function runM868ProtokollFullContractTests(run) {
     assert.match(css, /\.bbm-tops-editbox-long-wrap\s*\{[\s\S]*?grid-column:\s*1[\s\S]*?grid-row:\s*2/s);
     assert.match(css, /\.editbox-meta-slot\s*\{[\s\S]*?grid-column:\s*2[\s\S]*?grid-row:\s*2/s);
   });
+
+  await run("M86.8 04: Editbox-Ampel nutzt den vorhandenen Symbolref und die normale Textgroessenoperation", () => {
+    const contract = registry.getM83ComponentContract("bbm.protokoll.editbox");
+    const ampel = contract.slots.find((slot) => slot.slotId === "protokoll.edit.ampel").element;
+    const screen = read("src/renderer/modules/protokoll/screens/TopsScreen.js");
+    const css = read("src/renderer/modules/protokoll/styles/tops.css");
+    assert.equal(ampel.type, "statusIndicator");
+    assert.equal(ampel.hasVisibleText, true);
+    assert.ok(ampel.allowedOps.includes("textResize"));
+    assert.match(screen, /registerM80Ref\("protokoll\.edit\.ampel", status\.trafficDot\)/);
+    assert.match(css, /\.bbm-tops-meta-due-with-ampel \.status-ampel-dot\s*\{[\s\S]*?width:\s*1em;[\s\S]*?height:\s*1em;[\s\S]*?font-size:\s*15px;/);
+  });
 }
 
 module.exports = { runM868ProtokollFullContractTests };

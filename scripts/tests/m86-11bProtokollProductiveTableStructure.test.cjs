@@ -258,7 +258,7 @@ async function runM8611bProtokollProductiveTableStructureTests(run) {
       assert.strictEqual(list.table.children[0], list.header);
       assert.strictEqual(list.table.children[1], list.root);
       assert.deepEqual(list.header.children.map((element) => element.textContent), [
-        "Nr. / Datum / Klasse",
+        "Nr.\nDatum",
         "Gegenstand",
         "",
       ]);
@@ -294,12 +294,14 @@ async function runM8611bProtokollProductiveTableStructureTests(run) {
         const due = findByClass(dueLine, "bbm-tops-list-row-meta-text");
         const status = findByClass(statusLine, "bbm-tops-list-row-meta-text");
         const responsible = findByClass(responsibleLine, "bbm-tops-list-row-meta-text");
+        assert.equal(itemClass.textContent, "", `Zeile ${index + 1}/Klassenbezeichnung`);
+        assert.equal(itemClass.hidden, true, `Zeile ${index + 1}/Klassenbezeichnung verborgen`);
         for (const [element, owner, label] of [
-          [number, geometry.numberColumn, "Nummer"], [createdAt, geometry.numberColumn, "Datum"], [itemClass, geometry.numberColumn, "Klasse"],
+          [number, geometry.numberColumn, "Nummer"], [createdAt, geometry.numberColumn, "Datum"],
           [shortText, geometry.textColumn, "Kurztext"], [longText, geometry.textColumn, "Langtext"],
           [due, geometry.metaColumn, "Fertig bis"], [status, geometry.metaColumn, "Status"], [responsible, geometry.metaColumn, "Verantwortlich"],
         ]) inside(element, owner, `Zeile ${index + 1}/${label}`);
-        assert.ok(number._rect.top < createdAt._rect.top && createdAt._rect.top < itemClass._rect.top, `Zeile ${index + 1}/links vertikal`);
+        assert.ok(number._rect.top < createdAt._rect.top, `Zeile ${index + 1}/links vertikal`);
         assert.ok(shortText._rect.top < longText._rect.top, `Zeile ${index + 1}/Kurztext vor Langtext`);
         assert.ok(due._rect.top < status._rect.top && status._rect.top < responsible._rect.top, `Zeile ${index + 1}/Meta vertikal`);
         assert.ok(geometry.metaColumn._rect.left >= geometry.textColumn._rect.left + geometry.textColumn._rect.width - 2, `Zeile ${index + 1}/Meta rechts`);

@@ -78,7 +78,7 @@ export class TopsList {
 
     const number = document.createElement("div");
     number.className = "bbm-tops-list-table-header-number";
-    number.textContent = "Nr. / Datum / Klasse";
+    number.textContent = "Nr.\nDatum";
 
     const text = document.createElement("div");
     text.className = "bbm-tops-list-table-header-text";
@@ -271,7 +271,9 @@ export class TopsList {
 
     const itemClass = document.createElement("div");
     itemClass.className = "bbm-tops-list-row-class";
-    itemClass.textContent = String(item.itemClass || (item.isTitle ? "Titel" : "TOP"));
+    itemClass.hidden = true;
+    itemClass.setAttribute("aria-hidden", "true");
+    itemClass.textContent = "";
     num.appendChild(itemClass);
     this._uiEditorRefs["protokoll.list.row.class"].push(itemClass);
 

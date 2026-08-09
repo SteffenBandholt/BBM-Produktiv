@@ -82,6 +82,15 @@ Aktueller Stand:
 - [x] M86.11b Produktive M86.11-Dreispaltenstruktur ausdruecklich beibehalten und hart gegen Blockfluss-Rueckfall absichern
 - [x] M86.12 Tatsaechlichen Dreispaltenfehler im normalen Source-Start messen und reparieren
 - [x] M86.13 Einheitlichen zweizeiligen MainHeader und unteren Entwicklungsmarker herstellen
+- [x] M86.25 Protokoll-Listenbeschriftung, Langtextgröße und Ampel-textResize korrigieren
+
+## Statusupdate M86.25
+
+- Status: `[A]`. Der erste Protokoll-Listenkopf zeigt zweizeilig `Nr.` und `Datum`; `Klasse`, `TOP` und `Titel` werden in der Liste nicht mehr sichtbar ausgegeben. Bestehende IDs, Refs, Parentstruktur und Dreispaltenlayout bleiben erhalten.
+- Kurz- und Langtext verwenden dieselbe Listen-Schriftgröße. Die vorhandenen Abstände, Umbruchregeln und Einrückungen wurden nicht umgebaut.
+- Das bestehende Ziel `protokoll.edit.ampel` zeigt direkt auf den Ampelpunkt und deklariert wie das vergleichbare Listensymbol sichtbaren Text-/Symbolinhalt. Dadurch liefert der Universalvertrag wieder `textResize`; die Punktgeometrie folgt der Schriftgröße über `1em`, ohne Ampelzustand oder Fachaktion zu ändern.
+- Manifestversion und Fingerprint folgen der produktiven Registry. Gezielte Struktur-, Integrations-, Vertrags- und Chromiumtests sowie die sichtbare native Protokoll-Abnahme mit Save, Close und Neustart-Restore sind grün. Vorhandene rote Licensing-, Registryversions-, Navigations-, Feldbreiten- und Harness-Guards der Gesamtsuite bleiben dokumentiert und außerhalb dieses Pakets.
+- Nicht geändert: Fachlogik, Datenmodell, Speicherung, PDF/Druck, Tabellenstruktur, Ampelzustände und Restarbeiten-Produktcode.
 
 ## Statusupdate M86.13
 

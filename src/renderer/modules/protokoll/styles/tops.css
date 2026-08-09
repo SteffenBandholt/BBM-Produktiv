@@ -21,7 +21,6 @@
   --bbm-top-short-font-size: 10pt;
   --bbm-top-long-font-size: 9.5pt;
   --bbm-tops-list-title-font-size: 8.5pt;
-  --bbm-tops-list-long-font-size: 9.5pt;
   --bbm-tops-list-meta-default-font-size: 8pt;
   --bbm-tops-list-date-font-size: 6.5pt;
   --bbm-tops-list-number-default-font-size: 8.5pt;
@@ -704,6 +703,10 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   min-width: 0;
 }
 
+.bbm-tops-list-table-header-number {
+  white-space: pre-line;
+}
+
 .bbm-tops-list-table-header-text {
   padding-inline: var(--bbm-tops-list-text-padding-inline, var(--bbm-top-text-pad-x));
 }
@@ -1003,7 +1006,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 .bbm-tops-list-row-preview {
   margin-top: 4px;
   /* DEV-Layout: keep preview in sync with the text-zone font size when overridden. */
-  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-tops-list-long-font-size));
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-tops-list-title-font-size));
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
   max-inline-size: var(--bbm-top-long-measure);
@@ -1014,13 +1017,12 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row:not([data-top-level="1"]) .bbm-tops-list-row-preview {
-  font-size: var(--bbm-tops-list-long-font-size);
   max-inline-size: 107ch;
 }
 
 /* DEV-Layout override: when the text-zone font variable is set, keep the preview in sync. */
 .bbm-tops-list-row-text .bbm-tops-list-row-preview {
-  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-tops-list-long-font-size));
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-tops-list-title-font-size));
 }
 
 .bbm-tops-list-row[data-is-important="true"]:not([data-is-completed="true"]) .bbm-tops-list-row-preview {
@@ -1628,8 +1630,9 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-meta-due-with-ampel .status-ampel-dot {
-  width: 15px;
-  height: 15px;
+  width: 1em;
+  height: 1em;
+  font-size: 15px;
   border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.25);
   background: transparent;

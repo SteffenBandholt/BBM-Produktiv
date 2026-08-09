@@ -1,5 +1,13 @@
 # STATUS.md — BBM-Produktiv
 
+### M86.25 – Protokoll-Liste und Ampel-Editor korrigieren
+
+- Status: `[A]`; die Listenüberschrift zeigt `Nr.` und darunter `Datum`, ohne `Klasse`. In den Zeilen bleiben nur Nummer und Datum sichtbar; die bestehenden stabilen Klassen-Refs bleiben als unsichtbare Kompatibilitätsziele erhalten.
+- Der Listen-Langtext verwendet dieselbe Standard-Schriftgröße wie der Kurztext. Einrückung, Umbruch, Abstände, Dreispaltenstruktur und Fachwerte bleiben unverändert.
+- `protokoll.edit.ampel` behält seine ID, bindet nun direkt den vorhandenen Ampelpunkt und erhält über den normalen Komponentenvertrag wieder `textResize`. Die Punktgröße folgt dabei der Editor-Schriftgröße über `1em`; Ampelstatus und Fachlogik bleiben unangetastet.
+- Registryversion und Gesamtfingerprint im Ziel-App-Manifest sind mit der bereits produktiven Registry synchronisiert. Gezielte Vertrags-, DOM-, Chromium- und sichtbare Save-/Restart-Prüfungen sind grün. Der Gesamttest bleibt an vorhandenen Licensing-, Registryversions-, Navigations-, Feldbreiten- und Harness-Guards rot; Commit-SHA wird im Paketabschluss berichtet.
+- Nächster offener Schritt für M86.25: keiner.
+
 ### M86.13 – Einheitlicher zweizeiliger Modulheader
 
 - Status: `[A]`; `src/renderer/ui/MainHeader.js` bleibt die einzige gemeinsame Headerquelle fuer Protokoll, Restarbeiten und weitere CoreShell-Ansichten.

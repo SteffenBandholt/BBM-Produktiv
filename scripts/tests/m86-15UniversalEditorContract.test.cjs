@@ -165,6 +165,13 @@ async function runM8615UniversalEditorContractTests(run) {
     assert.ok(symbols.length >= 7);
     for (const symbol of symbols) UNIVERSAL_OPS.forEach((operation) => assert.ok(symbol.allowedOps.includes(operation), `${symbol.id}: ${operation}`));
     for (const id of ["restarbeiten.edit.meta.ampel", "restarbeiten.record.ampel", "protokoll.edit.ampel", "protokoll.list.row.ampel", "protokoll.list.row.todo", "protokoll.list.row.decision"]) assert.ok(byId.get(id)?.allowedOps.includes("move"), id);
+    const protokollEditAmpel = byId.get("protokoll.edit.ampel");
+    assert.equal(protokollEditAmpel?.hasVisibleText, true);
+    assert.ok(protokollEditAmpel?.allowedOps.includes("textResize"));
+    assert.deepEqual(
+      [protokollEditAmpel?.baseline?.width, protokollEditAmpel?.baseline?.height, protokollEditAmpel?.baseline?.fontSize],
+      [15, 15, 15],
+    );
   });
 
   const previous = { document: global.document, window: global.window, Element: global.Element, CustomEvent: global.CustomEvent };

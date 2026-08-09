@@ -288,7 +288,7 @@ async function runM8611ProtokollRestarbeitenRowGeometryTests(run) {
       "protokoll.list.row.createdAt": 8.667,
       "protokoll.list.row.class": 8.667,
       "protokoll.list.row.short": 11.333,
-      "protokoll.list.row.long": 12.667,
+      "protokoll.list.row.long": 11.333,
       "protokoll.list.row.due": 10.667,
       "protokoll.list.row.status": 10.667,
       "protokoll.list.row.responsible": 10.667,
@@ -381,13 +381,14 @@ async function runM8611ProtokollRestarbeitenRowGeometryTests(run) {
       ]);
     });
 
-    await run("M86.11 05: Nummer, Datum und Klasse stehen am selben x und streng untereinander", () => {
+    await run("M86.11 05: Nummer und Datum stehen untereinander; die Klassenbezeichnung bleibt unsichtbar", () => {
       const number = refs.getM80Ref("protokoll.list.row.number").element;
       const date = refs.getM80Ref("protokoll.list.row.createdAt").element;
       const itemClass = refs.getM80Ref("protokoll.list.row.class").element;
-      assertApproximatelySameX([number, date, itemClass], "linke Spalte");
+      assertApproximatelySameX([number, date], "linke Spalte");
       assert.ok(number.getBoundingClientRect().top < date.getBoundingClientRect().top);
-      assert.ok(date.getBoundingClientRect().top < itemClass.getBoundingClientRect().top);
+      assert.equal(itemClass.textContent, "");
+      assert.equal(itemClass.hidden, true);
     });
 
     await run("M86.11 06: Kurztext und Langtext stehen am selben x und Kurztext liegt oben", () => {
@@ -409,7 +410,7 @@ async function runM8611ProtokollRestarbeitenRowGeometryTests(run) {
 
     await run("M86.11 08: alle Einzelziele liegen in derselben TOP-Zeile und Meta niemals unter dem Gegenstand", () => {
       const row = protocolGeometry.rowElement;
-      for (const id of ["protokoll.list.row.number", "protokoll.list.row.createdAt", "protokoll.list.row.class", "protokoll.list.row.short", "protokoll.list.row.long", "protokoll.list.row.due", "protokoll.list.row.status", "protokoll.list.row.responsible", "protokoll.list.row.ampel"]) {
+      for (const id of ["protokoll.list.row.number", "protokoll.list.row.createdAt", "protokoll.list.row.short", "protokoll.list.row.long", "protokoll.list.row.due", "protokoll.list.row.status", "protokoll.list.row.responsible", "protokoll.list.row.ampel"]) {
         assertInside(refs.getM80Ref(id).element, row, id);
       }
       const subject = protocolGeometry.textColumn.getBoundingClientRect();
@@ -461,24 +462,20 @@ async function runM8611ProtokollRestarbeitenRowGeometryTests(run) {
       const host = await importEsmFromFile(path.join(ROOT, "src/renderer/ui-editor/m80HostAdapter.js"));
       const hiddenRef = refs.getM80Ref("protokoll.list.row.long");
       assert.equal(hiddenRef.contractTargets.length, 0);
-      const restored = host.handleM80EditorRequest({
-        action: "submitChange",
-        scopeId: "protokoll.list.root",
-        changeRequest: {
-          changeId: "m86-11-hidden-startup-longtext",
-          elementId: "protokoll.list.row.long",
-          operation: "textResize",
-          payload: { text: { fontSize: 11 } },
-          source: "target-app-start",
-        },
-      }).changeResult;
-      assert.equal(restored.success, true, restored.message);
-      assert.equal(restored.newState.fontSize, 11);
+      const hiddenState = refs.snapshotM80State("protokoll.list.row.long");
+      const currentFontSize = Number(hiddenState.fontSize);
+      const startupFontSize = currentFontSize >= 48 ? currentFontSize - 1 : currentFontSize + 1;
+      const restored = refs.applyM80State(
+        "protokoll.list.row.long",
+        { ...hiddenState, fontSize: startupFontSize },
+        "textResize"
+      );
+      assert.equal(restored.fontSize, startupFontSize);
 
       list.setItems([{ id: 13, level: 2, number: "1.3.", itemClass: "TOP", title: "Wieder sichtbar", preview: "Gespeicherter Langtext" }]);
       const visibleRef = refs.getM80Ref("protokoll.list.row.long");
       assert.equal(visibleRef.contractTargets.length, 1);
-      assert.equal(visibleRef.contractTargets[0].style.fontSize, "11px");
+      assert.equal(visibleRef.contractTargets[0].style.fontSize, `${startupFontSize}px`);
 
       list.setItems([{ id: 14, level: 2, number: "1.4.", itemClass: "TOP", title: "Wieder ausgeblendet" }]);
       const interactive = host.handleM80EditorRequest({

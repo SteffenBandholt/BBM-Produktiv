@@ -49,12 +49,12 @@ async function runChromiumProbe() {
     const html = `<!doctype html><html><head><meta charset="utf-8"><style>${css}</style></head><body>
       <div id="table" class="bbm-tops-list-table" style="width:900px">
         <div id="header" class="bbm-tops-list-table-header">
-          <div class="bbm-tops-list-table-header-number">Nr. / Datum / Klasse</div>
+          <div class="bbm-tops-list-table-header-number">Nr.<br>Datum</div>
           <div class="bbm-tops-list-table-header-text">Gegenstand</div>
           <div class="bbm-tops-list-table-header-meta">Fertig bis / Status / Verantw.</div>
         </div>
         <div id="row" class="bbm-tops-list-row-grid">
-          <div class="bbm-tops-list-row-number">1. / 03.08.2026 / TOP</div>
+          <div class="bbm-tops-list-row-number">1.<br>03.08.2026</div>
           <div class="bbm-tops-list-row-text">Kurztext<br>Langtext</div>
           <div class="bbm-tops-list-row-meta">09.08.2026<br>offen<br>Steffen</div>
         </div>

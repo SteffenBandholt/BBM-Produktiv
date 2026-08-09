@@ -44,7 +44,7 @@ const elements = [
     m83Element({ id: `protokoll.edit.${key}.label`, name: `Bezeichnung ${name}`, type: "label", role: "fieldLabel", parentId: `protokoll.edit.${key}`, order: order + 1, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
     m83Element({ id: `protokoll.edit.${key}.field`, name: `Eingabefeld ${name}`, type: "field", role: "dataFieldLayout", parentId: `protokoll.edit.${key}`, order: order + 2, allowedOps: FIELD_LAYOUT, fieldKind, componentKind: fieldKind === "date" ? "dateInput" : "select" }),
   ]),
-  m83Element({ id: "protokoll.edit.ampel", name: "Statussymbol Ampel", type: "statusIndicator", role: "status", parentId: "protokoll.edit.meta", order: 100, allowedOps: ICON_LAYOUT, componentKind: "statusIndicator" }),
+  m83Element({ id: "protokoll.edit.ampel", name: "Statussymbol Ampel", type: "statusIndicator", role: "status", parentId: "protokoll.edit.meta", order: 100, allowedOps: ICON_LAYOUT, componentKind: "statusIndicator", hasVisibleText: true, baseline: { width: 15, height: 15, minWidth: 7, maxWidth: 48, minHeight: 7, maxHeight: 48, fontSize: 15, minFontSize: 7, maxFontSize: 48 } }),
 ];
 
 export const PROTOKOLL_EDIT_REQUIRED_SLOTS = Object.freeze([

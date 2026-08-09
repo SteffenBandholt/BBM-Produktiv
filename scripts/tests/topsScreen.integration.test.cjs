@@ -561,8 +561,10 @@ async function runTopsScreenIntegrationTests(run) {
       assert.equal(numberCell.children[0].children[0].textContent, "7.");
       assert.equal(numberCell.children[1].textContent, "27.04.2026");
       assert.equal(numberCell.children[1].className, "bbm-tops-list-row-number-date");
-      assert.equal(numberCell.children[2].textContent, "TOP");
+      assert.equal(numberCell.children[2].textContent, "");
       assert.equal(numberCell.children[2].className, "bbm-tops-list-row-class");
+      assert.equal(numberCell.children[2].hidden, true);
+      assert.equal(numberCell.children[2]["aria-hidden"], "true");
 
       list.setItems(datedRows);
       const datedRow = list.root.children[list.root.children.length - 1];
@@ -717,7 +719,7 @@ async function runTopsScreenIntegrationTests(run) {
     }
   });
 
-  await run("Tops v2 Integration: Ohne TOP-Anlagedatum bleibt die Datumszeile aus und die Klasse sichtbar", () => {
+  await run("Tops v2 Integration: Ohne TOP-Anlagedatum bleibt nur die Nummer sichtbar", () => {
     const prevDocument = globalThis.document;
     globalThis.document = createFakeDocument();
     try {
@@ -738,8 +740,9 @@ async function runTopsScreenIntegrationTests(run) {
       const numberCell = grid.children[0];
       assert.equal(numberCell.children.length, 2);
       assert.equal(numberCell.children[0].children[0].textContent, "8.");
-      assert.equal(numberCell.children[1].textContent, "TOP");
+      assert.equal(numberCell.children[1].textContent, "");
       assert.equal(numberCell.children[1].className, "bbm-tops-list-row-class");
+      assert.equal(numberCell.children[1].hidden, true);
     } finally {
       globalThis.document = prevDocument;
     }
@@ -882,7 +885,7 @@ async function runTopsScreenIntegrationTests(run) {
     );
   });
 
-  await run("Tops v2 Integration: Titel zeigt vorhandenes Anlagedatum und bestehende Level-Klasse", () => {
+  await run("Tops v2 Integration: Titel zeigt Nummer und Anlagedatum ohne sichtbare Level-Klasse", () => {
     const rows = buildListItemsFromState({
       tops: [
         {
@@ -914,7 +917,8 @@ async function runTopsScreenIntegrationTests(run) {
       assert.equal(numberCell.children.length, 3);
       assert.equal(numberCell.children[0].children[0].textContent, "1.");
       assert.equal(numberCell.children[1].textContent, "27.04.2026");
-      assert.equal(numberCell.children[2].textContent, "Titel");
+      assert.equal(numberCell.children[2].textContent, "");
+      assert.equal(numberCell.children[2].hidden, true);
     } finally {
       globalThis.document = prevDocument;
     }
@@ -1621,7 +1625,12 @@ async function runTopsScreenIntegrationTests(run) {
       true
     );
     assert.equal(
-      topsCss.includes(".bbm-tops-list-row:not([data-top-level=\"1\"]) .bbm-tops-list-row-preview {\n  font-size: var(--bbm-tops-list-long-font-size);\n  max-inline-size: 107ch;"),
+      topsCss.includes(".bbm-tops-list-row:not([data-top-level=\"1\"]) .bbm-tops-list-row-preview {\n  max-inline-size: 107ch;"),
+      true
+    );
+    assert.equal(topsCss.includes("--bbm-tops-list-long-font-size"), false);
+    assert.equal(
+      topsCss.includes("font-size: var(--bbm-tops-list-text-font-size, var(--bbm-tops-list-title-font-size));"),
       true
     );
     assert.equal(
