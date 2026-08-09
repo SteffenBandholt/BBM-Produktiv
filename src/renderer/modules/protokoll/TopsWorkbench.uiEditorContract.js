@@ -28,7 +28,7 @@ const elements = [
   ...[["short", "Kurztext", "text", 41], ["long", "Langtext", "multilineText", 50]].flatMap(([key, name, fieldKind, order]) => [
     m83Element({ id: `protokoll.edit.${key}`, name: `Gruppe ${name}`, type: "fieldGroup", role: "formFieldGroup", parentId: "protokoll.edit.text", order, allowedOps: groupLayout, componentKind: "fieldGroup" }),
     m83Element({ id: `protokoll.edit.${key}.label`, name: `Bezeichnung ${name}`, type: "label", role: "fieldLabel", parentId: `protokoll.edit.${key}`, order: order + 1, allowedOps: TEXT_LAYOUT, componentKind: "label" }),
-    m83Element({ id: `protokoll.edit.${key}.counter`, name: `Restzeichen ${name}`, type: "label", role: "status", parentId: `protokoll.edit.${key}.label`, order: order + 2, allowedOps: TEXT_LAYOUT, componentKind: "counter", hasVisibleText: true, baseline: { minWidth: 1, minHeight: 1 } }),
+    m83Element({ id: `protokoll.edit.${key}.counter`, name: `Restzeichenanzeige ${name}`, type: "label", role: "status", parentId: `protokoll.edit.${key}`, order: order + 2, allowedOps: TEXT_LAYOUT, componentKind: "counter", hasVisibleText: true, baseline: { minWidth: 1, minHeight: 1 } }),
     m83Element({ id: `protokoll.edit.${key}.field`, name: `Eingabefeld ${name}`, type: "field", role: "dataFieldLayout", parentId: `protokoll.edit.${key}`, order: order + 3, allowedOps: FIELD_LAYOUT, fieldKind, componentKind: fieldKind === "text" ? "input" : "textarea", ...(fieldKind === "multilineText" ? { baseline: { width: null, height: null, minWidth: 120, maxWidth: 1880, minHeight: 24, maxHeight: 720 } } : {}) }),
   ]),
   m83DomainButton({ id: "protokoll.edit.short.action.dictation", name: "Diktat starten Kurztext", parentId: "protokoll.edit.short.label", order: 45, actionKind: "dictationShort" }),
