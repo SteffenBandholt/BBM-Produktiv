@@ -315,7 +315,7 @@ export function buildRestarbeitenEditbox({
   registerM80Ref("restarbeiten.edit.fields", textArea);
   textArea.append(
     createTextField({
-      label: "Kurztext / Gegenstand",
+      label: "Kurztext",
       labelUiId: "restarbeiten.editbox.text.short.label",
       value: draft.short_text || "",
       uiId: "restarbeiten.editbox.text.short",
@@ -338,7 +338,7 @@ export function buildRestarbeitenEditbox({
       onCommit: () => onAutoSave?.(),
     }),
     createTextField({
-      label: "Langtext / Beschreibung",
+      label: "Langtext",
       labelUiId: "restarbeiten.editbox.text.long.label",
       value: draft.long_text || "",
       uiId: "restarbeiten.editbox.text.long",

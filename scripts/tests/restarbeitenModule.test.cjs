@@ -436,7 +436,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(text.includes("Restarbeitenliste wird neu aufgebaut."), false);
     assert.equal(text.includes("Verortung"), false);
     assert.equal(text.includes("Tuer einstellen"), true);
-    assert.equal(text.includes("Kurztext / Gegenstand"), true);
+    assert.equal(findByUiId(rendered.root, "restarbeiten.editbox.text.short.label")?.textContent, "Kurztext");
+    assert.equal(findByUiId(rendered.root, "restarbeiten.editbox.text.long.label")?.textContent, "Langtext");
     assert.equal(text.includes("Neu"), true);
     assert.equal(text.includes("Speichern"), false);
     assert.equal(text.includes("Datensatz löschen"), false);
