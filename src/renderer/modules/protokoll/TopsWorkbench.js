@@ -4,31 +4,25 @@ import { getM80Ref, registerM80Ref } from "../../ui-editor/m80Refs.js";
 export class TopsWorkbench extends BaseTopsWorkbench {
   constructor(options = {}) {
     super(options);
-    this._installUiEditorCounterBinding();
+    this._registerUiEditorCounterRefs();
   }
 
-  _installUiEditorCounterBinding() {
-    const sharedEditboxCore = this.sharedEditboxCore;
-    const editbox = sharedEditboxCore?.editbox;
-    if (!sharedEditboxCore || !editbox) return;
+  _registerUiEditorCounterRefs() {
+    const editbox = this.sharedEditboxCore?.editbox;
+    if (!editbox) return;
 
-    const registerCounters = () => {
-      if (!getM80Ref("protokoll.edit.short.counter")) {
-        registerM80Ref("protokoll.edit.short.counter", editbox.shortCounter);
-      }
-      if (!getM80Ref("protokoll.edit.long.counter")) {
-        registerM80Ref("protokoll.edit.long.counter", editbox.longCounter);
-      }
-    };
+    if (!getM80Ref("protokoll.edit.short.counter")) {
+      registerM80Ref("protokoll.edit.short.counter", editbox.shortCounter);
+    }
+    if (!getM80Ref("protokoll.edit.long.counter")) {
+      registerM80Ref("protokoll.edit.long.counter", editbox.longCounter);
+    }
+  }
 
-    Object.defineProperty(this, "sharedEditboxCore", {
-      configurable: true,
-      enumerable: true,
-      get() {
-        registerCounters();
-        return sharedEditboxCore;
-      },
-    });
+  setState(...args) {
+    const result = super.setState(...args);
+    this._registerUiEditorCounterRefs();
+    return result;
   }
 }
 
