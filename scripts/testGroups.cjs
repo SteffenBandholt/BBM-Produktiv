@@ -42,6 +42,13 @@ const TEST_GROUPS = Object.freeze([
     ]),
   }),
   Object.freeze({
+    id: "rechnungen-design",
+    label: "Rechnungen UI-Designreferenz",
+    suites: Object.freeze([
+      ["rechnungenDesignModule.test.cjs", "runRechnungenDesignModuleTests"],
+    ]),
+  }),
+  Object.freeze({
     id: "editor-core",
     label: "Editor-Kern",
     suites: Object.freeze([

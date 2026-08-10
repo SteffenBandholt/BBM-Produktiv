@@ -923,6 +923,25 @@ export default class Router {
     await this.show(new V({ router: this }), { section: "settings", isTopsView: false });
   }
 
+  async isRechnungenDesignAvailable() {
+    const mod = await import("../modules/rechnungen/index.js");
+    return await mod.isRechnungenDesignAvailable({ api: globalThis.window?.bbmDb });
+  }
+
+  async showRechnungenDesign() {
+    const mod = await import("../modules/rechnungen/index.js");
+    const available = await mod.isRechnungenDesignAvailable({ api: globalThis.window?.bbmDb });
+    if (!available) return { ok: false, reason: "DEV_ONLY" };
+
+    await this.show(new mod.RechnungenDesignScreen({ router: this }), {
+      section: "rechnungenDesign",
+      isTopsView: false,
+      pageTitle: "Rechnungen · Design-Dummy",
+      hideSidebar: false,
+    });
+    return { ok: true };
+  }
+
   async showBbmUiEditorDemo() {
     const ui = {
       node(tag) {

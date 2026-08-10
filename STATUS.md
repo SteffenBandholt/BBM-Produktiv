@@ -3987,6 +3987,16 @@ Wichtig:
 - Guardrail: `scripts/tests/m86-24VisibleEditorAcceptance.test.cjs` steuert den sichtbaren nativen Editor über Windows UI Automation, misst reale DOM-Bounds und prüft persistentes Profil, Protokollreihenfolge und Neustart-Restore beider Module.
 - Schutz: `docs/licensing.md` blieb hashgleich; Benutzerlizenz, `app.db`, `app.db.bak` und `design-reference/` wurden nicht geöffnet oder verändert. Commit, Push, PR und Merge: keiner.
 
+## Rechnungen - isolierte UI-Designreferenz
+
+- Status: DEV-Design-Dummy umgesetzt und sichtbar in Electron geprüft.
+- Fundstelle der früheren Referenz: `../UI-Editor-kit/reference-target-app`, native WPF-Referenz „Auftragsverwaltung“.
+- Der Einstieg liegt ausschließlich in DEV unter `Einstellungen -> Entwicklung -> Rechnungen · Design-Dummy`; außerhalb von DEV bleibt das Element `display:none` und der Router blockiert den direkten Aufruf zusätzlich.
+- Übersicht und Popup verwenden nur statische lokale Beispieldaten. Datenbank, IPC, Speicherung, Rechnungsberechnung, PDF-Erzeugung, ZUGFeRD/E-Rechnung und GAEB bleiben ausdrücklich ausgeschlossen.
+- Die lokalen Tokens sind in `src/renderer/modules/rechnungen/styles/rechnungenDesign.css` gekapselt und in der Modul-README dokumentiert. Die Dummy-Tabelle ist weder UI-Editor-Ziel noch Tabellenlayout-Registry-Eintrag.
+- Electron-Sichtprüfung: Übersicht und Popup bei Desktop-Größe vollständig sichtbar; bei effektiv 960 x 600 ist der Dialogkörper scrollbar, während Header, Footer und Aktionen sichtbar bleiben. Speichern und PDF zeigen ausschließlich einen erklärenden Dummy-Status.
+- Guardrail: `scripts/tests/rechnungenDesignModule.test.cjs`; nächster sinnvoller Schritt ist die fachliche Designabnahme, bevor einzelne Tokens in einen globalen BBM-Standard überführt werden.
+
 ## M86.25 - Reale Benutzerprofil-Persistenz im normalen BBM-Lauf
 
 - Status: `[A]`; der reale Save-/Close-/Neustart-Ablauf wurde mit den vorhandenen Benutzerprofilen für Protokoll und Restarbeiten praktisch geprüft.

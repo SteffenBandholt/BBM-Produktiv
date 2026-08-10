@@ -6809,6 +6809,16 @@ export default class SettingsView {
       },
     });
 
+    const tileInvoicesDesign = mkTile({
+      titleText: "Rechnungen · Design-Dummy",
+      subText: "DEV-Referenz für Formulare, Tabellen, Karten und Popups",
+      onClick: async () => {
+        await this.router?.showRechnungenDesign?.();
+      },
+    });
+    tileInvoicesDesign.style.display = "none";
+    tileInvoicesDesign.setAttribute("data-settings-dev-entry", "rechnungen-design");
+
     const groupGeneral = mkGroup({
       key: "general",
       titleText: "Allgemein",
@@ -6845,10 +6855,20 @@ export default class SettingsView {
       tiles: [tileDev],
       variant: "dev",
     });
+    groupDev.children[1]?.append(tileInvoicesDesign);
 
     tiles.append(groupGeneral, groupInput, groupOutput, groupModule, groupDev);
     root.append(head, tiles);
     this.root = root;
+
+    if (typeof this.router?.isRechnungenDesignAvailable === "function") {
+      void this.router.isRechnungenDesignAvailable().then((available) => {
+        if (this.root !== root) return;
+        tileInvoicesDesign.style.display = available ? "flex" : "none";
+      }).catch(() => {
+        tileInvoicesDesign.style.display = "none";
+      });
+    }
 
     const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: OVERLAY_TOP });
     overlay.style.alignItems = "center";

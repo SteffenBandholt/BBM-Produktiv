@@ -435,6 +435,15 @@ Dabei gilt:
 - PDF, Druck, Mail, Diktat/Audio, Fachlogik, Datenbankmigration, automatische DOM-Erkennung, neue Modul-Anbindung und neue Editor-Architektur blieben ausserhalb dieses Pakets.
 - Neue Doku: `docs/M36_UI_EDITOR_FIXSTAND_ABNAHME.md`.
 
+### Designreferenz Rechnungen (DEV-Dummy, abgeschlossen)
+
+- Eigenständiger Renderer-Modulordner `src/renderer/modules/rechnungen` mit statischen Beispieldaten, lokaler Tokenquelle und zwei sichtbaren Zuständen: Übersicht sowie „Rechnung bearbeiten“.
+- DEV-Einstieg über `Einstellungen -> Entwicklung`; keine Aufnahme in produktive Modulnavigation, Lizenzmodule, UI-Editor-Registry oder Tabellenlayout-Registry.
+- Keine Datenbank-, IPC-, Speicher-, Berechnungs-, ZUGFeRD-/E-Rechnungs-, GAEB- oder PDF-Funktion.
+- Referenzen: WPF-Referenz „Auftragsverwaltung“ in `../UI-Editor-kit/reference-target-app`, bestehende BBM-Einstellungskarten und das kompakte Projektformular.
+- Automatischer Guardrail und Electron-Sichtprüfung einschließlich kleinem, scrollbar bleibendem Dialogviewport vorhanden.
+- Nächster Schritt außerhalb dieses Pakets: Designwerte fachlich beurteilen und erst nach ausdrücklicher Freigabe eine mögliche globale BBM-Standardisierung separat planen.
+
 ### M37 UI-Editor Klick-Abnahme dokumentiert (neu)
 - Die manuelle Klick-Abnahme des UI-Editor-Fixstands ist als Pruefliste dokumentiert.
 - Die Abnahme umfasst App-Start, sichtbaren UI-Editor, Restarbeiten- und Protokoll/TOPS-Scope, aktive Scope-Anzeige, Elementauswahl, Scope-Wechsel, Speichern/Laden/Reset und Blockademeldungen.
