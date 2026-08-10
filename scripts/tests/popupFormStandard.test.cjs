@@ -164,6 +164,40 @@ async function runPopupFormStandardTests(run) {
     assert.equal(popupCommon.includes('? "app"'), true);
   });
 
+  await run("Popup-Standard: Spezial- und Vorschaupopups nutzen die aktive gemeinsame Basis", () => {
+    const help = read("src/renderer/ui/HelpModal.js");
+    const print = read("src/renderer/modules/ausgabe/PrintModal.js");
+    const selector = read("src/renderer/ui/react/ClosedProtocolSelector.js");
+    const dictation = read("src/renderer/features/audio-dictation/DictationController.js");
+
+    assert.equal(
+      (help.match(/classList\.add\("bbm-popup-standard", "bbm-popup-dialog"\)/g) || []).length,
+      2
+    );
+    assert.equal(help.includes('body.className = "bbm-popup-body"'), true);
+    assert.equal(help.includes('footer.className = "bbm-popup-footer"'), true);
+    assert.equal(help.includes('head.style.padding = "12px"'), false);
+
+    assert.equal(
+      (print.match(/modal\.classList\.add\("bbm-popup-standard", "bbm-popup-dialog"\)/g) || []).length,
+      4
+    );
+    assert.equal(print.includes('content.className = "bbm-popup-body"'), true);
+    assert.equal(print.includes('body.className = "bbm-popup-body bbm-form-content"'), true);
+    assert.equal(print.includes('actions.className = "bbm-popup-footer"'), true);
+    assert.equal(print.includes('select.style.minHeight = "38px"'), false);
+    assert.equal(print.includes("cleanupPopupHandlers(overlay)"), true);
+
+    assert.equal(selector.includes("createPopupOverlay({ background:"), true);
+    assert.equal(selector.includes('className: "bbm-popup-standard bbm-popup-dialog"'), true);
+    assert.equal(selector.includes('className: "bbm-popup-body bbm-form-content"'), true);
+    assert.equal(selector.includes('className: "bbm-popup-footer"'), true);
+    assert.equal(selector.includes('overlay.style.position = "fixed"'), false);
+
+    assert.equal(dictation.includes("maybeOfferTermCorrection(target, value, hostEl)"), true);
+    assert.equal((dictation.match(/maybeOfferTermCorrection\(/g) || []).length, 1);
+  });
+
   await run("Popup-Standard: zentrale Dokumentation nennt Zweck, Nutzer und Pilotgrenze", () => {
     const docs = read("docs/BBM_POPUP_FORMULARSTANDARD.md");
     assert.equal(docs.includes("Tokenname"), true);

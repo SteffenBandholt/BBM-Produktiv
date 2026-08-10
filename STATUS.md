@@ -4048,3 +4048,24 @@ Wichtig:
 - Horizontale Formularzeilen sind nicht mehr fälschlich als zentrale vertikale `bbm-form-group` markiert; ihre Wrap- und Spaltenabstände referenzieren den Token nun ausdrücklich.
 - Der lokale Zusatzabstand vor `Ablageordner (PDF)` wurde entfernt; dadurch wird dort nicht mehr `10px + 4px`, sondern exakt der zentrale Gruppenabstand gerendert.
 - Zentrale Tokens, Spalten, Feldbreiten, Fachlogik und andere Popups blieben unverändert.
+
+## Popup-/Formularstandard - fünfte kontrollierte Migrationswelle
+
+- Status: Hilfe/Info, Folgetermin, ToDo-Verantwortlichenfilter, die gemeinsame
+  geschlossene Protokollauswahl und die gemeinsame PDF-Vorschauhülle verwenden die
+  unveränderte zentrale Opt-in-Basis.
+- Die PDF-/Dokumentvorschau im Iframe und die kompakten Auswahl-/Listenzeilen
+  blieben funktional und geometrisch unverändert.
+- Der alte Wörterbuch-/Diktat-Prompt besitzt keinen produktiven Aufrufer und wurde
+  nicht reaktiviert. Weitere ungemountete Varianten sind im Formularstandard
+  kategorisiert; gelöscht wurde nichts.
+- Electron-Sichtprüfung: Desktop und kleiner Viewport, Fokus, Disabled-Darstellung,
+  Scrollbarkeit, sichtbare Header/Footer und echte PDF-Vorschau; Screenshots liegen
+  unter `output/playwright/popup-standard-wave5`.
+- Popup-, Rechnungen- und Layout-/Ausgabe-Testgruppen sowie UI-Editor-Vertragscheck
+  sind grün. Der zusätzliche App-Modul-Lauf bestätigt die Hilfe-Navigation, bleibt
+  insgesamt aber an vier bekannten paketfremden MainHeader-/Bridge-Altassertionen
+  rot; keine davon betrifft eine geänderte Datei. Gezieltes ESLint meldet 0 Fehler
+  und 26 bestehende Warnungen.
+- Nächster Schritt: ausschließlich Sichtfreigabe dieser Welle; keine automatische
+  Löschung oder weitere Massenmigration.

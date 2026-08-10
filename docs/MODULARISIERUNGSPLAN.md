@@ -462,3 +462,16 @@ Dabei gilt:
 - M37 ist ein reines Doku-/Abnahmepaket ohne Code-, UI-, Fachlogik-, Modul- oder Architekturaenderung.
 - `git diff --check`, `node scripts/ui-editor-contract-check.cjs --self-test`, `npm test` und `npm start` liefen gruen; das App-Fenster `BBM` war sichtbar und antwortend.
 - Neue Doku: `docs/M37_UI_EDITOR_KLICK_ABNAHME.md`.
+
+### Zentraler Popup-/Formularstandard (fünftes Migrationspaket umgesetzt, Freigabe offen)
+
+- Das fünfte kontrollierte Paket ergänzt Hilfe/Info, Folgetermin,
+  ToDo-Verantwortlichenfilter, die gemeinsame geschlossene Protokollauswahl und die
+  gemeinsame PDF-Vorschauhülle. Die zentralen Tokenwerte bleiben unverändert.
+- Vorschauinhalt, PDF-Renderer, Filter-/Terminlogik, Listenzeilen und Datenbindung
+  wurden nicht verändert.
+- Nicht aufgerufene Diktat-/Wörterbuch-, TOP-Regeln-, Vorbemerkungs- und
+  MainHeader-Auswahlvarianten wurden nur inventarisiert und nicht reaktiviert; der
+  separate aktive MainHeader-Maildialog blieb außerhalb dieser Welle.
+- Nächster Schritt ist ausschließlich die visuelle Freigabe; keine automatische
+  Löschung und keine sechste Migrationswelle.

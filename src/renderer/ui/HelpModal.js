@@ -35,13 +35,15 @@ export default class HelpModal {
 
     const modal = document.createElement("div");
     stylePopupCard(modal, { width: "min(760px, calc(100vw - 24px))" });
+    modal.classList.add("bbm-popup-standard", "bbm-popup-dialog");
+    modal.style.maxHeight = "100%";
+    modal.style.padding = "0";
 
     const head = document.createElement("div");
+    head.className = "bbm-popup-header";
     head.style.display = "flex";
     head.style.alignItems = "center";
     head.style.gap = "10px";
-    head.style.padding = "12px";
-    head.style.borderBottom = "1px solid #e2e8f0";
 
     const title = document.createElement("div");
     title.textContent = "Hilfe";
@@ -58,10 +60,11 @@ export default class HelpModal {
     head.append(title, closeBtn);
 
     const tabBar = document.createElement("div");
+    tabBar.className = "bbm-form-content";
     tabBar.style.display = "flex";
-    tabBar.style.gap = "8px";
-    tabBar.style.padding = "10px 12px";
-    tabBar.style.borderBottom = "1px solid #e2e8f0";
+    tabBar.style.padding =
+      "var(--bbm-popup-footer-padding-y) var(--bbm-popup-dialog-padding-x)";
+    tabBar.style.borderBottom = "1px solid var(--bbm-popup-border)";
 
     const btnQuickStart = document.createElement("button");
     btnQuickStart.type = "button";
@@ -78,11 +81,12 @@ export default class HelpModal {
     tabBar.append(btnQuickStart, btnGlossary);
 
     const helpActions = document.createElement("div");
+    helpActions.className = "bbm-form-content";
     helpActions.style.display = "flex";
     helpActions.style.alignItems = "center";
-    helpActions.style.gap = "8px";
-    helpActions.style.padding = "10px 12px";
-    helpActions.style.borderBottom = "1px solid #e2e8f0";
+    helpActions.style.padding =
+      "var(--bbm-popup-footer-padding-y) var(--bbm-popup-dialog-padding-x)";
+    helpActions.style.borderBottom = "1px solid var(--bbm-popup-border)";
 
     const btnQuickAssist = document.createElement("button");
     btnQuickAssist.type = "button";
@@ -120,7 +124,7 @@ export default class HelpModal {
     helpActions.append(btnQuickAssist, quickAssistHint, btnInfo);
 
     const body = document.createElement("div");
-    body.style.padding = "12px";
+    body.className = "bbm-popup-body";
     body.style.overflow = "auto";
     body.style.flex = "1 1 auto";
     body.style.minHeight = "0";
@@ -128,11 +132,10 @@ export default class HelpModal {
     body.style.fontFamily = "var(--bbm-font-ui)";
 
     const footer = document.createElement("div");
+    footer.className = "bbm-popup-footer";
     footer.style.display = "flex";
     footer.style.justifyContent = "flex-end";
-    footer.style.gap = "8px";
-    footer.style.padding = "10px 12px";
-    footer.style.borderTop = "1px solid #e2e8f0";
+    footer.style.gap = "var(--bbm-popup-footer-gap)";
 
     const btnFooterClose = document.createElement("button");
     btnFooterClose.type = "button";
@@ -167,13 +170,15 @@ export default class HelpModal {
 
     const card = document.createElement("div");
     stylePopupCard(card, { width: "min(560px, calc(100vw - 24px))" });
+    card.classList.add("bbm-popup-standard", "bbm-popup-dialog");
+    card.style.maxHeight = "100%";
+    card.style.padding = "0";
 
     const head = document.createElement("div");
+    head.className = "bbm-popup-header";
     head.style.display = "flex";
     head.style.alignItems = "center";
     head.style.gap = "10px";
-    head.style.padding = "12px";
-    head.style.borderBottom = "1px solid #e2e8f0";
 
     const title = document.createElement("div");
     title.textContent = "Info";
@@ -190,9 +195,8 @@ export default class HelpModal {
     head.append(title, btnClose);
 
     const body = document.createElement("div");
-    body.style.padding = "12px";
+    body.className = "bbm-popup-body bbm-form-content";
     body.style.display = "grid";
-    body.style.gap = "6px";
     body.style.lineHeight = "1.45";
 
     const p1 = document.createElement("div");
@@ -205,11 +209,10 @@ export default class HelpModal {
     body.append(p1, mail);
 
     const footer = document.createElement("div");
+    footer.className = "bbm-popup-footer";
     footer.style.display = "flex";
     footer.style.justifyContent = "flex-end";
-    footer.style.gap = "8px";
-    footer.style.padding = "10px 12px";
-    footer.style.borderTop = "1px solid #e2e8f0";
+    footer.style.gap = "var(--bbm-popup-footer-gap)";
 
     const btnOk = document.createElement("button");
     btnOk.type = "button";
@@ -288,13 +291,21 @@ export default class HelpModal {
 
     if (this.btnQuickStart) {
       this.btnQuickStart.style.fontWeight = activeQuickStart ? "700" : "600";
-      this.btnQuickStart.style.borderColor = activeQuickStart ? "rgba(25,118,210,0.65)" : "rgba(0,0,0,0.18)";
-      this.btnQuickStart.style.background = activeQuickStart ? "#e8f1ff" : "#f9fbff";
+      this.btnQuickStart.style.borderColor = activeQuickStart
+        ? "var(--bbm-popup-focus)"
+        : "var(--bbm-popup-border-strong)";
+      this.btnQuickStart.style.background = activeQuickStart
+        ? "color-mix(in srgb, var(--bbm-popup-focus) 9%, white)"
+        : "var(--bbm-popup-surface)";
     }
     if (this.btnGlossary) {
       this.btnGlossary.style.fontWeight = activeGlossary ? "700" : "600";
-      this.btnGlossary.style.borderColor = activeGlossary ? "rgba(25,118,210,0.65)" : "rgba(0,0,0,0.18)";
-      this.btnGlossary.style.background = activeGlossary ? "#e8f1ff" : "#f9fbff";
+      this.btnGlossary.style.borderColor = activeGlossary
+        ? "var(--bbm-popup-focus)"
+        : "var(--bbm-popup-border-strong)";
+      this.btnGlossary.style.background = activeGlossary
+        ? "color-mix(in srgb, var(--bbm-popup-focus) 9%, white)"
+        : "var(--bbm-popup-surface)";
     }
   }
 
@@ -315,7 +326,7 @@ export default class HelpModal {
     for (const entry of glossary || []) {
       const row = document.createElement("div");
       row.style.paddingBottom = "8px";
-      row.style.borderBottom = "1px solid #e2e8f0";
+      row.style.borderBottom = "1px solid var(--bbm-popup-border)";
 
       const term = document.createElement("div");
       term.style.fontWeight = "700";

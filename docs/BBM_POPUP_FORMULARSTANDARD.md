@@ -89,6 +89,14 @@ gleichen Standard.
   Projektfirmen verwendet; die Tabellenzeilen bleiben bewusst kompakte Listenzeilen.
 - Protokoll `Text korrigieren`.
 - Protokoll-Mail `Protokoll versenden` im produktiven Abschluss-Flow.
+- Hilfe `Hilfe` und der daraus geöffnete Informationsdialog `Info`.
+- Gemeinsame geschlossene Protokollauswahl für Ausgabe, Vorschau, Mail und Druck
+  (`ClosedProtocolSelector`). Die Listenzeilen behalten ihre eigene kompakte Dichte.
+- Ausgabe `Nächste Besprechung` und `ToDo-Liste drucken`
+  (Verantwortlichenfilter).
+- Gemeinsame PDF-Vorschau für Protokoll, gespeicherte PDF, Firmenliste, ToDo-Liste
+  und TOP-Liste. Standardisiert sind nur Dialograhmen und Header/Body-Hülle; die
+  eingebettete PDF-/Dokumentvorschau bleibt unverändert.
 
 Die in dieser Welle migrierten eigenständigen Dialoge verwenden die gemeinsame
 `createPopupOverlay`-Fläche. Sie beginnt unter der real gemessenen Unterkante des
@@ -96,23 +104,34 @@ globalen Mainheaders und im Protokoll unter der tiefer liegenden fachlichen
 Header-Unterkante. Bei geringer Höhe bleiben Header und Footer sichtbar; der
 Dialogkörper beziehungsweise die inneren Detailkarten übernehmen den Scroll.
 
-Bewusst noch nicht umgestellt sind die übrigen Einstellungen, die nicht produktiv
-aufgerufenen Legacy-Komponenten `CompanyDialog`, `EmployeeDialog`,
-`xEmployeeEditModal`/`FirmsPoolView`, der eigenständige Diktat-Prompt zur
-Wörterbuchaufnahme, Hilfe sowie die weiteren Druckvarianten Vorschau,
-Folgetermin-Prompt und ToDo-Verantwortlichenfilter. `TOP-Regeln` ist derzeit nur
-als nicht aufgerufene Methode `TopsScreen._openTopRulesDialog()` vorhanden; eine
-produktive Schaltfläche oder andere Aufrufstelle existiert nicht. Diese tote Variante
-wurde deshalb nicht verändert. Die Re-Export-Datei
+Weiterhin produktiv aktiv, aber bewusst noch nicht umgestellt sind die übrigen
+Einstellungsvarianten außerhalb der bisherigen Piloten und
+`Restarbeiten._openNotesPopup()`. Ebenfalls aktiv erreichbar, aber nicht Teil dieser
+Welle ist `MainHeader._openMailSendModal()` nach der geschlossenen
+Protokollauswahl im E-Mail-Weg der Projekt-Quicklane.
+
+Technisch vorhanden, derzeit aber ohne produktive Aufrufstelle sind
+`DictationController._showTermCorrectionPrompt()`/`maybeOfferTermCorrection()`,
+`TopsScreen._openTopRulesDialog()`,
+`SettingsView._openPdfPreRemarksPopup()`,
+`MainHeader._promptMeetingSelection()`,
+`MainHeader._openStoredProjectPdfSelectionPopup()`. Der Wörterbuch-/Diktat-Prompt wurde
+daher nicht künstlich reaktiviert oder migriert. Die Quicklane erwartet außerdem
+`router.openProtocolMailModal`, für das aktuell keine produktive Implementierung
+registriert ist.
+
+Als eindeutig alte, nicht produktiv montierte Varianten bleiben `CompanyDialog`,
+`EmployeeDialog` und `xEmployeeEditModal`/`FirmsPoolView` dokumentiert. Der reine
+Hinweis-Stummel `PrintModal.openStoredFirmsPdfSelection()` wurde ebenfalls nicht zu
+einem Dialog ausgebaut. Noch nichts davon wird gelöscht.
+
+Die Re-Export-Datei
 `src/renderer/modules/protokoll/TopsViewDialogs.js` ist keine zweite TOP-Regeln-
 Variante, sondern nur der aktive Modulpfad zur bestehenden Dialogbasis. Auch
 `CloseMeetingOutputFlow` und `TopsCloseFlow` enthalten keine zusätzliche Mail-UI,
 sondern delegieren an die nun migrierte `MailFlow`-Variante. Die vorbereitete
-`MainHeader._openMailSendModal()`-Variante wird im aktuellen Header nicht gemountet
-(`mailWrap` wird nicht in die Aktionsleiste eingesetzt) und blieb als Legacy-Code
-unverändert. Die Quicklane erwartet `router.openProtocolMailModal`, für das aktuell
-keine produktive Implementierung registriert ist; sie öffnet daher keinen zweiten
-Maildialog.
+Kompatibilitätsdatei `src/renderer/ui/PrintModal.js` ist nur ein Re-Export der
+produktiven Ausgabe-Implementierung und keine zusätzliche Vorschauvariante.
 Die bisherigen `--bbm-form-*`-Werte bleiben für diese Altbereiche als unveränderte
 Fallbacks bestehen. Eine spätere Übernahme ist ein jeweils explizit freizugebender
 Schritt; nach diesem Paket erfolgt keine Massenmigration.

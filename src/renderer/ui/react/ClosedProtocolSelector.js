@@ -1,4 +1,5 @@
 import { loadReactRuntime } from "./loadReactRuntime.js";
+import { cleanupPopupHandlers, createPopupOverlay } from "../popupCommon.js";
 
 function getPrimaryLabel(mode) {
   if (mode === "output") return "Weiter";
@@ -32,17 +33,13 @@ export async function openClosedProtocolSelector({
 
   return await new Promise((resolve) => {
     let closed = false;
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.inset = "0";
-    overlay.style.background = "rgba(15, 23, 42, 0.45)";
+    const overlay = createPopupOverlay({ background: "rgba(15, 23, 42, 0.45)", zIndex: 12500 });
     overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = "12500";
-    overlay.tabIndex = -1;
 
     const host = document.createElement("div");
+    host.style.width = "min(720px, calc(100vw - 28px))";
+    host.style.maxHeight = "100%";
+    host.style.display = "flex";
     overlay.appendChild(host);
     document.body.appendChild(overlay);
 
@@ -51,6 +48,7 @@ export async function openClosedProtocolSelector({
     const cleanup = (result = null) => {
       if (closed) return;
       closed = true;
+      cleanupPopupHandlers(overlay);
       document.removeEventListener("keydown", escHandler, true);
       if (root) root.unmount();
       else ReactDOM.unmountComponentAtNode(host);
@@ -166,12 +164,10 @@ export async function openClosedProtocolSelector({
       return React.createElement(
         "div",
         {
+          className: "bbm-popup-standard bbm-popup-dialog",
           style: {
-            width: "min(720px, calc(100vw - 28px))",
-            maxHeight: "calc(100vh - 28px)",
-            background: "#ffffff",
-            border: "1px solid #d7dde5",
-            borderRadius: "16px",
+            width: "100%",
+            maxHeight: "100%",
             boxShadow: "0 18px 44px rgba(15,23,42,0.22)",
             overflow: "hidden",
             display: "flex",
@@ -181,12 +177,11 @@ export async function openClosedProtocolSelector({
         React.createElement(
           "div",
           {
+            className: "bbm-popup-header",
             style: {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              padding: "16px 18px 12px",
-              borderBottom: "1px solid #e2e8f0",
             },
           },
           React.createElement(
@@ -194,12 +189,12 @@ export async function openClosedProtocolSelector({
             null,
             React.createElement(
               "div",
-              { style: { fontSize: "18px", fontWeight: "800", color: "#0f172a" } },
+              { style: { fontSize: "16px", fontWeight: "800", color: "var(--bbm-popup-text)" } },
               getTitle(props.mode)
             ),
             React.createElement(
               "div",
-              { style: { marginTop: "4px", fontSize: "12px", color: "#64748b" } },
+              { style: { marginTop: "4px", fontSize: "12px", color: "var(--bbm-popup-muted)" } },
               getSubtitle(props.mode)
             )
           ),
@@ -209,10 +204,8 @@ export async function openClosedProtocolSelector({
               type: "button",
               onClick: () => props.onCancel(),
               style: {
-                border: "1px solid #d7dde5",
-                background: "#ffffff",
-                borderRadius: "10px",
-                padding: "8px 10px",
+                border: "1px solid var(--bbm-popup-border-strong)",
+                background: "var(--bbm-popup-surface)",
                 cursor: "pointer",
               },
             },
@@ -222,12 +215,13 @@ export async function openClosedProtocolSelector({
         React.createElement(
           "div",
           {
+            className: "bbm-popup-body bbm-form-content",
             style: {
-              padding: "14px 18px 18px",
               display: "flex",
               flexDirection: "column",
-              gap: "12px",
+              flex: "1 1 auto",
               minHeight: "0",
+              overflow: "auto",
             },
           },
           props.searchEnabled
@@ -240,11 +234,6 @@ export async function openClosedProtocolSelector({
                 onKeyDown: handleListKeyDown,
                 style: {
                   width: "100%",
-                  boxSizing: "border-box",
-                  border: "1px solid #cbd5e1",
-                  borderRadius: "10px",
-                  padding: "10px 12px",
-                  fontSize: "14px",
                 },
               })
             : null,
@@ -252,12 +241,12 @@ export async function openClosedProtocolSelector({
             "div",
             {
               style: {
-                border: "1px solid #e2e8f0",
-                borderRadius: "14px",
+                border: "1px solid var(--bbm-popup-border)",
+                borderRadius: "var(--bbm-popup-card-radius)",
                 overflow: "auto",
                 minHeight: "240px",
                 maxHeight: "52vh",
-                background: "#f8fafc",
+                background: "var(--bbm-popup-surface-subtle)",
                 padding: "8px",
                 display: "flex",
                 flexDirection: "column",
@@ -284,15 +273,15 @@ export async function openClosedProtocolSelector({
                         textAlign: "left",
                         border:
                           !item.disabled && String(item.id) === String(activeItem?.id || "")
-                            ? "1px solid #2563eb"
-                            : "1px solid #dbe4ee",
+                            ? "1px solid var(--bbm-popup-focus)"
+                            : "1px solid var(--bbm-popup-border)",
                         background:
                           item.disabled
-                            ? "#f8fafc"
+                            ? "var(--bbm-popup-disabled-bg)"
                             : String(item.id) === String(activeItem?.id || "")
-                              ? "#eff6ff"
-                              : "#ffffff",
-                        borderRadius: "12px",
+                              ? "color-mix(in srgb, var(--bbm-popup-focus) 8%, white)"
+                              : "var(--bbm-popup-surface)",
+                        borderRadius: "var(--bbm-popup-card-radius)",
                         padding: "12px 14px",
                         cursor: item.disabled ? "not-allowed" : "pointer",
                         outline: "none",
@@ -301,13 +290,13 @@ export async function openClosedProtocolSelector({
                     },
                     React.createElement(
                       "div",
-                      { style: { fontSize: "14px", fontWeight: "700", color: "#0f172a" } },
+                      { style: { fontSize: "14px", fontWeight: "700", color: "var(--bbm-popup-text)" } },
                       item.label || "Protokoll"
                     ),
                     item.subLabel
                       ? React.createElement(
                           "div",
-                          { style: { fontSize: "12px", color: "#64748b" } },
+                          { style: { fontSize: "12px", color: "var(--bbm-popup-muted)" } },
                           item.subLabel
                         )
                       : null
@@ -320,31 +309,31 @@ export async function openClosedProtocolSelector({
                       padding: "18px 12px",
                       textAlign: "center",
                       fontSize: "13px",
-                      color: "#64748b",
+                      color: "var(--bbm-popup-muted)",
                     },
                   },
                   query ? "Keine Treffer in den geschlossenen Protokollen." : "Keine geschlossenen Protokolle gefunden."
                 )
-          ),
-          React.createElement(
-            "div",
-            {
-              style: {
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "10px",
-              },
+          )
+        ),
+        React.createElement(
+          "div",
+          {
+            className: "bbm-popup-footer",
+            style: {
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "var(--bbm-popup-footer-gap)",
             },
+          },
             React.createElement(
               "button",
               {
                 type: "button",
                 onClick: () => props.onCancel(),
                 style: {
-                  border: "1px solid #d7dde5",
-                  background: "#ffffff",
-                  borderRadius: "10px",
-                  padding: "10px 14px",
+                  border: "1px solid var(--bbm-popup-border-strong)",
+                  background: "var(--bbm-popup-surface)",
                   cursor: "pointer",
                 },
               },
@@ -357,17 +346,20 @@ export async function openClosedProtocolSelector({
                 disabled: !activeItem || isSubmitting,
                 onClick: () => activeItem && submitActiveItem(activeItem),
                 style: {
-                  border: "1px solid #2563eb",
-                  background: activeItem && !isSubmitting ? "#2563eb" : "#94a3b8",
-                  color: "#ffffff",
-                  borderRadius: "10px",
-                  padding: "10px 14px",
+                  border: "1px solid var(--bbm-popup-primary)",
+                  background:
+                    activeItem && !isSubmitting
+                      ? "var(--bbm-popup-primary)"
+                      : "var(--bbm-popup-disabled-bg)",
+                  color:
+                    activeItem && !isSubmitting
+                      ? "#ffffff"
+                      : "var(--bbm-popup-disabled-text)",
                   cursor: activeItem && !isSubmitting ? "pointer" : "default",
                 },
               },
               isSubmitting ? "Bitte warten..." : getPrimaryLabel(props.mode)
             )
-          )
         )
       );
     }

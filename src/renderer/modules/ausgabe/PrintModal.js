@@ -32,7 +32,12 @@ import {
   shouldShowAmpelInPdf,
 } from "../../../shared/ampel/pdfAmpelRule.js";
 import { applyPopupButtonStyle } from "../../ui/popupButtonStyles.js";
-import { createPopupOverlay, stylePopupCard, registerPopupCloseHandlers } from "../../ui/popupCommon.js";
+import {
+  cleanupPopupHandlers,
+  createPopupOverlay,
+  stylePopupCard,
+  registerPopupCloseHandlers,
+} from "../../ui/popupCommon.js";
 import { OVERLAY_TOP } from "../../ui/zIndex.js";
 import { buildProtocolPdfFileName } from "../../utils/protocolPdfNaming.js";
 import { resolvePrintUserData } from "../../../shared/print/userDataResolver.mjs";
@@ -404,17 +409,17 @@ export default class PrintModal {
 
     const modal = document.createElement("div");
     stylePopupCard(modal, { width: "1100px" });
+    modal.classList.add("bbm-popup-standard", "bbm-popup-dialog");
     modal.style.maxWidth = "calc(100vw - 28px)";
-    modal.style.maxHeight = "calc(100vh - 28px)";
-    modal.style.height = "80vh";
+    modal.style.maxHeight = "100%";
+    modal.style.height = "min(80vh, 100%)";
     modal.style.padding = "0";
 
     const head = document.createElement("div");
+    head.className = "bbm-popup-header";
     head.style.display = "flex";
     head.style.alignItems = "center";
     head.style.gap = "10px";
-    head.style.padding = "10px 12px";
-    head.style.borderBottom = "1px solid #e2e8f0";
 
     const title = document.createElement("div");
     title.textContent = "PDF Vorschau";
@@ -439,12 +444,12 @@ export default class PrintModal {
     frame.style.background = "#fafafa";
 
     const content = document.createElement("div");
+    content.className = "bbm-popup-body";
     content.style.display = "flex";
     content.style.flexDirection = "column";
     content.style.flex = "1 1 auto";
     content.style.minHeight = "0";
     content.style.overflow = "hidden";
-    content.style.padding = "12px";
     content.append(frame);
 
     modal.append(head, content);
@@ -752,16 +757,16 @@ export default class PrintModal {
 
       const modal = document.createElement("div");
       stylePopupCard(modal, { width: "720px" });
+      modal.classList.add("bbm-popup-standard", "bbm-popup-dialog");
       modal.style.maxWidth = "calc(100vw - 28px)";
-      modal.style.maxHeight = "calc(100vh - 28px)";
+      modal.style.maxHeight = "100%";
       modal.style.padding = "0";
 
       const head = document.createElement("div");
+      head.className = "bbm-popup-header";
       head.style.display = "flex";
       head.style.alignItems = "center";
       head.style.gap = "10px";
-      head.style.padding = "12px 14px";
-      head.style.borderBottom = "1px solid #e2e8f0";
 
       const title = document.createElement("div");
       title.textContent = "Nächste Besprechung";
@@ -778,17 +783,15 @@ export default class PrintModal {
 
       const mkRow = (labelText, inputEl) => {
         const wrap = document.createElement("div");
+        wrap.className = "bbm-form-field";
         wrap.style.display = "flex";
         wrap.style.flexWrap = "wrap";
         wrap.style.alignItems = "center";
-        wrap.style.gap = "8px";
-        wrap.style.marginTop = "8px";
 
         const lab = document.createElement("div");
+        lab.className = "bbm-form-label";
         lab.textContent = labelText;
         lab.style.minWidth = "160px";
-        lab.style.fontSize = "12px";
-        lab.style.opacity = "0.85";
 
         inputEl.style.flex = "1 1 auto";
         inputEl.style.minWidth = "220px";
@@ -803,7 +806,7 @@ export default class PrintModal {
       const chkWrap = document.createElement("label");
       chkWrap.style.display = "inline-flex";
       chkWrap.style.alignItems = "center";
-      chkWrap.style.gap = "8px";
+      chkWrap.style.gap = "var(--bbm-popup-label-field-gap)";
       chkWrap.style.cursor = "pointer";
       const chkText = document.createElement("span");
       chkText.textContent = "Drucken";
@@ -828,11 +831,10 @@ export default class PrintModal {
       inpExtra.value = loaded.extra;
 
       const actions = document.createElement("div");
+      actions.className = "bbm-popup-footer";
       actions.style.display = "flex";
       actions.style.justifyContent = "flex-end";
-      actions.style.gap = "8px";
-      actions.style.padding = "10px 14px";
-      actions.style.borderTop = "1px solid #e2e8f0";
+      actions.style.gap = "var(--bbm-popup-footer-gap)";
 
       const btnCancel = document.createElement("button");
       btnCancel.type = "button";
@@ -847,10 +849,10 @@ export default class PrintModal {
       actions.append(btnCancel, btnOk);
 
       const body = document.createElement("div");
+      body.className = "bbm-popup-body bbm-form-content";
       body.style.flex = "1 1 auto";
       body.style.minHeight = "0";
       body.style.overflow = "auto";
-      body.style.padding = "14px";
       body.append(
         chkWrap,
         mkRow("Datum", inpDate),
@@ -864,6 +866,7 @@ export default class PrintModal {
       overlay.appendChild(modal);
 
       const cleanup = () => {
+        cleanupPopupHandlers(overlay);
         overlay.removeEventListener("mousedown", onOverlayClick);
         overlay.removeEventListener("keydown", onOverlayKeyDown);
         btnCancel.removeEventListener("click", onCancel);
@@ -993,6 +996,7 @@ export default class PrintModal {
 
   _destroyPreviewDom() {
     try {
+      cleanupPopupHandlers(this.previewRoot);
       if (this.previewRoot && this.previewRoot.parentElement) {
         this.previewRoot.parentElement.removeChild(this.previewRoot);
       }
@@ -1007,6 +1011,7 @@ export default class PrintModal {
 
   _destroyMainDom() {
     try {
+      cleanupPopupHandlers(this.root);
       if (this.root && this.root.parentElement) {
         this.root.parentElement.removeChild(this.root);
       }
@@ -1282,16 +1287,16 @@ export default class PrintModal {
 
       const modal = document.createElement("div");
       stylePopupCard(modal, { width: "620px" });
+      modal.classList.add("bbm-popup-standard", "bbm-popup-dialog");
       modal.style.maxWidth = "calc(100vw - 28px)";
-      modal.style.maxHeight = "calc(100vh - 28px)";
+      modal.style.maxHeight = "100%";
       modal.style.padding = "0";
 
       const head = document.createElement("div");
+      head.className = "bbm-popup-header";
       head.style.display = "flex";
       head.style.alignItems = "center";
       head.style.gap = "10px";
-      head.style.padding = "12px 14px";
-      head.style.borderBottom = "1px solid #e2e8f0";
 
       const title = document.createElement("div");
       title.textContent = "ToDo-Liste drucken";
@@ -1307,11 +1312,11 @@ export default class PrintModal {
       head.append(title, btnClose);
 
       const body = document.createElement("div");
+      body.className = "bbm-popup-body bbm-form-content";
       body.style.display = "flex";
       body.style.flexDirection = "column";
-      body.style.gap = "10px";
-      body.style.padding = "14px";
       body.style.minHeight = "0";
+      body.style.overflow = "auto";
 
       const hint = document.createElement("div");
       hint.style.fontSize = "12px";
@@ -1320,10 +1325,6 @@ export default class PrintModal {
 
       const select = document.createElement("select");
       select.style.width = "100%";
-      select.style.minHeight = "38px";
-      select.style.padding = "8px 10px";
-      select.style.border = "1px solid #cbd5e1";
-      select.style.borderRadius = "10px";
 
       for (const item of items) {
         const opt = document.createElement("option");
@@ -1335,15 +1336,14 @@ export default class PrintModal {
       const count = Math.max(0, items.length - 1);
       const listBox = document.createElement("div");
       listBox.style.fontSize = "12px";
-      listBox.style.color = "#475569";
+      listBox.style.color = "var(--bbm-popup-muted)";
       listBox.textContent = count > 0 ? `${count} Verantwortliche gefunden` : "Keine Verantwortlichen gefunden";
 
       const actions = document.createElement("div");
+      actions.className = "bbm-popup-footer";
       actions.style.display = "flex";
       actions.style.justifyContent = "flex-end";
-      actions.style.gap = "8px";
-      actions.style.padding = "10px 14px";
-      actions.style.borderTop = "1px solid #e2e8f0";
+      actions.style.gap = "var(--bbm-popup-footer-gap)";
 
       const btnCancel = document.createElement("button");
       btnCancel.type = "button";
@@ -1361,6 +1361,7 @@ export default class PrintModal {
       overlay.appendChild(modal);
 
       const cleanup = (result = null) => {
+        cleanupPopupHandlers(overlay);
         overlay.removeEventListener("mousedown", onOverlayClick);
         overlay.removeEventListener("keydown", onOverlayKeyDown);
         btnCancel.removeEventListener("click", onCancel);
