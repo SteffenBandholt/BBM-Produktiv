@@ -160,10 +160,10 @@ export default class MainHeader {
     const root = document.createElement("div");
     root.style.boxSizing = "border-box";
     root.style.width = "100%";
-    const headerPaddingTop = Math.max(8, this.padding - 4);
-    const headerPaddingBottom = Math.max(6, this.padding - 6);
+    const headerPaddingTop = Math.max(4, this.padding - 8);
+    const headerPaddingBottom = Math.max(3, this.padding - 9);
     root.style.padding = `${headerPaddingTop}px ${this.padding}px ${headerPaddingBottom}px`;
-    root.style.minHeight = "84px";
+    root.style.minHeight = "60px";
     root.style.borderBottom = "1px solid var(--card-border)";
     root.style.background = "var(--header-bg)";
     root.style.color = "var(--header-text)";
@@ -179,9 +179,9 @@ export default class MainHeader {
     // fixed-ish layout, PDF-nah
     root.style.display = "grid";
     root.style.gridTemplateColumns = "1fr auto 1fr";
-    root.style.gridTemplateRows = "auto auto auto auto";
+    root.style.gridTemplateRows = "auto auto";
     root.style.columnGap = "12px";
-    root.style.rowGap = "3px";
+    root.style.rowGap = "1px";
     root.style.alignItems = "start";
 
     const logoGroup = document.createElement("div");
@@ -795,8 +795,8 @@ export default class MainHeader {
     stickyNotice.append(stickyNoticeText, stickyNoticeClose);
 
     if (this._isNewUi) {
-      root.style.gridTemplateRows = "auto auto auto auto";
-      root.style.rowGap = "3px";
+      root.style.gridTemplateRows = "auto auto";
+      root.style.rowGap = "1px";
       elCenterTitle.style.fontSize = "20px";
       elCenterTitle.style.lineHeight = "24px";
       elCenterTitle.style.fontWeight = "700";
@@ -810,6 +810,7 @@ export default class MainHeader {
 
       actionWrap.style.gridColumn = "1 / span 3";
       actionWrap.style.gridRow = "3";
+      actionWrap.style.display = "none";
       actionWrap.style.justifySelf = "center";
       actionWrap.style.alignSelf = "end";
       actionWrap.style.paddingRight = "0px";
@@ -822,7 +823,7 @@ export default class MainHeader {
 
       trialInfo.style.gridRow = "1";
       trialInfo.style.marginBottom = "0";
-      stickyNotice.style.gridRow = "4";
+      stickyNotice.style.gridRow = "3";
     }
 
     root.append(logoGroup, trialInfo, elCenterTitle, leftIdentity, actionWrap, stickyNotice, devControls);

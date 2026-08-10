@@ -1,12 +1,12 @@
 # STATUS.md — BBM-Produktiv
 
-### Globalen Mainheader kompakter gestalten
+### Globalen Mainheader deutlich flacher gestalten
 
-- Status: `[A]`; der globale Mainheader bleibt zweizeilig und misst im realen Electron-Lauf mit und ohne DEV-Editor-Button jeweils 84 px statt zuvor 99,35 px im Protokoll beziehungsweise 89,79 px auf der Startansicht.
-- Die vorhandene Grid-Struktur bleibt bei Screenwechseln erhalten. Das Außenpadding wurde von `10px 12px 7px` auf `8px 12px 6px`, der Zeilenabstand von 5 px auf 3 px reduziert; `min-height: 84px` hält die Grundhöhe unabhängig vom DEV-Button stabil.
+- Status: `[A]`; der globale Mainheader misst im realen Electron-Lauf mit und ohne DEV-Editor-Button jeweils 60,00 px statt zuletzt 84,00 px.
+- Die vorhandene Grid-Struktur bleibt bei Screenwechseln erhalten. Das Außenpadding wird von `8px 12px 6px` auf `4px 12px 3px`, der Zeilenabstand von 3 px auf 1 px und `min-height` von 84 px auf 60 px reduziert. Die leere Action-Zeile entfällt in der neuen UI; der DEV-Button wird auf Badge-Höhe verdichtet.
 - Lizenzbadge, Versionsanzeige und aktiver Kontext bleiben an ihren vorhandenen Positionen. Der fachliche Protokoll-Header, Menüleiste, Fachlogik, Typografie und Theme wurden nicht verändert.
-- Sichtprüfung in DEV mit Editor-Button sowie auf Start ohne Editor-Button ist grün. Gezielte Header-/Shell-/Launcher-Tests, UI-Editor-Vertragscheck, ESLint und `git diff --check` sind grün; ESLint meldet nur bestehende Warnungen.
-- `npm test` bleibt an den bereits vorhandenen Registryversions-, Licensing-, Navigations- und Testharness-Guardrails rot. Nächster offener Schritt: keiner; Commit-SHA wird im Paketabschluss berichtet.
+- Der reale DEV-Protokoll-Lauf und die Startansicht ohne Editor-Button sind vermessen und sichtbar geprüft; ein Screenshot des DEV-Protokolls wurde angefertigt und kontrolliert. Der fachliche Protokoll-Header blieb bei 54,87 px.
+- Gezielte Header-/Shell-/Launcher-Tests, UI-Editor-Vertragscheck, ESLint und `git diff --check` sind grün; ESLint meldet nur bestehende Warnungen. `npm test` bleibt aus dem unmittelbar vorherigen Paket an den vorhandenen Registryversions-, Licensing-, Navigations- und Testharness-Guardrails rot. Nächster offener Schritt: keiner; Commit-SHA wird im Paketabschluss berichtet.
 
 ### Protokoll – Popups unter dem sichtbaren Header positionieren
 

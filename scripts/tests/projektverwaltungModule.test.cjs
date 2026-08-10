@@ -980,8 +980,10 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(mainHeaderSource.includes('devBadge.style.position = "absolute"'), false);
     assert.equal(mainHeaderSource.includes('devBadge.style.top = "8px"'), false);
     assert.equal(coreShellHeaderBridgeSource.includes('root.style.display = "grid"'), true);
+    assert.equal(coreShellNavigationSource.includes("height:18px;min-height:18px"), true);
     assert.equal(mainHeaderSource.includes("actionWrap.style.gridRow = \"3\""), true);
-    assert.equal(mainHeaderSource.includes("stickyNotice.style.gridRow = \"4\""), true);
+    assert.equal(mainHeaderSource.includes('actionWrap.style.display = "none"'), true);
+    assert.equal(mainHeaderSource.includes("stickyNotice.style.gridRow = \"3\""), true);
   });
 
   await run("M86.13: Protokoll und Restarbeiten erhalten den einen zweizeiligen MainHeader", () => {
@@ -1048,10 +1050,10 @@ async function runProjektverwaltungModuleTests(run) {
       assert.equal(header.elDevBadge.style.gridRow, "2");
       assert.equal(header.elDevBadge.style.position, undefined);
       assert.equal(header.root.style.display, "grid");
-      assert.equal(header.root.style.gridTemplateRows, "auto auto auto auto");
-      assert.equal(header.root.style.rowGap, "3px");
-      assert.equal(header.root.style.padding, "8px 12px 6px");
-      assert.equal(header.root.style.minHeight, "84px");
+      assert.equal(header.root.style.gridTemplateRows, "auto auto");
+      assert.equal(header.root.style.rowGap, "1px");
+      assert.equal(header.root.style.padding, "4px 12px 3px");
+      assert.equal(header.root.style.minHeight, "60px");
       assert.equal(header.elVersion.style.fontSize, "12px");
       assert.equal(header.elVersion.style.lineHeight, "15px");
       assert.equal(["500", "600"].includes(header.elVersion.style.fontWeight), true);

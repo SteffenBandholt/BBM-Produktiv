@@ -149,7 +149,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - der gleiche Checkpoint ist testseitig simulierbar und belegt den produktiven ReadOnly-Flow nur im Test
 - M18.0 bis M18.4 sind als ReadOnly-Freigabevorbereitung abgeschlossen und eingefroren
 - M19.0 legt vor einer echten Produktivaktivierung einen fachlichen Abnahmetest fest
-- der globale Mainheader bleibt als gemeinsamer Shell-Bereich zweizeilig, nutzt bei Screenwechseln zuverlässig sein Grid und besitzt mit oder ohne DEV-Editor-Button dieselbe kompakte Grundhöhe
+- der globale Mainheader bleibt als gemeinsamer Shell-Bereich zweizeilig, nutzt bei Screenwechseln zuverlässig sein Grid und besitzt ohne leere Action-Zeile mit oder ohne DEV-Editor-Button dieselbe deutlich flachere Grundhöhe
 
 **Noch offen**
 - kein vollstaendig produktiver freigabebasierter Betrieb

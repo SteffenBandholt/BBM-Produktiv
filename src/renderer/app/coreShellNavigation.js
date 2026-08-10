@@ -139,7 +139,7 @@ export async function installDevelopmentUiEditorOpenButton({
   button.className = "bbm-development-ui-editor-open-button";
   button.textContent = DEVELOPMENT_UI_EDITOR_BUTTON_LABEL;
   button.setAttribute("data-bbm-development-ui-editor-open", "true");
-  button.style.cssText = "display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:4px 9px;border:1px solid #d3dfec;border-radius:7px;background:#f5f8fc;color:#1f344a;font:600 8.5pt/1.2 var(--bbm-font-ui,system-ui,sans-serif);white-space:nowrap;cursor:pointer;";
+  button.style.cssText = "display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;height:18px;min-height:18px;padding:1px 8px;border:1px solid #d3dfec;border-radius:7px;background:#f5f8fc;color:#1f344a;font:600 8.5pt/1.2 var(--bbm-font-ui,system-ui,sans-serif);white-space:nowrap;cursor:pointer;";
   button.addEventListener("click", async () => {
     if (button.disabled) return;
     button.disabled = true;
