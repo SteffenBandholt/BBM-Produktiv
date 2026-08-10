@@ -62,18 +62,28 @@ async function runPopupFormStandardTests(run) {
     assert.equal(loader.includes("link.setAttribute(`data-${POPUP_FORM_STANDARD_STYLE_TAG}`"), true);
   });
 
-  await run("Popup-Standard: aktiviert nur Rechnungen, Projekt und zwei Settings-Piloten", () => {
+  await run("Popup-Standard: aktiviert nur die freigegebenen Rechnungen- und Produktpiloten", () => {
     const invoices = read("src/renderer/modules/rechnungen/screens/RechnungenDesignScreen.js");
     const project = read("src/renderer/modules/projektverwaltung/screens/ProjectFormScreen.js");
+    const print = read("src/renderer/modules/ausgabe/PrintModal.js");
     const settings = read("src/renderer/views/SettingsView.js");
     assert.equal(invoices.includes("bbm-invoice-design bbm-popup-standard"), true);
     assert.equal(invoices.includes('overlay.classList.add("bbm-invoice-design-modal")'), true);
     assert.equal(project.includes('modal.classList.add("bbm-popup-standard", "bbm-popup-dialog")'), true);
-    assert.equal((settings.match(/standardForm: true/g) || []).length, 2);
+    assert.equal((settings.match(/standardForm: true/g) || []).length, 4);
     assert.equal(settings.includes('title: "Profil / Adresse",\n      content: [wrap],\n      standardForm: true'), true);
     assert.equal(settings.includes('title: "Protokoll",\n      content: [wrap],\n      standardForm: true'), true);
+    assert.equal(settings.includes('title: "Ausgabe & Druck",\n      content: [wrap],\n      standardForm: true'), true);
+    assert.equal(settings.includes('title: "Drucklogos verwalten",\n      content: [wrap],\n      standardForm: true'), true);
     assert.equal(settings.includes("standardForm = false"), true);
     assert.equal(settings.includes('classList.toggle("bbm-popup-standard", !!standardForm)'), true);
+    assert.equal(project.includes('body.classList.add("bbm-popup-body", "bbm-form-content")'), true);
+    assert.equal(project.includes('section.classList.add("bbm-form-card", "bbm-form-group")'), true);
+    assert.equal(project.includes('createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 10020 })'), false);
+    assert.equal(print.includes('overlay.setAttribute("data-bbm-print-overlay", "main")'), true);
+    assert.equal(print.includes('modal.classList.add("bbm-popup-standard", "bbm-popup-dialog")'), true);
+    assert.equal(print.includes('content.classList.add("bbm-popup-body", "bbm-form-content")'), true);
+    assert.equal(print.includes('modal.style.maxHeight = "100%"'), true);
   });
 
   await run("Popup-Standard: Projektformular nutzt zentrale vertikale Abstände ohne lokale Zugabe", () => {

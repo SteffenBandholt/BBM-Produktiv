@@ -1,5 +1,14 @@
 # STATUS.md — BBM-Produktiv
 
+### Weitere BBM-Popups auf Formularstandard migriert
+
+- Status: `[A]`; als zweites, bewusst begrenztes Paket verwenden jetzt zusätzlich die Einstellungen `Ausgabe & Druck` und `Drucklogos verwalten`, die Projektverwaltung `Projekt-Einstellungen` sowie der Hauptdialog `Protokoll drucken` den unveränderten zentralen Popup-/Formularstandard.
+- Lokale Altwerte für Dialog-/Kartenradius, Karten- und Bodypadding, Feld-/Gruppengaps, Controltypografie, Borders und Footer wurden durch die vorhandenen semantischen Klassen ersetzt. Spalten, Feldbreiten, Reihenfolgen, Fachlogik, Datenbindung und Aktionen blieben unverändert.
+- Electron-Messung: Controls 32 px, Controlradius 8 px, Labels 11,5 px, Label-Feld-Gap 4 px, Gruppengap 10 px, Kartenpadding 14 px, Kartenradius 12 px, Bodypadding 12 px 16 px, Footerpadding 10 px 16 px und Dialogradius 14 px. Focus-Border/Ring ist `#2563eb`; der simulierte Disabled-Zustand verwendet `#f1f3f6` / `#8a94a3`.
+- Bei effektiv 1200 × 576 px bleiben alle Footer sichtbar und die Inhaltskörper scrollbar. `Protokoll drucken` verwendet mit `max-height: 100%` ausschließlich die headerbereinigte gemeinsame Popup-Fläche und beginnt 8 px unter dem fachlichen Protokoll-Header. Der lokale Projektsettings-Layer `10020` wurde zugunsten der gemeinsamen Overlay-Ebene entfernt, damit der Dialogkopf nicht vom Mainheader überdeckt wird.
+- Popup-Guardrail, Settings-/Projektsettings- und Ausgabe-Tests sowie UI-Editor-Vertragscheck sind grün. Der Projektverwaltungs-Gruppenlauf enthält weiterhin vier bereits bekannte, paketfremde Mainheader-Erwartungen. ESLint ist für die übrigen geänderten Dateien fehlerfrei; `SettingsView.js` behält die zwei bekannten `footerDefaults`-Altfehler außerhalb der Styleänderung.
+- Bewusst offen bleiben alle weiteren Einstellungen und die dokumentierten Projekt-, Firmen-/Personen-, Teilnehmer-, TOP-/Textkorrektur-, Mail-, Hilfe- und Druckvarianten. Keine automatische Folgemigration vor Sichtfreigabe. Commit-SHA wird im Paketabschluss berichtet.
+
 ### Zentraler BBM Popup- und Formularstandard – Pilot
 
 - Status: `[A]`; die freigegebenen Rechnungen-Werte sind als opt-in-basierter Standard in `src/renderer/ui/styles/popupFormStandard.css` zentralisiert und in `docs/BBM_POPUP_FORMULARSTANDARD.md` verbindlich dokumentiert.

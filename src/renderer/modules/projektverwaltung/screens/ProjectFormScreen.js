@@ -846,13 +846,11 @@ export default class ProjectFormScreen {
       } catch (_e) {}
     }
 
-    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 10020 });
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)" });
     overlay.style.display = "flex";
 
     const modal = document.createElement("div");
-    modal.style.background = "#fff";
-    modal.style.borderRadius = "10px";
-    modal.style.border = "1px solid rgba(0,0,0,0.15)";
+    modal.classList.add("bbm-popup-standard", "bbm-popup-dialog");
     modal.style.width = "min(760px, calc(100vw - 32px))";
     modal.style.maxHeight = "calc(100vh - 32px)";
     modal.style.display = "flex";
@@ -861,11 +859,10 @@ export default class ProjectFormScreen {
     modal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.2)";
 
     const head = document.createElement("div");
+    head.classList.add("bbm-popup-header");
     head.style.display = "flex";
     head.style.alignItems = "center";
     head.style.gap = "10px";
-    head.style.padding = "12px 16px";
-    head.style.borderBottom = "1px solid #e2e8f0";
 
     const title = document.createElement("div");
     title.textContent = "Projekt-Einstellungen";
@@ -880,10 +877,9 @@ export default class ProjectFormScreen {
     head.append(title, btnClose);
 
     const body = document.createElement("div");
-    body.style.padding = "14px 16px";
+    body.classList.add("bbm-popup-body", "bbm-form-content");
     body.style.overflow = "auto";
     body.style.display = "grid";
-    body.style.gap = "12px";
 
     const mkInput = (placeholder = "") => {
       const input = document.createElement("input");
@@ -891,31 +887,23 @@ export default class ProjectFormScreen {
       input.placeholder = placeholder;
       input.style.width = "100%";
       input.style.boxSizing = "border-box";
-      input.style.padding = "8px 10px";
-      input.style.border = "1px solid #d1d5db";
-      input.style.borderRadius = "8px";
-      input.style.fontSize = "13px";
       return input;
     };
     const mkRow = (labelText, fieldEl) => {
       const wrap = document.createElement("div");
+      wrap.classList.add("bbm-form-field");
       wrap.style.display = "grid";
       wrap.style.gridTemplateColumns = "220px minmax(0, 1fr)";
-      wrap.style.gap = "10px";
       wrap.style.alignItems = "center";
       const lab = document.createElement("div");
+      lab.classList.add("bbm-form-label");
       lab.textContent = labelText;
-      lab.style.fontSize = "13px";
-      lab.style.fontWeight = "600";
       wrap.append(lab, fieldEl);
       return wrap;
     };
     const section = document.createElement("div");
-    section.style.border = "1px solid #e5e7eb";
-    section.style.borderRadius = "10px";
-    section.style.padding = "12px";
+    section.classList.add("bbm-form-card", "bbm-form-group");
     section.style.display = "grid";
-    section.style.gap = "10px";
 
     const sectionTitle = document.createElement("div");
     sectionTitle.textContent = "Protokoll";
@@ -924,11 +912,8 @@ export default class ProjectFormScreen {
     inpProtocolTitle.value = String(data["pdf.protocolTitle"] || "");
 
     const footerSection = document.createElement("div");
-    footerSection.style.border = "1px solid #e5e7eb";
-    footerSection.style.borderRadius = "10px";
-    footerSection.style.padding = "12px";
+    footerSection.classList.add("bbm-form-card", "bbm-form-group");
     footerSection.style.display = "grid";
-    footerSection.style.gap = "10px";
 
     const footerTitle = document.createElement("div");
     footerTitle.textContent = "Protokoll-Fuss (PDF)";
@@ -995,11 +980,9 @@ export default class ProjectFormScreen {
     body.append(section, footerSection);
 
     const footer = document.createElement("div");
+    footer.classList.add("bbm-popup-footer");
     footer.style.display = "flex";
     footer.style.justifyContent = "flex-end";
-    footer.style.gap = "8px";
-    footer.style.padding = "12px 16px";
-    footer.style.borderTop = "1px solid #e2e8f0";
 
     const btnCancel = document.createElement("button");
     btnCancel.type = "button";

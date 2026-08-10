@@ -123,16 +123,16 @@ export default class PrintModal {
 
     const modal = document.createElement("div");
     stylePopupCard(modal, { width: "920px" });
+    modal.classList.add("bbm-popup-standard", "bbm-popup-dialog");
     modal.style.maxWidth = "calc(100vw - 28px)";
-    modal.style.maxHeight = "calc(100vh - 28px)";
+    modal.style.maxHeight = "100%";
     modal.style.padding = "0";
 
     const head = document.createElement("div");
+    head.classList.add("bbm-popup-header");
     head.style.display = "flex";
     head.style.gap = "10px";
     head.style.alignItems = "center";
-    head.style.padding = "12px 14px";
-    head.style.borderBottom = "1px solid #e2e8f0";
 
     const title = document.createElement("div");
     title.textContent = "Protokoll drucken";
@@ -147,10 +147,8 @@ export default class PrintModal {
     head.append(title, msg);
 
     const box = document.createElement("div");
-    box.style.border = "1px solid #ddd";
-    box.style.borderRadius = "10px";
-    box.style.background = "#fafafa";
-    box.style.padding = "12px";
+    box.classList.add("bbm-form-card", "bbm-form-group");
+    box.style.display = "grid";
 
     const row = document.createElement("div");
     row.style.display = "flex";
@@ -228,16 +226,12 @@ export default class PrintModal {
     box.append(row, hint, protocolsInfo);
 
     const outputBox = document.createElement("div");
-    outputBox.style.border = "1px solid #ddd";
-    outputBox.style.borderRadius = "10px";
-    outputBox.style.background = "#fafafa";
-    outputBox.style.padding = "12px";
-    outputBox.style.marginTop = "12px";
+    outputBox.classList.add("bbm-form-card", "bbm-form-group");
+    outputBox.style.display = "grid";
 
     const outputTitle = document.createElement("div");
     outputTitle.textContent = "Weitere Ausgaben";
     outputTitle.style.fontWeight = "700";
-    outputTitle.style.marginBottom = "8px";
 
     const outputGrid = document.createElement("div");
     outputGrid.style.display = "grid";
@@ -288,30 +282,24 @@ export default class PrintModal {
     outputBox.append(outputTitle, outputGrid);
 
     const nextMeetBox = document.createElement("div");
-    nextMeetBox.style.border = "1px solid #ddd";
-    nextMeetBox.style.borderRadius = "10px";
-    nextMeetBox.style.background = "#fafafa";
-    nextMeetBox.style.padding = "12px";
-    nextMeetBox.style.marginTop = "12px";
+    nextMeetBox.classList.add("bbm-form-card", "bbm-form-group");
+    nextMeetBox.style.display = "grid";
 
     const nextMeetTitle = document.createElement("div");
     nextMeetTitle.textContent = "Nächste Besprechung";
     nextMeetTitle.style.fontWeight = "700";
-    nextMeetTitle.style.marginBottom = "8px";
 
     const mkRow = (labelText, inputEl) => {
       const wrap = document.createElement("div");
+      wrap.classList.add("bbm-form-field");
       wrap.style.display = "flex";
       wrap.style.flexWrap = "wrap";
       wrap.style.alignItems = "center";
-      wrap.style.gap = "8px";
-      wrap.style.marginBottom = "8px";
 
       const lab = document.createElement("div");
+      lab.classList.add("bbm-form-label");
       lab.textContent = labelText;
       lab.style.minWidth = "160px";
-      lab.style.fontSize = "12px";
-      lab.style.opacity = "0.85";
 
       inputEl.style.flex = "1 1 auto";
       inputEl.style.minWidth = "220px";
@@ -360,18 +348,17 @@ export default class PrintModal {
     );
 
     const content = document.createElement("div");
+    content.classList.add("bbm-popup-body", "bbm-form-content");
     content.style.flex = "1 1 auto";
     content.style.minHeight = "0";
     content.style.overflow = "auto";
-    content.style.padding = "14px";
+    content.style.display = "grid";
     content.append(box, outputBox, nextMeetBox);
 
     const footer = document.createElement("div");
+    footer.classList.add("bbm-popup-footer");
     footer.style.display = "flex";
     footer.style.justifyContent = "flex-end";
-    footer.style.gap = "8px";
-    footer.style.padding = "10px 14px";
-    footer.style.borderTop = "1px solid #e2e8f0";
     footer.append(btnClose);
 
     modal.append(head, content, footer);

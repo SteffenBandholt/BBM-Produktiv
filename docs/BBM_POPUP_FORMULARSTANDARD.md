@@ -70,9 +70,15 @@ gleichen Standard.
 - Popup `Projekt bearbeiten` mit unveränderter Zweispaltenstruktur und Fachlogik.
 - Einstellungen `Profil / Adresse`.
 - Einstellungen `Protokoll`.
+- Einstellungen `Ausgabe & Druck`.
+- Einstellungen `Drucklogos verwalten`.
+- Projektverwaltung `Projekt-Einstellungen`.
+- Protokoll-Ausgabe `Protokoll drucken` (nur Hauptdialog).
 
-Bewusst noch nicht umgestellt sind alle anderen Einstellungen, Protokoll-Popups,
-Firmen-, Teilnehmer-, Druck-, Vorschau- und Maildialoge sowie sonstige Formulare.
-Die bisherigen `--bbm-form-*`-Werte bleiben für diese Altbereiche als unveränderte
-Fallbacks bestehen. Eine spätere Übernahme ist ein jeweils explizit freizugebender
-Schritt.
+Bewusst noch nicht umgestellt sind die übrigen Einstellungen, `Protokoll anlegen`,
+Projekt Import/Export, Firmen-, Personen- und Mitarbeiterdialoge, Teilnehmerauswahlen,
+TOP-Regeln, Textkorrektur, Mail, Hilfe sowie die weiteren Druckvarianten Vorschau,
+Folgetermin-Prompt und ToDo-Verantwortlichenfilter. Die bisherigen `--bbm-form-*`-Werte
+bleiben für diese Altbereiche als unveränderte Fallbacks bestehen. Eine spätere
+Übernahme ist ein jeweils explizit freizugebender Schritt; nach diesem Paket erfolgt
+keine Massenmigration.

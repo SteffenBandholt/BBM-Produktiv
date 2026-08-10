@@ -4174,8 +4174,8 @@ export default class SettingsView {
   async _createOutputPrintContent() {
     const api = window.bbmDb || {};
     const wrap = document.createElement("div");
+    wrap.classList.add("bbm-form-content");
     wrap.style.display = "grid";
-    wrap.style.gap = "10px";
     wrap.style.minWidth = "min(720px, calc(100vw - 80px))";
 
     const info = document.createElement("div");
@@ -4189,12 +4189,12 @@ export default class SettingsView {
 
     const renderField = (field) => {
       const row = document.createElement("label");
+      row.classList.add("bbm-form-field");
       row.style.display = "grid";
-      row.style.gap = "4px";
 
       const lbl = document.createElement("span");
+      lbl.classList.add("bbm-form-label");
       lbl.textContent = field.label || field.key;
-      lbl.style.fontSize = "12px";
 
       let inp;
       if (field.type === "checkbox") {
@@ -4228,9 +4228,8 @@ export default class SettingsView {
 
     const footerCard = document.createElement("div");
     applyPopupCardStyle(footerCard);
-    footerCard.style.padding = "10px";
+    footerCard.classList.add("bbm-form-group");
     footerCard.style.display = "grid";
-    footerCard.style.gap = "8px";
     const footerTitle = document.createElement("div");
     footerTitle.textContent = "Footer / Drucksignatur";
     footerTitle.style.fontWeight = "800";
@@ -4264,9 +4263,8 @@ export default class SettingsView {
 
     const storageCard = document.createElement("div");
     applyPopupCardStyle(storageCard);
-    storageCard.style.padding = "10px";
+    storageCard.classList.add("bbm-form-group");
     storageCard.style.display = "grid";
-    storageCard.style.gap = "8px";
     const storageTitle = document.createElement("div");
     storageTitle.textContent = "Ausgabeordner / Speicherort";
     storageTitle.style.fontWeight = "800";
@@ -4277,11 +4275,11 @@ export default class SettingsView {
     storageHint.style.opacity = "0.78";
     storageCard.append(storageHint);
     const protocolsDirRow = document.createElement("label");
+    protocolsDirRow.classList.add("bbm-form-field");
     protocolsDirRow.style.display = "grid";
-    protocolsDirRow.style.gap = "4px";
     const protocolsDirLabel = document.createElement("span");
+    protocolsDirLabel.classList.add("bbm-form-label");
     protocolsDirLabel.textContent = "Ausgabeordner";
-    protocolsDirLabel.style.fontSize = "12px";
     const inpProtocolsDir = document.createElement("input");
     inpProtocolsDir.type = "text";
     inpProtocolsDir.style.width = "100%";
@@ -4291,9 +4289,8 @@ export default class SettingsView {
 
     const logosCard = document.createElement("div");
     applyPopupCardStyle(logosCard);
-    logosCard.style.padding = "10px";
+    logosCard.classList.add("bbm-form-group");
     logosCard.style.display = "grid";
-    logosCard.style.gap = "8px";
     const logosTitle = document.createElement("div");
     logosTitle.textContent = "Drucklogos";
     logosTitle.style.fontWeight = "800";
@@ -4314,9 +4311,8 @@ export default class SettingsView {
 
     const layoutCard = document.createElement("div");
     applyPopupCardStyle(layoutCard);
-    layoutCard.style.padding = "10px";
+    layoutCard.classList.add("bbm-form-group");
     layoutCard.style.display = "grid";
-    layoutCard.style.gap = "8px";
     const layoutTitle = document.createElement("div");
     layoutTitle.textContent = "Drucklayout";
     layoutTitle.style.fontWeight = "800";
@@ -4435,6 +4431,7 @@ export default class SettingsView {
     this._openSettingsModal({
       title: "Ausgabe & Druck",
       content: [wrap],
+      standardForm: true,
       saveFn: async () => {
         if (typeof api.appSettingsSetMany !== "function") return false;
 
@@ -4790,22 +4787,20 @@ export default class SettingsView {
   async _openPrintLogosPopup() {
     const api = window.bbmDb || {};
     const wrap = document.createElement("div");
+    wrap.classList.add("bbm-form-content");
     wrap.style.display = "grid";
-    wrap.style.gap = "10px";
     wrap.style.minWidth = "min(860px, calc(100vw - 80px))";
     wrap.style.maxWidth = "1020px";
 
     const mkRow = (labelText, valueNode) => {
       const row = document.createElement("div");
+      row.classList.add("bbm-form-field");
       row.style.display = "grid";
       row.style.gridTemplateColumns = "160px 1fr";
-      row.style.gap = "8px";
       row.style.alignItems = "center";
       const label = document.createElement("div");
+      label.classList.add("bbm-form-label");
       label.textContent = labelText;
-      label.style.fontWeight = "700";
-      label.style.fontSize = "12px";
-      label.style.color = "#334155";
       const value = valueNode instanceof HTMLElement ? valueNode : document.createElement("div");
       if (!(valueNode instanceof HTMLElement)) value.textContent = String(valueNode ?? "-");
       value.style.minWidth = "0";
@@ -4817,9 +4812,8 @@ export default class SettingsView {
 
     const headerCard = document.createElement("div");
     applyPopupCardStyle(headerCard);
-    headerCard.style.padding = "10px";
+    headerCard.classList.add("bbm-form-group");
     headerCard.style.display = "grid";
-    headerCard.style.gap = "8px";
     const headerTitle = document.createElement("div");
     headerTitle.textContent = "Header";
     headerTitle.style.fontWeight = "800";
@@ -4872,9 +4866,8 @@ export default class SettingsView {
     const mkSlotCard = (idx) => {
       const card = document.createElement("div");
       applyPopupCardStyle(card);
-      card.style.padding = "10px";
+      card.classList.add("bbm-form-group");
       card.style.display = "grid";
-      card.style.gap = "8px";
 
       const title = document.createElement("div");
       title.textContent = `Drucklogo ${idx + 1}`;
@@ -5011,6 +5004,7 @@ export default class SettingsView {
     this._openSettingsModal({
       title: "Drucklogos verwalten",
       content: [wrap],
+      standardForm: true,
       saveFn: async () => (await this._savePrintLogoSettings()) !== false,
       closeOnly: false,
     });

@@ -444,13 +444,14 @@ Dabei gilt:
 - Automatischer Guardrail und Electron-Sichtprüfung einschließlich kleinem, scrollbar bleibendem Dialogviewport vorhanden.
 - Nächster Schritt außerhalb dieses Pakets: Designwerte fachlich beurteilen und erst nach ausdrücklicher Freigabe eine mögliche globale BBM-Standardisierung separat planen.
 
-### Zentraler Popup-/Formularstandard (Pilot abgeschlossen, Freigabe offen)
+### Zentraler Popup-/Formularstandard (zweites Migrationspaket umgesetzt, Freigabe offen)
 
 - Die freigegebenen Rechnungen-Werte sind zentral unter `src/renderer/ui/styles/popupFormStandard.css` definiert und in `docs/BBM_POPUP_FORMULARSTANDARD.md` dokumentiert.
 - Die Aktivierung bleibt opt-in über `.bbm-popup-standard`; bestehende Altbereiche werden nicht automatisch verändert.
 - Rechnungen nutzt die zentrale Quelle bei optisch unverändertem Modul- und Dialoglayout.
 - Produktpiloten sind `Projekt bearbeiten`, Einstellungen `Profil / Adresse` und Einstellungen `Protokoll`.
-- Alle weiteren Popups und Formulare bleiben bewusst offen. Nächster Schritt ist ausschließlich die visuelle Pilotfreigabe; keine automatische Massenmigration.
+- Das zweite, begrenzte Paket ergänzt Einstellungen `Ausgabe & Druck`, Einstellungen `Drucklogos verwalten`, Projektverwaltung `Projekt-Einstellungen` und ausschließlich den Hauptdialog `Protokoll drucken`; die zentralen Tokenwerte bleiben unverändert.
+- Alle weiteren Popups und Formulare bleiben bewusst offen. Nächster Schritt ist ausschließlich die visuelle Freigabe dieses Pakets; keine automatische Massenmigration.
 
 ### M37 UI-Editor Klick-Abnahme dokumentiert (neu)
 - Die manuelle Klick-Abnahme des UI-Editor-Fixstands ist als Pruefliste dokumentiert.
