@@ -464,14 +464,14 @@ export default class ProjectFormScreen {
       return wrap;
     };
 
-    const mkRow = (mt) => {
+    const mkRow = () => {
       const row = document.createElement("div");
-      row.classList.add("bbm-form-group");
+      row.classList.add("project-form-row");
       row.style.display = "flex";
-      row.style.gap = "10px";
+      row.style.columnGap = "var(--bbm-form-group-gap)";
+      row.style.rowGap = "var(--bbm-form-group-gap)";
       row.style.alignItems = "flex-end";
       row.style.flexWrap = "wrap";
-      if (mt) row.style.marginTop = mt;
       return row;
     };
 
@@ -573,7 +573,6 @@ export default class ProjectFormScreen {
 
     const storagePreviewWrap = document.createElement("div");
     storagePreviewWrap.classList.add("bbm-form-card");
-    storagePreviewWrap.style.marginTop = "var(--bbm-form-section-margin-top)";
     storagePreviewWrap.style.marginLeft = "0";
     storagePreviewWrap.style.alignSelf = "flex-start";
     // Spannt von linker Kante der linken Spalte bis zur rechten Kante der rechten Spalte.
@@ -654,7 +653,6 @@ export default class ProjectFormScreen {
     row4.append(fieldLead, fieldLeadPhone);
 
     const row5 = mkRow();
-    row5.style.gap = "1cm";
     const fieldEnd = mkField("Enddatum", inpEnd, { grow: false });
     row5.append(mkField("Startdatum", inpStart, { grow: false }), fieldEnd);
 

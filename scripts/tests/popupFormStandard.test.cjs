@@ -76,6 +76,18 @@ async function runPopupFormStandardTests(run) {
     assert.equal(settings.includes('classList.toggle("bbm-popup-standard", !!standardForm)'), true);
   });
 
+  await run("Popup-Standard: Projektformular nutzt zentrale vertikale Abstände ohne lokale Zugabe", () => {
+    const project = read("src/renderer/modules/projektverwaltung/screens/ProjectFormScreen.js");
+    assert.equal(project.includes('row.classList.add("project-form-row")'), true);
+    assert.equal(project.includes('row.style.columnGap = "var(--bbm-form-group-gap)"'), true);
+    assert.equal(project.includes('row.style.rowGap = "var(--bbm-form-group-gap)"'), true);
+    assert.equal(project.includes('row.classList.add("bbm-form-group")'), false);
+    assert.equal(project.includes('row5.style.gap = "1cm"'), false);
+    assert.equal(project.includes('storagePreviewWrap.style.marginTop'), false);
+    assert.equal(project.includes('leftCol.style.gap = "var(--bbm-form-group-gap)"'), true);
+    assert.equal(project.includes('rightCol.style.gap = "var(--bbm-form-group-gap)"'), true);
+  });
+
   await run("Popup-Standard: zentrale Dokumentation nennt Zweck, Nutzer und Pilotgrenze", () => {
     const docs = read("docs/BBM_POPUP_FORMULARSTANDARD.md");
     assert.equal(docs.includes("Tokenname"), true);

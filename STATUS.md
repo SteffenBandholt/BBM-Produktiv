@@ -4015,3 +4015,9 @@ Wichtig:
 - Realnachweis: `protokoll.list.row.due` blieb nach Save, Editor-Close, BBM-Close und Neustart mit Profilwert `51.49624252319336` DIP sichtbar (`51.48496627807617` DOM-DIP). `restarbeiten.edit.short.label` blieb entsprechend mit Profilwert `147` DIP sichtbar (`147.00001525878906` DOM-DIP). Beide Starts meldeten `startup_layout_applied`; Markerzahl jeweils `0`.
 - Guardrail: Der M86.20-Chromium-Restarttest enthält nun den gezielten M86.25-Fall mit gespeicherter Restarbeiten-Breite und gespeichertem Move. M86.14, M86.16, M86.19 bis M86.24 sowie die Core-M86.23/M86.24-Tests sind grün; der erste M86.24-Wiederholungslauf hatte einen transienten Registry-Mount-Fehler, der unmittelbare vollständige Wiederholungslauf war grün.
 - Schutz: `docs/licensing.md` blieb beim Schutz-Hash `02AE66A8873C74869539F13F734B7CE43BC63B6EF37DA553A40C27A4F514D784`; Benutzerlizenz und Datenbankdateien wurden nicht manuell gelesen oder bearbeitet, `design-reference/` wurde nicht verändert oder gestaged. Commit, Push, PR und Merge: keiner.
+# Projektformular: zentrale Abstände lokal bereinigt (10.08.2026)
+
+- `Projekt bearbeiten` verwendet für vertikale Feldgruppen weiterhin unverändert den zentralen `10px`-Token.
+- Horizontale Formularzeilen sind nicht mehr fälschlich als zentrale vertikale `bbm-form-group` markiert; ihre Wrap- und Spaltenabstände referenzieren den Token nun ausdrücklich.
+- Der lokale Zusatzabstand vor `Ablageordner (PDF)` wurde entfernt; dadurch wird dort nicht mehr `10px + 4px`, sondern exakt der zentrale Gruppenabstand gerendert.
+- Zentrale Tokens, Spalten, Feldbreiten, Fachlogik und andere Popups blieben unverändert.
