@@ -18,6 +18,7 @@ export function injectCoreShellBaseStyles() {
       --bbm-button-font-size-sm: 12px;
       --bbm-button-font-weight: 500;
       --bbm-button-line-height: 1.15;
+      /* Legacy-Fallbacks für noch nicht auf den opt-in-Standard migrierte Formulare. */
       --bbm-form-dialog-padding-y: 8px;
       --bbm-form-dialog-padding-x: 12px;
       --bbm-form-card-padding: 10px;

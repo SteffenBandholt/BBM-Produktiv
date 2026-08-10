@@ -14,10 +14,14 @@ Berechnung, keine Speicherung, keine Rechnungs-/ZUGFeRD-/GAEB- oder PDF-Logik.
 - BBM-Popup „Projekt bearbeiten“: dichte Feldgruppen, echte Zweizeiligkeit und
   scrollbarer Dialogkörper zwischen festem Header und Footer.
 
-## Lokale Design-Tokens
+## Zentraler BBM-Standard
 
-Die zentrale Quelle ist `styles/rechnungenDesign.css`. Alle Tokens sind auf
-`.bbm-invoice-design` und `.bbm-invoice-design-modal` begrenzt.
+Die freigegebenen Werte liegen zentral in
+`src/renderer/ui/styles/popupFormStandard.css` und sind in
+`docs/BBM_POPUP_FORMULARSTANDARD.md` verbindlich dokumentiert. Das Modul aktiviert
+den opt-in-Standard über `.bbm-popup-standard`; `styles/rechnungenDesign.css`
+enthält nur noch die rechnungsspezifische Anordnung und verweist für die
+gemeinsamen Werte auf die zentralen `--bbm-popup-*`-Tokens.
 
 | Token | Wert |
 | --- | --- |

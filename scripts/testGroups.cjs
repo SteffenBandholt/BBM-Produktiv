@@ -49,6 +49,13 @@ const TEST_GROUPS = Object.freeze([
     ]),
   }),
   Object.freeze({
+    id: "popup-form-standard",
+    label: "Zentraler Popup- und Formularstandard",
+    suites: Object.freeze([
+      ["popupFormStandard.test.cjs", "runPopupFormStandardTests"],
+    ]),
+  }),
+  Object.freeze({
     id: "editor-core",
     label: "Editor-Kern",
     suites: Object.freeze([

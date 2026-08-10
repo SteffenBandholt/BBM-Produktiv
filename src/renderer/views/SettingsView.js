@@ -3924,6 +3924,7 @@ export default class SettingsView {
   async _createProfileAddressContent() {
     const api = window.bbmDb || {};
     const wrap = document.createElement("div");
+    wrap.classList.add("bbm-form-content");
     wrap.style.display = "grid";
     wrap.style.gap = "10px";
     wrap.style.minWidth = "min(560px, calc(100vw - 80px))";
@@ -3939,10 +3940,12 @@ export default class SettingsView {
 
     const renderField = (field) => {
       const row = document.createElement("label");
+      row.classList.add("bbm-form-field");
       row.style.display = "grid";
       row.style.gap = "4px";
 
       const lbl = document.createElement("span");
+      lbl.classList.add("bbm-form-label");
       lbl.textContent = field.label || field.key;
       lbl.style.fontSize = "12px";
 
@@ -3957,6 +3960,7 @@ export default class SettingsView {
     const makeCard = (titleText, hintText, fields) => {
       const card = document.createElement("div");
       applyPopupCardStyle(card);
+      card.classList.add("bbm-form-group");
       card.style.padding = "10px";
       card.style.display = "grid";
       card.style.gap = "8px";
@@ -4042,6 +4046,7 @@ export default class SettingsView {
     this._openSettingsModal({
       title: "Profil / Adresse",
       content: [wrap],
+      standardForm: true,
       saveFn: async () => {
         if (typeof api.userProfileUpsert !== "function" || typeof api.appSettingsSetMany !== "function") {
           alert("Settings-API fehlt (IPC noch nicht aktiv).");
@@ -4513,6 +4518,7 @@ export default class SettingsView {
   async _createProtocolContent() {
     const api = window.bbmDb || {};
     const wrap = document.createElement("div");
+    wrap.classList.add("bbm-form-content");
     wrap.style.display = "grid";
     wrap.style.gap = "10px";
     wrap.style.minWidth = "min(620px, calc(100vw - 80px))";
@@ -4528,10 +4534,12 @@ export default class SettingsView {
 
     const renderField = (field) => {
       const row = document.createElement("label");
+      row.classList.add("bbm-form-field");
       row.style.display = "grid";
       row.style.gap = "4px";
 
       const lbl = document.createElement("span");
+      lbl.classList.add("bbm-form-label");
       lbl.textContent = field.label || field.key;
       lbl.style.fontSize = "12px";
 
@@ -4557,6 +4565,7 @@ export default class SettingsView {
 
     const titleCard = document.createElement("div");
     applyPopupCardStyle(titleCard);
+    titleCard.classList.add("bbm-form-group");
     titleCard.style.padding = "10px";
     titleCard.style.display = "grid";
     titleCard.style.gap = "8px";
@@ -4578,6 +4587,7 @@ export default class SettingsView {
 
     const remarksCard = document.createElement("div");
     applyPopupCardStyle(remarksCard);
+    remarksCard.classList.add("bbm-form-group");
     remarksCard.style.padding = "10px";
     remarksCard.style.display = "grid";
     remarksCard.style.gap = "8px";
@@ -4648,6 +4658,7 @@ export default class SettingsView {
     this._openSettingsModal({
       title: "Protokoll",
       content: [wrap],
+      standardForm: true,
       saveFn: async () => {
         if (typeof api.appSettingsSetMany !== "function") return false;
 
@@ -6876,6 +6887,7 @@ export default class SettingsView {
 
     const modal = document.createElement("div");
     applyPopupCardStyle(modal);
+    modal.classList.add("bbm-popup-dialog");
     modal.style.width = "min(980px, calc(100vw - 24px))";
     modal.style.maxHeight = "calc(100vh - 24px)";
     modal.style.display = "flex";
@@ -6888,6 +6900,7 @@ export default class SettingsView {
     modal.tabIndex = -1;
 
     const modalHead = document.createElement("div");
+    modalHead.classList.add("bbm-popup-header");
     modalHead.style.display = "flex";
     modalHead.style.alignItems = "center";
     modalHead.style.justifyContent = "space-between";
@@ -6907,6 +6920,7 @@ export default class SettingsView {
     modalHead.append(modalTitle, modalClose);
 
     const modalBody = document.createElement("div");
+    modalBody.classList.add("bbm-popup-body");
     modalBody.style.display = "grid";
     modalBody.style.gap = "10px";
     modalBody.style.flex = "1 1 auto";
@@ -6915,6 +6929,7 @@ export default class SettingsView {
     modalBody.style.padding = "12px";
 
     const modalFooter = document.createElement("div");
+    modalFooter.classList.add("bbm-popup-footer");
     modalFooter.style.borderTop = "1px solid #e2e8f0";
     modalFooter.style.padding = "10px 12px";
 
@@ -6965,11 +6980,12 @@ export default class SettingsView {
     return root;
   }
 
-  _openSettingsModal({ title, content, saveFn, closeOnly = false } = {}) {
+  _openSettingsModal({ title, content, saveFn, closeOnly = false, standardForm = false } = {}) {
     if (!this.settingsModalOverlayEl || !this.settingsModalBodyEl || !this.settingsModalTitleEl) return;
     this.settingsModalTitleEl.textContent = (title || "").toString();
     const titleNorm = String(title || "").trim().toLowerCase();
     if (this.settingsModalEl) {
+      this.settingsModalEl.classList.toggle("bbm-popup-standard", !!standardForm);
       const isCompactPopup =
         titleNorm === "lizenz" || titleNorm === "entwicklung" || titleNorm === "adminbereich";
       const isPrintSettingsPopup = titleNorm === "druckeinstellungen";

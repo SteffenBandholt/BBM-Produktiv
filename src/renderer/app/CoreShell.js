@@ -9,6 +9,7 @@ import {
   setBtnEnabled,
 } from "./coreShellButtons.js";
 import { injectCoreShellBaseStyles } from "./coreShellStyles.js";
+import { ensurePopupFormStandardStyles } from "../ui/popupFormStyles.js";
 import { createCoreShellNavigationRouteDefs } from "./coreShellNavigation.js";
 import {
   CORE_SHELL_LAYOUT_PADDING,
@@ -72,6 +73,7 @@ export default class CoreShell {
 
   _initShell() {
     injectCoreShellBaseStyles();
+    ensurePopupFormStandardStyles();
     prepareCoreShellBody();
 
     registerCoreShellKeyboardHandling();

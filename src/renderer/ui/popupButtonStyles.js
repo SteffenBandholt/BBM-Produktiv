@@ -2,6 +2,7 @@
 
 export function applyPopupButtonStyle(btn, { variant = "neutral" } = {}) {
   if (!btn || !btn.style) return;
+  btn.classList?.add("bbm-form-button");
   btn.style.padding = "var(--bbm-button-padding-y) var(--bbm-button-padding-x)";
   btn.style.borderRadius = "var(--bbm-button-radius)";
   btn.style.fontFamily = "var(--bbm-font-ui)";
@@ -31,6 +32,7 @@ export function applyCompactFormButtonStyle(btn, options = {}) {
 
 export function applyPopupCardStyle(card) {
   if (!card || !card.style) return;
+  card.classList?.add("bbm-form-card");
   card.style.border = "1px solid var(--card-border)";
   card.style.borderRadius = "10px";
   card.style.background = "var(--card-bg)";

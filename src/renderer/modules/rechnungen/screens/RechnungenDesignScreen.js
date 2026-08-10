@@ -75,7 +75,7 @@ export default class RechnungenDesignScreen {
 
   render() {
     ensureRechnungenDesignStyles();
-    const root = node("section", "bbm-invoice-design");
+    const root = node("section", "bbm-invoice-design bbm-popup-standard");
     root.setAttribute("data-invoice-design-screen", "overview");
 
     const header = node("header", "invoice-page-header");
@@ -87,7 +87,7 @@ export default class RechnungenDesignScreen {
     );
     const headerActions = node("div", "invoice-page-actions");
     const helpButton = button("Designwerte", "quiet");
-    helpButton.onclick = () => this._showMessage("Alle Maße und Farben sind lokal im Rechnungs-Dummy definiert.");
+    helpButton.onclick = () => this._showMessage("Alle Maße und Farben stammen aus dem zentralen BBM Popup- und Formularstandard.");
     const newButton = button("+ Neue Rechnung", "primary");
     newButton.setAttribute("data-invoice-action", "open-editor");
     newButton.onclick = () => this.openEditor();
@@ -228,7 +228,7 @@ export default class RechnungenDesignScreen {
     overlay.setAttribute("data-invoice-design-state", "editor-open");
     overlay.style.display = "flex";
 
-    const modal = node("section", "invoice-dialog");
+    const modal = node("section", "invoice-dialog bbm-popup-standard bbm-popup-dialog");
     modal.setAttribute("role", "dialog");
     modal.setAttribute("aria-modal", "true");
     modal.setAttribute("aria-labelledby", "invoice-dialog-title");

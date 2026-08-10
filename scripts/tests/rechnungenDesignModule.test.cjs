@@ -33,7 +33,7 @@ async function runRechnungenDesignModuleTests(run) {
       "Abbrechen",
       "Speichern",
       "PDF",
-    ].forEach((label) => assert.equal(source.includes(`\"${label}\"`), true, label));
+    ].forEach((label) => assert.equal(source.includes(`"${label}"`), true, label));
     assert.equal(source.includes('data-invoice-design-screen'), true);
     assert.equal(source.includes('data-invoice-design-state'), true);
   });
@@ -50,23 +50,30 @@ async function runRechnungenDesignModuleTests(run) {
     assert.equal(screenSource.includes("Keine Speicherung"), true);
   });
 
-  await run("Rechnungen-Design: hält Design-Tokens lokal und vollständig", () => {
+  await run("Rechnungen-Design: bezieht die freigegebenen Werte aus dem zentralen BBM-Standard", () => {
     const css = read("src/renderer/modules/rechnungen/styles/rechnungenDesign.css");
+    const standardCss = read("src/renderer/ui/styles/popupFormStandard.css");
+    const screen = read("src/renderer/modules/rechnungen/screens/RechnungenDesignScreen.js");
     assert.equal(css.includes(":root"), false);
     assert.equal(css.includes(":where(.bbm-invoice-design, .bbm-invoice-design-modal)"), true);
     [
-      "--invoice-control-height: 32px",
-      "--invoice-button-height: 30px",
-      "--invoice-radius-control: 8px",
-      "--invoice-radius-card: 12px",
-      "--invoice-field-gap: 4px",
-      "--invoice-group-gap: 10px",
-      "--invoice-font-label: 11.5px",
-      "--invoice-color-primary: #235a9f",
+      "--invoice-control-height: var(--bbm-popup-control-height)",
+      "--invoice-button-height: var(--bbm-popup-button-height)",
+      "--invoice-radius-control: var(--bbm-popup-control-radius)",
+      "--invoice-radius-card: var(--bbm-popup-card-radius)",
+      "--invoice-field-gap: var(--bbm-popup-label-field-gap)",
+      "--invoice-group-gap: var(--bbm-popup-group-gap)",
+      "--invoice-font-label: var(--bbm-popup-label-font-size)",
+      "--invoice-color-primary: var(--bbm-popup-primary)",
       ":focus-visible",
       ":disabled",
       "::placeholder",
     ].forEach((token) => assert.equal(css.includes(token), true, token));
+    assert.equal(standardCss.includes("--bbm-popup-control-height: 32px"), true);
+    assert.equal(standardCss.includes(":not(.invoice-control)"), true);
+    assert.equal(css.includes(".invoice-search .invoice-control { padding-left: 31px; }"), true);
+    assert.equal(screen.includes("bbm-invoice-design bbm-popup-standard"), true);
+    assert.equal(screen.includes("invoice-dialog bbm-popup-standard bbm-popup-dialog"), true);
   });
 
   await run("Rechnungen-Design: bleibt außerhalb von UI-Editor und Tabellenregistry", () => {

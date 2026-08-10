@@ -437,12 +437,20 @@ Dabei gilt:
 
 ### Designreferenz Rechnungen (DEV-Dummy, abgeschlossen)
 
-- Eigenständiger Renderer-Modulordner `src/renderer/modules/rechnungen` mit statischen Beispieldaten, lokaler Tokenquelle und zwei sichtbaren Zuständen: Übersicht sowie „Rechnung bearbeiten“.
+- Eigenständiger Renderer-Modulordner `src/renderer/modules/rechnungen` mit statischen Beispieldaten und zwei sichtbaren Zuständen: Übersicht sowie „Rechnung bearbeiten“; die freigegebenen gemeinsamen Tokens liegen inzwischen in der zentralen BBM-Popup-/Formularbasis.
 - DEV-Einstieg über `Einstellungen -> Entwicklung`; keine Aufnahme in produktive Modulnavigation, Lizenzmodule, UI-Editor-Registry oder Tabellenlayout-Registry.
 - Keine Datenbank-, IPC-, Speicher-, Berechnungs-, ZUGFeRD-/E-Rechnungs-, GAEB- oder PDF-Funktion.
 - Referenzen: WPF-Referenz „Auftragsverwaltung“ in `../UI-Editor-kit/reference-target-app`, bestehende BBM-Einstellungskarten und das kompakte Projektformular.
 - Automatischer Guardrail und Electron-Sichtprüfung einschließlich kleinem, scrollbar bleibendem Dialogviewport vorhanden.
 - Nächster Schritt außerhalb dieses Pakets: Designwerte fachlich beurteilen und erst nach ausdrücklicher Freigabe eine mögliche globale BBM-Standardisierung separat planen.
+
+### Zentraler Popup-/Formularstandard (Pilot abgeschlossen, Freigabe offen)
+
+- Die freigegebenen Rechnungen-Werte sind zentral unter `src/renderer/ui/styles/popupFormStandard.css` definiert und in `docs/BBM_POPUP_FORMULARSTANDARD.md` dokumentiert.
+- Die Aktivierung bleibt opt-in über `.bbm-popup-standard`; bestehende Altbereiche werden nicht automatisch verändert.
+- Rechnungen nutzt die zentrale Quelle bei optisch unverändertem Modul- und Dialoglayout.
+- Produktpiloten sind `Projekt bearbeiten`, Einstellungen `Profil / Adresse` und Einstellungen `Protokoll`.
+- Alle weiteren Popups und Formulare bleiben bewusst offen. Nächster Schritt ist ausschließlich die visuelle Pilotfreigabe; keine automatische Massenmigration.
 
 ### M37 UI-Editor Klick-Abnahme dokumentiert (neu)
 - Die manuelle Klick-Abnahme des UI-Editor-Fixstands ist als Pruefliste dokumentiert.

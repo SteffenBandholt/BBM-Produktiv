@@ -1,5 +1,15 @@
 # STATUS.md — BBM-Produktiv
 
+### Zentraler BBM Popup- und Formularstandard – Pilot
+
+- Status: `[A]`; die freigegebenen Rechnungen-Werte sind als opt-in-basierter Standard in `src/renderer/ui/styles/popupFormStandard.css` zentralisiert und in `docs/BBM_POPUP_FORMULARSTANDARD.md` verbindlich dokumentiert.
+- Das DEV-Dummymodul Rechnungen bezieht seine bisherigen Werte aus den zentralen `--bbm-popup-*`-Tokens. Übersicht und Dialog sind vor/nach der Zentralisierung sichtbar verglichen; rechnungsspezifische Anordnung, Suchsymbol, Control-Geometrie und 14-px-Dialogradius bleiben erhalten.
+- Produktpiloten sind ausschließlich `Projekt bearbeiten` sowie die Einstellungen `Profil / Adresse` und `Protokoll`. Die bestehende Zweispaltenstruktur, Feldfolge, Datenbindung, Validierung und Fachaktionen wurden nicht geändert.
+- Sichtbar gemessen: Controls 32 px, Buttons 30 px, Controlradius 8 px, Kartenradius 12 px, Dialogradius 14 px, Label 11,5 px, Controltext 13 px, Bodypadding 12 px 16 px und Footerpadding 10 px 16 px. Focus-Border ist `#2563eb`; der erreichbare Disabled-Zustand nutzt die zentralen Disabled-Farben.
+- Bei 576 px innerer Fensterhöhe bleiben die Footer sichtbar; Projekt, Settings-Profil und Rechnungsdialog verwenden scrollbare Inhaltskörper. Ein nicht pilotiertes Lizenz-Popup wurde gegen die Scope-Grenze geprüft und behält 10-px-Radius sowie 28-px-Buttons.
+- Guardrails für den zentralen Standard und Rechnungen sowie die relevante Settings-Gruppe sind grün. Projektverwaltung enthält weiterhin vier auf `main` vorhandene, veraltete Mainheader-Erwartungen; SettingsView weiterhin zwei vorhandene ESLint-`no-undef`-Fehler außerhalb der geänderten Bereiche.
+- Nächster offener Schritt: visuelle Freigabe des Piloten; bis dahin keine Massenmigration weiterer Popups. Commit-SHA wird im Paketabschluss berichtet.
+
 ### Projekt-Popup als kompakte UI-Referenz gestalten
 
 - Status: `[A]`; das reale Popup `Projekt bearbeiten` misst bei gleicher Breite im Electron-Lauf 478,16 px statt 574,79 px und liegt damit vollständig in der sichtbaren Popup-Fläche unter dem Protokoll-Header.

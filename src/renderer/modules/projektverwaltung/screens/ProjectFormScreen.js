@@ -402,6 +402,7 @@ export default class ProjectFormScreen {
 
   _buildFormContent() {
     const root = document.createElement("div");
+    root.classList.add("bbm-form-content");
     root.style.maxWidth = "900px";
     root.style.width = "100%";
     root.style.boxSizing = "border-box";
@@ -442,6 +443,7 @@ export default class ProjectFormScreen {
 
     const mkLbl = (t) => {
       const d = document.createElement("div");
+      d.classList.add("bbm-form-label");
       d.textContent = t;
       d.style.opacity = "0.9";
       d.style.fontSize = "var(--bbm-form-label-font-size)";
@@ -452,6 +454,7 @@ export default class ProjectFormScreen {
 
     const mkField = (labelText, inputEl, { grow = true } = {}) => {
       const wrap = document.createElement("div");
+      wrap.classList.add("bbm-form-field");
       wrap.style.display = "flex";
       wrap.style.flexDirection = "column";
       wrap.style.gap = "var(--bbm-form-label-field-gap)";
@@ -463,6 +466,7 @@ export default class ProjectFormScreen {
 
     const mkRow = (mt) => {
       const row = document.createElement("div");
+      row.classList.add("bbm-form-group");
       row.style.display = "flex";
       row.style.gap = "10px";
       row.style.alignItems = "flex-end";
@@ -568,6 +572,7 @@ export default class ProjectFormScreen {
     row1.append(fieldProjectNumber, fieldShort);
 
     const storagePreviewWrap = document.createElement("div");
+    storagePreviewWrap.classList.add("bbm-form-card");
     storagePreviewWrap.style.marginTop = "var(--bbm-form-section-margin-top)";
     storagePreviewWrap.style.marginLeft = "0";
     storagePreviewWrap.style.alignSelf = "flex-start";
@@ -662,6 +667,7 @@ export default class ProjectFormScreen {
     row6.append(fieldNotes);
 
     const leftCol = document.createElement("div");
+    leftCol.classList.add("bbm-form-group");
     leftCol.style.minWidth = "0";
     leftCol.style.display = "flex";
     leftCol.style.flexDirection = "column";
@@ -670,6 +676,7 @@ export default class ProjectFormScreen {
     leftCol.append(row0, row1, row2, row3, storagePreviewWrap);
 
     const rightCol = document.createElement("div");
+    rightCol.classList.add("bbm-form-group");
     rightCol.style.minWidth = "0";
     rightCol.style.display = "flex";
     rightCol.style.flexDirection = "column";
@@ -696,6 +703,7 @@ export default class ProjectFormScreen {
     form.append(leftCol, separator, rightCol);
 
     const formCard = document.createElement("div");
+    formCard.classList.add("bbm-form-card");
     formCard.style.border = "1px solid #e5e7eb";
     formCard.style.borderRadius = "10px";
     formCard.style.padding = "var(--bbm-form-card-padding)";
@@ -1108,6 +1116,7 @@ export default class ProjectFormScreen {
 
   _buildModalFooter() {
     const btnRow = document.createElement("div");
+    btnRow.classList.add("bbm-form-group");
     btnRow.style.display = "flex";
     btnRow.style.justifyContent = "flex-end";
     btnRow.style.gap = "var(--bbm-form-footer-gap)";
@@ -1171,6 +1180,7 @@ export default class ProjectFormScreen {
     });
 
     const modal = document.createElement("div");
+    modal.classList.add("bbm-popup-standard", "bbm-popup-dialog");
     modal.style.width = "min(900px, calc(100vw - 32px))";
     modal.style.maxHeight = "calc(100% - 16px)";
     modal.style.display = "flex";
@@ -1182,6 +1192,7 @@ export default class ProjectFormScreen {
     modal.style.overflow = "hidden";
 
     const header = document.createElement("div");
+    header.classList.add("bbm-popup-header");
     header.style.display = "flex";
     header.style.alignItems = "center";
     header.style.gap = "10px";
@@ -1222,6 +1233,7 @@ export default class ProjectFormScreen {
     body.style.overflow = "hidden";
 
     const contentWrapper = document.createElement("div");
+    contentWrapper.classList.add("bbm-popup-body");
     contentWrapper.style.flex = "1 1 auto";
     contentWrapper.style.overflow = "auto";
     contentWrapper.style.padding =
@@ -1232,6 +1244,7 @@ export default class ProjectFormScreen {
     body.appendChild(contentWrapper);
 
     const footer = document.createElement("div");
+    footer.classList.add("bbm-popup-footer");
     footer.style.borderTop = "1px solid #e2e8f0";
     footer.style.padding =
       "var(--bbm-form-footer-padding-y) var(--bbm-form-footer-padding-x)";

@@ -1,31 +1,31 @@
 :where(.bbm-invoice-design, .bbm-invoice-design-modal) {
-  --invoice-color-canvas: #f3f5f8;
-  --invoice-color-surface: #ffffff;
-  --invoice-color-surface-subtle: #f8fafc;
-  --invoice-color-text: #172033;
-  --invoice-color-muted: #667085;
-  --invoice-color-primary: #235a9f;
-  --invoice-color-primary-hover: #194a86;
-  --invoice-color-border: #d7dee8;
-  --invoice-color-border-strong: #c5cfdd;
-  --invoice-color-focus: #2563eb;
+  --invoice-color-canvas: var(--bbm-popup-canvas);
+  --invoice-color-surface: var(--bbm-popup-surface);
+  --invoice-color-surface-subtle: var(--bbm-popup-surface-subtle);
+  --invoice-color-text: var(--bbm-popup-text);
+  --invoice-color-muted: var(--bbm-popup-muted);
+  --invoice-color-primary: var(--bbm-popup-primary);
+  --invoice-color-primary-hover: var(--bbm-popup-primary-hover);
+  --invoice-color-border: var(--bbm-popup-border);
+  --invoice-color-border-strong: var(--bbm-popup-border-strong);
+  --invoice-color-focus: var(--bbm-popup-focus);
   --invoice-color-success: #287a52;
   --invoice-color-warning: #9a6700;
   --invoice-color-danger: #b42318;
-  --invoice-radius-control: 8px;
-  --invoice-radius-card: 12px;
-  --invoice-radius-dialog: 14px;
-  --invoice-control-height: 32px;
-  --invoice-button-height: 30px;
+  --invoice-radius-control: var(--bbm-popup-control-radius);
+  --invoice-radius-card: var(--bbm-popup-card-radius);
+  --invoice-radius-dialog: var(--bbm-popup-dialog-radius);
+  --invoice-control-height: var(--bbm-popup-control-height);
+  --invoice-button-height: var(--bbm-popup-button-height);
   --invoice-page-gap: 12px;
-  --invoice-card-padding: 14px;
-  --invoice-dialog-padding-inline: 16px;
-  --invoice-dialog-padding-block: 12px;
-  --invoice-field-gap: 4px;
-  --invoice-group-gap: 10px;
-  --invoice-font-label: 11.5px;
-  --invoice-font-control: 13px;
-  --invoice-font-body: 13px;
+  --invoice-card-padding: var(--bbm-popup-card-padding);
+  --invoice-dialog-padding-inline: var(--bbm-popup-dialog-padding-x);
+  --invoice-dialog-padding-block: var(--bbm-popup-dialog-padding-y);
+  --invoice-field-gap: var(--bbm-popup-label-field-gap);
+  --invoice-group-gap: var(--bbm-popup-group-gap);
+  --invoice-font-label: var(--bbm-popup-label-font-size);
+  --invoice-font-control: var(--bbm-popup-control-font-size);
+  --invoice-font-body: var(--bbm-popup-body-font-size);
   --invoice-font-title: 23px;
   color: var(--invoice-color-text);
   font-family: var(--bbm-font-ui, Inter, "Segoe UI", sans-serif);
@@ -123,7 +123,7 @@
   font: 500 var(--invoice-font-control)/1.25 var(--bbm-font-ui, Inter, "Segoe UI", sans-serif);
   transition: border-color 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
 }
-.invoice-control::placeholder { color: #98a2b3; opacity: 1; }
+.invoice-control::placeholder { color: var(--bbm-popup-placeholder); opacity: 1; }
 .invoice-control:hover:not(:disabled) { border-color: #9eacc0; }
 .invoice-control:focus-visible {
   border-color: var(--invoice-color-focus);
@@ -131,8 +131,8 @@
 }
 .invoice-control:disabled {
   border-color: #dde3eb;
-  background: #f1f3f6;
-  color: #8a94a3;
+  background: var(--bbm-popup-disabled-bg);
+  color: var(--bbm-popup-disabled-text);
   cursor: not-allowed;
 }
 select.invoice-control { padding-right: 28px; }
@@ -167,7 +167,7 @@ select.invoice-control { padding-right: 28px; }
   font-size: 20px;
   line-height: 1;
 }
-.invoice-button:disabled { border-color: #e2e7ee; background: #f2f4f7; color: #98a2b3; cursor: not-allowed; }
+.invoice-button:disabled { border-color: #e2e7ee; background: #f2f4f7; color: var(--bbm-popup-placeholder); cursor: not-allowed; }
 
 .invoice-metrics {
   display: grid;
