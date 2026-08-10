@@ -818,6 +818,45 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(archiveSource.includes("../../../ui/popupButtonStyles.js"), true);
   });
 
+  await run("Projektverwaltung: Projekt-Popup nutzt die kompakte Formular-Referenz", () => {
+    const referenceTokens = [
+      "--bbm-form-dialog-padding-y: 8px",
+      "--bbm-form-dialog-padding-x: 12px",
+      "--bbm-form-card-padding: 10px",
+      "--bbm-form-label-field-gap: 3px",
+      "--bbm-form-group-gap: 7px",
+      "--bbm-form-control-height: 30px",
+      "--bbm-form-label-font-size: 11.5px",
+      "--bbm-form-control-font-size: 12.5px",
+      "--bbm-form-textarea-height: 78px",
+      "--bbm-form-section-padding-y: 6px",
+      "--bbm-form-section-padding-x: 8px",
+      "--bbm-form-section-gap: 2px",
+      "--bbm-form-button-height: 26px",
+      "--bbm-form-footer-padding-y: 8px",
+      "--bbm-form-footer-padding-x: 12px",
+    ];
+    for (const token of referenceTokens) {
+      assert.equal(coreShellStylesSource.includes(token), true, `fehlendes Form-Token: ${token}`);
+    }
+
+    assert.equal(formSource.includes("applyCompactFormButtonStyle"), true);
+    assert.equal(formSource.includes("var(--bbm-form-label-field-gap)"), true);
+    assert.equal(formSource.includes("var(--bbm-form-group-gap)"), true);
+    assert.equal(formSource.includes("var(--bbm-form-control-height)"), true);
+    assert.equal(formSource.includes("var(--bbm-form-textarea-height)"), true);
+    assert.equal(formSource.includes("var(--bbm-form-section-padding-y)"), true);
+    assert.equal(formSource.includes("var(--bbm-form-footer-padding-y)"), true);
+    assert.equal(formSource.includes('modal.style.maxHeight = "calc(100% - 16px)"'), true);
+    assert.equal(
+      formSource.includes(
+        'form.style.gridTemplateColumns = "minmax(0, 1fr) 1px minmax(0, 1fr)"'
+      ),
+      true
+    );
+    assert.equal(formSource.includes('modal.style.width = "min(900px, calc(100vw - 32px))"'), true);
+  });
+
   await run("Projektverwaltung: alte View-Dateien bleiben nur als Compatibility-Re-Exports", () => {
     assert.equal(
       projectsViewSource.trim(),

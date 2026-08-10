@@ -5,7 +5,10 @@
 // - Speichern: create oder update über IPC
 // - Danach zurück zu ProjectsScreen
 
-import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
+import {
+  applyCompactFormButtonStyle,
+  applyPopupButtonStyle,
+} from "../../../ui/popupButtonStyles.js";
 import { cleanupPopupHandlers, createPopupOverlay } from "../../../ui/popupCommon.js";
 
 export default class ProjectFormScreen {
@@ -441,7 +444,7 @@ export default class ProjectFormScreen {
       const d = document.createElement("div");
       d.textContent = t;
       d.style.opacity = "0.9";
-      d.style.fontSize = "12px";
+      d.style.fontSize = "var(--bbm-form-label-font-size)";
       d.style.fontWeight = "600";
       d.style.lineHeight = "1.2";
       return d;
@@ -451,7 +454,7 @@ export default class ProjectFormScreen {
       const wrap = document.createElement("div");
       wrap.style.display = "flex";
       wrap.style.flexDirection = "column";
-      wrap.style.gap = "5px";
+      wrap.style.gap = "var(--bbm-form-label-field-gap)";
       wrap.style.flex = grow ? "1 1 0" : "0 1 auto";
       wrap.style.minWidth = "0";
       wrap.append(mkLbl(labelText), inputEl);
@@ -471,25 +474,27 @@ export default class ProjectFormScreen {
     const mkInp = (type = "text") => {
       const i = document.createElement("input");
       i.type = type;
-      i.style.padding = "7px 9px";
+      i.style.padding =
+        "var(--bbm-form-control-padding-y) var(--bbm-form-control-padding-x)";
       i.style.borderRadius = "8px";
       i.style.border = "1px solid #ddd";
       i.style.boxSizing = "border-box";
-      i.style.fontSize = "13px";
-      i.style.minHeight = "34px";
+      i.style.fontSize = "var(--bbm-form-control-font-size)";
+      i.style.minHeight = "var(--bbm-form-control-height)";
       return i;
     };
 
     const mkTa = () => {
       const t = document.createElement("textarea");
       t.rows = 4;
-      t.style.padding = "7px 9px";
+      t.style.padding =
+        "var(--bbm-form-control-padding-y) var(--bbm-form-control-padding-x)";
       t.style.borderRadius = "8px";
       t.style.border = "1px solid #ddd";
       t.style.boxSizing = "border-box";
       t.style.resize = "vertical";
-      t.style.fontSize = "13px";
-      t.style.minHeight = "120px";
+      t.style.fontSize = "var(--bbm-form-control-font-size)";
+      t.style.minHeight = "var(--bbm-form-textarea-height)";
       return t;
     };
 
@@ -507,7 +512,7 @@ export default class ProjectFormScreen {
 
     const inpShort = mkInp("text");
    // inpShort.placeholder = "verantw. im Protokoll";
-    inpShort.style.fontSize = "11px";
+    inpShort.style.fontSize = "var(--bbm-form-control-font-size-sm)";
     inpShort.maxLength = 20;
     applyWidthFromMaxLength(inpShort, { fallback: 20, min: 16, max: 24 });
 
@@ -546,9 +551,9 @@ export default class ProjectFormScreen {
     const taNotes = mkTa();
     taNotes.placeholder = "Notizen";
     taNotes.rows = 1;
-    taNotes.style.minHeight = "96px";
-    taNotes.style.height = "96px";
-    taNotes.style.maxHeight = "96px";
+    taNotes.style.minHeight = "var(--bbm-form-textarea-height)";
+    taNotes.style.height = "var(--bbm-form-textarea-height)";
+    taNotes.style.maxHeight = "var(--bbm-form-textarea-height)";
     taNotes.style.resize = "none";
     taNotes.style.width = "100%";
     taNotes.style.maxWidth = "100%";
@@ -563,23 +568,24 @@ export default class ProjectFormScreen {
     row1.append(fieldProjectNumber, fieldShort);
 
     const storagePreviewWrap = document.createElement("div");
-    storagePreviewWrap.style.marginTop = "8px";
+    storagePreviewWrap.style.marginTop = "var(--bbm-form-section-margin-top)";
     storagePreviewWrap.style.marginLeft = "0";
     storagePreviewWrap.style.alignSelf = "flex-start";
     // Spannt von linker Kante der linken Spalte bis zur rechten Kante der rechten Spalte.
     storagePreviewWrap.style.width = "calc(200% + 33px)";
     storagePreviewWrap.style.maxWidth = "calc(200% + 33px)";
     storagePreviewWrap.style.boxSizing = "border-box";
-    storagePreviewWrap.style.padding = "8px 10px";
+    storagePreviewWrap.style.padding =
+      "var(--bbm-form-section-padding-y) var(--bbm-form-section-padding-x)";
     storagePreviewWrap.style.border = "1px solid #e5e7eb";
     storagePreviewWrap.style.borderRadius = "8px";
     storagePreviewWrap.style.background = "#fafafa";
     storagePreviewWrap.style.display = "grid";
-    storagePreviewWrap.style.gap = "4px";
+    storagePreviewWrap.style.gap = "var(--bbm-form-section-gap)";
 
     const storagePreviewTitle = document.createElement("div");
     storagePreviewTitle.textContent = "Ablageordner (PDF):";
-    storagePreviewTitle.style.fontSize = "12px";
+    storagePreviewTitle.style.fontSize = "var(--bbm-form-section-font-size)";
     storagePreviewTitle.style.fontWeight = "700";
     storagePreviewTitle.style.color = "#111827";
 
@@ -592,12 +598,12 @@ export default class ProjectFormScreen {
 
       const left = document.createElement("div");
       left.textContent = label;
-      left.style.fontSize = "12px";
+      left.style.fontSize = "var(--bbm-form-section-font-size)";
       left.style.fontWeight = "600";
       left.style.color = "#374151";
 
       const right = document.createElement("div");
-      right.style.fontSize = "12px";
+      right.style.fontSize = "var(--bbm-form-section-font-size)";
       right.style.fontFamily = "Consolas, 'Courier New', monospace";
       right.style.wordBreak = "break-all";
       right.style.color = "#111827";
@@ -614,9 +620,9 @@ export default class ProjectFormScreen {
     const lineLists = mkPreviewLine("Listen");
 
     const storagePreviewStatus = document.createElement("div");
-    storagePreviewStatus.style.fontSize = "12px";
+    storagePreviewStatus.style.fontSize = "var(--bbm-form-section-font-size)";
     storagePreviewStatus.style.color = "#4b5563";
-    storagePreviewStatus.style.minHeight = "16px";
+    storagePreviewStatus.style.minHeight = "var(--bbm-form-section-status-height)";
     storagePreviewStatus.textContent = "";
 
     storagePreviewWrap.append(
@@ -659,7 +665,7 @@ export default class ProjectFormScreen {
     leftCol.style.minWidth = "0";
     leftCol.style.display = "flex";
     leftCol.style.flexDirection = "column";
-    leftCol.style.gap = "10px";
+    leftCol.style.gap = "var(--bbm-form-group-gap)";
     leftCol.style.paddingRight = "4px";
     leftCol.append(row0, row1, row2, row3, storagePreviewWrap);
 
@@ -667,7 +673,7 @@ export default class ProjectFormScreen {
     rightCol.style.minWidth = "0";
     rightCol.style.display = "flex";
     rightCol.style.flexDirection = "column";
-    rightCol.style.gap = "10px";
+    rightCol.style.gap = "var(--bbm-form-group-gap)";
     rightCol.style.paddingLeft = "4px";
     rightCol.append(row4, row5, row6);
 
@@ -692,7 +698,7 @@ export default class ProjectFormScreen {
     const formCard = document.createElement("div");
     formCard.style.border = "1px solid #e5e7eb";
     formCard.style.borderRadius = "10px";
-    formCard.style.padding = "12px";
+    formCard.style.padding = "var(--bbm-form-card-padding)";
     formCard.style.width = "100%";
     formCard.style.boxSizing = "border-box";
     formCard.style.overflow = "hidden";
@@ -1104,33 +1110,33 @@ export default class ProjectFormScreen {
     const btnRow = document.createElement("div");
     btnRow.style.display = "flex";
     btnRow.style.justifyContent = "flex-end";
-    btnRow.style.gap = "8px";
+    btnRow.style.gap = "var(--bbm-form-footer-gap)";
     btnRow.style.width = "100%";
 
     const btnArchive = document.createElement("button");
     btnArchive.type = "button";
     btnArchive.textContent = "Archiv";
-    applyPopupButtonStyle(btnArchive, { variant: "danger" });
+    applyCompactFormButtonStyle(btnArchive, { variant: "danger" });
 
     const btnExport = document.createElement("button");
     btnExport.type = "button";
     btnExport.textContent = "Export";
-    applyPopupButtonStyle(btnExport);
+    applyCompactFormButtonStyle(btnExport);
 
     const btnCancel = document.createElement("button");
     btnCancel.type = "button";
     btnCancel.textContent = "Abbrechen";
-    applyPopupButtonStyle(btnCancel);
+    applyCompactFormButtonStyle(btnCancel);
 
     const btnSettings = document.createElement("button");
     btnSettings.type = "button";
     btnSettings.textContent = "Einstellungen";
-    applyPopupButtonStyle(btnSettings);
+    applyCompactFormButtonStyle(btnSettings);
 
     const btnSave = document.createElement("button");
     btnSave.type = "button";
     btnSave.textContent = "Speichern";
-    applyPopupButtonStyle(btnSave, { variant: "primary" });
+    applyCompactFormButtonStyle(btnSave, { variant: "primary" });
 
     btnArchive.onclick = () => this._archive();
     btnExport.onclick = () => this._exportProject();
@@ -1166,7 +1172,7 @@ export default class ProjectFormScreen {
 
     const modal = document.createElement("div");
     modal.style.width = "min(900px, calc(100vw - 32px))";
-    modal.style.maxHeight = "min(92vh, calc(100vh - 32px))";
+    modal.style.maxHeight = "calc(100% - 16px)";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
     modal.style.background = "#fff";
@@ -1179,7 +1185,8 @@ export default class ProjectFormScreen {
     header.style.display = "flex";
     header.style.alignItems = "center";
     header.style.gap = "10px";
-    header.style.padding = "12px 16px";
+    header.style.padding =
+      "var(--bbm-form-dialog-padding-y) var(--bbm-form-dialog-padding-x)";
     header.style.borderBottom = "1px solid #e2e8f0";
 
     const title = document.createElement("div");
@@ -1202,7 +1209,7 @@ export default class ProjectFormScreen {
     const btnClose = document.createElement("button");
     btnClose.type = "button";
     btnClose.textContent = "X";
-    applyPopupButtonStyle(btnClose);
+    applyCompactFormButtonStyle(btnClose);
     btnClose.onclick = () => this._handleModalClose();
 
     headerRight.append(msg, btnClose);
@@ -1217,7 +1224,8 @@ export default class ProjectFormScreen {
     const contentWrapper = document.createElement("div");
     contentWrapper.style.flex = "1 1 auto";
     contentWrapper.style.overflow = "auto";
-    contentWrapper.style.padding = "12px 16px";
+    contentWrapper.style.padding =
+      "var(--bbm-form-dialog-padding-y) var(--bbm-form-dialog-padding-x)";
     contentWrapper.style.width = "100%";
     contentWrapper.style.boxSizing = "border-box";
 
@@ -1225,7 +1233,8 @@ export default class ProjectFormScreen {
 
     const footer = document.createElement("div");
     footer.style.borderTop = "1px solid #e2e8f0";
-    footer.style.padding = "12px 16px";
+    footer.style.padding =
+      "var(--bbm-form-footer-padding-y) var(--bbm-form-footer-padding-x)";
     footer.style.background = "#fff";
 
     modal.append(header, body, footer);

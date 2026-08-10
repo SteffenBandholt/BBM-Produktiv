@@ -1,5 +1,14 @@
 # STATUS.md — BBM-Produktiv
 
+### Projekt-Popup als kompakte UI-Referenz gestalten
+
+- Status: `[A]`; das reale Popup `Projekt bearbeiten` misst bei gleicher Breite im Electron-Lauf 478,16 px statt 574,79 px und liegt damit vollständig in der sichtbaren Popup-Fläche unter dem Protokoll-Header.
+- Gemeinsame `--bbm-form-*`-Tokens definieren die Referenzwerte für Dialog-/Footer-Padding, Label-Feld- und Gruppengap, Control-/Textarea-Höhen, Formular-Typografie, Ablagebereich und kompakte Formularbuttons. Das Projekt-Popup verwendet diese Werte ohne Änderung an Zweispaltenraster, Breiten, Feldreihenfolge oder Fachlogik.
+- Bei 677 px App-Höhe sind Inhalt und Footer ohne Scrollen vollständig sichtbar. Bei 480 px App-Höhe bleibt der Dialog in der Popup-Fläche, der Footer sichtbar und der vorhandene Inhaltsbereich wird scrollbar.
+- Die Sichtprüfung ergab keine abgeschnittenen Controls, überlappenden Labels oder verdeckten Buttons. Der Screenshot `output/playwright/projekt-popup-kompakt.png` dokumentiert den kompakten DEV-Protokoll-Stand.
+- Popup-Referenztest, UI-Editor-Vertragscheck, ESLint (0 Fehler, 7 bestehende Warnungen) und `git diff --check` sind grün. Der gesamte Projektverwaltungs-Testlauf enthält weiterhin vier bereits im Ausgangsstand vorhandene veraltete Mainheader-Erwartungen; der neue Popup-Test ist darin grün.
+- Nächster offener Schritt: keiner; Commit-SHA wird im Paketabschluss berichtet.
+
 ### Globalen Mainheader deutlich flacher gestalten
 
 - Status: `[A]`; der globale Mainheader misst im realen Electron-Lauf mit und ohne DEV-Editor-Button jeweils 60,00 px statt zuletzt 84,00 px.

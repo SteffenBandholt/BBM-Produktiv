@@ -20,6 +20,15 @@ export function applyPopupButtonStyle(btn, { variant = "neutral" } = {}) {
   }
 }
 
+export function applyCompactFormButtonStyle(btn, options = {}) {
+  applyPopupButtonStyle(btn, options);
+  if (!btn || !btn.style) return;
+  btn.style.padding =
+    "var(--bbm-form-button-padding-y) var(--bbm-form-button-padding-x)";
+  btn.style.fontSize = "var(--bbm-form-button-font-size)";
+  btn.style.minHeight = "var(--bbm-form-button-height)";
+}
+
 export function applyPopupCardStyle(card) {
   if (!card || !card.style) return;
   card.style.border = "1px solid var(--card-border)";

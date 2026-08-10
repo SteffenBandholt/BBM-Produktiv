@@ -150,6 +150,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - M18.0 bis M18.4 sind als ReadOnly-Freigabevorbereitung abgeschlossen und eingefroren
 - M19.0 legt vor einer echten Produktivaktivierung einen fachlichen Abnahmetest fest
 - der globale Mainheader bleibt als gemeinsamer Shell-Bereich zweizeilig, nutzt bei Screenwechseln zuverlässig sein Grid und besitzt ohne leere Action-Zeile mit oder ohne DEV-Editor-Button dieselbe deutlich flachere Grundhöhe
+- gemeinsame `--bbm-form-*`-Tokens bilden die kompakte Formular-/Popup-Referenz; das Projekt-Popup nutzt sie ohne Änderung seines Zweispaltenrasters oder seiner Fachlogik
 
 **Noch offen**
 - kein vollstaendig produktiver freigabebasierter Betrieb
@@ -206,6 +207,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - kleine Nachweise zur Kernnavigation, Router-Entkopplung und Modulsichtbarkeit sind nachgezogen
 - der entmischte `TopsScreen`-Zwischenstand ist per Test abgesichert
 - die inline platzierte Diktat-Schaltflaeche ist testseitig mit Asset-Icons, Start-/Stop-Umschaltung und Freischaltung abgesichert
+- die kompakte Projektformular-Referenz ist mit einem gezielten Token-/Struktur-Guardrail sowie realer Electron-Messung bei normaler und kleiner Fensterhöhe abgesichert
 - die kaputte sichtbare Restarbeiten-V2-UI ist aus der aktiven App-Struktur entfernt und bleibt entfernt; der neue M1-RestarbeitenScreen ist bewusst neu aufgebaut und stellt `restarbeiten.screen` wieder als expliziten UI-Editor-Scope bereit, Protokoll- und Demo-Scope bleiben erhalten
 - M2.1 hat die Restarbeiten-Main/Body-Datensatzdarstellung im Blatt mit Tabellenkopf und dreizeiliger Datensatzstruktur nachgezogen
 
