@@ -160,8 +160,10 @@ export default class MainHeader {
     const root = document.createElement("div");
     root.style.boxSizing = "border-box";
     root.style.width = "100%";
-    const headerPadding = Math.max(8, this.padding - 2);
-    root.style.padding = `${headerPadding}px ${this.padding}px ${Math.max(6, headerPadding - 3)}px`;
+    const headerPaddingTop = Math.max(8, this.padding - 4);
+    const headerPaddingBottom = Math.max(6, this.padding - 6);
+    root.style.padding = `${headerPaddingTop}px ${this.padding}px ${headerPaddingBottom}px`;
+    root.style.minHeight = "84px";
     root.style.borderBottom = "1px solid var(--card-border)";
     root.style.background = "var(--header-bg)";
     root.style.color = "var(--header-text)";
@@ -179,7 +181,7 @@ export default class MainHeader {
     root.style.gridTemplateColumns = "1fr auto 1fr";
     root.style.gridTemplateRows = "auto auto auto auto";
     root.style.columnGap = "12px";
-    root.style.rowGap = "4px";
+    root.style.rowGap = "3px";
     root.style.alignItems = "start";
 
     const logoGroup = document.createElement("div");
@@ -794,7 +796,7 @@ export default class MainHeader {
 
     if (this._isNewUi) {
       root.style.gridTemplateRows = "auto auto auto auto";
-      root.style.rowGap = "5px";
+      root.style.rowGap = "3px";
       elCenterTitle.style.fontSize = "20px";
       elCenterTitle.style.lineHeight = "24px";
       elCenterTitle.style.fontWeight = "700";

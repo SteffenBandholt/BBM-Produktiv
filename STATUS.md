@@ -1,5 +1,13 @@
 # STATUS.md — BBM-Produktiv
 
+### Globalen Mainheader kompakter gestalten
+
+- Status: `[A]`; der globale Mainheader bleibt zweizeilig und misst im realen Electron-Lauf mit und ohne DEV-Editor-Button jeweils 84 px statt zuvor 99,35 px im Protokoll beziehungsweise 89,79 px auf der Startansicht.
+- Die vorhandene Grid-Struktur bleibt bei Screenwechseln erhalten. Das Außenpadding wurde von `10px 12px 7px` auf `8px 12px 6px`, der Zeilenabstand von 5 px auf 3 px reduziert; `min-height: 84px` hält die Grundhöhe unabhängig vom DEV-Button stabil.
+- Lizenzbadge, Versionsanzeige und aktiver Kontext bleiben an ihren vorhandenen Positionen. Der fachliche Protokoll-Header, Menüleiste, Fachlogik, Typografie und Theme wurden nicht verändert.
+- Sichtprüfung in DEV mit Editor-Button sowie auf Start ohne Editor-Button ist grün. Gezielte Header-/Shell-/Launcher-Tests, UI-Editor-Vertragscheck, ESLint und `git diff --check` sind grün; ESLint meldet nur bestehende Warnungen.
+- `npm test` bleibt an den bereits vorhandenen Registryversions-, Licensing-, Navigations- und Testharness-Guardrails rot. Nächster offener Schritt: keiner; Commit-SHA wird im Paketabschluss berichtet.
+
 ### Protokoll – Popups unter dem sichtbaren Header positionieren
 
 - Status: `[A]`; die gemeinsame Popup-Basis misst im Protokoll die reale Unterkante des sichtbaren Protokoll-Headers und nutzt nur die verbleibende Viewportfläche darunter.

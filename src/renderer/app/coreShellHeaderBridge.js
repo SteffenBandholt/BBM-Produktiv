@@ -22,7 +22,7 @@ export function registerCoreShellHeaderBridge({
     if (typeof applyThemeFromRouterContext === "function") {
       applyThemeFromRouterContext();
     }
-    if (root) root.style.display = "";
+    if (root) root.style.display = "grid";
     header.refresh();
   };
 
