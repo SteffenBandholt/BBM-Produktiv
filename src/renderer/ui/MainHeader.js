@@ -11,6 +11,8 @@ import { PROTOKOLL_MODULE_ID } from "../app/modules/index.js";
 import { isModuleActive, refreshCachedActiveModuleAccess } from "../app/modules/moduleAccessState.js";
 import { bindDevelopmentUiEditorOpenButtonRef, clearDevelopmentUiEditorOpenButtonRefs, installDevelopmentUiEditorOpenButton } from "../app/coreShellNavigation.js";
 import { getVisiblePrintDialogActions } from "../../shared/print/printModes.mjs";
+import { applyPopupButtonStyle } from "./popupButtonStyles.js";
+import { cleanupPopupHandlers, createPopupOverlay, stylePopupCard } from "./popupCommon.js";
 
 const PROTOCOL_DISABLED_MESSAGE = "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.";
 
@@ -3116,48 +3118,36 @@ async _openMailClient(mailType = "", options = {}) {
       mailType: "",
     });
 
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.inset = "0";
-    overlay.style.background = "rgba(0,0,0,0.45)";
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.45)", zIndex: 12600 });
     overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = "12600";
-    overlay.tabIndex = -1;
 
     const card = document.createElement("div");
-    card.style.width = "min(760px, 94vw)";
-    card.style.maxHeight = "90vh";
-    card.style.background = "#fff";
-    card.style.borderRadius = "10px";
+    card.className = "bbm-popup-standard bbm-popup-dialog";
+    stylePopupCard(card, { width: "min(760px, 94vw)", maxHeight: "100%" });
     card.style.boxShadow = "0 10px 30px rgba(0,0,0,0.28)";
-    card.style.display = "grid";
-    card.style.gridTemplateRows = "auto 1fr auto";
-    card.style.rowGap = "14px";
-    card.style.padding = "16px";
 
     const title = document.createElement("div");
+    title.className = "bbm-popup-header";
     title.textContent = "Datei an Teilnehmer senden";
     title.style.fontWeight = "700";
     title.style.fontSize = "16px";
 
     const content = document.createElement("div");
+    content.className = "bbm-popup-body bbm-form-content";
     content.style.display = "grid";
     content.style.gridTemplateColumns = "1fr 1fr";
-    content.style.gap = "14px";
+    content.style.flex = "1 1 auto";
     content.style.minWidth = "0";
-    content.style.overflow = "auto";
 
     // Empfänger
     const recWrap = document.createElement("div");
+    recWrap.className = "bbm-form-content";
     recWrap.style.display = "flex";
     recWrap.style.flexDirection = "column";
-    recWrap.style.gap = "8px";
 
     const recTitle = document.createElement("div");
+    recTitle.className = "bbm-form-label";
     recTitle.textContent = "Empfänger";
-    recTitle.style.fontWeight = "700";
 
     const recActions = document.createElement("div");
     recActions.style.display = "flex";
@@ -3168,11 +3158,7 @@ async _openMailClient(mailType = "", options = {}) {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.textContent = label;
-      btn.style.padding = "4px 8px";
-      btn.style.border = "1px solid var(--card-border)";
-      btn.style.background = "var(--card-bg)";
-      btn.style.borderRadius = "6px";
-      btn.style.cursor = "pointer";
+      applyPopupButtonStyle(btn);
       btn.onclick = handler;
       return btn;
     };
@@ -3232,13 +3218,13 @@ async _openMailClient(mailType = "", options = {}) {
 
     // Anhänge
     const attWrap = document.createElement("div");
+    attWrap.className = "bbm-form-content";
     attWrap.style.display = "flex";
     attWrap.style.flexDirection = "column";
-    attWrap.style.gap = "8px";
 
     const attTitle = document.createElement("div");
+    attTitle.className = "bbm-form-label";
     attTitle.textContent = "Anhänge";
-    attTitle.style.fontWeight = "700";
 
     const attList = document.createElement("div");
     attList.style.display = "flex";
@@ -3266,10 +3252,13 @@ async _openMailClient(mailType = "", options = {}) {
     attWrap.append(attTitle, attList);
 
     // Betreff / Text
-    const subjectLabel = document.createElement("div");
+    const subjectField = document.createElement("label");
+    subjectField.className = "bbm-form-field";
+    subjectField.style.display = "grid";
+    subjectField.style.gridColumn = "1 / -1";
+    const subjectLabel = document.createElement("span");
+    subjectLabel.className = "bbm-form-label";
     subjectLabel.textContent = "Betreff";
-    subjectLabel.style.fontWeight = "700";
-    subjectLabel.style.gridColumn = "1 / -1";
 
     const subjectInput = document.createElement("input");
     subjectInput.type = "text";
@@ -3277,50 +3266,45 @@ async _openMailClient(mailType = "", options = {}) {
     subjectInput.style.width = "100%";
     subjectInput.style.maxWidth = "100%";
     subjectInput.style.boxSizing = "border-box";
-    subjectInput.style.padding = "8px";
-    subjectInput.style.gridColumn = "1 / -1";
+    subjectField.append(subjectLabel, subjectInput);
 
-    const bodyLabel = document.createElement("div");
+    const bodyField = document.createElement("label");
+    bodyField.className = "bbm-form-field";
+    bodyField.style.display = "grid";
+    bodyField.style.gridColumn = "1 / -1";
+    const bodyLabel = document.createElement("span");
+    bodyLabel.className = "bbm-form-label";
     bodyLabel.textContent = "Mailtext";
-    bodyLabel.style.fontWeight = "700";
-    bodyLabel.style.gridColumn = "1 / -1";
 
     const bodyInput = document.createElement("textarea");
     bodyInput.value = draft.body;
     bodyInput.style.width = "100%";
     bodyInput.style.maxWidth = "100%";
     bodyInput.style.boxSizing = "border-box";
-    bodyInput.style.minHeight = "180px";
-    bodyInput.style.padding = "8px";
-    bodyInput.style.gridColumn = "1 / -1";
+    bodyInput.style.height = "180px";
+    bodyField.append(bodyLabel, bodyInput);
 
-    content.append(recWrap, attWrap, subjectLabel, subjectInput, bodyLabel, bodyInput);
-    content.style.gridTemplateColumns = "1fr 1fr";
-    content.style.gridTemplateRows = "auto auto auto auto";
-    content.style.gridAutoFlow = "row";
+    content.append(recWrap, attWrap, subjectField, bodyField);
 
     const actions = document.createElement("div");
+    actions.className = "bbm-popup-footer";
     actions.style.display = "flex";
     actions.style.justifyContent = "flex-end";
-    actions.style.gap = "10px";
 
     const btnCancel = document.createElement("button");
     btnCancel.type = "button";
     btnCancel.textContent = "Abbrechen";
-    btnCancel.style.padding = "8px 12px";
+    applyPopupButtonStyle(btnCancel);
 
 
     const btnSend = document.createElement("button");
     btnSend.type = "button";
     btnSend.textContent = "Mit Outlook / Mailprogramm öffnen";
-    btnSend.style.padding = "8px 12px";
-    btnSend.style.background = "#2563eb";
-    btnSend.style.color = "#fff";
-    btnSend.style.border = "none";
-    btnSend.style.borderRadius = "6px";
+    applyPopupButtonStyle(btnSend, { variant: "primary" });
 
     const closeOverlay = () => {
       try {
+        cleanupPopupHandlers(overlay);
         overlay.remove();
       } catch (_e) {}
     };

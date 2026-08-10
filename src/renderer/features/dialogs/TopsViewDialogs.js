@@ -1,4 +1,5 @@
-import { applyPopupButtonStyle, applyPopupCardStyle } from "../../ui/popupButtonStyles.js";
+import { applyPopupButtonStyle } from "../../ui/popupButtonStyles.js";
+import { cleanupPopupHandlers, createPopupOverlay, stylePopupCard } from "../../ui/popupCommon.js";
 
 export class TopsViewDialogs {
   constructor({ view }) {
@@ -7,6 +8,7 @@ export class TopsViewDialogs {
 
   clearGapPopup() {
     if (this.view._gapPopupOverlay && this.view._gapPopupOverlay.parentElement) {
+      cleanupPopupHandlers(this.view._gapPopupOverlay);
       this.view._gapPopupOverlay.parentElement.removeChild(this.view._gapPopupOverlay);
     }
     this.view._gapPopupOverlay = null;
@@ -41,58 +43,40 @@ export class TopsViewDialogs {
   async showNumberGapPopup({ gap, onConfirm, onCancel }) {
     this.clearGapPopup();
 
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.inset = "0";
-    overlay.style.background = "rgba(0,0,0,0.35)";
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 20000 });
     overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = "20000";
-    overlay.tabIndex = -1;
 
     const card = document.createElement("div");
-    card.style.width = "min(560px, 92vw)";
-    card.style.maxHeight = "80vh";
-    card.style.display = "flex";
-    card.style.flexDirection = "column";
-    card.style.background = "#fff";
-    card.style.borderRadius = "10px";
+    card.className = "bbm-popup-standard bbm-popup-dialog";
+    stylePopupCard(card, { width: "min(560px, 92vw)", maxHeight: "100%" });
     card.style.boxShadow = "0 10px 30px rgba(0,0,0,0.2)";
-    applyPopupCardStyle(card);
 
     const header = document.createElement("div");
-    header.style.padding = "14px 16px 10px 16px";
-    header.style.borderBottom = "1px solid rgba(0,0,0,0.08)";
+    header.className = "bbm-popup-header";
     header.style.fontWeight = "700";
     header.textContent = "Nummernlücke gefunden";
 
     const content = document.createElement("div");
-    content.style.padding = "12px 16px";
-    content.style.overflow = "auto";
+    content.className = "bbm-popup-body bbm-form-content";
+    content.style.display = "grid";
     content.style.flex = "1 1 auto";
     content.style.lineHeight = "1.4";
 
     const intro = document.createElement("div");
     intro.textContent = "Das Protokoll kann erst geschlossen werden, wenn die Nummerierung lückenlos ist.";
-    intro.style.marginBottom = "8px";
     content.appendChild(intro);
 
     const lines = this.buildGapDetailsText(gap);
     for (const line of lines) {
       const p = document.createElement("div");
       p.textContent = line;
-      p.style.marginBottom = "6px";
       content.appendChild(p);
     }
 
     const footer = document.createElement("div");
+    footer.className = "bbm-popup-footer";
     footer.style.display = "flex";
     footer.style.justifyContent = "flex-end";
-    footer.style.gap = "8px";
-    footer.style.padding = "10px 16px";
-    footer.style.borderTop = "1px solid rgba(0,0,0,0.08)";
-    footer.style.background = "rgba(255,255,255,0.98)";
 
     const btnCancel = document.createElement("button");
     btnCancel.textContent = "Abbrechen";
@@ -103,7 +87,6 @@ export class TopsViewDialogs {
     applyPopupButtonStyle(btnOk, { variant: "primary" });
     const canRepair = !!gap?.lastTopId;
     btnOk.disabled = !canRepair;
-    btnOk.style.opacity = canRepair ? "1" : "0.55";
 
     btnCancel.onclick = () => {
       this.clearGapPopup();
@@ -182,35 +165,26 @@ export class TopsViewDialogs {
 
     const parts = this.view._parseMeetingTitleParts();
 
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.inset = "0";
-    overlay.style.background = "rgba(0,0,0,0.35)";
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 1400 });
     overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = "1400";
-    overlay.tabIndex = -1;
 
     const modal = document.createElement("div");
-    applyPopupCardStyle(modal);
-    modal.style.width = "min(560px, calc(100vw - 24px))";
-    modal.style.background = "#fff";
-    modal.style.padding = "12px";
-    modal.style.display = "grid";
-    modal.style.gap = "10px";
+    modal.className = "bbm-popup-standard bbm-popup-dialog";
+    stylePopupCard(modal, { width: "min(560px, calc(100vw - 24px))", maxHeight: "100%" });
 
     const title = document.createElement("div");
+    title.className = "bbm-popup-header";
     title.textContent = "Schlagwort bearbeiten";
     title.style.fontWeight = "700";
 
     const mkReadOnly = (labelText, value) => {
       const row = document.createElement("div");
+      row.className = "bbm-form-field";
       row.style.display = "grid";
       row.style.gridTemplateColumns = "170px 1fr";
-      row.style.gap = "8px";
 
       const lab = document.createElement("div");
+      lab.className = "bbm-form-label";
       lab.textContent = labelText;
 
       const inp = document.createElement("input");
@@ -224,11 +198,12 @@ export class TopsViewDialogs {
     };
 
     const rowKeyword = document.createElement("div");
+    rowKeyword.className = "bbm-form-field";
     rowKeyword.style.display = "grid";
     rowKeyword.style.gridTemplateColumns = "170px 1fr";
-    rowKeyword.style.gap = "8px";
 
     const keywordLabel = document.createElement("div");
+    keywordLabel.className = "bbm-form-label";
     keywordLabel.textContent = "Schlagwort";
 
     const keywordInput = document.createElement("input");
@@ -240,9 +215,9 @@ export class TopsViewDialogs {
     rowKeyword.append(keywordLabel, keywordInput);
 
     const actions = document.createElement("div");
+    actions.className = "bbm-popup-footer";
     actions.style.display = "flex";
     actions.style.justifyContent = "flex-end";
-    actions.style.gap = "8px";
 
     const btnCancel = document.createElement("button");
     btnCancel.type = "button";
@@ -263,6 +238,7 @@ export class TopsViewDialogs {
 
     const close = () => {
       try {
+        cleanupPopupHandlers(overlay);
         overlay.remove();
       } catch (_e) {
         // ignore
@@ -316,13 +292,16 @@ export class TopsViewDialogs {
       close();
     });
 
-    modal.append(
-      title,
+    const body = document.createElement("div");
+    body.className = "bbm-popup-body bbm-form-content";
+    body.style.display = "grid";
+    body.style.flex = "1 1 auto";
+    body.append(
       mkReadOnly("Besprechungsnummer", parts.meetingIndex),
       mkReadOnly("Datum", parts.meetingDateText),
-      rowKeyword,
-      actions
+      rowKeyword
     );
+    modal.append(title, body, actions);
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);

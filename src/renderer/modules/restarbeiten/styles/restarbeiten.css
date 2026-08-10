@@ -1104,11 +1104,9 @@
 
 .bbm-restarbeiten-notes-popup__header {
   display: flex;
-  gap: 12px;
+  gap: var(--bbm-popup-group-gap);
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--bbm-line);
 }
 
 .bbm-restarbeiten-notes-popup__header h2 {
@@ -1120,15 +1118,13 @@
 
 .bbm-restarbeiten-notes-popup__body {
   display: grid;
-  gap: 10px;
+  flex: 1 1 auto;
   min-height: 0;
-  padding: 12px 14px 14px;
-  overflow: auto;
 }
 
 .bbm-restarbeiten-notes-popup__summary {
-  color: var(--bbm-muted);
-  font-size: var(--bbm-rest-meta-font-size);
+  color: var(--bbm-popup-muted);
+  font-size: var(--bbm-popup-label-font-size);
   font-weight: 700;
 }
 
@@ -1141,10 +1137,6 @@
 .bbm-restarbeiten-notes-popup__note {
   display: grid;
   gap: 3px;
-  padding: 8px;
-  border: 1px solid var(--bbm-line);
-  border-radius: 8px;
-  background: var(--bbm-surface-soft);
 }
 
 .bbm-restarbeiten-notes-popup__note-time {
@@ -1160,20 +1152,21 @@
 }
 
 .bbm-restarbeiten-notes-popup__input {
-  min-height: 90px;
+  height: 90px;
   resize: vertical;
-  border: 1px solid var(--bbm-line);
-  border-radius: 8px;
-  padding: 8px;
-  font-family: var(--bbm-rest-font-family);
-  font-size: var(--bbm-rest-long-font-size);
-  line-height: var(--bbm-rest-line-height);
 }
 
 .bbm-restarbeiten-notes-popup__actions {
   display: flex;
-  gap: 8px;
+  gap: var(--bbm-popup-footer-gap);
   justify-content: flex-end;
+}
+
+.bbm-restarbeiten-notes-popup__footer {
+  display: flex;
+  gap: var(--bbm-popup-footer-gap);
+  align-items: center;
+  justify-content: space-between;
 }
 
 .bbm-restarbeiten-notes-popup__empty,

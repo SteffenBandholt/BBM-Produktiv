@@ -10,16 +10,15 @@ export function createDictationDevSection({
   const WHISPER_QUALITIES = ["fast", "balanced", "best", "large"];
 
   const dictationTab = document.createElement("div");
+  dictationTab.classList.add("bbm-form-content");
   dictationTab.style.display = "grid";
-  dictationTab.style.gap = "10px";
 
   const dictationProductBox = document.createElement("div");
   applyPopupCardStyle(dictationProductBox);
-  dictationProductBox.style.padding = "8px 10px";
+  dictationProductBox.classList.add("bbm-form-card", "bbm-form-content");
   dictationProductBox.style.maxWidth = "720px";
   dictationProductBox.style.marginTop = "0";
   dictationProductBox.style.display = "grid";
-  dictationProductBox.style.gap = "8px";
 
   const dictationProductTitle = document.createElement("div");
   dictationProductTitle.textContent = "Diktierprodukt";
@@ -36,12 +35,8 @@ export function createDictationDevSection({
   currentEngine.textContent = "Aktuelle Engine: Whisper";
 
   const whisperBox = document.createElement("div");
+  whisperBox.classList.add("bbm-form-card", "bbm-form-content");
   whisperBox.style.display = "grid";
-  whisperBox.style.gap = "6px";
-  whisperBox.style.padding = "6px 8px";
-  whisperBox.style.border = "1px solid var(--card-border)";
-  whisperBox.style.borderRadius = "8px";
-  whisperBox.style.background = "var(--card-bg)";
 
   const whisperTitle = document.createElement("div");
   whisperTitle.textContent = "Whisper-Modelle";
@@ -77,8 +72,6 @@ export function createDictationDevSection({
 
   const setWhisperBtnEnabled = (btn, enabled) => {
     btn.disabled = !enabled;
-    btn.style.opacity = enabled ? "1" : "0.55";
-    btn.style.cursor = enabled ? "pointer" : "default";
     btn.title = enabled ? "" : "Modell nicht installiert";
   };
 
@@ -171,11 +164,10 @@ export function createDictationDevSection({
 
   const dictionaryBox = document.createElement("div");
   applyPopupCardStyle(dictionaryBox);
-  dictionaryBox.style.padding = "8px 10px";
+  dictionaryBox.classList.add("bbm-form-card", "bbm-form-content");
   dictionaryBox.style.maxWidth = "720px";
   dictionaryBox.style.marginTop = "0";
   dictionaryBox.style.display = "grid";
-  dictionaryBox.style.gap = "8px";
 
   const dictionaryTitle = document.createElement("div");
   dictionaryTitle.textContent = "Wörterbuch V1";
@@ -213,12 +205,8 @@ export function createDictationDevSection({
   dictionaryList.style.padding = "6px 0";
 
   const dictionaryForm = document.createElement("div");
+  dictionaryForm.classList.add("bbm-form-card", "bbm-form-content");
   dictionaryForm.style.display = "grid";
-  dictionaryForm.style.gap = "8px";
-  dictionaryForm.style.padding = "8px";
-  dictionaryForm.style.border = "1px solid var(--card-border)";
-  dictionaryForm.style.borderRadius = "8px";
-  dictionaryForm.style.background = "var(--card-bg)";
 
   const formHeader = document.createElement("div");
   formHeader.style.display = "flex";
@@ -238,16 +226,16 @@ export function createDictationDevSection({
   formHeader.append(formTitle, formMeta);
 
   const formGrid = document.createElement("div");
+  formGrid.classList.add("bbm-form-content");
   formGrid.style.display = "grid";
   formGrid.style.gridTemplateColumns = "repeat(auto-fit, minmax(180px, 1fr))";
-  formGrid.style.gap = "8px";
 
   const makeField = (labelText, element) => {
     const wrap = document.createElement("label");
+    wrap.classList.add("bbm-form-field");
     wrap.style.display = "grid";
-    wrap.style.gap = "4px";
-    wrap.style.fontSize = "12px";
     const label = document.createElement("span");
+    label.classList.add("bbm-form-label");
     label.textContent = labelText;
     wrap.append(label, element);
     return wrap;

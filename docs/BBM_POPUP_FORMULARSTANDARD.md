@@ -7,11 +7,12 @@ Dieser Standard übernimmt die visuell freigegebene Formsprache des DEV-Dummymod
 `src/renderer/ui/styles/popupFormStandard.css`; geladen wird sie einmal durch die
 CoreShell.
 
-Die Anwendung bleibt bewusst im Pilotbetrieb. Der Standard wird nur durch die Klasse
-`bbm-popup-standard` an einem konkreten Popup- oder Modul-Root aktiviert. Ohne diese
-Klasse verändern die zentralen Komponentenklassen kein bestehendes Popup. Nach dem
-Pilot erfolgt keine Massenmigration; weitere Popups benötigen eine eigene visuelle
-Freigabe.
+Der Standard ist für die produktiv aktiven fachlichen BBM-Popups und -Formulare
+vollständig eingeführt. Er bleibt technisch opt-in: Erst die Klasse
+`bbm-popup-standard` an einem konkreten Popup- oder Modul-Root aktiviert die
+gemeinsame Formsprache. Ohne diese Klasse verändern die zentralen Komponentenklassen
+keine Spezial-, Editor- oder Legacy-Oberfläche. Es erfolgt weiterhin keine
+automatische Massenmigration neuer oder experimenteller Dialoge.
 
 ## Verbindliche Tokens
 
@@ -64,7 +65,7 @@ gemeinsam behandelt. Checkboxen, Radio-Buttons, Datei- und Range-Controls sind
 bewusst ausgeschlossen. Placeholder-, Focus- und Disabled-Zustände gehören zum
 gleichen Standard.
 
-## Pilotumfang
+## Produktiver Migrationsstatus
 
 - DEV-Dummymodul `Rechnungen`, Übersicht und Dialog `Rechnung bearbeiten`.
 - Popup `Projekt bearbeiten` mit unveränderter Zweispaltenstruktur und Fachlogik.
@@ -97,6 +98,17 @@ gleichen Standard.
 - Gemeinsame PDF-Vorschau für Protokoll, gespeicherte PDF, Firmenliste, ToDo-Liste
   und TOP-Liste. Standardisiert sind nur Dialograhmen und Header/Body-Hülle; die
   eingebettete PDF-/Dokumentvorschau bleibt unverändert.
+- Restarbeiten `Notizen` aus der produktiven
+  `RestarbeitenScreen._openNotesPopup()`-Variante.
+- Projekt-Quicklane/MainHeader-Mail `Datei an Teilnehmer senden` aus dem aktiven
+  Weg `openClosedProtocolSelector({ mode: "mail" })` zu
+  `MainHeader._openMailSendModal()`.
+- Einstellungen `Diktat / Audio`, `Rollenreihenfolge für Firmen`, `Lizenz` und
+  `Entwicklung`. Damit sind alle produktiv erreichbaren Settings-Popups auf der
+  gemeinsamen Settings-Modalbasis standardisiert; `Archiv` ist eine eigene Seite
+  und kein Popup.
+- Protokoll `Nummernlücke gefunden` und `Schlagwort bearbeiten` auf der produktiven
+  `TopsViewDialogs`-Basis.
 
 Die in dieser Welle migrierten eigenständigen Dialoge verwenden die gemeinsame
 `createPopupOverlay`-Fläche. Sie beginnt unter der real gemessenen Unterkante des
@@ -104,18 +116,31 @@ globalen Mainheaders und im Protokoll unter der tiefer liegenden fachlichen
 Header-Unterkante. Bei geringer Höhe bleiben Header und Footer sichtbar; der
 Dialogkörper beziehungsweise die inneren Detailkarten übernehmen den Scroll.
 
-Weiterhin produktiv aktiv, aber bewusst noch nicht umgestellt sind die übrigen
-Einstellungsvarianten außerhalb der bisherigen Piloten und
-`Restarbeiten._openNotesPopup()`. Ebenfalls aktiv erreichbar, aber nicht Teil dieser
-Welle ist `MainHeader._openMailSendModal()` nach der geschlossenen
-Protokollauswahl im E-Mail-Weg der Projekt-Quicklane.
+### Finale Inventur
+
+Produktiv aktiv und standardisiert sind alle oben aufgeführten fachlichen
+Popup-/Formulardialoge. Nach der Abschlussinventur ist kein produktiv aktiver
+fachlicher Modal- oder Formulardialog außerhalb des Standards bekannt.
+
+Produktiv aktiv, aber bewusst keine Ziele des Popup-/Formularstandards, sind
+positionsgebundene Quicklane-/Filter-Popover und die Vorschlagsliste des
+`AudioSuggestionsPanel`. Sie sind keine modalen Formulare. Gleiches gilt für die
+eigentlichen PDF-/Dokumentflächen und kompakte Tabellen-/Listenzeilen innerhalb
+standardisierter Dialoghüllen; nur ihre Rahmen, Toolbar-Controls und Aktionen folgen
+dem Formularstandard.
+
+DEV-/Editor-Spezialoberflächen wie Tabellen-Kalibrator, UI-Editor und UI-Inspektor
+bleiben bewusst außerhalb der produktiven Abschlussaussage. Die erreichbare
+Settings-Hülle `Entwicklung` selbst ist standardisiert; ihre spezialisierten
+Editor-/Kalibratorinhalte behalten ihre eigenen Verträge und Inhaltsmaße.
 
 Technisch vorhanden, derzeit aber ohne produktive Aufrufstelle sind
 `DictationController._showTermCorrectionPrompt()`/`maybeOfferTermCorrection()`,
 `TopsScreen._openTopRulesDialog()`,
 `SettingsView._openPdfPreRemarksPopup()`,
 `MainHeader._promptMeetingSelection()`,
-`MainHeader._openStoredProjectPdfSelectionPopup()`. Der Wörterbuch-/Diktat-Prompt wurde
+`MainHeader._openStoredProjectPdfSelectionPopup()` und
+`TopsViewDialogs.openCreateMeetingModal()`. Der Wörterbuch-/Diktat-Prompt wurde
 daher nicht künstlich reaktiviert oder migriert. Die Quicklane erwartet außerdem
 `router.openProtocolMailModal`, für das aktuell keine produktive Implementierung
 registriert ist.
@@ -133,5 +158,6 @@ sondern delegieren an die nun migrierte `MailFlow`-Variante. Die vorbereitete
 Kompatibilitätsdatei `src/renderer/ui/PrintModal.js` ist nur ein Re-Export der
 produktiven Ausgabe-Implementierung und keine zusätzliche Vorschauvariante.
 Die bisherigen `--bbm-form-*`-Werte bleiben für diese Altbereiche als unveränderte
-Fallbacks bestehen. Eine spätere Übernahme ist ein jeweils explizit freizugebender
-Schritt; nach diesem Paket erfolgt keine Massenmigration.
+Fallbacks bestehen. Legacy-Komponenten werden in diesem Paket weder gelöscht noch
+reaktiviert. Eine spätere Übernahme ist ein jeweils explizit freizugebender Schritt;
+nach diesem Paket erfolgt keine weitere Massenmigration.

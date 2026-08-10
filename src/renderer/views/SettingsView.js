@@ -2806,11 +2806,16 @@ export default class SettingsView {
       hasSelection && String(this.roleSelectedCode) !== String(this._fallbackRoleCode());
     if (this.btnRoleMove) {
       this.btnRoleMove.disabled = busy || !hasSelection;
-      this.btnRoleMove.style.opacity = this.btnRoleMove.disabled ? "0.55" : "1";
-      this.btnRoleMove.style.background = this.roleMoveModeActive ? "#e8f2ff" : "#f3f3f3";
-      this.btnRoleMove.style.border = this.roleMoveModeActive
-        ? "1px solid #7aa7ff"
-        : "1px solid #ddd";
+      this.btnRoleMove.style.background = this.btnRoleMove.disabled
+        ? ""
+        : this.roleMoveModeActive
+          ? "var(--bbm-popup-surface-subtle)"
+          : "var(--bbm-popup-surface)";
+      this.btnRoleMove.style.border = this.btnRoleMove.disabled
+        ? ""
+        : this.roleMoveModeActive
+          ? "1px solid var(--bbm-popup-focus)"
+          : "1px solid var(--bbm-popup-border-strong)";
       this.btnRoleMove.textContent = "Schieben";
       this.btnRoleMove.title = this.roleMoveModeActive
         ? "Markierte Rolle mit den Pfeilen verschieben"
@@ -2825,12 +2830,10 @@ export default class SettingsView {
       hasSelection && Array.isArray(this.roleOrder) && selectedIndex >= 0 && selectedIndex < this.roleOrder.length - 1;
     if (this.btnRoleMoveUp) {
       this.btnRoleMoveUp.disabled = busy || !this.roleMoveModeActive || !canMoveUp;
-      this.btnRoleMoveUp.style.opacity = this.btnRoleMoveUp.disabled ? "0.55" : "1";
       this.btnRoleMoveUp.style.display = this.roleMoveModeActive ? "" : "none";
     }
     if (this.btnRoleMoveDown) {
       this.btnRoleMoveDown.disabled = busy || !this.roleMoveModeActive || !canMoveDown;
-      this.btnRoleMoveDown.style.opacity = this.btnRoleMoveDown.disabled ? "0.55" : "1";
       this.btnRoleMoveDown.style.display = this.roleMoveModeActive ? "" : "none";
     }
     if (this.roleMoveHintEl) {
@@ -2841,11 +2844,9 @@ export default class SettingsView {
     }
     if (this.btnRoleDelete) {
       this.btnRoleDelete.disabled = busy || !canDelete;
-      this.btnRoleDelete.style.opacity = this.btnRoleDelete.disabled ? "0.55" : "1";
     }
     if (this.btnRoleRename) {
       this.btnRoleRename.disabled = busy || !hasSelection;
-      this.btnRoleRename.style.opacity = this.btnRoleRename.disabled ? "0.55" : "1";
     }
   }
 
@@ -3155,8 +3156,8 @@ export default class SettingsView {
 
   _createFirmRoleOrderPopupContent() {
     const wrap = document.createElement("div");
+    wrap.classList.add("bbm-form-content");
     wrap.style.display = "grid";
-    wrap.style.gap = "12px";
     wrap.style.minWidth = "min(920px, calc(100vw - 80px))";
     wrap.style.maxWidth = "1040px";
 
@@ -3246,14 +3247,13 @@ export default class SettingsView {
     addBar.style.alignItems = "end";
 
     const addLabel = document.createElement("label");
+    addLabel.classList.add("bbm-form-field");
     addLabel.style.display = "grid";
-    addLabel.style.gap = "4px";
     addLabel.style.minWidth = "260px";
 
     const addLabelText = document.createElement("span");
+    addLabelText.classList.add("bbm-form-label");
     addLabelText.textContent = "Neue Rolle";
-    addLabelText.style.fontSize = "12px";
-    addLabelText.style.fontWeight = "700";
 
     const addInput = document.createElement("input");
     addInput.type = "text";
@@ -3285,8 +3285,8 @@ export default class SettingsView {
     addBar.append(addLabel, addBtn);
 
     const tableWrap = document.createElement("div");
-    tableWrap.style.border = "1px solid #dbe3ea";
-    tableWrap.style.borderRadius = "8px";
+    tableWrap.style.border = "1px solid var(--bbm-popup-border)";
+    tableWrap.style.borderRadius = "var(--bbm-popup-card-radius)";
     tableWrap.style.overflow = "auto";
     tableWrap.style.background = "#fff";
 
@@ -3302,7 +3302,7 @@ export default class SettingsView {
       th.textContent = text;
       th.style.textAlign = "left";
       th.style.padding = "10px 12px";
-      th.style.borderBottom = "1px solid #dbe3ea";
+      th.style.borderBottom = "1px solid var(--bbm-popup-border)";
       th.style.background = "#f8fafc";
       th.style.position = "sticky";
       th.style.top = "0";
@@ -3334,6 +3334,7 @@ export default class SettingsView {
       content: [content],
       saveFn: async () => (await this._saveRoleMeta()) !== false,
       closeOnly: false,
+      standardForm: true,
     });
   }
 
@@ -4125,12 +4126,11 @@ export default class SettingsView {
   async _createDictationAudioContent() {
     const mkScaleGroup = (labelText, buttons) => {
       const row = document.createElement("div");
+      row.classList.add("bbm-form-field");
       row.style.display = "grid";
-      row.style.gap = "6px";
       const lbl = document.createElement("div");
+      lbl.classList.add("bbm-form-label");
       lbl.textContent = labelText;
-      lbl.style.fontWeight = "700";
-      lbl.style.fontSize = "12px";
       const btnWrap = document.createElement("div");
       btnWrap.style.display = "flex";
       btnWrap.style.gap = "6px";
@@ -4140,18 +4140,16 @@ export default class SettingsView {
       return row;
     };
     const applyScaleBtnBase = (el) => {
-      el.style.padding = "6px 10px";
-      el.style.borderRadius = "8px";
-      el.style.border = "1px solid rgba(0,0,0,0.18)";
+      el.style.padding = "var(--bbm-form-button-padding-y) var(--bbm-form-button-padding-x)";
+      el.style.border = "1px solid var(--bbm-popup-border-strong)";
       el.style.fontWeight = "600";
       el.style.cursor = "pointer";
-      el.style.minHeight = "30px";
       el.style.boxShadow = "none";
     };
     const setScaleBtnActive = (el, active) => {
-      el.style.background = active ? "#1976d2" : "#fff";
-      el.style.color = active ? "white" : "#1565c0";
-      el.style.borderColor = active ? "rgba(25,118,210,0.65)" : "rgba(0,0,0,0.18)";
+      el.style.background = active ? "var(--bbm-popup-primary)" : "var(--bbm-popup-surface)";
+      el.style.color = active ? "white" : "var(--bbm-popup-primary)";
+      el.style.borderColor = active ? "var(--bbm-popup-primary)" : "var(--bbm-popup-border-strong)";
     };
     const dictationSection = createDictationDevSection({
       applyPopupCardStyle,
@@ -4168,6 +4166,7 @@ export default class SettingsView {
       title: "Diktat / Audio",
       content: [dictationSection.tab],
       closeOnly: true,
+      standardForm: true,
     });
   }
 
@@ -4700,16 +4699,15 @@ export default class SettingsView {
   _createLicenseSettingsContent() {
     const api = window.bbmDb || {};
     const wrap = document.createElement("div");
+    wrap.classList.add("bbm-form-content");
     wrap.style.display = "grid";
-    wrap.style.gap = "10px";
     wrap.style.minWidth = "min(560px, calc(100vw - 80px))";
     wrap.style.maxWidth = "700px";
 
     const card = document.createElement("div");
     applyPopupCardStyle(card);
-    card.style.padding = "10px";
+    card.classList.add("bbm-form-card", "bbm-form-content");
     card.style.display = "grid";
-    card.style.gap = "8px";
 
     const title = document.createElement("div");
     title.textContent = "Lizenzstatus";
@@ -4729,10 +4727,7 @@ export default class SettingsView {
     doubleClickHint.textContent = "Hinweis: Sie koennen eine erhaltene .bbmlic-Datei direkt per Doppelklick oeffnen und importieren.";
 
     const status = document.createElement("div");
-    status.style.padding = "8px 10px";
-    status.style.border = "1px solid rgba(0,0,0,0.08)";
-    status.style.borderRadius = "8px";
-    status.style.background = "#f8fafc";
+    status.classList.add("bbm-form-card");
     status.style.fontSize = "12px";
     status.style.whiteSpace = "pre-line";
     status.textContent = "Lizenzstatus wird geladen ...";
@@ -5022,16 +5017,14 @@ export default class SettingsView {
     };
     const mkRow = (labelText, valueNode) => {
       const row = document.createElement("div");
+      row.classList.add("bbm-form-field");
       row.style.display = "grid";
       row.style.gridTemplateColumns = "160px 1fr";
-      row.style.gap = "8px";
       row.style.alignItems = "center";
 
       const label = document.createElement("div");
+      label.classList.add("bbm-form-label");
       label.textContent = labelText;
-      label.style.fontWeight = "700";
-      label.style.fontSize = "12px";
-      label.style.color = "#334155";
 
       const value =
         valueNode instanceof HTMLElement ? valueNode : document.createElement("div");
@@ -5048,10 +5041,9 @@ export default class SettingsView {
     const mkCard = (titleText, hintText = "") => {
       const box = document.createElement("div");
       applyPopupCardStyle(box);
-      box.style.padding = "8px 10px";
+      box.classList.add("bbm-form-card", "bbm-form-content");
       box.style.marginTop = "0";
       box.style.display = "grid";
-      box.style.gap = "8px";
       const title = document.createElement("div");
       title.textContent = titleText;
       title.style.fontWeight = "800";
@@ -5764,9 +5756,9 @@ export default class SettingsView {
     };
 
     const section = document.createElement("div");
+    section.classList.add("bbm-form-content");
     section.style.display = "grid";
-    section.style.gap = "10px";
-    section.style.minWidth = "min(760px, calc(100vw - 80px))";
+    section.style.minWidth = "min(720px, calc(100vw - 80px))";
     section.style.maxWidth = "920px";
 
     const versionCard = mkCard("Versionierung", "SemVer und Build-Kanal verwalten.");
@@ -6522,6 +6514,7 @@ export default class SettingsView {
       title: "Entwicklung",
       content: [section],
       closeOnly: true,
+      standardForm: true,
     });
   }
 
@@ -6790,6 +6783,7 @@ export default class SettingsView {
           title: "Lizenz",
           content: [this._createLicenseSettingsContent()],
           closeOnly: true,
+          standardForm: true,
         });
       },
     });
@@ -7011,7 +7005,7 @@ export default class SettingsView {
       }
       if (!isTableLayoutPopup) {
         this.settingsModalEl.style.height = "";
-        this.settingsModalEl.style.maxHeight = "calc(100vh - 24px)";
+        this.settingsModalEl.style.maxHeight = standardForm ? "100%" : "calc(100vh - 24px)";
         delete this.settingsModalEl.dataset.layoutMode;
       }
     }

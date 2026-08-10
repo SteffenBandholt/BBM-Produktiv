@@ -300,6 +300,7 @@ export default class ProjectsScreen {
   _closeCreateMeetingModal(result) {
     if (this._createMeetingModalEl) {
       try {
+        cleanupPopupHandlers(this._createMeetingModalEl);
         this._createMeetingModalEl.remove();
       } catch (_) {}
     }
@@ -320,23 +321,13 @@ export default class ProjectsScreen {
     return new Promise((resolve) => {
       this._createMeetingModalResolve = resolve;
 
-      const overlay = document.createElement("div");
-      overlay.style.position = "fixed";
-      overlay.style.left = "0";
-      overlay.style.top = "0";
-      overlay.style.width = "100%";
-      overlay.style.height = "100%";
-      overlay.style.background = "rgba(0,0,0,0.35)";
+      const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 9999 });
       overlay.style.display = "flex";
-      overlay.style.alignItems = "center";
-      overlay.style.justifyContent = "center";
-      overlay.style.zIndex = "9999";
-      overlay.tabIndex = -1;
 
       const box = document.createElement("div");
       box.className = "bbm-popup-standard bbm-popup-dialog";
       box.style.width = "min(560px, calc(100vw - 32px))";
-      box.style.maxHeight = "calc(100vh - 32px)";
+      box.style.maxHeight = "100%";
       box.style.display = "flex";
       box.style.flexDirection = "column";
       box.style.overflow = "hidden";

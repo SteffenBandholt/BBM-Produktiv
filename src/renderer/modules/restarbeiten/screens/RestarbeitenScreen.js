@@ -25,6 +25,7 @@ import {
   registerPopupCloseHandlers,
   stylePopupCard,
 } from "../../../ui/popupCommon.js";
+import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
 
 function normalizeText(value) {
   return String(value ?? "").trim();
@@ -455,23 +456,23 @@ export default class RestarbeitenScreen {
     this.notesOverlay.style.display = "flex";
 
     const card = document.createElement("section");
-    card.className = "bbm-restarbeiten-notes-popup";
-    stylePopupCard(card, { width: "min(720px, calc(100vw - 32px))", maxHeight: "calc(100vh - 32px)" });
+    card.className = "bbm-restarbeiten-notes-popup bbm-popup-standard bbm-popup-dialog";
+    stylePopupCard(card, { width: "min(720px, calc(100vw - 32px))", maxHeight: "100%" });
 
     const header = document.createElement("header");
-    header.className = "bbm-restarbeiten-notes-popup__header";
+    header.className = "bbm-restarbeiten-notes-popup__header bbm-popup-header";
     const title = document.createElement("h2");
     title.textContent = `Notizen zu Nr.: ${this.draft?.running_number || "?"}`;
     const closeBtn = document.createElement("button");
     closeBtn.type = "button";
-    closeBtn.className = "bbm-restarbeiten-button";
+    applyPopupButtonStyle(closeBtn);
     closeBtn.textContent = "Schließen";
     closeBtn.setAttribute("data-bbm-restarbeiten-note-action", "close");
     closeBtn.addEventListener("click", () => this._closeNotesPopup());
     header.append(title, closeBtn);
 
     const body = document.createElement("div");
-    body.className = "bbm-restarbeiten-notes-popup__body";
+    body.className = "bbm-restarbeiten-notes-popup__body bbm-popup-body bbm-form-content";
     const summary = document.createElement("div");
     summary.className = "bbm-restarbeiten-notes-popup__summary";
     const locationLine = buildLocationLine(this.draft);
@@ -500,7 +501,7 @@ export default class RestarbeitenScreen {
     } else {
       for (const note of this.notesPopup.notes) {
         const item = document.createElement("article");
-        item.className = "bbm-restarbeiten-notes-popup__note";
+        item.className = "bbm-restarbeiten-notes-popup__note bbm-form-card";
         const timestamp = document.createElement("div");
         timestamp.className = "bbm-restarbeiten-notes-popup__note-time";
         timestamp.textContent = formatNoteTimestamp(note.created_at);
@@ -522,7 +523,7 @@ export default class RestarbeitenScreen {
     actions.className = "bbm-restarbeiten-notes-popup__actions";
     const addBtn = document.createElement("button");
     addBtn.type = "button";
-    addBtn.className = "bbm-restarbeiten-button";
+    applyPopupButtonStyle(addBtn, { variant: "primary" });
     addBtn.textContent = "Notiz hinzufügen";
     addBtn.disabled = !normalizeText(input.value);
     addBtn.setAttribute("data-bbm-restarbeiten-note-action", "add");
@@ -534,7 +535,7 @@ export default class RestarbeitenScreen {
 
     const printBtn = document.createElement("button");
     printBtn.type = "button";
-    printBtn.className = "bbm-restarbeiten-button";
+    applyPopupButtonStyle(printBtn);
     printBtn.textContent = "Drucken";
     printBtn.setAttribute("data-bbm-restarbeiten-note-action", "print");
     printBtn.addEventListener("click", () => this._printRestarbeitNoteHistory());
@@ -544,8 +545,12 @@ export default class RestarbeitenScreen {
     status.className = "bbm-restarbeiten-notes-popup__status";
     status.textContent = this.notesPopup.printStatus || "";
 
-    body.append(summary, history, input, actions, status);
-    card.append(header, body);
+    const footer = document.createElement("div");
+    footer.className = "bbm-restarbeiten-notes-popup__footer bbm-popup-footer";
+    footer.append(status, actions);
+
+    body.append(summary, history, input);
+    card.append(header, body, footer);
     this.notesOverlay.appendChild(card);
   }
 

@@ -70,11 +70,15 @@ async function runPopupFormStandardTests(run) {
     assert.equal(invoices.includes("bbm-invoice-design bbm-popup-standard"), true);
     assert.equal(invoices.includes('overlay.classList.add("bbm-invoice-design-modal")'), true);
     assert.equal(project.includes('modal.classList.add("bbm-popup-standard", "bbm-popup-dialog")'), true);
-    assert.equal((settings.match(/standardForm: true/g) || []).length, 4);
+    assert.equal((settings.match(/standardForm: true/g) || []).length, 8);
     assert.equal(settings.includes('title: "Profil / Adresse",\n      content: [wrap],\n      standardForm: true'), true);
     assert.equal(settings.includes('title: "Protokoll",\n      content: [wrap],\n      standardForm: true'), true);
     assert.equal(settings.includes('title: "Ausgabe & Druck",\n      content: [wrap],\n      standardForm: true'), true);
     assert.equal(settings.includes('title: "Drucklogos verwalten",\n      content: [wrap],\n      standardForm: true'), true);
+    assert.equal(settings.includes('title: "Diktat / Audio",\n      content: [dictationSection.tab],\n      closeOnly: true,\n      standardForm: true'), true);
+    assert.equal(settings.includes('title: "Rollenreihenfolge für Firmen",'), true);
+    assert.equal(settings.includes('title: "Entwicklung",\n      content: [section],\n      closeOnly: true,\n      standardForm: true'), true);
+    assert.equal(settings.includes('title: "Lizenz",\n          content: [this._createLicenseSettingsContent()],\n          closeOnly: true,\n          standardForm: true'), true);
     assert.equal(settings.includes("standardForm = false"), true);
     assert.equal(settings.includes('classList.toggle("bbm-popup-standard", !!standardForm)'), true);
     assert.equal(project.includes('body.classList.add("bbm-popup-body", "bbm-form-content")'), true);
@@ -198,12 +202,35 @@ async function runPopupFormStandardTests(run) {
     assert.equal((dictation.match(/maybeOfferTermCorrection\(/g) || []).length, 1);
   });
 
-  await run("Popup-Standard: zentrale Dokumentation nennt Zweck, Nutzer und Pilotgrenze", () => {
+  await run("Popup-Standard: Abschlusswelle standardisiert Restarbeiten, MainHeader-Mail und aktive TOP-Dialoge", () => {
+    const restarbeiten = read("src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
+    const mainHeader = read("src/renderer/ui/MainHeader.js");
+    const topsDialogs = read("src/renderer/features/dialogs/TopsViewDialogs.js");
+
+    assert.equal(
+      restarbeiten.includes('card.className = "bbm-restarbeiten-notes-popup bbm-popup-standard bbm-popup-dialog"'),
+      true
+    );
+    assert.equal(restarbeiten.includes('body.className = "bbm-restarbeiten-notes-popup__body bbm-popup-body bbm-form-content"'), true);
+    assert.equal(restarbeiten.includes('footer.className = "bbm-restarbeiten-notes-popup__footer bbm-popup-footer"'), true);
+
+    assert.equal(mainHeader.includes('const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.45)", zIndex: 12600 })'), true);
+    assert.equal(mainHeader.includes('card.className = "bbm-popup-standard bbm-popup-dialog"'), true);
+    assert.equal(mainHeader.includes('subjectField.className = "bbm-form-field"'), true);
+    assert.equal(mainHeader.includes('actions.className = "bbm-popup-footer"'), true);
+
+    assert.equal((topsDialogs.match(/className = "bbm-popup-standard bbm-popup-dialog"/g) || []).length, 2);
+    assert.equal((topsDialogs.match(/createPopupOverlay\(/g) || []).length, 2);
+    assert.equal(topsDialogs.includes('body.className = "bbm-popup-body bbm-form-content"'), true);
+  });
+
+  await run("Popup-Standard: zentrale Dokumentation nennt Zweck, Nutzer und Abschlussstatus", () => {
     const docs = read("docs/BBM_POPUP_FORMULARSTANDARD.md");
     assert.equal(docs.includes("Tokenname"), true);
     assert.equal(docs.includes("Projekt bearbeiten"), true);
     assert.equal(docs.includes("Profil / Adresse"), true);
-    assert.equal(docs.includes("keine Massenmigration"), true);
+    assert.equal(docs.includes("vollständig eingeführt"), true);
+    assert.equal(docs.includes("keine weitere Massenmigration"), true);
   });
 }
 

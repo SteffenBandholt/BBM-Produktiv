@@ -1,5 +1,14 @@
 # STATUS.md — BBM-Produktiv
 
+### BBM Popup-Standardisierung abgeschlossen
+
+- Status: `[A]`; die letzte produktiv aktive Dialogwelle ist auf den unveränderten zentralen Popup-/Formularstandard umgestellt. Dazu gehören das Restarbeiten-Notizen-Popup, der über die Quicklane produktiv erreichte MainHeader-Maildialog, die aktiven TOP-Hinweis-/Schlagwortdialoge, `Protokoll anlegen` sowie alle produktiv erreichbaren Settings-Popups.
+- Settings-Inventur: `Profil / Adresse`, `Ausgabe & Druck`, `Protokoll`, `Drucklogos verwalten`, `Diktat / Audio`, `Rollenreihenfolge für Firmen`, `Lizenz` und `Entwicklung` verwenden nun die gemeinsame Opt-in-Hülle. Fachlogik, Datenbindung, Feldfolge und Speicherung blieben unverändert.
+- Produktive Ausnahmen sind ausschließlich andersartige Oberflächen: verankerte Quicklane-/Filter-Popover, das eingebettete `AudioSuggestionsPanel`, PDF-/Dokumentinhalte und kompakte Tabellen-/Listenzeilen. DEV-Spezialwerkzeuge bleiben außerhalb der fachlichen Migrationsbilanz; tote oder ungemountete Dialogvarianten wurden dokumentiert, aber weder reaktiviert noch gelöscht.
+- Electron-Sichtprüfung: Desktop und kleine Fensterhöhe, Fokus/Disabled, Öffnen/Schließen, Body-Scroll sowie sichtbare Header/Footer. Gemessen wurden 32 px Controls, 30 px Buttons, 8 px Controlradius, 14 px Dialogradius, 12 px Kartenradius, 11,5 px Labels, 13 px Eingabetext, 4 px Label-Feld-Gap, 10 px Gruppengap, 12 px 16 px Bodypadding und 10 px 16 px Footerpadding. Screenshots liegen unter `output/playwright/popup-standard-final/`.
+- Popup-, Rechnungen-, Restarbeiten-V2- und Layout-/Ausgabe-Guardrails sowie der UI-Editor-Vertragscheck sind grün. Der vollständige Restarbeiten-Modultest behält einen bekannten paketfremden Quicklane-UI-Editor-Altfehler; ESLint reproduziert ausschließlich die zwei bereits auf `HEAD` vorhandenen `footerDefaults`-Fehler in `SettingsView.js`.
+- Nächster Schritt: Sichtfreigabe des abgeschlossenen produktiven Standards. Keine automatische Legacy-Löschung oder weitere Popup-Refaktorierung. Commit-SHA wird im Paketabschluss berichtet.
+
 ### Formularstandard auf Protokoll und Teilnehmerdialoge ausgeweitet
 
 - Status: `[A]`; der unveränderte opt-in-Standard gilt jetzt zusätzlich für `Protokoll anlegen`, die globalen und projektbezogenen Firmen-/Mitarbeiterformulare, das produktive separate Firmen-Editorfenster sowie `Personalpool` und `Teilnehmer` auf der gemeinsamen Teilnehmerbasis.
