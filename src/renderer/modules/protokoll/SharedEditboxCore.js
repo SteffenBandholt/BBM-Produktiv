@@ -443,22 +443,30 @@ export class SharedEditboxCore {
 
     const card = document.createElement("div");
     stylePopupCard(card, { width: "min(560px, calc(100vw - 24px))" });
-    card.style.padding = "12px";
-    card.style.display = "grid";
-    card.style.gap = "12px";
+    card.className = "bbm-popup-standard bbm-popup-dialog";
+    card.style.maxHeight = "100%";
 
     const title = document.createElement("div");
+    title.className = "bbm-popup-header";
     title.textContent = "Text korrigieren";
     title.style.fontSize = "16px";
     title.style.fontWeight = "700";
 
+    const body = document.createElement("div");
+    body.className = "bbm-popup-body bbm-form-content";
+    body.style.display = "grid";
+    body.style.flex = "1 1 auto";
+    body.style.minHeight = "0";
+    body.style.overflow = "auto";
+
     const promptRow = document.createElement("div");
+    promptRow.className = "bbm-form-field";
     promptRow.style.display = "flex";
     promptRow.style.flexWrap = "wrap";
     promptRow.style.alignItems = "center";
-    promptRow.style.gap = "10px";
 
     const sourceText = document.createElement("div");
+    sourceText.className = "bbm-form-label";
     sourceText.textContent = `"${snapshot.selectedText}" ändern zu`;
     sourceText.style.fontWeight = "600";
     sourceText.style.whiteSpace = "nowrap";
@@ -472,9 +480,10 @@ export class SharedEditboxCore {
     promptRow.append(sourceText, correctionInput);
 
     const actions = document.createElement("div");
+    actions.className = "bbm-popup-footer";
     actions.style.display = "flex";
     actions.style.justifyContent = "flex-end";
-    actions.style.gap = "8px";
+    actions.style.gap = "var(--bbm-popup-footer-gap)";
 
     const message = document.createElement("div");
     message.style.minHeight = "18px";
@@ -542,7 +551,8 @@ export class SharedEditboxCore {
     };
 
     actions.append(cancelButton, replaceButton);
-    card.append(title, promptRow, message, actions);
+    body.append(promptRow, message);
+    card.append(title, body, actions);
     overlay.appendChild(card);
     document.body.appendChild(overlay);
     this._dictionaryCorrectionOverlay = overlay;

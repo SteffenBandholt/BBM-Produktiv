@@ -4033,6 +4033,15 @@ Wichtig:
 - Realnachweis: `protokoll.list.row.due` blieb nach Save, Editor-Close, BBM-Close und Neustart mit Profilwert `51.49624252319336` DIP sichtbar (`51.48496627807617` DOM-DIP). `restarbeiten.edit.short.label` blieb entsprechend mit Profilwert `147` DIP sichtbar (`147.00001525878906` DOM-DIP). Beide Starts meldeten `startup_layout_applied`; Markerzahl jeweils `0`.
 - Guardrail: Der M86.20-Chromium-Restarttest enthält nun den gezielten M86.25-Fall mit gespeicherter Restarbeiten-Breite und gespeichertem Move. M86.14, M86.16, M86.19 bis M86.24 sowie die Core-M86.23/M86.24-Tests sind grün; der erste M86.24-Wiederholungslauf hatte einen transienten Registry-Mount-Fehler, der unmittelbare vollständige Wiederholungslauf war grün.
 - Schutz: `docs/licensing.md` blieb beim Schutz-Hash `02AE66A8873C74869539F13F734B7CE43BC63B6EF37DA553A40C27A4F514D784`; Benutzerlizenz und Datenbankdateien wurden nicht manuell gelesen oder bearbeitet, `design-reference/` wurde nicht verändert oder gestaged. Commit, Push, PR und Merge: keiner.
+
+## Popup-/Formularstandard - vierte kontrollierte Migrationswelle
+
+- Status: Projekttransfer, produktive Firmen-/Personen-CSV-Staging- und Detaildialoge, Textkorrektur und der produktive Protokoll-Abschluss-Maildialog sind auf die bestehende zentrale Opt-in-Basis umgestellt; die Tokenwerte blieben unverändert.
+- Die gemeinsame Popup-Fläche berücksichtigt nun außer dem sichtbaren Protokoll-Header auch den real gemessenen globalen Mainheader. Header und Footer bleiben bei kleiner Höhe stehen, während ausschließlich Dialogkörper bzw. innere Detailkarten scrollen.
+- Die editierbaren Zellen der Firmen-Stagingtabelle bleiben als dokumentierte Tabellen-Ausnahme kompakt und werden nicht auf 32 px Zeilenhöhe gezwungen. Formular-Inputs, Selects, Textareas, Buttons, Karten und Dialograhmen verwenden weiterhin die verbindlichen zentralen Maße.
+- Inventur: `TopsScreen._openTopRulesDialog()` besitzt keine produktive Aufrufstelle; `MainHeader._openMailSendModal()` wird im aktuellen Header nicht gemountet; die Quicklane besitzt keine registrierte `openProtocolMailModal`-Implementierung. Diese Legacy-/toten Varianten blieben unverändert.
+- Electron-Sichtprüfung mit lokalem, nicht importiertem QA-Staging: Desktop und kleiner Viewport, Fokuszustände, Tabellen-/Listenansichten, Headerabstand, Body-Scroll und sichtbare Footer wurden gemessen und als Screenshots unter `output/playwright/popup-standard-wave4` abgelegt.
+- Nächster Schritt: ausschließlich Sichtfreigabe dieser Welle; keine automatische fünfte Migration.
 # Projektformular: zentrale Abstände lokal bereinigt (10.08.2026)
 
 - `Projekt bearbeiten` verwendet für vertikale Feldgruppen weiterhin unverändert den zentralen `10px`-Token.

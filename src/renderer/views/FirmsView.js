@@ -3,6 +3,11 @@
 // src/renderer/views/FirmsView.js
 
 import { applyPopupButtonStyle } from "../ui/popupButtonStyles.js";
+import {
+  cleanupPopupHandlers,
+  createPopupOverlay,
+  registerPopupCloseHandlers,
+} from "../ui/popupCommon.js";
 import { OVERLAY, OVERLAY_TOP } from "../ui/zIndex.js";
 import { fireAndForget } from "../utils/async.js";
 //
@@ -1682,44 +1687,25 @@ const taFirmNotes = document.createElement("textarea");
   _ensureImportModal() {
     if (this.importModalRoot) return;
 
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.left = "0";
-    overlay.style.top = "0";
-    overlay.style.width = "100vw";
-    overlay.style.height = "100vh";
-    overlay.style.background = "rgba(0,0,0,0.25)";
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.25)", zIndex: OVERLAY });
     overlay.style.display = "none";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = String(OVERLAY);
-    overlay.tabIndex = -1;
-    overlay.addEventListener("mousedown", (e) => {
-      if (e.target === overlay) this._closeImportModal();
-    });
-    overlay.addEventListener("keydown", (e) => {
-      if (e.key !== "Escape") return;
-      e.preventDefault();
-      this._closeImportModal();
-    });
+    registerPopupCloseHandlers(overlay, () => this._closeImportModal());
 
     const modal = document.createElement("div");
     modal.style.width = "min(1220px, calc(100vw - 28px))";
-    modal.style.height = "min(86vh, 880px)";
+    modal.className = "bbm-popup-standard bbm-popup-dialog";
+    modal.style.height = "min(86vh, 880px, 100%)";
+    modal.style.maxHeight = "100%";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
-    modal.style.background = "#fff";
-    modal.style.border = "1px solid #ddd";
-    modal.style.borderRadius = "12px";
     modal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.2)";
     modal.style.overflow = "hidden";
 
     const head = document.createElement("div");
+    head.className = "bbm-popup-header";
     head.style.display = "flex";
     head.style.alignItems = "center";
     head.style.gap = "10px";
-    head.style.padding = "12px";
-    head.style.borderBottom = "1px solid #e2e8f0";
 
     const title = document.createElement("div");
     title.textContent = "Firmen importieren";
@@ -1735,28 +1721,26 @@ const taFirmNotes = document.createElement("textarea");
     head.append(title, fileNameEl);
 
     const body = document.createElement("div");
+    body.className = "bbm-popup-body bbm-form-content";
     body.style.display = "grid";
     body.style.gridTemplateColumns = "1fr";
-    body.style.gap = "10px";
-    body.style.padding = "10px";
-    body.style.overflow = "hidden";
+    body.style.overflow = "auto";
     body.style.flex = "1 1 auto";
+    body.style.minHeight = "0";
 
     const left = document.createElement("div");
+    left.className = "bbm-form-content";
     left.style.display = "flex";
     left.style.flexDirection = "column";
-    left.style.gap = "10px";
     left.style.minWidth = "0";
 
     const drop = document.createElement("div");
-    drop.style.border = "1px dashed #9eb6d8";
-    drop.style.borderRadius = "10px";
-    drop.style.padding = "12px";
-    drop.style.background = "#f7fbff";
+    drop.className = "bbm-form-card bbm-form-group";
+    drop.style.border = "1px dashed var(--bbm-popup-border-strong)";
+    drop.style.background = "var(--bbm-popup-surface-subtle)";
     drop.style.display = "flex";
     drop.style.alignItems = "center";
     drop.style.justifyContent = "space-between";
-    drop.style.gap = "12px";
 
     const dropText = document.createElement("div");
     dropText.textContent = "CSV hier ablegen";
@@ -1764,6 +1748,7 @@ const taFirmNotes = document.createElement("textarea");
 
     const dropBtn = document.createElement("button");
     dropBtn.textContent = "Datei auswählen…";
+    applyPopupButtonStyle(dropBtn, { variant: "neutral" });
     dropBtn.onclick = async () => {
       const api = window.bbmDb || {};
       if (typeof api.selectCsvFile !== "function") {
@@ -1784,11 +1769,11 @@ const taFirmNotes = document.createElement("textarea");
       drop.style.background = "#eaf3ff";
     });
     drop.addEventListener("dragleave", () => {
-      drop.style.background = "#f7fbff";
+      drop.style.background = "var(--bbm-popup-surface-subtle)";
     });
     drop.addEventListener("drop", async (e) => {
       e.preventDefault();
-      drop.style.background = "#f7fbff";
+      drop.style.background = "var(--bbm-popup-surface-subtle)";
       const files = Array.from(e.dataTransfer?.files || []);
       if (!files.length) return;
       const p = String(files[0].path || "").trim();
@@ -1802,9 +1787,9 @@ const taFirmNotes = document.createElement("textarea");
     drop.append(dropText, dropBtn);
 
     const tableWrap = document.createElement("div");
-    tableWrap.style.border = "1px solid #ddd";
-    tableWrap.style.borderRadius = "10px";
-    tableWrap.style.background = "#fff";
+    tableWrap.style.border = "1px solid var(--bbm-popup-border)";
+    tableWrap.style.borderRadius = "var(--bbm-popup-card-radius)";
+    tableWrap.style.background = "var(--bbm-popup-surface)";
     tableWrap.style.display = "flex";
     tableWrap.style.flexDirection = "column";
     tableWrap.style.flex = "1 1 0";
@@ -1820,14 +1805,14 @@ const taFirmNotes = document.createElement("textarea");
     const thead = document.createElement("thead");
     thead.innerHTML = `
       <tr>
-        <th style="padding:6px;border-bottom:1px solid #ddd;width:34px;">✓</th>
-        <th style="padding:6px;border-bottom:1px solid #ddd;">Firmenname</th>
-        <th style="padding:6px;border-bottom:1px solid #ddd;">Straße/HsNr</th>
-        <th style="padding:6px;border-bottom:1px solid #ddd;width:78px;">PLZ</th>
-        <th style="padding:6px;border-bottom:1px solid #ddd;">Ort</th>
-        <th style="padding:6px;border-bottom:1px solid #ddd;">Telefon</th>
-        <th style="padding:6px;border-bottom:1px solid #ddd;">E-Mail</th>
-        <th style="padding:6px;border-bottom:1px solid #ddd;width:110px;">Abgleich</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);width:34px;">✓</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);">Firmenname</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);">Straße/HsNr</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);width:78px;">PLZ</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);">Ort</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);">Telefon</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);">E-Mail</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);width:110px;">Abgleich</th>
       </tr>
     `;
 
@@ -1837,40 +1822,36 @@ const taFirmNotes = document.createElement("textarea");
 
     const hint = document.createElement("div");
     hint.textContent = "mit doppelklich Firma wählen";
-    hint.style.color = "blue";
+    hint.style.color = "var(--bbm-popup-primary)";
     hint.style.fontWeight = "600";
-    hint.style.fontSize = "18px";
 
     left.append(drop, hint, tableWrap);
 
     const right = document.createElement("div");
+    right.className = "bbm-form-content";
     right.style.display = "flex";
     right.style.flexDirection = "column";
-    right.style.gap = "10px";
     right.style.minWidth = "0";
     right.style.display = "none";
 
     const detail = document.createElement("div");
-    detail.style.border = "1px solid #ddd";
-    detail.style.borderRadius = "10px";
-    detail.style.padding = "10px";
-    detail.style.background = "#fff";
+    detail.className = "bbm-form-card bbm-form-content";
+    detail.style.display = "grid";
     detail.style.overflow = "auto";
 
     const detailTitle = document.createElement("div");
     detailTitle.textContent = "Details";
     detailTitle.style.fontWeight = "700";
-    detailTitle.style.marginBottom = "8px";
     detail.appendChild(detailTitle);
 
     const mkRow = (label, input) => {
       const row = document.createElement("div");
+      row.className = "bbm-form-field";
       row.style.display = "grid";
       row.style.gridTemplateColumns = "112px 1fr";
-      row.style.gap = "8px";
       row.style.alignItems = "center";
-      row.style.marginBottom = "6px";
       const l = document.createElement("div");
+      l.className = "bbm-form-label";
       l.textContent = label;
       row.append(l, input);
       return row;
@@ -1900,26 +1881,24 @@ const taFirmNotes = document.createElement("textarea");
     dNotes.style.resize = "vertical";
 
     const rawLabel = document.createElement("div");
+    rawLabel.className = "bbm-form-label";
     rawLabel.textContent = "Quelle (CSV) – Rohdaten";
     rawLabel.style.fontWeight = "700";
-    rawLabel.style.marginTop = "12px";
 
     const rawHint = document.createElement("div");
     rawHint.textContent =
       "Hilft bei fehlerhaften/unklaren Adress- oder Kontaktfeldern. Nur Kontrolle, wird nicht gespeichert.";
     rawHint.style.fontSize = "12px";
     rawHint.style.opacity = "0.8";
-    rawHint.style.marginTop = "4px";
 
     const rawTa = document.createElement("textarea");
     rawTa.readOnly = true;
     rawTa.rows = 9;
     rawTa.style.width = "100%";
     rawTa.style.resize = "vertical";
-    rawTa.style.background = "#fafafa";
+    rawTa.style.background = "var(--bbm-popup-surface-subtle)";
 
     const rawDetails = document.createElement("details");
-    rawDetails.style.marginTop = "4px";
 
     const rawSummary = document.createElement("summary");
     rawSummary.textContent = "Rohdaten anzeigen";
@@ -1961,17 +1940,17 @@ const taFirmNotes = document.createElement("textarea");
     body.append(left, right);
 
     const footer = document.createElement("div");
+    footer.className = "bbm-popup-footer";
     footer.style.display = "flex";
     footer.style.alignItems = "center";
-    footer.style.gap = "8px";
-    footer.style.padding = "12px";
-    footer.style.borderTop = "1px solid #e2e8f0";
+    footer.style.gap = "var(--bbm-popup-footer-gap)";
 
     const spacer = document.createElement("div");
     spacer.style.marginLeft = "auto";
 
     const btnImport = document.createElement("button");
     btnImport.textContent = "Importieren";
+    applyPopupButtonStyle(btnImport, { variant: "primary" });
     btnImport.onclick = async () => {
       if (this.savingFirm || this.savingPerson) return;
       const api = window.bbmDb || {};
@@ -2031,6 +2010,7 @@ const taFirmNotes = document.createElement("textarea");
 
     const btnClose = document.createElement("button");
     btnClose.textContent = "Schließen";
+    applyPopupButtonStyle(btnClose, { variant: "neutral" });
     btnClose.onclick = () => this._closeImportModal();
 
     footer.append(spacer, btnImport, btnClose);
@@ -2109,6 +2089,7 @@ const taFirmNotes = document.createElement("textarea");
     this._closeImportDetailPopup();
     if (this.importModalRoot) {
       try {
+        cleanupPopupHandlers(this.importModalRoot);
         this.importModalRoot.remove();
       } catch (_) {}
     }
@@ -2169,11 +2150,17 @@ const taFirmNotes = document.createElement("textarea");
     const mkInput = (item, key, width) => {
       const i = document.createElement("input");
       i.type = "text";
+      i.className = "bbm-import-table-control";
       i.value = String(item?.[key] || "");
       i.style.width = width || "100%";
       i.style.boxSizing = "border-box";
-      i.style.border = "none";
-      i.style.background = "transparent";
+      i.style.setProperty("min-height", "0", "important");
+      i.style.setProperty("height", "auto", "important");
+      i.style.setProperty("padding", "0", "important");
+      i.style.setProperty("border", "none", "important");
+      i.style.setProperty("border-radius", "0", "important");
+      i.style.setProperty("background", "transparent", "important");
+      i.style.setProperty("font", "inherit", "important");
       i.style.outline = "none";
       i.addEventListener("input", () => {
         item[key] = String(i.value || "");
@@ -2204,7 +2191,7 @@ const taFirmNotes = document.createElement("textarea");
 
       const tdTake = document.createElement("td");
       tdTake.style.padding = "4px";
-      tdTake.style.borderBottom = "1px solid #eee";
+      tdTake.style.borderBottom = "1px solid var(--bbm-popup-border)";
       tdTake.style.textAlign = "center";
       const chk = document.createElement("input");
       chk.type = "checkbox";
@@ -2222,7 +2209,7 @@ const taFirmNotes = document.createElement("textarea");
       const mkCell = (el) => {
         const td = document.createElement("td");
         td.style.padding = "4px";
-        td.style.borderBottom = "1px solid #eee";
+        td.style.borderBottom = "1px solid var(--bbm-popup-border)";
         td.appendChild(el);
         return td;
       };
@@ -2311,43 +2298,26 @@ const taFirmNotes = document.createElement("textarea");
       raw_data: String(item.address_raw || item.raw_data || ""),
     };
 
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.inset = "0";
-    overlay.style.background = "rgba(0,0,0,0.32)";
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.32)", zIndex: OVERLAY_TOP });
     overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = String(OVERLAY_TOP);
-    overlay.tabIndex = -1;
-    overlay.addEventListener("mousedown", (event) => {
-      if (event.target === overlay) this._closeImportDetailPopup();
-    });
-    overlay.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      this._closeImportDetailPopup();
-    });
+    registerPopupCloseHandlers(overlay, () => this._closeImportDetailPopup());
 
     const modal = document.createElement("div");
     modal.style.width = "min(900px, calc(100vw - 32px))";
-    modal.style.maxHeight = "min(80vh, calc(100vh - 32px))";
+    modal.style.maxHeight = "100%";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
     modal.style.overflow = "hidden";
-    modal.style.background = "#fff";
-    modal.style.border = "1px solid #ddd";
-    modal.style.borderRadius = "12px";
+    modal.className = "bbm-popup-standard bbm-popup-dialog";
     modal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.2)";
     modal.style.padding = "0";
 
     const head = document.createElement("div");
+    head.className = "bbm-popup-header";
     head.style.display = "flex";
     head.style.alignItems = "center";
     head.style.justifyContent = "space-between";
     head.style.gap = "10px";
-    head.style.padding = "12px 14px";
-    head.style.borderBottom = "1px solid #e2e8f0";
 
     const title = document.createElement("div");
     title.textContent = "Firma bearbeiten";
@@ -2362,29 +2332,28 @@ const taFirmNotes = document.createElement("textarea");
     head.append(title, btnClose);
 
     const body = document.createElement("div");
+    body.className = "bbm-popup-body bbm-form-content";
     body.style.flex = "1 1 auto";
     body.style.minHeight = "0";
-    body.style.padding = "12px 14px";
     body.style.display = "grid";
     body.style.gridTemplateColumns = "1fr 1fr";
-    body.style.gap = "12px";
     body.style.overflow = "hidden";
 
     const leftCard = document.createElement("div");
+    leftCard.className = "bbm-form-card bbm-form-content";
     leftCard.style.display = "flex";
     leftCard.style.flexDirection = "column";
-    leftCard.style.gap = "6px";
     leftCard.style.minHeight = "0";
     leftCard.style.overflowY = "auto";
 
     const mkRow = (label, input) => {
       const row = document.createElement("div");
+      row.className = "bbm-form-field";
       row.style.display = "grid";
       row.style.gridTemplateColumns = "120px 1fr";
-      row.style.gap = "8px";
       row.style.alignItems = "center";
-      row.style.marginBottom = "4px";
       const lbl = document.createElement("div");
+      lbl.className = "bbm-form-label";
       lbl.textContent = label;
       row.append(lbl, input);
       return row;
@@ -2434,7 +2403,6 @@ const taFirmNotes = document.createElement("textarea");
     statusMeta.textContent = `Abgleich: ${this._importStatusText(item)}`;
     statusMeta.style.fontSize = "12px";
     statusMeta.style.opacity = "0.8";
-    statusMeta.style.marginTop = "4px";
 
     leftCard.append(
       mkRow("Kurzbez.", inpShort),
@@ -2451,16 +2419,16 @@ const taFirmNotes = document.createElement("textarea");
     );
 
     const rightCard = document.createElement("div");
+    rightCard.className = "bbm-form-card bbm-form-content";
     rightCard.style.display = "flex";
     rightCard.style.flexDirection = "column";
-    rightCard.style.gap = "6px";
     rightCard.style.minHeight = "0";
     rightCard.style.overflow = "auto";
 
     const rawLabel = document.createElement("div");
+    rawLabel.className = "bbm-form-label";
     rawLabel.textContent = "Quelle (CSV) – Rohdaten";
     rawLabel.style.fontWeight = "600";
-    rawLabel.style.marginBottom = "4px";
 
     const rawTa = document.createElement("textarea");
     rawTa.readOnly = true;
@@ -2468,20 +2436,18 @@ const taFirmNotes = document.createElement("textarea");
     rawTa.style.width = "100%";
     rawTa.style.resize = "vertical";
     rawTa.style.flex = "1 1 auto";
-    rawTa.style.minHeight = "120px";
     rawTa.style.maxHeight = "360px";
-    rawTa.style.background = "#f7f9fc";
+    rawTa.style.background = "var(--bbm-popup-surface-subtle)";
 
     rightCard.append(rawLabel, rawTa);
 
     body.append(leftCard, rightCard);
 
     const footer = document.createElement("div");
+    footer.className = "bbm-popup-footer";
     footer.style.display = "flex";
     footer.style.justifyContent = "flex-end";
-    footer.style.gap = "8px";
-    footer.style.borderTop = "1px solid #e2e8f0";
-    footer.style.padding = "10px 14px";
+    footer.style.gap = "var(--bbm-popup-footer-gap)";
 
     const btnCancel = document.createElement("button");
     btnCancel.textContent = "Abbrechen";
@@ -2512,6 +2478,7 @@ const taFirmNotes = document.createElement("textarea");
   _closeImportDetailPopup() {
     if (this.importDetailOverlay) {
       try {
+        cleanupPopupHandlers(this.importDetailOverlay);
         this.importDetailOverlay.remove();
       } catch (_) {}
     }
@@ -2703,30 +2670,14 @@ const taFirmNotes = document.createElement("textarea");
     this._closePersonImportNewFirmPopup();
     this.personImportNewFirmItem = item;
 
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.inset = "0";
-    overlay.style.background = "rgba(0,0,0,0.35)";
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: OVERLAY_TOP });
     overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = String(OVERLAY_TOP);
-    overlay.tabIndex = -1;
-    overlay.addEventListener("mousedown", (e) => {
-      if (e.target === overlay) this._closePersonImportNewFirmPopup();
-    });
-    overlay.addEventListener("keydown", (e) => {
-      if (e.key !== "Escape") return;
-      e.preventDefault();
-      this._closePersonImportNewFirmPopup();
-    });
+    registerPopupCloseHandlers(overlay, () => this._closePersonImportNewFirmPopup());
 
     const modal = document.createElement("div");
     modal.style.width = "min(420px, calc(100vw - 32px))";
-    modal.style.maxHeight = "calc(100vh - 32px)";
-    modal.style.background = "#fff";
-    modal.style.borderRadius = "12px";
-    modal.style.border = "1px solid rgba(0,0,0,0.15)";
+    modal.style.maxHeight = "100%";
+    modal.className = "bbm-popup-standard bbm-popup-dialog";
     modal.style.boxShadow = "0 18px 30px rgba(0,0,0,0.25)";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
@@ -2734,17 +2685,16 @@ const taFirmNotes = document.createElement("textarea");
     modal.style.padding = "0";
 
     const header = document.createElement("div");
+    header.className = "bbm-popup-header";
     header.style.display = "flex";
     header.style.alignItems = "center";
     header.style.justifyContent = "space-between";
     header.style.gap = "10px";
-    header.style.padding = "12px 14px";
-    header.style.borderBottom = "1px solid #e2e8f0";
 
     const heading = document.createElement("div");
     heading.textContent = "Firma neu";
     heading.style.fontWeight = "700";
-    heading.style.fontSize = "18px";
+    heading.style.fontSize = "16px";
 
     const btnClose = document.createElement("button");
     btnClose.type = "button";
@@ -2760,13 +2710,12 @@ const taFirmNotes = document.createElement("textarea");
     hint.style.opacity = "0.7";
 
     const body = document.createElement("div");
+    body.className = "bbm-popup-body bbm-form-content";
     body.style.flex = "1 1 auto";
     body.style.minHeight = "0";
     body.style.overflow = "auto";
-    body.style.padding = "14px";
     body.style.display = "flex";
     body.style.flexDirection = "column";
-    body.style.gap = "10px";
 
     const inpName = document.createElement("input");
     inpName.type = "text";
@@ -2779,11 +2728,10 @@ const taFirmNotes = document.createElement("textarea");
     inpCity.style.width = "100%";
 
     const actions = document.createElement("div");
+    actions.className = "bbm-popup-footer";
     actions.style.display = "flex";
     actions.style.justifyContent = "flex-end";
-    actions.style.gap = "8px";
-    actions.style.borderTop = "1px solid #e2e8f0";
-    actions.style.padding = "10px 14px";
+    actions.style.gap = "var(--bbm-popup-footer-gap)";
 
     const btnCancel = document.createElement("button");
     btnCancel.textContent = "Abbrechen";
@@ -2818,6 +2766,7 @@ const taFirmNotes = document.createElement("textarea");
   _closePersonImportNewFirmPopup() {
     if (this.personImportNewFirmOverlay) {
       try {
+        cleanupPopupHandlers(this.personImportNewFirmOverlay);
         this.personImportNewFirmOverlay.remove();
       } catch (_) {}
     }
@@ -2871,44 +2820,25 @@ const taFirmNotes = document.createElement("textarea");
   _ensurePersonImportModal() {
     if (this.personImportModalRoot) return;
 
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.left = "0";
-    overlay.style.top = "0";
-    overlay.style.width = "100vw";
-    overlay.style.height = "100vh";
-    overlay.style.background = "rgba(0,0,0,0.25)";
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.25)", zIndex: OVERLAY });
     overlay.style.display = "none";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = String(OVERLAY);
-    overlay.tabIndex = -1;
-    overlay.addEventListener("mousedown", (e) => {
-      if (e.target === overlay) this._closePersonImportModal();
-    });
-    overlay.addEventListener("keydown", (e) => {
-      if (e.key !== "Escape") return;
-      e.preventDefault();
-      this._closePersonImportModal();
-    });
+    registerPopupCloseHandlers(overlay, () => this._closePersonImportModal());
 
     const modal = document.createElement("div");
     modal.style.width = "min(1260px, calc(100vw - 28px))";
-    modal.style.height = "min(86vh, 880px)";
+    modal.className = "bbm-popup-standard bbm-popup-dialog";
+    modal.style.height = "min(86vh, 880px, 100%)";
+    modal.style.maxHeight = "100%";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
-    modal.style.background = "#fff";
-    modal.style.border = "1px solid #ddd";
-    modal.style.borderRadius = "12px";
     modal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.2)";
     modal.style.overflow = "hidden";
 
     const head = document.createElement("div");
+    head.className = "bbm-popup-header";
     head.style.display = "flex";
     head.style.alignItems = "center";
     head.style.gap = "10px";
-    head.style.padding = "12px";
-    head.style.borderBottom = "1px solid #e2e8f0";
 
     const title = document.createElement("div");
     title.textContent = "Import Kontakte (CSV)";
@@ -2924,28 +2854,26 @@ const taFirmNotes = document.createElement("textarea");
     head.append(title, fileNameEl);
 
     const body = document.createElement("div");
+    body.className = "bbm-popup-body bbm-form-content";
     body.style.display = "grid";
     body.style.gridTemplateColumns = "1fr";
-    body.style.gap = "10px";
-    body.style.padding = "10px";
-    body.style.overflow = "hidden";
+    body.style.overflow = "auto";
     body.style.flex = "1 1 auto";
+    body.style.minHeight = "0";
 
     const left = document.createElement("div");
+    left.className = "bbm-form-content";
     left.style.display = "flex";
     left.style.flexDirection = "column";
-    left.style.gap = "10px";
     left.style.minWidth = "0";
 
     const drop = document.createElement("div");
-    drop.style.border = "1px dashed #9eb6d8";
-    drop.style.borderRadius = "10px";
-    drop.style.padding = "12px";
-    drop.style.background = "#f7fbff";
+    drop.className = "bbm-form-card bbm-form-group";
+    drop.style.border = "1px dashed var(--bbm-popup-border-strong)";
+    drop.style.background = "var(--bbm-popup-surface-subtle)";
     drop.style.display = "flex";
     drop.style.alignItems = "center";
     drop.style.justifyContent = "space-between";
-    drop.style.gap = "12px";
 
     const dropText = document.createElement("div");
     dropText.textContent = "CSV hier ablegen";
@@ -2953,6 +2881,7 @@ const taFirmNotes = document.createElement("textarea");
 
     const dropBtn = document.createElement("button");
     dropBtn.textContent = "Datei auswählen…";
+    applyPopupButtonStyle(dropBtn, { variant: "neutral" });
     dropBtn.onclick = async () => {
       const api = window.bbmDb || {};
       if (typeof api.selectCsvFile !== "function") {
@@ -2973,11 +2902,11 @@ const taFirmNotes = document.createElement("textarea");
       drop.style.background = "#eaf3ff";
     });
     drop.addEventListener("dragleave", () => {
-      drop.style.background = "#f7fbff";
+      drop.style.background = "var(--bbm-popup-surface-subtle)";
     });
     drop.addEventListener("drop", async (e) => {
       e.preventDefault();
-      drop.style.background = "#f7fbff";
+      drop.style.background = "var(--bbm-popup-surface-subtle)";
       const files = Array.from(e.dataTransfer?.files || []);
       if (!files.length) return;
       const p = String(files[0].path || "").trim();
@@ -2992,14 +2921,13 @@ const taFirmNotes = document.createElement("textarea");
 
     const listHint = document.createElement("div");
     listHint.textContent = "mit doppelklick Kontakt wählen";
-    listHint.style.color = "blue";
-    listHint.style.fontSize = "16px";
+    listHint.style.color = "var(--bbm-popup-primary)";
     listHint.style.fontWeight = "600";
 
     const tableWrap = document.createElement("div");
-    tableWrap.style.border = "1px solid #ddd";
-    tableWrap.style.borderRadius = "10px";
-    tableWrap.style.background = "#fff";
+    tableWrap.style.border = "1px solid var(--bbm-popup-border)";
+    tableWrap.style.borderRadius = "var(--bbm-popup-card-radius)";
+    tableWrap.style.background = "var(--bbm-popup-surface)";
     tableWrap.style.display = "flex";
     tableWrap.style.flexDirection = "column";
     tableWrap.style.flex = "1 1 0";
@@ -3017,13 +2945,13 @@ const taFirmNotes = document.createElement("textarea");
     const thead = document.createElement("thead");
     thead.innerHTML = `
       <tr>
-        <th style="padding:6px;border-bottom:1px solid #ddd;width:34px;">✓</th>
-        <th style="padding:6px;border-bottom:1px solid #ddd;">Vorname</th>
-        <th style="padding:6px;border-bottom:1px solid #ddd;">Nachname</th>
-        <th style="padding:6px;border-bottom:1px solid #ddd;">Firma</th>
-        <th style="padding:6px;border-bottom:1px solid #ddd;">E-Mail</th>
-        <th style="padding:6px;border-bottom:1px solid #ddd;">Telefon</th>
-        <th style="padding:6px;border-bottom:1px solid #ddd;width:120px;">Abgleich</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);width:34px;">✓</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);">Vorname</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);">Nachname</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);">Firma</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);">E-Mail</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);">Telefon</th>
+        <th style="padding:6px;border-bottom:1px solid var(--bbm-popup-border);width:120px;">Abgleich</th>
       </tr>
     `;
     const headerCells = thead.querySelectorAll("th");
@@ -3037,32 +2965,29 @@ const taFirmNotes = document.createElement("textarea");
     left.append(drop, listHint, tableWrap);
 
     const right = document.createElement("div");
+    right.className = "bbm-form-content";
     right.style.display = "flex";
     right.style.flexDirection = "column";
-    right.style.gap = "10px";
     right.style.minWidth = "0";
 
     const detail = document.createElement("div");
-    detail.style.border = "1px solid #ddd";
-    detail.style.borderRadius = "10px";
-    detail.style.padding = "10px";
-    detail.style.background = "#fff";
+    detail.className = "bbm-form-card bbm-form-content";
+    detail.style.display = "grid";
     detail.style.overflow = "auto";
 
     const detailTitle = document.createElement("div");
     detailTitle.textContent = "Details";
     detailTitle.style.fontWeight = "700";
-    detailTitle.style.marginBottom = "8px";
     detail.appendChild(detailTitle);
 
     const mkRow = (label, input) => {
       const row = document.createElement("div");
+      row.className = "bbm-form-field";
       row.style.display = "grid";
       row.style.gridTemplateColumns = "112px 1fr";
-      row.style.gap = "8px";
       row.style.alignItems = "center";
-      row.style.marginBottom = "6px";
       const l = document.createElement("div");
+      l.className = "bbm-form-label";
       l.textContent = label;
       row.append(l, input);
       return row;
@@ -3093,38 +3018,36 @@ const taFirmNotes = document.createElement("textarea");
     dConflictAction.style.width = "100%";
 
     const compareLabel = document.createElement("div");
+    compareLabel.className = "bbm-form-label";
     compareLabel.textContent = "Dublettenvergleich (Alt/Neu)";
     compareLabel.style.fontWeight = "700";
-    compareLabel.style.marginTop = "10px";
 
     const compareTa = document.createElement("textarea");
     compareTa.readOnly = true;
     compareTa.rows = 6;
     compareTa.style.width = "100%";
     compareTa.style.resize = "vertical";
-    compareTa.style.background = "#fafafa";
+    compareTa.style.background = "var(--bbm-popup-surface-subtle)";
 
     const rawLabel = document.createElement("div");
+    rawLabel.className = "bbm-form-label";
     rawLabel.textContent = "Quelle (CSV) – Rohdaten";
     rawLabel.style.fontWeight = "700";
-    rawLabel.style.marginTop = "12px";
 
     const rawHint = document.createElement("div");
     rawHint.textContent =
       "Hilft bei widersprüchlichen Kontaktfeldern. Nur Kontrolle, wird nicht übernommen.";
     rawHint.style.fontSize = "12px";
     rawHint.style.opacity = "0.8";
-    rawHint.style.marginTop = "4px";
 
     const rawTa = document.createElement("textarea");
     rawTa.readOnly = true;
     rawTa.rows = 9;
     rawTa.style.width = "100%";
     rawTa.style.resize = "vertical";
-    rawTa.style.background = "#fafafa";
+    rawTa.style.background = "var(--bbm-popup-surface-subtle)";
 
     const rawDetails = document.createElement("details");
-    rawDetails.style.marginTop = "4px";
 
     const rawSummary = document.createElement("summary");
     rawSummary.textContent = "Rohdaten anzeigen";
@@ -3155,8 +3078,7 @@ const taFirmNotes = document.createElement("textarea");
     const firmPickerWrap = document.createElement("div");
     firmPickerWrap.style.display = "flex";
     firmPickerWrap.style.flexDirection = "column";
-    firmPickerWrap.style.gap = "6px";
-    firmPickerWrap.style.marginTop = "6px";
+    firmPickerWrap.className = "bbm-form-content";
 
     const firmPickerLabel = document.createElement("div");
     firmPickerLabel.textContent = "Firmen-Auswahl (Doppelklick übernimmt)";
@@ -3171,11 +3093,11 @@ const taFirmNotes = document.createElement("textarea");
     };
 
     const firmListPanel = document.createElement("div");
-    firmListPanel.style.border = "1px solid rgba(0,0,0,0.1)";
-    firmListPanel.style.borderRadius = "8px";
+    firmListPanel.style.border = "1px solid var(--bbm-popup-border)";
+    firmListPanel.style.borderRadius = "var(--bbm-popup-control-radius)";
     firmListPanel.style.maxHeight = "180px";
     firmListPanel.style.overflowY = "auto";
-    firmListPanel.style.background = "#fff";
+    firmListPanel.style.background = "var(--bbm-popup-surface)";
     firmListPanel.style.display = "none";
     firmListPanel.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
 
@@ -3198,17 +3120,17 @@ const taFirmNotes = document.createElement("textarea");
     body.append(left);
 
     const footer = document.createElement("div");
+    footer.className = "bbm-popup-footer";
     footer.style.display = "flex";
     footer.style.alignItems = "center";
-    footer.style.gap = "8px";
-    footer.style.padding = "12px";
-    footer.style.borderTop = "1px solid #e2e8f0";
+    footer.style.gap = "var(--bbm-popup-footer-gap)";
 
     const spacer = document.createElement("div");
     spacer.style.marginLeft = "auto";
 
     const btnImport = document.createElement("button");
     btnImport.textContent = "Importieren";
+    applyPopupButtonStyle(btnImport, { variant: "primary" });
     btnImport.onclick = async () => {
       if (this.savingFirm || this.savingPerson) return;
       const api = window.bbmDb || {};
@@ -3261,6 +3183,7 @@ const taFirmNotes = document.createElement("textarea");
 
     const btnClose = document.createElement("button");
     btnClose.textContent = "Schließen";
+    applyPopupButtonStyle(btnClose, { variant: "neutral" });
     btnClose.onclick = () => this._closePersonImportModal();
 
     footer.append(spacer, btnImport, btnClose);
@@ -3380,6 +3303,7 @@ const taFirmNotes = document.createElement("textarea");
     this._closePersonImportFirmList();
     if (this.personImportModalRoot) {
       try {
+        cleanupPopupHandlers(this.personImportModalRoot);
         this.personImportModalRoot.remove();
       } catch (_) {}
     }
@@ -3492,7 +3416,7 @@ const taFirmNotes = document.createElement("textarea");
 
       const tdTake = document.createElement("td");
       tdTake.style.padding = "4px";
-      tdTake.style.borderBottom = "1px solid #eee";
+      tdTake.style.borderBottom = "1px solid var(--bbm-popup-border)";
       tdTake.style.textAlign = "center";
       const chk = document.createElement("input");
       chk.type = "checkbox";
@@ -3510,7 +3434,7 @@ const taFirmNotes = document.createElement("textarea");
       const mkCell = (el) => {
         const td = document.createElement("td");
         td.style.padding = "4px";
-        td.style.borderBottom = "1px solid #eee";
+        td.style.borderBottom = "1px solid var(--bbm-popup-border)";
         td.appendChild(el);
         return td;
       };
@@ -3678,43 +3602,27 @@ const taFirmNotes = document.createElement("textarea");
       notes: String(item.notes || ""),
     };
 
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.inset = "0";
-    overlay.style.background = "rgba(0,0,0,0.28)";
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.28)", zIndex: OVERLAY_TOP });
     overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = String(OVERLAY_TOP);
-    overlay.tabIndex = -1;
-    overlay.addEventListener("mousedown", (event) => {
-      if (event.target === overlay) this._closePersonImportDetailPopup();
-    });
-    overlay.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      this._closePersonImportDetailPopup();
-    });
+    registerPopupCloseHandlers(overlay, () => this._closePersonImportDetailPopup());
 
     const modal = document.createElement("div");
     modal.style.width = "min(1100px, calc(100vw - 28px))";
     modal.style.height = "min(80vh, 760px)";
+    modal.style.maxHeight = "100%";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
     modal.style.overflow = "hidden";
-    modal.style.background = "#fff";
-    modal.style.border = "1px solid #ddd";
-    modal.style.borderRadius = "12px";
+    modal.className = "bbm-popup-standard bbm-popup-dialog";
     modal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.2)";
     modal.style.padding = "0";
 
     const head = document.createElement("div");
+    head.className = "bbm-popup-header";
     head.style.display = "flex";
     head.style.alignItems = "center";
     head.style.justifyContent = "space-between";
     head.style.gap = "10px";
-    head.style.padding = "12px 14px";
-    head.style.borderBottom = "1px solid #e2e8f0";
 
     const headTitle = document.createElement("div");
     headTitle.textContent = "Mitarbeiter zuordnen";
@@ -3729,44 +3637,37 @@ const taFirmNotes = document.createElement("textarea");
     head.append(headTitle, headClose);
 
     const body = document.createElement("div");
+    body.className = "bbm-popup-body bbm-form-content";
     body.style.flex = "1 1 auto";
     body.style.minHeight = "0";
-    body.style.padding = "10px";
     body.style.display = "grid";
     body.style.gridTemplateColumns = "1.35fr 1fr";
-    body.style.gap = "10px";
     body.style.overflow = "hidden";
 
     const leftCard = document.createElement("div");
-    leftCard.style.border = "1px solid #ddd";
-    leftCard.style.borderRadius = "10px";
-    leftCard.style.padding = "10px";
+    leftCard.className = "bbm-form-card bbm-form-content";
     leftCard.style.overflow = "auto";
     leftCard.style.display = "flex";
     leftCard.style.flexDirection = "column";
 
     const rightCard = document.createElement("div");
-    rightCard.style.border = "1px solid #ddd";
-    rightCard.style.borderRadius = "10px";
-    rightCard.style.padding = "10px";
+    rightCard.className = "bbm-form-card bbm-form-content";
     rightCard.style.overflow = "hidden";
     rightCard.style.display = "flex";
     rightCard.style.flexDirection = "column";
-    rightCard.style.gap = "8px";
 
     const leftTitle = document.createElement("div");
     leftTitle.textContent = "Zuordnung Firma";
     leftTitle.style.fontWeight = "700";
-    leftTitle.style.marginBottom = "8px";
 
     const mkRow = (label, input) => {
       const row = document.createElement("div");
+      row.className = "bbm-form-field";
       row.style.display = "grid";
       row.style.gridTemplateColumns = "112px 1fr";
-      row.style.gap = "8px";
       row.style.alignItems = "center";
-      row.style.marginBottom = "6px";
       const l = document.createElement("div");
+      l.className = "bbm-form-label";
       l.textContent = label;
       row.append(l, input);
       return row;
@@ -3801,7 +3702,6 @@ const taFirmNotes = document.createElement("textarea");
     inpNotes.addEventListener("input", () => { draft.notes = String(inpNotes.value || ""); });
 
     const assignedEl = document.createElement("div");
-    assignedEl.style.fontSize = "16pt";
     assignedEl.style.fontWeight = "400";
     assignedEl.style.marginLeft = "120px";
 
@@ -3811,9 +3711,9 @@ const taFirmNotes = document.createElement("textarea");
     };
 
     const rawLabel = document.createElement("div");
+    rawLabel.className = "bbm-form-label";
     rawLabel.textContent = "Rohdaten";
     rawLabel.style.fontWeight = "700";
-    rawLabel.style.marginTop = "10px";
     rawLabel.style.marginLeft = "120px";
 
     const rawTa = document.createElement("textarea");
@@ -3825,7 +3725,7 @@ const taFirmNotes = document.createElement("textarea");
     rawTa.style.flex = "0 0 auto";
     rawTa.style.minHeight = "0";
     rawTa.style.resize = "vertical";
-    rawTa.style.background = "#fafafa";
+    rawTa.style.background = "var(--bbm-popup-surface-subtle)";
     rawTa.value = String(item.raw_data || "");
 
     leftCard.append(
@@ -3857,16 +3757,17 @@ const taFirmNotes = document.createElement("textarea");
     btnNewFirm.style.alignSelf = "flex-start";
 
     const firmList = document.createElement("div");
-    firmList.style.border = "1px solid #e5e7eb";
-    firmList.style.borderRadius = "8px";
+    firmList.style.border = "1px solid var(--bbm-popup-border)";
+    firmList.style.borderRadius = "var(--bbm-popup-control-radius)";
     firmList.style.flex = "1 1 auto";
     firmList.style.overflowY = "auto";
-    firmList.style.background = "#fff";
+    firmList.style.background = "var(--bbm-popup-surface)";
 
     let createFirmOverlay = null;
     const closeCreateFirmPopup = () => {
       if (!createFirmOverlay) return;
       try {
+        cleanupPopupHandlers(createFirmOverlay);
         createFirmOverlay.remove();
       } catch (_) {}
       createFirmOverlay = null;
@@ -3875,40 +3776,27 @@ const taFirmNotes = document.createElement("textarea");
     const openCreateFirmPopup = () => {
       if (createFirmOverlay) return;
 
-      const createOverlay = document.createElement("div");
-      createOverlay.style.position = "fixed";
-      createOverlay.style.inset = "0";
-      createOverlay.style.background = "rgba(0,0,0,0.35)";
+      const createOverlay = createPopupOverlay({
+        background: "rgba(0,0,0,0.35)",
+        zIndex: OVERLAY_TOP,
+      });
       createOverlay.style.display = "flex";
-      createOverlay.style.alignItems = "center";
-      createOverlay.style.justifyContent = "center";
-      createOverlay.style.zIndex = String(OVERLAY_TOP);
-      createOverlay.tabIndex = -1;
-      createOverlay.addEventListener("mousedown", (event) => {
-        if (event.target === createOverlay) closeCreateFirmPopup();
-      });
-      createOverlay.addEventListener("keydown", (event) => {
-        if (event.key !== "Escape") return;
-        event.preventDefault();
-        closeCreateFirmPopup();
-      });
+      registerPopupCloseHandlers(createOverlay, () => closeCreateFirmPopup());
 
       const createModal = document.createElement("div");
       createModal.style.width = "min(640px, calc(100vw - 32px))";
-      createModal.style.maxHeight = "calc(100vh - 32px)";
-      createModal.style.background = "#fff";
-      createModal.style.borderRadius = "12px";
+      createModal.style.maxHeight = "100%";
+      createModal.className = "bbm-popup-standard bbm-popup-dialog";
       createModal.style.boxShadow = "0 20px 50px rgba(0,0,0,0.3)";
       createModal.style.display = "flex";
       createModal.style.flexDirection = "column";
       createModal.style.overflow = "hidden";
 
       const createHeader = document.createElement("div");
+      createHeader.className = "bbm-popup-header";
       createHeader.style.display = "flex";
       createHeader.style.alignItems = "center";
       createHeader.style.justifyContent = "space-between";
-      createHeader.style.padding = "10px 14px";
-      createHeader.style.borderBottom = "1px solid #eee";
       createHeader.style.gap = "8px";
 
       const createTitle = document.createElement("div");
@@ -3924,14 +3812,16 @@ const taFirmNotes = document.createElement("textarea");
       createHeader.append(createTitle, btnCreateClose);
 
       const createBody = document.createElement("div");
-      createBody.style.padding = "12px";
+      createBody.className = "bbm-popup-body";
       createBody.style.display = "grid";
       createBody.style.gridTemplateColumns = "130px 1fr";
-      createBody.style.gap = "8px";
+      createBody.style.columnGap = "var(--bbm-popup-label-field-gap)";
+      createBody.style.rowGap = "var(--bbm-popup-group-gap)";
       createBody.style.overflowY = "auto";
 
       const mkCreateInput = (labelText) => {
         const label = document.createElement("div");
+        label.className = "bbm-form-label";
         label.textContent = labelText;
         const input = document.createElement("input");
         input.type = "text";
@@ -3950,6 +3840,7 @@ const taFirmNotes = document.createElement("textarea");
       const fGewerk = mkCreateInput("Gewerk");
 
       const notesLabel = document.createElement("div");
+      notesLabel.className = "bbm-form-label";
       notesLabel.textContent = "Notizen";
       const notesInput = document.createElement("textarea");
       notesInput.rows = 4;
@@ -3970,11 +3861,10 @@ const taFirmNotes = document.createElement("textarea");
       );
 
       const createFooter = document.createElement("div");
+      createFooter.className = "bbm-popup-footer";
       createFooter.style.display = "flex";
       createFooter.style.justifyContent = "flex-end";
-      createFooter.style.gap = "8px";
-      createFooter.style.padding = "10px 14px";
-      createFooter.style.borderTop = "1px solid #eee";
+      createFooter.style.gap = "var(--bbm-popup-footer-gap)";
 
       const btnCreateCancel = document.createElement("button");
       btnCreateCancel.textContent = "Abbrechen";
@@ -4057,11 +3947,10 @@ const taFirmNotes = document.createElement("textarea");
     rightCard.append(rightTitle, rightHint, btnNewFirm, firmList);
 
     const footer = document.createElement("div");
+    footer.className = "bbm-popup-footer";
     footer.style.display = "flex";
     footer.style.justifyContent = "flex-end";
-    footer.style.gap = "8px";
-    footer.style.borderTop = "1px solid #e5e7eb";
-    footer.style.padding = "10px 14px";
+    footer.style.gap = "var(--bbm-popup-footer-gap)";
 
     const btnCancel = document.createElement("button");
     btnCancel.textContent = "Abbrechen";
@@ -4103,6 +3992,7 @@ const taFirmNotes = document.createElement("textarea");
   _closePersonImportDetailPopup() {
     if (this.personImportDetailOverlay) {
       try {
+        cleanupPopupHandlers(this.personImportDetailOverlay);
         this.personImportDetailOverlay.remove();
       } catch (_) {}
     }

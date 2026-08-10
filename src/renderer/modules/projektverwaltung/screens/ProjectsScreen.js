@@ -10,6 +10,11 @@
 // - Projektnummer: eigene Zeile
 
 import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
+import {
+  cleanupPopupHandlers,
+  createPopupOverlay,
+  registerPopupCloseHandlers,
+} from "../../../ui/popupCommon.js";
 
 const LAST_PROJECT_KEY = "bbm.lastProjectId";
 const CREATE_MEETING_EDIT_PARTICIPANTS_KEY = "bbm.createMeeting.editParticipants";
@@ -487,6 +492,7 @@ export default class ProjectsScreen {
   _closeProjectTransferModal() {
     if (this._transferModalEl) {
       try {
+        cleanupPopupHandlers(this._transferModalEl);
         this._transferModalEl.remove();
       } catch (_) {}
     }
@@ -524,25 +530,14 @@ export default class ProjectsScreen {
   async _openProjectTransferModal() {
     if (this._transferModalEl) return;
 
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.left = "0";
-    overlay.style.top = "0";
-    overlay.style.width = "100%";
-    overlay.style.height = "100%";
-    overlay.style.background = "rgba(0,0,0,0.35)";
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 9999 });
     overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = "9999";
-    overlay.tabIndex = -1;
+    registerPopupCloseHandlers(overlay, () => this._closeProjectTransferModal());
 
     const box = document.createElement("div");
-    box.style.background = "#fff";
-    box.style.borderRadius = "10px";
-    box.style.border = "1px solid rgba(0,0,0,0.15)";
+    box.className = "bbm-popup-standard bbm-popup-dialog";
     box.style.width = "min(720px, calc(100vw - 32px))";
-    box.style.maxHeight = "calc(100vh - 32px)";
+    box.style.maxHeight = "100%";
     box.style.display = "flex";
     box.style.flexDirection = "column";
     box.style.overflow = "hidden";
@@ -552,8 +547,7 @@ export default class ProjectsScreen {
     header.style.display = "flex";
     header.style.alignItems = "center";
     header.style.gap = "10px";
-    header.style.padding = "12px 16px";
-    header.style.borderBottom = "1px solid #e2e8f0";
+    header.className = "bbm-popup-header";
 
     const title = document.createElement("div");
     title.textContent = "Projekt Import / Export";
@@ -572,43 +566,38 @@ export default class ProjectsScreen {
     body.style.flex = "1 1 auto";
     body.style.minHeight = "0";
     body.style.overflow = "auto";
-    body.style.padding = "12px 16px";
+    body.className = "bbm-popup-body bbm-form-content";
+    body.style.display = "flex";
+    body.style.flexDirection = "column";
 
     const status = document.createElement("div");
     status.style.fontSize = "12px";
     status.style.opacity = "0.8";
-    status.style.marginBottom = "10px";
     status.textContent = "";
 
     const exportBox = document.createElement("div");
-    exportBox.style.border = "1px solid #e2e8f0";
-    exportBox.style.borderRadius = "8px";
-    exportBox.style.padding = "10px";
-    exportBox.style.marginBottom = "12px";
+    exportBox.className = "bbm-form-card bbm-form-group";
+    exportBox.style.display = "flex";
+    exportBox.style.flexDirection = "column";
 
     const exportTitle = document.createElement("div");
     exportTitle.textContent = "Projekt exportieren";
     exportTitle.style.fontWeight = "700";
-    exportTitle.style.marginBottom = "8px";
 
     const exportHint = document.createElement("div");
     exportHint.textContent = "W?hlt ein Projekt und erstellt ein ZIP im Export-Ordner.";
     exportHint.style.fontSize = "12px";
     exportHint.style.opacity = "0.75";
-    exportHint.style.marginBottom = "8px";
 
     const exportSelect = document.createElement("select");
     exportSelect.style.width = "100%";
     exportSelect.style.boxSizing = "border-box";
-    exportSelect.style.padding = "6px 8px";
-    exportSelect.style.border = "1px solid #ddd";
-    exportSelect.style.borderRadius = "6px";
 
     const exportBtn = document.createElement("button");
     exportBtn.type = "button";
     exportBtn.textContent = "Export starten";
     applyPopupButtonStyle(exportBtn, { variant: "primary" });
-    exportBtn.style.marginTop = "8px";
+    exportBtn.style.alignSelf = "flex-start";
 
     const fillExportOptions = () => {
       exportSelect.innerHTML = "";
@@ -663,31 +652,27 @@ export default class ProjectsScreen {
     exportBox.append(exportTitle, exportHint, exportSelect, exportBtn);
 
     const importBox = document.createElement("div");
-    importBox.style.border = "1px solid #e2e8f0";
-    importBox.style.borderRadius = "8px";
-    importBox.style.padding = "10px";
+    importBox.className = "bbm-form-card bbm-form-group";
+    importBox.style.display = "flex";
+    importBox.style.flexDirection = "column";
 
     const importTitle = document.createElement("div");
     importTitle.textContent = "Projekt importieren";
     importTitle.style.fontWeight = "700";
-    importTitle.style.marginBottom = "8px";
 
     const importHint = document.createElement("div");
     importHint.textContent = "Imports aus dem Export-Ordner der App.";
     importHint.style.fontSize = "12px";
     importHint.style.opacity = "0.75";
-    importHint.style.marginBottom = "6px";
 
     const exportDirHint = document.createElement("div");
     exportDirHint.textContent = "Export-Ordner: -";
     exportDirHint.style.fontSize = "12px";
     exportDirHint.style.opacity = "0.7";
-    exportDirHint.style.marginBottom = "6px";
 
     const exportDirActions = document.createElement("div");
     exportDirActions.style.display = "flex";
     exportDirActions.style.justifyContent = "flex-start";
-    exportDirActions.style.marginBottom = "8px";
 
     const btnOpenExportDir = document.createElement("button");
     btnOpenExportDir.type = "button";
@@ -699,7 +684,6 @@ export default class ProjectsScreen {
     const importActions = document.createElement("div");
     importActions.style.display = "flex";
     importActions.style.gap = "8px";
-    importActions.style.marginBottom = "8px";
 
     const importAllBtn = document.createElement("button");
     importAllBtn.type = "button";
@@ -760,7 +744,7 @@ export default class ProjectsScreen {
         row.style.alignItems = "center";
         row.style.gap = "8px";
         row.style.border = "1px solid #eee";
-        row.style.borderRadius = "6px";
+        row.style.borderRadius = "var(--bbm-popup-control-radius)";
         row.style.padding = "6px 8px";
 
         const label = document.createElement("div");
@@ -821,9 +805,8 @@ export default class ProjectsScreen {
     const footer = document.createElement("div");
     footer.style.display = "flex";
     footer.style.justifyContent = "flex-end";
-    footer.style.gap = "8px";
-    footer.style.padding = "12px 16px";
-    footer.style.borderTop = "1px solid #e2e8f0";
+    footer.className = "bbm-popup-footer";
+    footer.style.gap = "var(--bbm-popup-footer-gap)";
 
     const btnCloseBottom = document.createElement("button");
     btnCloseBottom.type = "button";
@@ -836,17 +819,6 @@ export default class ProjectsScreen {
     body.append(status, exportBox, importBox);
     box.append(header, body, footer);
     overlay.appendChild(box);
-
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) this._closeProjectTransferModal();
-    });
-
-    overlay.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        this._closeProjectTransferModal();
-      }
-    });
 
     document.body.appendChild(overlay);
     this._transferModalEl = overlay;

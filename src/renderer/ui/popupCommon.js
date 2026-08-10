@@ -4,12 +4,13 @@ import { OVERLAY } from "./zIndex.js";
 const CLOSE_HANDLERS = Symbol("bbm.popup.closeHandlers");
 const PROTOKOLL_HEADER_SELECTOR =
   '[data-bbm-tops-screen="true"] [data-bbm-tops-header-v2="true"]';
+const MAIN_HEADER_SELECTOR = '[data-bbm-main-header="true"]';
 const POPUP_VIEWPORT_MARGIN = 12;
 const PROTOKOLL_HEADER_GAP = 8;
 
-function getVisibleProtokollHeaderBottom() {
+function getVisibleHeaderBottom(selector) {
   if (typeof document === "undefined" || typeof document.querySelector !== "function") return 0;
-  const header = document.querySelector(PROTOKOLL_HEADER_SELECTOR);
+  const header = document.querySelector(selector);
   if (!header || typeof header.getBoundingClientRect !== "function") return 0;
 
   const rect = header.getBoundingClientRect();
@@ -25,19 +26,25 @@ function getVisibleProtokollHeaderBottom() {
 export function syncPopupOverlayViewport(overlay) {
   if (!overlay?.style) return { context: "window", top: 0 };
 
-  const headerBottom = getVisibleProtokollHeaderBottom();
-  const usesProtokollViewport = headerBottom > 0;
-  overlay.style.top = usesProtokollViewport ? `${headerBottom}px` : "0";
-  overlay.style.height = usesProtokollViewport
+  const mainHeaderBottom = getVisibleHeaderBottom(MAIN_HEADER_SELECTOR);
+  const protokollHeaderBottom = getVisibleHeaderBottom(PROTOKOLL_HEADER_SELECTOR);
+  const headerBottom = Math.max(mainHeaderBottom, protokollHeaderBottom);
+  const usesHeaderViewport = headerBottom > 0;
+  overlay.style.top = usesHeaderViewport ? `${headerBottom}px` : "0";
+  overlay.style.height = usesHeaderViewport
     ? `calc(100vh - ${headerBottom}px)`
     : "100vh";
-  overlay.style.padding = usesProtokollViewport
+  overlay.style.padding = usesHeaderViewport
     ? `${PROTOKOLL_HEADER_GAP}px ${POPUP_VIEWPORT_MARGIN}px`
     : `${POPUP_VIEWPORT_MARGIN}px`;
   overlay.style.boxSizing = "border-box";
   overlay.style.overflow = "auto";
   overlay.style.alignItems = "safe center";
-  overlay.dataset.bbmPopupViewport = usesProtokollViewport ? "protokoll" : "window";
+  overlay.dataset.bbmPopupViewport = protokollHeaderBottom > 0
+    ? "protokoll"
+    : mainHeaderBottom > 0
+      ? "app"
+      : "window";
   return {
     context: overlay.dataset.bbmPopupViewport,
     top: headerBottom,

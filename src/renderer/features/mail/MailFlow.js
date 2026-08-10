@@ -1,4 +1,4 @@
-import { applyPopupButtonStyle, applyPopupCardStyle } from "../../ui/popupButtonStyles.js";
+import { applyPopupButtonStyle } from "../../ui/popupButtonStyles.js";
 import { cleanupPopupHandlers, createPopupOverlay } from "../../ui/popupCommon.js";
 
 export class MailFlow {
@@ -57,31 +57,33 @@ export class MailFlow {
     overlay.style.display = "flex";
 
     const card = document.createElement("div");
-    applyPopupCardStyle(card);
+    card.className = "bbm-popup-standard bbm-popup-dialog";
+    card.style.boxShadow = "0 10px 30px rgba(0,0,0,0.28)";
     card.style.width = "min(720px, 94vw)";
-    card.style.maxHeight = "90vh";
+    card.style.maxHeight = "100%";
     card.style.display = "grid";
     card.style.gridTemplateRows = "auto 1fr auto";
-    card.style.rowGap = "14px";
-    card.style.padding = "16px";
+    card.style.overflow = "hidden";
 
     const title = document.createElement("div");
+    title.className = "bbm-popup-header";
     title.textContent = "Protokoll versenden";
     title.style.fontWeight = "700";
     title.style.fontSize = "16px";
 
     const content = document.createElement("div");
+    content.className = "bbm-popup-body bbm-form-content";
     content.style.display = "grid";
     content.style.gridTemplateColumns = "1fr 1fr";
-    content.style.gap = "14px";
     content.style.overflow = "auto";
 
     const recWrap = document.createElement("div");
+    recWrap.className = "bbm-form-card bbm-form-content";
     recWrap.style.display = "flex";
     recWrap.style.flexDirection = "column";
-    recWrap.style.gap = "8px";
 
     const recTitle = document.createElement("div");
+    recTitle.className = "bbm-form-label";
     recTitle.textContent = "Empf\u00e4nger";
     recTitle.style.fontWeight = "700";
 
@@ -95,7 +97,6 @@ export class MailFlow {
       btn.type = "button";
       btn.textContent = label;
       applyPopupButtonStyle(btn, { variant: "neutral" });
-      btn.style.padding = "4px 8px";
       btn.onclick = handler;
       return btn;
     };
@@ -154,11 +155,12 @@ export class MailFlow {
     recWrap.append(recTitle, recActions, recList);
 
     const attWrap = document.createElement("div");
+    attWrap.className = "bbm-form-card bbm-form-content";
     attWrap.style.display = "flex";
     attWrap.style.flexDirection = "column";
-    attWrap.style.gap = "8px";
 
     const attTitle = document.createElement("div");
+    attTitle.className = "bbm-form-label";
     attTitle.textContent = "Anh\u00e4nge";
     attTitle.style.fontWeight = "700";
 
@@ -188,9 +190,9 @@ export class MailFlow {
     attWrap.append(attTitle, attList);
 
     const subjectLabel = document.createElement("div");
+    subjectLabel.className = "bbm-form-label";
     subjectLabel.textContent = "Betreff";
     subjectLabel.style.fontWeight = "700";
-    subjectLabel.style.gridColumn = "1 / -1";
 
     const subjectInput = document.createElement("input");
     subjectInput.type = "text";
@@ -198,33 +200,42 @@ export class MailFlow {
     subjectInput.style.width = "100%";
     subjectInput.style.maxWidth = "100%";
     subjectInput.style.boxSizing = "border-box";
-    subjectInput.style.padding = "8px";
-    subjectInput.style.gridColumn = "1 / -1";
 
     const bodyLabel = document.createElement("div");
+    bodyLabel.className = "bbm-form-label";
     bodyLabel.textContent = "Mailtext";
     bodyLabel.style.fontWeight = "700";
-    bodyLabel.style.gridColumn = "1 / -1";
 
     const bodyInput = document.createElement("textarea");
     bodyInput.value = draft.body;
     bodyInput.style.width = "100%";
     bodyInput.style.maxWidth = "100%";
     bodyInput.style.boxSizing = "border-box";
-    bodyInput.style.minHeight = "180px";
-    bodyInput.style.padding = "8px";
-    bodyInput.style.gridColumn = "1 / -1";
+    bodyInput.rows = 8;
+
+    const subjectField = document.createElement("div");
+    subjectField.className = "bbm-form-field";
+    subjectField.style.display = "grid";
+    subjectField.style.gridColumn = "1 / -1";
+    subjectField.append(subjectLabel, subjectInput);
+
+    const bodyField = document.createElement("div");
+    bodyField.className = "bbm-form-field";
+    bodyField.style.display = "grid";
+    bodyField.style.gridColumn = "1 / -1";
+    bodyField.append(bodyLabel, bodyInput);
 
     content.append(recWrap, attWrap);
-    content.append(subjectLabel, subjectInput, bodyLabel, bodyInput);
+    content.append(subjectField, bodyField);
     content.style.gridTemplateColumns = "1fr 1fr";
     content.style.gridTemplateRows = "auto auto auto auto";
     content.style.gridAutoFlow = "row";
 
     const actions = document.createElement("div");
+    actions.className = "bbm-popup-footer";
     actions.style.display = "flex";
     actions.style.justifyContent = "flex-end";
-    actions.style.gap = "10px";
+    actions.style.gap = "var(--bbm-popup-footer-gap)";
 
     const btnCancel = document.createElement("button");
     btnCancel.type = "button";

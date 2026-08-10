@@ -81,12 +81,38 @@ gleichen Standard.
   und `Neuer Mitarbeiter`/`Mitarbeiter bearbeiten`.
 - Teilnehmerauswahl `Personalpool` und Teilnehmerverwaltung `Teilnehmer` auf der
   gemeinsamen `ParticipantsModals`-Basis.
+- Projektverwaltung `Projekt Import / Export`.
+- Firmen-/Personenimport auf der produktiven `FirmsView`-Basis: `Firmen importieren`,
+  `Import Kontakte (CSV)`, die Detaildialoge `Firma bearbeiten` und
+  `Mitarbeiter zuordnen` sowie die daraus erreichbaren Dialoge `Firma neu` und
+  `Firma anlegen`. Dieselbe Basis wird aus dem Firmenstamm und aus den
+  Projektfirmen verwendet; die Tabellenzeilen bleiben bewusst kompakte Listenzeilen.
+- Protokoll `Text korrigieren`.
+- Protokoll-Mail `Protokoll versenden` im produktiven Abschluss-Flow.
 
-Bewusst noch nicht umgestellt sind die übrigen Einstellungen, Projekt Import/Export,
-die CSV-Import-/Staging- und Importdetaildialoge für Firmen und Personen, die nicht
-produktiv aufgerufenen Legacy-Komponenten `CompanyDialog`, `EmployeeDialog`,
-`xEmployeeEditModal`/`FirmsPoolView`, TOP-Regeln, Textkorrektur, Mail, Hilfe sowie die
-weiteren Druckvarianten Vorschau, Folgetermin-Prompt und ToDo-Verantwortlichenfilter.
+Die in dieser Welle migrierten eigenständigen Dialoge verwenden die gemeinsame
+`createPopupOverlay`-Fläche. Sie beginnt unter der real gemessenen Unterkante des
+globalen Mainheaders und im Protokoll unter der tiefer liegenden fachlichen
+Header-Unterkante. Bei geringer Höhe bleiben Header und Footer sichtbar; der
+Dialogkörper beziehungsweise die inneren Detailkarten übernehmen den Scroll.
+
+Bewusst noch nicht umgestellt sind die übrigen Einstellungen, die nicht produktiv
+aufgerufenen Legacy-Komponenten `CompanyDialog`, `EmployeeDialog`,
+`xEmployeeEditModal`/`FirmsPoolView`, der eigenständige Diktat-Prompt zur
+Wörterbuchaufnahme, Hilfe sowie die weiteren Druckvarianten Vorschau,
+Folgetermin-Prompt und ToDo-Verantwortlichenfilter. `TOP-Regeln` ist derzeit nur
+als nicht aufgerufene Methode `TopsScreen._openTopRulesDialog()` vorhanden; eine
+produktive Schaltfläche oder andere Aufrufstelle existiert nicht. Diese tote Variante
+wurde deshalb nicht verändert. Die Re-Export-Datei
+`src/renderer/modules/protokoll/TopsViewDialogs.js` ist keine zweite TOP-Regeln-
+Variante, sondern nur der aktive Modulpfad zur bestehenden Dialogbasis. Auch
+`CloseMeetingOutputFlow` und `TopsCloseFlow` enthalten keine zusätzliche Mail-UI,
+sondern delegieren an die nun migrierte `MailFlow`-Variante. Die vorbereitete
+`MainHeader._openMailSendModal()`-Variante wird im aktuellen Header nicht gemountet
+(`mailWrap` wird nicht in die Aktionsleiste eingesetzt) und blieb als Legacy-Code
+unverändert. Die Quicklane erwartet `router.openProtocolMailModal`, für das aktuell
+keine produktive Implementierung registriert ist; sie öffnet daher keinen zweiten
+Maildialog.
 Die bisherigen `--bbm-form-*`-Werte bleiben für diese Altbereiche als unveränderte
 Fallbacks bestehen. Eine spätere Übernahme ist ein jeweils explizit freizugebender
 Schritt; nach diesem Paket erfolgt keine Massenmigration.

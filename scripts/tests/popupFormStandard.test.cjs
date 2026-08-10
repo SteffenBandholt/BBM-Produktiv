@@ -99,7 +99,7 @@ async function runPopupFormStandardTests(run) {
     assert.equal(projects.includes('dateField.className = "bbm-form-field"'), true);
     assert.equal(projects.includes('inpDate.style.borderRadius = "6px"'), false);
 
-    assert.equal((firms.match(/modal\.className = "bbm-popup-standard bbm-popup-dialog"/g) || []).length, 2);
+    assert.equal((firms.match(/modal\.className = "bbm-popup-standard bbm-popup-dialog"/g) || []).length, 7);
     assert.equal(firms.includes('editWrap.className = "bbm-form-card"'), true);
     assert.equal(firms.includes('d.className = "bbm-form-label"'), true);
 
@@ -131,6 +131,37 @@ async function runPopupFormStandardTests(run) {
     assert.equal(project.includes('storagePreviewWrap.style.marginTop'), false);
     assert.equal(project.includes('leftCol.style.gap = "var(--bbm-form-group-gap)"'), true);
     assert.equal(project.includes('rightCol.style.gap = "var(--bbm-form-group-gap)"'), true);
+  });
+
+  await run("Popup-Standard: Import-, Textkorrektur- und Maildialoge nutzen die Opt-in-Basis", () => {
+    const projects = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
+    const firms = read("src/renderer/views/FirmsView.js");
+    const editbox = read("src/renderer/modules/protokoll/SharedEditboxCore.js");
+    const mailFlow = read("src/renderer/features/mail/MailFlow.js");
+    const mainHeader = read("src/renderer/ui/MainHeader.js");
+    const popupCommon = read("src/renderer/ui/popupCommon.js");
+
+    assert.equal(projects.includes('exportBox.className = "bbm-form-card bbm-form-group"'), true);
+    assert.equal(projects.includes('footer.className = "bbm-popup-footer"'), true);
+    assert.equal(projects.includes('createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 9999 })'), true);
+
+    assert.equal(firms.includes('createModal.className = "bbm-popup-standard bbm-popup-dialog"'), true);
+    assert.equal(firms.includes('body.className = "bbm-popup-body bbm-form-content"'), true);
+    assert.equal(firms.includes('row.className = "bbm-form-field"'), true);
+    assert.equal(firms.includes('i.className = "bbm-import-table-control"'), true);
+    assert.equal(firms.includes('i.style.setProperty("min-height", "0", "important")'), true);
+    assert.equal((firms.match(/createPopupOverlay\(/g) || []).length, 6);
+
+    assert.equal(editbox.includes('body.className = "bbm-popup-body bbm-form-content"'), true);
+    assert.equal(editbox.includes('promptRow.className = "bbm-form-field"'), true);
+
+    assert.equal(mailFlow.includes('card.className = "bbm-popup-standard bbm-popup-dialog"'), true);
+    assert.equal(mailFlow.includes('content.className = "bbm-popup-body bbm-form-content"'), true);
+    assert.equal(mailFlow.includes('subjectField.className = "bbm-form-field"'), true);
+    assert.equal(mailFlow.includes('actions.className = "bbm-popup-footer"'), true);
+    assert.equal(mainHeader.includes('root.dataset.bbmMainHeader = "true"'), true);
+    assert.equal(popupCommon.includes("const MAIN_HEADER_SELECTOR = '[data-bbm-main-header=\"true\"]'"), true);
+    assert.equal(popupCommon.includes('? "app"'), true);
   });
 
   await run("Popup-Standard: zentrale Dokumentation nennt Zweck, Nutzer und Pilotgrenze", () => {

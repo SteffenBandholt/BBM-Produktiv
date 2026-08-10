@@ -281,6 +281,16 @@ async function runM864GlobalClickBlockerTests(run) {
       assert.equal(overlay.style.top, "72px");
       assert.equal(overlay.style.height, "calc(100vh - 72px)");
 
+      const mainHeader = doc.createElement("div");
+      mainHeader.rect = { left: 0, top: 0, width: 940, height: 60, right: 940, bottom: 60 };
+      doc.querySelector = (selector) =>
+        selector === '[data-bbm-main-header="true"]' ? mainHeader : null;
+      popupCommon.syncPopupOverlayViewport(overlay);
+      assert.equal(overlay.dataset.bbmPopupViewport, "app");
+      assert.equal(overlay.style.top, "60px");
+      assert.equal(overlay.style.height, "calc(100vh - 60px)");
+      assert.equal(overlay.style.padding, "8px 12px");
+
       doc.querySelector = () => null;
       popupCommon.syncPopupOverlayViewport(overlay);
       assert.equal(overlay.dataset.bbmPopupViewport, "window");

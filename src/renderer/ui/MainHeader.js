@@ -158,6 +158,7 @@ export default class MainHeader {
 
   render() {
     const root = document.createElement("div");
+    root.dataset.bbmMainHeader = "true";
     root.style.boxSizing = "border-box";
     root.style.width = "100%";
     const headerPaddingTop = Math.max(4, this.padding - 8);
