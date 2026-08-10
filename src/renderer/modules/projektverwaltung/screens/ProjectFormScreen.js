@@ -6,6 +6,7 @@
 // - Danach zurück zu ProjectsScreen
 
 import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
+import { cleanupPopupHandlers, createPopupOverlay } from "../../../ui/popupCommon.js";
 
 export default class ProjectFormScreen {
   constructor({ router, projectId, mode = "page", onClose, onSaved } = {}) {
@@ -793,6 +794,7 @@ export default class ProjectFormScreen {
   _closeProjectSettingsModal() {
     if (this.projectSettingsOverlayEl) {
       try {
+        cleanupPopupHandlers(this.projectSettingsOverlayEl);
         this.projectSettingsOverlayEl.remove();
       } catch (_e) {}
     }
@@ -832,18 +834,8 @@ export default class ProjectFormScreen {
       } catch (_e) {}
     }
 
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.left = "0";
-    overlay.style.top = "0";
-    overlay.style.width = "100vw";
-    overlay.style.height = "100vh";
-    overlay.style.background = "rgba(0,0,0,0.35)";
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 10020 });
     overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = "10020";
-    overlay.tabIndex = -1;
 
     const modal = document.createElement("div");
     modal.style.background = "#fff";
@@ -1160,18 +1152,7 @@ export default class ProjectFormScreen {
   _ensureModalDom() {
     if (this.overlayEl) return;
 
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.left = "0";
-    overlay.style.top = "0";
-    overlay.style.width = "100vw";
-    overlay.style.height = "100vh";
-    overlay.style.background = "rgba(0,0,0,0.35)";
-    overlay.style.display = "none";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = "9999";
-    overlay.tabIndex = -1;
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 9999 });
 
     overlay.addEventListener("mousedown", (e) => {
       if (e.target === overlay) this._handleModalClose();
@@ -1276,6 +1257,7 @@ export default class ProjectFormScreen {
   _closeModal() {
     if (!this.overlayEl) return;
     const overlay = this.overlayEl;
+    cleanupPopupHandlers(overlay);
     if (this.modalBodyEl) this.modalBodyEl.innerHTML = "";
     if (this.modalFooterEl) this.modalFooterEl.innerHTML = "";
     if (this.root && this.root.parentElement) {

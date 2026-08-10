@@ -246,6 +246,53 @@ async function runM864GlobalClickBlockerTests(run) {
     }
   });
 
+  await run("M86.4 Protokoll-Popups: gemeinsame Flaeche beginnt unter der realen Header-Unterkante", () => {
+    const previousDocument = globalThis.document;
+    const previousWindow = globalThis.window;
+    const doc = createFakeDocument();
+    const resizeHandlers = [];
+    const header = doc.createElement("header");
+    header.rect = { left: 0, top: 0, width: 940, height: 58, right: 940, bottom: 58 };
+    doc.querySelector = (selector) =>
+      selector === '[data-bbm-tops-screen="true"] [data-bbm-tops-header-v2="true"]'
+        ? header
+        : null;
+    globalThis.document = doc;
+    globalThis.window = {
+      innerHeight: 500,
+      addEventListener(type, handler) {
+        if (type === "resize") resizeHandlers.push(handler);
+      },
+      removeEventListener() {},
+    };
+
+    try {
+      const overlay = popupCommon.createPopupOverlay();
+      assert.equal(overlay.dataset.bbmPopupViewport, "protokoll");
+      assert.equal(overlay.style.top, "58px");
+      assert.equal(overlay.style.height, "calc(100vh - 58px)");
+      assert.equal(overlay.style.padding, "8px 12px");
+      assert.equal(overlay.style.overflow, "auto");
+      assert.equal(overlay.style.alignItems, "safe center");
+
+      header.rect = { left: 0, top: 0, width: 940, height: 72, right: 940, bottom: 72 };
+      assert.equal(resizeHandlers.length, 1);
+      resizeHandlers[0]();
+      assert.equal(overlay.style.top, "72px");
+      assert.equal(overlay.style.height, "calc(100vh - 72px)");
+
+      doc.querySelector = () => null;
+      popupCommon.syncPopupOverlayViewport(overlay);
+      assert.equal(overlay.dataset.bbmPopupViewport, "window");
+      assert.equal(overlay.style.top, "0");
+      assert.equal(overlay.style.height, "100vh");
+      assert.equal(overlay.style.padding, "12px");
+    } finally {
+      globalThis.document = previousDocument;
+      globalThis.window = previousWindow;
+    }
+  });
+
   await run("M86.4 Editorfokus: der gemeinsame DEV-Launcher gibt seinen Button nach dem Start wieder frei", async () => {
     const doc = createFakeDocument();
     const host = doc.createElement("div");

@@ -1,4 +1,5 @@
 import { applyPopupButtonStyle, applyPopupCardStyle } from "../../ui/popupButtonStyles.js";
+import { cleanupPopupHandlers, createPopupOverlay } from "../../ui/popupCommon.js";
 
 export class MailFlow {
   constructor({ view, router }) {
@@ -52,15 +53,8 @@ export class MailFlow {
       }
     }
 
-    const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.inset = "0";
-    overlay.style.background = "rgba(0,0,0,0.45)";
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.45)", zIndex: 13000 });
     overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = "13000";
-    overlay.tabIndex = -1;
 
     const card = document.createElement("div");
     applyPopupCardStyle(card);
@@ -244,6 +238,7 @@ export class MailFlow {
 
     const closeOverlay = () => {
       try {
+        cleanupPopupHandlers(overlay);
         overlay.remove();
       } catch (_e) {
         // ignore

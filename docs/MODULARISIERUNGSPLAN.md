@@ -170,6 +170,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - `TopsScreen` ist fuer die bisher bearbeitete Kleinschnitt-Achse weitgehend von direkten Tiefenimports entlastet
 - ein kleiner Nachweis fuer den entmischten Screen-Stand ist vorhanden
 - die Diktat-Buttons nutzen jetzt die vorhandenen SVG-Assets und sitzen direkt neben der Restzeichenanzeige in der echten Tops-Editbox
+- Protokoll-Popups verwenden die gemeinsame, an der realen Header-Unterkante ausgerichtete Popup-Flaeche; Projekt und Mail sind ohne fachliche Aenderung an dieselbe Basis angeschlossen
 
 **Noch offen**
 - grosser Unterbau liegt weiter unter `src/renderer/tops/`

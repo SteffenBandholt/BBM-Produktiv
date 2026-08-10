@@ -1,5 +1,14 @@
 # STATUS.md — BBM-Produktiv
 
+### Protokoll – Popups unter dem sichtbaren Header positionieren
+
+- Status: `[A]`; die gemeinsame Popup-Basis misst im Protokoll die reale Unterkante des sichtbaren Protokoll-Headers und nutzt nur die verbleibende Viewportfläche darunter.
+- Der Abstand zwischen Header und Dialog beträgt 8 px. Kleine Fensterhöhen bleiben über den gemeinsamen Overlay-Scrollbereich vollständig erreichbar; Breiten, Inhalte und Fachaktionen sind unverändert.
+- Teilnehmer, Drucken und Projekt wurden im laufenden Electron-Protokoll sichtbar geprüft. Der Drucken-Dialog blieb bei reduzierter Höhe bis zum Ende scrollbar. Drucken, Vorschau, Speichern und Mailversand wurden nicht ausgelöst.
+- Projekt- und Mail-Overlays verwenden nun ebenfalls die gemeinsame Popup-Basis. Die Quicklane-Aktion `Firmen` bleibt als Screenwechsel unverändert.
+- Gezielter Regressionstest, UI-Editor-Vertragscheck, ESLint und `git diff --check` sind grün. Die Gesamtsuite bleibt an bereits auf `main` vorhandenen, paketfremden Registry-, Licensing- und Testharness-Guardrails rot.
+- Nächster offener Schritt: keiner; Commit-SHA wird im Paketabschluss berichtet.
+
 ### M86.25 – Protokoll-Liste und Ampel-Editor korrigieren
 
 - Status: `[A]`; die Listenüberschrift zeigt `Nr.` und darunter `Datum`, ohne `Klasse`. In den Zeilen bleiben nur Nummer und Datum sichtbar; die bestehenden stabilen Klassen-Refs bleiben als unsichtbare Kompatibilitätsziele erhalten.
