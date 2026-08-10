@@ -21,6 +21,10 @@ function mkTextarea(value) {
   return ta;
 }
 
+function mkLabel(text) {
+  return mkEl("div", "bbm-form-label", text);
+}
+
 function collect(map) {
   const data = {};
   Object.entries(map).forEach(([key, el]) => {
@@ -108,14 +112,14 @@ async function init() {
     document.title = initPayload.title;
   }
 
-  const card = mkEl("div", "card");
-  const header = mkEl("div", "header");
+  const card = mkEl("div", "card bbm-popup-standard bbm-popup-dialog");
+  const header = mkEl("div", "header bbm-popup-header");
   header.appendChild(mkEl("div", "title", initPayload.title || "Bearbeiten"));
   if (initPayload.subtitle) {
     header.appendChild(mkEl("div", "subtitle", initPayload.subtitle));
   }
 
-  const form = mkEl("div", "form");
+  const form = mkEl("div", "form bbm-popup-body");
   const inputs = {};
 
   if (initPayload.kind === "firm") {
@@ -144,14 +148,14 @@ async function init() {
       ["email", "E-Mail", "email", firm.email],
           ];
     fields.forEach(([key, label, type, value]) => {
-      form.appendChild(mkEl("div", null, label));
+      form.appendChild(mkLabel(label));
       const inp = mkInput(type, value);
       if (key === "short") inp.placeholder = "verantw. im Projekt";
       inputs[key] = inp;
       form.appendChild(inp);
     });
 
-    form.appendChild(mkEl("div", null, "Gewerk"));
+    form.appendChild(mkLabel("Gewerk"));
     const gewerkInput = mkInput("text", firm.gewerk);
     gewerkInput.setAttribute("list", "editor-gewerk-options");
     inputs.gewerk = gewerkInput;
@@ -167,7 +171,7 @@ async function init() {
     );
     form.appendChild(gewerkOptions);
 
-    form.appendChild(mkEl("div", null, "Kategorie"));
+    form.appendChild(mkLabel("Kategorie"));
     const roleSelect = document.createElement("select");
     roleOrder.forEach((code) => {
       const opt = document.createElement("option");
@@ -180,14 +184,14 @@ async function init() {
     inputs.role_code = roleSelect;
     form.appendChild(roleSelect);
 
-    form.appendChild(mkEl("div", null, "Notizen"));
+    form.appendChild(mkLabel("Notizen"));
     const taNotes = mkTextarea(firm.notes);
     inputs.notes = taNotes;
     form.appendChild(taNotes);
   } else if (initPayload.kind === "person") {
     const person = initPayload.person || {};
     if (person.firmName) {
-      form.appendChild(mkEl("div", null, "Firma"));
+      form.appendChild(mkLabel("Firma"));
       const firmLabel = mkEl("div", "note", person.firmName);
       form.appendChild(firmLabel);
     }
@@ -199,14 +203,14 @@ async function init() {
       ["email", "E-Mail", "email", person.email],
     ];
     fields.forEach(([key, label, type, value]) => {
-      form.appendChild(mkEl("div", null, label));
+      form.appendChild(mkLabel(label));
       const inp = mkInput(type, value);
       inputs[key] = inp;
       form.appendChild(inp);
     });
     inputs.rolle = inputs.funktion;
 
-    form.appendChild(mkEl("div", null, "Notizen"));
+    form.appendChild(mkLabel("Notizen"));
     const taNotes = mkTextarea(person.notes);
     inputs.notes = taNotes;
     form.appendChild(taNotes);
@@ -215,7 +219,7 @@ async function init() {
     return;
   }
 
-  const actions = mkEl("div", "actions");
+  const actions = mkEl("div", "actions bbm-popup-footer");
   const btnDelete = mkEl("button", null, "Löschen");
   btnDelete.style.background = "#c62828";
   btnDelete.style.color = "#fff";

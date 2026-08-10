@@ -9,6 +9,8 @@
 // - Edit: öffnet Projektedit (ProjectFormScreen)  ✅ robust gegen Bubble
 // - Projektnummer: eigene Zeile
 
+import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
+
 const LAST_PROJECT_KEY = "bbm.lastProjectId";
 const CREATE_MEETING_EDIT_PARTICIPANTS_KEY = "bbm.createMeeting.editParticipants";
 
@@ -327,9 +329,7 @@ export default class ProjectsScreen {
       overlay.tabIndex = -1;
 
       const box = document.createElement("div");
-      box.style.background = "#fff";
-      box.style.borderRadius = "10px";
-      box.style.border = "1px solid rgba(0,0,0,0.15)";
+      box.className = "bbm-popup-standard bbm-popup-dialog";
       box.style.width = "min(560px, calc(100vw - 32px))";
       box.style.maxHeight = "calc(100vh - 32px)";
       box.style.display = "flex";
@@ -338,11 +338,10 @@ export default class ProjectsScreen {
       box.style.boxShadow = "0 10px 30px rgba(0,0,0,0.2)";
 
       const header = document.createElement("div");
+      header.className = "bbm-popup-header";
       header.style.display = "flex";
       header.style.alignItems = "center";
       header.style.gap = "10px";
-      header.style.padding = "12px 16px";
-      header.style.borderBottom = "1px solid #e2e8f0";
 
       const title = document.createElement("div");
       title.textContent = "Protokoll anlegen";
@@ -358,49 +357,49 @@ export default class ProjectsScreen {
       header.append(title, btnClose);
 
       const body = document.createElement("div");
+      body.className = "bbm-popup-body bbm-form-content";
       body.style.flex = "1 1 auto";
       body.style.minHeight = "0";
       body.style.overflow = "auto";
-      body.style.padding = "12px 16px";
+      body.style.display = "flex";
+      body.style.flexDirection = "column";
+
+      const dateField = document.createElement("div");
+      dateField.className = "bbm-form-field";
+      dateField.style.display = "flex";
+      dateField.style.flexDirection = "column";
 
       const labDate = document.createElement("label");
+      labDate.className = "bbm-form-label";
       labDate.textContent = "Datum";
-      labDate.style.display = "block";
-      labDate.style.fontSize = "12px";
-      labDate.style.opacity = "0.8";
-      labDate.style.marginBottom = "4px";
 
       const inpDate = document.createElement("input");
       inpDate.type = "date";
       inpDate.value = /^\d{4}-\d{2}-\d{2}$/.test(String(dateISO || "")) ? dateISO : "";
       inpDate.style.width = "100%";
       inpDate.style.boxSizing = "border-box";
-      inpDate.style.padding = "6px 8px";
-      inpDate.style.border = "1px solid #ddd";
-      inpDate.style.borderRadius = "6px";
-      inpDate.style.marginBottom = "10px";
+      dateField.append(labDate, inpDate);
+
+      const keywordField = document.createElement("div");
+      keywordField.className = "bbm-form-field";
+      keywordField.style.display = "flex";
+      keywordField.style.flexDirection = "column";
 
       const labKeyword = document.createElement("label");
+      labKeyword.className = "bbm-form-label";
       labKeyword.textContent = "Schlagwort (optional)";
-      labKeyword.style.display = "block";
-      labKeyword.style.fontSize = "12px";
-      labKeyword.style.opacity = "0.8";
-      labKeyword.style.marginBottom = "4px";
 
       const inpKeyword = document.createElement("input");
       inpKeyword.type = "text";
       inpKeyword.value = "";
       inpKeyword.style.width = "100%";
       inpKeyword.style.boxSizing = "border-box";
-      inpKeyword.style.padding = "6px 8px";
-      inpKeyword.style.border = "1px solid #ddd";
-      inpKeyword.style.borderRadius = "6px";
+      keywordField.append(labKeyword, inpKeyword);
 
       const participantsOptionRow = document.createElement("label");
       participantsOptionRow.style.display = "flex";
       participantsOptionRow.style.alignItems = "center";
       participantsOptionRow.style.gap = "8px";
-      participantsOptionRow.style.marginTop = "12px";
       participantsOptionRow.style.cursor = "pointer";
 
       const chkEditParticipants = document.createElement("input");
@@ -414,11 +413,10 @@ export default class ProjectsScreen {
       participantsOptionRow.append(chkEditParticipants, participantsOptionText);
 
       const btnRow = document.createElement("div");
+      btnRow.className = "bbm-popup-footer";
       btnRow.style.display = "flex";
       btnRow.style.justifyContent = "flex-end";
       btnRow.style.gap = "8px";
-      btnRow.style.padding = "12px 16px";
-      btnRow.style.borderTop = "1px solid #e2e8f0";
 
       const btnCancel = document.createElement("button");
       btnCancel.type = "button";
@@ -468,7 +466,7 @@ export default class ProjectsScreen {
       });
 
       btnRow.append(btnCancel, btnCreate);
-      body.append(labDate, inpDate, labKeyword, inpKeyword, participantsOptionRow);
+      body.append(dateField, keywordField, participantsOptionRow);
       box.append(header, body, btnRow);
       overlay.appendChild(box);
 

@@ -1,5 +1,14 @@
 # STATUS.md — BBM-Produktiv
 
+### Formularstandard auf Protokoll und Teilnehmerdialoge ausgeweitet
+
+- Status: `[A]`; der unveränderte opt-in-Standard gilt jetzt zusätzlich für `Protokoll anlegen`, die globalen und projektbezogenen Firmen-/Mitarbeiterformulare, das produktive separate Firmen-Editorfenster sowie `Personalpool` und `Teilnehmer` auf der gemeinsamen Teilnehmerbasis.
+- Aktive Varianten wurden vorab von Import-/Staging- und nicht aufgerufenen Legacy-Dialogen getrennt. Spaltenbreiten, Feldreihenfolgen, Datenbindung, Validierung und Fachaktionen blieben unverändert.
+- Electron-Messung: Controls 32 px, Buttons 30 px, Controlradius 8 px, Dialogradius 14 px, Kartenradius 12 px, Labels 11,5 px, Eingabetext 13 px, Label-Feld-Gap 4 px, Gruppengap 10 px, Kartenpadding 14 px, Bodypadding 12 px 16 px und Footerpadding 10 px 16 px.
+- Bei kleiner Höhe scrollen die Dialogkörper; Footer bzw. die unverändert im Header liegenden globalen Firmen-/Mitarbeiteraktionen bleiben erreichbar. Die Teilnehmerbasis nutzt `max-height: 100%` der bereits headerbereinigten Popup-Fläche und bleibt damit vollständig unter dem Protokoll-Header.
+- Screenshots liegen unter `output/playwright/popup-standard-wave-3/`. Der Popup-Guardrail ist grün; bekannte paketfremde Protokoll-Integrationstestfehler im veralteten DOM-Testdouble bleiben offen und wurden nicht repariert.
+- Bewusst offen bleiben die dokumentierten Import-/Stagingdialoge, Legacy-Komponenten sowie alle weiteren noch nicht freigegebenen Popups. Keine automatische Folgemigration vor Sichtfreigabe. Commit-SHA wird im Paketabschluss berichtet.
+
 ### Weitere BBM-Popups auf Formularstandard migriert
 
 - Status: `[A]`; als zweites, bewusst begrenztes Paket verwenden jetzt zusätzlich die Einstellungen `Ausgabe & Druck` und `Drucklogos verwalten`, die Projektverwaltung `Projekt-Einstellungen` sowie der Hauptdialog `Protokoll drucken` den unveränderten zentralen Popup-/Formularstandard.

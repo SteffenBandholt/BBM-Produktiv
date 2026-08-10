@@ -74,11 +74,19 @@ gleichen Standard.
 - Einstellungen `Drucklogos verwalten`.
 - Projektverwaltung `Projekt-Einstellungen`.
 - Protokoll-Ausgabe `Protokoll drucken` (nur Hauptdialog).
+- Projektverwaltung `Protokoll anlegen`.
+- Firmenstamm `Neue Firma` und `Neuer Mitarbeiter`/`Mitarbeiter bearbeiten`.
+- Separates produktives Editorfenster `Firma bearbeiten`.
+- Projektfirmen `Aus Firmenstamm hinzufügen`, `Neue Firma`/`Firma bearbeiten`
+  und `Neuer Mitarbeiter`/`Mitarbeiter bearbeiten`.
+- Teilnehmerauswahl `Personalpool` und Teilnehmerverwaltung `Teilnehmer` auf der
+  gemeinsamen `ParticipantsModals`-Basis.
 
-Bewusst noch nicht umgestellt sind die übrigen Einstellungen, `Protokoll anlegen`,
-Projekt Import/Export, Firmen-, Personen- und Mitarbeiterdialoge, Teilnehmerauswahlen,
-TOP-Regeln, Textkorrektur, Mail, Hilfe sowie die weiteren Druckvarianten Vorschau,
-Folgetermin-Prompt und ToDo-Verantwortlichenfilter. Die bisherigen `--bbm-form-*`-Werte
-bleiben für diese Altbereiche als unveränderte Fallbacks bestehen. Eine spätere
-Übernahme ist ein jeweils explizit freizugebender Schritt; nach diesem Paket erfolgt
-keine Massenmigration.
+Bewusst noch nicht umgestellt sind die übrigen Einstellungen, Projekt Import/Export,
+die CSV-Import-/Staging- und Importdetaildialoge für Firmen und Personen, die nicht
+produktiv aufgerufenen Legacy-Komponenten `CompanyDialog`, `EmployeeDialog`,
+`xEmployeeEditModal`/`FirmsPoolView`, TOP-Regeln, Textkorrektur, Mail, Hilfe sowie die
+weiteren Druckvarianten Vorschau, Folgetermin-Prompt und ToDo-Verantwortlichenfilter.
+Die bisherigen `--bbm-form-*`-Werte bleiben für diese Altbereiche als unveränderte
+Fallbacks bestehen. Eine spätere Übernahme ist ein jeweils explizit freizugebender
+Schritt; nach diesem Paket erfolgt keine Massenmigration.

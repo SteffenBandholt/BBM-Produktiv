@@ -308,17 +308,18 @@ export default class ParticipantsModals {
     registerPopupCloseHandlers(overlay, () => this.close());
 
     const modal = document.createElement("div");
+    modal.className = "bbm-popup-standard bbm-popup-dialog";
     stylePopupCard(modal, { width: "min(980px, calc(100vw - 24px))" });
+    modal.style.maxHeight = "100%";
     modal.style.padding = "0";
     modal.style.fontFamily = "var(--bbm-font-ui)";
 
     const head = document.createElement("div");
+    head.className = "bbm-popup-header";
     head.style.display = "flex";
     head.style.alignItems = "center";
     head.style.justifyContent = "space-between";
     head.style.gap = "10px";
-    head.style.padding = "12px";
-    head.style.borderBottom = "1px solid #e2e8f0";
 
     const title = document.createElement("div");
     title.style.fontWeight = "bold";
@@ -329,22 +330,23 @@ export default class ParticipantsModals {
     const err = document.createElement("div");
     err.style.color = "#c62828";
     err.style.fontSize = "12px";
-    err.style.marginBottom = "8px";
     err.style.display = "none";
 
     const bodyWrap = document.createElement("div");
+    bodyWrap.className = "bbm-popup-body bbm-form-content";
     bodyWrap.style.flex = "1 1 auto";
     bodyWrap.style.minHeight = "0";
     bodyWrap.style.overflow = "auto";
-    bodyWrap.style.padding = "12px";
+    bodyWrap.style.display = "flex";
+    bodyWrap.style.flexDirection = "column";
 
     const body = document.createElement("div");
+    body.className = "bbm-form-content";
     const footer = document.createElement("div");
+    footer.className = "bbm-popup-footer";
     footer.style.display = "flex";
     footer.style.justifyContent = "flex-end";
     footer.style.gap = "8px";
-    footer.style.borderTop = "1px solid #e2e8f0";
-    footer.style.padding = "10px 12px";
 
     bodyWrap.append(err, body);
     modal.append(head, bodyWrap, footer);
@@ -373,21 +375,18 @@ export default class ParticipantsModals {
 
   _mkListCol(titleText) {
     const col = document.createElement("div");
+    col.className = "bbm-form-group";
     col.style.display = "flex";
     col.style.flexDirection = "column";
-    col.style.gap = "8px";
 
     const t = document.createElement("div");
     t.textContent = titleText;
     t.style.fontWeight = "bold";
 
     const list = document.createElement("div");
-    list.style.border = "1px solid #ddd";
-    list.style.borderRadius = "8px";
-    list.style.padding = "6px";
+    list.className = "bbm-form-card";
     list.style.height = "420px";
     list.style.overflow = "auto";
-    list.style.background = "#fafafa";
 
     col.append(t, list);
     return { col, list };
@@ -1056,9 +1055,9 @@ export default class ParticipantsModals {
     this.footerEl.innerHTML = "";
 
     const grid = document.createElement("div");
+    grid.className = "bbm-form-content";
     grid.style.display = "grid";
     grid.style.gridTemplateColumns = "1fr 1fr";
-    grid.style.gap = "12px";
 
     const leftCol = this._mkListCol("Mitarbeiter im Personalpool");
     const rightCol = this._mkListCol("Alle Mitarbeiter (Projekt)");
@@ -1266,9 +1265,9 @@ export default class ParticipantsModals {
     }
 
     const grid = document.createElement("div");
+    grid.className = "bbm-form-content";
     grid.style.display = "grid";
     grid.style.gridTemplateColumns = "1fr 1fr";
-    grid.style.gap = "12px";
 
     const leftCol = this._mkListCol("Teilnehmer dieser Besprechung");
     const rightCol = this._mkListCol("Personen im Projekt");
@@ -1546,6 +1545,3 @@ export default class ParticipantsModals {
     this.close();
   }
 }
-
-
-

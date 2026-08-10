@@ -327,15 +327,12 @@ export default class FirmsView {
 
     // ---- Firm edit wrapper (hidden until select/create) ----
     const editWrap = document.createElement("div");
-    editWrap.style.marginTop = "8px";
-    editWrap.style.border = "1px solid #ddd";
-    editWrap.style.borderRadius = "8px";
-    editWrap.style.padding = "6px 8px 10px";
-    editWrap.style.background = "#fff";
+    editWrap.className = "bbm-form-card";
     editWrap.style.display = "none";
 
     const mkLbl = (t) => {
       const d = document.createElement("div");
+      d.className = "bbm-form-label";
       d.textContent = t;
       return d;
     };
@@ -374,9 +371,9 @@ export default class FirmsView {
     const firmGrid = document.createElement("div");
     firmGrid.style.display = "grid";
     firmGrid.style.gridTemplateColumns = "120px minmax(0, 1fr)";
-    firmGrid.style.gap = "6px 12px";
+    firmGrid.style.rowGap = "var(--bbm-popup-group-gap)";
+    firmGrid.style.columnGap = "var(--bbm-popup-label-field-gap)";
     firmGrid.style.alignItems = "center";
-    firmGrid.style.marginBottom = "8px";
 
     const inpFirmName1 = mkFirmInp("Name 1…");
     const inpFirmName2 = mkFirmInp("Name 2…");
@@ -434,11 +431,10 @@ const taFirmNotes = document.createElement("textarea");
     const btnDeleteFirm = document.createElement("button");
     btnDeleteFirm.textContent = "Papierkorb";
     btnDeleteFirm.title = "In Papierkorb";
+    applyPopupButtonStyle(btnDeleteFirm, { variant: "danger" });
     btnDeleteFirm.style.background = "#c62828";
     btnDeleteFirm.style.color = "#ffffff";
     btnDeleteFirm.style.border = "1px solid rgba(0,0,0,0.25)";
-    btnDeleteFirm.style.borderRadius = "6px";
-    btnDeleteFirm.style.padding = "6px 10px";
     btnDeleteFirm.onclick = async () => {
       await this._deleteFirm();
     };
@@ -496,17 +492,15 @@ const taFirmNotes = document.createElement("textarea");
 
     // Person form (hidden until create/edit)
     const personForm = document.createElement("div");
-    personForm.style.marginTop = "10px";
-    personForm.style.borderTop = "1px dashed #ddd";
-    personForm.style.paddingTop = "10px";
+    personForm.className = "bbm-form-card";
     personForm.style.display = "none";
 
     const pGrid = document.createElement("div");
     pGrid.style.display = "grid";
     pGrid.style.gridTemplateColumns = "160px 1fr";
-    pGrid.style.gap = "8px";
+    pGrid.style.rowGap = "var(--bbm-popup-group-gap)";
+    pGrid.style.columnGap = "var(--bbm-popup-label-field-gap)";
     pGrid.style.alignItems = "center";
-    pGrid.style.marginBottom = "10px";
 
     const inpFirstName = mkInp("Vorname…");
     const inpLastName = mkInp("Nachname…");
@@ -543,11 +537,10 @@ const taFirmNotes = document.createElement("textarea");
     const btnDeletePerson = document.createElement("button");
     btnDeletePerson.textContent = "Papierkorb";
     btnDeletePerson.title = "In Papierkorb";
+    applyPopupButtonStyle(btnDeletePerson, { variant: "danger" });
     btnDeletePerson.style.background = "#c62828";
     btnDeletePerson.style.color = "#ffffff";
     btnDeletePerson.style.border = "1px solid rgba(0,0,0,0.25)";
-    btnDeletePerson.style.borderRadius = "6px";
-    btnDeletePerson.style.padding = "6px 10px";
     btnDeletePerson.onclick = async () => {
       if (!this.editPersonId) return;
       await this._deletePerson(this.editPersonId);
@@ -922,22 +915,20 @@ const taFirmNotes = document.createElement("textarea");
     });
 
     const modal = document.createElement("div");
+    modal.className = "bbm-popup-standard bbm-popup-dialog";
     modal.style.width = "min(640px, calc(100vw - 32px))";
     modal.style.maxWidth = "640px";
     modal.style.maxHeight = "calc(100vh - 32px)";
-    modal.style.background = "#fff";
-    modal.style.borderRadius = "12px";
     modal.style.boxShadow = "0 20px 50px rgba(0,0,0,0.3)";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
     modal.style.overflow = "hidden";
 
     const header = document.createElement("div");
+    header.className = "bbm-popup-header";
     header.style.display = "flex";
     header.style.alignItems = "center";
     header.style.justifyContent = "space-between";
-    header.style.padding = "10px 14px";
-    header.style.borderBottom = "1px solid #eee";
     header.style.gap = "8px";
 
     const title = document.createElement("div");
@@ -961,9 +952,9 @@ const taFirmNotes = document.createElement("textarea");
     header.append(title, headerActions);
 
     const body = document.createElement("div");
+    body.className = "bbm-popup-body";
     body.style.flex = "1";
     body.style.overflowY = "auto";
-    body.style.padding = "0 12px 16px";
 
     modal.append(header, body);
     overlay.appendChild(modal);
@@ -1022,9 +1013,8 @@ const taFirmNotes = document.createElement("textarea");
     });
 
     const modal = document.createElement("div");
+    modal.className = "bbm-popup-standard bbm-popup-dialog";
     modal.style.width = "min(520px, calc(100vw - 32px))";
-    modal.style.background = "#fff";
-    modal.style.borderRadius = "10px";
     modal.style.boxShadow = "0 12px 30px rgba(0,0,0,0.25)";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
@@ -1032,11 +1022,10 @@ const taFirmNotes = document.createElement("textarea");
     modal.style.maxHeight = "calc(100vh - 32px)";
 
     const header = document.createElement("div");
+    header.className = "bbm-popup-header";
     header.style.display = "flex";
     header.style.alignItems = "center";
     header.style.justifyContent = "space-between";
-    header.style.padding = "12px 16px";
-    header.style.borderBottom = "1px solid #eee";
 
     const title = document.createElement("div");
     title.style.fontWeight = "700";
@@ -1058,9 +1047,9 @@ const taFirmNotes = document.createElement("textarea");
     header.append(title, headerActions);
 
     const body = document.createElement("div");
+    body.className = "bbm-popup-body";
     body.style.flex = "1";
     body.style.overflowY = "auto";
-    body.style.padding = "0 16px 16px";
 
     modal.append(header, body);
     overlay.appendChild(modal);

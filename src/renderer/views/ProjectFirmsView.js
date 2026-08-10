@@ -815,24 +815,21 @@ const taFirmNotes = document.createElement("textarea");
     });
 
     const modal = document.createElement("div");
+    modal.className = "bbm-popup-standard bbm-popup-dialog";
     modal.style.width = "min(980px, calc(100vw - 24px))";
     modal.style.maxHeight = "calc(100vh - 24px)";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
     modal.style.overflow = "hidden";
-    modal.style.background = "#fff";
-    modal.style.borderRadius = "10px";
-    modal.style.border = "1px solid rgba(0,0,0,0.15)";
     modal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.25)";
     modal.style.padding = "0";
 
     const modalHead = document.createElement("div");
+    modalHead.className = "bbm-popup-header";
     modalHead.style.display = "flex";
     modalHead.style.alignItems = "center";
     modalHead.style.justifyContent = "space-between";
     modalHead.style.gap = "10px";
-    modalHead.style.padding = "12px";
-    modalHead.style.borderBottom = "1px solid #e2e8f0";
 
     const modalTitle = document.createElement("div");
     modalTitle.textContent = "Aus Firmenstamm hinzufügen";
@@ -848,37 +845,35 @@ const taFirmNotes = document.createElement("textarea");
     const modalErr = document.createElement("div");
     modalErr.style.color = "#c62828";
     modalErr.style.fontSize = "12px";
-    modalErr.style.marginBottom = "8px";
     modalErr.style.display = "none";
 
     const modalGrid = document.createElement("div");
+    modalGrid.className = "bbm-form-content";
     modalGrid.style.display = "grid";
     modalGrid.style.gridTemplateColumns = "1fr 1fr";
-    modalGrid.style.gap = "12px";
 
     const modalBody = document.createElement("div");
+    modalBody.className = "bbm-popup-body bbm-form-content";
     modalBody.style.flex = "1 1 auto";
     modalBody.style.minHeight = "0";
     modalBody.style.overflow = "auto";
-    modalBody.style.padding = "12px";
+    modalBody.style.display = "flex";
+    modalBody.style.flexDirection = "column";
 
     const mkListCol = (titleText) => {
       const col = document.createElement("div");
+      col.className = "bbm-form-group";
       col.style.display = "flex";
       col.style.flexDirection = "column";
-      col.style.gap = "8px";
 
       const t = document.createElement("div");
       t.textContent = titleText;
       t.style.fontWeight = "bold";
 
       const list = document.createElement("div");
-      list.style.border = "1px solid #ddd";
-      list.style.borderRadius = "8px";
-      list.style.padding = "6px";
+      list.className = "bbm-form-card";
       list.style.height = "360px";
       list.style.overflow = "auto";
-      list.style.background = "#fafafa";
 
       col.append(t, list);
       return { col, list };
@@ -890,12 +885,11 @@ const taFirmNotes = document.createElement("textarea");
     modalGrid.append(leftCol.col, rightCol.col);
 
     const modalFoot = document.createElement("div");
+    modalFoot.className = "bbm-popup-footer";
     modalFoot.style.display = "flex";
     modalFoot.style.justifyContent = "space-between";
     modalFoot.style.alignItems = "center";
     modalFoot.style.gap = "8px";
-    modalFoot.style.borderTop = "1px solid #e2e8f0";
-    modalFoot.style.padding = "10px 12px";
     const modalHint = document.createElement("div");
     modalHint.textContent = "Doppelklick fuegt hinzu oder entfernt";
     modalHint.style.fontSize = "12px";
@@ -946,24 +940,21 @@ const taFirmNotes = document.createElement("textarea");
     });
 
     const localFirmModal = document.createElement("div");
+    localFirmModal.className = "bbm-popup-standard bbm-popup-dialog";
     localFirmModal.style.width = "min(860px, calc(100vw - 24px))";
     localFirmModal.style.maxHeight = "calc(100vh - 24px)";
     localFirmModal.style.display = "flex";
     localFirmModal.style.flexDirection = "column";
     localFirmModal.style.overflow = "hidden";
-    localFirmModal.style.background = "#fff";
-    localFirmModal.style.borderRadius = "10px";
-    localFirmModal.style.border = "1px solid rgba(0,0,0,0.15)";
     localFirmModal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.25)";
     localFirmModal.style.padding = "0";
 
     const localFirmHead = document.createElement("div");
+    localFirmHead.className = "bbm-popup-header";
     localFirmHead.style.display = "flex";
     localFirmHead.style.alignItems = "center";
     localFirmHead.style.justifyContent = "space-between";
     localFirmHead.style.gap = "10px";
-    localFirmHead.style.padding = "12px";
-    localFirmHead.style.borderBottom = "1px solid #e2e8f0";
 
     const localFirmTitle = document.createElement("div");
     localFirmTitle.textContent = "Neue Firma";
@@ -978,27 +969,28 @@ const taFirmNotes = document.createElement("textarea");
     const localFirmErr = document.createElement("div");
     localFirmErr.style.color = "#c62828";
     localFirmErr.style.fontSize = "12px";
-    localFirmErr.style.marginBottom = "8px";
     localFirmErr.style.display = "none";
 
     const mkModalRow = (labelText, inputEl) => {
       const row = document.createElement("div");
+      row.className = "bbm-form-field";
       row.style.display = "grid";
       row.style.gridTemplateColumns = "160px 1fr";
-      row.style.gap = "8px";
       row.style.alignItems = "center";
-      row.style.marginBottom = "8px";
       const lbl = document.createElement("div");
+      lbl.className = "bbm-form-label";
       lbl.textContent = labelText;
       row.append(lbl, inputEl);
       return row;
     };
 
     const localFirmBody = document.createElement("div");
+    localFirmBody.className = "bbm-popup-body bbm-form-content";
     localFirmBody.style.flex = "1 1 auto";
     localFirmBody.style.minHeight = "0";
     localFirmBody.style.overflow = "auto";
-    localFirmBody.style.padding = "12px";
+    localFirmBody.style.display = "flex";
+    localFirmBody.style.flexDirection = "column";
     const localFirmName1 = document.createElement("input");
     localFirmName1.type = "text";
     localFirmName1.placeholder = "Name 1";
@@ -1061,11 +1053,10 @@ const taFirmNotes = document.createElement("textarea");
     localFirmBody.appendChild(localFirmGewerkList);
 
     const localFirmFoot = document.createElement("div");
+    localFirmFoot.className = "bbm-popup-footer";
     localFirmFoot.style.display = "flex";
     localFirmFoot.style.justifyContent = "flex-end";
     localFirmFoot.style.gap = "8px";
-    localFirmFoot.style.borderTop = "1px solid #e2e8f0";
-    localFirmFoot.style.padding = "10px 12px";
     const localFirmBtnCancel = document.createElement("button");
     localFirmBtnCancel.textContent = "Abbrechen";
     applyPopupButtonStyle(localFirmBtnCancel);
@@ -1112,24 +1103,21 @@ const taFirmNotes = document.createElement("textarea");
     });
 
     const localPersonModal = document.createElement("div");
+    localPersonModal.className = "bbm-popup-standard bbm-popup-dialog";
     localPersonModal.style.width = "min(760px, calc(100vw - 24px))";
     localPersonModal.style.maxHeight = "calc(100vh - 24px)";
     localPersonModal.style.display = "flex";
     localPersonModal.style.flexDirection = "column";
     localPersonModal.style.overflow = "hidden";
-    localPersonModal.style.background = "#fff";
-    localPersonModal.style.borderRadius = "10px";
-    localPersonModal.style.border = "1px solid rgba(0,0,0,0.15)";
     localPersonModal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.25)";
     localPersonModal.style.padding = "0";
 
     const localPersonHead = document.createElement("div");
+    localPersonHead.className = "bbm-popup-header";
     localPersonHead.style.display = "flex";
     localPersonHead.style.alignItems = "center";
     localPersonHead.style.justifyContent = "space-between";
     localPersonHead.style.gap = "10px";
-    localPersonHead.style.padding = "12px";
-    localPersonHead.style.borderBottom = "1px solid #e2e8f0";
     const localPersonTitle = document.createElement("div");
     localPersonTitle.textContent = "Neuer Mitarbeiter";
     localPersonTitle.style.fontWeight = "bold";
@@ -1142,14 +1130,15 @@ const taFirmNotes = document.createElement("textarea");
     const localPersonErr = document.createElement("div");
     localPersonErr.style.color = "#c62828";
     localPersonErr.style.fontSize = "12px";
-    localPersonErr.style.marginBottom = "8px";
     localPersonErr.style.display = "none";
 
     const localPersonBody = document.createElement("div");
+    localPersonBody.className = "bbm-popup-body bbm-form-content";
     localPersonBody.style.flex = "1 1 auto";
     localPersonBody.style.minHeight = "0";
     localPersonBody.style.overflow = "auto";
-    localPersonBody.style.padding = "12px";
+    localPersonBody.style.display = "flex";
+    localPersonBody.style.flexDirection = "column";
     const localPersonFirst = document.createElement("input");
     localPersonFirst.type = "text";
     localPersonFirst.placeholder = "Vorname";
@@ -1184,11 +1173,10 @@ const taFirmNotes = document.createElement("textarea");
     );
 
     const localPersonFoot = document.createElement("div");
+    localPersonFoot.className = "bbm-popup-footer";
     localPersonFoot.style.display = "flex";
     localPersonFoot.style.justifyContent = "flex-end";
     localPersonFoot.style.gap = "8px";
-    localPersonFoot.style.borderTop = "1px solid #e2e8f0";
-    localPersonFoot.style.padding = "10px 12px";
     const localPersonBtnCancel = document.createElement("button");
     localPersonBtnCancel.textContent = "Abbrechen";
     applyPopupButtonStyle(localPersonBtnCancel);

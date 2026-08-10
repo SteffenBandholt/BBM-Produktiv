@@ -62,7 +62,7 @@ async function runPopupFormStandardTests(run) {
     assert.equal(loader.includes("link.setAttribute(`data-${POPUP_FORM_STANDARD_STYLE_TAG}`"), true);
   });
 
-  await run("Popup-Standard: aktiviert nur die freigegebenen Rechnungen- und Produktpiloten", () => {
+  await run("Popup-Standard: aktiviert die freigegebenen Rechnungen- und Produktdialoge", () => {
     const invoices = read("src/renderer/modules/rechnungen/screens/RechnungenDesignScreen.js");
     const project = read("src/renderer/modules/projektverwaltung/screens/ProjectFormScreen.js");
     const print = read("src/renderer/modules/ausgabe/PrintModal.js");
@@ -84,6 +84,41 @@ async function runPopupFormStandardTests(run) {
     assert.equal(print.includes('modal.classList.add("bbm-popup-standard", "bbm-popup-dialog")'), true);
     assert.equal(print.includes('content.classList.add("bbm-popup-body", "bbm-form-content")'), true);
     assert.equal(print.includes('modal.style.maxHeight = "100%"'), true);
+  });
+
+  await run("Popup-Standard: Protokoll-, Firmen- und Teilnehmerdialoge nutzen die zentrale Opt-in-Basis", () => {
+    const projects = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
+    const firms = read("src/renderer/views/FirmsView.js");
+    const projectFirms = read("src/renderer/views/ProjectFirmsView.js");
+    const participants = read("src/renderer/ui/ParticipantsModals.js");
+    const editorHtml = read("src/renderer/editor.html");
+    const editorJs = read("src/renderer/editor.js");
+
+    assert.equal(projects.includes('box.className = "bbm-popup-standard bbm-popup-dialog"'), true);
+    assert.equal(projects.includes('body.className = "bbm-popup-body bbm-form-content"'), true);
+    assert.equal(projects.includes('dateField.className = "bbm-form-field"'), true);
+    assert.equal(projects.includes('inpDate.style.borderRadius = "6px"'), false);
+
+    assert.equal((firms.match(/modal\.className = "bbm-popup-standard bbm-popup-dialog"/g) || []).length, 2);
+    assert.equal(firms.includes('editWrap.className = "bbm-form-card"'), true);
+    assert.equal(firms.includes('d.className = "bbm-form-label"'), true);
+
+    assert.equal(
+      (projectFirms.match(/className = "bbm-popup-standard bbm-popup-dialog"/g) || []).length,
+      3
+    );
+    assert.equal(projectFirms.includes('row.className = "bbm-form-field"'), true);
+    assert.equal(projectFirms.includes('localFirmBody.className = "bbm-popup-body bbm-form-content"'), true);
+    assert.equal(projectFirms.includes('localPersonBody.className = "bbm-popup-body bbm-form-content"'), true);
+
+    assert.equal(participants.includes('modal.className = "bbm-popup-standard bbm-popup-dialog"'), true);
+    assert.equal(participants.includes('modal.style.maxHeight = "100%"'), true);
+    assert.equal(participants.includes('list.className = "bbm-form-card"'), true);
+    assert.equal(participants.includes('grid.style.gap = "12px"'), false);
+
+    assert.equal(editorHtml.includes('href="./ui/styles/popupFormStandard.css"'), true);
+    assert.equal(editorJs.includes('card bbm-popup-standard bbm-popup-dialog'), true);
+    assert.equal(editorJs.includes('form bbm-popup-body'), true);
   });
 
   await run("Popup-Standard: Projektformular nutzt zentrale vertikale Abstände ohne lokale Zugabe", () => {

@@ -2,6 +2,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Editor</title>
+<link rel="stylesheet" href="./ui/styles/popupFormStandard.css">
 <style>
   :root {
     --bbm-font-ui: "Noto Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -10,20 +11,19 @@
     font-family: var(--bbm-font-ui);
     margin: 0;
     padding: 0;
-    background: #f7f7f9;
-    color: #111;
+    background: var(--bbm-popup-canvas);
+    color: var(--bbm-popup-text);
   }
   #root {
-    padding: 16px;
+    padding: 12px 16px;
   }
   .card {
-    background: #fff;
-    border-radius: 10px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-    padding: 16px;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    max-height: calc(100vh - 24px);
+    overflow: hidden;
   }
   .header {
     display: flex;
@@ -41,16 +41,9 @@
   .form {
     display: grid;
     grid-template-columns: 160px 1fr;
-    gap: 8px 12px;
+    row-gap: var(--bbm-popup-group-gap);
+    column-gap: var(--bbm-popup-label-field-gap);
     align-items: center;
-  }
-  .form input, .form textarea {
-    width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 14px;
-    box-sizing: border-box;
   }
   .actions {
     display: flex;
@@ -59,15 +52,14 @@
   }
   button {
     padding: 6px 12px;
-    border-radius: 6px;
-    border: 1px solid #bbb;
-    background: #eee;
+    border: 1px solid var(--bbm-popup-border-strong);
+    background: var(--bbm-popup-surface-subtle);
     cursor: pointer;
   }
   button.primary {
-    background: #2f6fed;
+    background: var(--bbm-popup-primary);
     color: #fff;
-    border-color: #2558bc;
+    border-color: var(--bbm-popup-primary);
   }
   .note {
     font-size: 12px;
