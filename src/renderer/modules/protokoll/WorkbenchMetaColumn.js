@@ -198,6 +198,7 @@ export class WorkbenchMetaColumn {
   applyState(metaVm = {}) {
     const metaValue = metaVm?.value || {};
     const metaAccess = metaVm?.access || {};
+    const metaHidden = !!metaAccess?.hidden;
     const metaDisabled = !!metaAccess?.disabled;
     const responsibleDisabled = !!metaAccess?.responsibleDisabled;
 
@@ -207,6 +208,8 @@ export class WorkbenchMetaColumn {
     this._syncMetaSymbols(metaValue);
 
     this.metaPanel.setDisabled(metaDisabled);
+    this.metaFields.hidden = metaHidden;
+    this.metaFields.style.display = metaHidden ? "none" : "";
     this.statusAmpelBridge.setDisabled(metaDisabled);
     this.responsibleBridge.setDisabled(metaDisabled || responsibleDisabled);
   }

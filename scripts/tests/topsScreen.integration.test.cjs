@@ -94,6 +94,13 @@ async function runTopsScreenIntegrationTests(run) {
           this.children.push(nodeChild);
           return nodeChild;
         },
+        insertBefore(nodeChild, referenceChild) {
+          if (nodeChild && typeof nodeChild === "object") nodeChild.parentElement = this;
+          const index = this.children.indexOf(referenceChild);
+          if (index < 0) this.children.push(nodeChild);
+          else this.children.splice(index, 0, nodeChild);
+          return nodeChild;
+        },
         replaceChildren(...nodes) {
           this.children = [...nodes];
           for (const child of this.children) {
@@ -332,7 +339,12 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(wbWithSelection.canDelete, true);
     assert.equal(workbenchVm.editor.access.shortTextReadOnly, false);
     assert.equal(workbenchVm.editor.access.longTextReadOnly, false);
+    assert.equal(workbenchVm.meta.access.hidden, false);
     assert.equal(shouldShowWorkbench(store.getState()), true);
+
+    const titleVm = buildWorkbenchVm(store.getState(), { id: 33, level: 1, title: "Titel" });
+    assert.equal(titleVm.meta.access.hidden, true);
+    assert.equal(titleVm.meta.access.disabled, true);
 
     store.setState({ isReadOnly: true });
     const wbReadOnly = buildWorkbenchState(store.getState());
@@ -403,6 +415,20 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(level1Rows[0].meta.length, 0);
     assert.equal(level1Rows[0].ampelColor, null);
     assert.equal(level1Rows[0].metaSymbolType, null);
+
+    const markedTitleRows = buildListItemsFromState({
+      tops: [
+        { id: 3021, level: 1, title: "Wichtiger Titel", is_important: 1 },
+        { id: 3022, level: 1, title: "ToDo-Titel", is_task: 1 },
+        { id: 3023, level: 1, title: "Beschluss-Titel", is_decision: 1 },
+      ],
+    });
+    assert.equal(markedTitleRows[0].isImportant, true);
+    assert.equal(markedTitleRows[1].metaSymbolType, "task");
+    assert.equal(markedTitleRows[1].isTask, true);
+    assert.equal(markedTitleRows[2].metaSymbolType, "decision");
+    assert.equal(markedTitleRows[2].isDecision, true);
+    assert.equal(markedTitleRows.every((row) => row.meta.length === 0), true);
 
     const datedRows = buildListItemsFromState({
       tops: [
@@ -924,6 +950,38 @@ async function runTopsScreenIntegrationTests(run) {
     }
   });
 
+  await run("Tops v2 Integration: Titel rendert vorhandene Wichtig-, ToDo- und Beschlusskennzeichnungen", () => {
+    const rows = buildListItemsFromState({
+      tops: [
+        { id: 320, level: 1, title: "Wichtig", displayNumber: 1, is_important: 1 },
+        { id: 321, level: 1, title: "ToDo", displayNumber: 2, is_task: 1 },
+        { id: 322, level: 1, title: "Beschluss", displayNumber: 3, is_decision: 1 },
+      ],
+    });
+
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const list = new TopsList();
+      list.setItems(rows);
+
+      const importantRow = list.root.children[0];
+      assert.equal(importantRow.dataset.isImportant, "true");
+
+      const todoMeta = list.root.children[1].children[0].children[2];
+      const todoSymbol = todoMeta.children[0].children[0];
+      assert.equal(todoSymbol.dataset.symbol, "task");
+      assert.equal(todoSymbol.alt, "ToDo");
+
+      const decisionMeta = list.root.children[2].children[0].children[2];
+      const decisionSymbol = decisionMeta.children[0].children[0];
+      assert.equal(decisionSymbol.dataset.symbol, "decision");
+      assert.equal(decisionSymbol.alt, "Beschluss");
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
   await run("Tops v2 Integration: Level-1-Titel blendet seine Familienkinder ein und aus", () => {
     const tops = [
       { id: 1, level: 1, title: "Titel A", displayNumber: 1 },
@@ -1040,17 +1098,30 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(rows[0].id, 411);
   });
 
-  await run("Tops v2 Integration: Filter Beschluss zeigt nur Beschluss-TOPs", () => {
+  await run("Tops v2 Integration: Filter Wichtig zeigt nur wichtige TOPs", () => {
     const rows = buildListItemsFromState({
-      topFilter: "decision",
+      topFilter: "important",
       tops: [
         { id: 421, level: 2, title: "ToDo", is_task: 1 },
-        { id: 422, level: 2, title: "Beschluss", is_decision: 1 },
+        { id: 422, level: 2, title: "Wichtig", is_important: 1 },
       ],
     });
 
     assert.equal(rows.length, 1);
     assert.equal(rows[0].id, 422);
+  });
+
+  await run("Tops v2 Integration: Statusfilter verwenden nur die vorhandenen Protokollstatus", () => {
+    const rows = buildListItemsFromState({
+      topFilter: "status:in arbeit",
+      tops: [
+        { id: 423, level: 2, title: "Offen", status: "offen" },
+        { id: 424, level: 2, title: "Arbeit", status: "in arbeit" },
+        { id: 425, level: 2, title: "Erledigt", status: "erledigt" },
+      ],
+    });
+
+    assert.deepEqual(rows.map((row) => row.id), [424]);
   });
 
   await run("Tops v2 Integration: Langtext-Ausblendung nimmt die Preview aus der Liste", () => {
@@ -1368,10 +1439,19 @@ async function runTopsScreenIntegrationTests(run) {
     const prevWindow = globalThis.window;
     const doc = createFakeDocument();
     const calls = [];
+    const sessionValues = new Map();
     globalThis.document = doc;
     globalThis.window = {
       bbmDb: {},
       document: doc,
+      sessionStorage: {
+        getItem(key) {
+          return sessionValues.has(key) ? sessionValues.get(key) : null;
+        },
+        setItem(key, value) {
+          sessionValues.set(key, String(value));
+        },
+      },
       alert(message) {
         calls.push(["mail-alert", message]);
       },
@@ -1461,11 +1541,24 @@ async function runTopsScreenIntegrationTests(run) {
       pinButton.dispatchEvent({ type: "click", preventDefault() {} });
       assert.equal(quicklane.dataset.pinned, "true");
       assert.equal(quicklane.dataset.open, "true");
+      assert.equal(router.context.ui.protokollQuicklanePinned, true);
+      const restoredScreen = new TopsScreen({
+        router: { ...router, context: { projectLabel: "Projekt X", ui: {} } },
+        projectId: 17,
+        meetingId: 21,
+      });
+      restoredScreen._buildQuicklane();
+      assert.equal(restoredScreen.quicklane.root.dataset.pinned, "true");
       const unpinButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.pin");
       assert.equal(unpinButton.getAttribute?.("aria-pressed") || unpinButton["aria-pressed"], "true");
       unpinButton.dispatchEvent({ type: "click", preventDefault() {} });
       assert.equal(quicklane.dataset.pinned, "false");
       assert.equal(quicklane.dataset.open, "false");
+      assert.equal(router.context.ui.protokollQuicklanePinned, false);
+
+      screen._setCollapsedLevel1Ids(["501"]);
+      const restoredCollapseScreen = new TopsScreen({ router, projectId: 17, meetingId: 21 });
+      assert.deepEqual(restoredCollapseScreen.store.getState().collapsedLevel1Ids, ["501"]);
 
       projectButton.dispatchEvent({ type: "click", preventDefault() {} });
       firmsButton.dispatchEvent({ type: "click", preventDefault() {} });
@@ -1497,7 +1590,14 @@ async function runTopsScreenIntegrationTests(run) {
       assert.equal(screen.showLongtextInList, true);
 
       filterButton.dispatchEvent({ type: "click", preventDefault() {} });
-      const todoItem = quicklane.querySelectorAll("[data-filter-mode]").find((item) => item.dataset.filterMode === "todo");
+      const filterItems = quicklane.querySelectorAll("[data-filter-mode]");
+      assert.deepEqual(
+        filterItems.map((item) => item.dataset.filterMode),
+        ["all", "important", "todo", "status:offen", "status:in arbeit", "status:erledigt", "status:blockiert", "status:verzug"]
+      );
+      assert.equal(filterItems.some((item) => item.dataset.filterMode === "decision"), false);
+      assert.equal(filterItems[3].dataset.groupStart, "true");
+      const todoItem = filterItems.find((item) => item.dataset.filterMode === "todo");
       assert.ok(todoItem);
       todoItem.dispatchEvent({ type: "click", preventDefault() {} });
       assert.equal(screen.getTopFilter(), "todo");
@@ -1652,6 +1752,12 @@ async function runTopsScreenIntegrationTests(run) {
       const meta = new WorkbenchMetaColumn({
         flagsWrap: shared.flagsWrap,
       });
+
+      meta.applyState({ value: {}, access: { hidden: true, disabled: true } });
+      assert.equal(meta.metaFields.hidden, true);
+      assert.equal(meta.metaFields.style.display, "none");
+      meta.applyState({ value: {}, access: { hidden: false, disabled: false } });
+      assert.equal(meta.metaFields.style.display, "");
 
       const taskInput = shared.editbox.flagInputs.task;
       const decisionInput = shared.editbox.flagInputs.decision;

@@ -20,6 +20,7 @@ async function runAusgabeModuleTests(run) {
   const printIpcSource = read("src/main/ipc/printIpc.js");
   const printPreloadSource = read("src/main/preload/printPreload.js");
   const printCssSource = read("src/renderer/print/print.css");
+  const printShellSource = read("src/renderer/print/layout/PrintShell.js");
   const layoutCalibrationStateSource = read("src/renderer/layoutTools/layoutCalibrationState.js");
   const settingsViewSource = read("src/renderer/views/SettingsView.js");
   const routerSource = read("src/renderer/app/Router.js");
@@ -32,6 +33,8 @@ async function runAusgabeModuleTests(run) {
   const legacySendMailSource = read("src/renderer/services/mail/sendMailPayload.js");
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
   const mainHeaderSource = read("src/renderer/ui/MainHeader.js");
+  const mailFlowSource = read("src/renderer/features/mail/MailFlow.js");
+  const mainSource = read("src/main/main.js");
 
   await run("Ausgabe: Modul exportiert PrintModal und sendMailPayload", () => {
     assert.equal(typeof PrintModal, "function");
@@ -240,6 +243,41 @@ async function runAusgabeModuleTests(run) {
       printModalSource.includes('const createdDate = isLevel1 ? "" : this._fmtDateYYYYMMDD(createdAtRaw);'),
       true
     );
+  });
+
+  await run("Ausgabe: wichtiger Level-1-Titel nutzt die vorhandene rote PDF-Farblogik", () => {
+    assert.match(
+      printAppSource,
+      /const isImportant = Number\(top\.is_important \?\? top\.isImportant \?\? 0\) === 1;/
+    );
+    assert.match(
+      read("src/renderer/print/layout/PrintShell.js"),
+      /if \(row\.level === 1\)[\s\S]*?if \(row\.isImportant\) tr\.classList\.add\("isImportant"\);[\s\S]*?_applyImportantPrintColor\(topNumberEl, lvl1TextEl\);/
+    );
+    assert.match(
+      printCssSource,
+      /\.lvl1Row\.isImportant \.topNumber,[\s\S]*?\.lvl1Text\.isImportant \{\s*color: #c62828 !important;/
+    );
+  });
+
+  await run("Ausgabe: Level-1-Titel reicht vorhandene ToDo- und Beschlusskennzeichnungen in das PDF durch", () => {
+    assert.match(
+      printAppSource,
+      /const isTask = Number\(top\.is_task \?\? top\.isTask \?\? 0\) === 1;/
+    );
+    assert.match(
+      printAppSource,
+      /const isDecision = Number\(top\.is_decision \?\? top\.isDecision \?\? 0\) === 1;/
+    );
+    assert.equal(printAppSource.includes("appendProtocolTitleMarker(wrap, row);"), true);
+    assert.equal(printShellSource.includes('new URL("../../assets/todo.png", import.meta.url).href'), true);
+    assert.equal(printShellSource.includes('new URL("../../assets/redFlag.png", import.meta.url).href'), true);
+    assert.match(
+      printShellSource,
+      /const markerType = row\?\.isDecision \? "decision" : row\?\.isTask \? "task" : "";/
+    );
+    assert.equal(printShellSource.includes("appendProtocolTitleMarker(wrap, row);"), true);
+    assert.equal(printCssSource.includes(".lvl1Marker img"), true);
   });
 
   await run("Ausgabe: PDF-Schriftgrößen sind auf die neuen TOP-Werte gesetzt", () => {
@@ -472,6 +510,57 @@ async function runAusgabeModuleTests(run) {
     }
   });
 
+  await run("Ausgabe: Attachment-Fehler faellt nicht auf einen Pfadtext-mailto-Entwurf zurueck", async () => {
+    const originalWindow = global.window;
+    const originalDocument = global.document;
+    const originalAlert = global.alert;
+    const alerts = [];
+    const fallbackCalls = [];
+
+    global.window = {
+      localStorage: { getItem() { return ""; } },
+      location: { href: "", assign(url) { this.href = url; } },
+      bbmDb: {
+        licenseGetStatus: async () => ({ ok: true, valid: true, modules: ["protokoll"] }),
+      },
+      bbmMail: {
+        createOutlookDraft: async () => ({ ok: false, error: "Outlook COM blockiert" }),
+      },
+    };
+    global.document = { title: "BBM" };
+    global.alert = (msg) => alerts.push(String(msg || ""));
+
+    try {
+      const header = new MainHeader({ router: { currentProjectId: "17" } });
+      header._sendMailtoFallback = () => fallbackCalls.push("mailto");
+
+      const res = await header._dispatchMailTransport({
+        recipients: ["test@example.de"],
+        subject: "Betreff",
+        body: "Hallo",
+        attachments: ["A.pdf", "B.pdf"],
+      });
+
+      assert.equal(res?.ok, false);
+      assert.equal(res?.attachmentError, true);
+      assert.equal(fallbackCalls.length, 0);
+      assert.equal(alerts.some((text) => text.includes("PDF-Anhängen")), true);
+      assert.equal(alerts.some((text) => text.includes("Outlook COM blockiert")), true);
+    } finally {
+      global.window = originalWindow;
+      global.document = originalDocument;
+      global.alert = originalAlert;
+    }
+  });
+
+  await run("Ausgabe: bestehender Outlook-COM-Weg fuegt alle ausgewaehlten Dateien als echte Anhaenge an", () => {
+    assert.equal(mainSource.includes("$mail.Attachments.Add($att)"), true);
+    assert.equal(mainSource.includes('"-AttachmentsBase64"'), true);
+    assert.equal(mainHeaderSource.includes("if (mailPayload.attachments.length)"), true);
+    assert.equal(mailFlowSource.includes("if (!result?.ok) return;"), true);
+    assert.equal(mailFlowSource.includes("closeOverlay();\n        await this.view._enterIdleAfterClose();"), true);
+  });
+
   await run("Ausgabe: PrintModal gibt blockierten Lizenzfehler strukturiert zurueck", async () => {
     const originalWindow = global.window;
     const originalDocument = global.document;
@@ -528,6 +617,33 @@ async function runAusgabeModuleTests(run) {
       global.document = originalDocument;
       global.alert = originalAlert;
     }
+  });
+
+  await run("Ausgabe: direkter ToDo-Abschlussdruck laeuft ohne sichtbare Verantwortlichenauswahl", async () => {
+    const modal = new PrintModal({ router: {} });
+    let selectionCalls = 0;
+    let printPayload = null;
+    modal._selectTodoResponsibleFilter = async () => {
+      selectionCalls += 1;
+      return "responsible:17";
+    };
+    modal._printProjectListPdf = async (payload) => {
+      printPayload = payload;
+      return { ok: true, filePath: "C:/tmp/todo.pdf" };
+    };
+
+    const result = await modal.printTodoDirect({ projectId: "17" });
+
+    assert.equal(result.ok, true);
+    assert.equal(selectionCalls, 0);
+    assert.equal(printPayload.mode, "todo");
+    assert.equal(printPayload.preview, false);
+    assert.equal(printPayload.todoResponsibleFilter, "all");
+
+    await modal.openTodoPrintPreview({ projectId: "17" });
+    assert.equal(selectionCalls, 1);
+    assert.equal(printPayload.preview, true);
+    assert.equal(printPayload.todoResponsibleFilter, "responsible:17");
   });
 
   await run("Ausgabe: MainHeader-Blocklogik ist im Renderer sichtbar", () => {

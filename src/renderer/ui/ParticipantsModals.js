@@ -1335,29 +1335,28 @@ export default class ParticipantsModals {
 
       const controls = document.createElement("div");
       controls.style.display = "grid";
-      controls.style.gridTemplateRows = "auto auto";
-      controls.style.rowGap = "2px";
-      controls.style.width = "140px";
+      controls.style.gridTemplateColumns = "1fr 1fr";
+      controls.style.columnGap = "8px";
+      controls.style.width = "148px";
       controls.style.flexShrink = "0";
-      controls.style.justifyItems = "end";
+      controls.style.alignItems = "stretch";
 
-      const labelsRow = document.createElement("div");
-      labelsRow.style.display = "grid";
-      labelsRow.style.gridTemplateColumns = "1fr 1fr";
-      labelsRow.style.columnGap = "10px";
-      labelsRow.style.width = "100%";
-      labelsRow.style.justifyItems = "end";
+      const presentColumn = document.createElement("div");
+      presentColumn.style.display = "grid";
+      presentColumn.style.gridTemplateRows = "16px auto";
+      presentColumn.style.justifyItems = "center";
 
       const lblPresent = document.createElement("div");
       lblPresent.textContent = "Anwesend";
       lblPresent.style.fontSize = "12px";
-      lblPresent.style.textAlign = "right";
-      lblPresent.style.transform = "translateX(2.5mm)";
+      lblPresent.style.textAlign = "center";
+      lblPresent.style.width = "100%";
 
       const lblDistribution = document.createElement("div");
       lblDistribution.textContent = "Verteiler";
       lblDistribution.style.fontSize = "12px";
-      lblDistribution.style.textAlign = "right";
+      lblDistribution.style.textAlign = "center";
+      lblDistribution.style.width = "100%";
       lblDistribution.style.cursor = hasEmail ? "default" : "not-allowed";
       lblDistribution.onclick = () => {
         if (hasEmail) return;
@@ -1365,17 +1364,17 @@ export default class ParticipantsModals {
         this._renderParticipantsLists(leftListEl, rightListEl);
       };
 
-      labelsRow.append(lblPresent, lblDistribution);
-
-      const checksRow = document.createElement("div");
-      checksRow.style.display = "grid";
-      checksRow.style.gridTemplateColumns = "1fr 1fr";
-      checksRow.style.columnGap = "10px";
-      checksRow.style.width = "100%";
-      checksRow.style.justifyItems = "center";
+      const distributionColumn = document.createElement("div");
+      distributionColumn.style.display = "grid";
+      distributionColumn.style.gridTemplateRows = "16px auto";
+      distributionColumn.style.justifyItems = "center";
 
       const cbPresent = document.createElement("input");
       cbPresent.type = "checkbox";
+      cbPresent.setAttribute("aria-label", "Anwesend");
+      cbPresent.title = "Anwesend";
+      cbPresent.style.margin = "2px 0 0";
+      cbPresent.style.placeSelf = "center";
       cbPresent.checked = Number(p.isPresent) === 1;
       cbPresent.disabled = this.readOnly || this.isSaving;
       cbPresent.onchange = () => {
@@ -1389,6 +1388,9 @@ export default class ParticipantsModals {
 
       const cbDistribution = document.createElement("input");
       cbDistribution.type = "checkbox";
+      cbDistribution.setAttribute("aria-label", "Im Verteiler");
+      cbDistribution.style.margin = "2px 0 0";
+      cbDistribution.style.placeSelf = "center";
       cbDistribution.checked = Number(p.isInDistribution) === 1;
       cbDistribution.disabled = this.readOnly || this.isSaving || !hasEmail;
       cbDistribution.onchange = () => {
@@ -1402,8 +1404,9 @@ export default class ParticipantsModals {
         p.isInDistribution = cbDistribution.checked ? 1 : 0;
       };
 
-      checksRow.append(cbPresent, cbDistribution);
-      controls.append(labelsRow, checksRow);
+      presentColumn.append(lblPresent, cbPresent);
+      distributionColumn.append(lblDistribution, cbDistribution);
+      controls.append(presentColumn, distributionColumn);
 
       this._renderRow({
         container: leftListEl,
@@ -1412,9 +1415,9 @@ export default class ParticipantsModals {
         roleInline: true,
         firmBelowName: true,
         hideFirmRight: true,
-        rightWidth: "172px",
-        dividerOffsetMm: 14,
-        flushLeftToDivider: true,
+        rightWidth: "166px",
+        dividerOffsetMm: 0,
+        flushLeftToDivider: false,
         leftHintText: showDistributionHint ? "E-Mail Adresse fehlt." : "",
         badgeText: invalidReason ? invalidReason : "",
         onDblClick: () => {

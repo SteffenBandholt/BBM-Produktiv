@@ -119,6 +119,16 @@ async function runPopupFormStandardTests(run) {
     assert.equal(participants.includes('modal.style.maxHeight = "100%"'), true);
     assert.equal(participants.includes('list.className = "bbm-form-card"'), true);
     assert.equal(participants.includes('grid.style.gap = "12px"'), false);
+    assert.equal(participants.includes('lblPresent.textContent = "Anwesend"'), true);
+    assert.equal(participants.includes('cbPresent.setAttribute("aria-label", "Anwesend")'), true);
+    assert.equal(participants.includes('controls.style.gridTemplateColumns = "1fr 1fr"'), true);
+    assert.equal(participants.includes('controls.style.columnGap = "8px"'), true);
+    assert.equal(participants.includes('controls.style.width = "148px"'), true);
+    assert.equal(participants.includes('cbPresent.style.placeSelf = "center"'), true);
+    assert.equal(participants.includes('cbDistribution.style.placeSelf = "center"'), true);
+    assert.equal(participants.includes("flushLeftToDivider: false"), true);
+    assert.equal(participants.includes('rightWidth: "166px"'), true);
+    assert.equal(participants.includes("dividerOffsetMm: 0"), true);
 
     assert.equal(editorHtml.includes('href="./ui/styles/popupFormStandard.css"'), true);
     assert.equal(editorJs.includes('card bbm-popup-standard bbm-popup-dialog'), true);

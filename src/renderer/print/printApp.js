@@ -1,4 +1,5 @@
 import {
+  appendProtocolTitleMarker,
   buildRestarbeitenColGroup,
   buildRestarbeitenRow,
   buildRestarbeitenTableHead,
@@ -603,6 +604,8 @@ function _buildTopRowData(top, longtextOverride, ampelColor) {
   // NEW: carried-over TOP whose longtext was edited later
   const isTouched = Number(top.is_touched ?? top.isTouched ?? 0) === 1;
   const isImportant = Number(top.is_important ?? top.isImportant ?? 0) === 1;
+  const isTask = Number(top.is_task ?? top.isTask ?? 0) === 1;
+  const isDecision = Number(top.is_decision ?? top.isDecision ?? 0) === 1;
 
   const isHiddenTop =
     Number(top?.isHiddenTop ?? top?.is_hidden ?? top?.isHidden ?? 0) === 1 ||
@@ -625,6 +628,8 @@ function _buildTopRowData(top, longtextOverride, ampelColor) {
     isNewTop,
     isTouched, // NEW
     isImportant,
+    isTask,
+    isDecision,
     isHiddenTop,
     title,
     longtext,
@@ -660,6 +665,7 @@ function _buildTopRowElement(row) {
     // Stern im PDF weggelassen, Flag reicht
 
     wrap.append(numBox, _el("div", "lvl1Text", row.title));
+    appendProtocolTitleMarker(wrap, row);
     td.appendChild(wrap);
     tr.appendChild(td);
     return tr;

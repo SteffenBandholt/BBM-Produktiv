@@ -73,7 +73,8 @@ function buildProtocolMetaAccessVm(state, selectedTop) {
   const isWriting = !!state?.isWriting;
   const titleLevel = isTitleLevelTop(selectedTop);
   return {
-    disabled: !!state?.isReadOnly || isWriting,
+    hidden: titleLevel,
+    disabled: !!state?.isReadOnly || isWriting || titleLevel,
     responsibleDisabled: !!state?.isReadOnly || isWriting || titleLevel,
   };
 }

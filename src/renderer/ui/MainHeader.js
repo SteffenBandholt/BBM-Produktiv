@@ -2155,14 +2155,15 @@ _buildFallbackEmailSubject({ projectNumber, projectShortName, mailType } = {}) {
       if (isBlockedTransportPayload(draftRes)) {
         return { ok: false, blocked: true, result: draftRes };
       }
-      console.warn("[header] Outlook draft failed, fallback to mailto:", draftRes?.error || draftRes);
+      console.warn("[header] Outlook draft failed:", draftRes?.error || draftRes);
+      return { ok: false, skipped: false, result: draftRes };
     } catch (err) {
       if (isBlockedTransportPayload(err)) {
         return { ok: false, blocked: true, result: err };
       }
-      console.warn("[header] Outlook draft failed, fallback to mailto:", err);
+      console.warn("[header] Outlook draft failed:", err);
+      return { ok: false, skipped: false, result: err };
     }
-    return { ok: false, skipped: false };
   }
 
   async _dispatchMailTransport(payload = {}) {
@@ -2173,6 +2174,15 @@ _buildFallbackEmailSubject({ projectNumber, projectShortName, mailType } = {}) {
       if (opened?.blocked) {
         alert(getBlockedTransportMessage(opened.result || opened));
         return opened;
+      }
+      if (mailPayload.attachments.length) {
+        const detail = String(opened?.result?.error || "").trim();
+        alert(
+          `Outlook-Entwurf mit PDF-Anhängen konnte nicht geöffnet werden.${
+            detail ? `\n\n${detail}` : ""
+          }`
+        );
+        return { ok: false, attachmentError: true, result: opened?.result || opened };
       }
     }
     try {
@@ -2423,7 +2433,7 @@ async _openMailClient(mailType = "", options = {}) {
     console.warn("[header] protocol pdf resolve failed:", err);
   }
 
-  await this._dispatchMailTransport({
+  return await this._dispatchMailTransport({
     recipients,
     subject: draft.subject,
     body: draft.body,

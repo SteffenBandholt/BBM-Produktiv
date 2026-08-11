@@ -1449,14 +1449,12 @@ export default class PrintModal {
   }
 
   async printTodoDirect({ projectId } = {}) {
-    const filter = await this._selectTodoResponsibleFilter({ projectId });
-    if (filter == null) return false;
     return await this._printProjectListPdf({
       projectId,
       mode: "todo",
       listLabel: "ToDo-Liste",
       preview: false,
-      todoResponsibleFilter: filter,
+      todoResponsibleFilter: "all",
     });
   }
 

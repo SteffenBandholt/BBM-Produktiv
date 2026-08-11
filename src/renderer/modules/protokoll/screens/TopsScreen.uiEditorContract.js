@@ -7,6 +7,7 @@ import {
   m83Element,
   m83Slot,
 } from "../../../ui-editor/m83ComponentContract.js";
+import { TOP_FILTER_OPTIONS } from "../topFilterMode.js";
 
 const scopeId = "protokoll.screen.root";
 const protokollGroupLayout = Object.freeze(["move", "resizeWidth", "resizeHeight"]);
@@ -32,16 +33,14 @@ const quicklaneElements = [
     ["action.preview", "PDF-Vorschau", "output", 57], ["action.print", "Drucken", "output", 58], ["action.mail", "E-Mail", "output", 59],
   ].map(([key, name, group, order]) => m83DomainButton({ id: `protokoll.topsScreen.quicklane.${key}`, name, parentId: `protokoll.topsScreen.quicklane.group.${group}`, order, actionKind: "domainAction" })),
   m83Element({ id: "protokoll.topsScreen.quicklane.filter.menu", name: "TOP-Filterauswahl", type: "group", role: "layoutGroup", parentId: "protokoll.topsScreen.quicklane", order: 60, allowedOps: GROUP_LAYOUT, componentKind: "transientMenu" }),
-  ...[["all", "Alle", 61], ["todo", "ToDo", 62], ["decision", "Beschluss", 63]].map(([key, name, order]) => m83DomainButton({ id: `protokoll.topsScreen.quicklane.filter.option.${key}`, name, parentId: "protokoll.topsScreen.quicklane.filter.menu", order, actionKind: "filter" })),
+  ...TOP_FILTER_OPTIONS.map((option, index) => m83DomainButton({ id: `protokoll.topsScreen.quicklane.filter.option.${option.contractKey}`, name: option.label, parentId: "protokoll.topsScreen.quicklane.filter.menu", order: 61 + index, actionKind: "filter" })),
 ];
 
 const elements = [...screenElements, ...quicklaneElements];
 const optionalScreenSlotIds = new Set();
 const optionalQuicklaneSlotIds = new Set([
   "protokoll.topsScreen.quicklane.filter.menu",
-  "protokoll.topsScreen.quicklane.filter.option.all",
-  "protokoll.topsScreen.quicklane.filter.option.todo",
-  "protokoll.topsScreen.quicklane.filter.option.decision",
+  ...TOP_FILTER_OPTIONS.map((option) => `protokoll.topsScreen.quicklane.filter.option.${option.contractKey}`),
 ]);
 
 export const PROTOKOLL_SCREEN_REQUIRED_SLOTS = Object.freeze([

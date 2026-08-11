@@ -765,6 +765,25 @@ body[data-orientation="portrait"] .measureRoot,
   text-overflow: ellipsis;
 }
 
+.lvl1Marker {
+  width: 3.8mm;
+  height: 3.8mm;
+  margin-left: 1.5mm;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 3.8mm;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.lvl1Marker img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
 .lvl1Row .nrBox {
   width: 23mm;
   min-width: 23mm;

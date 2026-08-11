@@ -257,7 +257,7 @@ export function buildListItemsFromState(state, options = {}) {
         childrenColors: [],
         now: new Date(),
       }) || null;
-    const isImportant = !isTitle && Number(top?.is_important ?? top?.isImportant) === 1;
+    const isImportant = Number(top?.is_important ?? top?.isImportant) === 1;
     const isTask = Number(top?.is_task ?? top?.isTask) === 1;
     const isDecision = Number(top?.is_decision ?? top?.isDecision) === 1;
     const responsible = (top?.responsible_label || top?.responsibleLabel || "").toString().trim();
@@ -268,15 +268,13 @@ export function buildListItemsFromState(state, options = {}) {
       if (status) meta.push(status);
       if (responsible) meta.push(responsible);
     }
-    const metaSymbolType = !isTitle
-      ? isDecision
-        ? "decision"
-        : isTask
-          ? "task"
-          : showAmpelInList && ampelColor
-            ? "ampel"
-            : null
-      : null;
+    const metaSymbolType = isDecision
+      ? "decision"
+      : isTask
+        ? "task"
+        : !isTitle && showAmpelInList && ampelColor
+          ? "ampel"
+          : null;
 
     let isMoveTarget = null;
     let moveState = "normal";
@@ -315,8 +313,8 @@ export function buildListItemsFromState(state, options = {}) {
       moveState,
       isImportant,
       isCompleted,
-      isTask: !isTitle && isTask,
-      isDecision: !isTitle && isDecision,
+      isTask,
+      isDecision,
       metaSymbolType,
       visualState: visual.visualState,
       showStar: visual.showStar,

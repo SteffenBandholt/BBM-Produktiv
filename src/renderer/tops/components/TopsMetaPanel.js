@@ -4,7 +4,7 @@ const TOPS_META_DEFAULT_VALUE = Object.freeze({
   responsible_label: "",
 });
 
-const TOPS_META_STATUS_OPTIONS = Object.freeze([
+export const TOPS_META_STATUS_OPTIONS = Object.freeze([
   { value: "-", label: "-", disabled: false },
   { value: "offen", label: "offen", disabled: false },
   { value: "in arbeit", label: "in arbeit", disabled: false },

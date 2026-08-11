@@ -30,8 +30,13 @@ const BUTTONS = Object.freeze([
   ["protokoll.topsScreen.quicklane.action.print", "protokoll.topsScreen.quicklane.group.output", "group.children[index]"],
   ["protokoll.topsScreen.quicklane.action.mail", "protokoll.topsScreen.quicklane.group.output", "group.children[index]"],
   ["protokoll.topsScreen.quicklane.filter.option.all", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
+  ["protokoll.topsScreen.quicklane.filter.option.important", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
   ["protokoll.topsScreen.quicklane.filter.option.todo", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
-  ["protokoll.topsScreen.quicklane.filter.option.decision", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
+  ["protokoll.topsScreen.quicklane.filter.option.status.open", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
+  ["protokoll.topsScreen.quicklane.filter.option.status.inProgress", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
+  ["protokoll.topsScreen.quicklane.filter.option.status.done", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
+  ["protokoll.topsScreen.quicklane.filter.option.status.blocked", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
+  ["protokoll.topsScreen.quicklane.filter.option.status.overdue", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
 ]);
 
 class FakeElement {
@@ -72,7 +77,7 @@ async function runM867ProtokollButtonContractTests(run) {
       assert.match(screenSource, new RegExp(`registerM80Ref\\("${id.replace(/\\./g, "\\\\.")}", [^\\n]*${ref}`), id);
     }
     assert.match(quicklaneSource, /registerM80Ref\(buttonId, group\.children\[index\]\)/);
-    assert.match(quicklaneSource, /registerM80Ref\(`protokoll\.topsScreen\.quicklane\.filter\.option\.\$\{option\.mode\}`, menu\.children\[index\]\)/);
+    assert.match(quicklaneSource, /registerM80Ref\(`protokoll\.topsScreen\.quicklane\.filter\.option\.\$\{getTopFilterContractKey\(option\.mode\)\}`, menu\.children\[index\]\)/);
     assert.doesNotMatch(screenSource.slice(screenSource.indexOf("  _registerUiEditorRefs() {"), screenSource.indexOf("  _buildProtocolScreenRegions() {")), /createElement|appendChild|insertBefore|querySelector/);
   });
 

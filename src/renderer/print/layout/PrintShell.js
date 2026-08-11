@@ -13,6 +13,8 @@ import {
 import { normalizePrintMode } from "../../../shared/print/printModes.mjs";
 
 const APP_ICON_URL = new URL("../assets/bbm-icon.png", window.location.href).toString();
+const TODO_MARKER_URL = new URL("../../assets/todo.png", import.meta.url).href;
+const DECISION_MARKER_URL = new URL("../../assets/redFlag.png", import.meta.url).href;
 const PROTOKOLL_TOPS_LAYOUT = getProtokollTopsLayout();
 
 function _normalizeOrientation(value) {
@@ -29,6 +31,23 @@ function _el(tag, className, text) {
   if (className) el.className = className;
   if (text != null) el.textContent = text;
   return el;
+}
+
+export function appendProtocolTitleMarker(container, row = {}) {
+  if (!container || Number(row?.level) !== 1) return null;
+  const markerType = row?.isDecision ? "decision" : row?.isTask ? "task" : "";
+  if (!markerType) return null;
+
+  const marker = _el("span", "lvl1Marker");
+  marker.dataset.marker = markerType;
+  const img = document.createElement("img");
+  const isDecision = markerType === "decision";
+  img.src = isDecision ? DECISION_MARKER_URL : TODO_MARKER_URL;
+  img.alt = isDecision ? "Beschluss" : "ToDo";
+  img.title = img.alt;
+  marker.appendChild(img);
+  container.appendChild(marker);
+  return marker;
 }
 
 export const RESTARBEITEN_PDF_COLUMNS = Object.freeze([
@@ -204,6 +223,7 @@ function _buildTopRow(row) {
 
     const lvl1TextEl = _el("div", "lvl1Text", normalizeTopShortText(row.title));
     wrap.append(numBox, lvl1TextEl);
+    appendProtocolTitleMarker(wrap, row);
     if (row.isImportant) _applyImportantPrintColor(topNumberEl, lvl1TextEl);
     td.appendChild(wrap);
     tr.appendChild(td);

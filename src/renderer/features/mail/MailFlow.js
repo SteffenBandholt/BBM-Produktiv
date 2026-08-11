@@ -261,18 +261,20 @@ export class MailFlow {
     btnSend.onclick = async () => {
       btnSend.disabled = true;
       try {
-        await headerHelper._openMailClient("", {
+        const result = await headerHelper._openMailClient("", {
           recipients: selectedRecipients,
           subject: subjectInput.value,
           body: bodyInput.value,
           attachments: collectAttachments(),
           meeting: meetingRef,
         });
+        if (!result?.ok) return;
+        closeOverlay();
+        await this.view._enterIdleAfterClose();
       } catch (err) {
         console.error("[tops] send mail failed:", err);
       } finally {
-        closeOverlay();
-        await this.view._enterIdleAfterClose();
+        btnSend.disabled = false;
       }
     };
 

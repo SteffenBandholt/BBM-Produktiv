@@ -1,5 +1,16 @@
 # STATUS.md — BBM-Produktiv
 
+## P1-A - Protokoll V1: UI und Zustaende
+
+- Status: `[P]`; die drei letzten P1-A-Abnahmekorrekturen sind technisch und praktisch im isolierten Electron-Profil geprueft. Die fachliche Nutzerabnahme bleibt offen.
+- Der Teilnehmerdialog haelt zwischen `Rolle/Funktion` und Trennlinie 8 px Abstand. `Anwesend` und `Verteiler` besitzen gleich breite Bereiche; beide Checkboxen sind mittig unter ihren Ueberschriften ausgerichtet. Die Teilnehmerlogik blieb unveraendert.
+- Der TOP-Filter ist in `Alle`, `Wichtig`, `ToDo` und die tatsaechlich vorhandenen Statuswerte `Offen`, `In Arbeit`, `Erledigt`, `Blockiert`, `Verzug` gegliedert. Quicklane-Pin und Einklappzustand funktionieren weiterhin.
+- Bei Level-1-Titeln bleiben Status, Verantwortlich und Faelligkeit ausgeblendet und deaktiviert. `Wichtig` faerbt Titel in UI und PDF mit der vorhandenen Rotlogik; ToDo und Beschluss verwenden jetzt auch im PDF die bereits vorhandenen Symbole. Normale TOPs behalten den bisherigen Metabereich.
+- `Protokoll beenden` zeigt zuerst `Naechste Besprechung`, erzeugt danach Protokoll-, Firmenlisten-, ToDo- und TOP-Listen-PDF still im Hintergrund und oeffnet erst anschliessend den vorhandenen E-Mail-Dialog. Outlook erhaelt die vier erzeugten PDFs als echte Attachments. Bei Attachment-Fehlern wird kein pfadbasierter `mailto:`-Ersatzentwurf mehr geoeffnet; der BBM-Maildialog bleibt zur Wiederholung offen. Ein E-Mail-Abbruch laesst das Protokoll geschlossen.
+- Praktische Regression: altes Protokoll #1 erreichbar, Protokoll #2 abgeschlossen/read-only, neues Protokoll #3 mit fortgefuehrter TOP-Struktur angelegt und wieder abgeschlossen, Titel und TOP angelegt/bearbeitet, Teilnehmerlayout und PDF-Vorschau geprueft. Beim Abschluss war kein ToDo-/Druckdialog sichtbar. Der Outlook-Entwurf zeigte vier echte PDF-Anhaenge und wurde ohne Versand verworfen.
+- Gezielte Protokoll-, Popup-, Ausgabe-, CloseFlow-, Button-, UI-Vertrags- und PDF-Golden-Pruefungen sind gruen. Der gezielte ESLint-Lauf der korrigierten Produktdateien ausser `printApp.js` hat 0 Fehler; `printApp.js` behaelt seine zwei bereits auf `HEAD` vorhandenen `no-undef`-Fehler ausserhalb der geaenderten Zeilen.
+- Commit, Push und PR: keiner. Naechster offener Schritt: fachliche Abnahme von P1-A; P1-B nur als separates, ausdruecklich beauftragtes Paket.
+
 ### BBM Popup-Standardisierung abgeschlossen
 
 - Status: `[A]`; die letzte produktiv aktive Dialogwelle ist auf den unveränderten zentralen Popup-/Formularstandard umgestellt. Dazu gehören das Restarbeiten-Notizen-Popup, der über die Quicklane produktiv erreichte MainHeader-Maildialog, die aktiven TOP-Hinweis-/Schlagwortdialoge, `Protokoll anlegen` sowie alle produktiv erreichbaren Settings-Popups.

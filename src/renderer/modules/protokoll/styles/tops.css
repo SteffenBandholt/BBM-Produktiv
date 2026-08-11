@@ -448,7 +448,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   border-radius: 10px 0 0 10px;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 10px 22px rgba(31, 41, 55, 0.1);
-  overflow: hidden;
+  overflow: visible;
   transform: translateX(46px);
   transition: transform 160ms ease, box-shadow 140ms ease, border-color 140ms ease;
 }
@@ -605,6 +605,12 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   color: var(--bbm-tops-text);
   text-align: start;
   cursor: pointer;
+}
+
+.bbm-tops-screen-quicklane-filter-menu button[data-group-start="true"] {
+  margin-block-start: 3px;
+  padding-block-start: 9px;
+  border-block-start-color: var(--bbm-tops-line);
 }
 
 .bbm-tops-screen-quicklane-filter-menu button:hover,

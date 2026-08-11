@@ -306,6 +306,23 @@ export class TopsList {
     const meta = document.createElement("div");
     meta.className = "bbm-tops-list-row-meta";
     this._decorateLayoutZone(meta, "meta");
+    const titleSymbolType = item.isTitle ? String(item.metaSymbolType || "") : "";
+    if (titleSymbolType === "decision" || titleSymbolType === "task") {
+      const symbolRow = document.createElement("div");
+      symbolRow.className = "bbm-tops-list-row-meta-line bbm-tops-list-row-title-symbol";
+      const img = document.createElement("img");
+      const isDecision = titleSymbolType === "decision";
+      img.className = "bbm-tops-list-row-meta-symbol";
+      img.src = isDecision ? RED_FLAG_PNG : TODO_PNG;
+      img.alt = isDecision ? "Beschluss" : "ToDo";
+      img.title = img.alt;
+      img.dataset.symbol = titleSymbolType;
+      symbolRow.appendChild(img);
+      meta.appendChild(symbolRow);
+      this._uiEditorRefs[
+        isDecision ? "protokoll.list.row.decision" : "protokoll.list.row.todo"
+      ].push(img);
+    }
     const legacyMeta = Array.isArray(item.meta) ? item.meta : [];
     const metaLines = [
       { refId: "protokoll.list.row.due", value: item.due ?? legacyMeta[0] ?? "", kind: "due" },

@@ -1,13 +1,14 @@
-import { getTopFilterBadge, getTopFilterLabel, normalizeTopFilterMode } from "./topFilterMode.js";
+import {
+  TOP_FILTER_OPTIONS,
+  getTopFilterBadge,
+  getTopFilterContractKey,
+  getTopFilterLabel,
+  normalizeTopFilterMode,
+} from "./topFilterMode.js";
 import { beginM83ComponentBinding, completeM80PilotRender, registerM80MultiRef, registerM80Ref } from "../../ui-editor/m80Refs.js";
 
 const ICON_CLASS = "bbm-tops-screen-quicklane-icon";
 const AMPEL_STATUS_ICON_URL = "./assets/icons/ampel-status.svg";
-const FILTER_OPTIONS = Object.freeze([
-  { mode: "all", label: "Alle" },
-  { mode: "todo", label: "ToDo" },
-  { mode: "decision", label: "Beschluss" },
-]);
 
 function createTextIcon(label) {
   const icon = document.createElement("span");
@@ -101,8 +102,9 @@ export class TopsScreenQuicklane {
     this.root.dataset.pinned = "false";
     this.root.dataset.open = "false";
     this.filterMenu = null;
-    this.pinned = false;
+    this.pinned = !!this.callbacks.initialPinned;
     this.lastState = {};
+    this._syncPinnedState();
   }
 
   update({
@@ -245,7 +247,7 @@ export class TopsScreenQuicklane {
       buttonIds.forEach((buttonId, index) => registerM80Ref(buttonId, group.children[index]));
     }
     registerM80MultiRef("protokoll.topsScreen.quicklane.filter.menu", [], this.root);
-    FILTER_OPTIONS.forEach((option) => registerM80MultiRef(`protokoll.topsScreen.quicklane.filter.option.${option.mode}`, [], this.root));
+    TOP_FILTER_OPTIONS.forEach((option) => registerM80MultiRef(`protokoll.topsScreen.quicklane.filter.option.${option.contractKey}`, [], this.root));
     completeM80PilotRender();
   }
 
@@ -258,11 +260,17 @@ export class TopsScreenQuicklane {
 
     const menu = document.createElement("div");
     menu.className = "bbm-tops-screen-quicklane-filter-menu";
-    for (const option of FILTER_OPTIONS) {
+    let statusGroupStarted = false;
+    for (const option of TOP_FILTER_OPTIONS) {
       const item = document.createElement("button");
       item.type = "button";
       item.textContent = option.label;
       item.dataset.filterMode = option.mode;
+      item.dataset.filterGroup = option.group;
+      if (option.group === "status" && !statusGroupStarted) {
+        item.dataset.groupStart = "true";
+        statusGroupStarted = true;
+      }
       item.dataset.active = option.mode === currentMode ? "true" : "false";
       item.addEventListener("click", (event) => {
         event.preventDefault();
@@ -275,8 +283,8 @@ export class TopsScreenQuicklane {
     this.filterMenu = menu;
     this.root.appendChild(menu);
     registerM80Ref("protokoll.topsScreen.quicklane.filter.menu", menu);
-    FILTER_OPTIONS.forEach((option, index) => {
-      registerM80Ref(`protokoll.topsScreen.quicklane.filter.option.${option.mode}`, menu.children[index]);
+    TOP_FILTER_OPTIONS.forEach((option, index) => {
+      registerM80Ref(`protokoll.topsScreen.quicklane.filter.option.${getTopFilterContractKey(option.mode)}`, menu.children[index]);
     });
     completeM80PilotRender();
   }
@@ -284,6 +292,7 @@ export class TopsScreenQuicklane {
   _togglePinned() {
     this.pinned = !this.pinned;
     this._syncPinnedState();
+    this.callbacks.onPinnedChange?.(this.pinned);
     this.update(this.lastState);
   }
 

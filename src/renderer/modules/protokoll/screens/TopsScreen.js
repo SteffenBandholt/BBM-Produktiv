@@ -48,6 +48,8 @@ import {
   registerM80TableRef,
 } from "../../../ui-editor/m80Refs.js";
 
+const PROTOKOLL_QUICKLANE_PIN_SESSION_KEY = "bbm.protokoll.quicklane.pinned";
+
 function buildInitialProtocolScreenState({ projectId = null, meetingId = null } = {}) {
   return {
     projectId,
@@ -143,6 +145,7 @@ export default class TopsScreen {
         meetingId: this.meetingId,
       })
     );
+    this._restoreTransientUiState();
     this.commands = new TopsCommands({
       store: this.store,
       repository: this.topsRepository,
@@ -281,6 +284,8 @@ export default class TopsScreen {
 
   _buildQuicklane() {
     this.quicklane = new TopsScreenQuicklane({
+      initialPinned: this._readQuicklanePinned(),
+      onPinnedChange: (pinned) => this._persistQuicklanePinned(pinned),
       onProject: () => this._openQuicklaneProject(),
       onFirms: () => this._openQuicklaneFirms(),
       onParticipants: () => this._openQuicklaneParticipants(),
@@ -397,11 +402,71 @@ export default class TopsScreen {
   }
 
   _setCollapsedLevel1Ids(nextIds) {
-    this.store.setState({
-      collapsedLevel1Ids: Array.isArray(nextIds)
-        ? nextIds.map((id) => String(id || "").trim()).filter(Boolean)
-        : [],
-    });
+    const collapsedLevel1Ids = Array.isArray(nextIds)
+      ? nextIds.map((id) => String(id || "").trim()).filter(Boolean)
+      : [];
+    this.store.setState({ collapsedLevel1Ids });
+    this._persistCollapsedLevel1Ids(collapsedLevel1Ids);
+  }
+
+  _transientUiContextKey() {
+    const state = this.store?.getState?.() || {};
+    const projectId = String(state.projectId ?? this.projectId ?? "").trim();
+    const meetingId = String(state.meetingId ?? this.meetingId ?? "").trim();
+    return projectId && meetingId ? `${projectId}:${meetingId}` : "";
+  }
+
+  _restoreTransientUiState() {
+    const ui = this.router?.context?.ui;
+    if (!ui) return;
+
+    const patch = {};
+    if (ui.topFilter !== undefined) {
+      patch.topFilter = normalizeTopFilterMode(ui.topFilter);
+    }
+
+    const contextKey = this._transientUiContextKey();
+    const collapsedByMeeting = ui.protokollCollapsedLevel1IdsByMeeting;
+    const collapsedIds = contextKey && collapsedByMeeting?.[contextKey];
+    if (Array.isArray(collapsedIds)) {
+      patch.collapsedLevel1Ids = collapsedIds
+        .map((id) => String(id || "").trim())
+        .filter(Boolean);
+    }
+
+    if (Object.keys(patch).length) this.store.setState(patch);
+  }
+
+  _persistCollapsedLevel1Ids(collapsedLevel1Ids) {
+    const ui = this.router?.context?.ui;
+    const contextKey = this._transientUiContextKey();
+    if (!ui || !contextKey) return;
+
+    const current = ui.protokollCollapsedLevel1IdsByMeeting;
+    ui.protokollCollapsedLevel1IdsByMeeting = {
+      ...(current && typeof current === "object" ? current : {}),
+      [contextKey]: [...collapsedLevel1Ids],
+    };
+  }
+
+  _persistQuicklanePinned(pinned) {
+    const ui = this.router?.context?.ui;
+    if (ui) ui.protokollQuicklanePinned = !!pinned;
+    try {
+      window.sessionStorage?.setItem(PROTOKOLL_QUICKLANE_PIN_SESSION_KEY, pinned ? "true" : "false");
+    } catch {
+      // Der Router-Kontext bleibt der tabinterne Fallback, falls Web Storage nicht verfuegbar ist.
+    }
+  }
+
+  _readQuicklanePinned() {
+    try {
+      const stored = window.sessionStorage?.getItem(PROTOKOLL_QUICKLANE_PIN_SESSION_KEY);
+      if (stored === "true" || stored === "false") return stored === "true";
+    } catch {
+      // Fallback auf den vorhandenen Router-Kontext.
+    }
+    return !!this.router?.context?.ui?.protokollQuicklanePinned;
   }
 
   _normalizeSelectionAfterCollapseChange() {
