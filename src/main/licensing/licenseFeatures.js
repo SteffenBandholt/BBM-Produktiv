@@ -14,11 +14,15 @@ const KNOWN_LICENSE_MODULE_IDS = Object.freeze(Object.values(LICENSE_MODULES));
 const LEGACY_FEATURE_ALIASES = Object.freeze({
   audio: LICENSE_FEATURES.DIKTAT,
   dictate: LICENSE_FEATURES.DIKTAT,
-  app: LICENSE_MODULES.PROTOKOLL,
-  pdf: LICENSE_MODULES.PROTOKOLL,
-  export: LICENSE_MODULES.PROTOKOLL,
-  mail: LICENSE_MODULES.PROTOKOLL,
 });
+
+const LEGACY_PROTOKOLL_FEATURE_IDS = Object.freeze([
+  "app",
+  "pdf",
+  "export",
+  "mail",
+  LICENSE_MODULES.PROTOKOLL,
+]);
 
 function _normalizeFeatureValue(value) {
   return String(value || "").trim().toLowerCase();
@@ -58,10 +62,18 @@ function isOptionalLicensedFeature(feature) {
   return normalizeFeatureAlias(feature) === LICENSE_FEATURES.DIKTAT;
 }
 
+function _hasLegacyProtokollFeature(features) {
+  if (!Array.isArray(features)) return false;
+  return features.some((value) =>
+    LEGACY_PROTOKOLL_FEATURE_IDS.includes(_normalizeFeatureValue(value))
+  );
+}
+
 function normalizeLicensedModules(modules, features) {
   const rawModules = Array.isArray(modules) ? modules : [];
   const normalized = [];
   const seen = new Set();
+
   rawModules.forEach((value) => {
     const mod = _normalizeFeatureValue(value);
     const isAllowedModule = KNOWN_LICENSE_MODULE_IDS.includes(mod);
@@ -69,12 +81,14 @@ function normalizeLicensedModules(modules, features) {
     seen.add(mod);
     normalized.push(mod);
   });
-  if (!seen.has(LICENSE_MODULES.PROTOKOLL)) {
-    const fallback = Array.isArray(features)
-      ? features.some((value) => normalizeFeatureAlias(value) === LICENSE_MODULES.PROTOKOLL)
-      : false;
-    if (fallback) normalized.push(LICENSE_MODULES.PROTOKOLL);
+
+  // Bestandslizenzen vor dem kanonischen Modulmodell führten app/pdf/export/mail
+  // als Feature-Kennungen. Diese Übersetzung bleibt ausschließlich hier als
+  // Kompatibilitätsschicht bestehen; die Begriffe sind keine Modul-IDs mehr.
+  if (!seen.has(LICENSE_MODULES.PROTOKOLL) && _hasLegacyProtokollFeature(features)) {
+    normalized.push(LICENSE_MODULES.PROTOKOLL);
   }
+
   return normalized;
 }
 
@@ -92,6 +106,7 @@ module.exports = {
   LICENSE_MODULES,
   LICENSE_FEATURES,
   KNOWN_LICENSE_MODULE_IDS,
+  LEGACY_PROTOKOLL_FEATURE_IDS,
   normalizeLicensedModules,
   normalizeFeatureAlias,
   normalizeLicensedFeatures,
