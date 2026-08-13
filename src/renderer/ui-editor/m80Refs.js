@@ -7,6 +7,8 @@ import {
   fitTableToViewport,
   measureTableLayout,
   normalizeTableLayout,
+  resizeTableColumnBoundary,
+  validateTableColumnRuntimeMetrics,
 } from "../../../node_modules/ui-editor-kit/dist/table-layout-contract.mjs";
 import {
   compareUiTopology,
@@ -44,6 +46,13 @@ function px(value) { return `${Math.round(Number(value) * 1000) / 1000}px`; }
 function isElementRef(value) { return Boolean(value) && typeof value.setAttribute === "function"; }
 function rectOf(element) { return typeof element.getBoundingClientRect === "function" ? element.getBoundingClientRect() : { left: 0, top: 0, width: finite(parseFloat(element.style?.width)), height: finite(parseFloat(element.style?.height)) }; }
 function styleOf(element) { return globalThis.window?.getComputedStyle?.(element) || element.style || {}; }
+function contentBoxWidthOf(element) {
+  const rect = rectOf(element);
+  const style = styleOf(element);
+  const chrome = ["paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth"]
+    .reduce((sum, field) => sum + Math.max(0, finite(parseFloat(style?.[field]))), 0);
+  return Math.max(0, finite(rect.width) - chrome);
+}
 function hasClass(element, className) { return element.classList?.contains?.(className) ?? String(element.className || "").split(/\s+/).includes(className); }
 function toggleClass(element, className, enabled) {
   if (element.classList?.toggle) { element.classList.toggle(className, enabled); return; }
@@ -52,6 +61,7 @@ function toggleClass(element, className, enabled) {
   element.className = [...names].join(" ");
 }
 function setCustomProperty(style, name, value) { if (typeof style?.setProperty === "function") style.setProperty(name, value); else if (style) style[name] = value; }
+function removeCustomProperty(style, name) { if (typeof style?.removeProperty === "function") style.removeProperty(name); else if (style) delete style[name]; }
 function setLayoutProperty(style, name, value) {
   if (!style) return;
   if (typeof style.setProperty === "function") {
@@ -166,6 +176,16 @@ function bounded(entry, field, value, fallback) {
   return clamp(positive(value, fallback), positive(baseline[`min${capitalized}`], 1), positive(baseline[`max${capitalized}`], Number.MAX_SAFE_INTEGER));
 }
 
+function isTableDataCellContent(entry) {
+  let current = entry;
+  while (current) {
+    if (current.type === "tableDataCell" || current.role === "tableDataCell" ||
+        current.componentKind === "dataCellTemplate" || current.tableBinding?.region === "data") return true;
+    current = current.parentId ? getM80RegistryEntry(current.parentId) : null;
+  }
+  return false;
+}
+
 function applyGeneric(element, state, entry, requestedOperation = null) {
   const operations = new Set(entry.allowedOps);
   const applies = (...candidates) => requestedOperation === null || candidates.includes(requestedOperation);
@@ -184,8 +204,15 @@ function applyGeneric(element, state, entry, requestedOperation = null) {
       : Math.max(0, currentBounds.width - currentContentWidth);
     const contentWidth = style.boxSizing === "border-box" ? desiredWidth : Math.max(1, desiredWidth - horizontalChrome);
     setLayoutProperty(element.style, "min-width", px(positive(entry.baseline?.minWidth, 1)));
-    setLayoutProperty(element.style, "max-width", px(positive(entry.baseline?.maxWidth, Number.MAX_SAFE_INTEGER)));
-    setLayoutProperty(element.style, "width", px(contentWidth));
+    const constrainedByTableTrack = isTableDataCellContent(entry);
+    setLayoutProperty(
+      element.style,
+      "max-width",
+      entry.componentKind === "documentPaper" || constrainedByTableTrack
+        ? "100%"
+        : px(positive(entry.baseline?.maxWidth, Number.MAX_SAFE_INTEGER))
+    );
+    setLayoutProperty(element.style, "width", constrainedByTableTrack ? `min(${px(contentWidth)}, 100%)` : px(contentWidth));
     if (style.display === "inline") setLayoutProperty(element.style, "display", "inline-block");
     const parentStyle = element.parentElement ? styleOf(element.parentElement) : {};
     if (String(parentStyle?.display || "").includes("flex")) {
@@ -385,6 +412,54 @@ function writeColumnState(tableElement, id, value) {
   tableElement.dataset.uiEditorTableColumns = JSON.stringify(all);
 }
 
+function columnTrack(layout, width, widthMode = layout.widthMode) {
+  if (widthMode === "proportional") return `minmax(${px(layout.minimumWidth)}, ${Math.max(0.001, width)}fr)`;
+  if (widthMode === "auto") return `minmax(${px(layout.minimumWidth)}, max-content)`;
+  return px(width);
+}
+
+function runtimeColumnMetrics(id, logicalWidth) {
+  const binding = tableColumnRuntimeBindings.get(id);
+  if (!binding) return {};
+  const dataCells = Array.isArray(binding.dataCells) ? binding.dataCells.filter(Boolean) : [];
+  const effectiveWidth = positive(rectOf(binding.headerCell).width, logicalWidth);
+  const metrics = {
+    columnId: id,
+    logicalWidth,
+    effectiveWidth,
+    headerWidth: effectiveWidth,
+    headerContentWidth: contentBoxWidthOf(binding.headerCell),
+    dataCellWidths: dataCells.map((cell) => finite(rectOf(cell).width)),
+    dataContentWidths: dataCells.map(contentBoxWidthOf),
+    mountedDataCellCount: dataCells.length,
+  };
+  const validation = validateTableColumnRuntimeMetrics(metrics, { tolerance: 1 });
+  return {
+    logicalWidth: metrics.logicalWidth,
+    effectiveWidth: metrics.effectiveWidth,
+    headerWidth: metrics.headerWidth,
+    headerContentWidth: metrics.headerContentWidth,
+    dataCellWidths: metrics.dataCellWidths,
+    dataContentWidths: metrics.dataContentWidths,
+    mountedDataCellCount: metrics.mountedDataCellCount,
+    runtimeWidthValid: validation.ok,
+    runtimeWidthErrors: validation.errors.map((entry) => entry.code),
+  };
+}
+
+function stabilizeSiblingColumnTracks(tableId, sourceColumnId) {
+  const tableEntry = getM80RegistryEntry(tableId);
+  for (const column of tableEntry?.tableLayout?.columns || []) {
+    if (column.columnId === sourceColumnId) continue;
+    const binding = tableColumnRuntimeBindings.get(column.columnId);
+    if (!binding || getCustomProperty(binding.tableElement.style, binding.cssVariable)) continue;
+    const state = storedColumnState(binding.tableElement, column.columnId, column);
+    const width = positive(rectOf(binding.headerCell).width, binding.initialWidth || column.currentWidth);
+    const track = columnTrack(column, width, state.widthMode);
+    setCustomProperty(binding.tableElement.style, binding.cssVariable, track);
+  }
+}
+
 function applyColumnTextMode(targets, tableState) {
   for (const target of targets) {
     const boundParts = [target, ...Array.from(target.children || [])];
@@ -403,7 +478,10 @@ export function registerM80TableColumnRef(id, headerCell, dataCells, tableElemen
   const entry = getM80RegistryEntry(id);
   const layout = entry.tableColumnLayout;
   const targets = [headerCell, ...(Array.isArray(dataCells) ? dataCells : [])];
-  tableColumnRuntimeBindings.set(id, { entry, headerCell, tableElement, layoutBoundsElement, cssVariable, initialWidth });
+  const initialEditorTrack = tableColumnRuntimeBindings.get(id)?.initialEditorTrack ?? getCustomProperty(tableElement.style, cssVariable) ?? "";
+  const declaredBaselineTrack = columnTrack(layout, layout.currentWidth, layout.widthMode);
+  if (!getCustomProperty(tableElement.style, cssVariable)) setCustomProperty(tableElement.style, cssVariable, declaredBaselineTrack);
+  tableColumnRuntimeBindings.set(id, { entry, headerCell, dataCells, tableElement, layoutBoundsElement, cssVariable, initialWidth, initialEditorTrack, declaredBaselineTrack });
   const baselineTable = {
     tableId: entry.tableBinding.tableId, columnId: id, widthMode: layout.widthMode,
     wrapMode: layout.wrapMode, overflowMode: layout.overflowMode,
@@ -417,15 +495,20 @@ export function registerM80TableColumnRef(id, headerCell, dataCells, tableElemen
       const rect = rectOf(headerCell);
       const generic = readGeneric(headerCell, id);
       const table = storedColumnState(tableElement, id, baselineTable);
-      const configured = parseFloat(getCustomProperty(tableElement.style, cssVariable));
-      const width = positive(configured, positive(rect.width, initialWidth));
+      const configured = table.widthMode === "fixed" ? parseFloat(getCustomProperty(tableElement.style, cssVariable)) : NaN;
+      const storedWidth = Number(table.currentWidth);
+      const width = Number.isFinite(storedWidth) && storedWidth > 0
+        ? storedWidth
+        : positive(configured, initialWidth);
       const metrics = runtimeTableMetrics(entry.tableBinding.tableId, tableElement, layoutBoundsElement);
+      const columnMetrics = runtimeColumnMetrics(id, width);
+      const { currentWidth: _storedWidth, ...publicTable } = table;
       return {
         ...generic, elementId: id, width, height: positive(rect.height, 1),
         textOffsetX: finite(headerCell.dataset.uiEditorTextX, finite(parseFloat(style.paddingLeft))),
         textOffsetY: finite(headerCell.dataset.uiEditorTextY, finite(parseFloat(style.paddingTop))),
         fontSize: positive(parseFloat(style.fontSize), 12), visible: !hasClass(headerCell, HIDDEN_CLASS),
-        table: { ...table, ...metrics },
+        table: { ...publicTable, ...metrics, ...columnMetrics },
       };
     },
     apply: (state, requestedOperation = null) => {
@@ -438,13 +521,21 @@ export function registerM80TableColumnRef(id, headerCell, dataCells, tableElemen
         .forEach((operation) => applyGenericTargets(targets, state, entry, operation));
       const table = { ...baselineTable, ...(state.table || {}) };
       if (applies("resizeWidth", "setColumnWidthMode", "resetTableColumn")) {
-        const width = bounded(entry, "width", state.width, initialWidth);
-        const widthValue = table.widthMode === "proportional"
-          ? `minmax(${px(layout.minimumWidth)}, 1fr)`
-          : table.widthMode === "auto" ? `minmax(${px(layout.minimumWidth)}, max-content)` : px(width);
-        setCustomProperty(tableElement.style, cssVariable, widthValue);
+        if (requestedOperation === "resetTableColumn") {
+          setCustomProperty(tableElement.style, cssVariable, declaredBaselineTrack);
+        } else {
+          const width = bounded(entry, "width", state.width, initialWidth);
+          if (table.widthMode === "proportional") stabilizeSiblingColumnTracks(entry.tableBinding.tableId, id);
+          const widthValue = columnTrack(layout, width, table.widthMode);
+          setCustomProperty(tableElement.style, cssVariable, widthValue);
+        }
       }
-      if (applies("resizeWidth", "setColumnWidthMode", "setColumnWrapMode", "setColumnOverflowMode", "resetTableColumn")) writeColumnState(tableElement, id, table);
+      if (applies("resizeWidth", "setColumnWidthMode", "setColumnWrapMode", "setColumnOverflowMode", "resetTableColumn")) {
+        const storedTable = requestedOperation === "resetTableColumn"
+          ? baselineTable
+          : { ...table, currentWidth: bounded(entry, "width", state.width, initialWidth) };
+        writeColumnState(tableElement, id, storedTable);
+      }
       if (applies("textMove")) {
         headerCell.dataset.uiEditorTextX = String(finite(state.textOffsetX));
         headerCell.dataset.uiEditorTextY = String(finite(state.textOffsetY));
@@ -485,7 +576,7 @@ function runtimeTableMetrics(tableId, tableElement, layoutBoundsElement) {
     ...tableEntry.tableLayout,
     bounds: { left: tableRect.left, top: tableRect.top, width: tableRect.width, height: tableRect.height },
     viewportBounds: { left: viewportRect.left, top: viewportRect.top, width: viewportRect.width, height: viewportRect.height },
-    contentBounds: { left: tableRect.left, top: tableRect.top, width: Math.max(finite(tableElement.scrollWidth), columns.filter((column) => column.visibility).reduce((sum, column) => sum + column.currentWidth, tableEntry.tableLayout.reservedWidth)), height: Math.max(tableRect.height, finite(tableElement.scrollHeight)) },
+    contentBounds: { left: tableRect.left, top: tableRect.top, width: Math.max(tableRect.width, finite(tableElement.scrollWidth), columns.filter((column) => column.visibility).reduce((sum, column) => sum + column.currentWidth, tableEntry.tableLayout.reservedWidth)), height: Math.max(tableRect.height, finite(tableElement.scrollHeight)) },
     columns,
   });
   const metrics = measureTableLayout(layout);
@@ -501,14 +592,15 @@ function runtimeTableLayout(entry, tableElement, layoutBoundsElement) {
   const tableRect = rectOf(tableElement);
   const viewportRect = rectOf(layoutBoundsElement);
   const columns = entry.tableLayout.columns.map((column) => {
+    const binding = tableColumnRuntimeBindings.get(column.columnId);
     const state = getM80Ref(column.columnId)?.read();
-    return { ...column, currentWidth: positive(state?.width, column.currentWidth), widthMode: state?.table?.widthMode || column.widthMode, wrapMode: state?.table?.wrapMode || column.wrapMode, overflowMode: state?.table?.overflowMode || column.overflowMode, visibility: state?.visible !== false };
+    return { ...column, currentWidth: positive(rectOf(binding?.headerCell || {}).width, column.currentWidth), widthMode: state?.table?.widthMode || column.widthMode, wrapMode: state?.table?.wrapMode || column.wrapMode, overflowMode: state?.table?.overflowMode || column.overflowMode, visibility: state?.visible !== false };
   });
   return normalizeTableLayout({
     ...entry.tableLayout,
     bounds: { left: tableRect.left, top: tableRect.top, width: tableRect.width, height: tableRect.height },
     viewportBounds: { left: viewportRect.left, top: viewportRect.top, width: viewportRect.width, height: viewportRect.height },
-    contentBounds: { left: tableRect.left, top: tableRect.top, width: Math.max(finite(tableElement.scrollWidth), columns.filter((column) => column.visibility).reduce((sum, column) => sum + column.currentWidth, entry.tableLayout.reservedWidth)), height: Math.max(tableRect.height, finite(tableElement.scrollHeight)) },
+    contentBounds: { left: tableRect.left, top: tableRect.top, width: Math.max(tableRect.width, finite(tableElement.scrollWidth), columns.filter((column) => column.visibility).reduce((sum, column) => sum + column.currentWidth, entry.tableLayout.reservedWidth)), height: Math.max(tableRect.height, finite(tableElement.scrollHeight)) },
     horizontalOverflowMode: tableElement.dataset.uiEditorHorizontalOverflowMode || entry.tableLayout.horizontalOverflowMode,
     rowHeightMode: tableElement.dataset.uiEditorRowHeightMode || entry.tableLayout.rowHeightMode,
     columns,
@@ -551,7 +643,23 @@ export function fitM80Table(id, selectedColumnId = "") {
     const current = snapshotM80State(column.columnId);
     affectedStates.push(applyM80State(column.columnId, { ...current, width: column.currentWidth, table: { ...current.table, widthMode: column.widthMode } }, "resizeWidth"));
   }
-  return { result, affectedStates };
+  return { result, affectedStates: affectedStates.map((state) => snapshotM80State(state.elementId)) };
+}
+
+export function resizeM80TableBoundary(id, intent = {}) {
+  const entry = getM80RegistryEntry(id);
+  const ref = getM80Ref(id);
+  if (!entry?.tableLayout || !ref) throw Object.assign(new Error("Tabellenreferenz fehlt."), { code: "electron_element_not_found" });
+  const binding = tableRuntimeBindings.get(id);
+  const layout = runtimeTableLayout(entry, binding?.tableElement || ref.element, binding?.layoutBoundsElement || ref.element);
+  const result = resizeTableColumnBoundary(layout, intent);
+  if (!result.ok) throw Object.assign(new Error(result.errors?.[0]?.message || "Spaltengrenze kann nicht verschoben werden."), { code: result.errors?.[0]?.code || "electron_invalid_geometry" });
+  const affectedStates = [intent.leftColumnId, intent.rightColumnId].map((columnId) => {
+    const column = result.model.columns.find((candidate) => candidate.columnId === columnId);
+    const current = snapshotM80State(columnId);
+    return applyM80State(columnId, { ...current, width: column.currentWidth, table: { ...current.table, widthMode: column.widthMode } }, "resizeWidth");
+  });
+  return { result, affectedStates: affectedStates.map((state) => snapshotM80State(state.elementId)), newState: snapshotM80State(id) };
 }
 
 export function resetM80Table(id) {

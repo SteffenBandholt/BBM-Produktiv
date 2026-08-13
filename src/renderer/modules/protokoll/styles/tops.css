@@ -963,7 +963,10 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   font-size: var(--bbm-tops-list-text-font-size, var(--bbm-tops-list-title-font-size));
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
-  max-inline-size: var(--bbm-top-short-measure);
+  /* A stored content width may be smaller than the column, but it must never
+     escape the currently effective table track after a responsive resize. */
+  max-inline-size: 100%;
+  box-sizing: border-box;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -973,7 +976,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row:not([data-top-level="1"]) .bbm-tops-list-row-title {
-  max-inline-size: 107ch;
+  max-inline-size: 100%;
 }
 
 .bbm-tops-list-row-title[data-tone="blue"] {
@@ -1015,7 +1018,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   font-size: var(--bbm-tops-list-text-font-size, var(--bbm-tops-list-title-font-size));
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
-  max-inline-size: var(--bbm-top-long-measure);
+  max-inline-size: 100%;
   opacity: 0.9;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -1023,7 +1026,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row:not([data-top-level="1"]) .bbm-tops-list-row-preview {
-  max-inline-size: 107ch;
+  max-inline-size: 100%;
 }
 
 /* DEV-Layout override: when the text-zone font variable is set, keep the preview in sync. */
@@ -1037,15 +1040,16 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
 .bbm-tops-list-row-text {
   width: 100%;
+  box-sizing: border-box;
   min-width: 0;
-  max-inline-size: min(100%, var(--bbm-top-long-measure));
+  max-inline-size: 100%;
   padding-left: var(--bbm-tops-list-text-padding-inline, var(--bbm-top-text-pad-x));
   padding-right: var(--bbm-tops-list-text-padding-inline, var(--bbm-top-text-pad-x));
   font-size: var(--bbm-tops-list-text-font-size, var(--bbm-tops-list-title-font-size));
 }
 
 .bbm-tops-list-row:not([data-top-level="1"]) .bbm-tops-list-row-text {
-  max-inline-size: min(100%, 107ch);
+  max-inline-size: 100%;
 }
 
 .bbm-tops-list-row-preview[data-has-preview="false"] {

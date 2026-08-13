@@ -64,6 +64,37 @@ async function runM81BbmPdfAdapterTests(run) {
     assert.equal(submit(`${SCOPE_ID}.tops.column.text`, "setVisibility", { visible: false }).errorCode, "pdf_operation_locked");
   });
 
+  await run("K17 BBM-PDF verschiebt eine echte Spaltengrenze atomar bei fester Gesamtbreite", () => {
+    const table = byId.get(`${SCOPE_ID}.tops`);
+    assert.equal(table.boundaryResizePolicy, "adjacentPreserveTotal");
+    assert.ok(table.capabilities.includes("resizeColumnBoundary"));
+    const adapter = createBbmPdfAdapter();
+    const before = new Map(adapter.getCurrentPdfLayoutState().elements.map((entry) => [entry.elementId, entry]));
+    const result = adapter.submitPdfChangeRequest({
+      changeId: "boundary-text-meta", scopeId: SCOPE_ID, elementId: table.id, operation: "resizeColumnBoundary",
+      payload: { table: { leftColumnId: `${SCOPE_ID}.tops.column.text`, rightColumnId: `${SCOPE_ID}.tops.column.meta`, delta: 5 } },
+    });
+    assert.equal(result.success, true, result.message);
+    assert.deepEqual(result.affectedStates.map((entry) => entry.elementId), [`${SCOPE_ID}.tops.column.text`, `${SCOPE_ID}.tops.column.meta`]);
+    const after = new Map(adapter.getCurrentPdfLayoutState().elements.map((entry) => [entry.elementId, entry]));
+    assert.equal(after.get(`${SCOPE_ID}.tops.column.number`).width, before.get(`${SCOPE_ID}.tops.column.number`).width);
+    assert.equal(after.get(`${SCOPE_ID}.tops.column.text`).width, 125.9);
+    assert.equal(after.get(`${SCOPE_ID}.tops.column.meta`).width, 35.92);
+    assert.equal(["number", "text", "meta"].reduce((sum, key) => sum + after.get(`${SCOPE_ID}.tops.column.${key}`).width, 0), 186);
+  });
+
+  await run("K17 BBM-PDF weist Mindestbreitenverletzung ohne Teilzustand ab", () => {
+    const adapter = createBbmPdfAdapter();
+    const baseline = adapter.getCurrentPdfLayoutState();
+    const result = adapter.submitPdfChangeRequest({
+      changeId: "boundary-too-far", scopeId: SCOPE_ID, elementId: `${SCOPE_ID}.tops`, operation: "resizeColumnBoundary",
+      payload: { table: { leftColumnId: `${SCOPE_ID}.tops.column.text`, rightColumnId: `${SCOPE_ID}.tops.column.meta`, delta: 11 } },
+    });
+    assert.equal(result.success, false);
+    assert.equal(result.errorCode, "pdf_out_of_page_bounds");
+    assert.deepEqual(adapter.getCurrentPdfLayoutState().elements, baseline.elements);
+  });
+
   await run("M81 Applyfehler laesst vorherigen Zustand als erfolgreichen Rollback stehen", () => {
     const adapter = createBbmPdfAdapter();
     const before = adapter.getCurrentPdfLayoutState();

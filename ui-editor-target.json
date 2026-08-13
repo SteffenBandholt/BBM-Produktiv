@@ -7,8 +7,8 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 22,
-  "registryFingerprint": "sha256:a9bb2e20538e653b7be6aa6361a154f5ba31a64ffe0240391aee1a3f530b9cb0",
+  "registryVersion": 23,
+  "registryFingerprint": "sha256:4a38e970eb89e3df5d3a68625ab229cbdb656c2203289d4b21f5e4e5dad77a16",
   "registryStatus": "incomplete",
   "activeScopes": [
     "restarbeiten.header.root",
@@ -35,6 +35,7 @@
     "spacingReset",
     "fitTableToViewport",
     "resizeColumnsProportionally",
+    "resizeColumnBoundary",
     "setColumnWidthMode",
     "setColumnWrapMode",
     "setColumnOverflowMode",
@@ -65,5 +66,5 @@
     ]
   },
   "installedAt": "2026-07-27T00:00:00+00:00",
-  "updatedAt": "2026-08-09T00:00:00+00:00"
+  "updatedAt": "2026-08-12T00:00:00+00:00"
 }

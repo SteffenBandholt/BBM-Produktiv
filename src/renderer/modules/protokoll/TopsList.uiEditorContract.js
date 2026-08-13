@@ -10,9 +10,9 @@ import {
 
 const scopeId = "protokoll.list.root";
 const columns = Object.freeze([
-  Object.freeze({ columnId: "protokoll.list.column.number", displayName: "Struktur links: Nummer / Datum / Kennzeichnung", headerElementId: "protokoll.list.column.number.header", dataCellTemplateId: "protokoll.list.column.number.cells", cellElementIds: Object.freeze([]), currentWidth: 64, minimumWidth: 48, maximumWidth: 220, widthMode: "fixed", resizable: true, wrapMode: "noWrap", overflowMode: "clip", alignment: "stretch", visibility: true, order: 1, lockedOps: DOMAIN_LOCKS, widthSourceId: "protokoll.list.column.number", flexible: false, priority: 10, cssWidthVariable: "--bbm-ui-editor-tops-list-number-col", role: "contentColumn" }),
-  Object.freeze({ columnId: "protokoll.list.column.text", displayName: "Gegenstand Mitte: Kurztext / Langtext", headerElementId: "protokoll.list.column.text.header", dataCellTemplateId: "protokoll.list.column.text.cells", cellElementIds: Object.freeze([]), currentWidth: 650, minimumWidth: 180, maximumWidth: 1400, widthMode: "proportional", resizable: true, wrapMode: "wordWrap", overflowMode: "clip", alignment: "stretch", visibility: true, order: 2, lockedOps: DOMAIN_LOCKS, widthSourceId: "protokoll.list.column.text", flexible: true, priority: 100, cssWidthVariable: "--bbm-ui-editor-tops-list-text-col", role: "contentColumn" }),
-  Object.freeze({ columnId: "protokoll.list.column.meta", displayName: "Meta rechts: Fertig bis / Status / Kennzeichnung / Verantwortlich", headerElementId: "protokoll.list.column.meta.header", dataCellTemplateId: "protokoll.list.column.meta.cells", cellElementIds: Object.freeze([]), currentWidth: 172, minimumWidth: 96, maximumWidth: 420, widthMode: "fixed", resizable: true, wrapMode: "wordWrap", overflowMode: "clip", alignment: "stretch", visibility: true, order: 3, lockedOps: DOMAIN_LOCKS, widthSourceId: "protokoll.list.column.meta", flexible: false, priority: 20, cssWidthVariable: "--bbm-ui-editor-tops-list-meta-col", role: "metaColumn" }),
+  Object.freeze({ columnId: "protokoll.list.column.number", displayName: "Nr. / Datum", headerElementId: "protokoll.list.column.number.header", dataCellTemplateId: "protokoll.list.column.number.cells", cellElementIds: Object.freeze([]), currentWidth: 64, minimumWidth: 48, maximumWidth: 220, widthMode: "fixed", resizable: true, wrapMode: "noWrap", overflowMode: "clip", alignment: "stretch", visibility: true, order: 1, lockedOps: DOMAIN_LOCKS, widthSourceId: "protokoll.list.column.number", flexible: false, priority: 10, cssWidthVariable: "--bbm-ui-editor-tops-list-number-col", role: "contentColumn" }),
+  Object.freeze({ columnId: "protokoll.list.column.text", displayName: "Gegenstand", headerElementId: "protokoll.list.column.text.header", dataCellTemplateId: "protokoll.list.column.text.cells", cellElementIds: Object.freeze([]), currentWidth: 650, minimumWidth: 180, maximumWidth: 1400, widthMode: "proportional", resizable: true, wrapMode: "wordWrap", overflowMode: "clip", alignment: "stretch", visibility: true, order: 2, lockedOps: DOMAIN_LOCKS, widthSourceId: "protokoll.list.column.text", flexible: true, priority: 100, cssWidthVariable: "--bbm-ui-editor-tops-list-text-col", role: "contentColumn" }),
+  Object.freeze({ columnId: "protokoll.list.column.meta", displayName: "Meta rechts", headerElementId: "protokoll.list.column.meta.header", dataCellTemplateId: "protokoll.list.column.meta.cells", cellElementIds: Object.freeze([]), currentWidth: 172, minimumWidth: 96, maximumWidth: 420, widthMode: "fixed", resizable: true, wrapMode: "wordWrap", overflowMode: "clip", alignment: "stretch", visibility: true, order: 3, lockedOps: DOMAIN_LOCKS, widthSourceId: "protokoll.list.column.meta", flexible: false, priority: 20, cssWidthVariable: "--bbm-ui-editor-tops-list-meta-col", role: "metaColumn" }),
 ]);
 
 const tableLayout = Object.freeze({
@@ -32,6 +32,7 @@ const tableLayout = Object.freeze({
   reservedWidth: 14,
   scrollbarWidth: 0,
   rowHeightMode: "bounded",
+  boundaryResizePolicy: "adjacentPreserveTotal",
   minimumRowHeight: 54,
   maximumRowHeight: 180,
   columns,
@@ -70,7 +71,10 @@ const elements = [
   m83Element({ id: scopeId, name: "Protokoll-Listenbereich", type: "root", role: "scopeRoot", parentId: null, order: 0, allowedOps: [], componentKind: "sheetScrollOwner" }),
   m83Element({ id: "protokoll.list.canvas", name: "Protokoll-Dokumentflaeche", type: "area", role: "contentArea", parentId: scopeId, order: 10, allowedOps: [], componentKind: "documentCanvas" }),
   m83Element({ id: "protokoll.list.paper", name: "Protokoll-Dokumentblatt", type: "group", role: "layoutGroup", parentId: "protokoll.list.canvas", order: 20, allowedOps: [], componentKind: "documentPaper" }),
-  m83Element({ id: "protokoll.list.table", name: "Protokoll-TOP-Liste", type: "table", role: "contentTable", parentId: "protokoll.list.paper", order: 30, allowedOps: TABLE_LAYOUT, componentKind: "contentTable", tableLayout, baseline: { width: 900, height: 680, minWidth: 320, maxWidth: 1600, minHeight: 160, maxHeight: 12000 } }),
+  m83Element({ id: "protokoll.list.table", name: "Protokoll-TOP-Liste", type: "table", role: "contentTable", parentId: "protokoll.list.paper", order: 30, allowedOps: TABLE_LAYOUT, componentKind: "contentTable", tableLayout,
+    operationEffects: { resizeColumnBoundary: "layoutZone" },
+    operationAffectedIds: { resizeColumnBoundary: columns.flatMap((column) => [column.columnId, column.headerElementId, column.dataCellTemplateId]) },
+    baseline: { width: 900, height: 680, minWidth: 320, maxWidth: 1600, minHeight: 160, maxHeight: 12000 } }),
   m83Element({ id: "protokoll.list.table.header", name: "Tabellenkopf der Protokoll-TOP-Liste", type: "tableHeader", role: "tableHeader", parentId: "protokoll.list.table", order: 40, allowedOps: [], componentKind: "tableHeader" }),
   m83Element({ id: "protokoll.list.table.body", name: "Datenbereich der Protokoll-TOP-Liste", type: "tableBody", role: "tableBody", parentId: "protokoll.list.table", order: 50, allowedOps: [], componentKind: "tableBody" }),
   ...columns.map(columnElement),

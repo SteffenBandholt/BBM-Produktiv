@@ -55,7 +55,7 @@ async function runChromiumProbe() {
         </div>
         <div id="row" class="bbm-tops-list-row-grid">
           <div class="bbm-tops-list-row-number">1.<br>03.08.2026</div>
-          <div class="bbm-tops-list-row-text">Kurztext<br>Langtext</div>
+          <div class="bbm-tops-list-row-text" style="width:1000px"><div id="rowTitle" class="bbm-tops-list-row-title" style="width:1000px">Kurztext</div><div id="rowPreview" class="bbm-tops-list-row-preview" style="width:1000px">Langtext</div></div>
           <div class="bbm-tops-list-row-meta">09.08.2026<br>offen<br>Steffen</div>
         </div>
       </div>
@@ -75,7 +75,7 @@ async function runChromiumProbe() {
         const row = document.getElementById("row");
         return {
           header: { grid: measure(header), cells: [...header.children].map(measure) },
-          row: { grid: measure(row), cells: [...row.children].map(measure) },
+          row: { grid: measure(row), cells: [...row.children].map(measure), content: measure(document.getElementById("rowTitle")), preview: measure(document.getElementById("rowPreview")) },
         };
       };
       return profiles.map(snapshot);
@@ -126,6 +126,14 @@ function assertThreeColumns(snapshot, label) {
     assert.ok(cells[0].left < cells[1].left && cells[1].left < cells[2].left, `${label}/${area}: drei X-Positionen`);
     assert.ok(cells[0].right <= cells[1].left + 2, `${label}/${area}: links ohne Ueberlagerung`);
     assert.ok(cells[1].right <= cells[2].left + 2, `${label}/${area}: mitte ohne Ueberlagerung`);
+    assert.ok(cells[2].right <= grid.right + 0.6, `${label}/${area}: letzte Spalte bleibt im Tabellenrand`);
+    if (area === "row") {
+      assert.ok(snapshot.row.content.width <= cells[1].width + 0.6, `${label}/${area}: gespeicherte Inhaltsbreite bleibt im Track`);
+      assert.ok(snapshot.row.content.width >= cells[1].width - 40, `${label}/${area}: Inhalt verwendet die wirksame Trackbreite abzueglich Innenabstand`);
+      assert.ok(snapshot.row.content.right <= cells[1].right + 0.6, `${label}/${area}: Inhalt ragt nicht in Meta`);
+      assert.ok(snapshot.row.preview.width <= cells[1].width + 0.6, `${label}/${area}: Langtextbreite bleibt im Track`);
+      assert.ok(snapshot.row.preview.right <= cells[1].right + 0.6, `${label}/${area}: Langtext ragt nicht in Meta`);
+    }
   }
 }
 

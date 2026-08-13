@@ -20,6 +20,7 @@ import {
   registerM80MultiRef,
   restoreM80WorkingStates,
   fitM80Table,
+  resizeM80TableBoundary,
   resetM80Table,
   resetM80PilotWorkingStatesForDiagnostic,
   setM80WorkingStateOperationObserver,
@@ -438,7 +439,7 @@ function submitChange(changeRequest, scopeId) {
     }
     let readback;
     const affectedStates = [];
-    if (["fitTableToViewport", "resizeColumnsProportionally", "resetTable"].includes(request.operation)) {
+    if (["fitTableToViewport", "resizeColumnsProportionally", "resizeColumnBoundary", "resetTable"].includes(request.operation)) {
       tableRestore.set(entry.id, previous);
       for (const column of entry.tableLayout?.columns || []) tableRestore.set(column.columnId, snapshotM80State(column.columnId));
     }
@@ -446,6 +447,10 @@ function submitChange(changeRequest, scopeId) {
       const fitted = fitM80Table(entry.id, request.payload?.table?.selectedColumnId || "");
       affectedStates.push(...fitted.affectedStates);
       readback = snapshotM80State(entry.id);
+    } else if (request.operation === "resizeColumnBoundary") {
+      const boundary = resizeM80TableBoundary(entry.id, request.payload?.table || {});
+      affectedStates.push(...boundary.affectedStates);
+      readback = boundary.newState;
     } else if (request.operation === "resetTable") {
       const reset = resetM80Table(entry.id);
       affectedStates.push(...reset.affectedStates);
@@ -484,8 +489,9 @@ function submitChange(changeRequest, scopeId) {
     // Ziel-App-Vertrag und den Tabellen-Core begrenzt. Sie duerfen deshalb
     // nicht an der Geometrie des aktuell ueberbreiten Laufzeitzustands
     // haengen bleiben.
-    const usesValidatedTableGeometry = request.operation === "resetTable" ||
-      (["fitTableToViewport", "resizeColumnsProportionally"].includes(request.operation) && request.payload?.table?.previewAccepted === true);
+    const usesValidatedTableGeometry = ["resetTable", "resetTableColumn"].includes(request.operation) ||
+      (["fitTableToViewport", "resizeColumnsProportionally"].includes(request.operation) && request.payload?.table?.previewAccepted === true) ||
+      request.operation === "resizeColumnBoundary";
     const unvalidatedStartupRequest = request.source === "target-app-start" && !validatedStartupRequests.has(request);
     const risk = (interactive || unvalidatedStartupRequest) && !usesValidatedTableGeometry
       ? geometryRiskFor(entry, request, beforeGeometry, afterGeometry, affected)
@@ -1058,7 +1064,8 @@ export function createM80StartupRequests(scopeId, element, explicitOperations = 
   if (changed(element.x, current.x)) move.x = element.x;
   if (changed(element.y, current.y)) move.y = element.y;
   if (Object.keys(move).length) push("move", move);
-  if (changed(element.width, current.width)) push("resizeWidth", { width: element.width });
+  const widthWillResize = changed(element.width, current.width);
+  if (widthWillResize) push("resizeWidth", { width: element.width });
   if (changed(element.height, current.height)) push("resizeHeight", { height: element.height });
   const text = {};
   if (changed(element.textOffsetX, current.textOffsetX)) text.offsetX = element.textOffsetX;
@@ -1082,7 +1089,8 @@ export function createM80StartupRequests(scopeId, element, explicitOperations = 
   }
   const savedTable = element.table && typeof element.table === "object" && !Array.isArray(element.table) ? element.table : null;
   if (savedTable && current.table) {
-    if (savedTable.widthMode && savedTable.widthMode !== current.table.widthMode) push("setColumnWidthMode", { table: { widthMode: savedTable.widthMode } });
+    if (savedTable.widthMode && (savedTable.widthMode !== current.table.widthMode || (widthWillResize && savedTable.widthMode !== "fixed")))
+      push("setColumnWidthMode", { table: { widthMode: savedTable.widthMode } });
     if (savedTable.wrapMode && savedTable.wrapMode !== current.table.wrapMode) push("setColumnWrapMode", { table: { wrapMode: savedTable.wrapMode } });
     if (savedTable.overflowMode && savedTable.overflowMode !== current.table.overflowMode) push("setColumnOverflowMode", { table: { overflowMode: savedTable.overflowMode } });
     if (savedTable.horizontalOverflowMode && savedTable.horizontalOverflowMode !== current.table.horizontalOverflowMode) push("setHorizontalOverflowMode", { table: { horizontalOverflowMode: savedTable.horizontalOverflowMode } });

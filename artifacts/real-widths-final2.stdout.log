@@ -1,0 +1,92 @@
+
+> baubesprechungs-manager@1.5.0 start
+> npm run fix:electron-deps && npm run prepare:ui-editor && npm run start:raw
+
+
+> baubesprechungs-manager@1.5.0 fix:electron-deps
+> node scripts/nativeDepsAbi.cjs electron
+
+[native-abi] START Electron gemäß package.json
+  • electron-builder  version=24.13.3
+  • loaded configuration  file=package.json ("build" field)
+  • unresolved deps  unresolved=compress-commonsreadable-stream nodeModuleDir=C:\01_Projekte\BBM-Produktiv\node_modules round=0
+  • unresolved deps  unresolved=globlazystreamlodash.defaultslodash.differencelodash.isplainobjectlodash.unionnormalize-pathreadable-streamgraceful-fslodash.flatten
+                     nodeModuleDir=C:\01_Projekte\BBM-Produktiv\node_modules
+                     round=0
+  • unresolved deps  unresolved=inheritsoncepath-is-absolutefs.realpathinflight nodeModuleDir=C:\01_Projekte\BBM-Produktiv\node_modules round=0
+  • unresolved deps  unresolved=balanced-matchconcat-map nodeModuleDir=C:\01_Projekte\BBM-Produktiv\node_modules round=0
+  • unresolved deps  unresolved=inheritsisarrayprocess-nextick-argsutil-deprecatecore-util-is nodeModuleDir=C:\01_Projekte\BBM-Produktiv\node_modules round=0
+  • unresolved deps  unresolved=safe-buffer nodeModuleDir=C:\01_Projekte\BBM-Produktiv\node_modules round=0
+  • unresolved deps  unresolved=graceful-fslodash.defaultslodash.differencelodash.flattennormalize-pathgloblazystreamlodash.isplainobjectlodash.union
+                     nodeModuleDir=C:\01_Projekte\BBM-Produktiv\node_modules
+                     round=0
+  • unresolved deps  unresolved=core-util-isinheritsisarrayprocess-nextick-argsutil-deprecate nodeModuleDir=C:\01_Projekte\BBM-Produktiv\node_modules round=0
+  • unresolved deps  unresolved=safe-buffer nodeModuleDir=C:\01_Projekte\BBM-Produktiv\node_modules round=0
+  • unresolved deps  unresolved=mkdirp-classicpumptar-streamchownr nodeModuleDir=C:\01_Projekte\BBM-Produktiv\node_modules round=0
+  • unresolved deps  unresolved=deep-extendiniminimiststrip-json-comments nodeModuleDir=C:\01_Projekte\BBM-Produktiv\node_modules round=0
+  • unresolved deps  unresolved=debugget-stream nodeModuleDir=C:\01_Projekte\BBM-Produktiv\node_modules round=0
+  • unresolved deps  unresolved=fd-slicerbuffer-crc32 nodeModuleDir=C:\01_Projekte\BBM-Produktiv\node_modules round=0
+  • map async       taskCount=8
+  • map async       taskCount=1
+  • map async       taskCount=75
+  • map async       taskCount=1
+  • map async       taskCount=1
+  • map async       taskCount=3
+  • map async       taskCount=2
+  • map async       taskCount=1
+  • map async       taskCount=3
+  • rebuilding native dependencies  dependencies=better-sqlite3@12.6.2 platform=win32 arch=x64
+  • map async       taskCount=1
+  • install prebuilt binary  name=better-sqlite3 version=12.6.2 platform=win32 arch=x64 napi=
+  • execute command  command='C:\Program Files\nodejs\node.exe' 'C:\01_Projekte\BBM-Produktiv\node_modules\prebuild-install\bin.js' --platform=win32 --arch=x64 --target=30.5.1 --runtime=electron --verbose --force
+                     workingDirectory=C:\01_Projekte\BBM-Produktiv\node_modules\better-sqlite3
+  • command executed  executable=C:\Program Files\nodejs\node.exe
+                      errorOut=prebuild-install info begin Prebuild-install version 7.1.3
+    prebuild-install warn install prebuilt binaries enforced with --force!
+    prebuild-install warn install prebuilt binaries may be out of date!
+    prebuild-install info looking for local prebuild @ prebuilds\better-sqlite3-v12.6.2-electron-v123-win32-x64.tar.gz
+    prebuild-install info looking for cached prebuild @ C:\temp\npm-cache\_prebuilds\850e17-better-sqlite3-v12.6.2-electron-v123-win32-x64.tar.gz
+    prebuild-install info found cached prebuild
+    prebuild-install info unpacking @ C:\temp\npm-cache\_prebuilds\850e17-better-sqlite3-v12.6.2-electron-v123-win32-x64.tar.gz
+    prebuild-install info unpack resolved to C:\01_Projekte\BBM-Produktiv\node_modules\better-sqlite3\build\Release\better_sqlite3.node
+    prebuild-install info install Successfully installed prebuilt binary!
+    
+  • all native deps were installed using prebuild-install  
+[native-abi] OK Electron gemäß package.json
+
+> baubesprechungs-manager@1.5.0 prepare:ui-editor
+> node scripts/prepareUiEditorManager.cjs
+
+  ReferenceTargetApp.Domain -> C:\01_Projekte\UI-Editor-kit\reference-target-app\src\ReferenceTargetApp.Domain\bin\Release\net10.0\ReferenceTargetApp.Domain.dll
+  ReferenceTargetApp.EditorIntegration -> C:\01_Projekte\UI-Editor-kit\reference-target-app\src\ReferenceTargetApp.EditorIntegration\bin\Release\net10.0-windows\ReferenceTargetApp.EditorIntegration.dll
+  UiEditorKit.Manager.Domain -> C:\01_Projekte\UI-Editor-kit\windows-manager\src\UiEditorKit.Manager.Domain\bin\Release\net10.0\UiEditorKit.Manager.Domain.dll
+  ReferenceTargetApp.Infrastructure -> C:\01_Projekte\UI-Editor-kit\reference-target-app\src\ReferenceTargetApp.Infrastructure\bin\Release\net10.0\ReferenceTargetApp.Infrastructure.dll
+  ReferenceTargetApp.PdfRendering -> C:\01_Projekte\UI-Editor-kit\reference-target-app\src\ReferenceTargetApp.PdfRendering\bin\Release\net10.0-windows\ReferenceTargetApp.PdfRendering.dll
+  UiEditorKit.Manager.Core -> C:\01_Projekte\UI-Editor-kit\windows-manager\src\UiEditorKit.Manager.Core\bin\Release\net10.0\UiEditorKit.Manager.Core.dll
+  ReferenceTargetApp.PdfPreview -> C:\01_Projekte\UI-Editor-kit\reference-target-app\src\ReferenceTargetApp.PdfPreview\bin\Release\net10.0-windows10.0.19041.0\ReferenceTargetApp.PdfPreview.dll
+  UiEditorKit.Manager.Infrastructure -> C:\01_Projekte\UI-Editor-kit\windows-manager\src\UiEditorKit.Manager.Infrastructure\bin\Release\net10.0-windows\UiEditorKit.Manager.Infrastructure.dll
+  ReferenceTargetApp.Wpf -> C:\01_Projekte\UI-Editor-kit\reference-target-app\src\ReferenceTargetApp.Wpf\bin\Release\net10.0-windows10.0.19041.0\ReferenceTargetApp.dll
+  UiEditorKit.Manager.Wpf -> C:\01_Projekte\UI-Editor-kit\windows-manager\src\UiEditorKit.Manager.Wpf\bin\Release\net10.0-windows10.0.19041.0\UiEditorManager.dll
+  UiEditorKit.Manager.Wpf -> C:\01_Projekte\BBM-Produktiv\build\ui-editor-manager\
+UI-Editor-Manager vorbereitet: C:\01_Projekte\BBM-Produktiv\build\ui-editor-manager
+[ui-editor-build] id=ui-editor:9dbdfbefb7029644 branch=codex/table-editor-user-acceptance commit=6a87939d02ab85c2c16bc36269f8e8debfdad0c0 dirty=true
+
+> baubesprechungs-manager@1.5.0 start:raw
+> set ELECTRON_RUN_AS_NODE=&& electron .
+
+
+[main] meetings IPC registered
+[main] tops IPC registered
+[main] projectFirms/projectPersons IPC registered
+[main] IPC registered: appSettings
+[main] IPC registered: projects, meetings, tops, projectFirms, participants, print, settings, projectSettings, projectTransfer, license, audio, app:*
+[db] using C:\Users\Steffen\AppData\Roaming\baubesprechungs-manager\app.db
+[db] backup C:\Users\Steffen\AppData\Roaming\baubesprechungs-manager\app.db.bak
+[db] backup created C:\Users\Steffen\AppData\Roaming\baubesprechungs-manager\app.db.bak
+[db] legacy C:\01_Projekte\BBM-Produktiv\src\main\db\app.db
+[db] legacy-import C:\Users\Steffen\AppData\Roaming\baubesprechungs-manager\legacy-import\app_legacy.db
+[ui-editor] diagnostic mode requested: enabled=false, module=none, isolated=false
+[ui-editor] PDF context: available
+[ui-editor] startup layout requested: activeScopes=3
+[ui-editor] startup layout loaded: module=protokoll, profile=standard, found=true, code=layout_profile_loaded, fingerprint=3A872F3D40B7573E06EE84D999F45B4885DEE8BFE3E7483C644469F410C7AA2C
+[ui-editor] startup layout: startup_layout_applied, applied=true, moduleKey=module-protokoll, profile=standard, fingerprint=3A872F3D40B7573E06EE84D999F45B4885DEE8BFE3E7483C644469F410C7AA2C

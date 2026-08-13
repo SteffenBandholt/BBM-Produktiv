@@ -7,6 +7,7 @@ export const BBM_M83_SUPPORTED_OPERATIONS = Object.freeze([
   "move", "resize", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility",
   "spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset",
   "fitTableToViewport", "resizeColumnsProportionally", "setHorizontalOverflowMode",
+  "resizeColumnBoundary",
   "setColumnWidthMode", "setColumnWrapMode", "setColumnOverflowMode", "setRowHeightMode",
   "resetTableColumn", "resetTable",
 ]);
@@ -19,7 +20,7 @@ export const COMPACT_TEXT_LAYOUT = TEXT_LAYOUT;
 export const FIELD_LAYOUT = TEXT_LAYOUT;
 export const BUTTON_LAYOUT = TEXT_LAYOUT;
 export const ICON_LAYOUT = UNIVERSAL_LAYOUT;
-export const TABLE_LAYOUT = Object.freeze([...UNIVERSAL_LAYOUT, "fitTableToViewport", "resizeColumnsProportionally", "setRowHeightMode", "resetTable"]);
+export const TABLE_LAYOUT = Object.freeze([...UNIVERSAL_LAYOUT, "fitTableToViewport", "resizeColumnsProportionally", "resizeColumnBoundary", "setRowHeightMode", "resetTable"]);
 export const COLUMN_LAYOUT = Object.freeze([...UNIVERSAL_LAYOUT, "setColumnWidthMode", "setColumnWrapMode", "setColumnOverflowMode", "resetTableColumn"]);
 export const SPACING_LAYOUT = Object.freeze(["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"]);
 export const DOMAIN_LOCKS = Object.freeze(["executeTargetAction", "modifyDomainData", "createRecord", "deleteRecord"]);

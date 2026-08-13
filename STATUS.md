@@ -4089,3 +4089,72 @@ Wichtig:
   und 26 bestehende Warnungen.
 - Nächster Schritt: ausschließlich Sichtfreigabe dieser Welle; keine automatische
   Löschung oder weitere Massenmigration.
+
+## K17 - Real bedienbare Protokoll-Spaltengrenzen
+
+- Status: `[A]`; die reale Protokolltabelle und ihre PDF-Tabelle sind im nativen Editor als Tabellen mit Spaltenreihenfolge, Istbreiten, Limits und bedienbaren Grenzen sichtbar.
+- UI: Gegenstand/Meta wurde atomar zweimal um 10 DIP verschoben; Header, alle sichtbaren Datenzeilen und eine danach neu angelegte TOP-Zeile blieben ausgerichtet. Undo, Save und Restore nach getrenntem BBM-Neustart wurden praktisch bestätigt.
+- PDF: `24.18 / 120.9 / 40.92 mm` wurde atomar zu `24.18 / 125.9 / 35.92 mm`; Undo, erneute Anwendung, Regeneration, Save und Restore wurden praktisch bestätigt. Die Seitenzahl blieb bei zwei.
+- Satzvertrag: 47 Fixtures und alle strukturellen Golden-Snapshots sind grün; keine Paginierungs-, Schrift- oder Fachlogikänderung.
+- Testdaten und Layoutprofile lagen in einer isolierten temporären Acceptance-Wurzel und wurden danach entfernt. Commit, Push, PR und Merge: keiner.
+
+## K17.1 - Reale Undo-/Original-/Discard-Abnahme
+
+- Status: `[A]`; UI und PDF wurden im echten nativen Editor jeweils über sichtbare Grenz-, Undo-, `Tabelle Original`-, Speichern- und Schließen-Bedienelemente geprüft.
+- UI: Die gespeicherte Gegenstand-/Meta-Geometrie `602,585 / 161,992 DIP` blieb nach vollständigem BBM-Neustart erhalten. Die deklarierte Baseline `650 / 172 DIP` war sichtbar wiederherstellbar; ein Undo stellte den gespeicherten Zustand atomar und wieder sauber her. Bei 1100 x 900 blieb die Metaspalte sichtbar.
+- PDF: Die Baseline `24,18 / 120,9 / 40,92 mm` wurde sichtbar zu `24,18 / 125,9 / 35,92 mm` geändert. Undo, Original, Verwerfen, Speichern, kompletter Neustart und erneute PDF-Regeneration waren erfolgreich; die Seitenzahl blieb zwei.
+- Die isolierte Acceptance-Wurzel wurde nach der Prüfung sicher entfernt. PDF-V2-Satz-/Paginierungsverträge, Schriftgrößen und Fachlogik wurden nicht verändert.
+- Paketprüfungen sind grün: K17-Tabellengrenzen, M82.4 Tabellenbearbeitung, M81 PDF-Adapter, M85 mit 47 Golden-Fixtures, M86.15 Universalvertrag sowie UI-Editor-Vertragscheck. Der komplette BBM-Gesamtlauf bleibt wegen übernommener paketfremder Altassertionen rot (unter anderem Registryversion 19 statt 23, Lizenzdokument-Hash, alte Navigation und Testgruppenanzahl).
+- Commit/Push/PR/Merge: keiner.
+
+## P1-B - Rechte Metaspalte im normalen Protokoll wieder sichtbar
+
+- Ursache: Das reale Modulprofil enthielt fuer `protokoll.list.column.meta.cells` noch die horizontalen Operationen `move` und `resizeWidth`. Mit `x = 110` und `width = 189,97` ueberschritt das Datenzellen-Template den gespeicherten Metatrack von `193,30` DIP; ohne vorhandene Zeilen brach derselbe Restore mit `electron_element_not_found` komplett ab.
+- Reparatur: Der BBM-Startup prueft gespeicherte Protokoll-Tabellenzellen gegen ihren registrierten Spaltentrack, archiviert den unveraenderten Altstand und entfernt nur die ungueltigen horizontalen Operationen. Andere Profiloperationen bleiben erhalten. Ein gespeicherter `documentPaper`-Breitenwert bleibt auf grossen Fenstern wirksam, wird bei kleineren Viewports aber auf `max-width: 100%` begrenzt.
+- Realnachweis: Normales BBM-Benutzerprofil, Projekt `Rest Protokoll`, 38 vorhandene plus eine neu angelegte TOP-Zeile. Nummer/Datum, Gegenstand und Meta lagen in allen gemessenen Zeilen im selben Dreispaltenraster; Datum, Status, Statuspunkt und vorhandene Verantwortliche waren sichtbar. Bei `1386` und `854` CSS-DIP Fensterbreite lagen alle 39 Meta-Zellen innerhalb von Tabelle und Viewport; nach erneutem Vergroessern kehrte die gespeicherte Blattbreite zurueck.
+- Pruefungen: gezielter Profilreparaturtest, M86.9, M86.11b, M86.12, Vertrags-Selbsttest, Syntaxpruefung und gezieltes ESLint gruen. Der bestehende M82.1-Sammellauf bleibt allein an der paketfremden Altassertion Registryversion `19` statt aktuell `23` rot.
+- Schutz: PDF, Mail, Protokollabschluss, Filter, Teilnehmer, Datenbankstruktur, Paginierung, Restarbeiten und Rechnung wurden nicht geaendert. Commit und Push: keiner.
+
+## K17.2 - Tabellengrenzen im normalen Editor sichtbar bedienbar
+
+- Status: `[A]`; im normalen BBM-Fenster ist die registrierte `Protokoll-TOP-Liste` als eigene Tabellen-Bediengruppe sichtbar. Die Spalten heißen dort `Nr. / Datum`, `Gegenstand` und `Meta rechts`; beide vorhandenen Grenzen sind ohne Zell- oder Detailauswahl erreichbar.
+- Praktische UI-Prüfung: `Nr./Datum | Gegenstand` wurde um 10 DIP nach rechts und `Gegenstand | Meta rechts` um 10 DIP nach links verschoben. Reale Kopf- und Datenzeilen folgten gemeinsam; Status, Fertig bis, Verantwortlich, Statuspunkte und Kennzeichnungen blieben sichtbar.
+- Die Gruppe verwendet die einstellbare gemeinsame DIP-Schrittweite und unmittelbare Links-/Rechts-Pfeile. Bei einer Datenzelle bleibt sie ausgeblendet. Sichtbares `Rückgängig` und `Tabelle Original` stellten jeweils beide Nachbarspalten atomar wieder her.
+- PDF-Prüfung im selben nativen Fenster: sichtbare Spalten `TOP`, `Gegenstand`, `Meta`; Grenze Gegenstand/Meta um 5 mm nach rechts verschoben, PDF neu erzeugt und wieder zurückgesetzt. Seitenzahl vorher/nachher: vier. Bei einer einzelnen PDF-Spalte bleibt die Grenzgruppe ausgeblendet.
+- Keine PDF-Satz-, Paginierungs-, Renderer-, Fachlogik- oder Profilvertragsänderung. Gezielte K17-, Vertrags- und M85-Golden-Prüfungen sowie 127/127 native Tests sind grün. Der komplette BBM-Lauf bleibt an bereits vorhandenen paketfremden Altassertionen rot.
+- Nächster Schritt: fachliche Sichtabnahme der dokumentierten Screenshots. Commit und Push: keiner.
+## 2026-08-13 – Produktiver Tabelleneditor-Pfad und Build-Nachweis
+
+- Den vollständigen Nutzerweg ausschließlich über `npm start`, das normale BBM-Fenster, ein reales geschlossenes Protokoll und `UI-Editor öffnen` geprüft.
+- Der normale Entwicklungsstart veröffentlicht den Manager aus dem benachbarten `UI-Editor-kit` nach `build/ui-editor-manager`; BBM startet genau diese EXE als eigenen Kindprozess.
+- Ursache der vermeintlich alten Oberfläche eingegrenzt: Beim Öffnen ist zunächst der kontextbezogene `Protokoll-Eingabebereich` ausgewählt. Die vorhandene Tabellenoberfläche erscheint nach Auswahl von `Protokoll-Listenbereich` und `Protokoll-TOP-Liste · table`; ein abweichender produktiver Manager-Build wurde nicht gefunden.
+- `prepareUiEditorManager.cjs` schreibt nun einen prüfbaren Build-Nachweis (`ui-editor-build.json`) mit Branch, Commit, Dirty-Status und SHA-256 der Manager-DLL. Der Produktivstart protokolliert Pfad und Build-ID und stellt dieselbe Identität über den bestehenden Editor-Status bereit.
+- Sichtprüfung: Tabellenname, `Nr. / Datum`, `Gegenstand`, `Meta rechts`, beide Spaltengrenzen, Schrittweite, Pfeile, `Rückgängig` und `Tabelle Original` sichtbar. Grenze `Gegenstand | Meta rechts` mit Schrittweite 10 DIP verschoben (realer Readback 652,586/161,992 DIP), die direkte Reaktion im echten BBM geprüft und per Rückgängig wieder auf 650/172 DIP gestellt.
+- Screenshots: `C:\Users\Steffen\AppData\Local\Temp\codex-shot-2026-08-13_06-24-14.png` (reales BBM), `C:\Users\Steffen\AppData\Local\Temp\codex-shot-2026-08-13_06-31-33.png` (produktiver Editor nach Änderung), `C:\Users\Steffen\AppData\Local\Temp\codex-shot-2026-08-13_06-31-34.png` (reale BBM-Reaktion), `C:\Users\Steffen\AppData\Local\Temp\codex-shot-2026-08-13_06-32-11.png` (Rückgängig).
+- Prüfungen grün: Syntaxchecks, M80-Produktions-/Lifecycle-Suite einschließlich Build-ID, K17-Tabellengrenzen, Testgruppe `ui-editor-m51-m80`.
+- Nicht geändert: UI-Konzept, Core-Vertrag, Profile, PDF, Protokolllayout und Fachlogik. Kein Commit, kein Push.
+
+## 2026-08-13 - Tabellenbreiten nach Neustart wiederhergestellt
+
+- Status: `[A]`; die Abnahme lief ausschließlich mit dem normalen Benutzerprofil und dem produktiven Weg `npm start` -> reales Protokoll #21 -> `UI-Editor öffnen`.
+- UI: `Gegenstand` wurde zuerst mit exakt `700 DIP` und danach als zweite Geometrie mit `679,955 DIP` gespeichert. Beide Werte blieben nach jeweils vollständig beendetem und neu gestartetem BBM erhalten. Nach kleinem und wieder großem Fenster galt erneut der gespeicherte Wert.
+- PDF: `24,18 / 119,9 / 41,92 mm` wurde gespeichert und nach vollständigem BBM-Neustart exakt wieder geladen. `Tabelle Original` stellte anschließend `24,18 / 120,9 / 40,92 mm` her; auch diese Baseline blieb nach Save und Neustart erhalten.
+- Nach den Neustarts waren UI- und PDF-Sitzung sauber und die Undo-Historie leer. Das UI-Profil enthält für die wiederhergestellte Originaltabelle keine expliziten Spaltenoperationen mehr.
+- Die gezielten K17-, PDF-Adapter-, M85-Golden- und Vertragsprüfungen sind grün. Der komplette BBM-Sammellauf bleibt an bereits vorhandenen paketfremden Altassertionen des gemeinsamen Arbeitsstands rot.
+- Screenshots liegen unter `artifacts/`. Commit und Push: keiner.
+
+## 2026-08-13 - Reale und generisch wirksame Tabellenbreiten
+
+- Status: `[A]`; gespeicherte und tatsächlich gerenderte Breiten werden im Tabelleneditor getrennt ausgewiesen. Kopf, jede montierte Datenzelle und deren Inhaltsbox werden gegen denselben wirksamen Track validiert.
+- UI-Baseline: logisch `64 / 650 / 172 DIP` (Nr. fest, Gegenstand proportional, Meta fest). Im realen normalen Benutzerprofil bleiben Nr. und Meta beim Wechsel zwischen maximiert und `1280 x 900` sichtbar; Gegenstand verwendet den verfügbaren Rest. Zu große gespeicherte Legacy-Inhaltsbreiten bleiben erhalten, werden aber vertragsbasiert als `min(gespeichert, 100% Track)` wirksam, sodass Langtext vollständig vor Meta umbricht.
+- PDF-Baseline: gespeichert `24,18 / 120,9 / 40,92 mm`, real gerendert `24,178 / 120,901 / 40,924 mm`. Kopf- und Datenzellen sind konsistent; Inhaltsboxen bleiben innerhalb der Tracks. Die reale Vorschau blieb bei vier Seiten.
+- Save/Neustart/Restore und Original wurden im normalen `npm start`-Pfad mit dem Profil `standard` bestätigt; Restore-Fingerprint `3A872F3D40B7573E06EE84D999F45B4885DEE8BFE3E7483C644469F410C7AA2C`. Sauberer Neustart ohne Sitzungsänderung/Undo-Historie.
+- Gezielte K17-, M86.12-Chromium-, UI-Editor-Vertrags-, native Build- und M85-Golden-Prüfungen sind grün. Der bekannte paketfremde rote BBM-Sammelstand bleibt unverändert dokumentiert. Commit und Push: keiner.
+
+## 2026-08-13 - Realer Save-Pfad im normalen Benutzerfluss
+
+- Status: `[A]`; ausschließlich der normale Weg `npm start` -> reales Protokoll #5 -> produktiver UI-/PDF-Editor wurde verwendet. Ein sichtbarer UI-Grenzschritt wurde atomar von `563,387 / 170,992 DIP` auf `564,391 / 169,989 DIP` geschrieben und unter der Save-ID `341e52e13880461ba3f7edbad1d2df24` von BBM mit `accepted=true` und `persisted=true` bestätigt.
+- Das reale UI-Profil wechselte auf dem Datenträger von SHA-256 `BA14583C8D6C3E9CA9EF483EC646D02482B397D8B81358D8E375F4702F7B7358` zu `1EBB40805C3E2AAF4A2C9E70AC07527532BCEA0CD1613258BC00AD3C6A4ABBA5`. Save wurde clean, der Button deaktiviert und die Erfolgsmeldung sichtbar.
+- UI Test A und Test B sind grün: dieselbe Geometrie blieb nach erneutem Öffnen im laufenden BBM sowie nach vollständigem BBM-Ende und erneutem `npm start` erhalten.
+- PDF wurde im selben produktiven Ablauf von `24,18 / 120,9 / 40,92 mm` auf `24,18 / 121,9 / 39,92 mm` geändert und gespeichert. Das Profil wechselte von SHA-256 `5FBF12A61D4C04455DFDD602CD89AFDF0579E61BC07EE61B7A7959465BF17A7B` zu `3670E776493F711061420809B9A6F05370AD27D9948BDBFAC506DA3F6F332982`. Wiederöffnung und Vollneustart stellten exakt `121,9 / 39,92 mm` wieder her; die echte Vorschau blieb bei vier Seiten.
+- Gezielte K17-, M86.23-, M85-Golden-, UI-Editor-Kit-Vertrags- und 38 native Save-/Restore-/PDF-Tests sind grün. Der komplette BBM-Sammellauf bleibt an bereits dokumentierten paketfremden Altassertionen (Registryversion/Fingerprint, Licensing-Hash, alte Breiten- und Harness-Erwartungen) rot. Commit und Push: keiner.

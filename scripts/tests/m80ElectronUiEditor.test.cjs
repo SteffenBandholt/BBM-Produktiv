@@ -1,7 +1,9 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const { EventEmitter } = require("node:events");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
@@ -192,6 +194,33 @@ async function runM80ElectronUiEditorTests(run) {
     assert.equal(pkg.dependencies["ui-editor-kit"], "file:../UI-Editor-kit");
     assert.ok(pkg.build.extraResources.some((entry) => entry.to === "ui-editor"));
     assert.ok(pkg.build.files.includes("src/**/*"));
+  });
+
+  await run("M80 Produktion: vorbereiteter und gestarteter Manager besitzen dieselbe Build-Kennung", () => {
+    const session = require("../../src/main/ui-editor/electronUiEditorSession.js");
+    const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-ui-editor-build-"));
+    try {
+      const executablePath = path.join(temporaryRoot, "UiEditorManager.exe");
+      const assemblyPath = path.join(temporaryRoot, "UiEditorManager.dll");
+      fs.writeFileSync(executablePath, "launcher", "utf8");
+      fs.writeFileSync(assemblyPath, "productive-table-editor", "utf8");
+      const managerAssemblySha256 = crypto.createHash("sha256").update(fs.readFileSync(assemblyPath)).digest("hex");
+      fs.writeFileSync(path.join(temporaryRoot, "ui-editor-build.json"), JSON.stringify({
+        buildId: `ui-editor:${managerAssemblySha256.slice(0, 16)}`,
+        sourceBranch: "codex/table-editor-user-acceptance",
+        sourceCommit: "abc123",
+        sourceDirty: true,
+        managerAssemblySha256,
+      }), "utf8");
+      const identity = session.resolveEditorBuildIdentity(executablePath);
+      assert.equal(identity.buildId, `ui-editor:${managerAssemblySha256.slice(0, 16)}`);
+      assert.equal(identity.manifestMatches, true);
+      assert.equal(identity.sourceBranch, "codex/table-editor-user-acceptance");
+      assert.equal(identity.executablePath, path.resolve(executablePath));
+      assert.match(read("scripts/prepareUiEditorManager.cjs"), /\[ui-editor-build\].*buildIdentity\.buildId/);
+    } finally {
+      fs.rmSync(temporaryRoot, { recursive: true, force: true });
+    }
   });
 
   await run("M80 Lifecycle: erster Start, zweiter Fokus und genau ein Prozess", async () => {

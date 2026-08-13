@@ -2,6 +2,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const crypto = require("node:crypto");
 const { spawn } = require("node:child_process");
 const {
   ELECTRON_EDITOR_ERROR_CODES,
@@ -65,6 +66,32 @@ function resolveEditorRuntimeRoot(executablePath) {
   const kitRoot = path.resolve(__dirname, "..", "..", "..", "..", "UI-Editor-kit");
   if (fs.existsSync(path.join(kitRoot, "src", "process", "editor-process-entry.cjs"))) return kitRoot;
   throw new ElectronEditorError(ELECTRON_EDITOR_ERROR_CODES.EDITOR_NOT_INSTALLED, "Der Editor-Core ist nicht vollständig installiert.");
+}
+
+function resolveEditorBuildIdentity(executablePath) {
+  const resolvedExecutablePath = path.resolve(executablePath);
+  const managerRoot = path.dirname(resolvedExecutablePath);
+  const assemblyPath = path.join(managerRoot, "UiEditorManager.dll");
+  const manifestPath = path.join(managerRoot, "ui-editor-build.json");
+  let manifest = {};
+  try { manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8")); }
+  catch (_error) { manifest = {}; }
+  let assemblySha256 = null;
+  try {
+    assemblySha256 = crypto.createHash("sha256").update(fs.readFileSync(assemblyPath)).digest("hex");
+  } catch (_error) { assemblySha256 = null; }
+  const manifestSha256 = typeof manifest.managerAssemblySha256 === "string"
+    ? manifest.managerAssemblySha256.toLowerCase()
+    : null;
+  return Object.freeze({
+    buildId: assemblySha256 ? `ui-editor:${assemblySha256.slice(0, 16)}` : String(manifest.buildId || "ui-editor:unverified"),
+    executablePath: resolvedExecutablePath,
+    managerAssemblySha256: assemblySha256,
+    manifestMatches: Boolean(assemblySha256 && manifestSha256 && assemblySha256 === manifestSha256),
+    sourceBranch: String(manifest.sourceBranch || "unknown"),
+    sourceCommit: String(manifest.sourceCommit || "unknown"),
+    sourceDirty: typeof manifest.sourceDirty === "boolean" ? manifest.sourceDirty : null,
+  });
 }
 
 function ensureSmallPlainObject(value, name) {
@@ -156,6 +183,84 @@ function migrateCompatibleLegacyLayoutProfile(baseProfileRoot, moduleProfileRoot
   catch (error) { if (error?.code !== "EEXIST") throw error; }
 }
 
+function profileArchiveStamp(value = new Date()) {
+  return value.toISOString().replace(/[-:.]/g, "");
+}
+
+function migrateInvalidProtokollTableCellGeometryProfile({ profileRoot, loadedProfile, registration, now = () => new Date() }) {
+  const activeScopes = Array.isArray(registration?.activeScopes)
+    ? registration.activeScopes
+    : registration?.contract?.activeScopes;
+  if (!loadedProfile?.ok || !loadedProfile?.found || !loadedProfile.profilePath ||
+      !Array.isArray(activeScopes) || !activeScopes.includes("protokoll.list.root")) {
+    return { migrated: false, repairedElementIds: [], archivePath: null };
+  }
+  const persistedScope = loadedProfile.scopes?.find((scope) => scope.scopeId === "protokoll.list.root");
+  const registryScope = registration.registryScopes?.find((scope) => scope.scopeId === "protokoll.list.root");
+  if (!persistedScope || !registryScope || !persistedScope.explicitOperations) {
+    return { migrated: false, repairedElementIds: [], archivePath: null };
+  }
+  const persistedById = new Map(persistedScope.elements.map((entry) => [entry.elementId, entry]));
+  const registeredById = new Map(registryScope.elements.map((entry) => [entry.id, entry]));
+  const repairedElementIds = [];
+  for (const [elementId, operations] of Object.entries(persistedScope.explicitOperations)) {
+    const entry = registeredById.get(elementId);
+    if (entry?.type !== "tableDataCell" || !Array.isArray(operations) ||
+        !operations.some((operation) => ["move", "resize", "resizeWidth"].includes(operation))) continue;
+    const columnId = String(entry.tableBinding?.columnId || entry.parentId || "");
+    const registeredColumn = registeredById.get(columnId);
+    const persistedCell = persistedById.get(elementId);
+    const persistedColumn = persistedById.get(columnId);
+    if (registeredColumn?.type !== "tableColumn" || !persistedCell || !persistedColumn) continue;
+    const offsetX = Number(persistedCell.x || 0);
+    const cellWidth = Number(persistedCell.width);
+    const columnWidth = Number(persistedColumn.width);
+    if (![offsetX, cellWidth, columnWidth].every(Number.isFinite) || cellWidth <= 0 || columnWidth <= 0) continue;
+    if (offsetX < -0.5 || cellWidth > columnWidth + 0.5 || offsetX + cellWidth > columnWidth + 0.5) {
+      repairedElementIds.push(elementId);
+    }
+  }
+  if (!repairedElementIds.length) return { migrated: false, repairedElementIds: [], archivePath: null };
+
+  const document = JSON.parse(fs.readFileSync(loadedProfile.profilePath, "utf8"));
+  for (const scope of document.scopes || []) {
+    if (scope.scopeId !== "protokoll.list.root" || !scope.explicitOperations) continue;
+    for (const elementId of repairedElementIds) {
+      const remaining = Array.isArray(scope.explicitOperations[elementId])
+        ? scope.explicitOperations[elementId].filter((operation) => !["move", "resize", "resizeWidth"].includes(operation))
+        : [];
+      if (remaining.length) scope.explicitOperations[elementId] = remaining;
+      else delete scope.explicitOperations[elementId];
+    }
+  }
+  const migrationTime = now();
+  document.savedAt = migrationTime.toISOString();
+  const archiveRoot = path.join(profileRoot, "archive", APPLICATION_ID);
+  fs.mkdirSync(archiveRoot, { recursive: true });
+  const archivePath = path.join(
+    archiveRoot,
+    `${profileArchiveStamp(migrationTime)}_invalid-table-cell-geometry_${path.basename(loadedProfile.profilePath)}`
+  );
+  const temporaryPath = path.join(
+    path.dirname(loadedProfile.profilePath),
+    `.${path.basename(loadedProfile.profilePath)}.${process.pid}.${Date.now()}.tmp`
+  );
+  fs.writeFileSync(temporaryPath, JSON.stringify(document, null, 2), { encoding: "utf8", flag: "wx" });
+  try {
+    fs.renameSync(loadedProfile.profilePath, archivePath);
+    try { fs.renameSync(temporaryPath, loadedProfile.profilePath); }
+    catch (error) {
+      fs.renameSync(archivePath, loadedProfile.profilePath);
+      throw error;
+    }
+  } catch (error) {
+    try { fs.unlinkSync(temporaryPath); } catch (_cleanupError) { void _cleanupError; }
+    throw error;
+  }
+  try { fs.unlinkSync(temporaryPath); } catch (error) { if (error?.code !== "ENOENT") throw error; }
+  return { migrated: true, repairedElementIds, archivePath };
+}
+
 class ElectronUiEditorSessionController {
   constructor({ app, ipcMain, getMainWindow, pdfAdapter = null, spawnProcess = spawn, clientFactory, pathOptions = {}, executableResolver, runtimeRootResolver, sessionIdentifiersFactory, profileRootResolver, ensureDirectory }) {
     this.app = app;
@@ -180,6 +285,7 @@ class ElectronUiEditorSessionController {
     this.startupLayoutReceipts = new Map();
     this.registered = false;
     this.stopping = false;
+    this.editorBuildIdentity = null;
   }
 
   registerIpc() {
@@ -230,12 +336,26 @@ class ElectronUiEditorSessionController {
       migrateCompatibleLegacyLayoutProfile(baseProfileRoot, profileRoot, registration);
       const snapshot = this.#registrationSnapshot(registration, { sessionId: "startup-layout", profileRoot, identity });
       const manifestPath = this.#validateTargetManifest(snapshot.contract);
-      const result = loadTargetStartupLayout({
+      let result = loadTargetStartupLayout({
         profileRoot,
         applicationId: snapshot.contract.applicationId,
         activeScopes: snapshot.contract.activeScopes,
         registryScopes: snapshot.registryScopes,
       });
+      const layoutRepair = migrateInvalidProtokollTableCellGeometryProfile({
+        profileRoot,
+        loadedProfile: result,
+        registration: snapshot,
+      });
+      if (layoutRepair.migrated) {
+        result = loadTargetStartupLayout({
+          profileRoot,
+          applicationId: snapshot.contract.applicationId,
+          activeScopes: snapshot.contract.activeScopes,
+          registryScopes: snapshot.registryScopes,
+        });
+        console.info(`[ui-editor] startup layout repaired: elements=${layoutRepair.repairedElementIds.join(",")}, archive=${layoutRepair.archivePath}`);
+      }
       if (result.ok && result.found) this.pendingStartupLayouts.set(identity.layoutStorageKey, { ...result, manifestPath, layoutStorageKey: identity.layoutStorageKey });
       else this.pendingStartupLayouts.delete(identity.layoutStorageKey);
       const receipt = result.found ? null : {
@@ -248,7 +368,7 @@ class ElectronUiEditorSessionController {
       if (receipt) this.startupLayoutReceipts.set(identity.layoutStorageKey, receipt);
       else this.startupLayoutReceipts.delete(identity.layoutStorageKey);
       console.info(`[ui-editor] startup layout loaded: module=${identity.moduleId}, profile=${result.profileId || "standard"}, found=${result.found === true}, code=${result.code}, fingerprint=${result.profileSha256 || "none"}`);
-      return { ...result, manifestPath, layoutStorageKey: identity.layoutStorageKey };
+      return { ...result, manifestPath, layoutStorageKey: identity.layoutStorageKey, layoutRepair };
     } catch (error) {
       const receipt = { applied: false, state: "baseline", code: error?.code || "startup_layout_failed", editorProcessRequired: false };
       console.info(`[ui-editor] startup layout rejected: ${receipt.code}`);
@@ -388,6 +508,12 @@ class ElectronUiEditorSessionController {
     console.info(`[ui-editor] editor start receipt: ${contract.startupLayout?.code || "none"}, applied=${contract.startupLayout?.applied === true}`);
     const executablePath = this.executableResolver({ app: this.app, ...this.pathOptions });
     const editorRuntimeRoot = this.runtimeRootResolver(executablePath);
+    this.editorBuildIdentity = resolveEditorBuildIdentity(executablePath);
+    console.info(
+      `[ui-editor] manager build: id=${this.editorBuildIdentity.buildId}, path=${this.editorBuildIdentity.executablePath}, ` +
+      `branch=${this.editorBuildIdentity.sourceBranch}, commit=${this.editorBuildIdentity.sourceCommit}, ` +
+      `dirty=${this.editorBuildIdentity.sourceDirty}, manifestMatches=${this.editorBuildIdentity.manifestMatches}`
+    );
     const args = [
       "--electron-target-editor",
       `--pipe-name=${identifiers.pipeName}`,
@@ -566,6 +692,7 @@ class ElectronUiEditorSessionController {
       registryVersion: this.currentRegistration?.contract.registryVersion || null,
       registryFingerprint: this.currentRegistration?.contract.registryFingerprint || null,
       registryStatus: this.currentRegistration?.contract.registryStatus || "registrationRequired",
+      editorBuildIdentity: this.editorBuildIdentity ? { ...this.editorBuildIdentity } : null,
     };
   }
 
@@ -630,8 +757,10 @@ module.exports = Object.freeze({
   ACTIVE_SCOPES,
   ElectronUiEditorSessionController,
   createBbmModuleLayoutStorageIdentity,
+  migrateInvalidProtokollTableCellGeometryProfile,
   publicError,
   resolveBbmModuleLayoutProfileRoot,
+  resolveEditorBuildIdentity,
   resolveEditorRuntimeRoot,
   resolveTrustedEditorExecutable,
   trustedEditorCandidates,

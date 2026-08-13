@@ -57,7 +57,7 @@ async function createRuntime(refs, host) {
   const variables = ["--bbm-restarbeiten-number-column", "--bbm-restarbeiten-subject-column", "--bbm-restarbeiten-meta-column"];
   const minimums = [50, 160, 110];
   headers.forEach((element, index) => {
-    element._widthSource = () => {
+    const widthSource = () => {
       const value = table.style[variables[index]];
       if (!value) return element._rect.width;
         if (String(value).startsWith("minmax")) return Math.max(minimums[index], table._rect.width - 44 - headers.filter((_item, candidate) => candidate !== index).reduce((sum, other, candidate) => {
@@ -67,6 +67,8 @@ async function createRuntime(refs, host) {
       }, 0));
       return parseFloat(value);
     };
+    element._widthSource = widthSource;
+    cells[index]._widthSource = widthSource;
   });
 
   refs.registerM80Ref("restarbeiten.list.root", root);
@@ -110,9 +112,9 @@ async function runM824BbmTableColumnEditingTests(run) {
 
   const runtime = await createRuntime(refs, host);
   try {
-    await run("M82.4 BBM 11: Laufzeit meldet Viewport und Ueberlauf", () => { const state = refs.snapshotM80State("restarbeiten.list.table"); assert.equal(state.table.viewportWidth, 600); assert.ok(state.table.overflow > 250); });
-    await run("M82.4 BBM 11a: Spaltenauswahl meldet dieselbe Tabellengeometrie", () => { const state = refs.snapshotM80State("restarbeiten.list.table.subject"); assert.equal(state.table.viewportWidth, 600); assert.ok(state.table.tableWidth > state.table.viewportWidth); assert.ok(state.table.overflow > 250); });
-    await run("M82.4 BBM 12: exakte Breite schaltet die Spalte kontrolliert auf fest", () => { const result = runtime.submit("restarbeiten.list.table.subject", "resizeWidth", { width: 420 }); assert.equal(result.success, true); assert.equal(result.newState.width, 420); assert.equal(result.newState.table.widthMode, "fixed"); });
+    await run("M82.4 BBM 11: Laufzeit meldet responsive Ist-Geometrie ohne Scheinüberlauf", () => { const state = refs.snapshotM80State("restarbeiten.list.table"); assert.equal(state.table.viewportWidth, 600); assert.equal(state.table.tableWidth, 600); assert.equal(state.table.overflow, 0); });
+    await run("M82.4 BBM 11a: Spaltenauswahl meldet dieselbe responsive Tabellengeometrie", () => { const state = refs.snapshotM80State("restarbeiten.list.table.subject"); assert.equal(state.table.viewportWidth, 600); assert.equal(state.table.tableWidth, 600); assert.equal(state.table.overflow, 0); assert.equal(state.table.effectiveWidth, 302); assert.deepEqual(state.table.dataCellWidths, [302]); });
+    await run("M82.4 BBM 12: exakte Breite schaltet die Spalte kontrolliert auf fest", () => { runtime.table._rect.width = 900; const result = runtime.submit("restarbeiten.list.table.subject", "resizeWidth", { width: 420 }); assert.equal(result.success, true, result.message); assert.equal(result.newState.width, 420); assert.equal(result.newState.table.widthMode, "fixed"); });
     await run("M82.4 BBM 13: Kopfbreite stammt aus derselben CSS-Quelle", () => assert.equal(runtime.table.style["--bbm-restarbeiten-subject-column"], "420px"));
     await run("M82.4 BBM 14: Wortumbruch gilt fuer Kopf und Datenbereich", () => { const result = runtime.submit("restarbeiten.list.table.subject", "setColumnWrapMode", { table: { wrapMode: "wordWrap" } }); assert.equal(result.success, true); assert.equal(runtime.headers[1].style.overflowWrap, "break-word"); assert.equal(runtime.cells[1].style.overflowWrap, "break-word"); });
     await run("M82.4 BBM 15: Ellipsis gilt fuer Kopf, Datenbereich und sichtbare Unterelemente", () => { const line = new FakeElement(); runtime.cells[1].children.push(line); runtime.submit("restarbeiten.list.table.subject", "setColumnOverflowMode", { table: { overflowMode: "ellipsis" } }); assert.equal(runtime.headers[1].style.textOverflow, "ellipsis"); assert.equal(runtime.cells[1].style.textOverflow, "ellipsis"); assert.equal(line.style.textOverflow, "ellipsis"); });

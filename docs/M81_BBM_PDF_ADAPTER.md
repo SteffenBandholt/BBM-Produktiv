@@ -41,3 +41,11 @@ Stabile kompatible Profile werden übernommen; neue Registry-Elemente beginnen m
 - Es wurde keine `ReferenceOrder`-PDF als BBM-Nachweis verwendet.
 
 M82 bleibt offen und wurde nicht begonnen.
+
+## K17 - Atomare TOP-Spaltengrenze
+
+Die TOP-Tabelle bietet nun `resizeColumnBoundary` mit der Policy `adjacentPreserveTotal` an. BBM prüft zwei unmittelbar benachbarte Spalten, Delta, Mindest-/Maximalbreiten und die feste Tabellensumme. Gegenstand und Meta werden in einem Request gemeinsam geschrieben und gemeinsam zurückgelesen; ein Fehler hinterlässt keinen Teilzustand. Einzelnes `resizeWidth` bleibt für kompatible bestehende PDF-Profile und Satzvertrag-Fixtures erhalten.
+
+UI und PDF bleiben getrennt. In der Protokoll-UI bindet eine CSS-Variable je Spalte weiterhin Tabellenkopf, alle Datenzeilen und Multi-Refs. Im PDF besitzt die bestehende BBM-PDF-Sitzung eigene Millimeterwerte und denselben atomaren Grenzvorgang; Paginierung, Renderer, Schriftgrößen und Fachlogik wurden nicht geändert.
+
+Die praktische Abnahme im isolierten BBM-Profil verschob die sichtbare UI-Grenze Gegenstand/Meta, erzeugte anschließend eine neue TOP-Zeile und bestätigte die Geometrie nach Rerender, Save und Prozessneustart. Im PDF wurden `24.18 / 120.9 / 40.92 mm` zu `24.18 / 125.9 / 35.92 mm`; nach Regeneration und Neustart blieben zwei Seiten, vollständige Inhalte und Statusmarkierungen erhalten.

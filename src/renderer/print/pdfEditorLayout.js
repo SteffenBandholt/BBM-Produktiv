@@ -133,9 +133,16 @@ export function collectBbmPdfPreviewMetadata(root, data) {
       if (!(pageRect.width > 0 && pageRect.height > 0 && rect.width > 0 && rect.height > 0)) continue;
       const pageWidthMm = String(data?.orientation || "portrait") === "landscape" ? 297 : 210;
       const pageHeightMm = String(data?.orientation || "portrait") === "landscape" ? 210 : 297;
+      const tagName = String(node.tagName || "").toUpperCase();
+      const part = tagName === "COL" ? "track" : tagName === "TH" ? "header" : tagName === "TD" ? "data" : "element";
+      const computed = globalThis.getComputedStyle?.(node) || node.style || {};
+      const horizontalChromePx = ["paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth"]
+        .reduce((sum, field) => sum + Math.max(0, Number.parseFloat(computed?.[field]) || 0), 0);
       renderBounds.push({
         elementId: entry.id,
         pageNumber,
+        part,
+        contentWidth: round(Math.max(0, rect.width - horizontalChromePx) * pageWidthMm / pageRect.width),
         box: {
           x: round((rect.left - pageRect.left) * pageWidthMm / pageRect.width),
           y: round((rect.top - pageRect.top) * pageHeightMm / pageRect.height),

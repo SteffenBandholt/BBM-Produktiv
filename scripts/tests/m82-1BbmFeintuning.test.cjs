@@ -150,6 +150,62 @@ async function runM821BbmFeintuningTests(run) {
     assert.match(session, /state:\s*"baseline"/);
     assert.doesNotMatch(session, /BrowserWindow|WebSocket|https?:\/\//i);
   });
+
+  await run("M82.1 BBM 32a: ungueltige horizontale Tabellenzellen-Geometrie wird gezielt archiviert und auf Baseline gesetzt", () => {
+    const profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-m82-1-cell-repair-"));
+    try {
+      const profilePath = path.join(profileRoot, "standard.layout-profile.json");
+      const scope = scopes.find((candidate) => candidate.scopeId === "protokoll.list.root");
+      const originalDocument = {
+        schemaVersion: 2,
+        applicationId: "bbm-produktiv",
+        profileId: "standard",
+        savedAt: "2026-08-12T16:05:33.914Z",
+        scopes: [{
+          scopeId: "protokoll.list.root",
+          registryFingerprint: createUiScopeFingerprint(scope),
+          layoutState: { elements: [
+            { elementId: "protokoll.list.column.meta", scopeId: "protokoll.list.root", width: 193.297 },
+            { elementId: "protokoll.list.column.meta.cells", scopeId: "protokoll.list.root", x: 110, width: 189.97 },
+            { elementId: "protokoll.list.row.long", scopeId: "protokoll.list.root", width: 729.338 },
+          ] },
+          explicitOperations: {
+            "protokoll.list.column.meta.cells": ["move", "resizeWidth", "resizeHeight"],
+            "protokoll.list.row.long": ["resizeWidth"],
+          },
+        }],
+      };
+      fs.writeFileSync(profilePath, JSON.stringify(originalDocument), "utf8");
+      const { migrateInvalidProtokollTableCellGeometryProfile } = require("../../src/main/ui-editor/electronUiEditorSession.js");
+      const repaired = migrateInvalidProtokollTableCellGeometryProfile({
+        profileRoot,
+        loadedProfile: {
+          ok: true,
+          found: true,
+          profilePath,
+          scopes: originalDocument.scopes.map((entry) => ({
+            scopeId: entry.scopeId,
+            elements: entry.layoutState.elements,
+            explicitOperations: entry.explicitOperations,
+          })),
+        },
+        registration: { contract: { activeScopes: ["protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root"] }, registryScopes: [scope] },
+        now: () => new Date("2026-08-12T20:00:00.000Z"),
+      });
+      assert.equal(repaired.migrated, true);
+      assert.deepEqual(repaired.repairedElementIds, ["protokoll.list.column.meta.cells"]);
+      const migratedDocument = JSON.parse(fs.readFileSync(profilePath, "utf8"));
+      const migratedScope = migratedDocument.scopes[0];
+      assert.deepEqual(migratedScope.explicitOperations["protokoll.list.column.meta.cells"], ["resizeHeight"]);
+      assert.deepEqual(migratedScope.explicitOperations["protokoll.list.row.long"], ["resizeWidth"]);
+      assert.equal(migratedScope.layoutState.elements.find((entry) => entry.elementId === "protokoll.list.column.meta.cells").x, 110);
+      assert.equal(migratedDocument.savedAt, "2026-08-12T20:00:00.000Z");
+      assert.deepEqual(JSON.parse(fs.readFileSync(repaired.archivePath, "utf8")), originalDocument);
+      assert.match(refs, /entry\.componentKind === "documentPaper"[\s\S]*?\? "100%"/);
+    } finally {
+      fs.rmSync(profileRoot, { recursive: true, force: true });
+    }
+  });
 }
 
 module.exports = { runM821BbmFeintuningTests };
