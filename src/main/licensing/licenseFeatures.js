@@ -1,12 +1,15 @@
 const LICENSE_MODULES = Object.freeze({
   PROTOKOLL: "protokoll",
   RESTARBEITEN: "restarbeiten",
+  RECHNUNG: "rechnung",
 });
 
 const LICENSE_FEATURES = Object.freeze({
   DIKTAT: "diktat",
   AUDIO: "diktat",
 });
+
+const KNOWN_LICENSE_MODULE_IDS = Object.freeze(Object.values(LICENSE_MODULES));
 
 const LEGACY_FEATURE_ALIASES = Object.freeze({
   audio: LICENSE_FEATURES.DIKTAT,
@@ -61,8 +64,7 @@ function normalizeLicensedModules(modules, features) {
   const seen = new Set();
   rawModules.forEach((value) => {
     const mod = _normalizeFeatureValue(value);
-    const isAllowedModule =
-      mod === LICENSE_MODULES.PROTOKOLL || mod === LICENSE_MODULES.RESTARBEITEN;
+    const isAllowedModule = KNOWN_LICENSE_MODULE_IDS.includes(mod);
     if (!mod || !isAllowedModule || seen.has(mod)) return;
     seen.add(mod);
     normalized.push(mod);
@@ -78,7 +80,7 @@ function normalizeLicensedModules(modules, features) {
 
 function isLicensedModule(moduleId) {
   const normalized = _normalizeFeatureValue(moduleId);
-  return normalized === LICENSE_MODULES.PROTOKOLL || normalized === LICENSE_MODULES.RESTARBEITEN;
+  return KNOWN_LICENSE_MODULE_IDS.includes(normalized);
 }
 
 function isLicensedProduct(product) {
@@ -89,6 +91,7 @@ function isLicensedProduct(product) {
 module.exports = {
   LICENSE_MODULES,
   LICENSE_FEATURES,
+  KNOWN_LICENSE_MODULE_IDS,
   normalizeLicensedModules,
   normalizeFeatureAlias,
   normalizeLicensedFeatures,
