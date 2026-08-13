@@ -14,11 +14,12 @@ function hasResolvableNavigationTarget(moduleEntry, navigationItem) {
   return !!resolveModuleScreenFromEntry(moduleEntry, screenId);
 }
 
-// App-Kern: kleine Ableitung modulbezogener Navigation aus aktiven Modulen.
-// Kernnavigation und Fachaktionen bleiben davon getrennt.
-export function getActiveProjectModuleNavigation() {
+function getActiveModuleNavigationByScope(scope) {
+  const normalizedScope = String(scope || "").trim().toLowerCase();
+  if (!normalizedScope) return [];
+
   return getActiveModuleCatalog().flatMap((entry) => {
-    return asNavigationItems(entry?.navigation?.project)
+    return asNavigationItems(entry?.navigation?.[normalizedScope])
       .filter((item) => hasResolvableNavigationTarget(entry, item))
       .map((item) =>
         Object.freeze({
@@ -27,4 +28,16 @@ export function getActiveProjectModuleNavigation() {
         })
       );
   });
+}
+
+// App-Kern: modulbezogene Navigation wird ausschließlich aus den aktiven
+// Moduldeskriptoren abgeleitet. Damit können neue Fachmodule globale,
+// projektbezogene oder beide Einstiegspunkte deklarieren, ohne neue
+// Sonderlogik in der Shell-Navigation einzubauen.
+export function getActiveGlobalModuleNavigation() {
+  return getActiveModuleNavigationByScope("global");
+}
+
+export function getActiveProjectModuleNavigation() {
+  return getActiveModuleNavigationByScope("project");
 }

@@ -42,6 +42,7 @@ const { registerLicenseIpc, importLicenseFromFilePath } = require("./ipc/license
 const { registerAudioIpc } = require("./ipc/audioIpc");
 const { registerRestarbeitenIpc } = require("./ipc/restarbeitenIpc");
 const { registerUiEditorIpc } = require("./ipc/uiEditorIpc");
+const { registerActiveModuleIpcs } = require("./moduleIpcRegistry");
 const { checkLicense } = require("./licensing/licenseService");
 const { loadCustomerSetup } = require("./licensing/licenseStorage");
 const {
@@ -567,8 +568,6 @@ async function maybePromptLegacyMigration(win) {
 app.whenReady().then(async () => {
   // ✅ IPCs zuerst registrieren (verhindert "No handler registered" beim invoke)
   registerProjectsIpc();
-  registerMeetingsIpc();
-  registerTopsIpc();
   registerProjectFirmsIpc();
   registerParticipantsIpc();
   registerPrintIpc();
@@ -579,7 +578,16 @@ app.whenReady().then(async () => {
   registerProjectTransferIpc();
   registerLicenseIpc();
   registerAudioIpc();
-  registerRestarbeitenIpc({ ipcMain });
+  registerActiveModuleIpcs({
+    licenseStatus: checkLicense(),
+    registrars: {
+      protokoll: () => {
+        registerMeetingsIpc();
+        registerTopsIpc();
+      },
+      restarbeiten: () => registerRestarbeitenIpc({ ipcMain }),
+    },
+  });
   uiEditorSessionController = registerUiEditorIpc({ app, ipcMain, getMainWindow: () => mainWindow });
   ipcMain.handle("uiEditor:getDiagnosticMode", () => {
     const result = {

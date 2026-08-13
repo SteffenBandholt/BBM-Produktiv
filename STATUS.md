@@ -4089,3 +4089,11 @@ Wichtig:
   und 26 bestehende Warnungen.
 - Nächster Schritt: ausschließlich Sichtfreigabe dieser Welle; keine automatische
   Löschung oder weitere Massenmigration.
+
+## Core-Stabilisierung - Main-/IPC-Modulvertrag und Projektmodul-Navigation
+
+- Status: Der vorbereitete Main-/IPC-Modulvertrag ist produktiv angeschlossen. Protokoll- und Restarbeiten-IPCs werden anhand der aktiven Lizenzmodule registriert; Core-/Shared-IPCs bleiben direkt registriert. Rechnung besitzt weiterhin keinen Fach-IPC-Registrar.
+- Projektmodule dürfen mehrere projektbezogene Navigationseinträge besitzen. `Restarbeiten` und `Pläne` verwenden beide `moduleId: "restarbeiten"` und werden über die getrennten Navigation-Keys `restarbeiten` und `plaene` sichtbar gehalten und aufgelöst.
+- Reale DEV-Abnahme: Start ohne externe Lizenzdatei und ohne neue Lizenzabfrage; Protokoll, Restarbeiten und Pläne gleichzeitig sichtbar und jeweils separat geöffnet; keine `No handler registered`-Fehler.
+- Gezielte Navigationstests, UI-Editor-Vertragscheck, ESLint der geänderten Dateien und `git diff --check` sind grün. ESLint meldet ausschließlich bestehende Warnungen.
+- Die bereits dokumentierten globalen `npm test`-/`npm run lint`-Fehler bleiben paketfremd und wurden nicht verändert. Nächster offener Schritt: keiner für dieses Paket; Commit-SHA folgt im Abschlussbericht.
