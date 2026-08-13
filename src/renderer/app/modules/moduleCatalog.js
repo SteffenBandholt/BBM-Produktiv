@@ -6,10 +6,6 @@ import {
   getRestarbeitenModuleEntry,
   RESTARBEITEN_MODULE_ID,
 } from "../../modules/restarbeiten/index.js";
-import {
-  getPlaeneModuleEntry,
-  PLAENE_MODULE_ID,
-} from "../../modules/plaene/index.js";
 
 const AVAILABLE_MODULE_ENTRIES = Object.freeze([
   Object.freeze({
@@ -20,16 +16,11 @@ const AVAILABLE_MODULE_ENTRIES = Object.freeze([
     moduleId: RESTARBEITEN_MODULE_ID,
     entry: getRestarbeitenModuleEntry(),
   }),
-  Object.freeze({
-    moduleId: PLAENE_MODULE_ID,
-    entry: getPlaeneModuleEntry(),
-  }),
 ]);
 
 const DEFAULT_ACTIVE_MODULE_IDS = Object.freeze([
   PROTOKOLL_MODULE_ID,
   RESTARBEITEN_MODULE_ID,
-  PLAENE_MODULE_ID,
 ]);
 
 const PRODUCTIVE_DEFAULT_RELEASE_STATE = Object.freeze({
@@ -199,9 +190,9 @@ const PRODUCTIVE_ACTIVE_MODULE_ACCESS = createProductiveModuleAccess(
   () => ACTIVE_MODULE_IDS
 );
 
-// App-Kern: kleiner statischer Modulkatalog.
-// Bekannte Module und aktiver Modulumfang bleiben bewusst statisch.
-// Keine dynamische Discovery, keine Plattformmechanik und keine Lizenzlogik im Katalog.
+// App-Kern: Produktmodulkatalog der echten Fachmodule.
+// Unterfunktionen wie "Pläne" werden von ihrem Fachmodul registriert und sind
+// keine eigenständigen lizenzierbaren Produktmodule.
 export function getActiveModuleCatalog() {
   return PRODUCTIVE_ACTIVE_MODULE_ACCESS.getCatalog();
 }
@@ -234,4 +225,4 @@ export function getActiveModuleIdsForReleaseState(releaseState) {
   return RELEASE_STATE_MODULE_ACCESS.getModuleIds(releaseState);
 }
 
-export { PROTOKOLL_MODULE_ID, RESTARBEITEN_MODULE_ID, PLAENE_MODULE_ID };
+export { PROTOKOLL_MODULE_ID, RESTARBEITEN_MODULE_ID };
