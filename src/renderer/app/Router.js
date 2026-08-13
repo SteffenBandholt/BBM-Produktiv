@@ -565,16 +565,21 @@ export default class Router {
     await this.ensureActiveModuleAccess({ force: true });
     const effectiveProjectId = this._resolveProjectId(projectId);
     const normalizedModuleId = String(moduleId || "").trim();
+    const normalizedNavigationKey = String(options?.navigationKey || "").trim();
     if (!effectiveProjectId || !normalizedModuleId) return false;
 
     if (normalizedModuleId === PROTOKOLL_MODULE_ID) {
       return await this.openProjectProtocol(effectiveProjectId, options || {});
     }
 
-    const navEntry =
-      getActiveProjectModuleNavigation().find(
-        (entry) => String(entry?.moduleId || "").trim() === normalizedModuleId
-      ) || null;
+    const moduleNavigationEntries = getActiveProjectModuleNavigation().filter(
+      (entry) => String(entry?.moduleId || "").trim() === normalizedModuleId
+    );
+    const navEntry = normalizedNavigationKey
+      ? moduleNavigationEntries.find(
+          (entry) => String(entry?.key || "").trim() === normalizedNavigationKey
+        ) || null
+      : moduleNavigationEntries[0] || null;
     if (!navEntry) return false;
 
     const moduleScreen =
@@ -612,12 +617,13 @@ export default class Router {
   }
 
   _getProjectWorkspaceModules() {
-    const uniqueModuleIds = [];
+    const uniqueNavigationKeys = [];
     const activeModules = getActiveProjectModuleNavigation()
       .filter((entry) => this._isModuleActive(entry?.moduleId))
       .map((entry) =>
         Object.freeze({
           moduleId: String(entry?.moduleId || "").trim(),
+          navigationKey: String(entry?.key || "").trim(),
           label: String(entry?.label || "Arbeitsbereich öffnen").trim(),
           description: String(
             entry?.description || "Arbeitsbereich im aktuellen Projektkontext öffnen."
@@ -625,9 +631,9 @@ export default class Router {
         })
       )
       .filter((entry) => {
-        const moduleId = String(entry?.moduleId || "").trim();
-        if (!moduleId || uniqueModuleIds.includes(moduleId)) return false;
-        uniqueModuleIds.push(moduleId);
+        const navigationKey = String(entry?.navigationKey || "").trim();
+        if (!navigationKey || uniqueNavigationKeys.includes(navigationKey)) return false;
+        uniqueNavigationKeys.push(navigationKey);
         return true;
       });
 
@@ -635,6 +641,7 @@ export default class Router {
       ...activeModules,
       Object.freeze({
         moduleId: "projectFirms",
+        navigationKey: "projectFirms",
         label: "Firmen im Projekt",
         description: "Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen.",
       }),

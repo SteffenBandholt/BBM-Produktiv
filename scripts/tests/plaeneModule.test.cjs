@@ -111,31 +111,33 @@ async function withFakeDom(fn, bbmDb = {}) {
 }
 
 async function runPlaeneModuleTests(run) {
-  const [plaeneModule, screenResolver, navigationModule, catalogModule, screenModule] = await Promise.all([
-    importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/plaene/index.js")),
+  const [restarbeitenModule, screenResolver, navigationModule, catalogModule, screenModule] = await Promise.all([
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/index.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/app/modules/moduleEntryScreenResolver.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/app/modules/moduleNavigation.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/app/modules/moduleCatalog.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/plaene/screens/PlaeneScreen.js")),
   ]);
 
-  await run("Pläne: Modulentry bleibt im Projektmodul-System erreichbar", () => {
-    const entry = plaeneModule.getPlaeneModuleEntry();
-    assert.equal(entry.moduleId, "plaene");
-    assert.equal(entry.moduleLabel, "Pläne");
-    assert.equal(entry.workScreenId, "plaeneWork");
-    assert.equal(entry.navigation.project[0].key, "plaene");
-    assert.equal(entry.navigation.project[0].label, "Pläne");
-    assert.equal(entry.navigation.project[0].section, "plaene");
+  await run("Pläne: Navigation bleibt im Modul Restarbeiten erreichbar", () => {
+    const entry = restarbeitenModule.getRestarbeitenModuleEntry();
+    const plaeneNavigation = entry.navigation.project.find((item) => item.key === "plaene");
+    assert.equal(entry.moduleId, "restarbeiten");
+    assert.deepEqual(entry.navigation.project.map((item) => item.key), ["restarbeiten", "plaene"]);
+    assert.equal(plaeneNavigation.moduleId, "restarbeiten");
+    assert.equal(plaeneNavigation.label, "Pläne");
+    assert.equal(plaeneNavigation.section, "plaene");
     assert.equal(entry.shell.hideSidebar, true);
-    assert.equal(typeof screenResolver.resolveModuleWorkScreenFromEntry(entry), "function");
+    assert.equal(typeof screenResolver.resolveModuleScreenFromEntry(entry, plaeneNavigation.workScreenId), "function");
   });
 
-  await run("Pläne: aktive Projektmodulnavigation enthält genau einen Pläne-Eintrag", () => {
+  await run("Pläne: aktive Projektmodulnavigation nutzt den Key bei Modul-ID Restarbeiten", () => {
     const entries = navigationModule.getActiveProjectModuleNavigation();
-    const plaeneEntries = entries.filter((entry) => entry.moduleId === "plaene");
+    const plaeneEntries = entries.filter((entry) => entry.key === "plaene");
     assert.equal(plaeneEntries.length, 1);
-    assert.equal(catalogModule.getActiveModuleIds().includes("plaene"), true);
+    assert.equal(plaeneEntries[0].moduleId, "restarbeiten");
+    assert.equal(catalogModule.getActiveModuleIds().includes("restarbeiten"), true);
+    assert.equal(catalogModule.getActiveModuleIds().includes("plaene"), false);
   });
 
   await run("Pläne: ohne aktives Projekt zeigt die definierte Hinweisansicht", async () => withFakeDom(async () => {

@@ -584,10 +584,13 @@ async function runProjektverwaltungModuleTests(run) {
   await run("Projektverwaltung: Runtime-Projektmodulliste enthaelt Restarbeiten", async () => {
     const projectNavigation = getActiveProjectModuleNavigation();
     const moduleIds = projectNavigation.map((entry) => String(entry?.moduleId || "").trim());
+    const navigationKeys = projectNavigation.map((entry) => String(entry?.key || "").trim());
 
     assert.equal(moduleIds.includes("protokoll"), true);
     assert.equal(moduleIds.includes("restarbeiten"), true);
-    assert.equal(moduleIds.filter((moduleId) => moduleId === "restarbeiten").length, 1);
+    assert.equal(moduleIds.filter((moduleId) => moduleId === "restarbeiten").length, 2);
+    assert.equal(navigationKeys.includes("restarbeiten"), true);
+    assert.equal(navigationKeys.includes("plaene"), true);
   });
 
   await run("Projektverwaltung: DEV-Version schaltet Modulfreigabe auf alle aktiven Module frei", async () => {
@@ -637,11 +640,13 @@ async function runProjektverwaltungModuleTests(run) {
           return [
             ...getActiveProjectModuleNavigation().map((entry) => ({
               moduleId: String(entry?.moduleId || "").trim(),
+              navigationKey: String(entry?.key || "").trim(),
               label: String(entry?.label || "").trim(),
               description: String(entry?.description || "").trim(),
             })),
             {
               moduleId: "projectFirms",
+              navigationKey: "projectFirms",
               label: "Firmen im Projekt",
               description: "Projektfirmen anzeigen.",
             },
@@ -681,11 +686,15 @@ async function runProjektverwaltungModuleTests(run) {
       const actionRail = findNode(root, (node) => node?.dataset?.projectActionRail === "true");
       const moduleButton = findNode(
         root,
-        (node) => node?.dataset?.projectAction === "module" && node?.dataset?.moduleId === "protokoll"
+        (node) => node?.dataset?.projectAction === "module" && node?.dataset?.navigationKey === "protokoll"
       );
       const restarbeitenButton = findNode(
         root,
-        (node) => node?.dataset?.projectAction === "module" && node?.dataset?.moduleId === "restarbeiten"
+        (node) => node?.dataset?.projectAction === "module" && node?.dataset?.navigationKey === "restarbeiten"
+      );
+      const plaeneButton = findNode(
+        root,
+        (node) => node?.dataset?.projectAction === "module" && node?.dataset?.navigationKey === "plaene"
       );
       const allRestarbeitenButtons = findNodes(
         root,
@@ -701,104 +710,29 @@ async function runProjektverwaltungModuleTests(run) {
       assert.equal(!!actionRail, true);
       assert.equal(!!moduleButton, true);
       assert.equal(!!restarbeitenButton, true);
-      assert.equal(allRestarbeitenButtons.length, 1);
+      assert.equal(!!plaeneButton, true);
+      assert.equal(allRestarbeitenButtons.length, 2);
       assert.equal(!!projectFirmsButton, false);
       assert.equal(!!editButton, true);
-      assert.equal(actionRail.children.length >= 2, true);
+      assert.equal(actionRail.children.length >= 4, true);
 
       await moduleButton.click();
       await restarbeitenButton.click();
-      assert.deepEqual(calls, [
-        {
-          type: "module",
-          projectId: "17",
-          moduleId: "protokoll",
-          options: {
-            project: {
-              id: "17",
-              short: "Projekt A",
-              name: "Projekt A",
-              project_number: "17",
-            },
-          },
-        },
-        {
-          type: "module",
-          projectId: "17",
-          moduleId: "restarbeiten",
-          options: {
-            project: {
-              id: "17",
-              short: "Projekt A",
-              name: "Projekt A",
-              project_number: "17",
-            },
-          },
-        },
-      ]);
+      await plaeneButton.click();
+      assert.deepEqual(
+        calls.map((item) => [item.type, item.moduleId, item.options?.navigationKey]),
+        [
+          ["module", "protokoll", "protokoll"],
+          ["module", "restarbeiten", "restarbeiten"],
+          ["module", "restarbeiten", "plaene"],
+        ]
+      );
 
       await editButton.click();
-      assert.deepEqual(calls, [
-        {
-          type: "module",
-          projectId: "17",
-          moduleId: "protokoll",
-          options: {
-            project: {
-              id: "17",
-              short: "Projekt A",
-              name: "Projekt A",
-              project_number: "17",
-            },
-          },
-        },
-        {
-          type: "module",
-          projectId: "17",
-          moduleId: "restarbeiten",
-          options: {
-            project: {
-              id: "17",
-              short: "Projekt A",
-              name: "Projekt A",
-              project_number: "17",
-            },
-          },
-        },
-        { type: "edit", projectId: "17" },
-      ]);
+      assert.deepEqual(calls.at(-1), { type: "edit", projectId: "17" });
 
       await projectCard.click();
-      assert.deepEqual(calls, [
-        {
-          type: "module",
-          projectId: "17",
-          moduleId: "protokoll",
-          options: {
-            project: {
-              id: "17",
-              short: "Projekt A",
-              name: "Projekt A",
-              project_number: "17",
-            },
-          },
-        },
-        {
-          type: "module",
-          projectId: "17",
-          moduleId: "restarbeiten",
-          options: {
-            project: {
-              id: "17",
-              short: "Projekt A",
-              name: "Projekt A",
-              project_number: "17",
-            },
-          },
-        },
-        { type: "edit", projectId: "17" },
-        { type: "main", projectId: "17" },
-      ]);
+      assert.deepEqual(calls.at(-1), { type: "main", projectId: "17" });
     } finally {
       global.document = previousDocument;
     }

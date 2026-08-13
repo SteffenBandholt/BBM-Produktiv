@@ -143,8 +143,9 @@ export default class ProjectWorkspaceScreen {
     return false;
   }
 
-  async openProjectModule(moduleId) {
+  async openProjectModule(moduleId, navigationKey = "") {
     const normalizedModuleId = normalizeText(moduleId);
+    const normalizedNavigationKey = normalizeText(navigationKey);
     const projectId = this.projectId || this.router?.currentProjectId || null;
     if (!projectId) return false;
 
@@ -161,6 +162,7 @@ export default class ProjectWorkspaceScreen {
     if (typeof this.router?.openProjectModule !== "function") return false;
     const result = await this.router.openProjectModule(projectId, normalizedModuleId, {
       project: this.project || null,
+      navigationKey: normalizedNavigationKey,
     });
     return typeof result === "object" ? !!result?.ok : result !== false;
   }
@@ -193,7 +195,7 @@ export default class ProjectWorkspaceScreen {
       btn.textContent = moduleItem.label;
       applyPopupButtonStyle(btn, { variant: "primary" });
       btn.onclick = async () => {
-        await this.openProjectModule(moduleItem.moduleId);
+        await this.openProjectModule(moduleItem.moduleId, moduleItem.navigationKey);
       };
 
       tile.append(title, description, btn);
