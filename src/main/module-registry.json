@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "modules": {
+    "protokoll": {
+      "kind": "project",
+      "ipcGroup": "protokoll"
+    },
+    "restarbeiten": {
+      "kind": "project",
+      "ipcGroup": "restarbeiten"
+    },
+    "rechnung": {
+      "kind": "hybrid",
+      "ipcGroup": "rechnung"
+    }
+  },
+  "sharedServices": [
+    "pdf",
+    "mail",
+    "export",
+    "file-storage",
+    "ui-editor",
+    "audio"
+  ]
+}
