@@ -54,6 +54,7 @@ async function runM827RemainingIndicatorTests(run) {
   const editScope = registry.listM80RegistryScopes().find((scope) => scope.scopeId === "restarbeiten.edit.root");
   const byId = new Map(editScope.elements.map((entry) => [entry.id, entry]));
   const editboxSource = read("src/renderer/modules/restarbeiten/RestarbeitenEditbox.js");
+  const textLimitSettingsSource = read("src/renderer/core/textregeln/TextLimitSettingsService.js");
   const css = read("src/renderer/modules/restarbeiten/styles/restarbeiten.css");
 
   await run("M82.7 BBM 01: Kurztext-Restzeichenanzeige folgt dem universellen Textvertrag", () => assert.deepEqual(byId.get(IDS[0]).allowedOps, ["move", "resizeWidth", "resizeHeight", "setVisibility", "textResize"]));
@@ -67,8 +68,16 @@ async function runM827RemainingIndicatorTests(run) {
   }));
   await run("M82.7 BBM 07: Parent-Zuordnungen bleiben unveraendert", () => { assert.equal(byId.get(IDS[0]).parentId, "restarbeiten.edit.short.headerZone"); assert.equal(byId.get(IDS[1]).parentId, "restarbeiten.edit.long.headerZone"); });
   await run("M82.7 BBM 08: vorhandene Spans werden ohne neuen DOM-Knoten registriert", () => { assert.match(editboxSource, /registerM80Ref\(`\$\{editorGroupId\}\.remaining`, remaining\)/); assert.doesNotMatch(editboxSource.slice(editboxSource.indexOf("registerM80Ref(`${editorGroupId}.remaining`")), /createElement/); });
-  await run("M82.7 BBM 09: Zeichenlimits bleiben 87 und 400", () => { assert.match(editboxSource, /maxLength:\s*87/); assert.match(editboxSource, /maxLength:\s*400/); });
-  await run("M82.7 BBM 10: Zaehlwert bleibt aus Zeichenlimit minus Textlaenge berechnet", () => assert.match(editboxSource, /const left = Math\.max\(0, maxLength - String\(input\.value \|\| ""\)\.length\);\s*remaining\.textContent = String\(left\);/));
+  await run("M82.7 BBM 09: Zeichenlimits kommen dynamisch aus den gemeinsamen Benutzer-Settings", () => {
+    assert.match(editboxSource, /maxLength:\s*Number\(textLimits\.shortText\)/);
+    assert.match(editboxSource, /maxLength:\s*Number\(textLimits\.longText\)/);
+    assert.match(textLimitSettingsSource, /shortText:\s*Object\.freeze\(\{[\s\S]*?key:\s*"tops\.titleMax"/);
+    assert.match(textLimitSettingsSource, /longText:\s*Object\.freeze\(\{[\s\S]*?key:\s*"tops\.longMax"/);
+  });
+  await run("M82.7 BBM 10: Zaehlwert nutzt die gemeinsame Textregel", () => {
+    assert.match(editboxSource, /evaluateTextLength\(input\.value, \{ limit: maxLength \}\)/);
+    assert.match(editboxSource, /remaining\.textContent = String\(evaluation\.remaining\)/);
+  });
   await run("M82.7 BBM 11: produktives CSS behaelt 6.5pt und die vorhandene Pillenbreite", () => { assert.match(css, /\.bbm-restarbeiten-remaining\s*\{[\s\S]*?min-width:\s*18px;[\s\S]*?font-size:\s*6\.5pt;/); assert.match(css, /grid-template-columns:\s*190px 30px 24px/); });
 
   const previous = { document: global.document, window: global.window, Element: global.Element };

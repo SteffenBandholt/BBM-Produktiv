@@ -12,6 +12,10 @@ import { toRestarbeitenListItems, getRestarbeitenAmpelState } from "../viewModel
 import { buildRestarbeitenFilterbar } from "../RestarbeitenFilterbar.js";
 import { buildRestarbeitenMainBody } from "../RestarbeitenMainBody.js";
 import { buildRestarbeitenEditbox } from "../RestarbeitenEditbox.js";
+import {
+  DEFAULT_TEXT_LIMITS,
+  TextLimitSettingsService,
+} from "../../../core/textregeln/index.js";
 import { buildRestarbeitenQuicklane } from "../RestarbeitenQuicklane.js";
 import { ensureRestarbeitenStyles } from "../styles.js";
 import { beginM80PilotRender, completeM80PilotRender, registerM80Ref } from "../../../ui-editor/m80Refs.js";
@@ -121,7 +125,7 @@ function toSelectOptions(values = []) {
 }
 
 export default class RestarbeitenScreen {
-  constructor({ router, projectId, project, moduleId } = {}) {
+  constructor({ router, projectId, project, moduleId, textLimitSettingsService } = {}) {
     this.router = router || null;
     this.projectId = projectId || null;
     this.project = project || null;
@@ -132,6 +136,9 @@ export default class RestarbeitenScreen {
     this.items = [];
     this.viewItems = [];
     this.settings = {};
+    this.textLimitSettingsService = textLimitSettingsService || new TextLimitSettingsService();
+    this.textLimits = { ...DEFAULT_TEXT_LIMITS };
+    this._textLimitUnsubscribe = null;
     this.responsibleFirms = [];
     this.filters = {
       level1: "",
@@ -179,13 +186,15 @@ export default class RestarbeitenScreen {
     this.isLoading = true;
     this._renderShell();
     try {
-      const [items, settings, firms] = await Promise.all([
+      const [items, settings, firms, textLimits] = await Promise.all([
         listRestarbeitenByProject(this.projectId),
         getRestarbeitenProjectSettings(this.projectId).catch(() => ({})),
         listResponsibleProjectFirms(this.projectId).catch(() => []),
+        this.textLimitSettingsService.load(),
       ]);
       this.items = Array.isArray(items) ? items : [];
       this.settings = settings || {};
+      this.textLimits = textLimits || { ...DEFAULT_TEXT_LIMITS };
       this.responsibleFirms = Array.isArray(firms) ? firms : [];
       const selectedExists = this.selectedId && this.items.some((item) => normalizeText(item.id) === this.selectedId);
       if (selectedExists) {
@@ -202,6 +211,15 @@ export default class RestarbeitenScreen {
       this._renderShell();
       this._publishQuicklaneState();
     }
+    this._bindTextLimitSettings();
+  }
+
+  _bindTextLimitSettings() {
+    if (this._textLimitUnsubscribe) return;
+    this._textLimitUnsubscribe = this.textLimitSettingsService.subscribe((limits) => {
+      this.textLimits = limits || { ...DEFAULT_TEXT_LIMITS };
+      this._renderShell();
+    });
   }
 
   toggleAmpelDisplay() {
@@ -614,6 +632,7 @@ export default class RestarbeitenScreen {
       });
       const editbox = buildRestarbeitenEditbox({
         settings: this.settings,
+        textLimits: this.textLimits,
         draft: this.draft,
         showAmpel: this.showAmpelInList,
         responsibleOptions,
@@ -642,5 +661,12 @@ export default class RestarbeitenScreen {
       this.root.appendChild(status);
     }
     completeM80PilotRender();
+  }
+
+  destroy() {
+    this._textLimitUnsubscribe?.();
+    this._textLimitUnsubscribe = null;
+    this.notesOverlay?.remove?.();
+    this.notesOverlay = null;
   }
 }

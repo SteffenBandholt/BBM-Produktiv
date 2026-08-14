@@ -7,3 +7,9 @@ export {
   evaluateLongText,
 } from "./TextRules.js";
 
+export {
+  TEXT_LIMIT_SETTINGS,
+  TEXT_LIMIT_SETTING_KEYS,
+  parseTextLimitSettings,
+  TextLimitSettingsService,
+} from "./TextLimitSettingsService.js";

@@ -1,5 +1,15 @@
 # STATUS.md — BBM-Produktiv
 
+## Dynamische Textgrenzen fuer Protokoll und Restarbeiten
+
+- Status: `[A]` technisch umgesetzt und im isolierten normalen Electron-BBM praktisch geprueft; die fachliche Nutzerfreigabe bleibt offen.
+- Fuehrende Benutzerwerte sind unveraendert `tops.titleMax` fuer Kurztext und `tops.longMax` fuer Langtext. Protokoll und Restarbeiten beziehen Schluessel, Wertebereiche und Fallbacks aus demselben Settings-Service; es wurden keine parallelen Restarbeiten-Settings angelegt.
+- Entfernt wurden die produktiv wirksamen Festwerte 82 (Protokoll-Kurztext), 87/400 (Restarbeiten) und 4000 (gemeinsamer Langtext-Fallback). `maxlength`, Textregel und Restzeichenanzeige verwenden je Textart denselben geladenen Wert.
+- Der bestehende `app-settings:changed`-Weg aktualisiert beide geoeffneten Module. Vorhandene ueberlange Texte werden beim Laden, Oeffnen, Settingswechsel und Diktat nicht abgeschnitten; die Anzeige kann fuer solchen Bestand bewusst negativ werden.
+- Reale isolierte Abnahme: Protokoll 100/500 mit echter Eingabe 101 -> 100 und 501 -> 500; Settings-UI 500 -> 750; Live-Refresh 120/900 -> 140/1000. Restarbeiten 100/750 mit echter Eingabe 101 -> 100 und 751 -> 750; Live-Refresh 100/750 -> 120/900. Ueberlanger Bestand blieb in Protokoll mit 120/800 und in Restarbeiten mit 130/950 vollstaendig erhalten.
+- Gezielte Tests sind gruen: TopsScreen 53, Restarbeiten-Textgrenzen 3, Dictionary/Diktat 8, M82.7 44, UI-Editor-Vertragscheck und Diff-/Syntaxpruefung. Der vollstaendige Restarbeiten-Test behaelt den bekannten paketfremden Quicklane-Transform-Fehler; `core-protokoll` den bekannten fehlenden Quicklane-Text `ToDo`. Der gezielte ESLint-Lauf hat 0 Fehler und 8 bestehende Warnungen.
+- Commit, Push und PR: keiner. Naechster offener Schritt: fachliche Sichtfreigabe; keine weitere Textregel- oder Settings-Ausweitung ohne eigenen Auftrag.
+
 ## P1-A - Protokoll V1: UI und Zustaende
 
 - Status: `[P]`; die drei letzten P1-A-Abnahmekorrekturen sind technisch und praktisch im isolierten Electron-Profil geprueft. Die fachliche Nutzerabnahme bleibt offen.

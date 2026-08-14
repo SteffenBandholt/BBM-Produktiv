@@ -40,6 +40,10 @@ import {
 } from "../../../ui/popupCommon.js";
 import { OVERLAY_TOP } from "../../../ui/zIndex.js";
 import {
+  DEFAULT_TEXT_LIMITS,
+  TextLimitSettingsService,
+} from "../../../core/textregeln/index.js";
+import {
   beginM80PilotRender,
   beginM83ComponentBinding,
   completeM80PilotRender,
@@ -121,6 +125,10 @@ export default class TopsScreen {
     this.dialogs = null;
     this._dialogViewAdapter = this._createDialogViewAdapter();
     this._topRulesOverlay = null;
+    this.textLimitSettingsService =
+      options.textLimitSettingsService || new TextLimitSettingsService();
+    this.textLimits = { ...DEFAULT_TEXT_LIMITS };
+    this._textLimitUnsubscribe = null;
 
     this._buildProtocolModuleRuntime(options);
   }
@@ -1150,12 +1158,13 @@ export default class TopsScreen {
   }
 
   _titleMax() {
-    return Number(this.inpTitle?.maxLength || 100) || 100;
+    const configured = Number(this.inpTitle?.maxLength || this.textLimits.shortText);
+    return Number.isFinite(configured) && configured > 0 ? configured : this.textLimits.shortText;
   }
 
   _longMax() {
-    const current = Number(this.taLongtext?.maxLength || 500);
-    return Number.isFinite(current) && current > 0 ? current : 500;
+    const configured = Number(this.taLongtext?.maxLength || this.textLimits.longText);
+    return Number.isFinite(configured) && configured > 0 ? configured : this.textLimits.longText;
   }
 
   _clampStr(value, maxLen = 0) {
@@ -1177,6 +1186,28 @@ export default class TopsScreen {
     const core = this.workbench?.sharedEditboxCore?.editbox || null;
     if (!core || typeof core._updateCounters !== "function") return;
     core._updateCounters();
+  }
+
+  _applyTextLimits(limits = {}) {
+    const nextLimits = {
+      shortText: Number(limits.shortText) || this.textLimits.shortText,
+      longText: Number(limits.longText) || this.textLimits.longText,
+    };
+    this.textLimits = nextLimits;
+    this.workbench?.sharedEditboxCore?.editbox?.setLimits?.(nextLimits);
+  }
+
+  async _loadTextLimits() {
+    const limits = await this.textLimitSettingsService.load();
+    this._applyTextLimits(limits);
+    return limits;
+  }
+
+  _bindTextLimitSettings() {
+    if (this._textLimitUnsubscribe) return;
+    this._textLimitUnsubscribe = this.textLimitSettingsService.subscribe((limits) => {
+      this._applyTextLimits(limits);
+    });
   }
 
   _syncScreenState() {
@@ -1759,6 +1790,8 @@ export default class TopsScreen {
     if (this.projectId && this.meetingId && typeof window.uiEditor?.preparePdfContext === "function") {
       await window.uiEditor.preparePdfContext({ projectId: this.projectId, meetingId: this.meetingId });
     }
+    await this._loadTextLimits();
+    this._bindTextLimitSettings();
     const showAmpelInList = await this._loadDisplaySetting({
       key: "tops.ampelEnabled",
       fallback: true,
@@ -1781,6 +1814,8 @@ export default class TopsScreen {
   // ---------------------------------------------------------------------------
 
   async destroy() {
+    this._textLimitUnsubscribe?.();
+    this._textLimitUnsubscribe = null;
     if (this._onTableLayoutChanged && typeof window?.removeEventListener === "function") {
       window.removeEventListener("bbm:tableLayoutChanged", this._onTableLayoutChanged);
     }

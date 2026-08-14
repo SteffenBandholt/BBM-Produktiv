@@ -14,6 +14,7 @@ import {
   parseCssColor,
 } from "../theme/themes.js";
 import { createDictationDevSection } from "../modules/audio/index.js";
+import { TEXT_LIMIT_SETTINGS } from "../core/textregeln/index.js";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -5763,7 +5764,10 @@ export default class SettingsView {
 
     const versionCard = mkCard("Versionierung", "SemVer und Build-Kanal verwalten.");
     const dbCard = mkCard("DB-Diagnose", "Aktive DB, Legacy und Importpfade prüfen.");
-    const topsCard = mkCard("Textgrenzen für TOPs", "Maximale Länge für Kurztext und Langtext in TOPs.");
+    const topsCard = mkCard(
+      "Textgrenzen für Protokoll und Restarbeiten",
+      "Maximale Länge für Kurztext und Langtext in Protokoll und Restarbeiten."
+    );
     const tableCalCard = mkCard("Tabellen-Kalibrator", "DEV-only: Spaltenbreiten speichern und resetten.");
     const themeCard = mkCard("Farbschema", "Start-Defaults des Themes verwalten.");
     const dictationDevCard = mkCard(
@@ -5778,8 +5782,10 @@ export default class SettingsView {
       return el;
     };
 
-    const TOPS_TITLE_KEY = "tops.titleMax";
-    const TOPS_LONG_KEY = "tops.longMax";
+    const shortTextLimitSetting = TEXT_LIMIT_SETTINGS.shortText;
+    const longTextLimitSetting = TEXT_LIMIT_SETTINGS.longText;
+    const TOPS_TITLE_KEY = shortTextLimitSetting.key;
+    const TOPS_LONG_KEY = longTextLimitSetting.key;
 
     let versionRepoCurrent = "";
     const versionAppValue = document.createElement("div");
@@ -5954,12 +5960,14 @@ export default class SettingsView {
 
     const topsTitle = document.createElement("input");
     topsTitle.type = "number";
-    topsTitle.min = "1";
+    topsTitle.min = String(shortTextLimitSetting.min);
+    topsTitle.max = String(shortTextLimitSetting.max);
     topsTitle.step = "1";
     topsTitle.style.width = "100%";
     const topsLong = document.createElement("input");
     topsLong.type = "number";
-    topsLong.min = "1";
+    topsLong.min = String(longTextLimitSetting.min);
+    topsLong.max = String(longTextLimitSetting.max);
     topsLong.step = "1";
     topsLong.style.width = "100%";
     const topsMsg = document.createElement("div");
@@ -5976,14 +5984,34 @@ export default class SettingsView {
       const res = await api.appSettingsGetMany([TOPS_TITLE_KEY, TOPS_LONG_KEY]);
       if (!res?.ok) return;
       const data = res.data || {};
-      topsTitle.value = String(clampInt(data[TOPS_TITLE_KEY], 1, 5000, 100));
-      topsLong.value = String(clampInt(data[TOPS_LONG_KEY], 1, 20000, 500));
+      topsTitle.value = String(clampInt(
+        data[TOPS_TITLE_KEY],
+        shortTextLimitSetting.min,
+        shortTextLimitSetting.max,
+        shortTextLimitSetting.fallback
+      ));
+      topsLong.value = String(clampInt(
+        data[TOPS_LONG_KEY],
+        longTextLimitSetting.min,
+        longTextLimitSetting.max,
+        longTextLimitSetting.fallback
+      ));
     };
     const saveTopLimitSettings = async () => {
       if (!has("appSettingsSetMany")) return false;
       const res = await api.appSettingsSetMany({
-        [TOPS_TITLE_KEY]: String(clampInt(topsTitle.value, 1, 5000, 100)),
-        [TOPS_LONG_KEY]: String(clampInt(topsLong.value, 1, 20000, 500)),
+        [TOPS_TITLE_KEY]: String(clampInt(
+          topsTitle.value,
+          shortTextLimitSetting.min,
+          shortTextLimitSetting.max,
+          shortTextLimitSetting.fallback
+        )),
+        [TOPS_LONG_KEY]: String(clampInt(
+          topsLong.value,
+          longTextLimitSetting.min,
+          longTextLimitSetting.max,
+          longTextLimitSetting.fallback
+        )),
       });
       if (!res?.ok) {
         setTopsMsg(res?.error || "Speichern fehlgeschlagen");
@@ -6461,7 +6489,7 @@ export default class SettingsView {
     const tabs = [
       { key: "version", label: "Versionierung", el: versionCard.box },
       { key: "db", label: "DB-Diagnose", el: dbCard.box },
-      { key: "tops", label: "Protokoll-Textgrenzen", el: topsCard.box },
+      { key: "tops", label: "Textgrenzen", el: topsCard.box },
       { key: "tablecal", label: "Tabellen", el: tableCalCard.box },
       { key: "dictation", label: "Diktat-Testfreigabe", el: dictationDevCard.box },
       { key: "theme", label: "Farbschema", el: themeCard.box },
@@ -6496,7 +6524,7 @@ export default class SettingsView {
     tabHead.append(
       addTabBtn("Versionierung", "version"),
       addTabBtn("DB-Diagnose", "db"),
-      addTabBtn("Protokoll-Textgrenzen", "tops"),
+      addTabBtn("Textgrenzen", "tops"),
       addTabBtn("Tabellen", "tablecal"),
       addTabBtn("Diktat-Testfreigabe", "dictation"),
       addTabBtn("Farbschema", "theme")

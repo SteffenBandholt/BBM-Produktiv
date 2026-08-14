@@ -6,6 +6,7 @@ import {
   normalizeRestarbeitStatus,
 } from "./domain/restarbeitenRules.js";
 import { beginM83ComponentBinding, registerM80FlowLabelRef, registerM80Ref } from "../../ui-editor/m80Refs.js";
+import { DEFAULT_TEXT_LIMITS, evaluateTextLength } from "../../core/textregeln/index.js";
 
 function createEl(tag, { className = "", text = "", uiId = "" } = {}) {
   const el = document.createElement(tag);
@@ -168,8 +169,8 @@ function createTextField({
   const dictation = createDictationButton(dictationUiId);
   const updateRemaining = () => {
     if (typeof maxLength !== "number") return;
-    const left = Math.max(0, maxLength - String(input.value || "").length);
-    remaining.textContent = String(left);
+    const evaluation = evaluateTextLength(input.value, { limit: maxLength });
+    remaining.textContent = String(evaluation.remaining);
   };
   if (required) input.required = true;
   if (typeof maxLength === "number") {
@@ -238,6 +239,7 @@ function getValidationText(draft = {}) {
 
 export function buildRestarbeitenEditbox({
   settings = {},
+  textLimits = DEFAULT_TEXT_LIMITS,
   draft = {},
   showAmpel = true,
   responsibleOptions = [],
@@ -324,7 +326,7 @@ export function buildRestarbeitenEditbox({
       remainingUiId: "restarbeiten.editbox.text.short.remaining",
       required: true,
       multiline: false,
-      maxLength: 87,
+      maxLength: Number(textLimits.shortText) || DEFAULT_TEXT_LIMITS.shortText,
       labelControls: [classToggle, actions],
       editorGroupId: "restarbeiten.edit.short",
       editorLabelId: "restarbeiten.edit.short.label",
@@ -345,7 +347,7 @@ export function buildRestarbeitenEditbox({
       inputUiId: "restarbeiten.editbox.text.long.input",
       dictationUiId: "restarbeiten.editbox.text.long.dictation",
       remainingUiId: "restarbeiten.editbox.text.long.remaining",
-      maxLength: 400,
+      maxLength: Number(textLimits.longText) || DEFAULT_TEXT_LIMITS.longText,
       editorGroupId: "restarbeiten.edit.long",
       editorLabelId: "restarbeiten.edit.long.label",
       editorFieldId: "restarbeiten.edit.long.field",
