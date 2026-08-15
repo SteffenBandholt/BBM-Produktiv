@@ -318,6 +318,7 @@ function listProjectParticipantsPool(dbConn, projectId) {
        AND pc.person_id = pp.id
       WHERE pf.project_id = ?
         AND pf.removed_at IS NULL
+        AND pf.use_project_participant = 1
         AND pp.removed_at IS NULL
 
       UNION ALL
@@ -341,7 +342,9 @@ function listProjectParticipantsPool(dbConn, projectId) {
        AND pc.person_id = p.id
       WHERE pgf.project_id = ?
         AND pgf.removed_at IS NULL
+        AND f.use_project_participant = 1
         AND f.removed_at IS NULL
+        AND COALESCE(f.is_trashed, 0) = 0
         AND p.removed_at IS NULL
 
       ORDER BY firm COLLATE NOCASE, name COLLATE NOCASE

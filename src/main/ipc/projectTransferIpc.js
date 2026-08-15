@@ -34,7 +34,8 @@ function _sanitizeFilePart(value, fallback = "Projekt") {
 
 function _buildProjectTransferManifest({ projectId, project, storage, data, exportedAt, filesCount }) {
   return {
-    formatVersion: 2,
+    formatVersion: 3,
+    firmLogicSchemaVersion: 1,
     exportDate: exportedAt,
     appVersion: app.getVersion ? app.getVersion() : "",
     projectId,
@@ -55,6 +56,8 @@ function _buildProjectTransferManifest({ projectId, project, storage, data, expo
       projectCandidates: data.projectCandidates.length,
       projectGlobalFirms: data.projectGlobalFirms.length,
       projectSettings: data.projectSettings.length,
+      restarbeitenItems: data.restarbeitenItems.length,
+      globalFirmDependencies: data.globalFirmDependencies.length,
       filesCount,
     },
   };
@@ -72,6 +75,16 @@ function _buildProjectTransferPayloads({ project, data }) {
     { name: "data/project_persons.json", data: { project_persons: data.projectPersons || [] } },
     { name: "data/project_candidates.json", data: { project_candidates: data.projectCandidates || [] } },
     { name: "data/project_global_firms.json", data: { project_global_firms: data.projectGlobalFirms || [] } },
+    {
+      name: "data/global_firm_dependencies.json",
+      data: {
+        firms: data.globalFirmDependencies || [],
+        persons: data.globalPersonDependencies || [],
+      },
+    },
+    { name: "data/restarbeiten_items.json", data: { restarbeiten_items: data.restarbeitenItems || [] } },
+    { name: "data/restarbeiten_attachments.json", data: { restarbeiten_attachments: data.restarbeitenAttachments || [] } },
+    { name: "data/restarbeiten_notes.json", data: { restarbeiten_notes: data.restarbeitenNotes || [] } },
   ];
 }
 
@@ -129,6 +142,54 @@ function _fetchProjectData(projectId) {
     .prepare("SELECT key, value FROM project_settings WHERE project_id = ?")
     .all(projectId);
 
+  const restarbeitenItems = db
+    .prepare("SELECT * FROM restarbeiten_items WHERE project_id = ?")
+    .all(projectId);
+  const restarbeitIds = restarbeitenItems.map((item) => item.id).filter(Boolean);
+  const restarbeitenAttachments = restarbeitIds.length
+    ? db
+        .prepare(`SELECT * FROM restarbeiten_attachments WHERE restarbeit_id IN (${restarbeitIds.map(() => "?").join(",")})`)
+        .all(...restarbeitIds)
+    : [];
+  const restarbeitenNotes = restarbeitIds.length
+    ? db
+        .prepare(`SELECT * FROM restarbeiten_notes WHERE restarbeit_id IN (${restarbeitIds.map(() => "?").join(",")})`)
+        .all(...restarbeitIds)
+    : [];
+
+  const globalFirmIds = new Set(projectGlobalFirms.map((row) => String(row.firm_id || "")).filter(Boolean));
+  for (const row of meetingTops) {
+    if (row.responsible_kind === "global_firm" && row.responsible_id) globalFirmIds.add(String(row.responsible_id));
+  }
+  for (const row of restarbeitenItems) {
+    if (row.responsible_global_firm_id) globalFirmIds.add(String(row.responsible_global_firm_id));
+  }
+  const referencedGlobalPersonIds = new Set();
+  for (const row of projectCandidates) {
+    if (row.kind === "global_person" && row.person_id) referencedGlobalPersonIds.add(String(row.person_id));
+  }
+  for (const row of meetingParticipants) {
+    if (row.kind === "global_person" && row.person_id) referencedGlobalPersonIds.add(String(row.person_id));
+  }
+  const referencedGlobalPersons = referencedGlobalPersonIds.size
+    ? db
+        .prepare(`SELECT * FROM persons WHERE id IN (${[...referencedGlobalPersonIds].map(() => "?").join(",")})`)
+        .all(...referencedGlobalPersonIds)
+    : [];
+  for (const person of referencedGlobalPersons) {
+    if (person.firm_id) globalFirmIds.add(String(person.firm_id));
+  }
+  const globalFirmDependencies = globalFirmIds.size
+    ? db
+        .prepare(`SELECT * FROM firms WHERE id IN (${[...globalFirmIds].map(() => "?").join(",")})`)
+        .all(...globalFirmIds)
+    : [];
+  const globalPersonDependencies = globalFirmIds.size
+    ? db
+        .prepare(`SELECT * FROM persons WHERE firm_id IN (${[...globalFirmIds].map(() => "?").join(",")})`)
+        .all(...globalFirmIds)
+    : [];
+
   return {
     meetings,
     meetingTops,
@@ -139,7 +200,72 @@ function _fetchProjectData(projectId) {
     projectCandidates,
     projectGlobalFirms,
     projectSettings,
+    restarbeitenItems,
+    restarbeitenAttachments,
+    restarbeitenNotes,
+    globalFirmDependencies,
+    globalPersonDependencies,
   };
+}
+
+function _validateGlobalDependencies(db, payload, { requireSnapshots = false } = {}) {
+  const declared = Array.isArray(payload.globalFirmDependencies) ? payload.globalFirmDependencies : [];
+  const requiredIds = new Set(
+    (payload.projectGlobalFirms || []).map((row) => String(row?.firm_id || "")).filter(Boolean)
+  );
+  for (const row of payload.meetingTops || []) {
+    if (row?.responsible_kind === "global_firm" && row?.responsible_id) requiredIds.add(String(row.responsible_id));
+  }
+  for (const row of payload.restarbeitenItems || []) {
+    if (row?.responsible_global_firm_id) requiredIds.add(String(row.responsible_global_firm_id));
+  }
+  const declaredById = new Map(declared.map((row) => [String(row?.id || ""), row]));
+  const diagnostics = [];
+  for (const id of requiredIds) {
+    const existing = db.prepare("SELECT id, name FROM firms WHERE id = ?").get(id);
+    if (!existing) {
+      diagnostics.push(`Globale Firmenabhängigkeit fehlt: ${id}`);
+      continue;
+    }
+    const snapshot = declaredById.get(id);
+    if (requireSnapshots && !snapshot) {
+      diagnostics.push(`Snapshot der globalen Firmenabhängigkeit fehlt: ${id}`);
+    } else if (snapshot && String(snapshot.name || "").trim() !== String(existing.name || "").trim()) {
+      diagnostics.push(`Globale Firmenabhängigkeit kollidiert: ${id}`);
+    }
+  }
+  const requiredPersonIds = new Set();
+  for (const row of payload.projectCandidates || []) {
+    if (row?.kind === "global_person" && row?.person_id) requiredPersonIds.add(String(row.person_id));
+  }
+  for (const row of payload.meetingParticipants || []) {
+    if (row?.kind === "global_person" && row?.person_id) requiredPersonIds.add(String(row.person_id));
+  }
+  const personSnapshots = new Map(
+    (payload.globalPersonDependencies || []).map((row) => [String(row?.id || ""), row])
+  );
+  for (const id of requiredPersonIds) {
+    const existing = db.prepare("SELECT id, firm_id, name FROM persons WHERE id = ?").get(id);
+    if (!existing) {
+      diagnostics.push(`Globale Personenabhängigkeit fehlt: ${id}`);
+      continue;
+    }
+    const snapshot = personSnapshots.get(id);
+    if (requireSnapshots && !snapshot) {
+      diagnostics.push(`Snapshot der globalen Personenabhängigkeit fehlt: ${id}`);
+    } else if (
+      snapshot &&
+      (String(snapshot.firm_id || "") !== String(existing.firm_id || "") ||
+        String(snapshot.name || "").trim() !== String(existing.name || "").trim())
+    ) {
+      diagnostics.push(`Globale Personenabhängigkeit kollidiert: ${id}`);
+    }
+  }
+  if (diagnostics.length) {
+    const error = new Error(diagnostics.join("; "));
+    error.code = "PROJECT_TRANSFER_GLOBAL_DEPENDENCY";
+    throw error;
+  }
 }
 
 async function _countFilesRecursive(dirPath) {
@@ -193,7 +319,7 @@ async function _createExportZip({ exportPath, projectDir, manifest, payloads }) 
 }
 
 function _validateExportZip(exportPath) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
     try {
       const stat = fs.statSync(exportPath);
       if (!stat.isFile() || stat.size <= 0) return resolve({ ok: false, error: "Exportdatei leer." });
@@ -274,6 +400,15 @@ function _insertRows(db, table, rows = []) {
   for (const r of rows) _insertRow(db, table, r);
 }
 
+function _withLegacyFirmUseDefaults(rows = []) {
+  return (Array.isArray(rows) ? rows : []).map((row) => ({
+    ...(row || {}),
+    use_project_participant:
+      row?.use_project_participant === undefined ? 1 : Number(row.use_project_participant) === 1 ? 1 : 0,
+    use_customer: row?.use_customer === undefined ? 0 : Number(row.use_customer) === 1 ? 1 : 0,
+  }));
+}
+
 function _sanitizeProjectRow(project) {
   if (!project || typeof project !== "object") return null;
   const map = {
@@ -323,6 +458,13 @@ async function _importProjectZip(filePath) {
     const manifestRes = await _readJsonSafe(manifestPath, "manifest");
     if (!manifestRes.ok) return { ok: false, error: manifestRes.error };
     const manifest = manifestRes.data || {};
+    const formatVersion = Number(manifest.formatVersion || 1);
+    if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > 3) {
+      return { ok: false, error: `Nicht unterstützte Projektarchiv-Version: ${manifest.formatVersion}` };
+    }
+    if (Number(manifest.firmLogicSchemaVersion || 0) > 1) {
+      return { ok: false, error: "Projektarchiv verwendet eine neuere Firmenlogik-Version." };
+    }
 
     // Neue Exportstruktur: getrennte JSON-Dateien unter data/
     const payload = {};
@@ -348,6 +490,23 @@ async function _importProjectZip(filePath) {
     if (pcJson.ok) payload.projectCandidates = pcJson.data?.project_candidates || [];
     const pgfJson = await _readJsonIfExists(path.join(dataDir, "project_global_firms.json"), "project_global_firms.json");
     if (pgfJson.ok) payload.projectGlobalFirms = pgfJson.data?.project_global_firms || [];
+    const dependencyJson = await _readJsonIfExists(
+      path.join(dataDir, "global_firm_dependencies.json"),
+      "global_firm_dependencies.json"
+    );
+    if (dependencyJson.ok) {
+      payload.globalFirmDependencies = dependencyJson.data?.firms || [];
+      payload.globalPersonDependencies = dependencyJson.data?.persons || [];
+    }
+    const restJson = await _readJsonIfExists(path.join(dataDir, "restarbeiten_items.json"), "restarbeiten_items.json");
+    if (restJson.ok) payload.restarbeitenItems = restJson.data?.restarbeiten_items || [];
+    const restAttachmentsJson = await _readJsonIfExists(
+      path.join(dataDir, "restarbeiten_attachments.json"),
+      "restarbeiten_attachments.json"
+    );
+    if (restAttachmentsJson.ok) payload.restarbeitenAttachments = restAttachmentsJson.data?.restarbeiten_attachments || [];
+    const restNotesJson = await _readJsonIfExists(path.join(dataDir, "restarbeiten_notes.json"), "restarbeiten_notes.json");
+    if (restNotesJson.ok) payload.restarbeitenNotes = restNotesJson.data?.restarbeiten_notes || [];
 
     const project = payload.project;
     if (!project?.id) return { ok: false, error: "Projekt-ID fehlt im Export." };
@@ -362,6 +521,11 @@ async function _importProjectZip(filePath) {
     if (projectNumber) {
       const dup = db.prepare("SELECT id FROM projects WHERE project_number = ? LIMIT 1").get(projectNumber);
       if (dup) return { ok: false, error: "Projekt mit gleicher Projektnummer existiert bereits." };
+    }
+    try {
+      _validateGlobalDependencies(db, payload, { requireSnapshots: formatVersion >= 3 });
+    } catch (error) {
+      return { ok: false, error: error?.message || String(error), code: error?.code || null };
     }
 
     const projectFolderSource = path.join(tempDir, "project-folder");
@@ -392,7 +556,8 @@ async function _importProjectZip(filePath) {
       const withPid = (rows = []) => rows.map((r) => ({ ...(r || {}), project_id: pid }));
 
       _insertRows(db, "project_settings", withPid(payload.projectSettings || []));
-      _insertRows(db, "project_firms", withPid(payload.projectFirms || []));
+      const projectFirmRows = _withLegacyFirmUseDefaults(payload.projectFirms || []);
+      _insertRows(db, "project_firms", withPid(projectFirmRows));
       _insertRows(db, "project_persons", payload.projectPersons || []);
       _insertRows(db, "project_candidates", withPid(payload.projectCandidates || []));
       _insertRows(db, "project_global_firms", withPid(payload.projectGlobalFirms || []));
@@ -400,6 +565,9 @@ async function _importProjectZip(filePath) {
       _insertRows(db, "tops", withPid(payload.tops || []));
       _insertRows(db, "meeting_tops", payload.meetingTops || []);
       _insertRows(db, "meeting_participants", payload.meetingParticipants || []);
+      _insertRows(db, "restarbeiten_items", withPid(payload.restarbeitenItems || []));
+      _insertRows(db, "restarbeiten_attachments", withPid(payload.restarbeitenAttachments || []));
+      _insertRows(db, "restarbeiten_notes", payload.restarbeitenNotes || []);
     });
 
     tx();
@@ -560,4 +728,9 @@ function registerProjectTransferIpc() {
   });
 }
 
-module.exports = { registerProjectTransferIpc };
+module.exports = {
+  registerProjectTransferIpc,
+  _buildProjectTransferPayloads,
+  _validateGlobalDependencies,
+  _withLegacyFirmUseDefaults,
+};

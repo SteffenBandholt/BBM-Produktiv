@@ -17,8 +17,9 @@ const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const { initDatabase } = require("../db/database");
 
 const { createTopService } = require("../domain/TopService");
-const { createFirmService } = require("../domain/FirmService");
 const { createPersonService } = require("../domain/PersonService");
+const { getFirmDirectoryService } = require("../domain/firms/FirmDirectoryService");
+const { FIRM_KINDS } = require("../domain/firms/firmReference");
 
 const DEFAULT_FIRM_ROLE_ORDER = [10, 20, 30, 40, 50, 60];
 
@@ -924,9 +925,9 @@ function normalizeDisplayNumbers(list, meeting) {
 }
 
 function registerTopsIpc() {
+  const firmDirectory = getFirmDirectoryService();
   const topService = createTopService({ topsRepo, meetingsRepo, meetingTopsRepo });
 
-  const firmService = createFirmService({ firmsRepo, personsRepo });
   const personService = createPersonService({ firmsRepo, personsRepo });
 
   ipcMain.handle("tops:listByMeeting", (_e, meetingId) => {
@@ -1148,7 +1149,7 @@ function registerTopsIpc() {
 
   ipcMain.handle("firms:listGlobal", () => {
     try {
-      const list = firmService.listGlobal();
+      const list = firmDirectory.listAll({ kind: FIRM_KINDS.GLOBAL });
       const roleOrder = _getFirmRoleOrder();
       const sorted = _sortFirmsByRoleOrder(list, roleOrder);
       return { ok: true, list: sorted };
@@ -1159,7 +1160,11 @@ function registerTopsIpc() {
 
   ipcMain.handle("firms:createGlobal", (_e, data) => {
     try {
-      const firm = firmService.createGlobal(data);
+      const firm = firmDirectory.create({
+        origin: "firms",
+        data: data || {},
+        uses: data?.uses,
+      });
       return { ok: true, firm };
     } catch (err) {
       return { ok: false, error: err?.message || String(err) };
@@ -1168,8 +1173,8 @@ function registerTopsIpc() {
 
   ipcMain.handle("firms:updateGlobal", (_e, data) => {
     try {
-      const firm = firmService.updateGlobal({
-        firmId: data?.firmId,
+      const firm = firmDirectory.update({
+        ref: { kind: FIRM_KINDS.GLOBAL, id: data?.firmId },
         patch: data?.patch,
       });
       return { ok: true, firm };

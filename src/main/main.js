@@ -31,6 +31,7 @@ const { registerProjectsIpc } = require("./ipc/projectsIpc");
 const { registerMeetingsIpc } = require("./ipc/meetingsIpc");
 const { registerTopsIpc } = require("./ipc/topsIpc");
 const { registerProjectFirmsIpc } = require("./ipc/projectFirmsIpc");
+const { registerFirmDirectoryIpc } = require("./ipc/firmDirectoryIpc");
 const { registerParticipantsIpc } = require("./ipc/participantsIpc");
 const { registerPrintIpc } = require("./ipc/printIpc");
 const { registerTableLayoutsIpc } = require("./ipc/tableLayoutsIpc");
@@ -569,6 +570,7 @@ app.whenReady().then(async () => {
   // ✅ IPCs zuerst registrieren (verhindert "No handler registered" beim invoke)
   registerProjectsIpc();
   registerProjectFirmsIpc();
+  registerFirmDirectoryIpc();
   registerParticipantsIpc();
   registerPrintIpc();
   registerTableLayoutsIpc();

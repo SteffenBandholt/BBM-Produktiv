@@ -283,6 +283,7 @@ export default class FirmsPoolView {
       const res = await api.projectFirmsSetActive({
         projectId: this.projectId,
         firmId: item.id,
+        kind: item.kind,
         isActive: !!isActive,
       });
       if (!res?.ok) {

@@ -7,6 +7,8 @@ const projectFirmsRepo = require("../db/projectFirmsRepo");
 const projectPersonsRepo = require("../db/projectPersonsRepo");
 const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const { initDatabase } = require("../db/database");
+const { getFirmDirectoryService } = require("../domain/firms/FirmDirectoryService");
+const { FIRM_KINDS } = require("../domain/firms/firmReference");
 
 function _err(e) {
   return e?.message || String(e);
@@ -176,6 +178,7 @@ function _cleanupGlobalFirmLinks({ projectId, firmId }) {
 }
 
 function registerProjectFirmsIpc() {
+  const firmDirectory = getFirmDirectoryService();
   // --------------------------------------------
   // HINWEIS:
   // 'firms:listGlobal' wird bereits global registriert (Stammdaten).
@@ -187,7 +190,11 @@ function registerProjectFirmsIpc() {
   // --------------------------------------------
   ipcMain.handle("projectFirms:listByProject", (_evt, projectId) => {
     try {
-      const list = projectFirmsRepo.listActiveByProject(projectId);
+      const list = firmDirectory.listAll({
+        kind: FIRM_KINDS.PROJECT,
+        projectId,
+        includeInactive: true,
+      });
       const roleOrder = _getFirmRoleOrder();
       const sorted = _sortFirmsByRoleOrder(list, roleOrder);
       return { ok: true, list: sorted };
@@ -198,7 +205,12 @@ function registerProjectFirmsIpc() {
 
   ipcMain.handle("projectFirms:create", (_evt, data) => {
     try {
-      const firm = projectFirmsRepo.createProjectFirm(data || {});
+      const firm = firmDirectory.create({
+        origin: "project_firms",
+        projectId: data?.projectId,
+        data: data || {},
+        uses: data?.uses,
+      });
       return { ok: true, firm };
     } catch (e) {
       return { ok: false, error: _err(e) };
@@ -209,7 +221,12 @@ function registerProjectFirmsIpc() {
     try {
       const projectFirmId = data?.projectFirmId;
       const patch = data?.patch;
-      const firm = projectFirmsRepo.updateProjectFirm({ projectFirmId, patch });
+      const current = projectFirmsRepo.getById(projectFirmId);
+      if (!current?.project_id) throw new Error("project firm not found");
+      const firm = firmDirectory.update({
+        ref: { kind: FIRM_KINDS.PROJECT, id: projectFirmId, projectId: current.project_id },
+        patch,
+      });
       return { ok: true, firm };
     } catch (e) {
       return { ok: false, error: _err(e) };
@@ -230,7 +247,7 @@ function registerProjectFirmsIpc() {
   // --------------------------------------------
   ipcMain.handle("projectFirms:listFirmCandidatesByProject", (_evt, projectId) => {
     try {
-      const list = projectFirmsRepo.listFirmCandidatesByProject(projectId);
+      const list = firmDirectory.listProjectParticipants({ projectId, includeInactive: true });
       return { ok: true, list };
     } catch (e) {
       return { ok: false, error: _err(e) };
@@ -270,6 +287,7 @@ function registerProjectFirmsIpc() {
       const result = projectFirmsRepo.setProjectFirmActive({
         projectId: data?.projectId,
         firmId: data?.firmId,
+        kind: data?.kind,
         isActive: data?.isActive,
       });
       return { ok: true, result };
@@ -283,6 +301,7 @@ function registerProjectFirmsIpc() {
       const result = projectFirmsRepo.canDeactivateProjectFirm({
         projectId: data?.projectId,
         firmId: data?.firmId,
+        kind: data?.kind,
       });
       return { ok: true, result };
     } catch (e) {

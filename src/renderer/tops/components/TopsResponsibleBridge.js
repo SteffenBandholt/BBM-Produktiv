@@ -79,11 +79,13 @@ export class TopsResponsibleBridge {
     return String(this.metaPanel.getValue()?.responsible_label || "").trim();
   }
 
-  _writeMetaResponsibleLabel(label, { silent = false } = {}) {
+  _writeMetaResponsible(label, company = null, { silent = false } = {}) {
     if (typeof this.metaPanel?.updatePartial !== "function") return;
     this.metaPanel.updatePartial(
       {
         responsible_label: String(label || "").trim(),
+        responsible_kind: company?.kind || null,
+        responsible_id: company?.firmId || company?.id?.split(":").slice(1).join(":") || null,
       },
       { silent }
     );
@@ -111,15 +113,10 @@ export class TopsResponsibleBridge {
     const selected = this.options.find((item) => item.value === this.currentValue);
     const label = selected?.label || "";
 
-    this._writeMetaResponsibleLabel(label);
+    const companyId = String(this.currentValue || "").replace(/^company:/, "");
+    const company = (this.sources.companies || []).find((item) => String(item?.id || "") === companyId);
+    this._writeMetaResponsible(label, company);
     if (this.onChange) this.onChange();
-  }
-
-  _findOptionByLabel(label) {
-    const normalizedWanted = String(label || "").trim().toLowerCase();
-    return this.options.find(
-      (item) => String(item?.label || "").trim().toLowerCase() === normalizedWanted
-    );
   }
 
   _prependLegacyOption(label) {
@@ -130,29 +127,41 @@ export class TopsResponsibleBridge {
     return legacyValue;
   }
 
-  applyDraftValue(label) {
-    const wanted = String(label || "").trim();
+  applyDraftValue(value) {
+    const meta = value && typeof value === "object" ? value : { responsible_label: value };
+    const wanted = String(meta?.responsible_label || "").trim();
 
     if (!wanted) {
       this.currentValue = "";
       this.field.setValue("");
-      this._writeMetaResponsibleLabel("", { silent: true });
+      this._writeMetaResponsible("", null, { silent: true });
       return;
     }
 
-    const match = this._findOptionByLabel(wanted);
+    const refKey =
+      meta?.responsible_kind && meta?.responsible_id
+        ? `${meta.responsible_kind}:${meta.responsible_id}`
+        : "";
+    const match = refKey
+      ? this.options.find((item) => item.value === `company:${refKey}`)
+      : null;
 
     if (match) {
       this.currentValue = match.value;
       this.field.setValue(match.value);
-      this._writeMetaResponsibleLabel(match.label, { silent: true });
+      const companyId = String(match.value || "").replace(/^company:/, "");
+      const company = (this.sources.companies || []).find((item) => String(item?.id || "") === companyId);
+      this._writeMetaResponsible(match.label, company, { silent: true });
       return;
     }
 
     const legacyValue = this._prependLegacyOption(wanted);
     this.field.setValue(legacyValue);
     this.currentValue = legacyValue;
-    this._writeMetaResponsibleLabel(wanted, { silent: true });
+    const historicalCompany = refKey
+      ? { kind: meta.responsible_kind, firmId: meta.responsible_id }
+      : null;
+    this._writeMetaResponsible(wanted, historicalCompany, { silent: true });
   }
 
   setDisabled(disabled) {

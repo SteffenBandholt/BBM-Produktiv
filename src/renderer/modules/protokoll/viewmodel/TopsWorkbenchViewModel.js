@@ -66,6 +66,8 @@ function buildProtocolMetaValueVm(editorValue, selectedTop) {
     due_date: editorValue?.due_date ?? null,
     status: editorValue?.status ?? "-",
     responsible_label: titleLevel ? "" : editorValue?.responsible_label ?? "",
+    responsible_kind: titleLevel ? null : editorValue?.responsible_kind ?? null,
+    responsible_id: titleLevel ? null : editorValue?.responsible_id ?? null,
   };
 }
 

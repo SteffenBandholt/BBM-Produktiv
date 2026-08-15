@@ -75,6 +75,8 @@ function createFirm({
   gewerk,
   notes,
   role_code,
+  use_project_participant = 1,
+  use_customer = 0,
 }) {
   const db = initDatabase();
 
@@ -100,11 +102,13 @@ function createFirm({
       gewerk,
       notes,
       role_code,
+      use_project_participant,
+      use_customer,
       removed_at,
       created_at,
       updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)
   `
   ).run(
     id,
@@ -119,6 +123,8 @@ function createFirm({
     _trimOrNull(gewerk),
     notes !== undefined && notes !== null ? String(notes) : null,
     (_normRoleCode(role_code) !== undefined ? _normRoleCode(role_code) : 60),
+    Number(use_project_participant) === 1 ? 1 : 0,
+    Number(use_customer) === 1 ? 1 : 0,
     now,
     now
   );
@@ -348,9 +354,10 @@ function importFromOutlookStaging(stagingRows) {
         db.prepare(
           `
           INSERT INTO firms (
-            id, short, name, name2, street, zip, city, phone, email, gewerk, notes, role_code, removed_at, created_at, updated_at
+            id, short, name, name2, street, zip, city, phone, email, gewerk, notes, role_code,
+            use_project_participant, use_customer, removed_at, created_at, updated_at
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 60, NULL, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 60, 1, 0, NULL, ?, ?)
         `
         ).run(id, short, name1, name2, street, zip, city, phone, email, gewerk, notes, now, now);
 
