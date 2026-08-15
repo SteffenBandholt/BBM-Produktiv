@@ -9,7 +9,7 @@ import { OVERLAY_TOP } from "../../ui/zIndex.js";
 
 const TEXT_FIELDS = Object.freeze([
   ["short", "Kurzbezeichnung"],
-  ["name", "Name *"],
+  ["name", "Name"],
   ["name2", "Namenszusatz"],
   ["street", "Straße"],
   ["zip", "PLZ"],
@@ -30,17 +30,19 @@ function makeField(key, label, value) {
   const wrapper = setStyles(document.createElement("label"), {
     display: "flex",
     flexDirection: "column",
-    gap: "4px",
+    gap: "2px",
     gridColumn: key === "notes" ? "1 / -1" : "auto",
   });
+  wrapper.classList.add("bbm-form-field");
   const caption = document.createElement("span");
   caption.textContent = label;
-  caption.style.fontSize = "12px";
+  caption.classList.add("bbm-form-label");
+  caption.style.fontSize = "11.5px";
   const control = document.createElement(key === "notes" ? "textarea" : "input");
   control.value = String(value || "");
   control.dataset.firmField = key;
-  control.style.minHeight = key === "notes" ? "72px" : "34px";
-  control.style.padding = "7px 9px";
+  control.style.minHeight = key === "notes" ? "52px" : "30px";
+  control.style.setProperty("padding", "4px 8px", "important");
   control.style.border = "1px solid #cbd5e1";
   control.style.borderRadius = "6px";
   wrapper.append(caption, control);
@@ -51,7 +53,7 @@ function makeCheckbox(label, checked) {
   const wrapper = setStyles(document.createElement("label"), {
     display: "inline-flex",
     alignItems: "center",
-    gap: "8px",
+    gap: "6px",
   });
   const input = document.createElement("input");
   input.type = "checkbox";
@@ -79,33 +81,46 @@ export function openFirmEditor({
     overlay.dataset.firmEditor = "shared";
     const card = document.createElement("section");
     card.className = "bbm-popup-standard bbm-popup-dialog";
-    stylePopupCard(card, { width: "min(760px, calc(100vw - 32px))", maxHeight: "calc(100vh - 32px)" });
+    stylePopupCard(card, { width: "min(640px, calc(100vw - 24px))", maxHeight: "calc(100vh - 24px)" });
+    card.style.setProperty("--bbm-popup-control-height", "30px");
+    card.style.setProperty("--bbm-popup-textarea-height", "52px");
+    card.style.setProperty("--bbm-popup-button-height", "28px");
+    card.style.setProperty("--bbm-popup-label-field-gap", "2px");
+    card.style.setProperty("--bbm-popup-dialog-padding-y", "9px");
+    card.style.setProperty("--bbm-popup-dialog-padding-x", "14px");
+    card.style.setProperty("--bbm-popup-footer-padding-y", "8px");
+    card.style.setProperty("--bbm-popup-footer-padding-x", "14px");
 
     const header = setStyles(document.createElement("header"), {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      padding: "14px 18px",
+      padding: "8px 14px",
       borderBottom: "1px solid #e2e8f0",
     });
+    header.classList.add("bbm-popup-header");
     const heading = document.createElement("h2");
     heading.textContent = title;
     heading.style.margin = "0";
+    heading.style.fontSize = "18px";
+    heading.style.lineHeight = "1.25";
     const closeButton = document.createElement("button");
     closeButton.type = "button";
     closeButton.textContent = "Schließen";
     applyPopupButtonStyle(closeButton, { variant: "neutral" });
     header.append(heading, closeButton);
 
-    const body = setStyles(document.createElement("div"), { padding: "16px 18px", overflow: "auto" });
+    const body = setStyles(document.createElement("div"), { padding: "9px 14px", overflow: "auto" });
+    body.classList.add("bbm-popup-body");
     const scopeRow = setStyles(document.createElement("label"), {
       display: origin === "invoice" && projectId && !firm ? "flex" : "none",
       flexDirection: "column",
-      gap: "4px",
-      marginBottom: "12px",
+      gap: "2px",
+      marginBottom: "7px",
     });
     const scopeCaption = document.createElement("span");
     scopeCaption.textContent = "Ablage";
+    scopeCaption.classList.add("bbm-form-label");
     const scope = document.createElement("select");
     for (const [value, label] of [
       ["project_firm", "Projektlokaler Kunde"],
@@ -127,11 +142,12 @@ export function openFirmEditor({
     const fixedKind = defaultKind;
     const scopeInfo = setStyles(document.createElement("div"), {
       display: scopeRow.style.display === "none" ? "block" : "none",
-      marginBottom: "12px",
-      padding: "8px 10px",
+      marginBottom: "7px",
+      padding: "5px 8px",
       borderRadius: "6px",
       background: "#f1f5f9",
-      fontSize: "13px",
+      fontSize: "12px",
+      lineHeight: "1.3",
     });
     scopeInfo.textContent =
       fixedKind === "global_firm"
@@ -141,7 +157,7 @@ export function openFirmEditor({
     const grid = setStyles(document.createElement("div"), {
       display: "grid",
       gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-      gap: "10px 12px",
+      gap: "6px 10px",
     });
     const controls = {};
     for (const [key, label] of TEXT_FIELDS) {
@@ -152,14 +168,15 @@ export function openFirmEditor({
 
     const usesRow = setStyles(document.createElement("fieldset"), {
       display: "flex",
-      gap: "24px",
-      margin: "16px 0 0",
-      padding: "12px",
+      gap: "16px",
+      margin: "8px 0 0",
+      padding: "6px 9px",
       border: "1px solid #cbd5e1",
       borderRadius: "8px",
     });
     const legend = document.createElement("legend");
     legend.textContent = "Verwendungen";
+    legend.style.fontSize = "12px";
     const defaultParticipant = firm
       ? Number(firm?.uses?.projectParticipant ?? firm?.use_project_participant) === 1
       : origin !== "invoice";
@@ -172,18 +189,21 @@ export function openFirmEditor({
 
     const message = document.createElement("div");
     message.setAttribute("role", "status");
-    message.style.minHeight = "20px";
-    message.style.marginTop = "10px";
+    message.style.minHeight = "14px";
+    message.style.marginTop = "4px";
+    message.style.fontSize = "12px";
+    message.style.lineHeight = "1.2";
     message.style.color = "#b91c1c";
     body.append(scopeRow, scopeInfo, grid, usesRow, message);
 
     const footer = setStyles(document.createElement("footer"), {
       display: "flex",
       justifyContent: "flex-end",
-      gap: "8px",
-      padding: "12px 18px",
+      gap: "6px",
+      padding: "8px 14px",
       borderTop: "1px solid #e2e8f0",
     });
+    footer.classList.add("bbm-popup-footer");
     const cancel = document.createElement("button");
     cancel.type = "button";
     cancel.textContent = "Abbrechen";
