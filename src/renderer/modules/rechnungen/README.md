@@ -1,8 +1,13 @@
 # Rechnungen · UI-Designreferenz
 
-Das Modul ist ein ausschließlich in DEV sichtbarer Design-Dummy. Es verwendet
-nur die statischen Beispieldaten aus `demoData.js`: keine Datenbank, keine
-Berechnung, keine Speicherung, keine Rechnungs-/ZUGFeRD-/GAEB- oder PDF-Logik.
+Das Modul ist ausschließlich in DEV sichtbar. Rechnungszeilen, Positionen und
+Berechnungswerte bleiben statische Design-Dummys ohne Belegpersistenz. Der
+Kundenpicker ist der erste produktive Baustein und verwendet ausschließlich die
+kanonische `firmDirectoryListCustomers`-API sowie den gemeinsamen Firmeneditor.
+
+Die Kundenauswahl bleibt als typisierte Referenz aus `kind`, `id`, optionalem
+`projectId` und `label` im Screenzustand erhalten. Ohne Projekt werden nur globale
+Kunden geladen; mit Projekt globale Kunden und lokale Kunden dieses Projekts.
 
 ## Referenzquellen
 

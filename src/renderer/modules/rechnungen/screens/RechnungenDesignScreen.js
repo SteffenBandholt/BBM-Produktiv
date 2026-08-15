@@ -12,6 +12,10 @@ import {
 } from "../demoData.js";
 import { ensureRechnungenDesignStyles } from "../styles.js";
 import { openFirmEditor } from "../../../features/firms/openFirmEditor.js";
+import {
+  listInvoiceCustomers,
+  resolveInvoiceCustomer,
+} from "../customerDirectory.js";
 
 function node(tag, className = "", text = "") {
   const element = document.createElement(tag);
@@ -63,8 +67,14 @@ function statusBadge(row) {
 }
 
 export default class RechnungenDesignScreen {
-  constructor({ router } = {}) {
+  constructor({
+    router,
+    api = globalThis.window?.bbmDb,
+    firmEditor = openFirmEditor,
+  } = {}) {
     this.router = router || null;
+    this.api = api || null;
+    this.firmEditor = firmEditor;
     this.root = null;
     this.overlay = null;
     this.searchTerm = "";
@@ -73,21 +83,86 @@ export default class RechnungenDesignScreen {
     this.resultCount = null;
     this.designMessage = null;
     this.projectId = router?.currentProjectId || router?.projectId || null;
+    this.customers = [];
+    this.selectedCustomerRef = null;
+    this.customerSelect = null;
+    this.customerSelection = null;
+    this.editCustomerButton = null;
+    this.customerLoadVersion = 0;
   }
 
-  async _loadCustomerOptions(select, selectedKey = "") {
-    const api = globalThis.window?.bbmDb;
-    if (!select || typeof api?.firmDirectoryListCustomers !== "function") return;
-    const response = await api.firmDirectoryListCustomers({ projectId: this.projectId || undefined });
-    if (!response?.ok) {
-      this._setDialogMessage(response?.error || "Kunden konnten nicht geladen werden.");
+  _applyCustomerSelection(refOrKey = this.customerSelect?.value || "") {
+    const customer = resolveInvoiceCustomer(this.customers, refOrKey);
+    this.selectedCustomerRef = customer?.ref || null;
+    if (this.customerSelect) this.customerSelect.value = customer?.key || "";
+    if (this.editCustomerButton) this.editCustomerButton.disabled = !customer;
+    if (this.customerSelection) {
+      this.customerSelection.textContent = customer
+        ? `Ausgewählt: ${customer.label} · ${customer.scopeLabel}`
+        : "Kein Kunde ausgewählt";
+      this.customerSelection.dataset.invoiceCustomerKey = customer?.key || "";
+    }
+    return customer;
+  }
+
+  async _loadCustomerOptions(select = this.customerSelect, selectedRef = this.selectedCustomerRef) {
+    if (!select) return null;
+    const loadVersion = ++this.customerLoadVersion;
+    const response = await listInvoiceCustomers({ api: this.api, projectId: this.projectId });
+    if (loadVersion !== this.customerLoadVersion || select !== this.customerSelect) return null;
+    if (!response.ok) {
+      this.customers = [];
+      select.replaceChildren(option("", "Kunden nicht verfügbar"));
+      this._applyCustomerSelection(null);
+      this._setDialogMessage(response.error);
+      return null;
+    }
+    this.customers = response.list;
+    select.replaceChildren(option("", "Kunde auswählen"));
+    for (const customer of this.customers) {
+      select.append(option(customer.key, customer.optionLabel));
+    }
+    const selected = this._applyCustomerSelection(selectedRef);
+    if (selectedRef && !selected) {
+      this._setDialogMessage("Der ausgewählte Kunde ist nicht mehr als Rechnungskunde verfügbar.");
+    }
+    return selected;
+  }
+
+  async _createCustomer() {
+    const created = await this.firmEditor({
+      api: this.api,
+      origin: "invoice",
+      projectId: this.projectId,
+      title: "Rechnungskunde anlegen",
+    });
+    if (!created?.ok || created.canceled) return;
+    const selected = await this._loadCustomerOptions(
+      this.customerSelect,
+      created.firm?.ref || created.firm || null
+    );
+    if (selected) this._setDialogMessage(`${selected.label} wurde angelegt und ausgewählt.`);
+  }
+
+  async _editCustomer() {
+    const customer = resolveInvoiceCustomer(this.customers, this.selectedCustomerRef);
+    if (!customer) {
+      this._applyCustomerSelection(null);
       return;
     }
-    select.replaceChildren(option("", "Kunde auswählen"));
-    for (const firm of response.list || []) {
-      select.append(option(firm.key, `${firm.label}${firm.kind === "project_firm" ? " · Projekt" : " · Global"}`));
-    }
-    if (selectedKey && [...select.options].some((entry) => entry.value === selectedKey)) select.value = selectedKey;
+    const edited = await this.firmEditor({
+      api: this.api,
+      origin: "invoice",
+      projectId: this.projectId,
+      firm: customer.firm,
+      title: "Kunde bearbeiten",
+    });
+    if (!edited?.ok || edited.canceled) return;
+    const selected = await this._loadCustomerOptions(
+      this.customerSelect,
+      edited.firm?.ref || customer.ref
+    );
+    if (selected) this._setDialogMessage(`${selected.label} wurde aktualisiert.`);
   }
 
   render() {
@@ -271,23 +346,24 @@ export default class RechnungenDesignScreen {
     formCard.append(node("h3", "invoice-form-section__title", "Rechnungsdaten"));
     const formGrid = node("div", "invoice-form-grid");
     const customerSelect = selectInput([], "");
+    customerSelect.setAttribute("aria-label", "Rechnungskunde auswählen");
+    customerSelect.onchange = () => this._applyCustomerSelection(customerSelect.value);
     const customerControl = node("div", "invoice-customer-control");
-    customerControl.appendChild(customerSelect);
-    const createCustomer = button("+ Kunde", "quiet");
-    createCustomer.onclick = async () => {
-      const created = await openFirmEditor({
-        origin: "invoice",
-        projectId: this.projectId,
-        title: "Rechnungskunde anlegen",
-      });
-      if (created?.ok && !created.canceled) {
-        await this._loadCustomerOptions(customerSelect, created.firm?.key || "");
-      }
-    };
-    customerControl.appendChild(createCustomer);
+    const createCustomer = button("Neuer Kunde", "quiet");
+    createCustomer.onclick = () => this._createCustomer();
+    const editCustomer = button("Kunde bearbeiten", "quiet");
+    editCustomer.disabled = true;
+    editCustomer.onclick = () => this._editCustomer();
+    const selectedCustomer = node("div", "invoice-customer-selection", "Kein Kunde ausgewählt");
+    selectedCustomer.dataset.invoiceCustomerSelection = "true";
+    selectedCustomer.setAttribute("aria-live", "polite");
+    customerControl.append(customerSelect, createCustomer, editCustomer, selectedCustomer);
+    this.customerSelect = customerSelect;
+    this.customerSelection = selectedCustomer;
+    this.editCustomerButton = editCustomer;
     formGrid.append(
       field({ label: "Rechnungsnummer", control: textInput({ value: INVOICE_DESIGN_FORM.number }) }),
-      field({ label: "Kunde", control: customerControl }),
+      field({ label: "Kunde", className: "invoice-field--customer", control: customerControl }),
       field({ label: "Projekt", control: selectInput(["Erweiterung Werkhalle 3", "Quartier Am Stadtpark", "Verwaltungsbau Hafenstraße"], INVOICE_DESIGN_FORM.project) }),
       field({ label: "Rechnungsdatum", control: textInput({ value: INVOICE_DESIGN_FORM.invoiceDate, type: "date" }) }),
       field({ label: "Leistungszeitraum von", control: textInput({ value: INVOICE_DESIGN_FORM.serviceFrom, type: "date" }) }),
@@ -297,7 +373,7 @@ export default class RechnungenDesignScreen {
       field({ label: "Betreff", className: "invoice-field--wide", control: textInput({ value: INVOICE_DESIGN_FORM.subject }) })
     );
     formCard.append(formGrid);
-    this._loadCustomerOptions(customerSelect).catch((error) =>
+    this._loadCustomerOptions(customerSelect, this.selectedCustomerRef).catch((error) =>
       this._setDialogMessage(error?.message || String(error))
     );
 
@@ -378,10 +454,14 @@ export default class RechnungenDesignScreen {
 
   closeEditor() {
     if (!this.overlay) return;
+    this.customerLoadVersion += 1;
     cleanupPopupHandlers(this.overlay);
     this.overlay.remove();
     this.overlay = null;
     this.dialogMessage = null;
+    this.customerSelect = null;
+    this.customerSelection = null;
+    this.editCustomerButton = null;
   }
 
   destroy() {
