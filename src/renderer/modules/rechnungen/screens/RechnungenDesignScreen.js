@@ -11,6 +11,7 @@ import {
   INVOICE_DESIGN_ROWS,
 } from "../demoData.js";
 import { ensureRechnungenDesignStyles } from "../styles.js";
+import { openFirmEditor } from "../../../features/firms/openFirmEditor.js";
 
 function node(tag, className = "", text = "") {
   const element = document.createElement(tag);
@@ -71,6 +72,22 @@ export default class RechnungenDesignScreen {
     this.tableBody = null;
     this.resultCount = null;
     this.designMessage = null;
+    this.projectId = router?.currentProjectId || router?.projectId || null;
+  }
+
+  async _loadCustomerOptions(select, selectedKey = "") {
+    const api = globalThis.window?.bbmDb;
+    if (!select || typeof api?.firmDirectoryListCustomers !== "function") return;
+    const response = await api.firmDirectoryListCustomers({ projectId: this.projectId || undefined });
+    if (!response?.ok) {
+      this._setDialogMessage(response?.error || "Kunden konnten nicht geladen werden.");
+      return;
+    }
+    select.replaceChildren(option("", "Kunde auswählen"));
+    for (const firm of response.list || []) {
+      select.append(option(firm.key, `${firm.label}${firm.kind === "project_firm" ? " · Projekt" : " · Global"}`));
+    }
+    if (selectedKey && [...select.options].some((entry) => entry.value === selectedKey)) select.value = selectedKey;
   }
 
   render() {
@@ -253,9 +270,24 @@ export default class RechnungenDesignScreen {
     const formCard = node("section", "invoice-form-section");
     formCard.append(node("h3", "invoice-form-section__title", "Rechnungsdaten"));
     const formGrid = node("div", "invoice-form-grid");
+    const customerSelect = selectInput([], "");
+    const customerControl = node("div", "invoice-customer-control");
+    customerControl.appendChild(customerSelect);
+    const createCustomer = button("+ Kunde", "quiet");
+    createCustomer.onclick = async () => {
+      const created = await openFirmEditor({
+        origin: "invoice",
+        projectId: this.projectId,
+        title: "Rechnungskunde anlegen",
+      });
+      if (created?.ok && !created.canceled) {
+        await this._loadCustomerOptions(customerSelect, created.firm?.key || "");
+      }
+    };
+    customerControl.appendChild(createCustomer);
     formGrid.append(
       field({ label: "Rechnungsnummer", control: textInput({ value: INVOICE_DESIGN_FORM.number }) }),
-      field({ label: "Kunde", control: selectInput(["Nordlicht Anlagenbau GmbH", "Hanse Projektentwicklung AG", "Baukontor West GmbH"], INVOICE_DESIGN_FORM.customer) }),
+      field({ label: "Kunde", control: customerControl }),
       field({ label: "Projekt", control: selectInput(["Erweiterung Werkhalle 3", "Quartier Am Stadtpark", "Verwaltungsbau Hafenstraße"], INVOICE_DESIGN_FORM.project) }),
       field({ label: "Rechnungsdatum", control: textInput({ value: INVOICE_DESIGN_FORM.invoiceDate, type: "date" }) }),
       field({ label: "Leistungszeitraum von", control: textInput({ value: INVOICE_DESIGN_FORM.serviceFrom, type: "date" }) }),
@@ -265,6 +297,9 @@ export default class RechnungenDesignScreen {
       field({ label: "Betreff", className: "invoice-field--wide", control: textInput({ value: INVOICE_DESIGN_FORM.subject }) })
     );
     formCard.append(formGrid);
+    this._loadCustomerOptions(customerSelect).catch((error) =>
+      this._setDialogMessage(error?.message || String(error))
+    );
 
     const lowerGrid = node("div", "invoice-dialog__lower-grid");
     const positionsCard = node("section", "invoice-form-section invoice-form-section--positions");

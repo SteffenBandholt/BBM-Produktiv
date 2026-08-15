@@ -2,6 +2,8 @@ const TOPS_META_DEFAULT_VALUE = Object.freeze({
   due_date: null,
   status: "-",
   responsible_label: "",
+  responsible_kind: null,
+  responsible_id: null,
 });
 
 export const TOPS_META_STATUS_OPTIONS = Object.freeze([
@@ -18,6 +20,8 @@ function normalizeProtocolMetaValue(value = {}) {
     due_date: (value?.due_date || "").trim() || null,
     status: (value?.status || "").trim() || "-",
     responsible_label: (value?.responsible_label || "").trim() || "",
+    responsible_kind: (value?.responsible_kind || value?.responsibleKind || "").trim() || null,
+    responsible_id: (value?.responsible_id || value?.responsibleId || "").trim() || null,
   };
 }
 

@@ -36,23 +36,26 @@ export class TopsAssigneeDataSource {
   }
 
   _companyStableId(row) {
-    return this._asText(
+    const explicitKey = this._asText(row?.key);
+    if (explicitKey) return explicitKey;
+    const id = this._asText(
       row?.id ?? row?.projectFirmId ?? row?.project_company_id ?? row?.companyId ?? row?.firmId ?? row?.firm_id
     );
+    const kind = this._asText(row?.kind);
+    if (id.startsWith("global_firm:") || id.startsWith("project_firm:")) return id;
+    return id && ["project_firm", "global_firm"].includes(kind) ? `${kind}:${id}` : id;
   }
 
   _dedupeCompanies(list) {
     const out = [];
     const seenIds = new Set();
-    const seenLabels = new Set();
 
     for (const row of Array.isArray(list) ? list : []) {
       const id = this._companyStableId(row);
       const label = this._companyVisibleLabel(row).toLowerCase();
       if (!id || !label) continue;
-      if (seenIds.has(id) || seenLabels.has(label)) continue;
+      if (seenIds.has(id)) continue;
       seenIds.add(id);
-      seenLabels.add(label);
       out.push({
         ...row,
         id,
@@ -168,14 +171,21 @@ export class TopsAssigneeDataSource {
 
     const candidateCompanies = [];
 
-    if (typeof this.api.projectFirmsListFirmCandidatesByProject === "function") {
+    const listParticipants =
+      typeof this.api.firmDirectoryListProjectParticipants === "function"
+        ? (project) => this.api.firmDirectoryListProjectParticipants({ projectId: project })
+        : this.api.projectFirmsListFirmCandidatesByProject;
+
+    if (typeof listParticipants === "function") {
       try {
-        const res = await this.api.projectFirmsListFirmCandidatesByProject(id);
+        const res = await listParticipants(id);
         if (res?.ok !== false) {
           for (const row of this._pickRows(res)) {
             if (!this._asBool(row?.is_active ?? row?.isActive, true)) continue;
             candidateCompanies.push({
               id: this._companyStableId(row),
+              kind: this._asText(row?.kind),
+              firmId: this._asText(row?.id),
               short: this._asText(row?.short || row?.label || ""),
               name1: this._asText(row?.name || row?.name1 || row?.short || row?.label || ""),
               active: true,
@@ -211,7 +221,9 @@ export class TopsAssigneeDataSource {
         const poolRes = await this.api.projectParticipantsPool({ projectId: id });
         if (poolRes?.ok !== false) {
           for (const row of this._pickRows(poolRes)) {
-            const companyId = this._asText(row?.firmId ?? row?.firm_id ?? row?.id);
+            const rawCompanyId = this._asText(row?.firmId ?? row?.firm_id ?? row?.id);
+            const companyKind = row?.kind === "global_person" ? "global_firm" : "project_firm";
+            const companyId = rawCompanyId ? `${companyKind}:${rawCompanyId}` : "";
             const employee = this._createActivePoolEmployee(companyId, row);
             if (!employee) continue;
             if (!companyId) continue;

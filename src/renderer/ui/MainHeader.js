@@ -1479,13 +1479,17 @@ export default class MainHeader {
       }
     };
 
-    const firmCandidatesRaw = await safeCall(api.projectFirmsListFirmCandidatesByProject, pid);
+    const firmCandidatesRaw =
+      typeof api.firmDirectoryListProjectParticipants === "function"
+        ? await safeCall(api.firmDirectoryListProjectParticipants, {
+            projectId: pid,
+            includeInactive: true,
+          })
+        : await safeCall(api.projectFirmsListFirmCandidatesByProject, pid);
     const firmCandidates = this._dedupeBy(
       firmCandidatesRaw,
       (x) => `${String(x?.kind || "")}::${String(x?.id || "")}`
     );
-    const firmsAssignedCount = firmCandidates.length;
-
     const localFirms = await safeCall(api.projectFirmsListByProject, pid);
     const globalFirms = await safeCall(api.firmsListGlobal);
     const localById = new Map((localFirms || []).map((x) => [String(x?.id || ""), x]));
@@ -1507,6 +1511,9 @@ export default class MainHeader {
       }
       if (this._isItemActive(source)) firmsActiveCount += 1;
     }
+    // Setup-Kennzahlen zählen nur fachlich zulässige, operativ aktive
+    // Projektteilnehmer; Kunden-only- und inaktive Firmen bleiben außen vor.
+    const firmsAssignedCount = firmsActiveCount;
 
     const peopleRaw = await safeCall(api.projectCandidatesList, { projectId: pid });
     const people = this._dedupeBy(

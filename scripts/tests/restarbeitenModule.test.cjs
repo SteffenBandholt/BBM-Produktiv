@@ -1284,7 +1284,11 @@ async function runRestarbeitenModuleTests(run) {
           responsible_project_firm_id: "firm-1",
           responsible_label: "AB Bau",
         },
-        responsibleOptions: [{ value: "firm-1", label: "AB Bau" }],
+        responsibleOptions: [{
+          value: "project_firm:firm-1",
+          label: "AB Bau",
+          ref: { kind: "project_firm", id: "firm-1", projectId: "p-1" },
+        }],
         onDraftChange: (patch) => patches.push(patch),
       });
 
@@ -1292,9 +1296,30 @@ async function runRestarbeitenModuleTests(run) {
 
       triggerValue(findByUiId(root, "restarbeiten.editbox.meta.responsible"), "", "change");
       assert.deepEqual(patches.at(-1), {
+        responsible_ref: null,
+        responsible_kind: "",
+        responsible_id: "",
         responsible_project_firm_id: "",
+        responsible_global_firm_id: "",
         responsible_label: "",
       });
+
+      const historicalRoot = editbox.buildRestarbeitenEditbox({
+        draft: {
+          id: "ra-historisch",
+          short_text: "Historie",
+          responsible_kind: "global_firm",
+          responsible_id: "nicht-mehr-auswaehlbar",
+          responsible_label: "Historische Firma",
+        },
+        responsibleOptions: [],
+      });
+      const historicalSelect = findControl(findByUiId(
+        historicalRoot,
+        "restarbeiten.editbox.meta.responsible"
+      ));
+      assert.equal(historicalSelect.value, "global_firm:nicht-mehr-auswaehlbar");
+      assert.equal(collectText(historicalSelect).includes("Historische Firma"), true);
     } finally {
       globalThis.document = prevDocument;
     }

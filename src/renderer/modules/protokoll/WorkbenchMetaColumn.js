@@ -204,7 +204,7 @@ export class WorkbenchMetaColumn {
 
     this.metaPanel.setValue(metaValue);
     this.statusAmpelBridge.applyDraftValue(metaValue);
-    this.responsibleBridge.applyDraftValue(metaValue?.responsible_label || "");
+    this.responsibleBridge.applyDraftValue(metaValue);
     this._syncMetaSymbols(metaValue);
 
     this.metaPanel.setDisabled(metaDisabled);

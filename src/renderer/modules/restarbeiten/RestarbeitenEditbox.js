@@ -405,6 +405,25 @@ export function buildRestarbeitenEditbox({
     onInput: (due_date) => onDraftChange?.({ due_date }),
     onCommit: () => onAutoSave?.(),
   });
+  const currentResponsibleKey =
+    draft.responsible_kind && draft.responsible_id
+      ? `${draft.responsible_kind}:${draft.responsible_id}`
+      : draft.responsible_project_firm_id
+        ? `project_firm:${draft.responsible_project_firm_id}`
+        : "";
+  const historicalResponsibleOption =
+    currentResponsibleKey &&
+    !responsibleOptions.some((item) => String(item?.value || "") === currentResponsibleKey)
+      ? [{
+          value: currentResponsibleKey,
+          label: draft.responsible_label || "Historische Zuordnung",
+          ref: {
+            kind: draft.responsible_kind || "project_firm",
+            id: draft.responsible_id || draft.responsible_project_firm_id,
+          },
+        }]
+      : [];
+  const visibleResponsibleOptions = [...historicalResponsibleOption, ...responsibleOptions];
   meta.append(
     createField({
       label: "Status",
@@ -426,18 +445,26 @@ export function buildRestarbeitenEditbox({
     createField({
       label: "Verantwortlich",
       labelUiId: "restarbeiten.editbox.meta.responsible.label",
-      value: draft.responsible_project_firm_id || "",
+      value: currentResponsibleKey,
       type: "select",
-      options: [{ value: "", label: "Nicht zugeordnet" }, ...responsibleOptions],
+      options: [
+        { value: "", label: "Nicht zugeordnet" },
+        ...visibleResponsibleOptions,
+      ],
       uiId: "restarbeiten.editbox.meta.responsible",
       editorGroupId: "restarbeiten.edit.meta.responsible",
       editorLabelId: "restarbeiten.edit.meta.responsible.label",
       editorFieldId: "restarbeiten.edit.meta.responsible.field",
-      onInput: (responsible_project_firm_id) => {
-        const selected = responsibleOptions.find((item) => String(item.value) === String(responsible_project_firm_id));
+      onInput: (responsibleKey) => {
+        const selected = visibleResponsibleOptions.find((item) => String(item.value) === String(responsibleKey));
+        const ref = responsibleKey ? selected?.ref || null : null;
         onDraftChange?.({
-          responsible_project_firm_id,
-          responsible_label: responsible_project_firm_id ? selected?.label || "" : "",
+          responsible_ref: ref,
+          responsible_kind: ref?.kind || "",
+          responsible_id: ref?.id || "",
+          responsible_project_firm_id: ref?.kind === "project_firm" ? ref.id : "",
+          responsible_global_firm_id: ref?.kind === "global_firm" ? ref.id : "",
+          responsible_label: responsibleKey ? selected?.label || "" : "",
         });
       },
       onCommit: () => onAutoSave?.(),

@@ -339,6 +339,8 @@ export function editorFromTop(top) {
       due_date: null,
       status: "-",
       responsible_label: "",
+      responsible_kind: null,
+      responsible_id: null,
       is_important: 0,
       is_hidden: 0,
       is_task: 0,
@@ -352,6 +354,8 @@ export function editorFromTop(top) {
     due_date: top.due_date || top.dueDate || null,
     status: String(top.status || "-"),
     responsible_label: String(top.responsible_label || top.responsibleLabel || ""),
+    responsible_kind: top.responsible_kind || top.responsibleKind || null,
+    responsible_id: top.responsible_id || top.responsibleId || null,
     is_important: Number(top.is_important) === 1 ? 1 : 0,
     is_hidden: Number(top.is_hidden) === 1 ? 1 : 0,
     is_task: Number(top.is_task ?? top.isTask) === 1 ? 1 : 0,
@@ -388,6 +392,11 @@ export function buildPatchFromDraft(selectedTop, draft) {
   const responsibleLabel = String(draft.responsible_label || "");
   if (responsibleLabel !== String(selectedTop.responsible_label || selectedTop.responsibleLabel || "")) {
     patch.responsible_label = responsibleLabel;
+  }
+  for (const field of ["responsible_kind", "responsible_id"]) {
+    const next = draft[field] || null;
+    const current = selectedTop[field] || null;
+    if (String(next || "") !== String(current || "")) patch[field] = next;
   }
 
   for (const k of ["is_important", "is_hidden", "is_task", "is_decision"]) {

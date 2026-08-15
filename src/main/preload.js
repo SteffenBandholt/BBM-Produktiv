@@ -81,6 +81,20 @@ contextBridge.exposeInMainWorld("bbmDb", {
   firmsUpdateGlobal: (data) => ipcRenderer.invoke("firms:updateGlobal", data),
   firmsDeleteGlobal: (firmId) => ipcRenderer.invoke("firms:deleteGlobal", firmId),
 
+  // Zentrales, typisiertes Firmenverzeichnis. Bestehende APIs bleiben erhalten.
+  firmDirectoryGet: (data) => ipcRenderer.invoke("firmDirectory:get", data),
+  firmDirectoryListAll: (data) => ipcRenderer.invoke("firmDirectory:listAll", data),
+  firmDirectoryListProjectParticipants: (data) =>
+    ipcRenderer.invoke("firmDirectory:listProjectParticipants", data),
+  firmDirectoryListCustomers: (data) => ipcRenderer.invoke("firmDirectory:listCustomers", data),
+  firmDirectoryListPersons: (data) => ipcRenderer.invoke("firmDirectory:listPersons", data),
+  firmDirectoryCreate: (data) => ipcRenderer.invoke("firmDirectory:create", data),
+  firmDirectoryUpdate: (data) => ipcRenderer.invoke("firmDirectory:update", data),
+  firmDirectoryCheckUseChange: (data) => ipcRenderer.invoke("firmDirectory:checkUseChange", data),
+  firmDirectorySetUses: (data) => ipcRenderer.invoke("firmDirectory:setUses", data),
+  firmDirectoryPrepareLocalToGlobal: (data) =>
+    ipcRenderer.invoke("firmDirectory:prepareLocalToGlobal", data),
+
   // ============================================================
   // GLOBAL Mitarbeiter (Persons) je Firma
   // ============================================================

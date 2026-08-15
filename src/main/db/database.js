@@ -546,6 +546,9 @@ function ensureFirmsAndPersonsSchema(dbConn) {
 
         role_code INTEGER DEFAULT 60,
 
+        use_project_participant INTEGER NOT NULL DEFAULT 0 CHECK (use_project_participant IN (0, 1)),
+        use_customer INTEGER NOT NULL DEFAULT 0 CHECK (use_customer IN (0, 1)),
+
         is_trashed INTEGER NOT NULL DEFAULT 0,
         trashed_at INTEGER,
         removed_at TEXT,
@@ -734,6 +737,9 @@ function ensureProjectFirmsAndPersonsSchema(dbConn) {
 
         role_code INTEGER DEFAULT 60,
 
+        use_project_participant INTEGER NOT NULL DEFAULT 0 CHECK (use_project_participant IN (0, 1)),
+        use_customer INTEGER NOT NULL DEFAULT 0 CHECK (use_customer IN (0, 1)),
+
         removed_at TEXT,
         created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
         updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
@@ -843,6 +849,78 @@ function ensureProjectFirmsAndPersonsSchema(dbConn) {
       `);
     }
   }
+}
+
+/**
+ * Additive migration for the independent firm uses.
+ *
+ * Fresh databases use the neutral default (no use). Existing rows retain the
+ * historic BBM behaviour and become project participants. The migration is
+ * deliberately separate from both CREATE blocks so that both namespaces are
+ * migrated in one SQLite transaction.
+ */
+function ensureFirmUsesSchema(dbConn) {
+  // Several isolated repository unit tests use a deliberately tiny DB double.
+  // Schema migrations run only against real better-sqlite3 connections.
+  if (typeof dbConn?.transaction !== "function") return { changed: [], before: {} };
+  const tables = ["firms", "project_firms"];
+  const before = {};
+  const after = {};
+  const changed = [];
+
+  for (const table of tables) {
+    before[table] = Number(dbConn.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get()?.n || 0);
+  }
+
+  const migrate = dbConn.transaction(() => {
+    for (const table of tables) {
+      const missingParticipant = !columnExists(dbConn, table, "use_project_participant");
+      const missingCustomer = !columnExists(dbConn, table, "use_customer");
+
+      if (missingParticipant) {
+        dbConn.exec(
+          `ALTER TABLE ${table} ADD COLUMN use_project_participant INTEGER NOT NULL DEFAULT 0 CHECK (use_project_participant IN (0, 1));`
+        );
+        dbConn.prepare(`UPDATE ${table} SET use_project_participant = 1`).run();
+        changed.push(`${table}.use_project_participant`);
+      }
+      if (missingCustomer) {
+        dbConn.exec(
+          `ALTER TABLE ${table} ADD COLUMN use_customer INTEGER NOT NULL DEFAULT 0 CHECK (use_customer IN (0, 1));`
+        );
+        changed.push(`${table}.use_customer`);
+      }
+    }
+
+    for (const table of tables) {
+      const invalid = dbConn
+        .prepare(
+          `SELECT COUNT(*) AS n FROM ${table}
+           WHERE use_project_participant IS NULL OR use_customer IS NULL
+              OR use_project_participant NOT IN (0, 1) OR use_customer NOT IN (0, 1)`
+        )
+        .get();
+      if (Number(invalid?.n || 0) !== 0) {
+        throw new Error(`Firmenverwendungs-Migration ungueltig: ${table}`);
+      }
+      after[table] = Number(dbConn.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get()?.n || 0);
+      if (after[table] !== before[table]) {
+        throw new Error(`Firmenverwendungs-Migration hat Zeilenzahl veraendert: ${table}`);
+      }
+    }
+  });
+  migrate();
+
+  dbConn.exec(`
+    CREATE INDEX IF NOT EXISTS idx_firms_uses_active
+      ON firms (use_project_participant, use_customer, removed_at, is_trashed);
+    CREATE INDEX IF NOT EXISTS idx_project_firms_uses_active
+      ON project_firms (project_id, use_project_participant, use_customer, is_active, removed_at);
+  `);
+
+  const result = { changed, before, after };
+  if (changed.length) console.log("[db] firm uses migration", result);
+  return result;
 }
 
 // ✅ NEU: Kandidaten-Whitelist je Projekt
@@ -1279,6 +1357,7 @@ function ensureRestarbeitenSchema(dbConn) {
         status TEXT NOT NULL DEFAULT 'offen',
         due_date TEXT,
         responsible_project_firm_id TEXT,
+        responsible_global_firm_id TEXT,
         responsible_label TEXT,
         source TEXT NOT NULL DEFAULT 'desktop',
         import_batch_id TEXT,
@@ -1290,7 +1369,9 @@ function ensureRestarbeitenSchema(dbConn) {
         created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
         updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
         FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
-        FOREIGN KEY (responsible_project_firm_id) REFERENCES project_firms(id) ON DELETE SET NULL
+        FOREIGN KEY (responsible_project_firm_id) REFERENCES project_firms(id) ON DELETE SET NULL,
+        FOREIGN KEY (responsible_global_firm_id) REFERENCES firms(id) ON DELETE SET NULL,
+        CHECK (responsible_project_firm_id IS NULL OR responsible_global_firm_id IS NULL)
       );
     `);
   } else {
@@ -1313,6 +1394,7 @@ function ensureRestarbeitenSchema(dbConn) {
     addCol("status", "TEXT NOT NULL DEFAULT 'offen'");
     addCol("due_date", "TEXT");
     addCol("responsible_project_firm_id", "TEXT");
+    addCol("responsible_global_firm_id", "TEXT REFERENCES firms(id) ON DELETE SET NULL");
     addCol("responsible_label", "TEXT");
     addCol("source", "TEXT NOT NULL DEFAULT 'desktop'");
     addCol("import_batch_id", "TEXT");
@@ -1779,6 +1861,7 @@ function ensureSchema(dbConn) {
   ensureFirmsAndPersonsSchema(dbConn);
   ensureProjectGlobalFirmsSchema(dbConn);
   ensureProjectFirmsAndPersonsSchema(dbConn);
+  ensureFirmUsesSchema(dbConn);
 
   ensureProjectSettingsSchema(dbConn);
   ensureProjectCandidatesSchema(dbConn);
@@ -1865,6 +1948,7 @@ function initDatabase() {
 module.exports = {
   initDatabase,
   closeDatabase,
+  ensureFirmUsesSchema,
   getDbPaths,
   getDatabaseDiagnostics,
   isDbLikelyEmpty,

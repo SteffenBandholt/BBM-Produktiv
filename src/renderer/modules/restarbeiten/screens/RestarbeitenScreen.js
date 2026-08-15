@@ -59,6 +59,9 @@ function emptyDraft() {
     long_text: "",
     due_date: "",
     responsible_project_firm_id: "",
+    responsible_global_firm_id: "",
+    responsible_kind: "",
+    responsible_id: "",
     responsible_label: "",
     location_level_1: "",
     location_level_2: "",
@@ -79,6 +82,9 @@ function prepareDraft(source = {}) {
     item_class: normalizeText(source.item_class) === "mangel" ? "mangel" : "rest",
     status: normalizeDraftStatus(source.status, { defaultForNew: !source.id }),
     responsible_project_firm_id: normalizeText(source.responsible_project_firm_id),
+    responsible_global_firm_id: normalizeText(source.responsible_global_firm_id),
+    responsible_kind: normalizeText(source.responsible_kind),
+    responsible_id: normalizeText(source.responsible_id),
     responsible_label: normalizeText(source.responsible_label),
   };
   draft.ampelState = getRestarbeitenAmpelState(draft);
@@ -563,8 +569,9 @@ export default class RestarbeitenScreen {
     this.root.setAttribute("data-output-preview", this.outputPreviewOpen ? "true" : "false");
     const responsibleOptions = this.responsibleFirms
       .map((firm) => ({
-        value: normalizeText(firm.id),
+        value: normalizeText(firm.key || `${firm.kind}:${firm.id}`),
         label: normalizeText(firm.shortName || firm.short_name || firm.name || firm.company_name),
+        ref: { kind: firm.kind, id: firm.id, projectId: this.projectId },
       }))
       .filter((entry) => entry.value && entry.label);
 

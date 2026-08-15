@@ -718,7 +718,11 @@ async function runTopsScreenIntegrationTests(run) {
       });
 
       const companies = await dataSource.loadCompaniesByProject("project-1");
-      assert.equal(companies.length, 2);
+      assert.equal(companies.length, 3);
+      assert.deepEqual(
+        companies.filter((item) => item.short === "WTB").map((item) => item.id).sort(),
+        ["global_firm:g1", "project_firm:p1"]
+      );
       assert.equal(companies.some((item) => String(item.short || item.name1 || "").includes("Steffen")), false);
 
       const metaPanel = new TopsMetaPanel();
@@ -733,8 +737,28 @@ async function runTopsScreenIntegrationTests(run) {
       assert.equal(Array.isArray(companies), true);
 
       bridge.applyDraftValue("WTB");
-      assert.equal(bridge.field.getValue(), "company:p1");
+      assert.equal(bridge.field.getValue(), "legacy:WTB");
       assert.equal(metaPanel.getValue().responsible_label, "WTB");
+      assert.equal(metaPanel.getValue().responsible_kind, null);
+      assert.equal(metaPanel.getValue().responsible_id, null);
+
+      bridge.applyDraftValue({
+        responsible_label: "WTB",
+        responsible_kind: "global_firm",
+        responsible_id: "g1",
+      });
+      assert.equal(bridge.field.getValue(), "company:global_firm:g1");
+      assert.equal(metaPanel.getValue().responsible_kind, "global_firm");
+      assert.equal(metaPanel.getValue().responsible_id, "g1");
+
+      bridge.applyDraftValue({
+        responsible_label: "Historischer Snapshot",
+        responsible_kind: "global_firm",
+        responsible_id: "nicht-mehr-auswaehlbar",
+      });
+      assert.equal(bridge.field.getValue(), "legacy:Historischer Snapshot");
+      assert.equal(metaPanel.getValue().responsible_kind, "global_firm");
+      assert.equal(metaPanel.getValue().responsible_id, "nicht-mehr-auswaehlbar");
 
       bridge.applyDraftValue("");
       assert.equal(bridge.field.getValue(), "");

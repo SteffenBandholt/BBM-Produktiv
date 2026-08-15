@@ -8,6 +8,7 @@ import { applyPopupButtonStyle, applyPopupCardStyle } from "../ui/popupButtonSty
 import { OVERLAY, OVERLAY_TOP } from "../ui/zIndex.js";
 import FirmsView from "./FirmsView.js";
 import { fireAndForget } from "../utils/async.js";
+import { openFirmEditor } from "../features/firms/openFirmEditor.js";
 // - Hauptscreen: 2 Spalten nebeneinander
 //   links: "Lokale Firmen" (Kurzbezeichnung + Funktion/Gewerk) + bestehender Editor weiter genutzt
 //   rechts: "Globale Firmen" (nur zugeordnet) + Button "Global zuordnen"
@@ -2060,7 +2061,11 @@ const taFirmNotes = document.createElement("textarea");
     const api = window.bbmDb || {};
     if (typeof api.projectFirmsCanDeactivate !== "function") return { ok: true, can: true };
     try {
-      const res = await api.projectFirmsCanDeactivate({ projectId: this.projectId, firmId });
+      const res = await api.projectFirmsCanDeactivate({
+        projectId: this.projectId,
+        firmId,
+        kind: "project_firm",
+      });
       if (!res?.ok) return { ok: false, can: false, reason: res?.error || "" };
       const can = res?.result?.canDeactivate !== false;
       return {
@@ -2095,6 +2100,7 @@ const taFirmNotes = document.createElement("textarea");
     const res = await api.projectFirmsSetActive({
       projectId: this.projectId,
       firmId,
+      kind: "project_firm",
       isActive: !!isActive,
     });
     if (!res?.ok) {
@@ -2687,9 +2693,23 @@ const taFirmNotes = document.createElement("textarea");
     setDisabled(this.localPersonBtnCloseEl, busy);
   }
 
-  _openLocalFirmCreateModal() {
+  async _openLocalFirmCreateModal() {
     if (this._isReadOnly()) return;
     if (this.savingFirm || this.savingPerson || this.savingGlobalAssign) return;
+    if (typeof window.bbmDb?.firmDirectoryCreate === "function") {
+      const result = await openFirmEditor({
+        origin: "project_firms",
+        kind: "project_firm",
+        projectId: this.projectId,
+        title: "Firma anlegen",
+      });
+      if (!result?.ok) alert(result?.error || "Firmeneditor konnte nicht geöffnet werden.");
+      if (result?.ok && !result.canceled) {
+        this._selectFirm(result.firm?.id || null);
+        await this.reloadFirms();
+      }
+      return;
+    }
     if (!this.localFirmOverlayEl) return;
 
     this.router?.cleanupTransientOverlays?.();
@@ -2761,6 +2781,21 @@ const taFirmNotes = document.createElement("textarea");
     if (this._isReadOnly()) return;
     if (this.savingFirm || this.savingPerson || this.savingGlobalAssign) return;
     if (!firm || !firm.id) return;
+    if (typeof window.bbmDb?.firmDirectoryUpdate === "function") {
+      const result = await openFirmEditor({
+        origin: "project_firms",
+        kind: "project_firm",
+        projectId: this.projectId,
+        firm,
+        title: "Firma bearbeiten",
+      });
+      if (!result?.ok) alert(result?.error || "Firmeneditor konnte nicht geöffnet werden.");
+      if (result?.ok && !result.canceled) {
+        this._selectFirm(result.firm?.id || firm.id);
+        await this.reloadFirms();
+      }
+      return;
+    }
     if (!this.localFirmOverlayEl) return;
 
     this.router?.cleanupTransientOverlays?.();
@@ -3809,7 +3844,9 @@ const taFirmNotes = document.createElement("textarea");
       };
     }
 
-    const list = res.list || [];
+    const list = (res.list || []).filter(
+      (firm) => Number(firm?.uses?.projectParticipant ?? firm?.use_project_participant) === 1
+    );
     list.sort((a, b) => {
       const as = this._firmShortText(a).toLowerCase();
       const bs = this._firmShortText(b).toLowerCase();

@@ -83,6 +83,7 @@ function listFirmCandidatesByProject(projectId) {
     FROM project_firms
     WHERE project_id = ?
       AND removed_at IS NULL
+      AND use_project_participant = 1
   `).all(projectId).map((r) => ({
     kind: "project_firm",
     id: r.id,
@@ -115,6 +116,8 @@ function listFirmCandidatesByProject(projectId) {
     WHERE pgf.project_id = ?
       AND pgf.removed_at IS NULL
       AND f.removed_at IS NULL
+      AND COALESCE(f.is_trashed, 0) = 0
+      AND f.use_project_participant = 1
   `).all(projectId).map((r) => ({
     kind: "global_firm",
     id: r.id,
@@ -150,6 +153,13 @@ function assignGlobalFirmToProject({ projectId, firmId }) {
   if (!firmId) throw new Error("firmId required");
 
   const now = _nowIso();
+  const eligible = db
+    .prepare(
+      `SELECT id FROM firms WHERE id = ? AND removed_at IS NULL
+       AND COALESCE(is_trashed, 0) = 0 AND use_project_participant = 1`
+    )
+    .get(firmId);
+  if (!eligible) throw new Error("Nur globale Projektteilnehmer koennen zugeordnet werden.");
 
   // Insert falls neu, sonst "undelete"
   db.prepare(`
@@ -185,7 +195,7 @@ function unassignGlobalFirmFromProject({ projectId, firmId }) {
   return { changed: info.changes, project_id: projectId, firm_id: firmId, removed_at: now };
 }
 
-function setProjectFirmActive({ projectId, firmId, isActive }) {
+function setProjectFirmActive({ projectId, firmId, kind, isActive }) {
   const db = initDatabase();
   if (!projectId) throw new Error("projectId required");
   if (!firmId) throw new Error("firmId required");
@@ -194,7 +204,7 @@ function setProjectFirmActive({ projectId, firmId, isActive }) {
   const now = _nowIso();
 
   const tx = db.transaction(() => {
-    const localInfo = db.prepare(`
+    const localInfo = kind === "global_firm" ? { changes: 0 } : db.prepare(`
       UPDATE project_firms
       SET is_active = ?, updated_at = ?
       WHERE project_id = ?
@@ -202,7 +212,7 @@ function setProjectFirmActive({ projectId, firmId, isActive }) {
         AND removed_at IS NULL
     `).run(active, now, projectId, firmId);
 
-    const globalInfo = db.prepare(`
+    const globalInfo = kind === "project_firm" ? { changes: 0 } : db.prepare(`
       UPDATE project_global_firms
       SET is_active = ?, updated_at = ?
       WHERE project_id = ?
@@ -222,12 +232,12 @@ function setProjectFirmActive({ projectId, firmId, isActive }) {
   };
 }
 
-function canDeactivateProjectFirm({ projectId, firmId }) {
+function canDeactivateProjectFirm({ projectId, firmId, kind }) {
   const db = initDatabase();
   if (!projectId) throw new Error("projectId required");
   if (!firmId) throw new Error("firmId required");
 
-  const local = db
+  const local = kind === "global_firm" ? null : db
     .prepare(
       `
       SELECT id
@@ -240,7 +250,7 @@ function canDeactivateProjectFirm({ projectId, firmId }) {
     )
     .get(projectId, firmId);
 
-  const global = db
+  const global = kind === "project_firm" ? null : db
     .prepare(
       `
       SELECT firm_id
@@ -320,6 +330,8 @@ function createProjectFirm({
   gewerk,
   notes,
   role_code,
+  use_project_participant = 1,
+  use_customer = 0,
 }) {
   const db = initDatabase();
   if (!projectId) throw new Error("projectId required");
@@ -349,12 +361,13 @@ function createProjectFirm({
       id, project_id,
       short, name, name2, street, zip, city, phone, email, gewerk, notes,
       role_code,
+      use_project_participant, use_customer,
       removed_at, created_at, updated_at
     )
     VALUES (
       ?, ?,
       ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-      ?,
+      ?, ?, ?,
       NULL, ?, ?
     )
   `).run(
@@ -371,6 +384,8 @@ function createProjectFirm({
     norm(gewerk),
     norm(notes),
     (normRoleCode(role_code) !== undefined ? normRoleCode(role_code) : 60),
+    Number(use_project_participant) === 1 ? 1 : 0,
+    Number(use_customer) === 1 ? 1 : 0,
     now,
     now
   );
@@ -596,12 +611,13 @@ function importFromOutlookStaging({ projectId, stagingRows } = {}) {
             id, project_id,
             short, name, name2, street, zip, city, phone, email, gewerk, notes,
             role_code,
+            use_project_participant, use_customer,
             removed_at, created_at, updated_at
           )
           VALUES (
             ?, ?,
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            60,
+            60, 1, 0,
             NULL, ?, ?
           )
         `).run(

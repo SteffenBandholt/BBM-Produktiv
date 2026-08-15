@@ -62,11 +62,15 @@ export async function getRestarbeitenProjectSettings(projectId) {
 
 export async function listResponsibleProjectFirms(projectId) {
   const bbmDb = requireBbmDb();
-  if (typeof bbmDb.projectFirmsListByProject !== "function") {
+  if (typeof bbmDb.firmDirectoryListProjectParticipants !== "function") {
     throw new Error("Restarbeiten-Datenzugriff nicht verfügbar: projectFirmsListByProject fehlt.");
   }
   const pid = extractProjectId(projectId);
-  const response = await callAndNormalize(bbmDb.projectFirmsListByProject, pid, "firmenliste");
+  const response = await callAndNormalize(
+    bbmDb.firmDirectoryListProjectParticipants,
+    { projectId: pid },
+    "firmenliste"
+  );
   const source = Array.isArray(response.list) ? response.list : Array.isArray(response.firms) ? response.firms : [];
   return source.filter((entry) => entry && typeof entry === "object");
 }

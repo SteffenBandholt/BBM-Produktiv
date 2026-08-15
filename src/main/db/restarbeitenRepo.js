@@ -40,6 +40,73 @@ function normalizeRestarbeitItemClass(value) {
   return ALLOWED_ITEM_CLASSES.has(normalized) ? normalized : "rest";
 }
 
+function normalizeResponsible(db, projectId, source = {}) {
+  const ref = source.responsible_ref || source.responsibleRef || null;
+  const kind = toText(ref?.kind ?? source.responsible_kind);
+  const id = toText(ref?.id ?? source.responsible_id);
+  const legacyLocalId = toText(source.responsible_project_firm_id);
+  const legacyGlobalId = toText(source.responsible_global_firm_id);
+
+  if (!kind && !id && !legacyLocalId && !legacyGlobalId) {
+    return {
+      responsible_project_firm_id: null,
+      responsible_global_firm_id: null,
+      responsible_label: toText(source.responsible_label),
+    };
+  }
+
+  const resolvedKind = kind || (legacyGlobalId ? "global_firm" : "project_firm");
+  const resolvedId = id || legacyGlobalId || legacyLocalId;
+  if (!resolvedId || !["project_firm", "global_firm"].includes(resolvedKind)) {
+    throw new Error("responsible firm reference invalid");
+  }
+
+  let firm;
+  if (resolvedKind === "project_firm") {
+    firm = db
+      .prepare(
+        `SELECT id, short, name FROM project_firms
+         WHERE id = ? AND project_id = ? AND removed_at IS NULL
+           AND use_project_participant = 1 AND COALESCE(is_active, 1) = 1`
+      )
+      .get(resolvedId, projectId);
+  } else {
+    firm = db
+      .prepare(
+        `SELECT f.id, f.short, f.name FROM firms f
+         JOIN project_global_firms pgf ON pgf.firm_id = f.id
+         WHERE f.id = ? AND pgf.project_id = ?
+           AND f.removed_at IS NULL AND COALESCE(f.is_trashed, 0) = 0
+           AND f.use_project_participant = 1
+           AND pgf.removed_at IS NULL AND COALESCE(pgf.is_active, 1) = 1`
+      )
+      .get(resolvedId, projectId);
+  }
+  if (!firm) throw new Error("responsible firm is not an active project participant");
+
+  return {
+    responsible_project_firm_id: resolvedKind === "project_firm" ? resolvedId : null,
+    responsible_global_firm_id: resolvedKind === "global_firm" ? resolvedId : null,
+    responsible_label: toText(source.responsible_label) || toText(firm.short) || toText(firm.name),
+  };
+}
+
+function decorateResponsible(row) {
+  if (!row) return row;
+  const kind = row.responsible_global_firm_id
+    ? "global_firm"
+    : row.responsible_project_firm_id
+      ? "project_firm"
+      : null;
+  const id = row.responsible_global_firm_id || row.responsible_project_firm_id || null;
+  return {
+    ...row,
+    responsible_kind: kind,
+    responsible_id: id,
+    responsible_ref: kind && id ? { kind, id, projectId: row.project_id } : null,
+  };
+}
+
 function buildRestarbeitUpdatePatch(patch = {}) {
   const out = {};
 
@@ -54,6 +121,9 @@ function buildRestarbeitUpdatePatch(patch = {}) {
   if (patch.due_date !== undefined) out.due_date = toText(patch.due_date);
   if (patch.responsible_project_firm_id !== undefined) {
     out.responsible_project_firm_id = toText(patch.responsible_project_firm_id);
+  }
+  if (patch.responsible_global_firm_id !== undefined) {
+    out.responsible_global_firm_id = toText(patch.responsible_global_firm_id);
   }
   if (patch.responsible_label !== undefined) out.responsible_label = toText(patch.responsible_label);
   if (patch.completed_at !== undefined) out.completed_at = toText(patch.completed_at);
@@ -112,8 +182,7 @@ function createRestarbeitItem(projectIdOrPayload = {}, payload = {}) {
     item_class: normalizeRestarbeitItemClass(sourcePayload.item_class),
     status: reqStatus(sourcePayload.status, { defaultForNew: true }),
     due_date: toText(sourcePayload.due_date),
-    responsible_project_firm_id: toText(sourcePayload.responsible_project_firm_id),
-    responsible_label: toText(sourcePayload.responsible_label),
+    ...normalizeResponsible(db, pid, sourcePayload),
     source: toText(sourcePayload.source) || "desktop",
     import_batch_id: toText(sourcePayload.import_batch_id),
     archived_at: toText(sourcePayload.archived_at),
@@ -130,17 +199,17 @@ function createRestarbeitItem(projectIdOrPayload = {}, payload = {}) {
       id, project_id, running_number, sort_order,
       location_level_1, location_level_2, location_level_3, location_level_4,
       short_text, long_text, item_class, status, due_date,
-      responsible_project_firm_id, responsible_label, source, import_batch_id,
+      responsible_project_firm_id, responsible_global_firm_id, responsible_label, source, import_batch_id,
       archived_at, completed_at, completion_note, deleted_at, verified_at, created_at, updated_at
     ) VALUES (
       @id, @project_id, @running_number, @sort_order,
       @location_level_1, @location_level_2, @location_level_3, @location_level_4,
       @short_text, @long_text, @item_class, @status, @due_date,
-      @responsible_project_firm_id, @responsible_label, @source, @import_batch_id,
+      @responsible_project_firm_id, @responsible_global_firm_id, @responsible_label, @source, @import_batch_id,
       @archived_at, @completed_at, @completion_note, @deleted_at, @verified_at, @created_at, @updated_at
     )
   `).run(data);
-  return db.prepare(`SELECT * FROM restarbeiten_items WHERE id = ?`).get(id);
+  return decorateResponsible(db.prepare(`SELECT * FROM restarbeiten_items WHERE id = ?`).get(id));
 }
 
 function updateRestarbeitItem(id, patch = {}) {
@@ -150,9 +219,17 @@ function updateRestarbeitItem(id, patch = {}) {
   if (!existing) throw new Error("restarbeit not found");
 
   const data = buildRestarbeitUpdatePatch(patch);
+  const hasResponsiblePatch =
+    patch.responsible_ref !== undefined ||
+    patch.responsibleRef !== undefined ||
+    patch.responsible_kind !== undefined ||
+    patch.responsible_id !== undefined ||
+    patch.responsible_project_firm_id !== undefined ||
+    patch.responsible_global_firm_id !== undefined;
+  if (hasResponsiblePatch) Object.assign(data, normalizeResponsible(db, existing.project_id, patch));
   const keys = Object.keys(data);
   if (!keys.length) {
-    return existing;
+    return decorateResponsible(existing);
   }
 
   const setClause = keys.map((key) => `${key} = @${key}`).join(", ");
@@ -174,7 +251,7 @@ function updateRestarbeitItem(id, patch = {}) {
 
   const updated = db.prepare(`SELECT * FROM restarbeiten_items WHERE id = ?`).get(rid);
   if (!updated) throw new Error("restarbeit not found");
-  return updated;
+  return decorateResponsible(updated);
 }
 
 function listRestarbeitItems(projectId, { includeArchived = false, includeDeleted = false } = {}) {
@@ -186,7 +263,7 @@ function listRestarbeitItems(projectId, { includeArchived = false, includeDelete
     SELECT * FROM restarbeiten_items
     WHERE project_id = ? ${archivedWhere} ${deletedWhere}
     ORDER BY sort_order ASC, running_number ASC, created_at ASC
-  `).all(pid);
+  `).all(pid).map(decorateResponsible);
 }
 
 

@@ -4,7 +4,7 @@ const projectsRepo = require("../db/projectsRepo");
 const meetingsRepo = require("../db/meetingsRepo");
 const projectSettingsRepo = require("../db/projectSettingsRepo");
 const meetingTopsRepo = require("../db/meetingTopsRepo"); 
-const projectFirmsRepo = require("../db/projectFirmsRepo"); 
+const { getFirmDirectoryService } = require("../domain/firms/FirmDirectoryService");
 const { appSettingsGetManyWithDb } = require("../db/appSettingsRepo"); 
 const { getResolvedTableLayout } = require("../db/tableLayoutsRepo"); 
 const { getUserProfile } = require("../db/userProfileRepo"); 
@@ -954,7 +954,9 @@ function _loadPrintDocumentContent({
     tops = _applyPrintFlagsAndFilter(tops, { includeHidden: true });
     _sortTopsByNumber(tops);
   } else if (mode === "firms") {
-    firms = projectId ? projectFirmsRepo.listFirmCandidatesByProject(projectId) : [];
+    firms = projectId
+      ? getFirmDirectoryService().listProjectParticipants({ projectId })
+      : [];
     firms = _sortFirmsByRoleOrderAndName(firms, settings?.["firm_role_order"]);
     firms = _enrichFirmsForCards({ db, firms, settings });
   } else if (mode === "todo") {

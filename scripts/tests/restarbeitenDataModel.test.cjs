@@ -37,7 +37,7 @@ async function runRestarbeitenDataModelTests(run) {
       assert.ok(conn.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(t));
     }
     const cols = conn.prepare("PRAGMA table_info(restarbeiten_items)").all().map((c) => c.name);
-    ["project_id","running_number","location_level_1","location_level_2","location_level_3","location_level_4","short_text","long_text","item_class","status","due_date","responsible_project_firm_id","responsible_label","archived_at","completed_at","completion_note","deleted_at","created_at","updated_at"].forEach((c)=>assert.ok(cols.includes(c)));
+    ["project_id","running_number","location_level_1","location_level_2","location_level_3","location_level_4","short_text","long_text","item_class","status","due_date","responsible_project_firm_id","responsible_global_firm_id","responsible_label","archived_at","completed_at","completion_note","deleted_at","created_at","updated_at"].forEach((c)=>assert.ok(cols.includes(c)));
     const aCols = conn.prepare("PRAGMA table_info(restarbeiten_attachments)").all().map((c) => c.name);
     ["restarbeit_id","file_path","thumbnail_path","sort_order","is_primary"].forEach((c)=>assert.ok(aCols.includes(c)));
     const nCols = conn.prepare("PRAGMA table_info(restarbeiten_notes)").all().map((c) => c.name);
@@ -129,8 +129,8 @@ async function runRestarbeitenDataModelTests(run) {
   await run("Restarbeit Update normalisiert Felder und schuetzt Kernfelder", async () => withTemp(({ db, repo }) => {
     const conn = db.initDatabase();
     conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
-    conn.prepare("INSERT INTO project_firms (id, project_id, name) VALUES (?, ?, ?)").run("f1", "p1", "Firma A");
-    conn.prepare("INSERT INTO project_firms (id, project_id, name) VALUES (?, ?, ?)").run("f2", "p1", "Firma B");
+    conn.prepare("INSERT INTO project_firms (id, project_id, name, use_project_participant) VALUES (?, ?, ?, 1)").run("f1", "p1", "Firma A");
+    conn.prepare("INSERT INTO project_firms (id, project_id, name, use_project_participant) VALUES (?, ?, ?, 1)").run("f2", "p1", "Firma B");
     const item = repo.createRestarbeitItem({
       project_id: "p1",
       short_text: "Alt",

@@ -10,6 +10,7 @@ import {
 } from "../ui/popupCommon.js";
 import { OVERLAY, OVERLAY_TOP } from "../ui/zIndex.js";
 import { fireAndForget } from "../utils/async.js";
+import { openFirmEditor } from "../features/firms/openFirmEditor.js";
 //
 // GLOBAL Firmen (Stamm) + GLOBAL Mitarbeiter (Persons) je Firma
 // UI-Flow (verbindlich):
@@ -800,6 +801,28 @@ const taFirmNotes = document.createElement("textarea");
   async _openFirmEditor({ mode = "edit", firmId = null } = {}) {
     this._clearStaleBusyState();
     this._releaseImportUiLock();
+    if (typeof window.bbmDb?.firmDirectoryCreate === "function") {
+      const targetId = firmId || this.selectedFirmId;
+      const firm =
+        mode === "edit"
+          ? (this.firms || []).find((item) => this._sameId(item?.id, targetId)) || this.selectedFirm || null
+          : null;
+      if (mode !== "edit" || firm) {
+        const result = await openFirmEditor({
+          origin: "firms",
+          kind: "global_firm",
+          firm,
+          title: mode === "edit" ? "Firma bearbeiten" : "Firma anlegen",
+        });
+        if (!result?.ok) alert(result?.error || "Firmeneditor konnte nicht geöffnet werden.");
+        if (result?.ok && !result.canceled) {
+          this._closeFirmEditor();
+          this._selectFirm(result.firm?.id || null);
+          await this.reloadFirms();
+        }
+        return;
+      }
+    }
     if (mode === "edit") {
       const targetId = firmId || this.selectedFirmId;
       if (targetId) {
