@@ -15,7 +15,7 @@ async function runM802HeaderEditboxLayoutTests(run) {
   const elements = complete.flatMap((scope) => scope.elements);
 
   await run("M80.2 Registry: Header, Liste und Editbox sind direkt aktiv; Split ist gesperrt", () => {
-    assert.equal(registryModule.BBM_M80_REGISTRY_VERSION, 19);
+    assert.equal(registryModule.BBM_M80_REGISTRY_VERSION, 23);
     assert.deepEqual(registryModule.BBM_M80_ACTIVE_SCOPES, [
       "restarbeiten.header.root",
       "restarbeiten.list.root",
@@ -23,6 +23,7 @@ async function runM802HeaderEditboxLayoutTests(run) {
       "protokoll.screen.root",
       "protokoll.list.root",
       "protokoll.edit.root",
+      "rechnung.screen",
     ]);
     const removedLayout = scopes.find((scope) => scope.scopeId === "restarbeiten.layout.root");
     assert.equal(removedLayout.status, "blocked");
@@ -65,6 +66,16 @@ async function runM802HeaderEditboxLayoutTests(run) {
       const children = header.elements.filter((entry) => entry.parentId === fieldGroup.id);
       assert.ok(children.some((entry) => entry.type === "label"), `${fieldGroup.id}: label`);
       assert.ok(children.some((entry) => entry.type === "field"), `${fieldGroup.id}: field`);
+    }
+  });
+
+  await run("M80/M83 Registry: nativer ElectronPipeHostAdapter bildet alle Rechnungstypen oeffentlich ab", () => {
+    const invoice = complete.find((scope) => scope.scopeId === "rechnung.screen");
+    const nativeAdapter = read("../UI-Editor-kit/reference-target-app/src/ReferenceTargetApp.EditorIntegration/Electron/ElectronPipeHostAdapter.cs");
+    assert.equal(invoice.elements.length, 45);
+    assert.equal(invoice.elements.some((entry) => entry.type === "list" || entry.type === "dialog"), false);
+    for (const type of new Set(invoice.elements.map((entry) => entry.type))) {
+      assert.match(nativeAdapter, new RegExp(`"${type}"\\s*=>\\s*UiElementKind\\.`), type);
     }
   });
 

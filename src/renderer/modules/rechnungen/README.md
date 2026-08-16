@@ -1,9 +1,30 @@
-# Rechnungen · UI-Designreferenz
+# Rechnungen · Entwicklungsstand und UI-Vertrag
 
-Das Modul ist ausschließlich in DEV sichtbar. Rechnungszeilen, Positionen und
-Berechnungswerte bleiben statische Design-Dummys ohne Belegpersistenz. Der
-Kundenpicker ist der erste produktive Baustein und verwendet ausschließlich die
-kanonische `firmDirectoryListCustomers`-API sowie den gemeinsamen Firmeneditor.
+Das Modul ist ausschließlich in DEV sichtbar. Es enthält zwei klar getrennte
+Stände:
+
+- `RechnungenDesignScreen` bleibt die historische statische Designreferenz.
+- `RechnungScreen` ist der echte, an den vorhandenen Rechnungs-API-Pfad
+  angebundene Arbeitsscreen für Rechnungsgrunddaten und Belegkopf.
+
+Positionen, Summen und PDF-Fachausgabe sind im echten Arbeitsscreen noch nicht
+umgesetzt. Der Kundenpfad verwendet die vorhandene zentrale Kundenquelle; es
+entsteht keine zweite Kundenverwaltung.
+
+## UI-Editor-Status
+
+Der echte `RechnungScreen` ist als Scope `rechnung.screen` mit 45 expliziten
+Einzelzielen komponentennah registriert. Der Scope darf nur dann als `complete`
+veröffentlicht werden, wenn Komponentenvertrag, gemountete Runtime-Refs, nativer
+Typvertrag und Registry-Fingerprint gemeinsam grün sind.
+
+Der UI-Editor darf ausschließlich Layout und Darstellung der registrierten
+Elemente bearbeiten. Fachwerte und Fachaktionen bleiben gesperrt. Das gilt
+insbesondere für `Freie Rechnung`, `Speichern`, `Proberechnung`,
+`Rechnung buchen`, `Entwurf verwerfen`, `Schließen` und `Vorschau schließen`.
+
+Die vollständige Entscheidung steht in
+`docs/RECHNUNG_UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
 
 Die Kundenauswahl bleibt als typisierte Referenz aus `kind`, `id`, optionalem
 `projectId` und `label` im Screenzustand erhalten. Ohne Projekt werden nur globale
@@ -43,6 +64,7 @@ gemeinsamen Werte auf die zentralen `--bbm-popup-*`-Tokens.
 | Dialogpadding | `12px 16px` |
 | Dialog-Header / -Footer | mindestens `54px` / `50px` |
 
-Die Rechnungsübersicht ist eine nicht-fachliche Dummy-Tabelle und wird bewusst
-nicht in den Tabellenlayout-Editor aufgenommen (`editorEnabled: nein`). Auch
-das übrige Modul ist kein UI-Editor-Ziel.
+Die Rechnungsübersicht des echten Screens ist eine Karten-/Listengruppe und
+keine Inhaltstabelle. Deshalb wird sie nicht in den Tabellenlayout-Editor
+aufgenommen. Die statische Designreferenz bleibt ebenfalls außerhalb der
+Tabellenlayout-Registry.

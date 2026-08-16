@@ -42,6 +42,7 @@ const { registerProjectTransferIpc } = require("./ipc/projectTransferIpc");
 const { registerLicenseIpc, importLicenseFromFilePath } = require("./ipc/licenseIpc");
 const { registerAudioIpc } = require("./ipc/audioIpc");
 const { registerRestarbeitenIpc } = require("./ipc/restarbeitenIpc");
+const { registerRechnungIpc } = require("./ipc/rechnungIpc");
 const { registerUiEditorIpc } = require("./ipc/uiEditorIpc");
 const { registerActiveModuleIpcs } = require("./moduleIpcRegistry");
 const { checkLicense } = require("./licensing/licenseService");
@@ -580,6 +581,7 @@ app.whenReady().then(async () => {
   registerProjectTransferIpc();
   registerLicenseIpc();
   registerAudioIpc();
+  registerRechnungIpc({ ipcMain });
   registerActiveModuleIpcs({
     licenseStatus: checkLicense(),
     registrars: {

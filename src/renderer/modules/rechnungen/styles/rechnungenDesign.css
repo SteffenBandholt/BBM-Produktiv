@@ -349,6 +349,48 @@ select.invoice-control { padding-right: 28px; }
   .invoice-customer-control .invoice-control,
   .invoice-customer-selection { grid-column: 1 / -1; }
 }
+
+/* Echter Rechnungs-Belegkopf ab Entwicklungsschritt 2. */
+.bbm-rechnung-live { height: 100%; min-height: 0; overflow: hidden; }
+.rechnung-live-content { height: 100%; min-height: 0; }
+.rechnung-live-overview,
+.rechnung-live-editor { height: 100%; min-height: 0; overflow: auto; }
+.rechnung-live-overview { display: grid; align-content: start; gap: 14px; }
+.rechnung-live-list { display: grid; gap: 8px; }
+.rechnung-live-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-card); background: var(--invoice-color-surface); }
+.rechnung-live-card__body { display: grid; gap: 2px; min-width: 0; }
+.rechnung-live-card__title { color: var(--invoice-color-text); font-size: 13px; }
+.rechnung-live-editor { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: 8px; }
+.rechnung-live-editor__header,
+.rechnung-live-editor__footer { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-card); background: var(--invoice-color-surface); }
+.rechnung-live-editor__header { justify-content: space-between; }
+.rechnung-live-editor__body { display: grid; align-content: start; gap: 10px; min-height: 0; padding: 14px; overflow: auto; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-card); background: var(--invoice-color-surface); }
+.rechnung-live-editor__body .invoice-form-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.rechnung-live-parties { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.rechnung-live-address { min-height: 104px; padding: 12px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-control); background: var(--invoice-color-surface-subtle); white-space: pre-line; line-height: 1.5; }
+.rechnung-live-service { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--invoice-group-gap); }
+.rechnung-live-reference { display: grid; padding: 12px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-card); background: var(--invoice-color-surface-subtle); }
+.rechnung-live-payment { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: var(--invoice-group-gap); }
+.rechnung-live-message { min-height: 20px; padding: 1px 4px; color: var(--invoice-color-success); font-size: 12px; }
+.rechnung-live-message[data-tone="error"] { color: var(--invoice-color-danger); }
+.rechnung-live-footer-spacer { flex: 1; }
+.rechnung-live-preview { position: fixed; z-index: 10010; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(15, 23, 42, 0.48); }
+.rechnung-live-preview[hidden] { display: none; }
+.rechnung-live-preview__card { display: grid; gap: 16px; width: min(620px, 100%); padding: 24px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-dialog); background: #fff; box-shadow: 0 22px 55px rgba(15, 23, 42, 0.28); }
+.rechnung-live-preview__body { min-height: 260px; padding: 28px; border: 1px solid var(--invoice-color-border); background: #fff; white-space: pre-line; line-height: 1.8; }
+@media (max-width: 850px) {
+  .rechnung-live-editor__body .invoice-form-grid,
+  .rechnung-live-service { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .rechnung-live-card { grid-template-columns: 1fr; }
+  .rechnung-live-parties,
+  .rechnung-live-editor__body .invoice-form-grid,
+  .rechnung-live-service,
+  .rechnung-live-payment { grid-template-columns: 1fr; }
+  .rechnung-live-editor__footer { flex-wrap: wrap; }
+  .rechnung-live-footer-spacer { display: none; }
+}
 @media (max-width: 520px) {
   .invoice-form-grid { grid-template-columns: 1fr; }
   .invoice-field--wide,

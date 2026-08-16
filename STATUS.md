@@ -10,6 +10,16 @@
 - Gezielte Tests sind gruen: TopsScreen 53, Restarbeiten-Textgrenzen 3, Dictionary/Diktat 8, M82.7 44, UI-Editor-Vertragscheck und Diff-/Syntaxpruefung. Der vollstaendige Restarbeiten-Test behaelt den bekannten paketfremden Quicklane-Transform-Fehler; `core-protokoll` den bekannten fehlenden Quicklane-Text `ToDo`. Der gezielte ESLint-Lauf hat 0 Fehler und 8 bestehende Warnungen.
 - Commit, Push und PR: keiner. Naechster offener Schritt: fachliche Sichtfreigabe; keine weitere Textregel- oder Settings-Ausweitung ohne eigenen Auftrag.
 
+## 2026-08-15 - Rechnung UI-Editor-Vertragsreparatur
+
+- Status: `[P]`; die sechs benannten Vertragsabweichungen sind im Arbeitsbaum repariert. Der abschliessende reale Handshake mit dem nativen Manager bleibt als Umgebungsnachweis offen, weil lokal kein .NET-SDK und kein vorbereiteter Manager-Build vorhanden ist. Rechnung Step 2 bleibt bis zu diesem Nachweis gestoppt.
+- Fuer `rechnung.screen` liegt eine vollstaendige UI-/PDF-Entwurfsentscheidung mit 45 expliziten Einzelzielen vor. `list`/`dialog` wurden ohne neue Typfamilie auf die vorhandenen nativen Grundtypen `group`/`area` abgebildet; die Semantik bleibt ueber `componentKind` erhalten.
+- Rechnungs-README und Modularisierungsplan unterscheiden nun die historische statische Designreferenz vom echten Arbeitsscreen. Die Karten-/Listengruppe ist keine Inhaltstabelle und bleibt ausserhalb des Tabellenlayout-Editors.
+- Sieben aktive Scopes, 174 Textziele und zwoelf Komponentenvertraege sind synchronisiert; Registryversion und Fingerprint folgen dem aktuellen Clean-Branch-Vertrag.
+- Der neue M83-Mounted-Ref-Guard rendert den echten Rechnungsscreen und prueft 45/45 eindeutige Ziele, alle sechs `data-ui-*`-Pflichtattribute sowie Parent-/Ref-Zuordnung. Die isolierte Electron-Pruefung bestaetigt denselben Stand ohne Fachaktion.
+- Rechnung-Testgruppe, gezielte M80-/M82-/M83-Vertrags- und Fingerprintpruefungen sowie der UI-Editor-Kit-Selbsttest sind fuer das Paket gruen. Der bekannte paketfremde Schutz-Hash von `docs/licensing.md` bleibt rot und wurde nicht veraendert. Der breite UI-Editor-Gruppenlauf lieferte innerhalb von drei Minuten keine Ausgabe und wurde kontrolliert beendet.
+- Kein Commit, kein Push. Naechster Schritt: nativen Manager in einer vorhandenen .NET-SDK-Umgebung bauen und den isolierten Rechnungsscope einmal real verbinden; erst danach Fortsetzungsfreigabe fuer Rechnung Step 2.
+
 ## P1-A - Protokoll V1: UI und Zustaende
 
 - Status: `[P]`; die drei letzten P1-A-Abnahmekorrekturen sind technisch und praktisch im isolierten Electron-Profil geprueft. Die fachliche Nutzerabnahme bleibt offen.

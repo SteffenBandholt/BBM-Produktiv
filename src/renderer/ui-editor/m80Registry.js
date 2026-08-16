@@ -5,13 +5,14 @@ import { restarbeitenEditboxUiEditorContract } from "../modules/restarbeiten/Res
 import { protokollQuicklaneUiEditorContract, protokollScreenUiEditorContract } from "../modules/protokoll/screens/TopsScreen.uiEditorContract.js";
 import { protokollListColumnsUiEditorContract, protokollListUiEditorContract } from "../modules/protokoll/TopsList.uiEditorContract.js";
 import { protokollEditUiEditorContract } from "../modules/protokoll/TopsWorkbench.uiEditorContract.js";
+import { rechnungUiEditorContract } from "../modules/rechnungen/RechnungScreen.uiEditorContract.js";
 import {
   protokollMainHeaderLauncherUiEditorContract,
   restarbeitenMainHeaderLauncherUiEditorContract,
 } from "../ui/MainHeader.uiEditorContract.js";
 import { aggregateBbmM83Components } from "./m83ComponentContract.js";
 
-export const BBM_M80_REGISTRY_VERSION = 22;
+export const BBM_M80_REGISTRY_VERSION = 23;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
@@ -26,6 +27,7 @@ export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
   protokollListUiEditorContract,
   protokollListColumnsUiEditorContract,
   protokollEditUiEditorContract,
+  rechnungUiEditorContract,
 ]);
 
 const aggregate = aggregateBbmM83Components(BBM_M83_COMPONENT_CONTRACTS);
@@ -50,11 +52,13 @@ function blockedScope(scopeId, name, reason = "registration_inventory_pending") 
 export const BBM_M80_ACTIVE_SCOPES = Object.freeze([
   "restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root",
   "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root",
+  "rechnung.screen",
 ]);
 
 export const BBM_M80_ACTIVE_SCOPE_GROUPS = Object.freeze([
   Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]),
   Object.freeze(["protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root"]),
+  Object.freeze(["rechnung.screen"]),
 ]);
 
 export const BBM_M80_REGISTRY_SCOPES = Object.freeze([
