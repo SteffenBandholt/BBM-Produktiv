@@ -19,6 +19,17 @@ if (path.dirname(outputPath) !== buildRoot || !outputPath.startsWith(`${buildRoo
   process.exit(81);
 }
 
+const restoreResult = spawnSync("dotnet", ["restore", projectPath], {
+  cwd: kitRoot,
+  encoding: "utf8",
+  stdio: "inherit",
+  shell: false,
+});
+if (restoreResult.error || restoreResult.status !== 0) {
+  console.error("Der UI-Editor-Manager konnte nicht für BBM wiederhergestellt werden.");
+  process.exit(typeof restoreResult.status === "number" ? restoreResult.status : 82);
+}
+
 fs.rmSync(outputPath, { recursive: true, force: true });
 fs.mkdirSync(outputPath, { recursive: true });
 const result = spawnSync("dotnet", ["publish", projectPath, "-c", "Release", "--no-restore", "-o", outputPath], {
