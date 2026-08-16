@@ -7,8 +7,8 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 23,
-  "registryFingerprint": "sha256:27e4435e0ee66caea23cf0276aef01be27a47aa36a85ad78086fa772db72203b",
+  "registryVersion": 24,
+  "registryFingerprint": "sha256:97799db4a7cbcd65daaaba3d4036c9781fd22a86306c490102edb8329bf4ee21",
   "registryStatus": "incomplete",
   "activeScopes": [
     "restarbeiten.header.root",
@@ -54,7 +54,7 @@
     { "scopeId": "protokoll.screen.root", "status": "complete", "reason": null, "elementCount": 34, "missingReferenceCount": 0 },
     { "scopeId": "protokoll.list.root", "status": "complete", "reason": null, "elementCount": 32, "missingReferenceCount": 0 },
     { "scopeId": "protokoll.edit.root", "status": "complete", "reason": null, "elementCount": 38, "missingReferenceCount": 0 },
-    { "scopeId": "rechnung.screen", "status": "complete", "reason": null, "elementCount": 45, "missingReferenceCount": 0 },
+    { "scopeId": "rechnung.screen", "status": "complete", "reason": null, "elementCount": 61, "missingReferenceCount": 0 },
     { "scopeId": "bbm.remaining", "status": "blocked", "reason": "registration_inventory_pending", "elementCount": 0, "missingReferenceCount": 0 },
     { "scopeId": "pdf.bbm.protocol", "status": "complete", "reason": null, "elementCount": 28, "missingReferenceCount": 0 }
   ],

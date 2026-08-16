@@ -1,4 +1,5 @@
 import { addCalendarDays, formatDocumentType } from "../../../../shared/rechnung/invoiceHeaderRules.mjs";
+import { calculatePositionTotalCents } from "../../../../shared/rechnung/rechnungPositions.mjs";
 import { m80EditorAttributes } from "../../../ui-editor/m80Registry.js";
 import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../../ui-editor/m80Refs.js";
 import { ensureRechnungenDesignStyles } from "../styles.js";
@@ -20,7 +21,7 @@ function address(value = {}) { return [value.companyName || value.name, value.co
 function customerKey(value = {}) { return `${value.kind || value.ref?.kind}:${value.id || value.ref?.id}`; }
 
 export default class RechnungScreen {
-  constructor() { this.invoices = []; this.customers = []; this.projects = []; this.current = null; this.root = null; }
+  constructor() { this.invoices = []; this.customers = []; this.projects = []; this.positions = []; this.selectedPositionId = null; this.positionSequence = 0; this.current = null; this.root = null; }
 
   render() {
     ensureRechnungenDesignStyles();
@@ -71,11 +72,33 @@ export default class RechnungScreen {
     service.append(field("Leistungszeitpunkt", this.serviceType), ...Object.values(this.serviceFields));
     this.reference = control("input", "rechnung.editor.reference", "text"); this.reference.maxLength = 500;
     const referenceField = field("Bauvorhaben / Leistungsbezug", this.reference, "invoice-field--wide rechnung-live-reference");
+    this.constructionProject = control("input", "rechnung.editor.constructionProject", "text"); this.constructionProject.maxLength = 200;
+    const constructionField = field("Bauvorhaben", this.constructionProject, "invoice-field--wide rechnung-live-reference");
+    const positions = bind(node("section", "invoice-form-section rechnung-live-positions"), "rechnung.editor.positions");
+    const positionsHead = node("div", "invoice-form-section__head"); positionsHead.append(node("h3", "invoice-form-section__title", "Rechnungspositionen"));
+    this.positionsTotal = bind(node("strong", "rechnung-live-positions__total", "0,00 EUR"), "rechnung.editor.positions.total"); positionsHead.append(this.positionsTotal);
+    this.positionsList = bind(node("div", "rechnung-live-positions__list"), "rechnung.editor.positions.list");
+    const positionEditor = bind(node("div", "rechnung-live-position-editor"), "rechnung.editor.positionEditor");
+    this.positionType = control("select", "rechnung.editor.positionType"); [["service", "Leistung"], ["heading", "Ueberschrift"], ["note", "Hinweis"]].forEach(([value, label]) => this.positionType.append(option(value, label)));
+    this.positionShort = control("input", "rechnung.editor.positionShort", "text"); this.positionShort.maxLength = 200;
+    this.positionLong = control("textarea", "rechnung.editor.positionLong"); this.positionLong.maxLength = 2000;
+    this.positionQuantity = control("input", "rechnung.editor.positionQuantity", "text"); this.positionQuantity.value = "1";
+    this.positionUnit = control("input", "rechnung.editor.positionUnit", "text");
+    this.positionPrice = control("input", "rechnung.editor.positionPrice", "number"); this.positionPrice.min = "0"; this.positionPrice.step = "0.01";
+    this.positionNep = control("input", "rechnung.editor.positionNep", "checkbox");
+    const positionActions = node("div", "rechnung-live-position-editor__actions");
+    this.positionAddButton = button("Position uebernehmen", "rechnung.editor.positionApply", () => this._applyPosition(), "primary");
+    this.positionDeleteButton = button("Loeschen", "rechnung.editor.positionDelete", () => this._deletePosition());
+    this.positionUpButton = button("Nach oben", "rechnung.editor.positionUp", () => this._movePosition(-1));
+    this.positionDownButton = button("Nach unten", "rechnung.editor.positionDown", () => this._movePosition(1));
+    positionActions.append(this.positionDeleteButton, this.positionUpButton, this.positionDownButton, this.positionAddButton);
+    positionEditor.append(field("Typ", this.positionType), field("Kurztext", this.positionShort, "invoice-field--wide"), field("Langtext", this.positionLong, "invoice-field--wide"), field("Menge", this.positionQuantity), field("Einheit", this.positionUnit), field("Einzelpreis EUR", this.positionPrice), field("NEP", this.positionNep), positionActions);
+    positions.append(positionsHead, this.positionsList, positionEditor);
     const payment = bind(node("section", "invoice-form-section rechnung-live-payment"), "rechnung.editor.payment");
     this.paymentTerm = control("input", "rechnung.editor.paymentTermDays", "number"); this.paymentTerm.min = "0"; this.paymentTerm.max = "3650";
     this.dueDate = control("input", "rechnung.editor.dueDate", "date"); this.dueDate.readOnly = true;
     payment.append(field("Zahlungsziel (Kalendertage)", this.paymentTerm), field("Fällig am", this.dueDate));
-    body.append(basic, parties, service, referenceField, payment);
+    body.append(basic, parties, service, referenceField, constructionField, positions, payment);
     this.message = bind(node("div", "rechnung-live-message"), "rechnung.editor.validation"); this.message.setAttribute("role", "status");
     const footer = bind(node("footer", "rechnung-live-editor__footer"), "rechnung.editor.footer");
     this.deleteButton = button("Entwurf verwerfen", "rechnung.editor.delete", () => void this._delete(), "secondary");
@@ -132,7 +155,7 @@ export default class RechnungScreen {
     this.source.value = invoice.source_type || "FREE"; this.documentType.value = invoice.document_type || "INVOICE"; this.installmentNumber.value = invoice.installment_number || "";
     this.invoiceNumber.value = invoice.invoice_number || "wird bei Buchung vergeben"; this.invoiceDate.value = invoice.invoice_date || "";
     this.serviceType.value = invoice.service_period_type || "SINGLE_DATE"; this.serviceDate.value = invoice.service_date || ""; this.serviceMonth.value = invoice.service_period_start?.slice(0, 7) || ""; this.serviceStart.value = invoice.service_period_start || ""; this.serviceEnd.value = invoice.service_period_end || "";
-    this.reference.value = invoice.service_reference || ""; this.paymentTerm.value = String(invoice.payment_term_days ?? 8); this.dueDate.value = invoice.due_date || "";
+    this.reference.value = invoice.service_reference || ""; this.constructionProject.value = invoice.construction_project || ""; this.positions = (invoice.positions || []).map((entry) => ({ ...entry })); this.selectedPositionId = null; this._renderPositions(); this._clearPositionEditor(); this.paymentTerm.value = String(invoice.payment_term_days ?? 8); this.dueDate.value = invoice.due_date || "";
     this.customer.replaceChildren(option("", "Rechnungskunde wählen")); this.customers.forEach((entry) => this.customer.append(option(customerKey(entry), entry.label || entry.name)));
     const selectedCustomerKey = `${invoice.customer_ref_kind || ""}:${invoice.customer_firm_id || ""}`;
     if (invoice.status === "BOOKED" && invoice.customer_snapshot && ![...this.customer.options].some((entry) => entry.value === selectedCustomerKey)) this.customer.append(option(selectedCustomerKey, invoice.customer_snapshot.companyName || "Gebuchter Kunde"));
@@ -144,8 +167,15 @@ export default class RechnungScreen {
   _payload() {
     const customer = this.customers.find((entry) => customerKey(entry) === this.customer.value);
     const [fallbackKind, fallbackId] = this.customer.value.split(":");
-    return { source_type: this.source.value, document_type: this.documentType.value, installment_number: this.installmentNumber.value, invoice_date: this.invoiceDate.value, service_period_type: this.serviceType.value, service_date: this.serviceDate.value, service_month: this.serviceMonth.value, service_period_start: this.serviceStart.value, service_period_end: this.serviceEnd.value, customer_ref_kind: customer?.kind || customer?.ref?.kind || fallbackKind || null, customer_firm_id: customer?.id || customer?.ref?.id || fallbackId || null, customer_project_id: customer?.project_id || customer?.ref?.projectId || null, project_id: this.project.value || null, service_reference: this.reference.value, payment_term_days: this.paymentTerm.value };
+    return { source_type: this.source.value, document_type: this.documentType.value, installment_number: this.installmentNumber.value, invoice_date: this.invoiceDate.value, service_period_type: this.serviceType.value, service_date: this.serviceDate.value, service_month: this.serviceMonth.value, service_period_start: this.serviceStart.value, service_period_end: this.serviceEnd.value, customer_ref_kind: customer?.kind || customer?.ref?.kind || fallbackKind || null, customer_firm_id: customer?.id || customer?.ref?.id || fallbackId || null, customer_project_id: customer?.project_id || customer?.ref?.projectId || null, project_id: this.project.value || null, service_reference: this.reference.value, construction_project: this.constructionProject.value, positions: this.positions, payment_term_days: this.paymentTerm.value };
   }
+
+  _clearPositionEditor() { this.selectedPositionId = null; this.positionType.value = "service"; this.positionShort.value = ""; this.positionLong.value = ""; this.positionQuantity.value = "1"; this.positionUnit.value = ""; this.positionPrice.value = ""; this.positionNep.checked = false; this.positionAddButton.textContent = "Position uebernehmen"; }
+  _selectPosition(entry) { this.selectedPositionId = entry.id; this.positionType.value = entry.type; this.positionShort.value = entry.short_text || ""; this.positionLong.value = entry.long_text || ""; this.positionQuantity.value = entry.quantity ?? "1"; this.positionUnit.value = entry.unit || ""; this.positionPrice.value = entry.unit_price_cents == null ? "" : (entry.unit_price_cents / 100).toFixed(2); this.positionNep.checked = Boolean(entry.is_nep); this.positionAddButton.textContent = "Position aktualisieren"; }
+  _applyPosition() { const shortText = this.positionShort.value.trim(); if (!shortText) return this._error("Kurztext der Position fehlt."); const id = this.selectedPositionId || `invoice-position-${Date.now()}-${++this.positionSequence}`; const entry = { id, type: this.positionType.value, short_text: shortText, long_text: this.positionLong.value.trim(), quantity: this.positionQuantity.value || "0", unit: this.positionUnit.value.trim(), unit_price_cents: Math.round(Number(this.positionPrice.value || 0) * 100), is_nep: this.positionNep.checked }; const index = this.positions.findIndex((item) => item.id === id); if (index < 0) this.positions.push(entry); else this.positions[index] = entry; this._clearPositionEditor(); this._renderPositions(); }
+  _deletePosition() { if (!this.selectedPositionId) return; this.positions = this.positions.filter((entry) => entry.id !== this.selectedPositionId); this._clearPositionEditor(); this._renderPositions(); }
+  _movePosition(offset) { const index = this.positions.findIndex((entry) => entry.id === this.selectedPositionId); const next = index + offset; if (index < 0 || next < 0 || next >= this.positions.length) return; [this.positions[index], this.positions[next]] = [this.positions[next], this.positions[index]]; this._renderPositions(); }
+  _renderPositions() { this.positionsList.replaceChildren(); let total = 0; if (!this.positions.length) this.positionsList.append(node("div", "invoice-empty", "Noch keine Positionen.")); this.positions.forEach((entry, index) => { const row = node("button", `rechnung-live-position${entry.id === this.selectedPositionId ? " is-selected" : ""}`); row.type = "button"; row.onclick = () => { this._selectPosition(entry); this._renderPositions(); }; const amount = calculatePositionTotalCents(entry); if (amount != null) total += amount; row.append(node("span", "rechnung-live-position__number", entry.type === "note" ? "-" : String(index + 1)), node("span", "rechnung-live-position__text", entry.short_text), node("span", "rechnung-live-position__amount", amount == null ? "NEP" : `${(amount / 100).toFixed(2).replace(".", ",")} EUR`)); this.positionsList.append(row); }); this.positionsTotal.textContent = `${(total / 100).toFixed(2).replace(".", ",")} EUR`; }
 
   _syncDerived() {
     const isPartial = this.documentType.value === "PARTIAL"; this.installmentNumber.closest("label").hidden = !isPartial;
@@ -161,7 +191,7 @@ export default class RechnungScreen {
 
   _setBooked(booked) {
     this.status.textContent = booked ? "Erstellt / Gebucht" : "Entwurf"; this.status.className = `invoice-status invoice-status--${booked ? "paid" : "draft"}`;
-    [this.source, this.documentType, this.installmentNumber, this.customer, this.project, this.invoiceDate, this.serviceType, this.serviceDate, this.serviceMonth, this.serviceStart, this.serviceEnd, this.reference, this.paymentTerm].forEach((element) => { element.disabled = booked; });
+    [this.source, this.documentType, this.installmentNumber, this.customer, this.project, this.invoiceDate, this.serviceType, this.serviceDate, this.serviceMonth, this.serviceStart, this.serviceEnd, this.reference, this.constructionProject, this.paymentTerm, this.positionType, this.positionShort, this.positionLong, this.positionQuantity, this.positionUnit, this.positionPrice, this.positionNep, this.positionAddButton, this.positionDeleteButton, this.positionUpButton, this.positionDownButton].forEach((element) => { element.disabled = booked; });
     this.saveButton.hidden = booked; this.bookButton.hidden = booked; this.deleteButton.hidden = booked;
   }
 

@@ -1,5 +1,7 @@
 const { initDatabase } = require("./database");
 
+const PROFILE_FIELDS = Object.freeze(["name1", "name2", "street", "zip", "city", "country", "phone", "email", "website", "logo_path", "tax_number", "vat_id", "iban", "bic", "bank_name", "commercial_register", "register_number", "managing_director", "legal_notice"]);
+
 function _normText(v) {
   return String(v ?? "").trim();
 }
@@ -9,7 +11,7 @@ function getUserProfile() {
   const row = db
     .prepare(
       `
-      SELECT id, name1, name2, street, zip, city
+      SELECT id, ${PROFILE_FIELDS.join(", ")}
       FROM user_profile
       WHERE id = 1
     `
@@ -19,43 +21,27 @@ function getUserProfile() {
   return row || null;
 }
 
-function upsertUserProfile({ name1, name2, street, zip, city }) {
+function upsertUserProfile(input = {}) {
   const db = initDatabase();
   const now = new Date().toISOString();
-
-  const n1 = _normText(name1);
-  const n2 = _normText(name2);
-  const st = _normText(street);
-  const zp = _normText(zip);
-  const ct = _normText(city);
+  const current = db.prepare(`SELECT ${PROFILE_FIELDS.join(", ")} FROM user_profile WHERE id = 1`).get() || {};
+  const values = Object.fromEntries(PROFILE_FIELDS.map((field) => [field, input[field] === undefined ? _normText(current[field]) : _normText(input[field])]));
 
   db.prepare(
     `
     INSERT INTO user_profile (
       id,
-      name1,
-      name2,
-      street,
-      zip,
-      city,
+      ${PROFILE_FIELDS.join(",\n      ")},
       created_at,
       updated_at
     )
-    VALUES (1, @name1, @name2, @street, @zip, @city, @now, @now)
+    VALUES (1, ${PROFILE_FIELDS.map((field) => `@${field}`).join(", ")}, @now, @now)
     ON CONFLICT(id) DO UPDATE SET
-      name1 = excluded.name1,
-      name2 = excluded.name2,
-      street = excluded.street,
-      zip = excluded.zip,
-      city = excluded.city,
+      ${PROFILE_FIELDS.map((field) => `${field} = excluded.${field}`).join(",\n      ")},
       updated_at = excluded.updated_at
   `
   ).run({
-    name1: n1,
-    name2: n2,
-    street: st,
-    zip: zp,
-    city: ct,
+    ...values,
     now,
   });
 

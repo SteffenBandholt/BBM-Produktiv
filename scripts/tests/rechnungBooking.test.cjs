@@ -26,7 +26,7 @@ function fixture() {
   return { db, repository, service, close() { db.close(); fs.rmSync(root, { recursive: true, force: true }); } };
 }
 
-const complete = (overrides = {}) => ({ source_type: "FREE", document_type: "INVOICE", invoice_date: "2026-08-15", service_period_type: "RANGE", service_period_start: "2026-03-01", service_period_end: "2026-06-30", customer_ref_kind: "global_firm", customer_firm_id: "f1", project_id: "p1", service_reference: "Neubau Musterstraße", payment_term_days: 8, ...overrides });
+const complete = (overrides = {}) => ({ source_type: "FREE", document_type: "INVOICE", invoice_date: "2026-08-15", service_period_type: "RANGE", service_period_start: "2026-03-01", service_period_end: "2026-06-30", customer_ref_kind: "global_firm", customer_firm_id: "f1", project_id: "p1", service_reference: "Neubau Musterstraße", construction_project: "Haus A", positions: [{ id: "p1", type: "service", short_text: "Montage", quantity: "2", unit: "h", unit_price_cents: 5000 }], payment_term_days: 8, ...overrides });
 
 async function runRechnungBookingTests(run) {
   await run("Rechnung Step 2 A-B: neuer und gespeicherter Entwurf bleiben nummernlos und vollständig bearbeitbar", async () => {
@@ -38,6 +38,7 @@ async function runRechnungBookingTests(run) {
       assert.equal(draft.status, "DRAFT"); assert.equal(draft.invoice_number, null);
       const updated = await env.service.updateDraft(draft.id, { service_reference: "Gespeicherter Stand", payment_term_days: 10 });
       assert.equal(updated.service_reference, "Gespeicherter Stand"); assert.equal(updated.due_date, "2026-08-25"); assert.equal(updated.invoice_number, null);
+      assert.equal(updated.construction_project, "Haus A"); assert.equal(updated.positions[0].total_cents, 10000);
       assert.equal(env.service.get(draft.id).service_period_start, "2026-03-01");
     } finally { env.close(); }
   });
@@ -67,6 +68,7 @@ async function runRechnungBookingTests(run) {
       const restored = env.service.get(draft.id);
       assert.equal(restored.customer_snapshot.companyName, "Kunde Alt"); assert.equal(restored.customer_snapshot.street, "Altweg 1");
       assert.equal(restored.issuer_snapshot.companyName, "BBM Betrieb"); assert.equal(restored.issuer_snapshot.iban, "DE001");
+      assert.equal(restored.positions[0].short_text, "Montage");
       await assert.rejects(() => env.service.updateDraft(draft.id, { invoice_date: "2026-08-16" }), /nicht geändert/);
       assert.throws(() => env.service.deleteDraft(draft.id), /nicht gelöscht/);
       await assert.rejects(() => env.service.bookDraft(draft.id), /Nur Entwürfe/);
@@ -108,14 +110,14 @@ async function runRechnungBookingTests(run) {
       assert.equal(ipc.includes(`rechnung:${channel}`), true, channel);
     }
     for (const token of ["rechnungDefaults", "rechnungList", "rechnungGet", "rechnungCreateDraft", "rechnungUpdateDraft", "rechnungDeleteDraft", "rechnungPreviewDraft", "rechnungBookDraft", "rechnungListCustomers", "rechnungListProjects"]) assert.equal(preload.includes(token), true, token);
-    for (const forbidden of ["position", "tax", "zugferd", "pdf"]) assert.equal(ipc.toLowerCase().includes(forbidden), false, forbidden);
+    for (const forbidden of ["zugferd", "pdf"]) assert.equal(ipc.toLowerCase().includes(forbidden), false, forbidden);
   });
 
-  await run("Rechnung Step 2: echter Screen ersetzt den Dummy-Einstieg und enthält nur den Belegkopf", () => {
+  await run("Rechnung Step 1.4/2: echter Screen verbindet Belegkopf und Positionsarbeit", () => {
     const screen = fs.readFileSync(path.join(process.cwd(), "src/renderer/modules/rechnungen/screens/RechnungScreen.js"), "utf8");
     const router = fs.readFileSync(path.join(process.cwd(), "src/renderer/app/Router.js"), "utf8");
-    for (const required of ["Freie Rechnung", "Bauvorhaben / Leistungsbezug", "Proberechnung", "Rechnung buchen", "Entwurf verwerfen", "Erstellt / Gebucht", "serviceMonth", "customer_snapshot", "issuer_snapshot"]) assert.equal(screen.includes(required), true, required);
-    for (const forbidden of ["INVOICE_DESIGN_POSITIONS", "invoice-positions-table", "USt. 19 %", "Rechnungsbetrag", "ZUGFeRD", "Skonto"]) assert.equal(screen.includes(forbidden), false, forbidden);
+    for (const required of ["Freie Rechnung", "Bauvorhaben / Leistungsbezug", "Rechnungspositionen", "positionQuantity", "positionPrice", "positionNep", "Proberechnung", "Rechnung buchen", "Entwurf verwerfen", "Erstellt / Gebucht", "serviceMonth", "customer_snapshot", "issuer_snapshot"]) assert.equal(screen.includes(required), true, required);
+    for (const forbidden of ["INVOICE_DESIGN_POSITIONS", "invoice-positions-table", "ZUGFeRD", "Skonto"]) assert.equal(screen.includes(forbidden), false, forbidden);
     assert.equal(router.includes("new mod.RechnungScreen"), true);
     assert.equal(router.includes('pageTitle: "Rechnungen"'), true);
     assert.equal(router.includes("hideSidebar: true"), true);

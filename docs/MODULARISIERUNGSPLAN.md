@@ -439,7 +439,7 @@ Dabei gilt:
 
 - Der eigenstaendige Renderer-Modulordner `src/renderer/modules/rechnungen` enthaelt weiterhin die historische statische `RechnungenDesignScreen`-Referenz und daneben den echten `RechnungScreen` fuer Rechnungsgrunddaten und Belegkopf.
 - Der DEV-Einstieg ueber `Einstellungen -> Entwicklung` oeffnet den echten Arbeitsscreen; eine produktive Modulnavigation oder Lizenzfreigabe wurde dadurch nicht eingefuehrt.
-- Der echte Screen ist als `rechnung.screen` mit 45 expliziten, komponentennahen Einzelzielen in der UI-Editor-Registry registriert. Fachaktionen bleiben gesperrt; die vollstaendige Entscheidung steht in `docs/RECHNUNG_UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
+- Der echte Screen ist als `rechnung.screen` mit 61 expliziten, komponentennahen Einzelzielen einschliesslich Positionsarbeit in der UI-Editor-Registry registriert. Fachaktionen bleiben gesperrt; die vollstaendige Entscheidung steht in `docs/RECHNUNG_UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
 - Die Rechnungsuebersicht ist eine Karten-/Listengruppe und keine Inhaltstabelle. Es gibt weiterhin keinen Tabellenlayout-Registry-Eintrag fuer Rechnung.
 - Positionen, Summen, PDF-Fachausgabe, ZUGFeRD/E-Rechnung und GAEB bleiben ausserhalb dieses Reparaturstands.
 - Komponentenvertrag, Mounted-Refs, nativer Typvertrag und Registry-Fingerprint muessen gemeinsam gruen sein, bevor `rechnung.screen` als `complete` gilt.

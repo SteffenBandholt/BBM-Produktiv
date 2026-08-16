@@ -24,6 +24,8 @@ function ensureInvoiceSchema(db) {
       source_order_number TEXT,
       source_order_date TEXT,
       service_reference TEXT,
+      construction_project TEXT,
+      positions_json TEXT NOT NULL DEFAULT '[]',
       payment_term_days INTEGER NOT NULL DEFAULT 8 CHECK (payment_term_days BETWEEN 0 AND 3650),
       due_date TEXT NOT NULL,
       customer_snapshot_json TEXT,
@@ -45,6 +47,10 @@ function ensureInvoiceSchema(db) {
       updated_at TEXT NOT NULL
     );
   `);
+
+  const columns = new Set(db.prepare("PRAGMA table_info(invoices)").all().map((column) => column.name));
+  if (!columns.has("construction_project")) db.exec("ALTER TABLE invoices ADD COLUMN construction_project TEXT");
+  if (!columns.has("positions_json")) db.exec("ALTER TABLE invoices ADD COLUMN positions_json TEXT NOT NULL DEFAULT '[]'");
 }
 
 module.exports = { ensureInvoiceSchema };

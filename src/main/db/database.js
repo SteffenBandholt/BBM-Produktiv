@@ -1603,6 +1603,20 @@ function ensureUserProfileSchema(dbConn) {
         street TEXT,
         zip TEXT,
         city TEXT,
+        country TEXT,
+        phone TEXT,
+        email TEXT,
+        website TEXT,
+        logo_path TEXT,
+        tax_number TEXT,
+        vat_id TEXT,
+        iban TEXT,
+        bic TEXT,
+        bank_name TEXT,
+        commercial_register TEXT,
+        register_number TEXT,
+        managing_director TEXT,
+        legal_notice TEXT,
         created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
         updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
       );
@@ -1621,6 +1635,7 @@ function ensureUserProfileSchema(dbConn) {
   addCol("street", "TEXT");
   addCol("zip", "TEXT");
   addCol("city", "TEXT");
+  for (const name of ["country", "phone", "email", "website", "logo_path", "tax_number", "vat_id", "iban", "bic", "bank_name", "commercial_register", "register_number", "managing_director", "legal_notice"]) addCol(name, "TEXT");
 
   if (!columnExists(dbConn, "user_profile", "created_at")) {
     dbConn.exec(`

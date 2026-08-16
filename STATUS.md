@@ -1,4 +1,13 @@
-# STATUS.md — BBM-Produktiv
+# STATUS.md â€” BBM-Produktiv
+
+## 2026-08-16 - Rechnung Step 1.1 bis 1.4 in bereinigte Architektur integriert
+
+- Status: `[A]`; die fehlenden Stammdaten-, Draft-, Arbeitsscreen- und Positionsfunktionen sind in die kanonischen Pfade `domain/rechnung`, `db/invoice*` und `ipc/rechnungIpc.js` integriert. Die alten parallelen `modules/rechnung`-Services, Repositories, Migrationen und IPCs wurden nicht uebernommen.
+- `user_profile` bleibt die einzige Quelle fuer Rechnungsstellerdaten und wurde migrationssicher um Kontakt-, Steuer-, Bank- und Pflichtangaben erweitert. Vorhandene FirmDirectory-/Kundenlogik und die Buchungs-Snapshots bleiben fuehrend.
+- Rechnungsentwuerfe speichern Bauvorhaben und typisierte Positionen. Leistung, Ueberschrift, Hinweis und NEP werden gemeinsam normalisiert; Buchung und Vorschau nutzen denselben Entwurfsstand.
+- Der echte `RechnungScreen` besitzt eine kompakte Positions-Arbeitsliste und einen Positionseditor. Der komponentennahe `rechnung.screen`-Vertrag umfasst nun 61 explizite Ziele; fachliche Positionsaktionen bleiben als Editorziele gesperrt. Die Kartenliste ist keine Tabelleneditor-Tabelle.
+- Rechnungstestgruppe und der gemountete 61/61-Ref-Vertrag sind gruen. Im breiten UI-Editor-Lauf bleiben ausschliesslich bekannte paketfremde Altfehler (u. a. `docs/licensing.md`, alte Mainheader-Erwartungen und nicht installierter nativer UI-Editor); die Rechnungskomponente selbst ist gruen.
+- Naechster offener Schritt: fachliche Sichtpruefung des Arbeitsscreens. Kein Push und keine Veraenderung von `rechnung-entwicklung`.
 
 ## Dynamische Textgrenzen fuer Protokoll und Restarbeiten
 

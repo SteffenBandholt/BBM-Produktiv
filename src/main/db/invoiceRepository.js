@@ -8,6 +8,7 @@ const HEADER_COLUMNS = Object.freeze([
   "service_period_type", "service_date", "service_period_start", "service_period_end",
   "customer_ref_kind", "customer_firm_id", "customer_project_id", "project_id",
   "source_order_id", "source_order_number", "source_order_date", "service_reference",
+  "construction_project",
   "payment_term_days", "due_date",
 ]);
 
@@ -17,6 +18,7 @@ function parseRow(row) {
     ...row,
     customer_snapshot: row.customer_snapshot_json ? JSON.parse(row.customer_snapshot_json) : null,
     issuer_snapshot: row.issuer_snapshot_json ? JSON.parse(row.issuer_snapshot_json) : null,
+    positions: row.positions_json ? JSON.parse(row.positions_json) : [],
   };
 }
 
@@ -47,12 +49,12 @@ class InvoiceRepository {
   createDraft(header) {
     const id = randomUUID();
     const now = this.clock();
-    const params = { id, status: "DRAFT", ...headerParams(header), created_at: now, updated_at: now };
+    const params = { id, status: "DRAFT", ...headerParams(header), positions_json: JSON.stringify(header.positions || []), created_at: now, updated_at: now };
     this._db().prepare(`
       INSERT INTO invoices (
-        id, status, ${HEADER_COLUMNS.join(", ")}, created_at, updated_at
+        id, status, ${HEADER_COLUMNS.join(", ")}, positions_json, created_at, updated_at
       ) VALUES (
-        @id, @status, ${HEADER_COLUMNS.map((column) => `@${column}`).join(", ")}, @created_at, @updated_at
+        @id, @status, ${HEADER_COLUMNS.map((column) => `@${column}`).join(", ")}, @positions_json, @created_at, @updated_at
       )
     `).run(params);
     return this.get(id);
@@ -60,10 +62,11 @@ class InvoiceRepository {
 
   updateDraft(id, header) {
     const now = this.clock();
-    const params = { id: String(id || ""), ...headerParams(header), updated_at: now };
+    const params = { id: String(id || ""), ...headerParams(header), positions_json: JSON.stringify(header.positions || []), updated_at: now };
     const result = this._db().prepare(`
       UPDATE invoices SET
         ${HEADER_COLUMNS.map((column) => `${column} = @${column}`).join(", ")},
+        positions_json = @positions_json,
         updated_at = @updated_at
       WHERE id = @id AND status = 'DRAFT'
     `).run(params);
@@ -146,11 +149,12 @@ class InvoiceRepository {
       const invoiceNumber = formatInvoiceNumber(sequenceKey, sequence.last_value);
       const params = {
         id: String(id), ...headerParams(header), invoice_number: invoiceNumber, booked_at: bookedAt,
-        customer_snapshot_json: JSON.stringify(customerSnapshot), issuer_snapshot_json: JSON.stringify(issuerSnapshot), updated_at: bookedAt,
+        positions_json: JSON.stringify(header.positions || []), customer_snapshot_json: JSON.stringify(customerSnapshot), issuer_snapshot_json: JSON.stringify(issuerSnapshot), updated_at: bookedAt,
       };
       const result = db.prepare(`
         UPDATE invoices SET
           ${HEADER_COLUMNS.map((column) => `${column} = @${column}`).join(", ")},
+          positions_json = @positions_json,
           status = 'BOOKED', invoice_number = @invoice_number, booked_at = @booked_at,
           customer_snapshot_json = @customer_snapshot_json, issuer_snapshot_json = @issuer_snapshot_json,
           updated_at = @updated_at

@@ -370,6 +370,14 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-live-address { min-height: 104px; padding: 12px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-control); background: var(--invoice-color-surface-subtle); white-space: pre-line; line-height: 1.5; }
 .rechnung-live-service { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--invoice-group-gap); }
 .rechnung-live-reference { display: grid; padding: 12px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-card); background: var(--invoice-color-surface-subtle); }
+.rechnung-live-positions { display: grid; gap: 10px; }
+.rechnung-live-positions__list { display: grid; gap: 5px; }
+.rechnung-live-position { display: grid; grid-template-columns: 42px minmax(0, 1fr) 110px; gap: 8px; align-items: center; width: 100%; padding: 8px 10px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-control); background: var(--invoice-color-surface); color: var(--invoice-color-text); text-align: left; cursor: pointer; }
+.rechnung-live-position:hover, .rechnung-live-position.is-selected { border-color: var(--invoice-color-focus); background: #f1f6fc; }
+.rechnung-live-position__number, .rechnung-live-position__amount { color: var(--invoice-color-muted); font-variant-numeric: tabular-nums; }
+.rechnung-live-position__amount { text-align: right; }
+.rechnung-live-position-editor { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding-top: 10px; border-top: 1px solid var(--invoice-color-border); }
+.rechnung-live-position-editor__actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
 .rechnung-live-payment { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: var(--invoice-group-gap); }
 .rechnung-live-message { min-height: 20px; padding: 1px 4px; color: var(--invoice-color-success); font-size: 12px; }
 .rechnung-live-message[data-tone="error"] { color: var(--invoice-color-danger); }

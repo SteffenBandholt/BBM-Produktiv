@@ -6,9 +6,14 @@ const { InvoiceRepository } = require("../../db/invoiceRepository");
 const { appSettingsGetMany } = require("../../db/appSettingsRepo");
 
 let rulesPromise;
+let positionsPromise;
 function loadRules() {
   if (!rulesPromise) rulesPromise = import(pathToFileURL(path.join(__dirname, "../../../shared/rechnung/invoiceHeaderRules.mjs")).href);
   return rulesPromise;
+}
+function loadPositions() {
+  if (!positionsPromise) positionsPromise = import(pathToFileURL(path.join(__dirname, "../../../shared/rechnung/rechnungPositions.mjs")).href);
+  return positionsPromise;
 }
 
 class InvoiceService {
@@ -32,34 +37,38 @@ class InvoiceService {
 
   async createDraft(input = {}) {
     const rules = await loadRules();
+    const positions = await loadPositions();
     const defaults = await this.defaults();
-    return this.repository.createDraft(rules.normalizeInvoiceHeader({ ...defaults, ...input }));
+    return this.repository.createDraft({ ...rules.normalizeInvoiceHeader({ ...defaults, ...input }), construction_project: String(input.construction_project || "").trim(), positions: positions.normalizeInvoicePositions(input.positions || []) });
   }
 
   async updateDraft(id, input = {}) {
     const rules = await loadRules();
+    const positions = await loadPositions();
     const current = this.repository.get(id);
     if (!current) throw new Error("Rechnung wurde nicht gefunden.");
     if (current.status !== "DRAFT") throw new Error("Gebuchte Rechnungen können nicht geändert werden.");
-    return this.repository.updateDraft(id, rules.normalizeInvoiceHeader({ ...current, ...input }));
+    return this.repository.updateDraft(id, { ...rules.normalizeInvoiceHeader({ ...current, ...input }), construction_project: String(input.construction_project ?? current.construction_project ?? "").trim(), positions: positions.normalizeInvoicePositions(input.positions ?? current.positions ?? []) });
   }
 
   deleteDraft(id) { return this.repository.deleteDraft(id); }
 
   async previewDraft(id, input = null) {
     const rules = await loadRules();
+    const positions = await loadPositions();
     const current = this.repository.get(id);
     if (!current) throw new Error("Rechnung wurde nicht gefunden.");
     if (current.status !== "DRAFT") return current;
-    return { ...current, ...rules.normalizeInvoiceHeader({ ...current, ...(input || {}) }), invoice_number: null, status: "DRAFT", preview: true };
+    return { ...current, ...rules.normalizeInvoiceHeader({ ...current, ...(input || {}) }), construction_project: String(input?.construction_project ?? current.construction_project ?? "").trim(), positions: positions.normalizeInvoicePositions(input?.positions ?? current.positions ?? []), invoice_number: null, status: "DRAFT", preview: true };
   }
 
   async bookDraft(id, input = {}) {
     const rules = await loadRules();
+    const positions = await loadPositions();
     const current = this.repository.get(id);
     if (!current) throw new Error("Rechnung wurde nicht gefunden.");
     if (current.status !== "DRAFT") throw new Error("Nur Entwürfe können gebucht werden.");
-    const header = rules.normalizeInvoiceHeader({ ...current, ...input }, { requireBookingFields: true });
+    const header = { ...rules.normalizeInvoiceHeader({ ...current, ...input }, { requireBookingFields: true }), construction_project: String(input.construction_project ?? current.construction_project ?? "").trim(), positions: positions.normalizeInvoicePositions(input.positions ?? current.positions ?? []) };
     return this.repository.bookDraft(id, header);
   }
 }

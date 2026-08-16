@@ -125,8 +125,8 @@ async function runM8272GenericTextResizeTests(run) {
       return { lower, higher, direct };
     };
 
-    await run("M82.7.2/M83.0 BBM: Inventar umfasst alle 174 textResize-Ziele in sieben produktiven Scopes", () => {
-      assert.equal(textEntries.length, 174);
+    await run("M82.7.2/M83.0 BBM: Inventar umfasst alle 187 textResize-Ziele in sieben produktiven Scopes", () => {
+      assert.equal(textEntries.length, 187);
       assert.deepEqual(Object.fromEntries(scopes.map((scope) => [scope.scopeId, scope.elements.filter((entry) => entry.allowedOps.includes("textResize")).length]).filter(([, count]) => count)), {
         "restarbeiten.header.root": 27,
         "restarbeiten.list.root": 21,
@@ -134,7 +134,7 @@ async function runM8272GenericTextResizeTests(run) {
         "protokoll.screen.root": 24,
         "protokoll.list.root": 19,
         "protokoll.edit.root": 23,
-        "rechnung.screen": 29,
+        "rechnung.screen": 42,
       });
     });
     await run("M82.7.2 BBM: jedes Inventarziel besitzt sichtbaren Ref und lesbaren Computed-Style-Istwert", () => {
@@ -144,7 +144,7 @@ async function runM8272GenericTextResizeTests(run) {
         assert.ok(Number.isFinite(initialStates.get(entry.id).fontSize), entry.id);
       }
     });
-    await run("M82.7.2/M82.7.5 BBM: kleiner, groesser und direkter DIP-Wert wirken generisch auf alle 174 realen Refs", () => {
+    await run("M82.7.2/M82.7.5 BBM: kleiner, groesser und direkter DIP-Wert wirken generisch auf alle 187 realen Refs", () => {
       for (const entry of textEntries) {
         const candidates = changeValues(entry);
         const smaller = submit(entry, candidates.lower, "smaller");

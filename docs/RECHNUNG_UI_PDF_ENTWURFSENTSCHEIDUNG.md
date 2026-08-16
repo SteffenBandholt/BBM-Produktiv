@@ -29,7 +29,7 @@ Buchung und die fachliche Ausführung sichtbarer Buttons.
 
 ## C. Editorfähige Elemente
 
-Alle 45 Elemente sind sichtbar und besitzen:
+Alle 61 Elemente sind sichtbar und besitzen:
 
 - `visible: true`
 - `editable: true`
@@ -80,6 +80,22 @@ Operationsmengen:
 | `rechnung.editor.serviceStart` | Leistungszeitraum von | `field` | `content` | `rechnung.editor.servicePeriod` | 64 | T / – | `fieldKind: date` |
 | `rechnung.editor.serviceEnd` | Leistungszeitraum bis | `field` | `content` | `rechnung.editor.servicePeriod` | 65 | T / – | `fieldKind: date` |
 | `rechnung.editor.reference` | Bauvorhaben / Leistungsbezug | `field` | `content` | `rechnung.editor.body` | 70 | T / – | `fieldKind: singleLineText` |
+| `rechnung.editor.constructionProject` | Bauvorhaben | `field` | `content` | `rechnung.editor.body` | 71 | T / – | `fieldKind: singleLineText` |
+| `rechnung.editor.positions` | Rechnungspositionen | `group` | `layout` | `rechnung.editor.body` | 72 | G / – | `componentKind: positionWorkbench` |
+| `rechnung.editor.positions.total` | Positionssumme | `label` | `content` | `rechnung.editor.positions` | 73 | T / – | `componentKind: label` |
+| `rechnung.editor.positions.list` | Positionsliste | `group` | `content` | `rechnung.editor.positions` | 74 | G / – | `componentKind: cardList` |
+| `rechnung.editor.positionEditor` | Positionseditor | `group` | `layout` | `rechnung.editor.positions` | 75 | G / – | `componentKind: positionEditor` |
+| `rechnung.editor.positionType` | Positionstyp | `field` | `content` | `rechnung.editor.positionEditor` | 76 | T / – | `fieldKind: select` |
+| `rechnung.editor.positionShort` | Kurztext | `field` | `content` | `rechnung.editor.positionEditor` | 77 | T / – | `fieldKind: singleLineText` |
+| `rechnung.editor.positionLong` | Langtext | `field` | `content` | `rechnung.editor.positionEditor` | 78 | T / – | `fieldKind: multilineText` |
+| `rechnung.editor.positionQuantity` | Menge | `field` | `content` | `rechnung.editor.positionEditor` | 79 | T / – | `fieldKind: decimal` |
+| `rechnung.editor.positionUnit` | Einheit | `field` | `content` | `rechnung.editor.positionEditor` | 80 | T / – | `fieldKind: singleLineText` |
+| `rechnung.editor.positionPrice` | Einzelpreis | `field` | `content` | `rechnung.editor.positionEditor` | 81 | T / – | `fieldKind: currency` |
+| `rechnung.editor.positionNep` | NEP | `field` | `content` | `rechnung.editor.positionEditor` | 82 | T / – | `fieldKind: checkbox` |
+| `rechnung.editor.positionApply` | Position uebernehmen | `button` | `domainActionLayout` | `rechnung.editor.positionEditor` | 83 | T / D | `actionKind: applyPosition` |
+| `rechnung.editor.positionDelete` | Position loeschen | `button` | `domainActionLayout` | `rechnung.editor.positionEditor` | 84 | T / D | `actionKind: deletePosition` |
+| `rechnung.editor.positionUp` | Position nach oben | `button` | `domainActionLayout` | `rechnung.editor.positionEditor` | 85 | T / D | `actionKind: movePosition` |
+| `rechnung.editor.positionDown` | Position nach unten | `button` | `domainActionLayout` | `rechnung.editor.positionEditor` | 86 | T / D | `actionKind: movePosition` |
 | `rechnung.editor.payment` | Zahlungsdaten | `group` | `layout` | `rechnung.editor.body` | 80 | G / – | `componentKind: payment` |
 | `rechnung.editor.paymentTermDays` | Zahlungsziel Kalendertage | `field` | `content` | `rechnung.editor.payment` | 81 | T / – | `fieldKind: integer` |
 | `rechnung.editor.dueDate` | Fällig am | `field` | `content` | `rechnung.editor.payment` | 82 | T / – | `fieldKind: readOnlyDate` |
@@ -151,7 +167,7 @@ Die Entscheidung wird abgesichert durch:
 - statische M83-Komponentenvertragsprüfung
 - nativen M80-Typ- und Operationsvertrag
 - Registry-/Manifest-/Fingerprint-Prüfung
-- dauerhaften Rechnung-Mounted-Ref-Test mit exakt 45 Einzel-Refs
+- dauerhaften Rechnung-Mounted-Ref-Test mit exakt 61 Einzel-Refs
 - Prüfung aller sechs `data-ui-*`-Pflichtattribute
 - Parent-/Ref-Zuordnungsprüfung
 - UI-Editor-Kit-Vertragscheck

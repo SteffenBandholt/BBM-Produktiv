@@ -13,7 +13,7 @@ entsteht keine zweite Kundenverwaltung.
 
 ## UI-Editor-Status
 
-Der echte `RechnungScreen` ist als Scope `rechnung.screen` mit 45 expliziten
+Der echte `RechnungScreen` ist als Scope `rechnung.screen` mit 61 expliziten
 Einzelzielen komponentennah registriert. Der Scope darf nur dann als `complete`
 veröffentlicht werden, wenn Komponentenvertrag, gemountete Runtime-Refs, nativer
 Typvertrag und Registry-Fingerprint gemeinsam grün sind.

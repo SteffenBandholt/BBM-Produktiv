@@ -773,6 +773,20 @@ function registerSettingsIpc() {
         street: payload.street,
         zip: payload.zip,
         city: payload.city,
+        country: payload.country,
+        phone: payload.phone,
+        email: payload.email,
+        website: payload.website,
+        logo_path: payload.logo_path,
+        tax_number: payload.tax_number,
+        vat_id: payload.vat_id,
+        iban: payload.iban,
+        bic: payload.bic,
+        bank_name: payload.bank_name,
+        commercial_register: payload.commercial_register,
+        register_number: payload.register_number,
+        managing_director: payload.managing_director,
+        legal_notice: payload.legal_notice,
       });
 
       return { ok: true, profile };

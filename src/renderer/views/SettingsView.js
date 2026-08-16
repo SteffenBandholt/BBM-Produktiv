@@ -3994,9 +3994,25 @@ export default class SettingsView {
       { key: "user_street", label: "Strasse" },
       { key: "user_zip", label: "PLZ" },
       { key: "user_city", label: "Ort" },
+      { key: "country", label: "Land" },
+      { key: "phone", label: "Telefon" },
+      { key: "email", label: "E-Mail" },
+      { key: "website", label: "Website" },
     ]);
 
-    wrap.append(profileCard, addressCard);
+    const invoiceCard = makeCard("Rechnungssteller", "Steuer-, Bank- und Pflichtangaben", [
+      { key: "tax_number", label: "Steuernummer" },
+      { key: "vat_id", label: "USt-IdNr." },
+      { key: "iban", label: "IBAN" },
+      { key: "bic", label: "BIC" },
+      { key: "bank_name", label: "Bank" },
+      { key: "commercial_register", label: "Registergericht" },
+      { key: "register_number", label: "Registernummer" },
+      { key: "managing_director", label: "GeschÃ¤ftsfÃ¼hrung" },
+      { key: "legal_notice", label: "Rechtlicher Hinweis" },
+    ]);
+
+    wrap.append(profileCard, addressCard, invoiceCard);
 
     let profile = null;
     if (typeof api.userProfileGet === "function") {
@@ -4030,6 +4046,7 @@ export default class SettingsView {
           user_street: userState.userStreet,
           user_zip: userState.userZip,
           user_city: userState.userCity,
+          ...Object.fromEntries(["country", "phone", "email", "website", "tax_number", "vat_id", "iban", "bic", "bank_name", "commercial_register", "register_number", "managing_director", "legal_notice"].map((key) => [key, profile?.[key] || ""])),
         };
         for (const [key, inp] of inputs.entries()) {
           if (inp) inp.value = String(values[key] ?? "");
@@ -4069,6 +4086,7 @@ export default class SettingsView {
           street: user_street,
           zip: user_zip,
           city: user_city,
+          ...Object.fromEntries(["country", "phone", "email", "website", "tax_number", "vat_id", "iban", "bic", "bank_name", "commercial_register", "register_number", "managing_director", "legal_notice"].map((key) => [key, this._normalizeUserText(inputs.get(key)?.value, 160)])),
         });
         if (!resProfile?.ok) {
           alert(resProfile?.error || "Speichern der Nutzerdaten fehlgeschlagen");
