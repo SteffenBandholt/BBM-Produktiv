@@ -933,11 +933,11 @@ export default class Router {
     const available = await mod.isRechnungenDesignAvailable({ api: globalThis.window?.bbmDb });
     if (!available) return { ok: false, reason: "DEV_ONLY" };
 
-    await this.show(new mod.RechnungenDesignScreen({ router: this }), {
+    await this.show(new mod.RechnungScreen({ router: this }), {
       section: "rechnungenDesign",
       isTopsView: false,
-      pageTitle: "Rechnungen · Design-Dummy",
-      hideSidebar: false,
+      pageTitle: "Rechnungen",
+      hideSidebar: true,
     });
     return { ok: true };
   }

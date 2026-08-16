@@ -96,6 +96,20 @@ contextBridge.exposeInMainWorld("bbmDb", {
     ipcRenderer.invoke("firmDirectory:prepareLocalToGlobal", data),
 
   // ============================================================
+  // Rechnung: Grunddaten und Belegkopf
+  // ============================================================
+  rechnungDefaults: () => ipcRenderer.invoke("rechnung:defaults"),
+  rechnungList: () => ipcRenderer.invoke("rechnung:list"),
+  rechnungGet: (id) => ipcRenderer.invoke("rechnung:get", { id }),
+  rechnungCreateDraft: (header) => ipcRenderer.invoke("rechnung:createDraft", header),
+  rechnungUpdateDraft: (id, header) => ipcRenderer.invoke("rechnung:updateDraft", { id, header }),
+  rechnungDeleteDraft: (id) => ipcRenderer.invoke("rechnung:deleteDraft", { id }),
+  rechnungPreviewDraft: (id, header) => ipcRenderer.invoke("rechnung:previewDraft", { id, header }),
+  rechnungBookDraft: (id, header) => ipcRenderer.invoke("rechnung:bookDraft", { id, header }),
+  rechnungListCustomers: () => ipcRenderer.invoke("rechnung:listCustomers"),
+  rechnungListProjects: () => ipcRenderer.invoke("rechnung:listProjects"),
+
+  // ============================================================
   // GLOBAL Mitarbeiter (Persons) je Firma
   // ============================================================
   personsListByFirm: (firmId) => ipcRenderer.invoke("persons:listByFirm", firmId),

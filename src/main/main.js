@@ -42,6 +42,7 @@ const { registerProjectTransferIpc } = require("./ipc/projectTransferIpc");
 const { registerLicenseIpc, importLicenseFromFilePath } = require("./ipc/licenseIpc");
 const { registerAudioIpc } = require("./ipc/audioIpc");
 const { registerRestarbeitenIpc } = require("./ipc/restarbeitenIpc");
+const { registerRechnungIpc } = require("./ipc/rechnungIpc");
 const { registerUiEditorIpc } = require("./ipc/uiEditorIpc");
 const { checkLicense } = require("./licensing/licenseService");
 const { loadCustomerSetup } = require("./licensing/licenseStorage");
@@ -582,6 +583,7 @@ app.whenReady().then(async () => {
   registerLicenseIpc();
   registerAudioIpc();
   registerRestarbeitenIpc({ ipcMain });
+  registerRechnungIpc({ ipcMain });
   uiEditorSessionController = registerUiEditorIpc({ app, ipcMain, getMainWindow: () => mainWindow });
   ipcMain.handle("uiEditor:getDiagnosticMode", () => {
     const result = {

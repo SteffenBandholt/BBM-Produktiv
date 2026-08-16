@@ -12,16 +12,28 @@ const read = (relativePath) => fs.readFileSync(path.join(ROOT, relativePath), "u
 class FakeElement {
   constructor(tagName = "DIV", width = 100, height = 24) {
     this.tagName = tagName.toUpperCase(); this.nodeName = this.tagName; this.attributes = {}; this.dataset = {}; this.className = "";
-    this.parentElement = null; this.children = []; this.isConnected = true; this._rect = { left: 0, top: 0, width, height };
+    this.parentElement = null; this.children = []; this.isConnected = true; this.hidden = false; this.textContent = ""; this.value = "";
+    this._rect = { left: 0, top: 0, width, height };
     this.style = { setProperty(name, value) { this[name] = value; }, getPropertyValue(name) { return this[name] || ""; } };
     this.classList = { contains: (name) => this.className.split(/\s+/).includes(name), toggle: (name, active) => { const names = new Set(this.className.split(/\s+/).filter(Boolean)); if (active) names.add(name); else names.delete(name); this.className = [...names].join(" "); } };
   }
   setAttribute(name, value) { this.attributes[name] = String(value); if (name.startsWith("data-")) this.dataset[name.slice(5).replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())] = String(value); }
-  getAttribute(name) { return this.attributes[name] || null; }
+  getAttribute(name) { return Object.hasOwn(this.attributes, name) ? this.attributes[name] : null; }
   addEventListener() {}
   append(...children) { children.forEach((child) => { child.parentElement = this; this.children.push(child); }); }
   appendChild(child) { this.append(child); return child; }
+  replaceChildren(...children) { this.children = []; this.append(...children); }
   getBoundingClientRect() { const width = Number.parseFloat(this.style.width) || this._rect.width; const height = Number.parseFloat(this.style.height) || this._rect.height; return { left: 0, top: 0, width, height, right: width, bottom: height }; }
+}
+
+function collectEditorElements(root) {
+  const result = [];
+  const visit = (element) => {
+    if (element?.getAttribute?.("data-ui-inspector-id") !== null) result.push(element);
+    for (const child of element?.children || []) visit(child);
+  };
+  visit(root);
+  return result;
 }
 
 function computedStyle(element) {
@@ -34,14 +46,15 @@ async function runM830ComponentContractTests(run) {
   const refs = await importEsmFromFile(path.join(ROOT, "src/renderer/ui-editor/m80Refs.js"));
   const mainBody = await importEsmFromFile(path.join(ROOT, "src/renderer/modules/restarbeiten/RestarbeitenMainBody.js"));
   const quicklaneModule = await importEsmFromFile(path.join(ROOT, "src/renderer/modules/restarbeiten/RestarbeitenQuicklane.js"));
+  const rechnungScreenModule = await importEsmFromFile(path.join(ROOT, "src/renderer/modules/rechnungen/screens/RechnungScreen.js"));
   const contracts = registry.listM83ComponentContracts();
   const scopes = registry.listM80RegistryScopes().filter((scope) => scope.status === "complete");
   const registryIds = scopes.flatMap((scope) => scope.elements.map((entry) => entry.id));
   const contractIds = contracts.flatMap((component) => component.slots.map((slot) => slot.element.id));
   const listContract = contracts.find((component) => component.componentId === "bbm.restarbeiten.list");
 
-  await run("M83.0 BBM 01: alle offiziellen Scopes stammen aus elf komponentennahen Vertraegen", () => {
-    assert.equal(contracts.length, 11); assert.deepEqual([...contractIds].sort(), [...registryIds].sort()); assert.equal(new Set(contractIds).size, contractIds.length);
+  await run("M83.0 BBM 01: alle offiziellen Scopes stammen aus zwoelf komponentennahen Vertraegen", () => {
+    assert.equal(contracts.length, 12); assert.deepEqual([...contractIds].sort(), [...registryIds].sort()); assert.equal(new Set(contractIds).size, contractIds.length);
     for (const component of contracts) assert.deepEqual([...component.requiredSlots].sort(), component.slots.filter((slot) => slot.required).map((slot) => slot.slotId).sort(), component.componentId);
   });
   await run("M83.0 BBM 02: Meta-Startspalte deklariert Spalte, Kopf, Nr., Datum, Klasse und reale Zusatzinhalte", () => {
@@ -55,20 +68,60 @@ async function runM830ComponentContractTests(run) {
     const source = contracts.map((component) => JSON.stringify(component)).join("\n") + read("src/renderer/ui-editor/m80Refs.js");
     assert.doesNotMatch(source, /data-bbm-restarbeiten-record-id|app\.db|item\.id|databaseId|recordId/); assert.ok(contractIds.every((id) => !/(?:^|\.)\d{4,}(?:\.|$)|[0-9a-f]{8}-[0-9a-f-]{27,}/i.test(id)));
   });
-  await run("M83.0 BBM 05: Restarbeiten-Liste, Editbox und Protokoll sind vollstaendig gebuendelt", () => {
-    assert.deepEqual(Object.fromEntries(contracts.map((component) => [component.componentId, component.slots.length])), { "bbm.restarbeiten.filterbar": 31, "bbm.restarbeiten.quicklane": 12, "bbm.restarbeiten.list": 32, "bbm.restarbeiten.editbox": 53, "bbm.restarbeiten.mainHeaderLauncher": 1, "bbm.protokoll.screen": 9, "bbm.protokoll.quicklane": 24, "bbm.protokoll.mainHeaderLauncher": 1, "bbm.protokoll.list.shell": 6, "bbm.protokoll.list.columns": 26, "bbm.protokoll.editbox": 38 });
+  await run("M83.0 BBM 05: Restarbeiten, Protokoll und Rechnung sind vollstaendig gebuendelt", () => {
+    assert.deepEqual(Object.fromEntries(contracts.map((component) => [component.componentId, component.slots.length])), { "bbm.restarbeiten.filterbar": 31, "bbm.restarbeiten.quicklane": 12, "bbm.restarbeiten.list": 32, "bbm.restarbeiten.editbox": 53, "bbm.restarbeiten.mainHeaderLauncher": 1, "bbm.protokoll.screen": 9, "bbm.protokoll.quicklane": 24, "bbm.protokoll.mainHeaderLauncher": 1, "bbm.protokoll.list.shell": 6, "bbm.protokoll.list.columns": 26, "bbm.protokoll.editbox": 38, "bbm.rechnung.screen": 45 });
   });
 
   const previous = { document: global.document, window: global.window, Element: global.Element, CustomEvent: global.CustomEvent };
   const body = new FakeElement("BODY", 1600, 900);
   global.Element = FakeElement; global.CustomEvent = class { constructor(type) { this.type = type; } };
-  global.document = { body, createElement: (tag) => new FakeElement(tag), querySelector: () => null };
-  global.window = { getComputedStyle: computedStyle, dispatchEvent() {} };
+  global.document = { body, head: new FakeElement("HEAD"), createElement: (tag) => new FakeElement(tag), querySelector: () => null };
+  global.window = {
+    getComputedStyle: computedStyle,
+    dispatchEvent() {},
+    bbmDb: {
+      rechnungList: async () => ({ ok: true, list: [] }),
+      rechnungListCustomers: async () => ({ ok: true, list: [] }),
+      rechnungListProjects: async () => ({ ok: true, list: [] }),
+      userProfileGet: async () => ({ ok: true, profile: null }),
+    },
+  };
   const items = [
     { id: 7, numberLine: "17", dateLine: "01.08.26", itemClassLabel: "Rest", nachpflegeLabel: "Nachpflege", locationLine: "Bauteil A", shortTextLine: "Kurz A", longTextLine: "Lang A", dueDateLabel: "08.08.26", ampelState: "green", statusLabel: "offen", responsibleLabel: "Firma A", requiredFieldSummary: "Pflichtangabe" },
     { id: 8, numberLine: "18", dateLine: "02.08.26", itemClassLabel: "Mangel", locationLine: "Bauteil B", shortTextLine: "Kurz B", longTextLine: "Lang B", dueDateLabel: "09.08.26", ampelState: "red", statusLabel: "offen", responsibleLabel: "Firma B" },
   ];
   try {
+    refs.resetM80PilotWorkingStatesForDiagnostic();
+    const invoiceRoot = new rechnungScreenModule.default().render();
+    body.appendChild(invoiceRoot);
+    await Promise.resolve();
+    await run("M83.0 Rechnung 01: echter Rechnungsscreen mountet alle 45 Einzel-Refs mit vollstaendigem DOM-Vertrag", () => {
+      const component = contracts.find((entry) => entry.componentId === "bbm.rechnung.screen");
+      const scope = scopes.find((entry) => entry.scopeId === "rechnung.screen");
+      const expectedIds = scope.elements.map((entry) => entry.id);
+      const rendered = collectEditorElements(invoiceRoot);
+      const renderedIds = rendered.map((element) => element.getAttribute("data-ui-inspector-id"));
+      assert.equal(expectedIds.length, 45);
+      assert.equal(component.slots.length, 45);
+      assert.equal(new Set(renderedIds).size, 45);
+      assert.deepEqual([...renderedIds].sort(), [...expectedIds].sort());
+      assert.equal(refs.validateM83ComponentReferences([component.componentId]).ok, true);
+      const byId = new Map(scope.elements.map((entry) => [entry.id, entry]));
+      for (const element of rendered) {
+        const id = element.getAttribute("data-ui-inspector-id");
+        const entry = byId.get(id);
+        const ref = refs.getM80Ref(id);
+        assert.ok(entry, `${id}: unerwartete Rechnung-ID`);
+        assert.equal(ref.contractTargets.length, 1, `${id}: genau ein Runtime-Ziel`);
+        assert.strictEqual(ref.contractTargets[0], element, `${id}: Ref zeigt auf den gerenderten Knoten`);
+        assert.equal(element.getAttribute("data-ui-editor-kind"), entry.type, `${id}: kind`);
+        assert.equal(element.getAttribute("data-ui-editor-label"), entry.name, `${id}: label`);
+        assert.equal(element.getAttribute("data-ui-editor-parent"), entry.parentId || "", `${id}: parent`);
+        assert.equal(element.getAttribute("data-ui-editor-editable"), String(entry.editable), `${id}: editable`);
+        assert.equal(element.getAttribute("data-ui-editor-ops"), entry.allowedOps.join(","), `${id}: ops`);
+      }
+    });
+
     refs.resetM80PilotWorkingStatesForDiagnostic(); refs.beginM80PilotRender();
     body.appendChild(mainBody.buildRestarbeitenMainBody({ items, showAmpel: true, showLongtext: true }));
     await run("M83.0 BBM 06: reale gemountete Listenkomponente erfuellt alle Einzel- und Multi-Refs", () => assert.equal(refs.validateM83ComponentReferences(["bbm.restarbeiten.list"]).ok, true));

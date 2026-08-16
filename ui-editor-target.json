@@ -7,8 +7,8 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 23,
-  "registryFingerprint": "sha256:4a38e970eb89e3df5d3a68625ab229cbdb656c2203289d4b21f5e4e5dad77a16",
+  "registryVersion": 24,
+  "registryFingerprint": "sha256:824d8e1bffafc578cca207b6a8845bf910c46e37f39ce04865faa2b005c9e02f",
   "registryStatus": "incomplete",
   "activeScopes": [
     "restarbeiten.header.root",
@@ -16,7 +16,8 @@
     "restarbeiten.edit.root",
     "protokoll.screen.root",
     "protokoll.list.root",
-    "protokoll.edit.root"
+    "protokoll.edit.root",
+    "rechnung.screen"
   ],
   "uiCapability": "layout",
   "pdfCapability": "available",
@@ -53,7 +54,8 @@
     { "scopeId": "restarbeiten.edit.root", "status": "complete", "reason": null, "elementCount": 53, "missingReferenceCount": 0 },
     { "scopeId": "protokoll.screen.root", "status": "complete", "reason": null, "elementCount": 34, "missingReferenceCount": 0 },
     { "scopeId": "protokoll.list.root", "status": "complete", "reason": null, "elementCount": 32, "missingReferenceCount": 0 },
-    { "scopeId": "protokoll.edit.root", "status": "complete", "reason": null, "elementCount": 36, "missingReferenceCount": 0 },
+    { "scopeId": "protokoll.edit.root", "status": "complete", "reason": null, "elementCount": 38, "missingReferenceCount": 0 },
+    { "scopeId": "rechnung.screen", "status": "complete", "reason": null, "elementCount": 45, "missingReferenceCount": 0 },
     { "scopeId": "bbm.remaining", "status": "blocked", "reason": "registration_inventory_pending", "elementCount": 0, "missingReferenceCount": 0 },
     { "scopeId": "pdf.bbm.protocol", "status": "complete", "reason": null, "elementCount": 28, "missingReferenceCount": 0 }
   ],

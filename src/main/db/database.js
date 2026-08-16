@@ -4,6 +4,7 @@ const Database = require("better-sqlite3");
 const fs = require("fs");
 const { app } = require("electron");
 const path = require("path");
+const { ensureInvoiceSchema } = require("./invoiceMigrations");
 
 let db;
 
@@ -1876,6 +1877,7 @@ function ensureSchema(dbConn) {
   ensureRestarbeitenSchema(dbConn);
   ensureAppSettingsSchema(dbConn);
   ensureLicenseAdminSchema(dbConn);
+  ensureInvoiceSchema(dbConn);
 }
 
 function initDatabase() {

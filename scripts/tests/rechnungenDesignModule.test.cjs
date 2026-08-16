@@ -263,16 +263,19 @@ async function runRechnungenDesignModuleTests(run) {
     assert.equal(screen.includes("invoice-dialog bbm-popup-standard bbm-popup-dialog"), true);
   });
 
-  await run("Rechnungen-Design: bleibt außerhalb von UI-Editor und Tabellenregistry", () => {
-    const moduleRoot = path.join(repoRoot, "src/renderer/modules/rechnungen");
-    const files = fs.readdirSync(moduleRoot, { recursive: true, withFileTypes: true })
-      .filter((entry) => entry.isFile())
-      .map((entry) => read(path.relative(repoRoot, path.join(entry.parentPath || entry.path, entry.name))));
-    const joined = files.join("\n");
-    assert.equal(joined.includes("data-ui-inspector-id"), false);
-    assert.equal(joined.includes("data-ui-editor-kind"), false);
-    assert.equal(joined.includes("tableLayouts"), false);
-    assert.equal(joined.includes("editorEnabled: nein"), true);
+  await run("Rechnungen: Designreferenz bleibt tabellenfrei, echter Screen besitzt den expliziten UI-Editor-Vertrag", () => {
+    const designScreen = read("src/renderer/modules/rechnungen/screens/RechnungenDesignScreen.js");
+    const liveScreen = read("src/renderer/modules/rechnungen/screens/RechnungScreen.js");
+    const contract = read("src/renderer/modules/rechnungen/RechnungScreen.uiEditorContract.js");
+    const registry = read("src/renderer/ui-editor/m80Registry.js");
+    const documentation = read("src/renderer/modules/rechnungen/README.md");
+    assert.equal(designScreen.includes("data-ui-inspector-id"), false);
+    assert.equal(designScreen.includes("tableLayouts"), false);
+    assert.equal(liveScreen.includes("m80EditorAttributes"), true);
+    assert.equal(contract.includes('RECHNUNG_SCOPE_ID = "rechnung.screen"'), true);
+    assert.equal(registry.includes("rechnungUiEditorContract"), true);
+    assert.equal(documentation.includes("45 expliziten"), true);
+    assert.equal(documentation.includes("editorEnabled: nein"), false);
   });
 
   await run("Rechnungen-Design: DEV-Einstieg reserviert außerhalb von DEV keinen Platz", () => {

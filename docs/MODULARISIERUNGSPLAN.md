@@ -435,14 +435,14 @@ Dabei gilt:
 - PDF, Druck, Mail, Diktat/Audio, Fachlogik, Datenbankmigration, automatische DOM-Erkennung, neue Modul-Anbindung und neue Editor-Architektur blieben ausserhalb dieses Pakets.
 - Neue Doku: `docs/M36_UI_EDITOR_FIXSTAND_ABNAHME.md`.
 
-### Designreferenz Rechnungen (DEV-Dummy, abgeschlossen)
+### Rechnungen - Designreferenz und echter Arbeitsscreen (Uebergangsstand)
 
-- Eigenständiger Renderer-Modulordner `src/renderer/modules/rechnungen` mit statischen Beispieldaten und zwei sichtbaren Zuständen: Übersicht sowie „Rechnung bearbeiten“; die freigegebenen gemeinsamen Tokens liegen inzwischen in der zentralen BBM-Popup-/Formularbasis.
-- DEV-Einstieg über `Einstellungen -> Entwicklung`; keine Aufnahme in produktive Modulnavigation, Lizenzmodule, UI-Editor-Registry oder Tabellenlayout-Registry.
-- Keine Datenbank-, IPC-, Speicher-, Berechnungs-, ZUGFeRD-/E-Rechnungs-, GAEB- oder PDF-Funktion.
-- Referenzen: WPF-Referenz „Auftragsverwaltung“ in `../UI-Editor-kit/reference-target-app`, bestehende BBM-Einstellungskarten und das kompakte Projektformular.
-- Automatischer Guardrail und Electron-Sichtprüfung einschließlich kleinem, scrollbar bleibendem Dialogviewport vorhanden.
-- Nächster Schritt außerhalb dieses Pakets: Designwerte fachlich beurteilen und erst nach ausdrücklicher Freigabe eine mögliche globale BBM-Standardisierung separat planen.
+- Der eigenstaendige Renderer-Modulordner `src/renderer/modules/rechnungen` enthaelt weiterhin die historische statische `RechnungenDesignScreen`-Referenz und daneben den echten `RechnungScreen` fuer Rechnungsgrunddaten und Belegkopf.
+- Der DEV-Einstieg ueber `Einstellungen -> Entwicklung` oeffnet den echten Arbeitsscreen; eine produktive Modulnavigation oder Lizenzfreigabe wurde dadurch nicht eingefuehrt.
+- Der echte Screen ist als `rechnung.screen` mit 45 expliziten, komponentennahen Einzelzielen in der UI-Editor-Registry registriert. Fachaktionen bleiben gesperrt; die vollstaendige Entscheidung steht in `docs/RECHNUNG_UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
+- Die Rechnungsuebersicht ist eine Karten-/Listengruppe und keine Inhaltstabelle. Es gibt weiterhin keinen Tabellenlayout-Registry-Eintrag fuer Rechnung.
+- Positionen, Summen, PDF-Fachausgabe, ZUGFeRD/E-Rechnung und GAEB bleiben ausserhalb dieses Reparaturstands.
+- Komponentenvertrag, Mounted-Refs, nativer Typvertrag und Registry-Fingerprint muessen gemeinsam gruen sein, bevor `rechnung.screen` als `complete` gilt.
 
 ### Zentraler Popup-/Formularstandard (viertes Migrationspaket umgesetzt, Freigabe offen)
 
