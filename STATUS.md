@@ -1,5 +1,13 @@
 # STATUS.md — BBM-Produktiv
 
+## PDF-Editor-Bedienung und Neustart-Restore
+
+- Status: `[A]` im realen isolierten BBM-Protokoll über zwei vollständige Anwendungsstarts abgenommen; bestehende PDF-Architektur repariert, keine parallele Editor- oder Rendererarchitektur.
+- Der Print-DOM meldet für bewegliche Elemente die tatsächlich angewandten X-/Y-Koordinaten zurück. BBM weist Bewegungen außerhalb der registrierten Kopf-/Inhalts-/Fußzone sofort ab, statt erst beim Profilspeichern einen ungültigen Zustand zu entdecken.
+- Der getrennte Registryeintrag `pdf.bbm.protocol.header.meta.page-value` bleibt eigenes Ziel für Bewegung, Schriftgröße und Sichtbarkeit. Reale Print-DOM-Regressionen belegen sichtbare Positions- und Schriftänderung sowie vollständiges Ausblenden.
+- Sichtabnahme: sichtbarer Titelklick, rechts/runter/links/hoch mit jeweils unmittelbar aktueller echter PDF; Seitenwert direkt ausgewählt, nach links verschoben, auf 11 pt vergrößert und ausgeblendet; Rückgängig, Original und Speichern bestätigt. Nach vollständigem BBM-/Editor-Neustart wurden Titel `x=18` und Seitenwert `x=158`, `fontSize=11`, `visible=false` aus demselben Profil sauber wiederhergestellt.
+- Grün: M81-Adaptertests, M85-Satzvertrag einschließlich aller 47 Golden-Fixtures und neuem realem Print-DOM-Nachweis, UI-Editor ReferenceTargetApp 132/132 und Manager 103/103. `npm test` bleibt an den bereits im Ausgangsbranch vorhandenen fachfremden Registry-Sollzahlen/Fingerprints, Licensing-Hashes, Navigationserwartungen und Harness-Zählungen rot. Commit, Push und PR: keiner.
+
 ## Dynamische Textgrenzen fuer Protokoll und Restarbeiten
 
 - Status: `[A]` technisch umgesetzt und im isolierten normalen Electron-BBM praktisch geprueft; die fachliche Nutzerfreigabe bleibt offen.

@@ -54,13 +54,13 @@ function m85ProfileRoots() {
     .sort();
 }
 
-function runGoldenHarness() {
+function runGoldenHarness(extraArgs = []) {
   const output = path.join(os.tmpdir(), `bbm-m85-snapshots-${process.pid}-${Date.now()}.json`);
   const profileRootsBefore = m85ProfileRoots();
   try {
     const result = spawnSync(
       process.execPath,
-      [path.join(ROOT, "scripts/pdf-v2/runM85PdfFixtures.cjs"), "--node-launcher", "--output", output],
+      [path.join(ROOT, "scripts/pdf-v2/runM85PdfFixtures.cjs"), "--node-launcher", "--output", output, ...extraArgs],
       { cwd: ROOT, env: process.env, encoding: "utf8", maxBuffer: 20 * 1024 * 1024, windowsHide: true }
     );
     assert.equal(
@@ -91,6 +91,17 @@ function resultMap(runResult) {
 function compactRecordOrder(snapshot) {
   const ids = snapshot.pages.flatMap((page) => page.records.map((record) => record.id));
   return ids.filter((id, index) => index === 0 || ids[index - 1] !== id);
+}
+
+function editorRun(elementId, changes) {
+  const args = ["--fixture", "p02-one-page", "--editor-element", elementId];
+  for (const [name, value] of Object.entries(changes)) args.push(`--editor-${name}`, String(value));
+  return runGoldenHarness(args).results[0];
+}
+
+function editorBound(result, elementId) {
+  return (result?.previewMetadata?.renderBounds || [])
+    .find((entry) => entry.elementId === elementId && entry.pageNumber === 1) || null;
 }
 
 async function runM85PdfSatzvertragTests(run) {
@@ -363,6 +374,26 @@ async function runM85PdfSatzvertragTests(run) {
       assert.equal(snapshot.pages.slice(1).every((page) => page.headerKind === "mini"), true, `${CONTRACT.editorBoundary}:${id}:mini`);
       assert.equal(snapshot.pages.every((page) => page.footerReservePresent), true, `${CONTRACT.editorBoundary}:${id}:reserve`);
     }
+  });
+
+  await run("M85 PDF-Bedienung: Position, Schrift und Seitenwert-Sichtbarkeit wirken im echten Print-DOM", () => {
+    const titleId = "pdf.bbm.protocol.header.title";
+    const titleBefore = editorBound(editorRun(titleId, { x: 16, y: 28 }), titleId);
+    const titleAfter = editorBound(editorRun(titleId, { x: 26, y: 28 }), titleId);
+    assert.ok(titleBefore && titleAfter, `${titleId}:Renderer-Readback fehlt`);
+    assert.ok(Math.abs(titleBefore.appliedX - 16) <= 0.05, `${titleId}:Baseline-Readback X`);
+    assert.ok(Math.abs(titleAfter.appliedX - 26) <= 0.05, `${titleId}:Move-Readback X`);
+    assert.ok(Math.abs((titleAfter.box.x - titleBefore.box.x) - 10) <= 0.05, `${titleId}:reale DOM-Verschiebung X`);
+
+    const pageValueId = "pdf.bbm.protocol.header.meta.page-value";
+    const pageBefore = editorBound(editorRun(pageValueId, { x: 159, y: 14, "font-size": 9 }), pageValueId);
+    const pageAfter = editorBound(editorRun(pageValueId, { x: 158, y: 14, "font-size": 14 }), pageValueId);
+    assert.ok(pageBefore && pageAfter, `${pageValueId}:Renderer-Readback fehlt`);
+    assert.ok(Math.abs(pageAfter.appliedX - 158) <= 0.05, `${pageValueId}:Move-Readback X`);
+    assert.ok(Math.abs((pageAfter.box.x - pageBefore.box.x) + 1) <= 0.05, `${pageValueId}:reale DOM-Verschiebung X`);
+    assert.ok(pageAfter.box.width > pageBefore.box.width, `${pageValueId}:Schriftgroesse blieb visuell unveraendert`);
+    assert.equal(editorBound(editorRun(pageValueId, { visible: false }), pageValueId), null,
+      `${pageValueId}:ausgeblendeter Seitenwert blieb im Print-DOM sichtbar`);
   });
 
   await run("M85 Satzvertrag: Renderer, Paginierung, Profilweg und Altpfade bleiben eindeutig", () => {

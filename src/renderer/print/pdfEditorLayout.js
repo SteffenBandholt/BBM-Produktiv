@@ -121,6 +121,7 @@ function round(value) {
 export function collectBbmPdfPreviewMetadata(root, data) {
   if (!root || !data?.pdfEditorRegistry) return { pageCount: 0, renderBounds: [] };
   const pages = Array.from(root.querySelectorAll(".page"));
+  const states = stateMap(data);
   const renderBounds = [];
   for (const entry of registryEntries(data)) {
     for (const node of nodesFor(root, entry)) {
@@ -133,9 +134,22 @@ export function collectBbmPdfPreviewMetadata(root, data) {
       if (!(pageRect.width > 0 && pageRect.height > 0 && rect.width > 0 && rect.height > 0)) continue;
       const pageWidthMm = String(data?.orientation || "portrait") === "landscape" ? 297 : 210;
       const pageHeightMm = String(data?.orientation || "portrait") === "landscape" ? 210 : 297;
+      const computed = globalThis.getComputedStyle?.(node) || node.style || {};
+      const current = states.get(entry.id);
+      const canMove = entry.capabilities?.includes("move") && current;
+      const offsetX = Number.parseFloat(computed?.left);
+      const offsetY = Number.parseFloat(computed?.top);
+      const appliedX = canMove && Number.isFinite(Number(entry.baseline?.x))
+        ? round(Number(entry.baseline.x) + (Number.isFinite(offsetX) ? offsetX * pageWidthMm / pageRect.width : 0))
+        : undefined;
+      const appliedY = canMove && Number.isFinite(Number(entry.baseline?.y))
+        ? round(Number(entry.baseline.y) + (Number.isFinite(offsetY) ? offsetY * pageHeightMm / pageRect.height : 0))
+        : undefined;
       renderBounds.push({
         elementId: entry.id,
         pageNumber,
+        ...(appliedX === undefined ? {} : { appliedX }),
+        ...(appliedY === undefined ? {} : { appliedY }),
         box: {
           x: round((rect.left - pageRect.left) * pageWidthMm / pageRect.width),
           y: round((rect.top - pageRect.top) * pageHeightMm / pageRect.height),

@@ -228,6 +228,16 @@ function validateState(entry, state, allStates) {
       state.x + state.width > 210.000001 || state.y + state.height > 297.000001) {
     throw Object.assign(new Error("PDF-Layout verlässt die registrierten Grenzen."), { code: "pdf_out_of_page_bounds" });
   }
+  const zoneId = entry.pageArea === "header" ? `${SCOPE_ID}.header`
+    : entry.pageArea === "body" ? `${SCOPE_ID}.body`
+      : entry.pageArea === "footer" ? `${SCOPE_ID}.footer` : null;
+  const zone = zoneId ? allStates.get(zoneId) : null;
+  if (zone && entry.id !== zoneId &&
+      (state.x < zone.x - 0.000001 || state.y < zone.y - 0.000001 ||
+       state.x + state.width > zone.x + zone.width + 0.000001 ||
+       state.y + state.height > zone.y + zone.height + 0.000001)) {
+    throw Object.assign(new Error("PDF-Layout verlässt den registrierten Seitenbereich."), { code: "pdf_invalid_page_zone" });
+  }
   if (entry.kind === "tableColumn" && state.width < 5) throw Object.assign(new Error("PDF-Spalte ist kleiner als 5 mm."), { code: "pdf_invalid_column_width" });
   if (entry.kind === "tableColumn") {
     const widths = ["number", "text", "meta"].map((name) => allStates.get(`${SCOPE_ID}.tops.column.${name}`).width);

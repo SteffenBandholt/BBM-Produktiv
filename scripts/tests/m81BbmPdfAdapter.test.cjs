@@ -26,6 +26,9 @@ async function runM81BbmPdfAdapterTests(run) {
   await run("M81 Labels, Werte, Tabellenkopf, Inhalt und drei echte TOP-Spalten sind getrennt", () => {
     assert.notEqual(byId.get(`${SCOPE_ID}.header.project.label`).id, byId.get(`${SCOPE_ID}.header.project.value`).id);
     assert.notEqual(byId.get(`${SCOPE_ID}.footer.label`).id, byId.get(`${SCOPE_ID}.footer.value`).id);
+    assert.notEqual(byId.get(`${SCOPE_ID}.header.meta.page-label`).id, byId.get(`${SCOPE_ID}.header.meta.page-value`).id);
+    assert.equal(byId.get(`${SCOPE_ID}.header.meta.page-label`).rendererKey, ".v2MiniPageLabel");
+    assert.equal(byId.get(`${SCOPE_ID}.header.meta.page-value`).rendererKey, ".v2MiniPageValue");
     assert.ok(byId.has(`${SCOPE_ID}.tops.header`));
     assert.ok(byId.has(`${SCOPE_ID}.tops.rows`));
     assert.deepEqual(registry.elements.filter((entry) => entry.kind === "tableColumn").map((entry) => entry.name),
@@ -51,6 +54,19 @@ async function runM81BbmPdfAdapterTests(run) {
     assert.equal(result.newState.fontSize, 15);
     assert.equal(adapter.getCurrentPdfLayoutState().elements.find((entry) => entry.elementId === request.elementId).fontSize, 15);
     assert.equal(adapter.getPreviewMetadata().stale, true);
+  });
+
+  await run("M81 Seitenwert ist eigenstaendig verschiebbar, skalierbar und ausblendbar", () => {
+    const adapter = createBbmPdfAdapter();
+    const elementId = `${SCOPE_ID}.header.meta.page-value`;
+    const submit = (changeId, operation, payload) => adapter.submitPdfChangeRequest({ changeId, scopeId: SCOPE_ID, elementId, operation, payload });
+    assert.equal(submit("page-move", "move", { x: 158, y: 15 }).newState.x, 158);
+    assert.equal(submit("page-invalid", "move", { x: 160, y: 15 }).errorCode, "pdf_invalid_page_zone");
+    assert.equal(submit("page-font", "textResize", { text: { fontSize: 11 } }).newState.fontSize, 11);
+    assert.equal(submit("page-hide", "setVisibility", { visible: false }).newState.visible, false);
+    const current = adapter.getCurrentPdfLayoutState().elements.find((entry) => entry.elementId === elementId);
+    assert.deepEqual({ x: current.x, y: current.y, fontSize: current.fontSize, visible: current.visible },
+      { x: 158, y: 15, fontSize: 11, visible: false });
   });
 
   await run("M81 Ausrichtung, Sichtbarkeit, Zeilenabstand, Rand und Spaltenbreite sind capability-gesteuert", () => {

@@ -7,13 +7,14 @@ const { spawnSync } = require("node:child_process");
 const { pathToFileURL } = require("node:url");
 const electronModule = require("electron");
 const { createPrintToPdfOptions } = require("../../src/main/print/printOrientation.js");
+const { createBbmPdfAdapter } = require("../../src/main/ui-editor/bbmPdfAdapter.cjs");
 const { getM85Fixtures } = require("./m85Fixtures.cjs");
 
 const IS_ELECTRON_PROCESS = Boolean(process.versions.electron);
 const { app, BrowserWindow, ipcMain } = IS_ELECTRON_PROCESS ? electronModule : {};
 
 function parseArgs(argv) {
-  const result = { output: "", pdfDir: "", fixtureIds: [], isolatedRoot: "" };
+  const result = { output: "", pdfDir: "", fixtureIds: [], isolatedRoot: "", editorElement: "", editorX: null, editorY: null, editorFontSize: null, editorVisible: null };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = String(argv[index] || "");
     if (arg === "--output") result.output = path.resolve(String(argv[++index] || ""));
@@ -21,8 +22,15 @@ function parseArgs(argv) {
     else if (arg === "--isolated-root") result.isolatedRoot = path.resolve(String(argv[++index] || ""));
     else if (arg === "--fixture") result.fixtureIds.push(String(argv[++index] || ""));
     else if (arg.startsWith("--fixture=")) result.fixtureIds.push(arg.slice("--fixture=".length));
+    else if (arg === "--editor-element") result.editorElement = String(argv[++index] || "");
+    else if (arg === "--editor-x") result.editorX = Number(argv[++index]);
+    else if (arg === "--editor-y") result.editorY = Number(argv[++index]);
+    else if (arg === "--editor-font-size") result.editorFontSize = Number(argv[++index]);
+    else if (arg === "--editor-visible") result.editorVisible = String(argv[++index] || "") === "true";
   }
   if (!result.output) throw new Error("M85-Snapshot-Ausgabedatei fehlt (--output)." );
+  if (result.editorElement && ![result.editorX, result.editorY, result.editorFontSize].some(Number.isFinite) && result.editorVisible === null)
+    throw new Error("M85-Editorcheck benoetigt mindestens eine Layoutaenderung.");
   return result;
 }
 
@@ -46,6 +54,34 @@ function runNodeLauncher() {
 
 function clone(value) {
   return structuredClone(value);
+}
+
+function dataForFixture(fixture, args) {
+  const data = clone(fixture.data);
+  if (!args.editorElement) return data;
+  if (fixture.kind !== "protocol") throw new Error("M85-Editorcheck ist nur fuer Protokoll-Fixtures erlaubt.");
+  const adapter = createBbmPdfAdapter();
+  const submit = (operation, payload) => {
+    const result = adapter.submitPdfChangeRequest({
+      changeId: `editor-check-${operation}-${args.editorElement}`,
+      scopeId: "pdf.bbm.protocol",
+      elementId: args.editorElement,
+      operation,
+      payload,
+    });
+    if (!result.success) throw new Error(`M85-Editorcheck abgewiesen: ${result.errorCode}`);
+  };
+  if (Number.isFinite(args.editorX) || Number.isFinite(args.editorY)) {
+    const payload = {};
+    if (Number.isFinite(args.editorX)) payload.x = args.editorX;
+    if (Number.isFinite(args.editorY)) payload.y = args.editorY;
+    submit("move", payload);
+  }
+  if (Number.isFinite(args.editorFontSize)) submit("textResize", { text: { fontSize: args.editorFontSize } });
+  if (args.editorVisible !== null) submit("setVisibility", { visible: args.editorVisible });
+  data.pdfEditorRegistry = adapter.getPdfRegistry();
+  data.pdfEditorLayoutState = adapter.getCurrentPdfLayoutState();
+  return data;
 }
 
 function createHarnessWindow() {
@@ -99,7 +135,7 @@ async function renderFixture(win, fixture, { pdfDir } = {}) {
     pdfSatzvertragSnapshot: true,
     debug: false,
   });
-  await ready;
+  const readyMessage = await ready;
   const snapshot = await win.webContents.executeJavaScript(
     "structuredClone(globalThis.__bbmPdfSatzvertragSnapshot || null)",
     true
@@ -114,7 +150,8 @@ async function renderFixture(win, fixture, { pdfDir } = {}) {
     fs.writeFileSync(filePath, buffer);
     pdf = { fileName: path.basename(filePath), bytes: buffer.length };
   }
-  return { id: fixture.id, number: fixture.number, title: fixture.title, kind: fixture.kind, snapshot, pdf };
+  return { id: fixture.id, number: fixture.number, title: fixture.title, kind: fixture.kind, snapshot,
+    previewMetadata: readyMessage?.previewMetadata || null, pdf };
 }
 
 async function main() {
@@ -131,7 +168,7 @@ async function main() {
   ipcMain.handle("print:getData", (_event, payload) => {
     const fixture = fixtures.find((entry) => entry.id === payload?.fixtureId) || null;
     if (!fixture) return { ok: false, error: `Unbekannte M85-Fixture: ${String(payload?.fixtureId || "")}` };
-    return { ok: true, data: clone(fixture.data) };
+    return { ok: true, data: dataForFixture(fixture, args) };
   });
   ipcMain.handle("tableLayouts:getOne", () => ({ ok: false, error: "M85-Fixture verwendet nur explizite neutrale Daten." }));
   ipcMain.handle("appSettings:getMany", () => ({ ok: true, data: {} }));
