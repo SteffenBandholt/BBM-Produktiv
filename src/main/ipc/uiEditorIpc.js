@@ -1,4 +1,5 @@
 const { ipcMain } = require("electron");
+const path = require("node:path");
 const { startBbmUiEditorRuntime, getBbmUiEditorIntegrationStatus } = require("../../ui-editor/start-bbm-ui-editor-runtime.cjs");
 
 let session = null;
@@ -139,6 +140,7 @@ function registerUiEditorIpc(options = {}) {
   const { getSharedBbmPdfAdapter } = require("../ui-editor/bbmPdfAdapter.cjs");
   const { generatePdfForUiEditor } = require("./printIpc");
   const pdfAdapter = getSharedBbmPdfAdapter();
+  pdfAdapter.configureProfileRoot(path.join(options.app.getPath("userData"), "ui-editor", "profiles", "module-protokoll"));
   pdfAdapter.configureRegenerate(async ({ projectId, meetingId, activeDocumentId }) => generatePdfForUiEditor({
     mode: "protocol",
     projectId,

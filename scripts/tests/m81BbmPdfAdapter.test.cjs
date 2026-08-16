@@ -2,13 +2,14 @@
 
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 
 const ROOT = path.resolve(__dirname, "../..");
 const read = (file) => fs.readFileSync(path.join(ROOT, file), "utf8");
 
 async function runM81BbmPdfAdapterTests(run) {
-  const { createBbmPdfAdapter, getBbmPdfRegistry, SCOPE_ID, REGISTRY_FINGERPRINT } = require("../../src/main/ui-editor/bbmPdfAdapter.cjs");
+  const { createBbmPdfAdapter, getBbmPdfRegistry, SCOPE_ID, REGISTRY_FINGERPRINT, PERSISTED_REGISTRY_FINGERPRINT } = require("../../src/main/ui-editor/bbmPdfAdapter.cjs");
   const registry = getBbmPdfRegistry();
   const byId = new Map(registry.elements.map((entry) => [entry.id, entry]));
 
@@ -21,6 +22,7 @@ async function runM81BbmPdfAdapterTests(run) {
       assert.ok(registry.elements.some((entry) => entry.kind === kind), kind);
     assert.equal(registry.registryFingerprint, REGISTRY_FINGERPRINT);
     assert.match(REGISTRY_FINGERPRINT, /^sha256:[a-f0-9]{64}$/);
+    assert.match(PERSISTED_REGISTRY_FINGERPRINT, /^[a-f0-9]{64}$/);
   });
 
   await run("M81 Labels, Werte, Tabellenkopf, Inhalt und drei echte TOP-Spalten sind getrennt", () => {
@@ -93,12 +95,101 @@ async function runM81BbmPdfAdapterTests(run) {
   await run("M81 Reset, Discard und Restore nutzen denselben neutralen LayoutState", () => {
     const adapter = createBbmPdfAdapter();
     const baseline = adapter.getCurrentPdfLayoutState();
-    adapter.submitPdfChangeRequest({ changeId: "x", scopeId: SCOPE_ID, elementId: `${SCOPE_ID}.footer`, operation: "resizeWidth", payload: { width: 180 } });
+    adapter.submitPdfChangeRequest({ changeId: "x", scopeId: SCOPE_ID, elementId: `${SCOPE_ID}.header.title`, operation: "textResize", payload: { text: { fontSize: 15 } } });
     const changed = adapter.getCurrentPdfLayoutState();
     adapter.replaceCurrentPdfLayoutState(baseline);
-    assert.equal(adapter.getCurrentPdfLayoutState().elements.find((entry) => entry.elementId === `${SCOPE_ID}.footer`).width, 186);
+    assert.equal(adapter.getCurrentPdfLayoutState().elements.find((entry) => entry.elementId === `${SCOPE_ID}.header.title`).fontSize, 12.5);
     adapter.replaceCurrentPdfLayoutState(changed);
-    assert.equal(adapter.getCurrentPdfLayoutState().elements.find((entry) => entry.elementId === `${SCOPE_ID}.footer`).width, 180);
+    assert.equal(adapter.getCurrentPdfLayoutState().elements.find((entry) => entry.elementId === `${SCOPE_ID}.header.title`).fontSize, 15);
+  });
+
+  await run("M81 normaler Produktweg liest ausschliesslich das gespeicherte PDF-Profil", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-pdf-product-profile-"));
+    try {
+      const adapter = createBbmPdfAdapter();
+      const profilePath = adapter.configureProfileRoot(root);
+      assert.equal(adapter.getPersistedPdfLayoutState().elements.find((entry) => entry.elementId === `${SCOPE_ID}.header.meta.page-value`).visible, true);
+
+      const pageValueId = `${SCOPE_ID}.header.meta.page-value`;
+      const submit = (changeId, operation, payload) => adapter.submitPdfChangeRequest({ changeId, scopeId: SCOPE_ID, elementId: pageValueId, operation, payload });
+      assert.equal(submit("saved-move", "move", { x: 158, y: 14 }).success, true);
+      assert.equal(submit("saved-font", "textResize", { text: { fontSize: 11 } }).success, true);
+      assert.equal(submit("saved-hide", "setVisibility", { visible: false }).success, true);
+      const savedState = adapter.getCurrentPdfLayoutState();
+      const persistedFields = (definition) => {
+        const capabilities = new Set(definition.capabilities || []);
+        return [
+          ...(capabilities.has("move") ? ["x", "y"] : []),
+          ...(capabilities.has("resize") || capabilities.has("resizeWidth") ? ["width"] : []),
+          ...(capabilities.has("resize") || capabilities.has("resizeHeight") ? ["height"] : []),
+          ...(capabilities.has("textMove") ? ["textOffsetX", "textOffsetY"] : []),
+          ...(capabilities.has("textResize") ? ["fontSize"] : []),
+          ...(capabilities.has("setTextAlignment") ? ["textAlignment"] : []),
+          ...(capabilities.has("setLineSpacing") ? ["lineSpacing"] : []),
+          ...(capabilities.has("setVisibility") ? ["visible"] : []),
+          ...(capabilities.has("setPageMargins") ? ["marginTop", "marginRight", "marginBottom", "marginLeft"] : []),
+        ];
+      };
+      const persistedState = {
+        ...savedState,
+        elements: savedState.elements.map((entry) => {
+          const definition = byId.get(entry.elementId);
+          return Object.fromEntries(["elementId", "scopeId", ...persistedFields(definition)].map((field) => [field, entry[field]]));
+        }),
+      };
+      const document = {
+        schemaVersion: 1,
+        documentKind: "pdf-layout-profile",
+        applicationId: "bbm-produktiv",
+        documentType: "protocol",
+        profileId: "pdf-standard",
+        scopeId: SCOPE_ID,
+        savedAt: "2026-08-16T12:00:00.000Z",
+        registryFingerprint: PERSISTED_REGISTRY_FINGERPRINT,
+        layoutState: persistedState,
+      };
+      fs.mkdirSync(path.dirname(profilePath), { recursive: true });
+      fs.writeFileSync(profilePath, JSON.stringify(document), "utf8");
+
+      adapter.replaceCurrentPdfLayoutState({
+        ...savedState,
+        elements: savedState.elements.map((entry) => entry.elementId === pageValueId ? { ...entry, x: 159, fontSize: 9, visible: true } : entry),
+      });
+      const persisted = adapter.getPersistedPdfLayoutState().elements.find((entry) => entry.elementId === pageValueId);
+      assert.deepEqual({ x: persisted.x, y: persisted.y, fontSize: persisted.fontSize, visible: persisted.visible },
+        { x: 158, y: 14, fontSize: 11, visible: false });
+      const working = adapter.getCurrentPdfLayoutState().elements.find((entry) => entry.elementId === pageValueId);
+      assert.deepEqual({ x: working.x, fontSize: working.fontSize, visible: working.visible }, { x: 159, fontSize: 9, visible: true });
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  await run("M81 inkompatibles gespeichertes PDF-Profil wird nicht stillschweigend gedruckt", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-pdf-invalid-profile-"));
+    try {
+      const adapter = createBbmPdfAdapter();
+      const profilePath = adapter.configureProfileRoot(root);
+      const layoutState = { ...adapter.getCurrentPdfLayoutState(), elements: registry.elements.map((definition) => ({
+        elementId: definition.id,
+        scopeId: SCOPE_ID,
+        ...Object.fromEntries((definition.capabilities || []).flatMap((capability) => ({
+          move: ["x", "y"], resize: ["width", "height"], resizeWidth: ["width"], resizeHeight: ["height"],
+          textMove: ["textOffsetX", "textOffsetY"], textResize: ["fontSize"], setTextAlignment: ["textAlignment"],
+          setLineSpacing: ["lineSpacing"], setVisibility: ["visible"],
+          setPageMargins: ["marginTop", "marginRight", "marginBottom", "marginLeft"],
+        }[capability] || [])).map((field) => [field, definition.baseline[field]])),
+      })) };
+      fs.mkdirSync(path.dirname(profilePath), { recursive: true });
+      fs.writeFileSync(profilePath, JSON.stringify({
+        schemaVersion: 1, documentKind: "pdf-layout-profile", applicationId: "bbm-produktiv", documentType: "protocol",
+        profileId: "pdf-standard", scopeId: SCOPE_ID, savedAt: "2026-08-16T12:00:00.000Z",
+        registryFingerprint: "sha256:incompatible", layoutState,
+      }), "utf8");
+      assert.throws(() => adapter.getPersistedPdfLayoutState(), (error) => error?.code === "pdf_layout_incompatible");
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 
   await run("M81 explizite Neuerzeugung aktualisiert Seitenzahl und nur BBM-kontrollierten Pfad", async () => {
@@ -121,6 +212,8 @@ async function runM81BbmPdfAdapterTests(run) {
     const nativeEditor = read("../UI-Editor-kit/reference-target-app/src/ReferenceTargetApp.Wpf/UI/Editor/ElectronTargetEditor.cs");
     assert.match(printIpc, /generatePdfForUiEditor/);
     assert.match(printIpc, /printToPDF/);
+    assert.match(printIpc, /data\.mode === "protocol"/);
+    assert.match(printIpc, /p\.pdfEditorPreview === true[\s\S]*getCurrentPdfLayoutState\(\)[\s\S]*getPersistedPdfLayoutState\(\)/);
     assert.match(renderer, /pdf\.bbm\.protocol/);
     assert.doesNotMatch([printIpc, renderer, nativeEditor].join("\n"), /ReferenceOrderFactory/);
     assert.doesNotMatch([printIpc, renderer].join("\n"), /https?:|WebSocket|fetch\s*\(/i);

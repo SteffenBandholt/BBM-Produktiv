@@ -411,7 +411,9 @@ async function runM85PdfSatzvertragTests(run) {
     assert.match(printIpc, /mode \|\| ""\)[\s\S]*=== "restarbeiten"[\s\S]*\? "landscape"/, CONTRACT.restColumns);
     assert.match(editorIpc, /generatePdfForUiEditor/, CONTRACT.singleProfile);
     assert.match(editorIpc, /getSharedBbmPdfAdapter/, CONTRACT.singleProfile);
+    assert.match(editorIpc, /configureProfileRoot\([\s\S]*module-protokoll/, CONTRACT.singleProfile);
     assert.doesNotMatch(editorIpc, /new .*ProfileStore|create.*ProfileStore/, CONTRACT.singleProfile);
+    assert.match(printIpc, /data\.mode === "protocol"[\s\S]*getPersistedPdfLayoutState\(\)/, CONTRACT.singleProfile);
     assert.match(printApp, /data\.mode === "headerTest"/, CONTRACT.historical);
     assert.match(restScreen, /printPdfAndPreviewInternal\(this\._buildRestarbeitenPdfPayload\(\)\)/, CONTRACT.historical);
     assert.match(restScreen, /mode:\s*"restarbeiten"[\s\S]*orientation:\s*"landscape"/, CONTRACT.historical);

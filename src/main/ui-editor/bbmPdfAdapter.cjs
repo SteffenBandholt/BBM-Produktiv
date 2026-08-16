@@ -1,6 +1,8 @@
 "use strict";
 
 const crypto = require("node:crypto");
+const fs = require("node:fs");
+const path = require("node:path");
 const {
   PDF_TARGET_CONTRACT_VERSION,
   PDF_TARGET_OPERATIONS,
@@ -14,6 +16,7 @@ const DOCUMENT_TYPE_ID = "protocol";
 const DISPLAY_NAME = "BBM-Protokoll";
 const SCOPE_ID = "pdf.bbm.protocol";
 const PDF_REGISTRY_VERSION = 1;
+const PDF_PROFILE_FILE_NAME = "bbm-produktiv.protocol.pdf-standard.pdf-layout.json";
 const DOMAIN_LOCKS = Object.freeze([
   "changeText", "changeValue", "modifyDomainData", "createRecord", "deleteRecord", "saveDomainData",
   "upload", "import", "export", "autosave", "sortRecords", "filterRecords", "changeStatus",
@@ -162,6 +165,36 @@ const REGISTRY_BASE = Object.freeze({
 
 const REGISTRY_FINGERPRINT = createPdfRegistryFingerprint(REGISTRY_BASE);
 const REGISTRY = Object.freeze({ ...REGISTRY_BASE, registryVersion: PDF_REGISTRY_VERSION, registryFingerprint: REGISTRY_FINGERPRINT });
+function createPersistedRegistryFingerprint() {
+  const kindNames = Object.freeze({
+    document: "Document", page: "Page", area: "Area", group: "Group", text: "Text", label: "Label", value: "Value",
+    image: "Image", table: "Table", tableColumn: "TableColumn", repeatingArea: "RepeatingArea", header: "Header", footer: "Footer",
+  });
+  const roleNames = Object.freeze({
+    layout: "Layout", content: "Content", meta: "Meta", structure: "Structure", date: "Date",
+    fieldLabel: "FieldLabel", heading: "Heading", columnHeader: "ColumnHeader",
+  });
+  const pageAreaNames = Object.freeze({ document: "Document", header: "Header", body: "Body", footer: "Footer" });
+  const capabilityNames = Object.freeze([
+    ["move", "Position"], ["resizeWidth", "Width"], ["resizeHeight", "Height"], ["textMove", "TextPosition"],
+    ["textResize", "FontSize"], ["setTextAlignment", "TextAlignment"], ["setLineSpacing", "LineSpacing"],
+    ["setVisibility", "Visibility"], ["setPageMargins", "PageMargins"],
+  ]);
+  const canonical = [...ELEMENTS].sort((left, right) => left.id < right.id ? -1 : left.id > right.id ? 1 : 0).map((entry) => {
+    const operations = new Set(entry.capabilities || []);
+    if (operations.has("resize")) {
+      operations.add("resizeWidth");
+      operations.add("resizeHeight");
+    }
+    return [
+      entry.id, entry.scopeId, entry.parentId || "", kindNames[entry.kind], roleNames[entry.role] || "Content",
+      capabilityNames.filter(([operation]) => operations.has(operation)).map(([, name]) => name).join(","),
+      pageAreaNames[entry.pageArea] || "Body", String(entry.order), entry.boundaryResizePolicy || "",
+    ].join("|");
+  }).join("\n");
+  return crypto.createHash("sha256").update(canonical, "utf8").digest("hex");
+}
+const PERSISTED_REGISTRY_FINGERPRINT = createPersistedRegistryFingerprint();
 const REGISTRY_VALIDATION = validatePdfRegistry(REGISTRY);
 if (!REGISTRY_VALIDATION.ok) {
   const error = new TypeError("BBM-PDF-Registry ist ungültig.");
@@ -171,6 +204,82 @@ if (!REGISTRY_VALIDATION.ok) {
 
 function clone(value) {
   return structuredClone(value);
+}
+
+function pdfProfileError(code, message, cause) {
+  return Object.assign(new Error(message), { code, ...(cause ? { cause } : {}) });
+}
+
+function assertExactKeys(value, expectedKeys, label) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw pdfProfileError("pdf_profile_invalid", `${label} ist ungültig.`);
+  }
+  const actual = Object.keys(value).sort();
+  const expected = [...expectedKeys].sort();
+  if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) {
+    throw pdfProfileError("pdf_profile_invalid", `${label} enthält unerwartete oder fehlende Felder.`);
+  }
+}
+
+function persistedLayoutFields(definition) {
+  const capabilities = new Set(definition.capabilities || []);
+  return [
+    ...(capabilities.has("move") ? ["x", "y"] : []),
+    ...(capabilities.has("resize") || capabilities.has("resizeWidth") ? ["width"] : []),
+    ...(capabilities.has("resize") || capabilities.has("resizeHeight") ? ["height"] : []),
+    ...(capabilities.has("textMove") ? ["textOffsetX", "textOffsetY"] : []),
+    ...(capabilities.has("textResize") ? ["fontSize"] : []),
+    ...(capabilities.has("setTextAlignment") ? ["textAlignment"] : []),
+    ...(capabilities.has("setLineSpacing") ? ["lineSpacing"] : []),
+    ...(capabilities.has("setVisibility") ? ["visible"] : []),
+    ...(capabilities.has("setPageMargins") ? ["marginTop", "marginRight", "marginBottom", "marginLeft"] : []),
+  ];
+}
+
+function validatePersistedProfileDocument(document) {
+  assertExactKeys(document, ["schemaVersion", "documentKind", "applicationId", "documentType", "profileId", "scopeId", "savedAt", "registryFingerprint", "layoutState"], "PDF-Profildokument");
+  if (document.schemaVersion !== 1 || document.documentKind !== "pdf-layout-profile" ||
+      document.applicationId !== APPLICATION_ID || document.documentType !== DOCUMENT_TYPE_ID ||
+      document.profileId !== "pdf-standard" || document.scopeId !== SCOPE_ID ||
+      document.registryFingerprint !== PERSISTED_REGISTRY_FINGERPRINT || !Number.isFinite(Date.parse(document.savedAt))) {
+    throw pdfProfileError("pdf_layout_incompatible", "Das gespeicherte PDF-Layoutprofil ist nicht mit der aktuellen BBM-PDF-Registry kompatibel.");
+  }
+  const state = document.layoutState;
+  assertExactKeys(state, ["scopeId", "capturedAt", "elements"], "PDF-LayoutState");
+  if (state.scopeId !== SCOPE_ID || !Number.isFinite(Date.parse(state.capturedAt)) || !Array.isArray(state.elements) || state.elements.length !== ELEMENTS.length) {
+    throw pdfProfileError("pdf_profile_invalid", "Der gespeicherte PDF-LayoutState ist unvollständig.");
+  }
+  const byId = new Map();
+  for (const current of state.elements) {
+    if (!current || typeof current !== "object" || Array.isArray(current) || typeof current.elementId !== "string" || byId.has(current.elementId)) {
+      throw pdfProfileError("pdf_profile_invalid", "Das gespeicherte PDF-Layout enthält ungültige oder doppelte Elemente.");
+    }
+    byId.set(current.elementId, current);
+  }
+  const normalized = [];
+  for (const definition of ELEMENTS) {
+    const current = byId.get(definition.id);
+    if (!current || current.scopeId !== SCOPE_ID) {
+      throw pdfProfileError("pdf_profile_invalid", `PDF-Layout-Element fehlt oder hat einen falschen Scope: ${definition.id}`);
+    }
+    const layoutFields = persistedLayoutFields(definition);
+    assertExactKeys(current, ["elementId", "scopeId", ...layoutFields], `PDF-Layout-Element ${definition.id}`);
+    for (const [field, value] of Object.entries(current)) {
+      if (["elementId", "scopeId"].includes(field)) continue;
+      if (field === "visible") {
+        if (typeof value !== "boolean") throw pdfProfileError("pdf_profile_invalid", `PDF-Sichtbarkeit ist ungültig: ${definition.id}`);
+      } else if (field === "textAlignment") {
+        if (!["left", "center", "right"].includes(value)) throw pdfProfileError("pdf_profile_invalid", `PDF-Textausrichtung ist ungültig: ${definition.id}`);
+      } else if (typeof value !== "number" || !Number.isFinite(value)) {
+        throw pdfProfileError("pdf_profile_invalid", `PDF-Layoutwert ist ungültig: ${definition.id}.${field}`);
+      }
+    }
+    normalized.push({ elementId: definition.id, scopeId: SCOPE_ID, ...clone(definition.baseline), ...clone(current) });
+  }
+  const normalizedState = { scopeId: SCOPE_ID, capturedAt: state.capturedAt, elements: normalized };
+  const states = new Map(normalized.map((entry) => [entry.elementId, entry]));
+  for (const definition of ELEMENTS) validateState(definition, states.get(definition.id), states);
+  return normalizedState;
 }
 
 function stateFromRegistry() {
@@ -259,6 +368,7 @@ function safeDocumentId(projectId, meetingId) {
 
 function createBbmPdfAdapter({ regenerate } = {}) {
   let regenerateHandler = regenerate;
+  let profileRoot = null;
   let working = stateFromRegistry();
   let context = null;
   let preview = { state: "missing", stale: true, generation: 0, pageCount: 0, generatedAt: null, activeDocumentId: "", controlledOutputPath: null, renderBounds: [] };
@@ -266,6 +376,26 @@ function createBbmPdfAdapter({ regenerate } = {}) {
 
   function getPdfRegistry() { return clone(REGISTRY); }
   function getCurrentPdfLayoutState() { return clone({ ...working, capturedAt: new Date().toISOString() }); }
+  function configureProfileRoot(value) {
+    if (typeof value !== "string" || !value.trim()) throw new TypeError("PDF-Profilwurzel fehlt.");
+    profileRoot = path.resolve(value);
+    return getPdfProfilePath();
+  }
+  function getPdfProfilePath() {
+    return profileRoot ? path.join(profileRoot, "pdf-layouts", PDF_PROFILE_FILE_NAME) : null;
+  }
+  function getPersistedPdfLayoutState() {
+    const filePath = getPdfProfilePath();
+    if (!filePath) throw pdfProfileError("pdf_profile_unavailable", "Der bestehende PDF-Profilpfad ist nicht konfiguriert.");
+    if (!fs.existsSync(filePath)) return stateFromRegistry();
+    let document;
+    try {
+      document = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    } catch (cause) {
+      throw pdfProfileError("pdf_profile_invalid", "Das gespeicherte PDF-Layoutprofil konnte nicht gelesen werden.", cause);
+    }
+    return clone(validatePersistedProfileDocument(document));
+  }
   function activeDocumentId() { return safeDocumentId(context?.projectId, context?.meetingId); }
   function setActiveDocumentContext(value = {}) {
     const projectId = String(value.projectId || "").trim();
@@ -360,8 +490,8 @@ function createBbmPdfAdapter({ regenerate } = {}) {
     regenerateHandler = handler;
   }
 
-  return Object.freeze({ getPdfRegistry, getCurrentPdfLayoutState, submitPdfChangeRequest, regeneratePdfPreview, getPreviewMetadata,
-    getPdfContract, setActiveDocumentContext, replaceCurrentPdfLayoutState, resetForDiagnostic, failNextApply, configureRegenerate });
+  return Object.freeze({ getPdfRegistry, getCurrentPdfLayoutState, getPersistedPdfLayoutState, getPdfProfilePath, submitPdfChangeRequest, regeneratePdfPreview, getPreviewMetadata,
+    getPdfContract, setActiveDocumentContext, replaceCurrentPdfLayoutState, resetForDiagnostic, failNextApply, configureRegenerate, configureProfileRoot });
 }
 
 const sharedBbmPdfAdapter = createBbmPdfAdapter();
@@ -372,7 +502,9 @@ module.exports = Object.freeze({
   DISPLAY_NAME,
   SCOPE_ID,
   PDF_REGISTRY_VERSION,
+  PDF_PROFILE_FILE_NAME,
   REGISTRY_FINGERPRINT,
+  PERSISTED_REGISTRY_FINGERPRINT,
   createBbmPdfAdapter,
   getSharedBbmPdfAdapter: () => sharedBbmPdfAdapter,
   getBbmPdfRegistry: () => clone(REGISTRY),

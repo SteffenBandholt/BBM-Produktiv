@@ -566,10 +566,12 @@ function registerPrintIpc() {
         restarbeitenLocationLabels: p.restarbeitenLocationLabels || null,
         showAmpelInList: typeof p.showAmpelInList === "boolean" ? p.showAmpelInList : null,
       });
-      if (p.pdfEditorPreview === true && data.mode === "protocol") {
+      if (data.mode === "protocol") {
         const { getSharedBbmPdfAdapter } = require("../ui-editor/bbmPdfAdapter.cjs");
         const pdfAdapter = getSharedBbmPdfAdapter();
-        data.pdfEditorLayoutState = pdfAdapter.getCurrentPdfLayoutState();
+        data.pdfEditorLayoutState = p.pdfEditorPreview === true
+          ? pdfAdapter.getCurrentPdfLayoutState()
+          : pdfAdapter.getPersistedPdfLayoutState();
         data.pdfEditorRegistry = pdfAdapter.getPdfRegistry();
       }
       // Version/Channel für PDF-Footer mitgeben

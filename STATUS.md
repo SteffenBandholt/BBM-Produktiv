@@ -1,5 +1,13 @@
 # STATUS.md — BBM-Produktiv
 
+## Gespeichertes PDF-Layout wirkt im normalen Produktdruck
+
+- Status: `[A]` im realen isolierten BBM praktisch abgenommen. Die normale Protokoll-PDF-Erzeugung liest jetzt den gespeicherten Zustand desselben bestehenden PDF-Layoutprofils; die Editor-Vorschau verwendet weiterhin den aktuellen Arbeitszustand für unmittelbare, noch ungespeicherte Vorschauänderungen. Es wurde keine zweite Layoutquelle eingeführt.
+- Der produktive Datenweg ist geschlossen: Profil unter `ui-editor/profiles/module-protokoll` → gemeinsamer BBM-PDF-Adapter → `print:getData` → vorhandener Protokoll-Satz/DOM → `print:toPdf`. Das gespeicherte Profil wird strikt auf Schema, Scope, vollständige Elementmenge, elementbezogene Eigenschaften und den nativen Registry-Fingerprint geprüft und anschließend gegen dieselbe Registry-Baseline aufgelöst.
+- Damit gelten gespeicherte Sichtbarkeit, Position, Schriftgröße und die vom Komponentenvertrag unterstützten Größenänderungen auch für normal außerhalb des Editors erzeugte Protokoll-PDFs. Fehlende Profile verwenden die Registry-Baseline; beschädigte oder inkompatible Profile werden nicht unbemerkt als scheinbar erfolgreicher Produktdruck ignoriert.
+- Reale AUS/EIN-Abnahme über zwei vollständige BBM-Starts: `Seite · Wert` im echten Editor ausgeblendet und gespeichert, Editor vollständig geschlossen, Protokoll über den normalen BBM-Weg erzeugt: im Dokument nur `Seite`, keine Werte `1 / 2` oder `2 / 2`. Danach Editor erneut geöffnet, Sichtbarkeit eingeschaltet und gespeichert, Editor vollständig geschlossen und dieselbe normale Produkt-PDF erneut erzeugt: `Seite 1 / 2` und `Seite 2 / 2` waren sichtbar. Die beiden finalen PDFs unterschieden sich auch binär.
+- Grün: gezielte M81-Adaptertests einschließlich echtem Profilroundtrip und Produktpfad, M85-Satzvertrag einschließlich aller 47 Golden-Fixtures, UI-Editor-Vertragscheck, Syntaxprüfung und gezielter ESLint-Lauf mit 0 Fehlern. Der größere bestehende Sammellauf bleibt an bereits paketfremd veralteten Registry-Sollzahlen/Fingerprints, Licensing-Hashes, Navigationserwartungen und Harness-Zählungen rot. Commit und Push: keiner.
+
 ## PDF-Editor-Bedienung und Neustart-Restore
 
 - Status: `[A]` im realen isolierten BBM-Protokoll über zwei vollständige Anwendungsstarts abgenommen; bestehende PDF-Architektur repariert, keine parallele Editor- oder Rendererarchitektur.
