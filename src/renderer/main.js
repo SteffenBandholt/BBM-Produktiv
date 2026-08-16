@@ -158,6 +158,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const router = new Router();
 
+  await router.ensureActiveModuleAccess({ force: true });
+
   applyThemeForSettings(DEFAULT_THEME_SETTINGS);
 
   const coreShell = new CoreShell({

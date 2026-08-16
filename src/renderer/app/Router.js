@@ -2,6 +2,7 @@
 
 import {
   findActiveModuleEntry,
+  getActiveGlobalModuleNavigation,
   getActiveProjectModuleNavigation,
   PROTOKOLL_MODULE_ID,
   resolveActiveModuleScreen,
@@ -613,6 +614,33 @@ export default class Router {
       }
     );
 
+    return true;
+  }
+
+  async openGlobalModule(moduleId, options = {}) {
+    await this.ensureActiveModuleAccess({ force: true });
+    const normalizedModuleId = String(moduleId || "").trim();
+    const normalizedNavigationKey = String(options?.navigationKey || "").trim();
+    if (!normalizedModuleId || !this._isModuleActive(normalizedModuleId)) return false;
+
+    const moduleNavigationEntries = getActiveGlobalModuleNavigation().filter(
+      (entry) => String(entry?.moduleId || "").trim() === normalizedModuleId
+    );
+    const navEntry = normalizedNavigationKey
+      ? moduleNavigationEntries.find((entry) => String(entry?.key || "").trim() === normalizedNavigationKey) || null
+      : moduleNavigationEntries[0] || null;
+    if (!navEntry) return false;
+
+    const moduleScreen = resolveActiveModuleScreen(normalizedModuleId, navEntry.workScreenId);
+    if (typeof moduleScreen !== "function") return false;
+    const moduleEntry = findActiveModuleEntry(normalizedModuleId);
+    await this.show(new moduleScreen({ router: this, moduleId: normalizedModuleId }), {
+      section: navEntry.section || normalizedModuleId,
+      isTopsView: false,
+      pageTitle: String(navEntry.label || "").trim() || null,
+      activeModuleLabel: String(navEntry.label || "").trim() || null,
+      hideSidebar: navEntry.hideSidebar === true || moduleEntry?.shell?.hideSidebar === true,
+    });
     return true;
   }
 

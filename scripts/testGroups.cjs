@@ -53,6 +53,7 @@ const TEST_GROUPS = Object.freeze([
       ["rechnungBooking.test.cjs", "runRechnungBookingTests"],
       ["rechnungPositions.test.cjs", "runRechnungPositionsTests"],
       ["rechnungStammdaten.test.cjs", "runRechnungStammdatenTests"],
+      ["rechnungNavigation.test.cjs", "runRechnungNavigationTests"],
     ]),
   }),
   Object.freeze({

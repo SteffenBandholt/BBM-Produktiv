@@ -1,5 +1,13 @@
 # STATUS.md â€” BBM-Produktiv
 
+## 2026-08-16 - Rechnungen im normalen Modulpfad erreichbar
+
+- Status: `[A]`; `rechnung` ist als globales Fachmodul im kanonischen Modulkatalog registriert. Die normale Shell leitet sichtbare globale Module aus deren Deskriptoren ab und oeffnet sie ueber den generischen Routerpfad.
+- Der ungepackte Entwicklungsstart schaltet Rechnungen ueber den bestehenden Modulzugriff frei; gepackte Laufzeiten folgen weiterhin ausschliesslich der lizenzierten Modulliste.
+- Reale Pruefung: BBM normal gestartet, sichtbaren Sidebar-Eintrag `Rechnungen` angeklickt und den aktuellen RechnungScreen mit leerer Belegliste geoeffnet. Kein DEV-/Settings-Einstieg war beteiligt.
+- Rechnungstestgruppe ist gruen. Die relevante Lizenzgruppe bestaetigt Modulstatus und DEV-Regeln; ihre bekannten paketfremden Altfehler bleiben unveraendert.
+- Kein Commit und kein Push. Naechster Schritt: Review und anschliessender separater Git-Abschluss.
+
 ## 2026-08-16 - Rechnung Step 1.1 bis 1.4 in bereinigte Architektur integriert
 
 - Status: `[A]`; die fehlenden Stammdaten-, Draft-, Arbeitsscreen- und Positionsfunktionen sind in die kanonischen Pfade `domain/rechnung`, `db/invoice*` und `ipc/rechnungIpc.js` integriert. Die alten parallelen `modules/rechnung`-Services, Repositories, Migrationen und IPCs wurden nicht uebernommen.

@@ -9,6 +9,8 @@ import {
   RESTARBEITEN_MAIN_HEADER_LAUNCHER,
   getMainHeaderLauncherContract,
 } from "../ui/MainHeader.uiEditorContract.js";
+import { getActiveGlobalModuleNavigation } from "./modules/moduleNavigation.js";
+import { isModuleActive } from "./modules/moduleAccessState.js";
 
 const REGISTRY_STATUS_SUCCESS_DURATION_MS = 2400;
 const REGISTRY_STATUS_ERROR_DURATION_MS = 6000;
@@ -156,9 +158,17 @@ export async function installDevelopmentUiEditorOpenButton({
 }
 
 export function createCoreShellNavigationRouteDefs(router) {
+  const moduleRoutes = getActiveGlobalModuleNavigation()
+    .filter((entry) => isModuleActive(entry.moduleId))
+    .map((entry) => ({
+      key: entry.key,
+      label: entry.label,
+      onClick: () => router.openGlobalModule(entry.moduleId, { navigationKey: entry.key }),
+    }));
   return [
     { key: "home", label: "Start", onClick: () => router.showHome() },
     { key: "projects", label: "Projekte", onClick: () => router.showProjects() },
+    ...moduleRoutes,
     { key: "firms", label: "Firmen", onClick: () => router.showFirms() },
     { key: "settings", label: "Einstellungen", onClick: () => router.showSettings() },
   ];
