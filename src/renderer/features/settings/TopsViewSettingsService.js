@@ -1,6 +1,9 @@
+import { TextLimitSettingsService } from "../../core/textregeln/index.js";
+
 export class TopsViewSettingsService {
-  constructor({ view }) {
+  constructor({ view, textLimitSettingsService } = {}) {
     this.view = view;
+    this.textLimitSettingsService = textLimitSettingsService || new TextLimitSettingsService();
   }
 
   async loadAmpelSetting() {
@@ -83,42 +86,16 @@ export class TopsViewSettingsService {
   }
 
   async loadTextLimitsSetting() {
-    const DEFAULT_TITLE_MAX = 100;
-    const DEFAULT_LONG_MAX = 500;
-    const parseLimit = (val, min, max, fallback) => {
-      const n = Math.floor(Number(val));
-      if (!Number.isFinite(n) || n <= 0) return fallback;
-      return Math.max(min, Math.min(max, n));
-    };
+    const limits = await this.textLimitSettingsService.load();
+    this.view.titleMax = limits.shortText;
+    this.view.longMax = limits.longText;
 
-    const api = window.bbmDb || {};
-    if (typeof api.appSettingsGetMany !== "function") {
-      this.view.titleMax = DEFAULT_TITLE_MAX;
-      this.view.longMax = DEFAULT_LONG_MAX;
-      return;
-    }
-
-    const res = await api.appSettingsGetMany(["tops.titleMax", "tops.longMax"]);
-    if (!res?.ok) {
-      this.view.titleMax = DEFAULT_TITLE_MAX;
-      this.view.longMax = DEFAULT_LONG_MAX;
-      return;
-    }
-
-    const data = res.data || {};
-    const titleMax = parseLimit(data["tops.titleMax"], 1, 5000, DEFAULT_TITLE_MAX);
-    const longMax = parseLimit(data["tops.longMax"], 1, 20000, DEFAULT_LONG_MAX);
-
-    this.view.titleMax = titleMax;
-    this.view.longMax = longMax;
-
-    if (this.view.inpTitle) {
-      this.view.inpTitle.maxLength = this.view._titleMax();
-      this.view.inpTitle.value = this.view._clampStr(this.view.inpTitle.value, this.view._titleMax());
-    }
-    if (this.view.taLongtext) {
-      this.view.taLongtext.maxLength = this.view._longMax();
-      this.view.taLongtext.value = this.view._clampStr(this.view.taLongtext.value, this.view._longMax());
+    const editbox = this.view.workbench?.sharedEditboxCore?.editbox;
+    if (typeof editbox?.setLimits === "function") {
+      editbox.setLimits(limits);
+    } else {
+      if (this.view.inpTitle) this.view.inpTitle.maxLength = limits.shortText;
+      if (this.view.taLongtext) this.view.taLongtext.maxLength = limits.longText;
     }
 
     this.view._updateCharCounters();

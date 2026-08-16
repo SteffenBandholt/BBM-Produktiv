@@ -1,6 +1,7 @@
 import {
   getActiveModuleIds,
   getDerivedActiveModuleCatalog,
+  getDerivedActiveModuleIds,
 } from "./moduleCatalog.js";
 
 const DEFAULT_ACTIVE_MODULE_IDS = Object.freeze(getActiveModuleIds());
@@ -25,7 +26,8 @@ function normalizeModuleIds(moduleIds) {
 }
 
 function setCachedActiveModuleIds(moduleIds, source = "license") {
-  cachedActiveModuleIds = Object.freeze(normalizeModuleIds(moduleIds));
+  const normalizedModuleIds = normalizeModuleIds(moduleIds);
+  cachedActiveModuleIds = Object.freeze(getDerivedActiveModuleIds(normalizedModuleIds));
   cachedActiveModuleSource = String(source || "").trim() || "license";
   return cachedActiveModuleIds;
 }

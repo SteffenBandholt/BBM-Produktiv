@@ -5,8 +5,8 @@ export const TEXT_RULE_LEVEL = Object.freeze({
 });
 
 export const DEFAULT_TEXT_LIMITS = Object.freeze({
-  shortText: 240,
-  longText: 4000,
+  shortText: 100,
+  longText: 500,
 });
 
 export const DEFAULT_WARNING_RATIO = 0.85;
@@ -64,4 +64,3 @@ export function evaluateLongText(longText, config = {}) {
   const warningRatio = toRatio(config.warningRatio, DEFAULT_WARNING_RATIO);
   return evaluateTextLength(longText, { limit, warningRatio });
 }
-

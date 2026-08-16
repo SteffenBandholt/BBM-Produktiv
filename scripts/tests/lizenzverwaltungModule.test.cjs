@@ -1166,8 +1166,8 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('label: "Protokolltitel"'), true);
     assert.equal(settingsViewSource.includes('label: "Vorbemerkung"'), true);
     assert.equal(settingsViewSource.includes('label: "Vorbemerkung in der Ausgabe drucken"'), true);
-    assert.equal(settingsViewSource.includes('title: "Textgrenzen für TOPs"'), true);
-    assert.equal(settingsViewSource.includes('hint: "Maximale Länge für Kurztext und Langtext in TOPs."'), true);
+    assert.equal(settingsViewSource.includes('"Textgrenzen für Protokoll und Restarbeiten"'), true);
+    assert.equal(settingsViewSource.includes('"Maximale Länge für Kurztext und Langtext in Protokoll und Restarbeiten."'), true);
     assert.equal(settingsViewSource.includes('label: "Vorbemerkung drucken (true/false)"'), false);
     assert.equal(settingsViewSource.includes('title: "Protokoll-Textgrenzen"'), false);
   });
@@ -1375,7 +1375,8 @@ async function runLizenzverwaltungModuleTests(run) {
       assert.equal(contentText.includes("Aktiviert Diktat unabhängig von der Lizenz"), true);
       assert.equal(contentText.includes("Versionierung"), true);
       assert.equal(contentText.includes("DB-Diagnose"), true);
-      assert.equal(contentText.includes("Protokoll-Textgrenzen"), true);
+      assert.equal(contentText.includes("Textgrenzen"), true);
+      assert.equal(contentText.includes("Protokoll-Textgrenzen"), false);
       assert.equal(contentText.includes("Farbschema"), true);
     } finally {
       global.document = previousDocument;

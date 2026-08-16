@@ -10,6 +10,16 @@
 - Rechnung-Testgruppe, gezielte M80-/M82-/M83-Vertrags- und Fingerprintpruefungen sowie der UI-Editor-Kit-Selbsttest sind fuer das Paket gruen. Der bekannte paketfremde Schutz-Hash von `docs/licensing.md` bleibt rot und wurde nicht veraendert. Der breite UI-Editor-Gruppenlauf lieferte innerhalb von drei Minuten keine Ausgabe und wurde kontrolliert beendet.
 - Kein Commit, kein Push. Naechster Schritt: nativen Manager in einer vorhandenen .NET-SDK-Umgebung bauen und den isolierten Rechnungsscope einmal real verbinden; erst danach Fortsetzungsfreigabe fuer Rechnung Step 2.
 
+## Dynamische Textgrenzen fuer Protokoll und Restarbeiten
+
+- Status: `[A]` technisch umgesetzt und im isolierten normalen Electron-BBM praktisch geprueft; die fachliche Nutzerfreigabe bleibt offen.
+- Fuehrende Benutzerwerte sind unveraendert `tops.titleMax` fuer Kurztext und `tops.longMax` fuer Langtext. Protokoll und Restarbeiten beziehen Schluessel, Wertebereiche und Fallbacks aus demselben Settings-Service; es wurden keine parallelen Restarbeiten-Settings angelegt.
+- Entfernt wurden die produktiv wirksamen Festwerte 82 (Protokoll-Kurztext), 87/400 (Restarbeiten) und 4000 (gemeinsamer Langtext-Fallback). `maxlength`, Textregel und Restzeichenanzeige verwenden je Textart denselben geladenen Wert.
+- Der bestehende `app-settings:changed`-Weg aktualisiert beide geoeffneten Module. Vorhandene ueberlange Texte werden beim Laden, Oeffnen, Settingswechsel und Diktat nicht abgeschnitten; die Anzeige kann fuer solchen Bestand bewusst negativ werden.
+- Reale isolierte Abnahme: Protokoll 100/500 mit echter Eingabe 101 -> 100 und 501 -> 500; Settings-UI 500 -> 750; Live-Refresh 120/900 -> 140/1000. Restarbeiten 100/750 mit echter Eingabe 101 -> 100 und 751 -> 750; Live-Refresh 100/750 -> 120/900. Ueberlanger Bestand blieb in Protokoll mit 120/800 und in Restarbeiten mit 130/950 vollstaendig erhalten.
+- Gezielte Tests sind gruen: TopsScreen 53, Restarbeiten-Textgrenzen 3, Dictionary/Diktat 8, M82.7 44, UI-Editor-Vertragscheck und Diff-/Syntaxpruefung. Der vollstaendige Restarbeiten-Test behaelt den bekannten paketfremden Quicklane-Transform-Fehler; `core-protokoll` den bekannten fehlenden Quicklane-Text `ToDo`. Der gezielte ESLint-Lauf hat 0 Fehler und 8 bestehende Warnungen.
+- Commit, Push und PR: keiner. Naechster offener Schritt: fachliche Sichtfreigabe; keine weitere Textregel- oder Settings-Ausweitung ohne eigenen Auftrag.
+
 ## P1-A - Protokoll V1: UI und Zustaende
 
 - Status: `[P]`; die drei letzten P1-A-Abnahmekorrekturen sind technisch und praktisch im isolierten Electron-Profil geprueft. Die fachliche Nutzerabnahme bleibt offen.
@@ -4168,3 +4178,11 @@ Wichtig:
 - UI Test A und Test B sind grün: dieselbe Geometrie blieb nach erneutem Öffnen im laufenden BBM sowie nach vollständigem BBM-Ende und erneutem `npm start` erhalten.
 - PDF wurde im selben produktiven Ablauf von `24,18 / 120,9 / 40,92 mm` auf `24,18 / 121,9 / 39,92 mm` geändert und gespeichert. Das Profil wechselte von SHA-256 `5FBF12A61D4C04455DFDD602CD89AFDF0579E61BC07EE61B7A7959465BF17A7B` zu `3670E776493F711061420809B9A6F05370AD27D9948BDBFAC506DA3F6F332982`. Wiederöffnung und Vollneustart stellten exakt `121,9 / 39,92 mm` wieder her; die echte Vorschau blieb bei vier Seiten.
 - Gezielte K17-, M86.23-, M85-Golden-, UI-Editor-Kit-Vertrags- und 38 native Save-/Restore-/PDF-Tests sind grün. Der komplette BBM-Sammellauf bleibt an bereits dokumentierten paketfremden Altassertionen (Registryversion/Fingerprint, Licensing-Hash, alte Breiten- und Harness-Erwartungen) rot. Commit und Push: keiner.
+
+## Core-Stabilisierung - Main-/IPC-Modulvertrag und Projektmodul-Navigation
+
+- Status: Der vorbereitete Main-/IPC-Modulvertrag ist produktiv angeschlossen. Protokoll- und Restarbeiten-IPCs werden anhand der aktiven Lizenzmodule registriert; Core-/Shared-IPCs bleiben direkt registriert. Rechnung besitzt weiterhin keinen Fach-IPC-Registrar.
+- Projektmodule dürfen mehrere projektbezogene Navigationseinträge besitzen. `Restarbeiten` und `Pläne` verwenden beide `moduleId: "restarbeiten"` und werden über die getrennten Navigation-Keys `restarbeiten` und `plaene` sichtbar gehalten und aufgelöst.
+- Reale DEV-Abnahme: Start ohne externe Lizenzdatei und ohne neue Lizenzabfrage; Protokoll, Restarbeiten und Pläne gleichzeitig sichtbar und jeweils separat geöffnet; keine `No handler registered`-Fehler.
+- Gezielte Navigationstests, UI-Editor-Vertragscheck, ESLint der geänderten Dateien und `git diff --check` sind grün. ESLint meldet ausschließlich bestehende Warnungen.
+- Die bereits dokumentierten globalen `npm test`-/`npm run lint`-Fehler bleiben paketfremd und wurden nicht verändert. Nächster offener Schritt: keiner für dieses Paket; Commit-SHA folgt im Abschlussbericht.

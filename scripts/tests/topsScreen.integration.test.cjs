@@ -44,6 +44,12 @@ async function runTopsScreenIntegrationTests(run) {
   const { EditboxShell } = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/core/editbox/EditboxShell.js")
   );
+  const {
+    TEXT_LIMIT_SETTING_KEYS,
+    TextLimitSettingsService,
+  } = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/core/textregeln/index.js")
+  );
   const focusHelper = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/modules/protokoll/topCreateFocus.js")
   );
@@ -302,6 +308,97 @@ async function runTopsScreenIntegrationTests(run) {
 
     return gaps[0] || null;
   }
+
+  await run("Textgrenzen: gemeinsamer Settings-Service lädt und aktualisiert beide Benutzerwerte", async () => {
+    let changeHandler = null;
+    let unsubscribeCalled = false;
+    const values = {
+      [TEXT_LIMIT_SETTING_KEYS.shortText]: "120",
+      [TEXT_LIMIT_SETTING_KEYS.longText]: "500",
+    };
+    const service = new TextLimitSettingsService({
+      api: {
+        async appSettingsGetMany(keys) {
+          assert.deepEqual(keys, ["tops.titleMax", "tops.longMax"]);
+          return { ok: true, data: { ...values } };
+        },
+        appSettingsOnChanged(handler) {
+          changeHandler = handler;
+          return () => {
+            unsubscribeCalled = true;
+          };
+        },
+      },
+    });
+
+    assert.deepEqual(await service.load(), { shortText: 120, longText: 500 });
+    let changedLimits = null;
+    const unsubscribe = service.subscribe((limits) => {
+      changedLimits = limits;
+    });
+    values[TEXT_LIMIT_SETTING_KEYS.longText] = "750";
+    await changeHandler({ keys: [TEXT_LIMIT_SETTING_KEYS.longText] });
+    assert.deepEqual(changedLimits, { shortText: 120, longText: 750 });
+    changedLimits = null;
+    await changeHandler({ keys: ["unrelated.setting"] });
+    assert.equal(changedLimits, null);
+    unsubscribe();
+    assert.equal(unsubscribeCalled, true);
+  });
+
+  await run("Protokoll: Settingsgrenzen steuern beide Felder und erhalten längeren Bestand", async () => {
+    const previous = { document: globalThis.document, window: globalThis.window };
+    const doc = createFakeDocument();
+    let onSettingsChanged = null;
+    let unsubscribed = false;
+    const textLimitSettingsService = {
+      async load() {
+        return { shortText: 12, longText: 20 };
+      },
+      subscribe(handler) {
+        onSettingsChanged = handler;
+        return () => {
+          unsubscribed = true;
+        };
+      },
+    };
+    globalThis.document = doc;
+    globalThis.window = { document: doc };
+    try {
+      const screen = new TopsScreen({
+        router: { context: { ui: {} } },
+        projectId: 1,
+        meetingId: 1,
+        textLimitSettingsService,
+      });
+      screen.render();
+      const editbox = screen.workbench.sharedEditboxCore.editbox;
+      editbox.setValue({ shortText: "S".repeat(15), longText: "L".repeat(25) });
+
+      await screen._loadTextLimits();
+      screen._bindTextLimitSettings();
+      assert.equal(editbox.shortInput.maxLength, 12);
+      assert.equal(editbox.longInput.maxLength, 20);
+      assert.equal(editbox.shortInput.value.length, 15);
+      assert.equal(editbox.longInput.value.length, 25);
+      assert.equal(editbox.shortCounter.textContent, "-3");
+      assert.equal(editbox.longCounter.textContent, "-5");
+
+      onSettingsChanged({ shortText: 18, longText: 30 });
+      assert.equal(editbox.shortInput.maxLength, 18);
+      assert.equal(editbox.longInput.maxLength, 30);
+      assert.equal(editbox.shortCounter.textContent, "3");
+      assert.equal(editbox.longCounter.textContent, "5");
+      assert.equal(editbox.getValue().shortText.length, 15);
+      assert.equal(editbox.getValue().longText.length, 25);
+
+      screen._textLimitUnsubscribe();
+      assert.equal(unsubscribed, true);
+    } finally {
+      globalThis.document = previous.document;
+      globalThis.window = previous.window;
+    }
+  });
 
   await run("Tops v2 Integration: Auswahl -> Workbench-State + ReadOnly-Sichtbarkeit", async () => {
     const list = [
@@ -1720,7 +1817,7 @@ async function runTopsScreenIntegrationTests(run) {
         { hasSelection: true, isReadOnly: false }
       );
       assert.equal(core.root.dataset.topLevel, "1");
-      assert.equal(core.editbox.shortInput.maxLength, 82);
+      assert.equal(core.editbox.shortInput.maxLength, 100);
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;
@@ -1890,6 +1987,40 @@ async function runTopsScreenIntegrationTests(run) {
     await controller._applyDictationTextToField("Neuer Satz", "longText");
     assert.equal(String(longInput.value || "").includes("Neuer Satz"), true);
     assert.equal(view._updateCharCountersCalled > 1, true);
+  });
+
+  await run("Protokoll: Diktat nutzt dynamische Grenzen und schützt überlangen Bestand", async () => {
+    const doc = createFakeDocument();
+    const shortInput = doc.createElement("input");
+    const longInput = doc.createElement("textarea");
+    let shortLimit = 5;
+    let longLimit = 10;
+    const view = {
+      inpTitle: shortInput,
+      taLongtext: longInput,
+      _titleMax: () => shortLimit,
+      _longMax: () => longLimit,
+      _normTitle: (value) => String(value || "").trim(),
+      _normLong: (value) => String(value || "").trimEnd(),
+      _updateCharCounters() {},
+    };
+    const controller = new DictationController({ view, ensureAudioAvailable: async () => true });
+
+    await controller._applyDictationTextToField("abcdef", "shortText");
+    assert.equal(shortInput.value, "abcde");
+
+    longInput.value = "12345678";
+    await controller._applyDictationTextToField("ABCDE", "longText");
+    assert.equal(longInput.value, "12345678\nA");
+
+    longInput.value = "L".repeat(12);
+    await controller._applyDictationTextToField("neu", "longText");
+    assert.equal(longInput.value, "L".repeat(12));
+
+    shortLimit = 8;
+    longLimit = 15;
+    await controller._applyDictationTextToField("abcdefghij", "shortText");
+    assert.equal(shortInput.value, "abcdefgh");
   });
 
   await run("AudioFeature: Diktat-Testfreigabe aktiviert die Diktat-Buttons ohne Lizenzfeature", async () => {

@@ -309,11 +309,22 @@ export class DictationController {
     return String(term || "").trim().toLocaleLowerCase("de-DE");
   }
 
-  _deriveShortTextFromDictation(text) {
+  _getTextLimit(target) {
     const view = this.view || {};
+    const resolver = target === "longText" ? view._longMax : view._titleMax;
+    const value = typeof resolver === "function" ? Number(resolver.call(view)) : Number.NaN;
+    return Number.isFinite(value) && value > 0 ? Math.floor(value) : null;
+  }
+
+  _limitNewText(value, target) {
+    const text = String(value || "");
+    const limit = this._getTextLimit(target);
+    return limit ? text.slice(0, limit) : text;
+  }
+
+  _deriveShortTextFromDictation(text) {
     const raw = String(text || "").trim();
     if (!raw) return "";
-    const maxLen = typeof view._titleMax === "function" ? view._titleMax() : 100;
     const stopwords = ["also", "und", "oder", "aber", "dann", "ja", "nein"];
     let firstSentence = raw.split(/[.!?]/)[0] || raw;
     firstSentence = firstSentence.replace(/\s+/g, " ").trim();
@@ -322,7 +333,7 @@ export class DictationController {
       words.shift();
     }
     const candidate = words.join(" ");
-    return typeof view._clampStr === "function" ? view._clampStr(candidate, maxLen) : candidate;
+    return this._limitNewText(candidate, "shortText");
   }
 
   async _applyDictationTextToField(text, target, meta = {}) {
@@ -339,29 +350,23 @@ export class DictationController {
 
     if (tgt === "shortText" && shortField) {
       const normalized = typeof view._normTitle === "function" ? view._normTitle(text) : text;
-      shortField.value =
-        typeof view._clampStr === "function"
-          ? view._clampStr(normalized, view._titleMax?.() || 100)
-          : normalized;
+      shortField.value = this._limitNewText(normalized, "shortText");
       shortField.focus?.();
     } else if (tgt === "longText" && longField) {
       const current = String(longField.value || "");
-      const joined = current ? `${current.replace(/\s+$/g, "")}\n${text}` : text;
-      const normalized = typeof view._normLong === "function" ? view._normLong(joined) : joined;
-      longField.value =
-        typeof view._clampStr === "function"
-          ? view._clampStr(normalized || "", view._longMax?.() || 500)
-          : normalized || "";
+      const limit = this._getTextLimit("longText");
+      if (!limit || current.length < limit) {
+        const joined = current ? `${current.replace(/\s+$/g, "")}\n${text}` : text;
+        const normalized = typeof view._normLong === "function" ? view._normLong(joined) : joined;
+        longField.value = limit ? String(normalized || "").slice(0, limit) : normalized || "";
+      }
       longField.focus?.();
       if (shortField) {
         const currentShort = String(shortField.value || "").trim();
         if (!currentShort || currentShort === "(ohne Bezeichnung)") {
           const derived = this._deriveShortTextFromDictation(text);
           if (derived) {
-            shortField.value =
-              typeof view._clampStr === "function"
-                ? view._clampStr(derived, view._titleMax?.() || 100)
-                : derived;
+            shortField.value = derived;
           }
         }
       }

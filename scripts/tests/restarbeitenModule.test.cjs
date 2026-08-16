@@ -501,6 +501,47 @@ async function runRestarbeitenModuleTests(run) {
     }
   });
 
+  await run("Restarbeiten: Screen übernimmt Settingswechsel ohne Entwurfsverlust", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+    );
+    let onSettingsChanged = null;
+    let unsubscribed = false;
+    let renderCount = 0;
+    const textLimitSettingsService = {
+      async load() {
+        return { shortText: 30, longText: 50 };
+      },
+      subscribe(handler) {
+        onSettingsChanged = handler;
+        return () => {
+          unsubscribed = true;
+        };
+      },
+    };
+    const screen = new mod.default({
+      projectId: "p-1",
+      project: { id: "p-1" },
+      textLimitSettingsService,
+    });
+    screen.draft = { short_text: "bestehender Entwurf", long_text: "bleibt vollständig" };
+    screen._renderShell = () => {
+      renderCount += 1;
+    };
+    screen._bindTextLimitSettings();
+
+    onSettingsChanged({ shortText: 40, longText: 60 });
+    assert.deepEqual(screen.textLimits, { shortText: 40, longText: 60 });
+    assert.deepEqual(screen.draft, {
+      short_text: "bestehender Entwurf",
+      long_text: "bleibt vollständig",
+    });
+    assert.equal(renderCount, 1);
+
+    screen.destroy();
+    assert.equal(unsubscribed, true);
+  });
+
   await run("Restarbeiten: UI-Editor-Zielgruppen sind registriert und im DOM markiert", async () => {
     const uiEditor = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/uiEditor/restarbeitenUiElements.js")
@@ -1070,6 +1111,7 @@ async function runRestarbeitenModuleTests(run) {
     try {
       const root = editbox.buildRestarbeitenEditbox({
         draft: { item_class: "rest", status: "offen", short_text: "" },
+        textLimits: { shortText: 12, longText: 20 },
       });
       const text = collectText(root);
       const options = collectOptions(root);
@@ -1112,22 +1154,52 @@ async function runRestarbeitenModuleTests(run) {
       assert.notEqual(findByUiId(root, "restarbeiten.editbox.meta").children[0], findByUiId(root, "restarbeiten.editbox.meta.itemClass"));
       assert.equal(shortControl.tagName, "INPUT");
       assert.equal(shortControl.getAttribute("data-ui-editor-id"), "restarbeiten.editbox.text.short.input");
-      assert.equal(shortControl.getAttribute("maxlength"), "87");
+      assert.equal(shortControl.getAttribute("maxlength"), "12");
       assert.equal(longControl.tagName, "TEXTAREA");
       assert.equal(longControl.getAttribute("data-ui-editor-id"), "restarbeiten.editbox.text.long.input");
-      assert.equal(longControl.getAttribute("maxlength"), "400");
-      assert.equal(findByUiId(root, "restarbeiten.editbox.text.short.remaining").textContent, "87");
-      assert.equal(findByUiId(root, "restarbeiten.editbox.text.long.remaining").textContent, "400");
+      assert.equal(longControl.getAttribute("maxlength"), "20");
+      assert.equal(findByUiId(root, "restarbeiten.editbox.text.short.remaining").textContent, "12");
+      assert.equal(findByUiId(root, "restarbeiten.editbox.text.long.remaining").textContent, "20");
       triggerValue(shortField, "abc", "input");
-      assert.equal(findByUiId(root, "restarbeiten.editbox.text.short.remaining").textContent, "84");
+      assert.equal(findByUiId(root, "restarbeiten.editbox.text.short.remaining").textContent, "9");
       triggerValue(longField, "abcd", "input");
-      assert.equal(findByUiId(root, "restarbeiten.editbox.text.long.remaining").textContent, "396");
+      assert.equal(findByUiId(root, "restarbeiten.editbox.text.long.remaining").textContent, "16");
       const shortDictation = findByUiId(root, "restarbeiten.editbox.text.short.dictation");
       assert.equal(Boolean(shortDictation), true);
       assert.equal(shortDictation.parentElement.className, "bbm-restarbeiten-text-label__row");
       assert.equal(shortDictation.getAttribute("data-bbm-dictation-state"), "ready");
       assert.equal(findNodes(shortDictation, (node) => node.getAttribute?.("data-bbm-dictation-icon") === "ready").length, 1);
       assert.equal(findNodes(shortDictation, (node) => node.getAttribute?.("data-bbm-dictation-icon") === "recording").length, 1);
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
+  await run("Restarbeiten: dynamische Textgrenzen erhalten längeren Bestand vollständig", async () => {
+    const editbox = await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/RestarbeitenEditbox.js"));
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const root = editbox.buildRestarbeitenEditbox({
+        draft: {
+          item_class: "rest",
+          status: "offen",
+          short_text: "S".repeat(15),
+          long_text: "L".repeat(25),
+        },
+        textLimits: { shortText: 10, longText: 20 },
+      });
+      const shortField = findByUiId(root, "restarbeiten.editbox.text.short");
+      const longField = findByUiId(root, "restarbeiten.editbox.text.long");
+      const shortControl = findControl(shortField);
+      const longControl = findControl(longField);
+
+      assert.equal(shortControl.maxLength, 10);
+      assert.equal(longControl.maxLength, 20);
+      assert.equal(shortControl.value.length, 15);
+      assert.equal(longControl.value.length, 25);
+      assert.equal(findByUiId(root, "restarbeiten.editbox.text.short.remaining").textContent, "-5");
+      assert.equal(findByUiId(root, "restarbeiten.editbox.text.long.remaining").textContent, "-5");
     } finally {
       globalThis.document = prevDocument;
     }

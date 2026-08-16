@@ -475,3 +475,11 @@ Dabei gilt:
   separate aktive MainHeader-Maildialog blieb außerhalb dieser Welle.
 - Nächster Schritt ist ausschließlich die visuelle Freigabe; keine automatische
   Löschung und keine sechste Migrationswelle.
+
+### Mini-Paket dynamische Textgrenzen (abgeschlossen)
+
+- Ein kleiner gemeinsamer Settings-Service in Container 3 stellt die vorhandenen Benutzerwerte `tops.titleMax` und `tops.longMax` fuer Protokoll und Restarbeiten bereit.
+- Die Fachmodule in Container 4 und 5 verwenden diese Werte fuer Eingabelimit und Restzeichenanzeige; parallele Settings, neue Events, Datenbankaenderungen und Layoutumbauten wurden nicht eingefuehrt.
+- Der bestehende Settings-Change-Kanal aktualisiert geoeffnete Editboxen. Ueberlanger gespeicherter Bestand bleibt vollstaendig erhalten.
+- Der Nachweis in Container 6 umfasst gezielte Modul-/Diktat-/Restzeichen-Tests, den UI-Editor-Vertragscheck und einen isolierten praktischen Electron-Lauf beider Module.
+- Das Paket aendert keine aktive Modularisierungsachse und zieht keinen weiteren Folgeschritt vor.

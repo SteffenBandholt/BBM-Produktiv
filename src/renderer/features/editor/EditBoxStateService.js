@@ -42,11 +42,10 @@ export class EditBoxStateService {
   }
 
   applyTextValues(top) {
-    const titleVal = this.view._clampStr(top.title || "", this.view._titleMax());
-    this.view.inpTitle.value = titleVal;
+    this.view.inpTitle.value = String(top.title || "");
 
     if (this.view.taLongtext) {
-      this.view.taLongtext.value = this.view._clampStr(top.longtext || "", this.view._longMax());
+      this.view.taLongtext.value = String(top.longtext || "");
     }
   }
 

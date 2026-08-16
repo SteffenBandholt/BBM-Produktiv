@@ -51,7 +51,6 @@ export class SharedEditboxCore {
       typeof onStartDictation === "function" ? onStartDictation : null;
 
     this.editbox = new EditboxShell();
-    this.editbox.setLimits({ shortText: 82 });
     this.root = this.editbox.getElement();
     this.flagsWrap = this.editbox.flagsWrap;
     this.shortLabel = this.editbox.shortLabel;
@@ -113,7 +112,6 @@ export class SharedEditboxCore {
 
   _bindDraftChangeSources() {
     this.editbox.shortInput.addEventListener("input", () => {
-      this._enforceShortTextLimit();
       this._updateCounters();
       this._emitDraftChange("text");
     });
@@ -124,16 +122,6 @@ export class SharedEditboxCore {
     this.editbox.flagsWrap.addEventListener("change", () => this._emitDraftChange("flags"));
     this.editbox.shortInput.addEventListener("blur", () => this._emitTextBlur("shortText"));
     this.editbox.longInput.addEventListener("blur", () => this._emitTextBlur("longText"));
-  }
-
-  _enforceShortTextLimit() {
-    if (typeof this.editbox?._enforceShortTextLimit === "function") {
-      this.editbox._enforceShortTextLimit();
-      return;
-    }
-    const limit = Number(this.editbox?.shortInput?.maxLength || 70);
-    const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 70;
-    this.editbox.shortInput.value = String(this.editbox.shortInput.value || "").slice(0, safeLimit);
   }
 
   _updateCounters() {
@@ -385,6 +373,15 @@ export class SharedEditboxCore {
     const before = currentValue.slice(0, start);
     const after = currentValue.slice(end);
     const nextValue = `${before}${replacement}${after}`;
+    const inputLimit = Number(fieldEl.maxLength);
+    if (
+      Number.isFinite(inputLimit) &&
+      inputLimit > 0 &&
+      nextValue.length > inputLimit &&
+      nextValue.length > currentValue.length
+    ) {
+      return { ok: false, error: `Textgrenze von ${inputLimit} Zeichen erreicht.` };
+    }
     fieldEl.value = nextValue;
     const caretStart = before.length;
     const caretEnd = caretStart + String(replacement || "").length;
@@ -396,9 +393,6 @@ export class SharedEditboxCore {
       }
     }
 
-    if (fieldEl === this.editbox.shortInput && typeof this._enforceShortTextLimit === "function") {
-      this._enforceShortTextLimit();
-    }
     this._updateCounters();
     this._emitDraftChange("text");
     return { ok: true, value: nextValue };

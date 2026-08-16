@@ -147,22 +147,25 @@ export default class ProjectsScreen {
       .filter((entry) => String(entry?.moduleId || "").trim() !== "projectFirms")
       .map((entry) => {
         const moduleId = String(entry?.moduleId || "").trim();
+        const navigationKey = String(entry?.navigationKey || "").trim();
         const label = String(entry?.label || moduleId || "").trim();
         const description = String(entry?.description || "").trim();
-        if (!moduleId || !label) return null;
+        if (!moduleId || !navigationKey || !label) return null;
 
         return {
           moduleId,
+          navigationKey,
           label,
           description,
-          onClick: async () => this._openProjectModuleFromTile({ moduleId, project }),
+          onClick: async () => this._openProjectModuleFromTile({ moduleId, navigationKey, project }),
         };
       })
       .filter(Boolean);
   }
 
-  async _openProjectModuleFromTile({ moduleId, project } = {}) {
+  async _openProjectModuleFromTile({ moduleId, navigationKey, project } = {}) {
     const normalizedModuleId = String(moduleId || "").trim();
+    const normalizedNavigationKey = String(navigationKey || "").trim();
     const effectiveProjectId = String(project?.id || "").trim();
     if (!normalizedModuleId || !effectiveProjectId) return false;
 
@@ -170,6 +173,7 @@ export default class ProjectsScreen {
       if (typeof this.router?.openProjectModule === "function") {
         const result = await this.router.openProjectModule(effectiveProjectId, normalizedModuleId, {
           project: project || null,
+          navigationKey: normalizedNavigationKey,
         });
         if (typeof result === "object") {
           if (result?.blocked) {
@@ -206,6 +210,7 @@ export default class ProjectsScreen {
     if (typeof this.router?.openProjectModule === "function") {
       const result = await this.router.openProjectModule(effectiveProjectId, normalizedModuleId, {
         project: project || null,
+        navigationKey: normalizedNavigationKey,
       });
       if (typeof result === "object") {
         if (result?.blocked) {
@@ -1152,12 +1157,13 @@ export default class ProjectsScreen {
           e.stopImmediatePropagation?.();
         } catch (_) {}
       };
-      const makeRailButton = ({ text, actionType, moduleId = "", titleText = "", onClick }) => {
+      const makeRailButton = ({ text, actionType, moduleId = "", navigationKey = "", titleText = "", onClick }) => {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = text;
         btn.dataset.projectAction = actionType;
         if (moduleId) btn.dataset.moduleId = moduleId;
+        if (navigationKey) btn.dataset.navigationKey = navigationKey;
         btn.title = titleText || text;
         btn.style.width = "auto";
         btn.style.padding = "0";
@@ -1215,6 +1221,7 @@ export default class ProjectsScreen {
             text: moduleAction.label,
             actionType: "module",
             moduleId: moduleAction.moduleId,
+            navigationKey: moduleAction.navigationKey,
             titleText: moduleAction.description,
             onClick: moduleAction.onClick,
           })
