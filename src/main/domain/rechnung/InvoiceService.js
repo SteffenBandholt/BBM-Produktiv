@@ -25,8 +25,12 @@ class InvoiceService {
 
   async defaults() {
     const rules = await loadRules();
-    const settings = this.settingsGetMany([rules.PAYMENT_TERM_SETTING_KEY]);
-    const configured = Number(settings[rules.PAYMENT_TERM_SETTING_KEY]);
+    const settings = this.settingsGetMany([rules.PAYMENT_TERM_SETTING_KEY]) || {};
+    const configuredValue = settings[rules.PAYMENT_TERM_SETTING_KEY];
+    const hasConfiguredValue = configuredValue !== null
+      && configuredValue !== undefined
+      && (typeof configuredValue !== "string" || configuredValue.trim() !== "");
+    const configured = hasConfiguredValue ? Number(configuredValue) : Number.NaN;
     const paymentTermDays = Number.isInteger(configured) && configured >= 0 && configured <= 3650 ? configured : rules.DEFAULT_PAYMENT_TERM_DAYS;
     const invoiceDate = this.today();
     return { source_type: "FREE", document_type: "INVOICE", invoice_date: invoiceDate, service_period_type: "SINGLE_DATE", payment_term_days: paymentTermDays, due_date: rules.addCalendarDays(invoiceDate, paymentTermDays) };

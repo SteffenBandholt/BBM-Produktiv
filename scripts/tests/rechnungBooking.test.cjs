@@ -4,7 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const Database = require("better-sqlite3");
 
-function fixture() {
+function fixture({ settings = { "invoice.paymentTermDays": "8" } } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-invoice-booking-"));
   const db = new Database(path.join(root, "test.db"));
   db.exec(`
@@ -22,7 +22,7 @@ function fixture() {
   const { InvoiceService } = require(path.join(process.cwd(), "src/main/domain/rechnung/InvoiceService.js"));
   let tick = 0;
   const repository = new InvoiceRepository({ dbProvider: () => db, clock: () => `2026-08-15T12:00:${String(tick++).padStart(2, "0")}.000Z` });
-  const service = new InvoiceService({ repository, settingsGetMany: () => ({ "invoice.paymentTermDays": "8" }), today: () => "2026-08-15" });
+  const service = new InvoiceService({ repository, settingsGetMany: () => settings, today: () => "2026-08-15" });
   return { db, repository, service, close() { db.close(); fs.rmSync(root, { recursive: true, force: true }); } };
 }
 
@@ -41,6 +41,26 @@ async function runRechnungBookingTests(run) {
       assert.equal(updated.construction_project, "Haus A"); assert.equal(updated.positions[0].total_cents, 10000);
       assert.equal(env.service.get(draft.id).service_period_start, "2026-03-01");
     } finally { env.close(); }
+  });
+
+  await run("Rechnung Step 2: Zahlungsziel-Setting unterscheidet fehlend, null, 0 Tage und ungültig", async () => {
+    const cases = [
+      ["fehlender Key", {}, 8, "2026-08-23"],
+      ["leerer Settings-Wert", { "invoice.paymentTermDays": "" }, 8, "2026-08-23"],
+      ["null", { "invoice.paymentTermDays": null }, 8, "2026-08-23"],
+      ["vierzehn Tage", { "invoice.paymentTermDays": "14" }, 14, "2026-08-29"],
+      ["0 Tage", { "invoice.paymentTermDays": "0" }, 0, "2026-08-15"],
+      ["negativ", { "invoice.paymentTermDays": "-1" }, 8, "2026-08-23"],
+      ["zu groß", { "invoice.paymentTermDays": "3651" }, 8, "2026-08-23"],
+      ["nicht numerisch", { "invoice.paymentTermDays": "abc" }, 8, "2026-08-23"],
+    ];
+    for (const [label, settings, paymentTermDays, dueDate] of cases) {
+      const env = fixture({ settings });
+      try {
+        const defaults = await env.service.defaults();
+        assert.deepEqual([defaults.payment_term_days, defaults.due_date], [paymentTermDays, dueDate], label);
+      } finally { env.close(); }
+    }
   });
 
   await run("Rechnung Step 2 C-D: Löschen verbraucht keine Nummer und Pflichtfeldfehler buchen nicht", async () => {
