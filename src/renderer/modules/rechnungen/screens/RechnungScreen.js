@@ -17,7 +17,7 @@ function bind(element, id) {
 function button(label, id, handler, variant = "secondary") { const element = bind(node("button", `invoice-button invoice-button--${variant}`, label), id); element.type = "button"; element.onclick = handler; return element; }
 function control(tag, id, type = "") { const element = bind(node(tag, "invoice-control"), id); if (type) element.type = type; return element; }
 function field(labelText, input, className = "") { const wrapper = node("label", `invoice-field${className ? ` ${className}` : ""}`); wrapper.append(node("span", "invoice-field__label", labelText), input); return wrapper; }
-function address(value = {}) { return [value.companyName || value.name, value.companyName2 || value.name2, value.street, [value.zip, value.city].filter(Boolean).join(" "), value.country].filter(Boolean).join("\n"); }
+function address(value = {}) { const source = value || {}; return [source.companyName || source.name, source.companyName2 || source.name2, source.street, [source.zip, source.city].filter(Boolean).join(" "), source.country].filter(Boolean).join("\n"); }
 function customerKey(value = {}) { return `${value.kind || value.ref?.kind}:${value.id || value.ref?.id}`; }
 
 export default class RechnungScreen {
