@@ -1,6 +1,6 @@
 # Git-Arbeitsregeln für BBM
 
-Stand: 2026-08-16
+Stand: 2026-08-17
 
 Diese Regeln gelten verbindlich für **alle ChatGPT-Chats, Codex-Läufe und manuellen Git-Arbeiten** im Repository `BBM-Produktiv`.
 
@@ -10,7 +10,7 @@ Ziel: Parallelentwicklung an mehreren Rechnern und mehreren BBM-Themen ermöglic
 
 - `main` enthält nur freigegebenen, funktionierenden Produktstand.
 - Auf `main` wird **nicht fachlich entwickelt**.
-- Neue Arbeit startet immer von einem aktuellen `origin/main`.
+- Neue Arbeit startet grundsätzlich von einem aktuellen `origin/main`.
 - Vor neuer Arbeit muss geprüft werden, ob der lokale `main` aktuell ist.
 
 ## 2. Ein Branch = ein fachliches Ziel
@@ -27,9 +27,9 @@ Verboten ist, unabhängige Themen wie Rechnung, Protokoll, Tabelleneditor, PDF o
 
 Wenn ein neues Thema beginnt, wird dafür ein eigener Branch angelegt.
 
-## 3. Vor jedem größeren Chat-/Codex-Arbeitslauf synchronisieren
+## 3. Vor Beginn eines neuen Fachbranches synchronisieren
 
-Vor Beginn eines neuen Goal-Laufs oder größeren Arbeitspakets sind mindestens auszuführen:
+Bevor ein **neuer Fachbranch** oder ein neuer, unabhängiger Goal-Strang begonnen wird, sind mindestens auszuführen:
 
 ```powershell
 git fetch
@@ -41,16 +41,55 @@ git log --oneline HEAD..origin/main
 Auswertung:
 
 - `git status --short` muss leer sein oder die vorhandenen Änderungen müssen vorher bewusst gesichert werden.
-- Zeigt `git log --oneline HEAD..origin/main` Commits, liegt der Arbeitsbranch hinter `main`.
-- Dann **zuerst synchronisieren**, erst danach neue Entwicklung beginnen.
+- Ein neuer Fachbranch wird grundsätzlich von aktuellem `origin/main` angelegt.
+- Zeigt `git log --oneline HEAD..origin/main` Commits, darf daraus nicht ungeprüft ein neuer Fachbranch gestartet werden.
 
-## 4. Arbeitsbranches bewusst mit `main` synchronisieren
+**Wichtig:** Diese Regel bedeutet ausdrücklich **nicht**, dass ein bereits laufender Fachbranch vor jedem weiteren Goal-Lauf mit `main` synchronisiert werden muss.
 
-Auf einem länger laufenden Fachbranch:
+## 4. Aktive Feature-Branches während eines laufenden Arbeitsblocks einfrieren
+
+Ein laufender Fachbranch bleibt während eines zusammenhängenden Arbeitsblocks auf seinem definierten Unterbau.
+
+Beispiel:
+
+- `rechnung-entwicklung` wird auf dem Acer fachlich weiterentwickelt.
+- Während dieses Rechnungsblocks darf `main` auf einem anderen Rechner durch freigegebene Editor-/PDF-Arbeiten weiterlaufen.
+- Diese neuen `main`-Commits werden **nicht automatisch mitten in die laufende Rechnungsentwicklung gemergt**.
+
+Verbindliche Regel:
+
+> **Aktive Feature-Branches werden während eines laufenden Goal-/Entwicklungsblocks nicht mit `main` synchronisiert. Die Synchronisierung erfolgt erst an einem ausdrücklich festgelegten Meilenstein vor Integration oder wenn die aktuelle Arbeit zwingend auf einer neuen `main`-Änderung aufbauen muss.**
+
+Damit wird verhindert, dass sich während einer laufenden Fachentwicklung der technische Unterbau unerwartet verändert und bereits getestete Zwischenstände unklar werden.
+
+Ein Branch darf daher bewusst hinter `main` liegen. Das ist **kein Fehler**, solange:
+
+- der Rückstand bekannt ist,
+- der Branch nur sein eigenes Fachziel weiterentwickelt,
+- keine neue Arbeit begonnen wird, die die neueren `main`-Änderungen benötigt,
+- vor der späteren Integration eine kontrollierte Synchronisierung erfolgt.
+
+## 5. Synchronisierung am Meilenstein
+
+Ein aktiver Fachbranch wird mit `main` synchronisiert, wenn ein definierter Meilenstein erreicht ist, z. B.:
+
+- Fachfunktion bzw. Goal-Block ist abgeschlossen,
+- Zwischenstand ist committed und gepusht,
+- vor Integration in `main`,
+- oder eine neue `main`-Änderung wird für die weitere Facharbeit ausdrücklich benötigt.
+
+Vor der Synchronisierung:
 
 ```powershell
 git fetch
-git merge origin/main
+git status --short
+git log --oneline HEAD..origin/main
+```
+
+Dann auf dem Fachbranch bewusst:
+
+```powershell
+git merge origin/main --no-edit
 ```
 
 Keine blinden `git pull`-Aktionen auf Fachbranches.
@@ -62,13 +101,15 @@ Bei Konflikten:
 - Konflikte gezielt auflösen,
 - anschließend Tests und `git diff --check` ausführen.
 
-## 5. Neue Fachbranches nicht von veralteten Feature-Branches ableiten
+Nach dem Merge muss der Fachbereich erneut fachlich geprüft werden, bevor er nach `main` integriert wird.
+
+## 6. Neue Fachbranches nicht von veralteten Feature-Branches ableiten
 
 Neue Arbeit grundsätzlich von aktuellem `origin/main` starten.
 
 Ausnahme: Ein neuer Branch ist ausdrücklich ein Unter-/Integrationsbranch eines bestehenden Fachbranches. Dann muss das im Auftrag klar benannt sein.
 
-## 6. Codex arbeitet nur im vereinbarten Scope
+## 7. Codex arbeitet nur im vereinbarten Scope
 
 Jeder größere Codex-Auftrag muss enthalten:
 
@@ -85,7 +126,7 @@ Beispiel:
 
 > Keine Protokoll-, Restarbeiten-, PDF-, UI-Editor- oder Lizenzänderungen.
 
-## 7. Große Codex-Läufe zuerst auf Prüf-/Arbeitsbranch
+## 8. Große Codex-Läufe zuerst auf Prüf-/Arbeitsbranch
 
 Bei riskanten Integrationen oder größeren Umbauten:
 
@@ -96,19 +137,19 @@ Bei riskanten Integrationen oder größeren Umbauten:
 
 Kein direkter großer Umbau auf `main`.
 
-## 8. Bestehende, bereits abgenommene Fixes nicht neu programmieren
+## 9. Bestehende, bereits abgenommene Fixes nicht neu programmieren
 
 Wenn ein Fehler auf einem Branch wieder auftaucht, zuerst prüfen:
 
 - fehlt ein bereits vorhandener Commit aus `main`?
-- ist der Branch veraltet?
+- ist der Branch bewusst auf einem älteren, eingefrorenen Unterbau?
 - stammt die Regression aus Branch-Divergenz?
 
 Erst danach Code ändern.
 
 Bereits abgenommene Lösungen dürfen nicht unnötig neu implementiert werden.
 
-## 9. Nach jedem Codex-Lauf sauber abschließen
+## 10. Nach jedem Codex-Lauf sauber abschließen
 
 Mindestens:
 
@@ -127,7 +168,7 @@ Dann:
 
 Uncommittete Änderungen dürfen nicht über längere Zeit unklar liegen bleiben.
 
-## 10. Temporäre Branches nach Abschluss aufräumen
+## 11. Temporäre Branches nach Abschluss aufräumen
 
 Prüf-, Integrations- und Step-Branches werden nach erfolgreicher Übernahme gelöscht.
 
@@ -139,7 +180,7 @@ Vor dem Löschen muss geklärt sein:
 
 Keine alten Branches nur „zur Sicherheit“ dauerhaft weiterführen.
 
-## 11. Backup-Branches nur für riskante Umbauten
+## 12. Backup-Branches nur für riskante Umbauten
 
 Vor riskanten History-/Branch-Bereinigungen darf ein Backup-Branch angelegt werden, z. B.:
 
@@ -151,20 +192,21 @@ Ein Backup-Branch:
 - wird klar als Backup benannt,
 - bleibt nur so lange erhalten, wie er als Sicherheitsnetz sinnvoll ist.
 
-## 12. Mehrere Rechner dürfen unterschiedliche Fachbranches haben
+## 13. Mehrere Rechner dürfen unterschiedliche Fachbranches haben
 
-Es ist ausdrücklich erlaubt, dass z. B.:
+Es ist ausdrücklich erlaubt und gewollt, dass z. B.:
 
-- Rechner A auf `main` oder einem Editor-Branch arbeitet,
-- Rechner B auf `rechnung-entwicklung` arbeitet.
+- Lenovo/ThinkPad auf `main` oder einem Editor-Branch arbeitet,
+- Acer auf `rechnung-entwicklung` arbeitet.
 
 Entscheidend ist:
 
-- beide kennen denselben aktuellen `origin/main`,
-- Fachbranches werden regelmäßig mit `origin/main` synchronisiert,
+- beide kennen den Remote-Stand von `origin/main`,
+- ein laufender Fachbranch darf bewusst hinter `main` bleiben,
+- Synchronisierung erfolgt am definierten Meilenstein, nicht mitten im laufenden Arbeitsblock,
 - derselbe Fachbranch wird nicht unkoordiniert parallel auf zwei Rechnern weiterentwickelt.
 
-## 13. Vor Arbeit auf einem zweiten Rechner immer Remote-Stand prüfen
+## 14. Vor Arbeit auf einem zweiten Rechner immer Remote-Stand prüfen
 
 Mindestens:
 
@@ -177,7 +219,9 @@ git branch -vv
 
 Nicht einfach davon ausgehen, dass der lokale Clone aktuell ist.
 
-## 14. Kein Force-Push ohne Sicherung und ausdrücklichen Grund
+Die Prüfung dient zunächst der **Kenntnis des Zustands**. Ein festgestellter Rückstand eines bewusst laufenden Feature-Branches löst nicht automatisch einen Merge aus.
+
+## 15. Kein Force-Push ohne Sicherung und ausdrücklichen Grund
 
 `git push --force` ist verboten.
 
@@ -187,24 +231,38 @@ Wenn eine Branch-Historie bewusst ersetzt werden muss:
 - nur `git push --force-with-lease` verwenden,
 - danach Remote-Stand prüfen.
 
-## 15. Artefakte und Diagnosematerial nicht ungeprüft committen
+## 16. Artefakte und Diagnosematerial nicht ungeprüft committen
 
 Screenshots, Logs, temporäre PDFs und Testartefakte gehören nur dann ins Repository, wenn sie ausdrücklich Teil der Dokumentation oder des Tests sind.
 
 Vor `git add -A` prüfen, ob `artifacts/`, Logs oder temporäre Dateien versehentlich aufgenommen würden.
 
-## 16. Standardablauf vor Codex
+## 17. Standardablauf vor einem neuen Fachbranch / neuen unabhängigen Goal-Strang
 
 ```text
 1. git fetch
 2. git status --short
 3. git branch --show-current
 4. git log --oneline HEAD..origin/main
-5. Scope des Auftrags festlegen
-6. erst dann Codex starten
+5. neuen Branch von aktuellem origin/main anlegen
+6. Scope des Auftrags festlegen
+7. erst dann Codex starten
 ```
 
-## 17. Standardablauf nach Codex
+## 18. Standardablauf auf einem bereits laufenden Fachbranch
+
+```text
+1. git fetch
+2. git status --short
+3. git branch --show-current
+4. Remote-/main-Rückstand nur feststellen
+5. NICHT automatisch main hineinmergen
+6. vorhandenen Fachblock auf seinem definierten Unterbau fortsetzen
+7. nach Goal: testen, committen, pushen
+8. Synchronisierung erst am festgelegten Meilenstein
+```
+
+## 19. Standardablauf nach Codex
 
 ```text
 1. fachliche Sichtprüfung
@@ -222,7 +280,8 @@ Nicht weiterarbeiten, sondern zuerst klären, wenn:
 
 - der Arbeitsbaum unerwartet dirty ist,
 - der aktuelle Branch unklar ist,
-- der Branch hinter `origin/main` liegt und die neue Arbeit darauf aufbauen würde,
+- ein **neuer** Fachbranch von einem veralteten Stand gestartet werden soll,
+- ein laufender Fachbranch ungeplant mitten im Arbeitsblock mit `main` synchronisiert werden soll,
 - derselbe Fachbereich bereits auf einem anderen Branch/Rechner parallel geändert wird,
 - ein Merge Konflikte erzeugt,
 - alte und neue Architektur gleichzeitig auftauchen,
@@ -230,4 +289,4 @@ Nicht weiterarbeiten, sondern zuerst klären, wenn:
 
 ## Kurzform
 
-**`main` ist die Basis. Ein Branch = ein Ziel. Vor Codex synchronisieren. Nach Codex testen, committen, pushen und aufräumen. Keine Fremdthemen, keine alten Branchstände und kein Blind-Merging.**
+**`main` ist die gemeinsame freigegebene Basis. Ein Branch = ein Ziel. Neue Fachbranches starten von aktuellem `main`. Laufende Fachbranches bleiben während ihres Arbeitsblocks eingefroren und werden erst am definierten Meilenstein mit `main` synchronisiert. Nach Codex testen, committen und pushen. Keine Fremdthemen und kein Blind-Merging.**
