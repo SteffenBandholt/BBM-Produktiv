@@ -15,6 +15,7 @@ import {
 } from "../theme/themes.js";
 import { createDictationDevSection } from "../modules/audio/index.js";
 import { TEXT_LIMIT_SETTINGS } from "../core/textregeln/index.js";
+import { DEFAULT_PAYMENT_TERM_DAYS, PAYMENT_TERM_SETTING_KEY } from "../../shared/rechnung/invoiceHeaderRules.mjs";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -749,6 +750,14 @@ export default class SettingsView {
 
   _normalizePrintLayoutMmLimits(key) {
     return PRINT_LAYOUT_MM_LIMITS[String(key || "").trim()] || null;
+  }
+
+  _parseInvoicePaymentTermDays(value) {
+    const raw = String(value ?? "").trim();
+    if (!/^\d+$/.test(raw)) return null;
+    const days = Number(raw);
+    if (!Number.isInteger(days) || days < 0 || days > 3650) return null;
+    return String(days);
   }
 
   _resetPrintLayoutFields() {
@@ -4530,6 +4539,105 @@ export default class SettingsView {
     });
   }
 
+  async _createInvoiceSettingsContent() {
+    const api = window.bbmDb || {};
+    const wrap = document.createElement("div");
+    wrap.classList.add("bbm-form-content");
+    wrap.style.display = "grid";
+    wrap.style.gap = "10px";
+    wrap.style.minWidth = "min(520px, calc(100vw - 80px))";
+
+    const info = document.createElement("div");
+    info.style.fontSize = "12px";
+    info.style.opacity = "0.85";
+    info.textContent = "Standardwerte für neu angelegte Rechnungsentwürfe.";
+
+    const card = document.createElement("div");
+    applyPopupCardStyle(card);
+    card.classList.add("bbm-form-group");
+    card.style.display = "grid";
+    card.style.gap = "8px";
+
+    const title = document.createElement("div");
+    title.textContent = "Zahlungsziel";
+    title.style.fontWeight = "800";
+
+    const hint = document.createElement("div");
+    hint.textContent = "Ganze Kalendertage von 0 bis 3650. Der Standard beträgt 8 Tage.";
+    hint.style.fontSize = "12px";
+    hint.style.opacity = "0.78";
+
+    const row = document.createElement("label");
+    row.classList.add("bbm-form-field");
+    row.style.display = "grid";
+    row.style.gap = "4px";
+    const label = document.createElement("span");
+    label.classList.add("bbm-form-label");
+    label.textContent = "Standard-Zahlungsziel Rechnungen";
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = "0";
+    input.max = "3650";
+    input.step = "1";
+    input.inputMode = "numeric";
+    input.style.width = "100%";
+    row.append(label, input);
+
+    const validation = document.createElement("div");
+    validation.style.fontSize = "12px";
+    validation.style.color = "#b91c1c";
+
+    card.append(title, hint, row, validation);
+    wrap.append(info, card);
+
+    if (typeof api.appSettingsGetMany === "function") {
+      const res = await api.appSettingsGetMany([PAYMENT_TERM_SETTING_KEY]);
+      if (res?.ok) {
+        const stored = this._parseInvoicePaymentTermDays(res.data?.[PAYMENT_TERM_SETTING_KEY]);
+        input.value = stored ?? String(DEFAULT_PAYMENT_TERM_DAYS);
+      } else {
+        validation.textContent = res?.error || "Einstellung konnte nicht geladen werden.";
+        input.value = String(DEFAULT_PAYMENT_TERM_DAYS);
+      }
+    } else {
+      input.value = String(DEFAULT_PAYMENT_TERM_DAYS);
+      validation.textContent = "Settings-API fehlt (IPC noch nicht aktiv).";
+    }
+
+    this._openSettingsModal({
+      title: "Rechnungen",
+      content: [wrap],
+      standardForm: true,
+      saveFn: async () => {
+        if (typeof api.appSettingsSetMany !== "function") {
+          validation.textContent = "Settings-API fehlt (IPC noch nicht aktiv).";
+          return false;
+        }
+        const paymentTermDays = this._parseInvoicePaymentTermDays(input.value);
+        if (paymentTermDays === null) {
+          validation.textContent = "Bitte eine ganze Zahl zwischen 0 und 3650 Kalendertagen eingeben.";
+          input.focus();
+          return false;
+        }
+        const payload = { [PAYMENT_TERM_SETTING_KEY]: paymentTermDays };
+        const res = await api.appSettingsSetMany(payload);
+        if (!res?.ok) {
+          validation.textContent = res?.error || "Speichern fehlgeschlagen.";
+          return false;
+        }
+        if (this.router?.context) {
+          this.router.context.settings = {
+            ...(this.router.context.settings || {}),
+            ...payload,
+          };
+        }
+        this._setMsg("Gespeichert");
+        return true;
+      },
+      closeOnly: false,
+    });
+  }
+
   async _createProtocolContent() {
     const api = window.bbmDb || {};
     const wrap = document.createElement("div");
@@ -6813,6 +6921,14 @@ export default class SettingsView {
       },
     });
 
+    const tileInvoices = mkTile({
+      titleText: "Rechnungen",
+      subText: "Standard-Zahlungsziel für neue Entwürfe",
+      onClick: async () => {
+        await this._createInvoiceSettingsContent();
+      },
+    });
+
     const tileFirmRoles = mkTile({
       titleText: "Firmenrollen",
       subText: "Reihenfolge für Listen und Ausgaben",
@@ -6890,7 +7006,7 @@ export default class SettingsView {
       key: "module",
       titleText: "Module",
       subText: "Fachmodule und Erweiterungen.",
-      tiles: [tileProtocol],
+      tiles: [tileProtocol, tileInvoices],
     });
 
     const groupDev = mkGroup({

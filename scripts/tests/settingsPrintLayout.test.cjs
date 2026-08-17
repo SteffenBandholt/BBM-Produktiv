@@ -7,6 +7,23 @@ function read(relPath) {
   return fs.readFileSync(path.join(process.cwd(), relPath), "utf8");
 }
 
+function createFakeNode(tagName) {
+  return {
+    tagName: String(tagName || "").toUpperCase(),
+    children: [],
+    style: {},
+    classList: { add() {} },
+    append(...items) {
+      for (const item of items) if (item !== null && item !== undefined) this.children.push(item);
+    },
+    focus() { this.focused = true; },
+  };
+}
+
+function createFakeDocument() {
+  return { createElement(tagName) { return createFakeNode(tagName); } };
+}
+
 async function runSettingsPrintLayoutTests(run) {
   const { default: SettingsView } = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/views/SettingsView.js")
@@ -84,6 +101,51 @@ async function runSettingsPrintLayoutTests(run) {
     assert.equal(view._normalizePdfPreRemarks("1\n2\n3\n4\n5\n6"), "1\n2\n3\n4\n5");
     assert.equal(settingsSource.includes("max 500 Zeichen in 5 Zeilen"), true);
     assert.equal(settingsSource.includes("ta.maxLength = 500"), true);
+  });
+
+  await run("SettingsView: Rechnungs-Zahlungsziel lädt, speichert und validiert ganze Kalendertage", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opens = [];
+    const saves = [];
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        appSettingsGetMany: async () => ({ ok: true, data: { "invoice.paymentTermDays": "" } }),
+        appSettingsSetMany: async (payload) => {
+          saves.push(payload);
+          return { ok: true };
+        },
+      },
+    };
+    try {
+      const view = new SettingsView({ router: { context: { settings: {} } } });
+      view._openSettingsModal = (payload) => opens.push(payload);
+      await view._createInvoiceSettingsContent();
+
+      assert.equal(opens.length, 1);
+      assert.equal(opens[0].title, "Rechnungen");
+      const input = opens[0].content[0].children[1].children[2].children[1];
+      assert.deepEqual([input.type, input.min, input.max, input.step, input.value], ["number", "0", "3650", "1", "8"]);
+
+      for (const [value, expected] of [["8", "8"], ["14", "14"], ["0", "0"]]) {
+        input.value = value;
+        assert.equal(await opens[0].saveFn(), true);
+        assert.equal(saves.at(-1)["invoice.paymentTermDays"], expected);
+      }
+      for (const invalid of ["-1", "3651", "abc"]) {
+        input.value = invalid;
+        assert.equal(await opens[0].saveFn(), false);
+        assert.equal(saves.length, 3);
+      }
+      assert.equal(view._parseInvoicePaymentTermDays("14"), "14");
+      assert.equal(view._parseInvoicePaymentTermDays("0"), "0");
+      assert.equal(view._parseInvoicePaymentTermDays(""), null);
+      assert.equal(read("src/main/ipc/settingsIpc.js").includes('"invoice.paymentTermDays"'), true);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
   });
 }
 

@@ -282,6 +282,7 @@ const GLOBAL_APP_SETTING_KEYS = new Set([
   "tops.showLongtextInList",
   "tops.fontscale.list",
   "tops.fontscale.editbox",
+  "invoice.paymentTermDays",
   "audio.whisper.quality",
   "dev.audioDictationUnlock",
 ]);
