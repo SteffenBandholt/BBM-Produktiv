@@ -1573,7 +1573,7 @@ async function runTopsScreenIntegrationTests(run) {
         async openPrintVorabzug(payload) {
           calls.push(["preview", payload]);
         },
-        async openPrintModal(payload) {
+        async openOutputPrint(payload) {
           calls.push(["print", payload]);
         },
       };

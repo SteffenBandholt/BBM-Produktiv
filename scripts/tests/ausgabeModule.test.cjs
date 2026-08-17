@@ -90,7 +90,7 @@ async function runAusgabeModuleTests(run) {
     );
     assert.equal(printModalSource.includes("printClosedMeetingDirect"), true);
     assert.equal(printModalSource.includes("openTodoPrintPreview"), true);
-    assert.equal(mainHeaderSource.includes("openTopListAllPrintPreview"), true);
+    assert.equal(mainHeaderSource.includes('_openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "topsall" })'), true);
     assert.equal(printModalSource.includes("openFirmsPrintPreview"), true);
     assert.equal(printModalSource.includes("openStoredFirmsPdfSelection"), true);
     assert.equal(printModalSource.includes("_selectTodoResponsibleFilter"), true);
@@ -145,50 +145,27 @@ async function runAusgabeModuleTests(run) {
     assert.deepEqual(calls, ["chooser"]);
   });
 
-  await run("Ausgabe: Druckart-Auswahl reicht an vorhandene Wege weiter", async () => {
+  await run("Ausgabe: Druckart-Auswahl reicht jede PDF-Art an den gespeicherten Projektbestand weiter", async () => {
     const calls = [];
-    const header = new MainHeader({
-      router: {
-        currentProjectId: "17",
-        currentMeetingId: "m1",
-        openMeetingPrintPreview: async (args) => {
-          calls.push(["preview", args]);
-        },
-        openFirmsPrintPreview: async (args) => {
-          calls.push(["firms", args]);
-        },
-        openTodoPrintPreview: async (args) => {
-          calls.push(["todo", args]);
-        },
-        openTopListAllPrintPreview: async (args) => {
-          calls.push(["tops", args]);
-        },
-        openStoredFirmsPdfSelection: async (args) => {
-          calls.push(["stored", args]);
-        },
-      },
-    });
-    header._openClosedProtocolSelectorFlow = async (mode) => {
-      calls.push(["protocol-flow", mode]);
+    const header = new MainHeader({ router: { currentProjectId: "17", currentMeetingId: "m1" } });
+    header._openStoredProjectPdfSelectionPopup = async (args) => {
+      calls.push(args);
     };
 
     await header._handlePrintTypeSelection({ id: "protocol-print" }, { projectId: "17" });
-    await header._handlePrintTypeSelection({ id: "protocol-preview" }, { projectId: "17", meetingId: "m1" });
     await header._handlePrintTypeSelection({ id: "firms-preview" }, { projectId: "17" });
     await header._handlePrintTypeSelection({ id: "todo-preview" }, { projectId: "17" });
     await header._handlePrintTypeSelection({ id: "topsAll-preview" }, { projectId: "17" });
-    await new Promise((resolve) => setTimeout(resolve, 20));
 
     assert.deepEqual(calls, [
-      ["protocol-flow", "print"],
-      ["preview", { projectId: "17", meetingId: "m1", mode: "closed" }],
-      ["firms", { projectId: "17" }],
-      ["todo", { projectId: "17" }],
-      ["tops", { projectId: "17" }],
+      { projectId: "17", kind: "protocol" },
+      { projectId: "17", kind: "firms" },
+      { projectId: "17", kind: "todo" },
+      { projectId: "17", kind: "topsall" },
     ]);
   });
 
-  await run("Ausgabe: Druckart-Auswahl blockiert fehlende Meeting-Optionen", () => {
+  await run("Ausgabe: Drucken zeigt nur gespeicherte PDF-Arten und keine laufende Vorschau", () => {
     const header = new MainHeader({
       router: {
         currentProjectId: "17",
@@ -205,12 +182,19 @@ async function runAusgabeModuleTests(run) {
     const items = header._buildPrintTypeSelectionItems({ projectId: "17", meetingId: null });
     const byId = Object.fromEntries(items.map((item) => [item.id, item]));
 
-    assert.equal(items.some((item) => item.id === "stored-firms"), false);
+    assert.deepEqual(items.map((item) => item.label), ["Protokoll", "Firmenliste", "ToDo-Liste", "TOP-Liste"]);
     assert.equal(byId["protocol-print"]?.disabled, false);
-    assert.equal(byId["protocol-preview"]?.disabled, true);
+    assert.equal(byId["protocol-preview"], undefined);
     assert.equal(byId["todo-preview"]?.disabled, false);
     assert.equal(byId["topsAll-preview"]?.disabled, false);
     assert.equal(byId["firms-preview"]?.disabled, false);
+  });
+
+  await run("Ausgabe: Gespeicherte PDF-Auswahl wird vor dem Oeffnen der Vorschau geschlossen", () => {
+    assert.match(
+      mainHeaderSource,
+      /btn\.onclick = async \(\) => \{[\s\S]*?cleanup\(\);[\s\S]*?resolve\(\);[\s\S]*?openExistingPdfPreview\(/,
+    );
   });
 
   await run("Ausgabe: Druckart-Auswahl akzeptiert Projektkontext aus router.context", () => {
@@ -632,11 +616,12 @@ async function runAusgabeModuleTests(run) {
       return { ok: true, filePath: "C:/tmp/todo.pdf" };
     };
 
-    const result = await modal.printTodoDirect({ projectId: "17" });
+    const result = await modal.printTodoDirect({ projectId: "17", meetingId: "m18" });
 
     assert.equal(result.ok, true);
     assert.equal(selectionCalls, 0);
     assert.equal(printPayload.mode, "todo");
+    assert.equal(printPayload.meetingId, "m18");
     assert.equal(printPayload.preview, false);
     assert.equal(printPayload.todoResponsibleFilter, "all");
 
@@ -644,6 +629,46 @@ async function runAusgabeModuleTests(run) {
     assert.equal(selectionCalls, 1);
     assert.equal(printPayload.preview, true);
     assert.equal(printPayload.todoResponsibleFilter, "responsible:17");
+  });
+
+  await run("Ausgabe: Abschlusslisten werden pro Protokollstand eindeutig benannt und gespeichert", async () => {
+    const originalWindow = global.window;
+    const originalAlert = global.alert;
+    const printCalls = [];
+    global.alert = () => {};
+    global.window = {
+      bbmDb: {
+        async topsListByMeeting(meetingId) {
+          assert.equal(meetingId, "m18");
+          return { ok: true, meeting: { id: meetingId, meeting_index: 18, meeting_date: "2026-08-16" } };
+        },
+      },
+      bbmPrint: {
+        async printPdf(payload) {
+          printCalls.push(payload);
+          return { ok: true, filePath: "C:/pdf/firm.pdf" };
+        },
+      },
+    };
+    try {
+      const modal = new PrintModal({ router: { currentMeetingId: "m18", context: { settings: {} }, ensureAppSettingsLoaded: async () => {} } });
+      modal._resolveProtocolsDir = async ({ settings }) => ({ settings, dir: "C:/pdf" });
+      modal._getProjectInfo = async () => ({ number: "4711", short: "Baustelle" });
+      modal._setMsg = () => {};
+      modal._applyState = () => {};
+
+      const result = await modal.printFirmsDirect({ projectId: "p1", meetingId: "m18" });
+
+      assert.equal(result?.ok, true);
+      assert.equal(printCalls.length, 1);
+      assert.equal(printCalls[0].meetingId, "m18");
+      assert.equal(printCalls[0].fileName, "4711 - Baustelle - Firmenliste - Stand #18 - 16.08.2026.pdf");
+      assert.equal(printCalls[0].overwrite, true);
+      assert.equal(printCalls[0].silent, true);
+    } finally {
+      global.window = originalWindow;
+      global.alert = originalAlert;
+    }
   });
 
   await run("Ausgabe: MainHeader-Blocklogik ist im Renderer sichtbar", () => {

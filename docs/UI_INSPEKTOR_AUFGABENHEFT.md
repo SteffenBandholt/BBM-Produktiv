@@ -83,6 +83,8 @@ Aktueller Stand:
 - [x] M86.12 Tatsaechlichen Dreispaltenfehler im normalen Source-Start messen und reparieren
 - [x] M86.13 Einheitlichen zweizeiligen MainHeader und unteren Entwicklungsmarker herstellen
 - [x] M86.25 Protokoll-Listenbeschriftung, Langtextgröße und Ampel-textResize korrigieren
+- [x] K17.8 PDF-Tabellenspalte als geometrische Einheit bedienen und Ueberschrift separat feinjustieren
+- [x] K17.9 PDF-Nutzflaeche hart begrenzen und Teilnehmer-Spaltengrenzen atomar fuehren
 
 ## Statusupdate M86.25
 
@@ -970,3 +972,21 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
 - Separate Electron-Neustartprozesse laden die getrennten Modulprofile ohne Editoröffnung; gespeicherte Breiten bleiben sichtbar und alle Editor-/Diagnosemarker fehlen.
 - Test: `scripts/tests/m86-24VisibleEditorAcceptance.test.cjs`; ergänzend M86.16, M86.19, M86.20, M86.22 und M86.23.
 - Nicht geändert: UI-/Parent-/Tabellenstruktur, Fachlogik, PDF/Druck, Datenbank, Lizenzierung und produktive Benutzerprofile.
+
+## K17.8 - PDF-Tabellenspalte als ganze Einheit
+
+- Status: `[A]`; Umsetzung, Golden-Guardrails und sichtbare isolierte Zwei-Start-Abnahme abgeschlossen.
+- Die vorhandenen TOP-`TableColumn`-Ziele bewegen, skalieren und schalten ihren Spaltentrack, die Ueberschrift und saemtliche Datenzellen gemeinsam sichtbar. Spaltenzahl, Reihenfolge, Paginierung und Fachwerte bleiben gesperrt.
+- Jede Ueberschrift ist explizites Kind ihrer Spalte. Ihre Textposition, Schriftgroesse und Ausrichtung lassen sich getrennt feinjustieren, ohne Position oder Breite des Spaltencontainers zu veraendern.
+- Der Inspector zeigt fuer die ausgewaehlte Spalte Name, reale Position, Breite, Hoehe, Sichtbarkeit, Tabellenzuordnung und aktuelle Spaltenbreite. Nicht wirksame Ebenen, Modi und Eigenschaftsgruppen sind ausgeblendet; Richtungspfeile bleiben modusabhaengig an eine wirksame Aktion gebunden.
+- Sichtbarer Nachweis mit `Status / Fertig bis / verantw`: `+1 mm` Bewegung, Undo, Breite `40,92 -> 39,92 mm`, Ueberschriftentext `0 -> 1 mm`, Save, vollstaendiger Neustart-Restore und echte zweiseitige BBM-PDF-Neuerzeugung.
+- Guardrails: M81-Adaptervertrag, M85 mit 47 Golden-Fixtures und realem Print-DOM, ReferenceTargetApp 135/135 sowie UI-Editor-Vertrags-Selbsttest.
+
+## K17.9 - PDF-Nutzflaeche und Teilnehmer-Spaltengrenzen
+
+- Status: `[A]` fuer Adapter- und echten Print-DOM-Nachweis; sichtbare native Endabnahme separat protokolliert.
+- A4 bleibt 210 x 297 mm. Die vorhandenen Randeinstellungen O/R/U/L = 5/12/0/12 mm ergeben X = 12 bis 198 mm, Y = 5 bis 297 mm und 186 x 292 mm Nutzflaeche.
+- Die gemeinsame PDF-Geometrie prueft normale Ziele einschliesslich Tabellen und Spaltentracks gegen diese aktuelle Nutzflaeche. Horizontale oder vertikale Ueberschreitungen werden vor der Zustandsuebernahme mit der zugehoerigen Randmeldung abgewiesen; auch eine Randaenderung wird gegen den vollstaendigen Zustand geprueft.
+- Die bestaetigte Teilnehmer-Tabelle verwendet ihre vorhandenen fuenf Spalten Name 34, Funktion 32, Firma 30, Telefon/E-Mail 72 und Anwesend/Verteiler 18 mm als explizite Tracks. Innere Grenzen bleiben bei 186 mm Gesamtsumme atomar; eine Aussenbreitenaenderung passt Tabelle und rechten Track gemeinsam an.
+- Die Ueberschrift Anwesend/Verteiler ist ein Kind ihrer Spalte und separat textpositionierbar. Paginierung, Druckpfad, Fachwerte, Reihenfolge und bestehendes Teilnehmer-DOM bleiben unveraendert.
+- Guardrails: M81 einschliesslich Rollback und exakter Randmeldungen, M85 mit allen 47 unveraenderten Golden-Fixtures und realen Header-/Datenzellen-Bounding-Boxes, UI-Editor-Vertragscheck.

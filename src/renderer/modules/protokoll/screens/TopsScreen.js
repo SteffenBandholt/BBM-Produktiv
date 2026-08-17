@@ -668,8 +668,8 @@ export default class TopsScreen {
 
   async _openQuicklanePrint() {
     const projectId = this._getQuicklaneProjectId();
-    if (!projectId || typeof this.router?.openPrintModal !== "function") return false;
-    await this.router.openPrintModal({ projectId });
+    if (!projectId || typeof this.router?.openOutputPrint !== "function") return false;
+    await this.router.openOutputPrint({ projectId });
     return true;
   }
 

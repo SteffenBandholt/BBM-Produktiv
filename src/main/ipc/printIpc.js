@@ -280,7 +280,7 @@ function listStoredProjectPdfs({ baseDir, project, kind } = {}) {
     if (kindKey === "protocol") return true;
     if (kindKey === "firms") return normalized.includes("firmenliste");
     if (kindKey === "todo") return normalized.includes("todo-liste");
-    if (kindKey === "topsall") return normalized.includes("topliste-alle");
+    if (kindKey === "topsall") return normalized.includes("top-liste") || normalized.includes("topliste-alle");
     return false;
   };
 
@@ -569,10 +569,24 @@ function registerPrintIpc() {
       if (data.mode === "protocol") {
         const { getSharedBbmPdfAdapter } = require("../ui-editor/bbmPdfAdapter.cjs");
         const pdfAdapter = getSharedBbmPdfAdapter();
-        data.pdfEditorLayoutState = p.pdfEditorPreview === true
-          ? pdfAdapter.getCurrentPdfLayoutState()
-          : pdfAdapter.getPersistedPdfLayoutState();
-        data.pdfEditorRegistry = pdfAdapter.getPdfRegistry();
+        if (p.pdfEditorPreview === true) {
+          data.pdfEditorLayoutState = pdfAdapter.getCurrentPdfLayoutState();
+          data.pdfEditorRegistry = pdfAdapter.getPdfRegistry();
+        } else {
+          try {
+            const persistedLayoutState = pdfAdapter.readPersistedPdfLayoutState();
+            if (persistedLayoutState) {
+              data.pdfEditorLayoutState = persistedLayoutState;
+              data.pdfEditorRegistry = pdfAdapter.getPdfRegistry();
+            }
+          } catch (error) {
+            console.warn("[BBM PDF] Gespeichertes Editorprofil wird beim Produktdruck ignoriert.", {
+              profilePath: pdfAdapter.getPdfProfilePath(),
+              code: error?.code || "pdf_profile_read_failed",
+              message: error?.message || String(error),
+            });
+          }
+        }
       }
       // Version/Channel für PDF-Footer mitgeben
       data.appVersion = app.getVersion ? app.getVersion() : "";

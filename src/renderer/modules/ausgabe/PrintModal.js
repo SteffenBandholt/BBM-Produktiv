@@ -1124,6 +1124,7 @@ export default class PrintModal {
 
   async _printProjectListPdf({
     projectId,
+    meetingId,
     mode,
     listLabel,
     previewTitle,
@@ -1171,14 +1172,47 @@ export default class PrintModal {
         projectInfo?.projectShortName ||
         projectInfo?.name ||
         "";
+      const mid = meetingId || this.router?.currentMeetingId || null;
+      let meeting = null;
+      if (mid && typeof api.topsListByMeeting === "function") {
+        const meetingRes = await api.topsListByMeeting(mid);
+        if (meetingRes?.ok) meeting = meetingRes.meeting || null;
+        else if (!doPreview) {
+          alert(meetingRes?.error || "Besprechung konnte für die PDF-Ablage nicht geladen werden.");
+          return meetingRes;
+        }
+      }
+      if (!doPreview && !meeting) {
+        alert("Die abgeschlossene Besprechung fehlt für die eindeutige PDF-Ablage.");
+        return;
+      }
+
       const safeProject = [projectNumber, projectShortName].filter(Boolean).join(" ").trim() || ("Projekt-" + pid);
-      const fileName = this._sanitizeFileName("BBM " + safeProject + " " + (listLabel || "Liste")) + ".pdf";
+      const meetingIndex = meeting?.meeting_index ?? meeting?.meetingIndex ?? meeting?.index ?? meeting?.number ?? "";
+      const meetingDate =
+        meeting?.meeting_date ||
+        meeting?.meetingDate ||
+        meeting?.date ||
+        meeting?.created_at ||
+        meeting?.createdAt ||
+        meeting?.updated_at ||
+        meeting?.updatedAt ||
+        null;
+      const fileName = doPreview
+        ? this._sanitizeFileName("BBM " + safeProject + " " + (listLabel || "Liste")) + ".pdf"
+        : this._buildListPdfFileName({
+            projectNumber,
+            projectShortName,
+            listLabel: listLabel || "Liste",
+            meetingIndex,
+            meetingDate,
+          });
 
       const out = await window.bbmPrint.printPdf({
         bbmVersion: "1.0",
         mode,
         projectId: pid,
-        meetingId: null,
+        meetingId: mid,
         fileName,
         todoResponsibleFilter,
         ...(doPreview
@@ -1439,18 +1473,20 @@ export default class PrintModal {
     return false;
   }
 
-  async printFirmsDirect({ projectId } = {}) {
+  async printFirmsDirect({ projectId, meetingId } = {}) {
     return await this._printProjectListPdf({
       projectId,
+      meetingId,
       mode: "firms",
       listLabel: "Firmenliste",
       preview: false,
     });
   }
 
-  async printTodoDirect({ projectId } = {}) {
+  async printTodoDirect({ projectId, meetingId } = {}) {
     return await this._printProjectListPdf({
       projectId,
+      meetingId,
       mode: "todo",
       listLabel: "ToDo-Liste",
       preview: false,
@@ -1458,9 +1494,10 @@ export default class PrintModal {
     });
   }
 
-  async printTopListAllDirect({ projectId } = {}) {
+  async printTopListAllDirect({ projectId, meetingId } = {}) {
     return await this._printProjectListPdf({
       projectId,
+      meetingId,
       mode: "topsAll",
       listLabel: "TOP-Liste",
       preview: false,
@@ -1950,6 +1987,17 @@ export default class PrintModal {
       .replace(/[<>:"/\\|?*]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
+  }
+
+  _buildListPdfFileName({ projectNumber, projectShortName, listLabel, meetingIndex, meetingDate } = {}) {
+    const parts = [
+      this._sanitizeFileSegment(projectNumber || ""),
+      this._sanitizeFileSegment(projectShortName || ""),
+      this._sanitizeFileSegment(listLabel || "Liste"),
+      `Stand #${String(meetingIndex || "").trim() || "?"}`,
+      this._fmtDateYYYYMMDD(meetingDate || new Date()),
+    ].filter(Boolean);
+    return this._sanitizeFileName(parts.join(" - ")) + ".pdf";
   }
 
   // ============================================================

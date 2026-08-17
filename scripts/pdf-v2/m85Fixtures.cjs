@@ -211,9 +211,12 @@ const FIXTURES = Object.freeze([
   protocolFixture("p16-changed-columns", "Veränderte TOP-Spaltenbreiten", (data) => {
     addTopSeries(data, 20, { longtextWords: 24 });
     attachEditorLayout(data, [
-      { elementId: "pdf.bbm.protocol.tops.column.meta", operation: "resizeWidth", payload: { width: 33 } },
-      { elementId: "pdf.bbm.protocol.tops.column.number", operation: "resizeWidth", payload: { width: 28 } },
-      { elementId: "pdf.bbm.protocol.tops.column.text", operation: "resizeWidth", payload: { width: 125 } },
+      { elementId: "pdf.bbm.protocol.tops", operation: "resizeColumnBoundary", payload: { table: {
+        leftColumnId: "pdf.bbm.protocol.tops.column.number", rightColumnId: "pdf.bbm.protocol.tops.column.text", delta: 3.82,
+      } } },
+      { elementId: "pdf.bbm.protocol.tops", operation: "resizeColumnBoundary", payload: { table: {
+        leftColumnId: "pdf.bbm.protocol.tops.column.text", rightColumnId: "pdf.bbm.protocol.tops.column.meta", delta: 7.92,
+      } } },
     ]);
   }),
   protocolFixture("p17-changed-font", "Veränderte Schriftgröße", (data) => {

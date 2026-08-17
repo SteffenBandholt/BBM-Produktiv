@@ -159,3 +159,15 @@
 **Beschluss:** Jedes sichtbare registrierte BBM-Element erhaelt zentral die Layoutoperationen `move`, `resizeWidth`, `resizeHeight` und `setVisibility`; bei sichtbar klassifiziertem Text kommt `textResize` hinzu. Tabellenkopf- und Tabellendatenzellen duerfen ihre Breite ausschliesslich ueber die im gemeinsamen Core registrierte logische Spaltenquelle aendern.
 
 **Begruendung:** Damit gilt derselbe Bedienvertrag fuer Ampeln, Symbole, Buttons, Felder, Labels, Headerteile, Tabellenzellen und Container, ohne BBM-spezifische Core-Ausnahme. Die bestehende Tabellenstruktur, Parentbindung, Multi-Ref-Semantik, Registry-Vollstaendigkeit und Fingerprintpruefung bleiben unveraendert geschuetzt.
+
+## Entscheidung 031
+
+**Beschluss:** Eine PDF-`TableColumn` ist im Editor das uebergeordnete geometrische Ziel fuer Track, Ueberschrift und alle Datenzellen. Ihre registrierte Ueberschrift ist ein Kindziel und veraendert ueber Textoperationen ausschliesslich den Inhalt innerhalb der unveraenderten Spaltengeometrie.
+
+**Begruendung:** Der normale Spaltenklick muss Position, Breite und Sichtbarkeit der vollstaendigen sichtbaren Spalte steuern. Die explizite Parent-/Kind-Struktur erhaelt zugleich die bewusst tiefere Feinjustierung der Ueberschrift, ohne eine neue Tabellenarchitektur oder automatische Bestandserkennung einzufuehren.
+
+## Entscheidung 032
+
+**Beschluss:** Die tatsaechlich gesetzten vier PDF-Seitenraender definieren die harte Nutzflaeche fuer alle normalen PDF-Layoutziele. Eine Verletzung wird vor der Zustandsuebernahme horizontal oder vertikal atomar abgewiesen. Tabellen verwenden innerhalb dieser Flaeche explizite Spaltentracks: Eine innere Grenze veraendert direkte Nachbarn gegenlaeufig bei fester Gesamtsumme; eine Aussenbreitenaenderung veraendert Tabelle und aeussersten Track gemeinsam.
+
+**Begruendung:** Papiergrenze und Inhaltsgrenze sind unterschiedliche Vertraege. Erst die Ableitung aus dem vorhandenen `page-template` verhindert Randueberlauf auch nach einer Randanpassung. Die generische Tabellenregel haelt Kopf, Datenzellen und Hintergruende lueckenlos, ohne eine Tabellen- oder Druckarchitektur neben dem bestehenden Renderer einzufuehren.

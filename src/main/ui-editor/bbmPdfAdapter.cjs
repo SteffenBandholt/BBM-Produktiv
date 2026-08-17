@@ -15,7 +15,7 @@ const APPLICATION_ID = "bbm-produktiv";
 const DOCUMENT_TYPE_ID = "protocol";
 const DISPLAY_NAME = "BBM-Protokoll";
 const SCOPE_ID = "pdf.bbm.protocol";
-const PDF_REGISTRY_VERSION = 1;
+const PDF_REGISTRY_VERSION = 3;
 const PDF_PROFILE_FILE_NAME = "bbm-produktiv.protocol.pdf-standard.pdf-layout.json";
 const DOMAIN_LOCKS = Object.freeze([
   "changeText", "changeValue", "modifyDomainData", "createRecord", "deleteRecord", "saveDomainData",
@@ -58,6 +58,7 @@ function element(values) {
     refKey: values.refKey,
     rendererKey: values.rendererKey,
     ...(values.columnRole ? { columnRole: values.columnRole } : {}),
+    ...(values.boundaryResizePolicy ? { boundaryResizePolicy: values.boundaryResizePolicy } : {}),
   });
 }
 
@@ -102,17 +103,40 @@ const ELEMENTS = Object.freeze([
     refKey: "protocol.header.meta.page-value", rendererKey: ".v2MiniPageValue" }),
   element({ id: `${SCOPE_ID}.body`, name: "Dokumentinhalt", parentId: `${SCOPE_ID}.page-template`, kind: "area", role: "layout", pageArea: "body", order: 100,
     baseline: box(12, 56, 186, 204, { visible: true }), layoutBounds: BODY_BOUNDS, refKey: "protocol.body", rendererKey: ".v2PageBody" }),
-  element({ id: `${SCOPE_ID}.participants`, name: "Teilnehmerbereich", parentId: `${SCOPE_ID}.body`, kind: "group", role: "content", pageArea: "body", order: 110,
-    capabilities: ["move", "resizeWidth", "setVisibility"], baseline: box(12, 56, 186, 32, { visible: true }), layoutBounds: BODY_BOUNDS,
+  element({ id: `${SCOPE_ID}.participants`, name: "Teilnehmertabelle", parentId: `${SCOPE_ID}.body`, kind: "table", role: "content", pageArea: "body", order: 110,
+    capabilities: ["move", "resizeWidth", "setVisibility", "resizeColumnBoundary"], baseline: box(12, 56, 186, 32, { visible: true }), layoutBounds: BODY_BOUNDS,
+    boundaryResizePolicy: "adjacentPreserveTotal",
     refKey: "protocol.participants", rendererKey: ".v2ParticipantsBlock" }),
   element({ id: `${SCOPE_ID}.participants.title`, name: "Teilnehmer · Überschrift", parentId: `${SCOPE_ID}.participants`, kind: "label", role: "heading", pageArea: "body", order: 111,
     capabilities: TEXT, baseline: box(12, 56, 186, 6, { fontSize: 10, textAlignment: "left", visible: true }), layoutBounds: BODY_BOUNDS,
     refKey: "protocol.participants.title", rendererKey: ".v2ParticipantsTitle" }),
   element({ id: `${SCOPE_ID}.participants.rows`, name: "Teilnehmer · Wiederholung", parentId: `${SCOPE_ID}.participants`, kind: "repeatingArea", role: "content", pageArea: "body", order: 112,
-    capabilities: ["resizeWidth", "setLineSpacing"], baseline: box(12, 62, 186, 26, { lineSpacing: 1.1, visible: true }), layoutBounds: BODY_BOUNDS,
+    capabilities: ["setLineSpacing"], baseline: box(12, 62, 186, 26, { lineSpacing: 1.1, visible: true }), layoutBounds: BODY_BOUNDS,
     refKey: "protocol.participants.rows", rendererKey: ".v2ParticipantsTable tbody" }),
+  element({ id: `${SCOPE_ID}.participants.header`, name: "Teilnehmertabelle - Kopf", parentId: `${SCOPE_ID}.participants`, kind: "group", role: "structure", pageArea: "body", order: 113,
+    baseline: box(12, 62, 186, 8, { visible: true }), layoutBounds: BODY_BOUNDS,
+    refKey: "protocol.participants.header", rendererKey: ".v2ParticipantsTable thead" }),
+  element({ id: `${SCOPE_ID}.participants.column.name`, name: "Spalte Name", parentId: `${SCOPE_ID}.participants`, kind: "tableColumn", role: "content", columnRole: "contentColumn", pageArea: "body", order: 120,
+    capabilities: ["resizeWidth"], baseline: box(12, 62, 34, 26, { visible: true }), layoutBounds: BODY_BOUNDS,
+    refKey: "protocol.participants.column.name", rendererKey: ".v2ParticipantsTable .v2PartColName" }),
+  element({ id: `${SCOPE_ID}.participants.column.function`, name: "Spalte Funktion", parentId: `${SCOPE_ID}.participants`, kind: "tableColumn", role: "content", columnRole: "contentColumn", pageArea: "body", order: 121,
+    capabilities: ["resizeWidth"], baseline: box(46, 62, 32, 26, { visible: true }), layoutBounds: BODY_BOUNDS,
+    refKey: "protocol.participants.column.function", rendererKey: ".v2ParticipantsTable .v2PartColRole" }),
+  element({ id: `${SCOPE_ID}.participants.column.company`, name: "Spalte Firma", parentId: `${SCOPE_ID}.participants`, kind: "tableColumn", role: "content", columnRole: "contentColumn", pageArea: "body", order: 122,
+    capabilities: ["resizeWidth"], baseline: box(78, 62, 30, 26, { visible: true }), layoutBounds: BODY_BOUNDS,
+    refKey: "protocol.participants.column.company", rendererKey: ".v2ParticipantsTable .v2PartColFirm" }),
+  element({ id: `${SCOPE_ID}.participants.column.contact`, name: "Spalte Telefon / E-Mail", parentId: `${SCOPE_ID}.participants`, kind: "tableColumn", role: "content", columnRole: "contentColumn", pageArea: "body", order: 123,
+    capabilities: ["resizeWidth"], baseline: box(108, 62, 72, 26, { visible: true }), layoutBounds: BODY_BOUNDS,
+    refKey: "protocol.participants.column.contact", rendererKey: ".v2ParticipantsTable .v2PartColContact" }),
+  element({ id: `${SCOPE_ID}.participants.column.attendance`, name: "Spalte Anwesend / Verteiler", parentId: `${SCOPE_ID}.participants`, kind: "tableColumn", role: "meta", columnRole: "metaColumn", pageArea: "body", order: 124,
+    capabilities: ["resizeWidth"], baseline: box(180, 62, 18, 26, { visible: true }), layoutBounds: BODY_BOUNDS,
+    refKey: "protocol.participants.column.attendance", rendererKey: ".v2ParticipantsTable .v2PartColMarks" }),
+  element({ id: `${SCOPE_ID}.participants.heading.attendance`, name: "Tabellenkopf Anwesend / Verteiler", parentId: `${SCOPE_ID}.participants.column.attendance`, kind: "label", role: "columnHeader", pageArea: "body", order: 125,
+    capabilities: ["textMove", "textResize", "setTextAlignment", "setVisibility"], baseline: box(180, 62, 18, 8, { textOffsetX: 0, textOffsetY: 0, fontSize: 7, textAlignment: "center", visible: true }), layoutBounds: BODY_BOUNDS,
+    refKey: "protocol.participants.heading.attendance", rendererKey: ".v2ParticipantsTable thead .v2PartMarksHead" }),
   element({ id: `${SCOPE_ID}.tops`, name: "TOP-Tabelle", parentId: `${SCOPE_ID}.body`, kind: "table", role: "content", pageArea: "body", order: 200,
-    capabilities: ["move", "resizeWidth", "setVisibility"], baseline: box(12, 91, 186, 120, { visible: true }), layoutBounds: BODY_BOUNDS,
+    capabilities: ["move", "resizeWidth", "setVisibility", "resizeColumnBoundary"], baseline: box(12, 91, 186, 120, { visible: true }), layoutBounds: BODY_BOUNDS,
+    boundaryResizePolicy: "adjacentPreserveTotal",
     refKey: "protocol.tops", rendererKey: ".topsTable" }),
   element({ id: `${SCOPE_ID}.tops.header`, name: "TOP-Tabelle · Kopf", parentId: `${SCOPE_ID}.tops`, kind: "group", role: "structure", pageArea: "body", order: 210,
     capabilities: ["resizeHeight", "textResize", "setTextAlignment", "setVisibility"], baseline: box(12, 91, 186, 8, { fontSize: 8, textAlignment: "left", visible: true }), layoutBounds: BODY_BOUNDS,
@@ -121,23 +145,23 @@ const ELEMENTS = Object.freeze([
     capabilities: ["setLineSpacing"], baseline: box(12, 99, 186, 112, { lineSpacing: 1.35, visible: true }), layoutBounds: BODY_BOUNDS,
     refKey: "protocol.tops.rows", rendererKey: ".topsTable tbody" }),
   element({ id: `${SCOPE_ID}.tops.column.number`, name: "Spalte TOP", parentId: `${SCOPE_ID}.tops`, kind: "tableColumn", role: "structure", columnRole: "structureColumn", pageArea: "body", order: 230,
-    capabilities: ["resizeWidth"], baseline: box(12, 91, 24.18, 120, { visible: true }), layoutBounds: BODY_BOUNDS,
+    capabilities: ["resizeWidth", "setVisibility"], baseline: box(12, 91, 24.18, 120, { visible: true }), layoutBounds: BODY_BOUNDS,
     refKey: "protocol.tops.column.number", rendererKey: ".topsTable .colNr" }),
   element({ id: `${SCOPE_ID}.tops.column.text`, name: "Spalte Gegenstand", parentId: `${SCOPE_ID}.tops`, kind: "tableColumn", role: "content", columnRole: "contentColumn", pageArea: "body", order: 231,
-    capabilities: ["resizeWidth"], baseline: box(36.18, 91, 120.9, 120, { visible: true }), layoutBounds: BODY_BOUNDS,
+    capabilities: ["resizeWidth", "setVisibility"], baseline: box(36.18, 91, 120.9, 120, { visible: true }), layoutBounds: BODY_BOUNDS,
     refKey: "protocol.tops.column.text", rendererKey: ".topsTable .colText" }),
   element({ id: `${SCOPE_ID}.tops.column.meta`, name: "Spalte Status / Fertig bis / verantw", parentId: `${SCOPE_ID}.tops`, kind: "tableColumn", role: "meta", columnRole: "metaColumn", pageArea: "body", order: 232,
-    capabilities: ["resizeWidth"], baseline: box(157.08, 91, 40.92, 120, { visible: true }), layoutBounds: BODY_BOUNDS,
+    capabilities: ["resizeWidth", "setVisibility"], baseline: box(157.08, 91, 40.92, 120, { visible: true }), layoutBounds: BODY_BOUNDS,
     refKey: "protocol.tops.column.meta", rendererKey: ".topsTable .colMeta" }),
-  element({ id: `${SCOPE_ID}.tops.heading.number`, name: "Tabellenkopf TOP", parentId: `${SCOPE_ID}.tops.header`, kind: "label", role: "columnHeader", pageArea: "body", order: 240,
-    capabilities: ["textResize", "setTextAlignment", "setVisibility"], baseline: box(12, 91, 24.18, 8, { fontSize: 8, textAlignment: "left", visible: true }), layoutBounds: BODY_BOUNDS,
-    refKey: "protocol.tops.heading.number", rendererKey: ".topsTable thead .colNr" }),
-  element({ id: `${SCOPE_ID}.tops.heading.text`, name: "Tabellenkopf Gegenstand", parentId: `${SCOPE_ID}.tops.header`, kind: "label", role: "columnHeader", pageArea: "body", order: 241,
-    capabilities: ["textResize", "setTextAlignment", "setVisibility"], baseline: box(36.18, 91, 120.9, 8, { fontSize: 8, textAlignment: "left", visible: true }), layoutBounds: BODY_BOUNDS,
-    refKey: "protocol.tops.heading.text", rendererKey: ".topsTable thead .colText" }),
-  element({ id: `${SCOPE_ID}.tops.heading.meta`, name: "Tabellenkopf Status / Fertig bis / verantw", parentId: `${SCOPE_ID}.tops.header`, kind: "label", role: "columnHeader", pageArea: "body", order: 242,
-    capabilities: ["textResize", "setTextAlignment", "setVisibility"], baseline: box(157.08, 91, 40.92, 8, { fontSize: 8, textAlignment: "left", visible: true }), layoutBounds: BODY_BOUNDS,
-    refKey: "protocol.tops.heading.meta", rendererKey: ".topsTable thead .colMeta" }),
+  element({ id: `${SCOPE_ID}.tops.heading.number`, name: "Tabellenkopf TOP", parentId: `${SCOPE_ID}.tops.column.number`, kind: "label", role: "columnHeader", pageArea: "body", order: 240,
+    capabilities: ["textMove", "textResize", "setTextAlignment", "setVisibility"], baseline: box(12, 91, 24.18, 8, { textOffsetX: 0, textOffsetY: 0, fontSize: 8, textAlignment: "left", visible: true }), layoutBounds: BODY_BOUNDS,
+    refKey: "protocol.tops.heading.number", rendererKey: ".topsTable thead .colNr > .columnHeadingContent" }),
+  element({ id: `${SCOPE_ID}.tops.heading.text`, name: "Tabellenkopf Gegenstand", parentId: `${SCOPE_ID}.tops.column.text`, kind: "label", role: "columnHeader", pageArea: "body", order: 241,
+    capabilities: ["textMove", "textResize", "setTextAlignment", "setVisibility"], baseline: box(36.18, 91, 120.9, 8, { textOffsetX: 0, textOffsetY: 0, fontSize: 8, textAlignment: "left", visible: true }), layoutBounds: BODY_BOUNDS,
+    refKey: "protocol.tops.heading.text", rendererKey: ".topsTable thead .colText > .columnHeadingContent" }),
+  element({ id: `${SCOPE_ID}.tops.heading.meta`, name: "Tabellenkopf Status / Fertig bis / verantw", parentId: `${SCOPE_ID}.tops.column.meta`, kind: "label", role: "columnHeader", pageArea: "body", order: 242,
+    capabilities: ["textMove", "textResize", "setTextAlignment", "setVisibility"], baseline: box(157.08, 91, 40.92, 8, { textOffsetX: 0, textOffsetY: 0, fontSize: 8, textAlignment: "left", visible: true }), layoutBounds: BODY_BOUNDS,
+    refKey: "protocol.tops.heading.meta", rendererKey: ".topsTable thead .colMeta > .columnHeadingContent" }),
   element({ id: `${SCOPE_ID}.closing`, name: "Abschlussbereich", parentId: `${SCOPE_ID}.body`, kind: "group", role: "content", pageArea: "body", order: 300,
     capabilities: ["move", "resizeWidth", "setVisibility"], baseline: box(12, 225, 186, 35, { visible: true }), layoutBounds: BODY_BOUNDS,
     refKey: "protocol.closing", rendererKey: ".v2TopsTail" }),
@@ -159,7 +183,7 @@ const REGISTRY_BASE = Object.freeze({
   scopeId: SCOPE_ID,
   unit: "mm",
   pageSettings: Object.freeze({ format: "A4", orientation: "portrait", width: 210, height: 297,
-    margins: Object.freeze({ top: 2, right: 12, bottom: 0, left: 12 }) }),
+    margins: Object.freeze({ top: 5, right: 12, bottom: 0, left: 12 }) }),
   elements: ELEMENTS,
 });
 
@@ -330,8 +354,64 @@ function desiredState(previous, operation, payload) {
   return next;
 }
 
+function tableColumns(tableId) {
+  return ELEMENTS.filter((candidate) => candidate.kind === "tableColumn" && candidate.parentId === tableId)
+    .sort((left, right) => left.order - right.order);
+}
+
+function usablePageBounds(allStates) {
+  const page = allStates.get(`${SCOPE_ID}.page-template`);
+  return {
+    left: Number(page?.marginLeft ?? REGISTRY_BASE.pageSettings.margins.left),
+    right: Number(REGISTRY_BASE.pageSettings.width) - Number(page?.marginRight ?? REGISTRY_BASE.pageSettings.margins.right),
+    top: Number(page?.marginTop ?? REGISTRY_BASE.pageSettings.margins.top),
+    bottom: Number(REGISTRY_BASE.pageSettings.height) - Number(page?.marginBottom ?? REGISTRY_BASE.pageSettings.margins.bottom),
+  };
+}
+
+function effectiveGeometry(entry, state, allStates, visited = new Set()) {
+  if (!entry || !state || visited.has(entry.id)) return state;
+  const nextVisited = new Set(visited).add(entry.id);
+  let x = Number(state.x);
+  let y = Number(state.y);
+  let width = Number(state.width);
+  const height = Number(state.height);
+  const parentEntry = entry.parentId ? ELEMENTS.find((candidate) => candidate.id === entry.parentId) : null;
+  const parentState = parentEntry ? allStates.get(parentEntry.id) : null;
+  if (parentEntry && parentState) {
+    const parent = effectiveGeometry(parentEntry, parentState, allStates, nextVisited);
+    x += parent.x - Number(parentState.x);
+    y += parent.y - Number(parentState.y);
+    if (entry.kind === "tableColumn") {
+      for (const sibling of tableColumns(parentEntry.id)) {
+        if (sibling.id === entry.id) break;
+        x += Number(allStates.get(sibling.id)?.width) - Number(sibling.baseline.width);
+      }
+    }
+    if ((parentEntry.kind === "table" || parentEntry.kind === "tableColumn") &&
+        !entry.capabilities.includes("resize") && !entry.capabilities.includes("resizeWidth")) {
+      width = parent.width;
+    }
+  }
+  return { x, y, width, height };
+}
+
+function validateAllStates(allStates) {
+  for (const definition of ELEMENTS) validateState(definition, allStates.get(definition.id), allStates);
+}
+
 function validateState(entry, state, allStates) {
   const limit = entry.layoutBounds;
+  const geometry = effectiveGeometry(entry, state, allStates);
+  if (!["document", "page"].includes(entry.kind)) {
+    const usable = usablePageBounds(allStates);
+    if (geometry.x < usable.left - 0.000001 || geometry.x + geometry.width > usable.right + 0.000001) {
+      throw Object.assign(new Error("Maximale Seitenbreite erreicht. Bitte zuerst in den PDF-Einstellungen den linken oder rechten Seitenrand verkleinern."), { code: "pdf_out_of_usable_width" });
+    }
+    if (geometry.y < usable.top - 0.000001 || geometry.y + geometry.height > usable.bottom + 0.000001) {
+      throw Object.assign(new Error("Maximale Seitenhöhe erreicht. Bitte zuerst in den PDF-Einstellungen den oberen oder unteren Seitenrand verkleinern."), { code: "pdf_out_of_usable_height" });
+    }
+  }
   if (state.x < limit.minX || state.x > limit.maxX || state.y < limit.minY || state.y > limit.maxY ||
       state.width < limit.minWidth || state.width > limit.maxWidth || state.height < limit.minHeight || state.height > limit.maxHeight ||
       state.x + state.width > 210.000001 || state.y + state.height > 297.000001) {
@@ -341,16 +421,19 @@ function validateState(entry, state, allStates) {
     : entry.pageArea === "body" ? `${SCOPE_ID}.body`
       : entry.pageArea === "footer" ? `${SCOPE_ID}.footer` : null;
   const zone = zoneId ? allStates.get(zoneId) : null;
-  if (zone && entry.id !== zoneId &&
-      (state.x < zone.x - 0.000001 || state.y < zone.y - 0.000001 ||
-       state.x + state.width > zone.x + zone.width + 0.000001 ||
-       state.y + state.height > zone.y + zone.height + 0.000001)) {
+  const zoneEntry = zoneId ? ELEMENTS.find((candidate) => candidate.id === zoneId) : null;
+  const zoneGeometry = zone && zoneEntry ? effectiveGeometry(zoneEntry, zone, allStates) : null;
+  if (zoneGeometry && entry.id !== zoneId &&
+      (geometry.x < zoneGeometry.x - 0.000001 || geometry.y < zoneGeometry.y - 0.000001 ||
+       geometry.x + geometry.width > zoneGeometry.x + zoneGeometry.width + 0.000001 ||
+       geometry.y + geometry.height > zoneGeometry.y + zoneGeometry.height + 0.000001)) {
     throw Object.assign(new Error("PDF-Layout verlässt den registrierten Seitenbereich."), { code: "pdf_invalid_page_zone" });
   }
   if (entry.kind === "tableColumn" && state.width < 5) throw Object.assign(new Error("PDF-Spalte ist kleiner als 5 mm."), { code: "pdf_invalid_column_width" });
   if (entry.kind === "tableColumn") {
-    const widths = ["number", "text", "meta"].map((name) => allStates.get(`${SCOPE_ID}.tops.column.${name}`).width);
-    if (widths.reduce((sum, value) => sum + value, 0) > allStates.get(`${SCOPE_ID}.tops`).width + 0.000001) {
+    const table = allStates.get(entry.parentId);
+    const total = tableColumns(entry.parentId).reduce((sum, column) => sum + Number(allStates.get(column.id)?.width), 0);
+    if (!table || Math.abs(total - Number(table.width)) > 0.000001) {
       throw Object.assign(new Error("PDF-Spaltensumme überschreitet die Tabellenbreite."), { code: "pdf_invalid_table_width" });
     }
   }
@@ -396,6 +479,12 @@ function createBbmPdfAdapter({ regenerate } = {}) {
     }
     return clone(validatePersistedProfileDocument(document));
   }
+  function readPersistedPdfLayoutState() {
+    const filePath = getPdfProfilePath();
+    if (!filePath) throw pdfProfileError("pdf_profile_unavailable", "Der bestehende PDF-Profilpfad ist nicht konfiguriert.");
+    if (!fs.existsSync(filePath)) return null;
+    return getPersistedPdfLayoutState();
+  }
   function activeDocumentId() { return safeDocumentId(context?.projectId, context?.meetingId); }
   function setActiveDocumentContext(value = {}) {
     const projectId = String(value.projectId || "").trim();
@@ -439,16 +528,88 @@ function createBbmPdfAdapter({ regenerate } = {}) {
         failNextApplyForDiagnostic = false;
         throw Object.assign(new Error("Kontrollierter PDF-Diagnosefehler."), { code: "pdf_change_apply_failed" });
       }
+      if (request.operation === "resizeColumnBoundary") {
+        const table = request.payload?.table;
+        const keys = table && typeof table === "object" && !Array.isArray(table) ? Object.keys(table).sort() : [];
+        if (entry.kind !== "table" || entry.boundaryResizePolicy !== "adjacentPreserveTotal" ||
+            !table || keys.join("|") !== "delta|leftColumnId|rightColumnId") {
+          throw Object.assign(new Error("PDF-Spaltengrenzen-Payload ist ungültig."), { code: "pdf_invalid_payload" });
+        }
+        const columns = tableColumns(entry.id);
+        const leftIndex = columns.findIndex((candidate) => candidate.id === String(table.leftColumnId || ""));
+        const rightIndex = columns.findIndex((candidate) => candidate.id === String(table.rightColumnId || ""));
+        const delta = finite(table.delta, "delta");
+        if (leftIndex < 0 || rightIndex !== leftIndex + 1 || Math.abs(delta) < 0.000001) {
+          throw Object.assign(new Error("PDF-Spaltengrenze muss zwei direkte Nachbarspalten verbinden."), { code: "pdf_invalid_table_boundary" });
+        }
+        const states = new Map(working.elements.map((state) => [state.elementId, state]));
+        const leftDefinition = columns[leftIndex];
+        const rightDefinition = columns[rightIndex];
+        const left = states.get(leftDefinition.id);
+        const right = states.get(rightDefinition.id);
+        if (left.visible === false || right.visible === false) {
+          throw Object.assign(new Error("Beide Nachbarspalten müssen sichtbar sein."), { code: "pdf_invalid_table_boundary" });
+        }
+        const nextLeft = { ...left, width: Number(left.width) + delta };
+        const nextRight = { ...right, width: Number(right.width) - delta };
+        if (nextLeft.width < Math.max(5, Number(leftDefinition.layoutBounds.minWidth)) ||
+            nextLeft.width > Number(leftDefinition.layoutBounds.maxWidth) ||
+            nextRight.width < Math.max(5, Number(rightDefinition.layoutBounds.minWidth)) ||
+            nextRight.width > Number(rightDefinition.layoutBounds.maxWidth)) {
+          throw Object.assign(new Error("PDF-Spaltengrenze überschreitet eine registrierte Spaltenbreite."), { code: "pdf_invalid_column_width" });
+        }
+        const beforeTotal = columns.reduce((sum, column) => sum + Number(states.get(column.id).width), 0);
+        const afterTotal = beforeTotal - Number(left.width) - Number(right.width) + nextLeft.width + nextRight.width;
+        if (Math.abs(beforeTotal - Number(previous.width)) > 0.000001 || Math.abs(afterTotal - beforeTotal) > 0.000001) {
+          throw Object.assign(new Error("PDF-Tabellenbreite und Spaltensumme müssen unverändert übereinstimmen."), { code: "pdf_invalid_table_width" });
+        }
+        states.set(leftDefinition.id, nextLeft);
+        states.set(rightDefinition.id, nextRight);
+        validateAllStates(states);
+        working = { scopeId: SCOPE_ID, capturedAt: new Date().toISOString(), elements: [...states.values()].map(clone) };
+        preview = { ...preview, state: preview.controlledOutputPath ? "stale" : "missing", stale: true };
+        return {
+          success: true, changeId: request.changeId, elementId: entry.id, operation: request.operation, errorCode: null,
+          message: "PDF-Spaltengrenze atomar verschoben; Tabellenbreite unverändert.",
+          previousState: clone(previous), newState: clone(previous), affectedStates: [clone(nextLeft), clone(nextRight)], rollbackSucceeded: true,
+        };
+      }
+      if (request.operation === "resizeWidth" && entry.kind === "table" && tableColumns(entry.id).length > 0) {
+        const next = desiredState(previous, request.operation, request.payload);
+        const columns = tableColumns(entry.id);
+        const states = new Map(working.elements.map((state) => [state.elementId, state]));
+        const outerDefinition = columns.at(-1);
+        const outer = states.get(outerDefinition.id);
+        const nextOuter = { ...outer, width: Number(outer.width) + Number(next.width) - Number(previous.width) };
+        if (nextOuter.width < Math.max(5, Number(outerDefinition.layoutBounds.minWidth)) ||
+            nextOuter.width > Number(outerDefinition.layoutBounds.maxWidth)) {
+          throw Object.assign(new Error("PDF-Tabellenbreite ueberschreitet die zulaessige Aussenspaltenbreite."), { code: "pdf_invalid_column_width" });
+        }
+        states.set(entry.id, next);
+        states.set(outerDefinition.id, nextOuter);
+        validateAllStates(states);
+        working = { scopeId: SCOPE_ID, capturedAt: new Date().toISOString(), elements: [...states.values()].map(clone) };
+        preview = { ...preview, state: preview.controlledOutputPath ? "stale" : "missing", stale: true };
+        return {
+          success: true, changeId: request.changeId, elementId: entry.id, operation: request.operation, errorCode: null,
+          message: "PDF-Tabelle und aeusserste Spalte atomar skaliert.", previousState: clone(previous), newState: clone(next),
+          affectedStates: [clone(next), clone(nextOuter)], rollbackSucceeded: true,
+        };
+      }
       const next = desiredState(previous, request.operation, request.payload);
       const nextStates = new Map(working.elements.map((state) => [state.elementId, state.elementId === entry.id ? next : state]));
-      validateState(entry, next, nextStates);
+      if (entry.kind === "page") validateAllStates(nextStates);
+      else validateState(entry, next, nextStates);
       working = { scopeId: SCOPE_ID, capturedAt: new Date().toISOString(), elements: [...nextStates.values()].map(clone) };
       preview = { ...preview, state: preview.controlledOutputPath ? "stale" : "missing", stale: true };
       return { success: true, changeId: request.changeId, elementId: entry.id, operation: request.operation, errorCode: null,
         message: "PDF-Layoutänderung angewandt und zurückgelesen.", previousState: clone(previous), newState: clone(next), rollbackSucceeded: true };
     } catch (error) {
       const readback = working.elements.find((state) => state.elementId === entry.id);
-      return failure(error?.code || "pdf_change_apply_failed", "PDF-Layoutänderung wurde sicher abgewiesen; der vorherige Zustand blieb erhalten.", clone(readback), true);
+      const boundaryMessage = new Set(["pdf_out_of_usable_width", "pdf_out_of_usable_height"]).has(error?.code)
+        ? error.message
+        : "PDF-Layoutänderung wurde sicher abgewiesen; der vorherige Zustand blieb erhalten.";
+      return failure(error?.code || "pdf_change_apply_failed", boundaryMessage, clone(readback), true);
     }
   }
   async function regeneratePdfPreview() {
@@ -490,7 +651,7 @@ function createBbmPdfAdapter({ regenerate } = {}) {
     regenerateHandler = handler;
   }
 
-  return Object.freeze({ getPdfRegistry, getCurrentPdfLayoutState, getPersistedPdfLayoutState, getPdfProfilePath, submitPdfChangeRequest, regeneratePdfPreview, getPreviewMetadata,
+  return Object.freeze({ getPdfRegistry, getCurrentPdfLayoutState, getPersistedPdfLayoutState, readPersistedPdfLayoutState, getPdfProfilePath, submitPdfChangeRequest, regeneratePdfPreview, getPreviewMetadata,
     getPdfContract, setActiveDocumentContext, replaceCurrentPdfLayoutState, resetForDiagnostic, failNextApply, configureRegenerate, configureProfileRoot });
 }
 

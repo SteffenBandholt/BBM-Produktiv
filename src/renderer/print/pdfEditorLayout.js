@@ -82,15 +82,30 @@ function applyStyle(node, entry, current) {
   }
   if ((entry.capabilities?.includes("resize") || entry.capabilities?.includes("resizeWidth")) && changed(current.width, baseline.width)) {
     node.style.width = `${Number(current.width)}mm`;
+    if (entry.kind === "tableColumn") node.style.minWidth = `${Number(current.width)}mm`;
     node.style.maxWidth = `${Number(current.width)}mm`;
   }
   if ((entry.capabilities?.includes("resize") || entry.capabilities?.includes("resizeHeight")) && changed(current.height, baseline.height)) {
     node.style.height = `${Number(current.height)}mm`;
     node.style.minHeight = `${Number(current.height)}mm`;
   }
+  if (entry.capabilities?.includes("textMove") &&
+      (changed(current.textOffsetX, baseline.textOffsetX) || changed(current.textOffsetY, baseline.textOffsetY))) {
+    node.style.position = "relative";
+    node.style.left = `${Number(current.textOffsetX) - Number(baseline.textOffsetX || 0)}mm`;
+    node.style.top = `${Number(current.textOffsetY) - Number(baseline.textOffsetY || 0)}mm`;
+  }
   if (entry.capabilities?.includes("textResize") && Number.isFinite(Number(current.fontSize))) node.style.fontSize = `${Number(current.fontSize)}pt`;
   if (entry.capabilities?.includes("setTextAlignment") && current.textAlignment) node.style.textAlign = current.textAlignment;
   if (entry.capabilities?.includes("setLineSpacing") && Number.isFinite(Number(current.lineSpacing))) node.style.lineHeight = String(Number(current.lineSpacing));
+}
+
+function columnPart(node, entry) {
+  if (entry.kind !== "tableColumn") return null;
+  if (String(node.tagName || "").toLowerCase() === "col") return "track";
+  if (node.closest?.("thead")) return "header";
+  if (node.closest?.("tbody")) return "data";
+  return "column";
 }
 
 export function applyBbmPdfEditorLayout(root, data) {
@@ -102,6 +117,22 @@ export function applyBbmPdfEditorLayout(root, data) {
     root.style.setProperty("--v2-pad-right", `${Number(page.marginRight)}mm`);
     root.style.setProperty("--v2-pad-bottom", `${Number(page.marginBottom)}mm`);
     root.style.setProperty("--v2-pad-left", `${Number(page.marginLeft)}mm`);
+  }
+  for (const tableEntry of registryEntries(data).filter((entry) => entry.kind === "table")) {
+    const columns = registryEntries(data)
+      .filter((entry) => entry.kind === "tableColumn" && entry.parentId === tableEntry.id)
+      .sort((left, right) => left.order - right.order);
+    if (columns.length === 0 || columns.some((column) => !states.has(column.id))) continue;
+    const tableWidth = columns.reduce((sum, column) => sum + Number(states.get(column.id).width || 0), 0);
+    for (const registeredNode of nodesFor(root, tableEntry)) {
+      const tableNodes = String(registeredNode.tagName || "").toLowerCase() === "table"
+        ? [registeredNode]
+        : Array.from(registeredNode.querySelectorAll?.("table") || []);
+      for (const tableNode of tableNodes) {
+        tableNode.style.width = `${tableWidth}mm`;
+        tableNode.style.maxWidth = `${tableWidth}mm`;
+      }
+    }
   }
   for (const entry of registryEntries(data)) {
     const current = states.get(entry.id);
@@ -145,17 +176,28 @@ export function collectBbmPdfPreviewMetadata(root, data) {
       const appliedY = canMove && Number.isFinite(Number(entry.baseline?.y))
         ? round(Number(entry.baseline.y) + (Number.isFinite(offsetY) ? offsetY * pageHeightMm / pageRect.height : 0))
         : undefined;
+      const part = columnPart(node, entry);
+      const contentWidth = part && part !== "track" && Number(node.scrollWidth) > 0
+        ? round(Number(node.scrollWidth) * pageWidthMm / pageRect.width)
+        : undefined;
+      const measuredBox = {
+        x: round((rect.left - pageRect.left) * pageWidthMm / pageRect.width),
+        y: round((rect.top - pageRect.top) * pageHeightMm / pageRect.height),
+        width: round(rect.width * pageWidthMm / pageRect.width),
+        height: round(rect.height * pageHeightMm / pageRect.height),
+      };
+      if (part === "track" && canMove) {
+        measuredBox.x = round(Number(current.x));
+        measuredBox.y = round(Number(current.y));
+      }
       renderBounds.push({
         elementId: entry.id,
         pageNumber,
+        ...(part ? { part } : {}),
+        ...(contentWidth === undefined ? {} : { contentWidth }),
         ...(appliedX === undefined ? {} : { appliedX }),
         ...(appliedY === undefined ? {} : { appliedY }),
-        box: {
-          x: round((rect.left - pageRect.left) * pageWidthMm / pageRect.width),
-          y: round((rect.top - pageRect.top) * pageHeightMm / pageRect.height),
-          width: round(rect.width * pageWidthMm / pageRect.width),
-          height: round(rect.height * pageHeightMm / pageRect.height),
-        },
+        box: measuredBox,
       });
     }
   }

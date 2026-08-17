@@ -660,19 +660,23 @@ body[data-orientation="portrait"] .measureRoot,
   padding-right: var(--bbm-top-text-pad-x);
 }
 
-.topsTable .meta3 {
+.topsTable td.colMeta > .meta3 {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  min-width: 0;
   padding-left: 0;
 }
 
 .topsTable .metaLine {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
   min-height: 4.5mm;
   line-height: 4.5mm;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 11ch;
   text-align: left;
 }
 
@@ -680,6 +684,14 @@ body[data-orientation="portrait"] .measureRoot,
   display: flex;
   align-items: center;
   gap: 1.5mm;
+}
+
+.topsTable .metaLine.meta1 .metaText {
+  flex: 0 1 12mm;
+}
+
+.topsTable .metaLine.meta1 .ampelDot {
+  margin-left: 0;
 }
 
 .metaText {

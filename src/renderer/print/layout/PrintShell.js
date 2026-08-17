@@ -176,19 +176,23 @@ function _buildTableHead(type, topsLayout) {
   tr.className = "tableHeadRow";
 
   if (type === "tops") {
-    const thNr = _el("th", "colNr", topsLayout.labels.top);
+    const thNr = _el("th", "colNr");
     thNr.dataset.devPdfZone = "number";
-    const thText = _el("th", "colText", topsLayout.labels.text);
+    thNr.appendChild(_el("div", "columnHeadingContent", topsLayout.labels.top));
+    const thText = _el("th", "colText");
     thText.dataset.devPdfZone = "text";
+    thText.appendChild(_el("div", "columnHeadingContent", topsLayout.labels.text));
     const thMeta = _el("th", "colMeta");
     thMeta.dataset.devPdfZone = "meta";
-    thMeta.innerHTML = `
+    const metaContent = _el("div", "columnHeadingContent");
+    metaContent.innerHTML = `
       <div class="metaHead">
         <div>${topsLayout.labels.meta[0]}</div>
         <div>${topsLayout.labels.meta[1]}</div>
         <div>${topsLayout.labels.meta[2]}</div>
       </div>
     `;
+    thMeta.appendChild(metaContent);
     tr.append(thNr, thText, thMeta);
   } else if (type === "firms") {
     tr.innerHTML = `<th>Firma</th><th>Typ</th><th>Aktiv</th>`;
