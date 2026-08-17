@@ -322,8 +322,10 @@ async function runM81BbmPdfAdapterTests(run) {
     const nativeEditor = read("../UI-Editor-kit/reference-target-app/src/ReferenceTargetApp.Wpf/UI/Editor/ElectronTargetEditor.cs");
     assert.match(printIpc, /generatePdfForUiEditor/);
     assert.match(printIpc, /printToPDF/);
-    assert.match(printIpc, /data\.mode === "protocol"/);
+    assert.match(printIpc, /_usesBbmProtocolPdfLayout\(data\.mode\)/);
     assert.match(printIpc, /p\.pdfEditorPreview === true[\s\S]*getCurrentPdfLayoutState\(\)[\s\S]*readPersistedPdfLayoutState\(\)/);
+    assert.match(printIpc, /function _usesBbmProtocolPdfLayout\(mode\)[\s\S]*normalizedMode === "protocol" \|\| normalizedMode === "preview"/);
+    assert.match(printIpc, /if \(_usesBbmProtocolPdfLayout\(data\.mode\)\)[\s\S]*readPersistedPdfLayoutState\(\)/);
     assert.match(printIpc, /catch \(error\)[\s\S]*Editorprofil wird beim Produktdruck ignoriert/);
     assert.match(renderer, /pdf\.bbm\.protocol/);
     assert.doesNotMatch([printIpc, renderer, nativeEditor].join("\n"), /ReferenceOrderFactory/);

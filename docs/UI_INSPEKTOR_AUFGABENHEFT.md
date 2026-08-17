@@ -85,6 +85,7 @@ Aktueller Stand:
 - [x] M86.25 Protokoll-Listenbeschriftung, Langtextgröße und Ampel-textResize korrigieren
 - [x] K17.8 PDF-Tabellenspalte als geometrische Einheit bedienen und Ueberschrift separat feinjustieren
 - [x] K17.9 PDF-Nutzflaeche hart begrenzen und Teilnehmer-Spaltengrenzen atomar fuehren
+- [x] K17.10 Gespeichertes PDF-Layout im normalen Vorabzug und Produktdruck identisch anwenden
 
 ## Statusupdate M86.25
 
@@ -990,3 +991,11 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
 - Die bestaetigte Teilnehmer-Tabelle verwendet ihre vorhandenen fuenf Spalten Name 34, Funktion 32, Firma 30, Telefon/E-Mail 72 und Anwesend/Verteiler 18 mm als explizite Tracks. Innere Grenzen bleiben bei 186 mm Gesamtsumme atomar; eine Aussenbreitenaenderung passt Tabelle und rechten Track gemeinsam an.
 - Die Ueberschrift Anwesend/Verteiler ist ein Kind ihrer Spalte und separat textpositionierbar. Paginierung, Druckpfad, Fachwerte, Reihenfolge und bestehendes Teilnehmer-DOM bleiben unveraendert.
 - Guardrails: M81 einschliesslich Rollback und exakter Randmeldungen, M85 mit allen 47 unveraenderten Golden-Fixtures und realen Header-/Datenzellen-Bounding-Boxes, UI-Editor-Vertragscheck.
+
+## K17.10 - Gespeichertes PDF-Layout in allen Protokoll-Ausgaben
+
+- Status: `[A]`; Ursache, Minimalfix, automatische Guardrails und sichtbare Produktabnahme abgeschlossen.
+- `print:getData` behandelt `protocol` und `preview` als dieselbe BBM-Protokoll-PDF-Familie. Die Editor-Vorschau erhaelt weiterhin den aktuellen Arbeitszustand; normaler Vorabzug und Produktdruck lesen ausschliesslich den vorhandenen gespeicherten Profilzustand.
+- Der bestehende Renderer wendet den Zustand weiterhin vor Messung, Paginierung und finalem DOM an. Es gibt keine zweite Profilquelle, keinen zweiten Print-DOM und keinen nachtraeglichen CSS-Override.
+- Sichtbarer Nachweis: Teilnehmertracks 71/19 mm und TOP-Tracks 24,18/121,90/39,92 mm gespeichert, Editor geschlossen, Vorabzug und echtes Produkt-PDF erzeugt. Relevante Text-Bounding-Boxes sind ueber alle drei PDFs exakt gleich.
+- Guardrails: M81 14/14, M85 mit 47 unveraenderten Golden-Fixtures, UI-Editor-Vertragscheck und isolierter Zwei-Start-Lauf.

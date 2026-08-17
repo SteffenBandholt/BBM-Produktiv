@@ -89,6 +89,11 @@ function _readLayoutCalibrationEnabled() {
   return false;
 }
 
+function _usesBbmProtocolPdfLayout(mode) {
+  const normalizedMode = String(mode || "").trim().toLowerCase();
+  return normalizedMode === "protocol" || normalizedMode === "preview";
+}
+
 function _normalizeLayoutCalibrationEnabled(value, fallback = false) {
   if (value == null) return !!fallback;
   const raw = String(value).trim().toLowerCase();
@@ -566,7 +571,7 @@ function registerPrintIpc() {
         restarbeitenLocationLabels: p.restarbeitenLocationLabels || null,
         showAmpelInList: typeof p.showAmpelInList === "boolean" ? p.showAmpelInList : null,
       });
-      if (data.mode === "protocol") {
+      if (_usesBbmProtocolPdfLayout(data.mode)) {
         const { getSharedBbmPdfAdapter } = require("../ui-editor/bbmPdfAdapter.cjs");
         const pdfAdapter = getSharedBbmPdfAdapter();
         if (p.pdfEditorPreview === true) {

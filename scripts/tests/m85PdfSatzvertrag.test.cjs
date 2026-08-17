@@ -578,7 +578,7 @@ async function runM85PdfSatzvertragTests(run) {
     assert.match(editorIpc, /getSharedBbmPdfAdapter/, CONTRACT.singleProfile);
     assert.match(editorIpc, /configureProfileRoot\([\s\S]*module-protokoll/, CONTRACT.singleProfile);
     assert.doesNotMatch(editorIpc, /new .*ProfileStore|create.*ProfileStore/, CONTRACT.singleProfile);
-    assert.match(printIpc, /data\.mode === "protocol"[\s\S]*readPersistedPdfLayoutState\(\)/, CONTRACT.singleProfile);
+    assert.match(printIpc, /_usesBbmProtocolPdfLayout\(data\.mode\)[\s\S]*readPersistedPdfLayoutState\(\)/, CONTRACT.singleProfile);
     assert.match(printApp, /data\.mode === "headerTest"/, CONTRACT.historical);
     assert.match(restScreen, /printPdfAndPreviewInternal\(this\._buildRestarbeitenPdfPayload\(\)\)/, CONTRACT.historical);
     assert.match(restScreen, /mode:\s*"restarbeiten"[\s\S]*orientation:\s*"landscape"/, CONTRACT.historical);

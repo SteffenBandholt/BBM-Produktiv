@@ -1,5 +1,13 @@
 # STATUS.md — BBM-Produktiv
 
+## Gespeichertes PDF-Layout in Editor-, Normal- und Produktvorschau
+
+- Status: `[A]`; der normale offene Protokoll-Vorabzug (`mode=preview`) liest jetzt wie der Produktdruck den gespeicherten Zustand des bestehenden BBM-PDF-Profils. Die Editor-Vorschau verwendet weiterhin bewusst den aktuellen Arbeitszustand; nach `Speichern` sind beide Zustaende identisch.
+- Ursache war ausschliesslich die Modusgrenze in `print:getData`: `protocol` erhielt das gespeicherte Profil, `preview` fiel trotz desselben Protokoll-Print-DOM auf die Registry-Baseline zurueck. Renderer, Paginierung, CSS-Anwendung und `printToPDF`-Pfad waren bereits gemeinsam und wurden nicht umgebaut.
+- Reale isolierte Abnahme: Teilnehmergrenze auf 71/19 mm und TOP-Grenze auf 24,18/121,90/39,92 mm geaendert, gespeichert, Editor geschlossen, normalen Vorabzug geoeffnet und Protokoll abgeschlossen. Die extrahierten PDF-Bounding-Boxes fuer Telefon/E-Mail, Anwesend/Verteiler, Gegenstand, Status, Fertig bis und verantw. sind in Editor-Vorschau, normalem Vorabzug und Produkt-PDF numerisch identisch.
+- Der isolierte Zwei-Start-Lauf endete zweimal mit Exit 0; das PDF-Profil enthielt vor dem zweiten Start weiterhin die gespeicherten Trackbreiten. M81 14/14 und M85 mit allen 47 unveraenderten Golden-Fixtures sind gruen. Commit und Push: keiner.
+- Der vollstaendige `npm test` bleibt ausserhalb K17.10 rot: vorhandene Registry-Sollzahlen/Fingerprints, Licensing-Dokumenthash, einzelne Altvertraege und Harness-Zaehlungen weichen weiterhin ab; zusaetzlich fand der sichtbare M86.24-Gesamtlauf sein separates Editorfenster nicht. Keiner dieser Fehler betrifft den geaenderten `preview`-Profilzweig oder die gruenen M81-/M85-Nachweise.
+
 ## Abschlussnachweis PDF-Nutzflaeche / Teilnehmer-Tabelle
 
 - Native Zwei-Start-Abnahme: Die Grenze Telefon/E-Mail | Anwesend/Verteiler wurde im echten Editor von 72/18 mm auf 73/17 mm, per Undo zur Baseline und anschliessend auf 71/19 mm verstellt. Speichern und Neustart stellten 71/19 mm wieder her. Die rechte Ueberschrift blieb separat per Textposition 1/0 mm feinjustierbar.

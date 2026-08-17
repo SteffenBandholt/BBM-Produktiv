@@ -171,3 +171,9 @@
 **Beschluss:** Die tatsaechlich gesetzten vier PDF-Seitenraender definieren die harte Nutzflaeche fuer alle normalen PDF-Layoutziele. Eine Verletzung wird vor der Zustandsuebernahme horizontal oder vertikal atomar abgewiesen. Tabellen verwenden innerhalb dieser Flaeche explizite Spaltentracks: Eine innere Grenze veraendert direkte Nachbarn gegenlaeufig bei fester Gesamtsumme; eine Aussenbreitenaenderung veraendert Tabelle und aeussersten Track gemeinsam.
 
 **Begruendung:** Papiergrenze und Inhaltsgrenze sind unterschiedliche Vertraege. Erst die Ableitung aus dem vorhandenen `page-template` verhindert Randueberlauf auch nach einer Randanpassung. Die generische Tabellenregel haelt Kopf, Datenzellen und Hintergruende lueckenlos, ohne eine Tabellen- oder Druckarchitektur neben dem bestehenden Renderer einzufuehren.
+
+## Entscheidung 033
+
+**Beschluss:** Alle Ausgaben der vorhandenen Protokoll-PDF-Familie verwenden denselben BBM-PDF-Layoutzustand. Die Editor-Vorschau verwendet den aktuellen Arbeitszustand; normaler Vorabzug und Produktdruck verwenden den gespeicherten Zustand desselben Profils. Nach erfolgreichem Speichern muessen diese Zustaende geometrisch identisch sein.
+
+**Begruendung:** Der normale Vorabzug wird technisch mit `mode=preview` erzeugt, nutzt aber denselben Protokoll-Print-DOM, dieselben Seitenraender und dieselben Tabellen. Ein Rueckfall dieses Modus auf die Registry-Baseline widerspricht der sichtbaren Editorfreigabe. Die gemeinsame Modusklassifikation schliesst diese Luecke ohne neue Profilquelle, Rendererarchitektur oder Druckstrecke.
