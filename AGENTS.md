@@ -406,6 +406,35 @@ Achte bei Reviews besonders auf:
 - unstimmige Importpfade
 - Ã„nderungen, die nach â€žkleinem Paketâ€œ aussehen, aber faktisch mehrere Baustellen zugleich Ã¶ffnen
 
+## Entwicklungsorganisation Lenovo / Acer
+
+### Führender Hauptentwicklungsrechner: Lenovo / ThinkPad
+
+- Die Hauptentwicklung von BBM erfolgt auf dem Lenovo / ThinkPad.
+- Dort wird der führende integrierte BBM-Gesamtstand bearbeitet und fertig entwickelte Module kontrolliert in das Hauptprogramm übernommen.
+- Nach einer Modulintegration erfolgen dort Gesamt- und Integrationsregressionen.
+- Der spätere produktive EXE-Build entsteht ausschließlich aus diesem integrierten Hauptstand.
+
+### Abgegrenzte Modulentwicklung: Acer und weitere Rechner
+
+- Auf dem Acer oder weiteren Entwicklungsrechnern dürfen nur klar abgegrenzte, in sich geschlossene BBM-Module entwickelt werden.
+- Aktuell ist der Acer der Modulrechner für BBM Rechnung auf dem Branch `rechnung-entwicklung`.
+- Auf dem Acer findet keine parallele Hauptentwicklung anderer BBM-Module statt.
+- Arbeitsrechner werden nicht vorsorglich auf dieselben Arbeitsbranches umgeschaltet: Der ThinkPad wird nicht allein wegen Rechnungsarbeit auf `rechnung-entwicklung` geschaltet, und der Acer nicht vorsorglich auf andere ThinkPad-Modulbranches.
+
+### GitHub, Integration und gemeinsame Bereiche
+
+- GitHub ist Übergabe- und Versionspunkt für Programmcode, Tests, Migrationen und Dokumentation, nicht für produktive Nutzdatenbanken.
+- Ein Modul durchläuft: Entwicklung auf dem vorgesehenen Modulrechner, fachliche und technische Modulprüfung, Veröffentlichung des geprüften Modulstands auf GitHub, kontrollierte Übernahme in den führenden Hauptstand auf dem ThinkPad sowie dortige Gesamt-/Integrationsprüfung.
+- Ein auf dem Acer nach GitHub gepushter Rechnungscommit erfordert auf dem ThinkPad weder sofortiges Pullen noch das Auschecken von `rechnung-entwicklung`; das geschieht erst bei geplanter Integration oder konkretem Bedarf einer dortigen Arbeit.
+- Änderungen an BBM-Core, Datenbankgrundlagen, UI-Editor-Kit, gemeinsamen APIs oder Stammdatenstrukturen bleiben von Modulfachlogik nachvollziehbar getrennt, werden als eigenständige Pakete geprüft und separat committed.
+
+### Entwicklungsdatenbanken und Zielbetrieb
+
+- Acer und ThinkPad besitzen jeweils eigene lokale Test-/Entwicklungsdatenbanken. Diese werden nicht über Git synchronisiert und müssen keinen identischen Testdatenbestand enthalten.
+- Über Git werden DB-Schema, Migrationen, Programmcode und Tests übertragen. Migrationen müssen vorhandene lokale Datenbanken ohne Löschen oder Datenverlust auf einen neuen Programmstand aktualisieren können.
+- Der produktive Zielbetrieb bleibt zunächst eine lokale Einzelplatzanwendung mit lokaler EXE, lokaler SQLite-Datenbank und lokalen Dateien/PDFs, ohne Cloud-Zwang oder Mehrgeräte-Datensynchronisation.
+
 ## Git- und PR-Regeln
 - Ein PR soll idealerweise nur **einen sauberen Meilenstein** oder ein klar abgegrenztes Mini-Paket enthalten.
 - Keine Sammel-PRs mit mehreren unabhÃ¤ngigen Umbauten.
