@@ -3,6 +3,7 @@ import { bindDevelopmentUiEditorOpenButtonRef } from "../app/coreShellNavigation
 import { getM80Ref } from "./m80Refs.js";
 import { advanceM80DiagnosticRegistryRevision, createM80RegistrationDescriptor, emitM80RegistryEvent, refreshM80StartupLayoutAfterRegistryMount } from "./m80HostAdapter.js";
 import { installProtokollAcceptancePilot } from "./protokollAcceptancePilot.js";
+import { installRechnungAcceptancePilot } from "./rechnungAcceptancePilot.js";
 
 const DIAGNOSTIC_FAILURE_TARGET = "restarbeiten.edit.short.field";
 
@@ -37,6 +38,7 @@ export async function installBbmM80DiagnosticPilot({ router, module = "restarbei
 
 export async function installBbmM80DiagnosticModule({ router, module = "restarbeiten", isolatedAcceptance = false } = {}) {
   if (module === "protokoll") return installProtokollAcceptancePilot({ router, isolatedAcceptance });
+  if (module === "rechnung") return installRechnungAcceptancePilot({ router, isolatedAcceptance });
   console.info(`[ui-editor] restarbeiten diagnostic start: isolated=${isolatedAcceptance === true}`);
   if (!router?.contentRoot) throw new Error("M80-Diagnose braucht den vorhandenen BBM-Inhaltsbereich.");
   router._setSidebarVisibility?.(false);

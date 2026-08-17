@@ -28,7 +28,7 @@ const REMOVED_ENV_KEYS = Object.freeze([
   "BBM_WHISPER_SERVER_HOST",
   "BBM_WHISPER_SERVER_PORT",
 ]);
-const ACCEPTANCE_MODULES = Object.freeze(new Set(["restarbeiten", "protokoll"]));
+const ACCEPTANCE_MODULES = Object.freeze(new Set(["restarbeiten", "protokoll", "rechnung"]));
 const ACCEPTANCE_MODULE_SWITCH = "--bbm-ui-editor-acceptance-module=";
 
 function parseAcceptanceModule(argv = process.argv) {

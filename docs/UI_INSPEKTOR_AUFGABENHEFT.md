@@ -970,3 +970,12 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
 - Separate Electron-Neustartprozesse laden die getrennten Modulprofile ohne Editoröffnung; gespeicherte Breiten bleiben sichtbar und alle Editor-/Diagnosemarker fehlen.
 - Test: `scripts/tests/m86-24VisibleEditorAcceptance.test.cjs`; ergänzend M86.16, M86.19, M86.20, M86.22 und M86.23.
 - Nicht geändert: UI-/Parent-/Tabellenstruktur, Fachlogik, PDF/Druck, Datenbank, Lizenzierung und produktive Benutzerprofile.
+
+## M86.25 - Rechnung-Acceptance-Routing
+
+- Status: isolierter Rechnung-Acceptance-Pfad und gezielter Routing-Guardrail umgesetzt; die sichtbare native Rechnungsauswahl bleibt offen.
+- Der vorhandene Acceptance-Runner und der Main-Prozess akzeptieren nun explizit `rechnung`; unbekannte Werte bleiben von diesem neuen Fall getrennt.
+- Der Diagnose-Dispatcher öffnet den kanonischen Rechnungsscreen über den bestehenden globalen Modulweg und aktiviert den vorhandenen nativen Editor mit `rechnung.screen`.
+- Guardrail: `scripts/tests/uiEditorAcceptanceIsolation.test.cjs` prüft die explizite Freigabe und den unveränderten generischen Rechnung-/Editorpfad. Der bestehende Rechnungskomponenten-Guardrail bestätigt weiterhin 61 gemountete Einzel-Refs.
+- Nicht geändert: Rechnungskomponentenvertrag, Registry, Fingerprint, HostAdapter, Rechnungsfachlogik, Fachdaten, PDF, ZUGFeRD und Lizenzierung.
+- Offen: sichtbarer nativer Manager-Handshake mit `rechnung.screen`, Registry-/Fingerprint-Akzeptanz und Auswahl eines einzelnen Rechnungselements ohne Fachaktion.

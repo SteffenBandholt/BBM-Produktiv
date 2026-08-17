@@ -85,10 +85,21 @@ async function runUiEditorAcceptanceIsolationTests(run) {
     assert.equal(args.includes("--bbm-ui-editor-acceptance-module=protokoll"), true);
   });
 
-  await run("M84.0 Isolation: Acceptance-Modul ist auf Restarbeiten und Protokoll begrenzt", () => {
+  await run("M84.0 Isolation: Acceptance-Module sind explizit freigegeben", () => {
     assert.equal(parseAcceptanceModule(["node", "runner"]), "restarbeiten");
     assert.equal(parseAcceptanceModule(["node", "runner", "--module=protokoll"]), "protokoll");
+    assert.equal(parseAcceptanceModule(["node", "runner", "--module=rechnung"]), "rechnung");
     assert.throws(() => parseAcceptanceModule(["node", "runner", "--module=settings"]), /UI_EDITOR_ACCEPTANCE_MODULE_INVALID/);
+  });
+
+  await run("M84.0 Isolation: Rechnung nutzt den bestehenden Acceptance- und Editorpfad", () => {
+    const main = fs.readFileSync(path.join(process.cwd(), "src/main/main.js"), "utf8");
+    const diagnostic = fs.readFileSync(path.join(process.cwd(), "src/renderer/ui-editor/m80Diagnostic.js"), "utf8");
+    const invoicePilot = fs.readFileSync(path.join(process.cwd(), "src/renderer/ui-editor/rechnungAcceptancePilot.js"), "utf8");
+    assert.match(main, /new Set\(\["restarbeiten", "protokoll", "rechnung"\]\)/);
+    assert.match(diagnostic, /module === "rechnung"\) return installRechnungAcceptancePilot/);
+    assert.match(invoicePilot, /router\.openGlobalModule\("rechnung"\)/);
+    assert.match(invoicePilot, /openNativeUiEditor\(\{ scopeId: RECHNUNG_ACCEPTANCE_SCOPE_ID \}\)/);
   });
 
   await run("M82.7.3 Isolation: Sentinel-Benutzerdateien bleiben bei isoliertem DB-Schreiben bytegleich", () => {

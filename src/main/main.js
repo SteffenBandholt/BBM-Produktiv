@@ -11,7 +11,7 @@ const { configureUiEditorAcceptanceProfile } = require("./startup/uiEditorAccept
 
 const uiEditorAcceptanceProfile = configureUiEditorAcceptanceProfile({ electronApp: app });
 const UI_EDITOR_ACCEPTANCE_MODULE_SWITCH = "--bbm-ui-editor-acceptance-module=";
-const UI_EDITOR_ACCEPTANCE_MODULES = new Set(["restarbeiten", "protokoll"]);
+const UI_EDITOR_ACCEPTANCE_MODULES = new Set(["restarbeiten", "protokoll", "rechnung"]);
 
 function getUiEditorAcceptanceModule(argv = process.argv) {
   if (!uiEditorAcceptanceProfile.enabled) return null;
