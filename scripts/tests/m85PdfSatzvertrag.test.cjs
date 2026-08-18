@@ -120,6 +120,11 @@ function editorBounds(result, elementId, part) {
     .filter((entry) => entry.elementId === elementId && entry.pageNumber === 1 && (!part || entry.part === part));
 }
 
+function editorBoundsOnPage(result, elementId, pageNumber, part) {
+  return (result?.previewMetadata?.renderBounds || [])
+    .filter((entry) => entry.elementId === elementId && entry.pageNumber === pageNumber && (!part || entry.part === part));
+}
+
 async function runM85PdfSatzvertragTests(run) {
   let rendered = null;
 
@@ -451,6 +456,35 @@ async function runM85PdfSatzvertragTests(run) {
     }
     assert.equal(editorBounds(editorRun(metaId, { visible: false }), metaId).length, 0,
       `${metaId}:vollstaendige Spalte blieb sichtbar`);
+  });
+
+  await run("M85 PDF-Readback: Tabellenspalten liefern reale seitenbezogene Track-Geometrie", () => {
+    const tableId = "pdf.bbm.protocol.tops";
+    const columnIds = [`${tableId}.column.text`, `${tableId}.column.meta`];
+    const result = editorRun(`${tableId}.column.meta`, { visible: true }, "p03-two-pages");
+    assert.equal(result.previewMetadata.pageCount, 2, `${CONTRACT.editorBoundary}:Mehrseitenfixture`);
+
+    for (const columnId of columnIds) {
+      for (const pageNumber of [1, 2]) {
+        const tracks = editorBoundsOnPage(result, columnId, pageNumber, "track");
+        const headers = editorBoundsOnPage(result, columnId, pageNumber, "header");
+        const dataCells = editorBoundsOnPage(result, columnId, pageNumber, "data");
+        assert.equal(tracks.length, 1, `${columnId}:Seite${pageNumber}:eindeutiger Track`);
+        assert.equal(headers.length, 1, `${columnId}:Seite${pageNumber}:eindeutiger Kopf`);
+        assert.ok(dataCells.length > 0, `${columnId}:Seite${pageNumber}:Datenzellen fehlen`);
+        const track = tracks[0].box;
+        const header = headers[0].box;
+        const dataBottom = Math.max(...dataCells.map((entry) => entry.box.y + entry.box.height));
+        assert.ok(Math.abs(track.x - header.x) <= 0.05, `${columnId}:Seite${pageNumber}:linke Kante`);
+        assert.ok(Math.abs(track.y - header.y) <= 0.05, `${columnId}:Seite${pageNumber}:reale Kopfkante`);
+        assert.ok(Math.abs(track.width - header.width) <= 0.05, `${columnId}:Seite${pageNumber}:Trackbreite`);
+        assert.ok(Math.abs(track.y + track.height - dataBottom) <= 0.05, `${columnId}:Seite${pageNumber}:sichtbare Trackhoehe`);
+      }
+      const firstPageTrack = editorBoundsOnPage(result, columnId, 1, "track")[0].box;
+      const secondPageTrack = editorBoundsOnPage(result, columnId, 2, "track")[0].box;
+      assert.ok(Math.abs(firstPageTrack.y - secondPageTrack.y) > 1,
+        `${columnId}:Seitengeometrie wurde zu einer globalen Box vermischt`);
+    }
   });
 
   await run("M85 PDF-Bedienung: Teilnehmer-Tabelle bleibt bis zur Nutzflaechenkante lueckenlos", () => {

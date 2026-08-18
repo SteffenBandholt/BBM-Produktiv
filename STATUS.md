@@ -1,5 +1,13 @@
 # STATUS.md — BBM-Produktiv
 
+## Seitenbezogener PDF-TableColumn-Readback
+
+- Status: `[A]`; der native PDF-Editor verwendet fuer ausgewaehlte `TableColumn`-Ziele dieselbe reale, seitenbezogene Rendererbox fuer Inspector und Auswahlrahmen. Die logische Registry-Baseline bleibt unveraendert Reset-/Layoutquelle.
+- Der BBM-Renderer lieferte bereits getrennte `track`-, `header`- und `data`-Bounds je Seite. Der Fehler lag im nativen Inspector: nur `x` kam aus dem Track-Readback, waehrend `y`, Breite und Hoehe weiterhin aus LayoutState/Registry gelesen wurden. Das Overlay vereinigte zwar Rendererbounds, verwendete aber einen getrennten Geometriepfad.
+- Der gemeinsame Editor bevorzugt nun den sichtbaren Track der aktuell ausgewaehlten Seite und vereinigt ersatzweise nur Kopf und Datenzellen derselben Seite. Seitenwechsel aktualisieren Position, Breite, Hoehe und Overlay gemeinsam; neue Renderer-Metadaten aktualisieren zugleich die bestehende Tabellenuebersicht. Andere Elementarten behalten ihr bisheriges Verhalten.
+- Reale Abnahme im normalen `npm start`, Protokoll #22 mit vier Seiten: Meta Seite 1 `157,078 / 163,176 mm`, `40,921 x 108,166 mm`; Seite 2 `157,078 / 22,301 mm`, `40,921 x 248,492 mm`. Der rote Rahmen beginnt jeweils am sichtbaren TOP-Kopf. Gegenstand Seite 1: `36,177 / 163,176 mm`, `120,901 x 108,166 mm`. Grenzschritt `+1 mm` ergab Meta `x=158,078`, Breite `39,922 mm` und Gegenstand `121,901 mm`; Inspector und Tabellenuebersicht aktualisierten sich im selben Renderzyklus. Undo stellte `157,078`, `40,921 mm` und `120,901 mm` sofort wieder her. Sitzung danach sauber, kein Save.
+- Druckpfad, Registry, Profile, CSS, Paginierung und Tabellenbreiten wurden nicht geaendert. M85 einschliesslich aller 47 Golden-Fixtures und neuem Mehrseiten-Readback sowie die native ReferenceTargetApp-Suite 141/141 sind gruen. Commit und Push: keiner.
+
 ## Gespeichertes PDF-Layout in Editor-, Normal- und Produktvorschau
 
 - Status: `[A]`; der normale offene Protokoll-Vorabzug (`mode=preview`) liest jetzt wie der Produktdruck den gespeicherten Zustand des bestehenden BBM-PDF-Profils. Die Editor-Vorschau verwendet weiterhin bewusst den aktuellen Arbeitszustand; nach `Speichern` sind beide Zustaende identisch.

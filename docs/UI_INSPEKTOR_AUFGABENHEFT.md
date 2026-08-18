@@ -86,6 +86,7 @@ Aktueller Stand:
 - [x] K17.8 PDF-Tabellenspalte als geometrische Einheit bedienen und Ueberschrift separat feinjustieren
 - [x] K17.9 PDF-Nutzflaeche hart begrenzen und Teilnehmer-Spaltengrenzen atomar fuehren
 - [x] K17.10 Gespeichertes PDF-Layout im normalen Vorabzug und Produktdruck identisch anwenden
+- [x] K17.11 TableColumn-Inspector und Auswahlrahmen auf reale seitenbezogene PDF-Rendererbox vereinheitlichen
 
 ## Statusupdate M86.25
 
@@ -999,3 +1000,12 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
 - Der bestehende Renderer wendet den Zustand weiterhin vor Messung, Paginierung und finalem DOM an. Es gibt keine zweite Profilquelle, keinen zweiten Print-DOM und keinen nachtraeglichen CSS-Override.
 - Sichtbarer Nachweis: Teilnehmertracks 71/19 mm und TOP-Tracks 24,18/121,90/39,92 mm gespeichert, Editor geschlossen, Vorabzug und echtes Produkt-PDF erzeugt. Relevante Text-Bounding-Boxes sind ueber alle drei PDFs exakt gleich.
 - Guardrails: M81 14/14, M85 mit 47 unveraenderten Golden-Fixtures, UI-Editor-Vertragscheck und isolierter Zwei-Start-Lauf.
+
+## K17.11 - Seitenbezogener PDF-TableColumn-Readback
+
+- Status: `[A]`; Ursache, appneutraler Minimalfix, Renderer-/Mehrseiten-Guardrail und sichtbare reale BBM-Abnahme abgeschlossen.
+- Der Renderer meldete bereits die tatsaechlichen `track`-, `header`- und `data`-Bounds je Seite. Im nativen Inspector kam nur das horizontale `x` der TableColumn aus diesem Readback; `y`, Breite und Hoehe blieben Registry-/LayoutState-Werte. Inspector und Overlay besassen dadurch getrennte Geometriepfade.
+- Inspector und Auswahlrahmen verwenden nun dieselbe beobachtete Box: Track der aktuell ausgewaehlten Seite, ersatzweise Union aus Kopf und sichtbaren Datenzellen genau dieser Seite. Ein Seitenwechsel aktualisiert alle vier Geometriewerte; es entsteht keine seitenuebergreifende Box.
+- Reale Abnahme in `npm start`, Protokoll #22, vier Seiten: Meta Seite 1 `157,078 / 163,176 mm`, `40,921 x 108,166 mm`; Meta Seite 2 `157,078 / 22,301 mm`, `40,921 x 248,492 mm`; Gegenstand Seite 1 `36,177 / 163,176 mm`, `120,901 x 108,166 mm`. Teilnehmer und Vorbemerkung liegen ausserhalb des roten Rahmens. Tabellenkopf als separates Label blieb separat auswaehlbar.
+- Grenzschritt `+1 mm` aktualisierte die Meta-Box auf `x=158,078 mm`, Breite `39,922 mm` und die Gegenstand-Spalte auf `121,901 mm`; Inspector und Tabellenuebersicht zeigten die neuen Renderwerte im selben Zyklus. Undo stellte `x=157,078 mm`, Breite `40,921 mm` und Gegenstand `120,901 mm` sofort wieder her. Tabellenbreite/Spaltensumme blieben 186 mm. Kein Save, keine Profil-, Registry-, CSS-, Paginierungs- oder Druckpfadaenderung.
+- Guardrails: M85 mit 47 unveraenderten Golden-Fixtures und realer zweiseitiger Trackgeometrie, native M87-Readbacktests und ReferenceTargetApp 141/141.
