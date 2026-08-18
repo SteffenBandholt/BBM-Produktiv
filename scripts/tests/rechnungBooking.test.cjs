@@ -58,6 +58,34 @@ async function runRechnungBookingTests(run) {
     } finally { env.close(); }
   });
 
+  await run("Rechnung Hierarchie-Kern: DRAFT, Vorschau und Buchung behalten parent_id und abgeleitete Nummern", async () => {
+    const env = fixture();
+    try {
+      const invoicePositions = [
+        { id: "title", type: "heading", short_text: "Abschnitt" },
+        { id: "child", type: "service", parent_id: "title", short_text: "Leistung", quantity: "2", unit: "h", unit_price_cents: 5000 },
+      ];
+      const draft = await env.service.createDraft(complete({ positions: invoicePositions }));
+      assert.deepEqual(draft.positions.map((entry) => [entry.id, entry.parent_id, entry.position_number]), [["title", null, "1"], ["child", "title", "1.01"]]);
+      const preview = await env.service.previewDraft(draft.id);
+      assert.deepEqual(preview.positions.map((entry) => entry.position_number), ["1", "1.01"]);
+      const booked = await env.service.bookDraft(draft.id);
+      assert.deepEqual(booked.positions.map((entry) => [entry.id, entry.parent_id, entry.position_number]), [["title", null, "1"], ["child", "title", "1.01"]]);
+    } finally { env.close(); }
+  });
+
+  await run("Rechnung Hierarchie-Kern: bestehender DRAFT ohne parent_id bleibt auf Ebene 0 speicherbar", async () => {
+    const env = fixture();
+    try {
+      const draft = await env.service.createDraft(complete());
+      env.db.prepare("UPDATE invoices SET positions_json = ? WHERE id = ?").run(JSON.stringify([
+        { id: "legacy-position", type: "service", short_text: "Altbestand", quantity: "1", unit_price_cents: 2500 },
+      ]), draft.id);
+      const updated = await env.service.updateDraft(draft.id, { service_reference: "Weiterbearbeitet" });
+      assert.deepEqual(updated.positions.map((entry) => [entry.id, entry.parent_id, entry.position_number, entry.total_cents]), [["legacy-position", null, "01", 2500]]);
+    } finally { env.close(); }
+  });
+
   await run("Rechnung Step 2: Zahlungsziel-Setting unterscheidet fehlend, null, 0 Tage und ungültig", async () => {
     const cases = [
       ["fehlender Key", {}, 8, "2026-08-23"],
