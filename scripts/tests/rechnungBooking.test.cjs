@@ -43,6 +43,21 @@ async function runRechnungBookingTests(run) {
     } finally { env.close(); }
   });
 
+  await run("Rechnung Freitext: DRAFT speichert, lädt und leert mehrzeiligen Rechnungsinhalt unverändert", async () => {
+    const env = fixture();
+    try {
+      const draft = await env.service.createDraft(complete());
+      assert.equal(draft.intro_text, "");
+      const introText = "Sehr geehrte Damen und Herren,\n\nich erlaube mir gem. Auftrag vom 12.01.2025 in Rechnung zu stellen:";
+      const updated = await env.service.updateDraft(draft.id, { intro_text: introText });
+      assert.equal(updated.intro_text, introText);
+      assert.equal(env.service.get(draft.id).intro_text, introText);
+      assert.equal((await env.service.previewDraft(draft.id)).intro_text, introText);
+      const cleared = await env.service.updateDraft(draft.id, { intro_text: "" });
+      assert.equal(cleared.intro_text, "");
+    } finally { env.close(); }
+  });
+
   await run("Rechnung Step 2: Zahlungsziel-Setting unterscheidet fehlend, null, 0 Tage und ungültig", async () => {
     const cases = [
       ["fehlender Key", {}, 8, "2026-08-23"],
@@ -92,6 +107,18 @@ async function runRechnungBookingTests(run) {
       await assert.rejects(() => env.service.updateDraft(draft.id, { invoice_date: "2026-08-16" }), /nicht geändert/);
       assert.throws(() => env.service.deleteDraft(draft.id), /nicht gelöscht/);
       await assert.rejects(() => env.service.bookDraft(draft.id), /Nur Entwürfe/);
+    } finally { env.close(); }
+  });
+
+  await run("Rechnung Freitext: Buchung hält den Inhalt fest und die bestehende Sperre verweigert Änderungen", async () => {
+    const env = fixture();
+    try {
+      const introText = "Abschlagsrechnung\nBauabschnitt 2";
+      const draft = await env.service.createDraft(complete({ intro_text: introText }));
+      const booked = await env.service.bookDraft(draft.id);
+      assert.equal(booked.intro_text, introText);
+      await assert.rejects(() => env.service.updateDraft(draft.id, { intro_text: "Nicht zulässig" }), /nicht geändert/);
+      assert.equal(env.service.get(draft.id).intro_text, introText);
     } finally { env.close(); }
   });
 

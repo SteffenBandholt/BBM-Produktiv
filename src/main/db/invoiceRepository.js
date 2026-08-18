@@ -8,7 +8,7 @@ const HEADER_COLUMNS = Object.freeze([
   "service_period_type", "service_date", "service_period_start", "service_period_end",
   "customer_ref_kind", "customer_firm_id", "customer_project_id", "project_id",
   "source_order_id", "source_order_number", "source_order_date", "service_reference",
-  "construction_project",
+  "construction_project", "intro_text",
   "payment_term_days", "due_date",
 ]);
 

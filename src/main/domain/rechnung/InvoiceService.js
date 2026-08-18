@@ -16,6 +16,10 @@ function loadPositions() {
   return positionsPromise;
 }
 
+function normalizeIntroText(value) {
+  return value === null || value === undefined ? "" : String(value);
+}
+
 class InvoiceService {
   constructor({ repository = new InvoiceRepository(), settingsGetMany = appSettingsGetMany, today = () => new Date().toISOString().slice(0, 10) } = {}) {
     this.repository = repository;
@@ -43,7 +47,7 @@ class InvoiceService {
     const rules = await loadRules();
     const positions = await loadPositions();
     const defaults = await this.defaults();
-    return this.repository.createDraft({ ...rules.normalizeInvoiceHeader({ ...defaults, ...input }), construction_project: String(input.construction_project || "").trim(), positions: positions.normalizeInvoicePositions(input.positions || []) });
+    return this.repository.createDraft({ ...rules.normalizeInvoiceHeader({ ...defaults, ...input }), construction_project: String(input.construction_project || "").trim(), intro_text: normalizeIntroText(input.intro_text), positions: positions.normalizeInvoicePositions(input.positions || []) });
   }
 
   async updateDraft(id, input = {}) {
@@ -52,7 +56,7 @@ class InvoiceService {
     const current = this.repository.get(id);
     if (!current) throw new Error("Rechnung wurde nicht gefunden.");
     if (current.status !== "DRAFT") throw new Error("Gebuchte Rechnungen können nicht geändert werden.");
-    return this.repository.updateDraft(id, { ...rules.normalizeInvoiceHeader({ ...current, ...input }), construction_project: String(input.construction_project ?? current.construction_project ?? "").trim(), positions: positions.normalizeInvoicePositions(input.positions ?? current.positions ?? []) });
+    return this.repository.updateDraft(id, { ...rules.normalizeInvoiceHeader({ ...current, ...input }), construction_project: String(input.construction_project ?? current.construction_project ?? "").trim(), intro_text: normalizeIntroText(input.intro_text ?? current.intro_text), positions: positions.normalizeInvoicePositions(input.positions ?? current.positions ?? []) });
   }
 
   deleteDraft(id) { return this.repository.deleteDraft(id); }
@@ -63,7 +67,7 @@ class InvoiceService {
     const current = this.repository.get(id);
     if (!current) throw new Error("Rechnung wurde nicht gefunden.");
     if (current.status !== "DRAFT") return current;
-    return { ...current, ...rules.normalizeInvoiceHeader({ ...current, ...(input || {}) }), construction_project: String(input?.construction_project ?? current.construction_project ?? "").trim(), positions: positions.normalizeInvoicePositions(input?.positions ?? current.positions ?? []), invoice_number: null, status: "DRAFT", preview: true };
+    return { ...current, ...rules.normalizeInvoiceHeader({ ...current, ...(input || {}) }), construction_project: String(input?.construction_project ?? current.construction_project ?? "").trim(), intro_text: normalizeIntroText(input?.intro_text ?? current.intro_text), positions: positions.normalizeInvoicePositions(input?.positions ?? current.positions ?? []), invoice_number: null, status: "DRAFT", preview: true };
   }
 
   async bookDraft(id, input = {}) {
@@ -72,7 +76,7 @@ class InvoiceService {
     const current = this.repository.get(id);
     if (!current) throw new Error("Rechnung wurde nicht gefunden.");
     if (current.status !== "DRAFT") throw new Error("Nur Entwürfe können gebucht werden.");
-    const header = { ...rules.normalizeInvoiceHeader({ ...current, ...input }, { requireBookingFields: true }), construction_project: String(input.construction_project ?? current.construction_project ?? "").trim(), positions: positions.normalizeInvoicePositions(input.positions ?? current.positions ?? []) };
+    const header = { ...rules.normalizeInvoiceHeader({ ...current, ...input }, { requireBookingFields: true }), construction_project: String(input.construction_project ?? current.construction_project ?? "").trim(), intro_text: normalizeIntroText(input.intro_text ?? current.intro_text), positions: positions.normalizeInvoicePositions(input.positions ?? current.positions ?? []) };
     return this.repository.bookDraft(id, header);
   }
 }

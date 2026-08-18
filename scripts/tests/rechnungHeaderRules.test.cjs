@@ -11,7 +11,7 @@ async function runRechnungHeaderRulesTests(run) {
     "id", "status", "source_type", "document_type", "installment_number", "invoice_number", "invoice_date", "booked_at",
     "service_period_type", "service_date", "service_period_start", "service_period_end", "customer_ref_kind", "customer_firm_id",
     "customer_project_id", "project_id", "source_order_id", "source_order_number", "source_order_date", "service_reference",
-    "construction_project", "positions_json", "payment_term_days", "due_date", "customer_snapshot_json", "issuer_snapshot_json",
+    "construction_project", "intro_text", "positions_json", "payment_term_days", "due_date", "customer_snapshot_json", "issuer_snapshot_json",
     "created_at", "updated_at",
   ];
 
@@ -92,6 +92,7 @@ async function runRechnungHeaderRulesTests(run) {
       assert.equal(legacy.document_type, "INVOICE");
       assert.equal(legacy.payment_term_days, 8);
       assert.equal(legacy.positions_json, "[]");
+      assert.equal(legacy.intro_text, null);
       assert.equal(legacy.due_date, null);
       assert.equal(legacy.booked_at, null);
       assert.equal(legacy.invoice_date, "2026-08-01");
@@ -110,7 +111,7 @@ async function runRechnungHeaderRulesTests(run) {
         service_period_type: "SINGLE_DATE", service_date: "2026-08-17", service_period_start: null, service_period_end: null,
         customer_ref_kind: null, customer_firm_id: null, customer_project_id: null, project_id: null,
         source_order_id: null, source_order_number: null, source_order_date: null, service_reference: null,
-        construction_project: null, positions: [], payment_term_days: 8, due_date: "2026-08-25",
+        construction_project: null, intro_text: "", positions: [], payment_term_days: 8, due_date: "2026-08-25",
       });
       assert.equal(created.status, "DRAFT");
       assert.equal(created.source_type, "FREE");
