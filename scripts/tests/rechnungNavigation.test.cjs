@@ -52,6 +52,12 @@ async function runRechnungNavigationTests(run) {
     assert.equal(shown.options.pageTitle, "Rechnungen");
   });
 
+  await run("Rechnung Navigation: Übersicht und Editor respektieren hidden trotz Grid-Layout", () => {
+    const css = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/styles/rechnungenDesign.css"), "utf8");
+    assert.match(css, /\.rechnung-live-overview\[hidden\],\s*\.rechnung-live-editor\[hidden\]\s*\{\s*display:\s*none;\s*\}/);
+    assert.match(css, /\.rechnung-live-preview\[hidden\]\s*\{\s*display:\s*none;\s*\}/);
+  });
+
   await run("Rechnung Navigation: vorhandener DRAFT oeffnet und schliesst ohne Profil", () => {
     const previousDocument = global.document;
     const createElement = (tagName) => {

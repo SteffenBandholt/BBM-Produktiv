@@ -356,6 +356,8 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-live-overview,
 .rechnung-live-editor { height: 100%; min-height: 0; overflow: auto; }
 .rechnung-live-overview { display: grid; align-content: start; gap: 14px; }
+.rechnung-live-overview[hidden],
+.rechnung-live-editor[hidden] { display: none; }
 .rechnung-live-list { display: grid; gap: 8px; }
 .rechnung-live-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-card); background: var(--invoice-color-surface); }
 .rechnung-live-card__body { display: grid; gap: 2px; min-width: 0; }
