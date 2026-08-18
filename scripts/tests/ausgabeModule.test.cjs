@@ -256,12 +256,11 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printAppSource.includes("appendProtocolTitleMarker(wrap, row);"), true);
     assert.equal(printShellSource.includes('new URL("../../assets/todo.png", import.meta.url).href'), true);
     assert.equal(printShellSource.includes('new URL("../../assets/redFlag.png", import.meta.url).href'), true);
-    assert.match(
-      printShellSource,
-      /const markerType = row\?\.isDecision \? "decision" : row\?\.isTask \? "task" : "";/
-    );
+    assert.match(printShellSource, /\.\.\.\(row\?\.isDecision \? \["decision"\] : \[\]\)/);
+    assert.match(printShellSource, /\.\.\.\(row\?\.isTask \? \["task"\] : \[\]\)/);
     assert.equal(printShellSource.includes("appendProtocolTitleMarker(wrap, row);"), true);
     assert.equal(printCssSource.includes(".lvl1Marker img"), true);
+    assert.match(printCssSource, /\.lvl1Text\s*\{[\s\S]*?margin-right: auto;/);
   });
 
   await run("Ausgabe: PDF-Schriftgrößen sind auf die neuen TOP-Werte gesetzt", () => {

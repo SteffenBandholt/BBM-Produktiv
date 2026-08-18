@@ -296,6 +296,9 @@ Bearbeitbar sind:
 - Status
 - Verantwortlich
 - Ansprechpartner
+- Beschluss
+- ToDo
+- Wichtig
 
 ### Offenes Protokoll – übernommene schwarze TOPs
 
@@ -313,6 +316,13 @@ Weiterhin bearbeitbar sind:
 - Verantwortlich
 - Ansprechpartner
 - Langtext nach Markerregel
+
+Vorhandene Kennzeichnungen bleiben sichtbar, sind bei übernommenen schwarzen
+TOPs und Titeln aber nicht mehr editierbar:
+
+- Beschluss
+- ToDo
+- Wichtig
 
 ---
 
@@ -348,15 +358,36 @@ Wenn der Nutzer den Status später wieder ändert, gilt diese Ausblendekette nic
 
 ---
 
-## 21. Nicht Teil des verbindlichen Regelwerks
+## 21. Unabhängige Kennzeichnungen
 
-Nicht Teil des aktuell verbindlichen Regelwerks sind:
+Beschluss, ToDo und Wichtig sind drei voneinander unabhängige persistierte
+Kennzeichnungen. Keine davon darf eine andere Kennzeichnung, den Status, die
+Fälligkeit, die Erledigt- oder Folgeprotokoll-Logik verändern.
+
+- Beschluss ist ein reiner Marker mit eigenem Symbol.
+- ToDo ist ein reiner Marker mit eigenem Symbol.
+- Beschluss und ToDo dürfen gleichzeitig gesetzt und sichtbar sein; ihre
+  sichtbare Reihenfolge ist Beschluss, ToDo.
+- Wichtig erzeugt kein Symbol und färbt ausschließlich den TOP- beziehungsweise
+  Titeltext rot. Die bestehende Darstellung erledigter TOPs behält Vorrang.
+- Bei neuen blauen TOPs und Titeln sind Beschluss, ToDo und Wichtig unabhängig
+  editierbar.
+- Bei übernommenen schwarzen TOPs und Titeln bleiben vorhandene Zustände
+  sichtbar, ihre Schalter sind jedoch deaktiviert.
+- In geschlossenen Protokollen bleiben sämtliche Kennzeichnungen read-only.
+- Der Beschluss-Filter verwendet ausschließlich `is_decision`; der ToDo-Filter
+  ausschließlich `is_task`. Ein gemeinsam gekennzeichneter TOP erscheint in
+  beiden Filtern.
+
+Die Ampel ist kein persistierter Kennzeichnungszustand. Der globale
+Quicklane-Schalter „Ampel“ steuert ausschließlich ihre Sichtbarkeit und verändert
+keinen TOP-Datensatz. Beschluss, ToDo und Wichtig beeinflussen die Ampel nicht.
+Normale TOPs dürfen Ampel, Beschluss und ToDo gleichzeitig anzeigen. Titel auf
+Level 1 besitzen gemäß Titelregel weiterhin grundsätzlich keine Ampel.
+
+Weiterhin nicht Teil des verbindlichen Regelwerks ist:
 
 - manuelles hidden / TOP ausblenden
-- `task`
-- `decision`
-
-Diese Punkte dürfen nicht stillschweigend als verbindlicher Fachkern behandelt werden.
 
 ---
 

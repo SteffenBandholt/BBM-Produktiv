@@ -15,7 +15,7 @@ async function runM81BbmPdfAdapterTests(run) {
 
   await run("M81 BBM-PDF-Registry ist explizit, vollstaendig und deterministisch", () => {
     assert.equal(registry.scopeId, "pdf.bbm.protocol");
-    assert.equal(registry.elements.length, 35);
+    assert.equal(registry.elements.length, 37);
     assert.deepEqual(registry.pageSettings, {
       format: "A4", orientation: "portrait", width: 210, height: 297,
       margins: { top: 5, right: 12, bottom: 0, left: 12 },
@@ -62,6 +62,41 @@ async function runM81BbmPdfAdapterTests(run) {
       assert.deepEqual(column.capabilities, ["resizeWidth", "setVisibility"]);
       assert.equal(heading.parentId, column.id);
       assert.deepEqual(heading.capabilities, ["textMove", "textResize", "setTextAlignment", "setVisibility"]);
+    }
+    for (const [suffix, name, marker] of [
+      ["decision", "Red Flag · Beschluss", "decision"],
+      ["todo", "Flag · ToDo", "task"],
+    ]) {
+      const target = byId.get(`${SCOPE_ID}.tops.marker.${suffix}`);
+      assert.deepEqual({
+        name: target.name,
+        parentId: target.parentId,
+        kind: target.kind,
+        role: target.role,
+        capabilities: target.capabilities,
+        rendererKey: target.rendererKey,
+      }, {
+        name,
+        parentId: `${SCOPE_ID}.tops.rows`,
+        kind: "image",
+        role: "content",
+        capabilities: ["move", "setVisibility"],
+        rendererKey: `.topsTable .lvl1Marker[data-marker="${marker}"]`,
+      });
+    }
+  });
+
+  await run("M81 Beschluss und ToDo sind getrennt verschiebbar und sichtbar, ohne UI- oder Fachoperationen", () => {
+    for (const suffix of ["decision", "todo"]) {
+      const adapter = createBbmPdfAdapter();
+      const elementId = `${SCOPE_ID}.tops.marker.${suffix}`;
+      const submit = (changeId, operation, payload) => adapter.submitPdfChangeRequest({ changeId, scopeId: SCOPE_ID, elementId, operation, payload });
+      const moved = submit(`${suffix}-left`, "move", { x: 192.2, y: 100 });
+      assert.equal(moved.success, true, moved.message);
+      assert.deepEqual({ x: moved.newState.x, y: moved.newState.y }, { x: 192.2, y: 100 });
+      assert.equal(submit(`${suffix}-hide`, "setVisibility", { visible: false }).newState.visible, false);
+      assert.equal(submit(`${suffix}-outside`, "move", { x: 194.3, y: 100 }).errorCode, "pdf_out_of_usable_width");
+      assert.equal(submit(`${suffix}-domain`, "changeStatus", { value: true }).errorCode, "pdf_operation_locked");
     }
   });
 
@@ -270,6 +305,123 @@ async function runM81BbmPdfAdapterTests(run) {
         { x: 158, y: 14, fontSize: 11, visible: false });
       const working = adapter.getCurrentPdfLayoutState().elements.find((entry) => entry.elementId === pageValueId);
       assert.deepEqual({ x: working.x, fontSize: working.fontSize, visible: working.visible }, { x: 159, fontSize: 9, visible: true });
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  await run("M81 additive Marker-Registrierung erhaelt das alte 35-Ziel-Profil", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-pdf-additive-profile-"));
+    try {
+      const adapter = createBbmPdfAdapter();
+      const profilePath = adapter.configureProfileRoot(root);
+      const decisionId = `${SCOPE_ID}.tops.marker.decision`;
+      const todoId = `${SCOPE_ID}.tops.marker.todo`;
+      const pageValueId = `${SCOPE_ID}.header.meta.page-value`;
+      const persistedFields = (definition) => {
+        const capabilities = new Set(definition.capabilities || []);
+        return [
+          ...(capabilities.has("move") ? ["x", "y"] : []),
+          ...(capabilities.has("resize") || capabilities.has("resizeWidth") ? ["width"] : []),
+          ...(capabilities.has("resize") || capabilities.has("resizeHeight") ? ["height"] : []),
+          ...(capabilities.has("textMove") ? ["textOffsetX", "textOffsetY"] : []),
+          ...(capabilities.has("textResize") ? ["fontSize"] : []),
+          ...(capabilities.has("setTextAlignment") ? ["textAlignment"] : []),
+          ...(capabilities.has("setLineSpacing") ? ["lineSpacing"] : []),
+          ...(capabilities.has("setVisibility") ? ["visible"] : []),
+          ...(capabilities.has("setPageMargins") ? ["marginTop", "marginRight", "marginBottom", "marginLeft"] : []),
+        ];
+      };
+      const baseline = adapter.getCurrentPdfLayoutState();
+      const legacyElements = baseline.elements
+        .filter((entry) => ![decisionId, todoId].includes(entry.elementId))
+        .map((entry) => {
+          const definition = byId.get(entry.elementId);
+          const values = Object.fromEntries(["elementId", "scopeId", ...persistedFields(definition)].map((field) => [field, entry[field]]));
+          return entry.elementId === pageValueId ? { ...values, x: 158, fontSize: 11, visible: false } : values;
+        });
+      fs.mkdirSync(path.dirname(profilePath), { recursive: true });
+      fs.writeFileSync(profilePath, JSON.stringify({
+        schemaVersion: 1,
+        documentKind: "pdf-layout-profile",
+        applicationId: "bbm-produktiv",
+        documentType: "protocol",
+        profileId: "pdf-standard",
+        scopeId: SCOPE_ID,
+        savedAt: "2026-08-16T12:00:00.000Z",
+        registryFingerprint: "950fceaf11909cf53f813c4959b178db0a3eacbd267c46dcfc9cd18cf832d73a",
+        layoutState: { ...baseline, elements: legacyElements },
+      }), "utf8");
+
+      adapter.configureProfileRoot(root);
+      const migratedDocument = JSON.parse(fs.readFileSync(profilePath, "utf8"));
+      assert.equal(migratedDocument.registryFingerprint, PERSISTED_REGISTRY_FINGERPRINT);
+      assert.equal(migratedDocument.layoutState.elements.length, 37);
+      const persisted = adapter.getPersistedPdfLayoutState();
+      const pageValue = persisted.elements.find((entry) => entry.elementId === pageValueId);
+      assert.deepEqual({ x: pageValue.x, fontSize: pageValue.fontSize, visible: pageValue.visible },
+        { x: 158, fontSize: 11, visible: false });
+      for (const markerId of [decisionId, todoId]) {
+        const marker = persisted.elements.find((entry) => entry.elementId === markerId);
+        assert.deepEqual({ x: marker.x, y: marker.y, width: marker.width, height: marker.height, visible: marker.visible },
+          { x: 193.2, y: 99, width: 3.8, height: 3.8, visible: true });
+      }
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  await run("M81 additive ToDo-Registrierung erhaelt den aktuellen Red-Flag-Pilotstand", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-pdf-additive-todo-profile-"));
+    try {
+      const adapter = createBbmPdfAdapter();
+      const profilePath = adapter.configureProfileRoot(root);
+      const decisionId = `${SCOPE_ID}.tops.marker.decision`;
+      const todoId = `${SCOPE_ID}.tops.marker.todo`;
+      const baseline = adapter.getCurrentPdfLayoutState();
+      const persistedFields = (definition) => {
+        const capabilities = new Set(definition.capabilities || []);
+        return [
+          ...(capabilities.has("move") ? ["x", "y"] : []),
+          ...(capabilities.has("resize") || capabilities.has("resizeWidth") ? ["width"] : []),
+          ...(capabilities.has("resize") || capabilities.has("resizeHeight") ? ["height"] : []),
+          ...(capabilities.has("textMove") ? ["textOffsetX", "textOffsetY"] : []),
+          ...(capabilities.has("textResize") ? ["fontSize"] : []),
+          ...(capabilities.has("setTextAlignment") ? ["textAlignment"] : []),
+          ...(capabilities.has("setLineSpacing") ? ["lineSpacing"] : []),
+          ...(capabilities.has("setVisibility") ? ["visible"] : []),
+          ...(capabilities.has("setPageMargins") ? ["marginTop", "marginRight", "marginBottom", "marginLeft"] : []),
+        ];
+      };
+      const legacyElements = baseline.elements
+        .filter((entry) => entry.elementId !== todoId)
+        .map((entry) => {
+          const definition = byId.get(entry.elementId);
+          const values = Object.fromEntries(["elementId", "scopeId", ...persistedFields(definition)].map((field) => [field, entry[field]]));
+          return entry.elementId === decisionId ? { ...values, x: 192.2, visible: false } : values;
+        });
+      fs.mkdirSync(path.dirname(profilePath), { recursive: true });
+      fs.writeFileSync(profilePath, JSON.stringify({
+        schemaVersion: 1,
+        documentKind: "pdf-layout-profile",
+        applicationId: "bbm-produktiv",
+        documentType: "protocol",
+        profileId: "pdf-standard",
+        scopeId: SCOPE_ID,
+        savedAt: "2026-08-18T08:00:00.000Z",
+        registryFingerprint: "82f19c97ef62bc16d86ba92c2b4424daa32d70cfb2cafbf7e8e3a2952bca3c22",
+        layoutState: { ...baseline, elements: legacyElements },
+      }), "utf8");
+
+      adapter.configureProfileRoot(root);
+      const migratedDocument = JSON.parse(fs.readFileSync(profilePath, "utf8"));
+      assert.equal(migratedDocument.registryFingerprint, PERSISTED_REGISTRY_FINGERPRINT);
+      assert.equal(migratedDocument.layoutState.elements.length, 37);
+      const persisted = adapter.getPersistedPdfLayoutState();
+      const decision = persisted.elements.find((entry) => entry.elementId === decisionId);
+      assert.deepEqual({ x: decision.x, visible: decision.visible }, { x: 192.2, visible: false });
+      const todo = persisted.elements.find((entry) => entry.elementId === todoId);
+      assert.deepEqual({ x: todo.x, y: todo.y, visible: todo.visible }, { x: 193.2, y: 99, visible: true });
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

@@ -1,4 +1,5 @@
 import {
+  appendProtocolMetaIndicators,
   appendProtocolTitleMarker,
   buildRestarbeitenColGroup,
   buildRestarbeitenRow,
@@ -700,7 +701,7 @@ function _buildTopRowElement(row) {
   const meta3 = _el("div", "meta3");
   const metaLine1 = _el("div", "metaLine meta1");
   metaLine1.appendChild(_el("span", "metaText", row.status));
-  if (row.ampelColor) metaLine1.appendChild(_el("span", `ampelDot ${row.ampelColor}`));
+  appendProtocolMetaIndicators(metaLine1, row);
   meta3.appendChild(metaLine1);
   meta3.appendChild(_el("div", "metaLine meta2", row.due));
   meta3.appendChild(_el("div", "metaLine meta3", row.resp));

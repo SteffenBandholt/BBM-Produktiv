@@ -44,6 +44,12 @@ async function runTopsScreenIntegrationTests(run) {
   const { EditboxShell } = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/core/editbox/EditboxShell.js")
   );
+  const { EditBoxStateService } = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/features/editor/EditBoxStateService.js")
+  );
+  const { TopMetaColumnRenderer } = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/features/list/TopMetaColumnRenderer.js")
+  );
   const {
     TEXT_LIMIT_SETTING_KEYS,
     TextLimitSettingsService,
@@ -511,7 +517,6 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(level1Rows[0].isTitle, true);
     assert.equal(level1Rows[0].meta.length, 0);
     assert.equal(level1Rows[0].ampelColor, null);
-    assert.equal(level1Rows[0].metaSymbolType, null);
 
     const markedTitleRows = buildListItemsFromState({
       tops: [
@@ -521,9 +526,7 @@ async function runTopsScreenIntegrationTests(run) {
       ],
     });
     assert.equal(markedTitleRows[0].isImportant, true);
-    assert.equal(markedTitleRows[1].metaSymbolType, "task");
     assert.equal(markedTitleRows[1].isTask, true);
-    assert.equal(markedTitleRows[2].metaSymbolType, "decision");
     assert.equal(markedTitleRows[2].isDecision, true);
     assert.equal(markedTitleRows.every((row) => row.meta.length === 0), true);
 
@@ -598,8 +601,8 @@ async function runTopsScreenIntegrationTests(run) {
       ],
     });
 
-    assert.equal(todoRows[0].metaSymbolType, "task");
-    assert.equal(decisionRows[0].metaSymbolType, "decision");
+    assert.equal(todoRows[0].isTask, true);
+    assert.equal(decisionRows[0].isDecision, true);
     assert.equal(importantRows[0].isImportant, true);
     assert.equal(importantRows[0].isCompleted, false);
 
@@ -719,8 +722,9 @@ async function runTopsScreenIntegrationTests(run) {
       const decisionGrid = decisionRow.children[0];
       const decisionStatusLine = decisionGrid.children[2].children[0];
       assert.equal(decisionStatusLine.children[0].textContent, "blockiert");
+      assert.equal(decisionStatusLine.children[1].children[0].className, "bbm-tops-list-row-ampel");
       assert.equal(
-        decisionStatusLine.children[1].children[0].src.includes("assets/icons/redFlag.png"),
+        decisionStatusLine.children[1].children[1].src.includes("assets/icons/redFlag.png"),
         true
       );
 
@@ -1193,6 +1197,23 @@ async function runTopsScreenIntegrationTests(run) {
 
     assert.equal(rows.length, 1);
     assert.equal(rows[0].id, 411);
+  });
+
+  await run("Tops v2 Integration: Beschluss- und ToDo-Filter bleiben unabhaengig", () => {
+    const tops = [
+      { id: 413, level: 2, title: "Nur Beschluss", is_decision: 1, is_task: 0 },
+      { id: 414, level: 2, title: "Nur ToDo", is_decision: 0, is_task: 1 },
+      { id: 415, level: 2, title: "Beschluss und ToDo", is_decision: 1, is_task: 1 },
+    ];
+
+    assert.deepEqual(
+      buildListItemsFromState({ topFilter: "decision", tops }).map((row) => row.id),
+      [413, 415]
+    );
+    assert.deepEqual(
+      buildListItemsFromState({ topFilter: "todo", tops }).map((row) => row.id),
+      [414, 415]
+    );
   });
 
   await run("Tops v2 Integration: Filter Wichtig zeigt nur wichtige TOPs", () => {
@@ -1679,7 +1700,8 @@ async function runTopsScreenIntegrationTests(run) {
       assert.equal(screen.showAmpelInList, false);
       assert.notEqual(screen.workbench.metaColumn.statusAmpelBridge.root.style.display, "none");
       assert.notEqual(screen.workbench.metaColumn.statusAmpelBridge.field.dueWrap.style.display, "none");
-      assert.equal(screen.workbench.metaColumn.statusAmpelBridge.field.trafficWrap.style.display, "none");
+      assert.notEqual(screen.workbench.metaColumn.statusAmpelBridge.field.trafficWrap.style.display, "none");
+      assert.equal(screen.workbench.metaColumn.statusAmpelBridge.field.trafficDot.style.display, "none");
 
       assert.equal(screen.showLongtextInList, false);
       longtextButton.dispatchEvent({ type: "click", preventDefault() {} });
@@ -1690,10 +1712,10 @@ async function runTopsScreenIntegrationTests(run) {
       const filterItems = quicklane.querySelectorAll("[data-filter-mode]");
       assert.deepEqual(
         filterItems.map((item) => item.dataset.filterMode),
-        ["all", "important", "todo", "status:offen", "status:in arbeit", "status:erledigt", "status:blockiert", "status:verzug"]
+        ["all", "important", "todo", "decision", "status:offen", "status:in arbeit", "status:erledigt", "status:blockiert", "status:verzug"]
       );
-      assert.equal(filterItems.some((item) => item.dataset.filterMode === "decision"), false);
-      assert.equal(filterItems[3].dataset.groupStart, "true");
+      assert.equal(filterItems.some((item) => item.dataset.filterMode === "decision"), true);
+      assert.equal(filterItems[4].dataset.groupStart, "true");
       const todoItem = filterItems.find((item) => item.dataset.filterMode === "todo");
       assert.ok(todoItem);
       todoItem.dispatchEvent({ type: "click", preventDefault() {} });
@@ -1887,7 +1909,7 @@ async function runTopsScreenIntegrationTests(run) {
       assert.equal(symbols.length, 2);
       assert.deepEqual(
         symbols.map((node) => node.dataset.symbol),
-        ["task", "decision"]
+        ["decision", "task"]
       );
 
       taskInput.checked = false;
@@ -1896,6 +1918,69 @@ async function runTopsScreenIntegrationTests(run) {
 
       assert.equal(readSymbols().length, 0);
       assert.equal(meta.metaSymbolSlot.style.display, "none");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Tops v2 Integration: Ampel, Beschluss, ToDo und Wichtig sind fuer TOP und Titel unabhaengig", () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = { document: doc };
+
+    const cases = [
+      { key: "A", ampel: false, decision: false, task: false, important: false, expected: [] },
+      { key: "B", ampel: true, decision: false, task: false, important: false, expected: ["ampel"] },
+      { key: "C", ampel: false, decision: true, task: false, important: false, expected: ["decision"] },
+      { key: "D", ampel: false, decision: false, task: true, important: false, expected: ["task"] },
+      { key: "E", ampel: false, decision: true, task: true, important: false, expected: ["decision", "task"] },
+      { key: "F", ampel: true, decision: true, task: true, important: false, expected: ["ampel", "decision", "task"] },
+      { key: "G", ampel: true, decision: true, task: true, important: true, expected: ["ampel", "decision", "task"] },
+    ];
+
+    try {
+      for (const level of [1, 2]) {
+        for (const markerCase of cases) {
+          const list = new TopsList();
+          list.setItems([{
+            id: `${level}-${markerCase.key}`,
+            level,
+            isTitle: level === 1,
+            number: `${level}.`,
+            title: `${markerCase.key} ${level === 1 ? "Titel" : "TOP"}`,
+            status: level === 1 ? "" : "blockiert",
+            ampelColor: markerCase.ampel ? "blue" : null,
+            showAmpelInList: true,
+            isDecision: markerCase.decision,
+            isTask: markerCase.task,
+            isImportant: markerCase.important,
+          }]);
+
+          const expectedAmpel = level === 1 ? false : markerCase.ampel;
+          assert.equal(list._uiEditorRefs["protokoll.list.row.ampel"].length, expectedAmpel ? 1 : 0);
+          assert.equal(list._uiEditorRefs["protokoll.list.row.decision"].length, markerCase.decision ? 1 : 0);
+          assert.equal(list._uiEditorRefs["protokoll.list.row.todo"].length, markerCase.task ? 1 : 0);
+
+          const row = list.root.children[0];
+          assert.equal(row.dataset.isImportant, markerCase.important ? "true" : "false");
+          const meta = row.children[0].children[2];
+          const indicatorContainer = level === 1
+            ? meta.children[0] || null
+            : meta.children[0]?.children[1] || null;
+          const rendered = indicatorContainer
+            ? indicatorContainer.children.map((node) =>
+              node.className === "bbm-tops-list-row-ampel" ? "ampel" : node.dataset.symbol
+            )
+            : [];
+          const expected = level === 1
+            ? markerCase.expected.filter((indicator) => indicator !== "ampel")
+            : markerCase.expected;
+          assert.deepEqual(rendered, expected, `${markerCase.key} Level ${level}`);
+        }
+      }
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;
@@ -2508,6 +2593,9 @@ async function runTopsScreenIntegrationTests(run) {
             title: "Alt-Titel",
             longtext: "",
             status: "-",
+            is_important: 1,
+            is_task: 1,
+            is_decision: 1,
             is_carried_over: 1,
             parent_top_id: null,
           },
@@ -2542,6 +2630,12 @@ async function runTopsScreenIntegrationTests(run) {
       screen._syncScreenState();
 
       assert.equal(screen.workbench.sharedEditboxCore.editbox.shortInput.readOnly, true);
+      assert.equal(screen.workbench.sharedEditboxCore.editbox.flagInputs.important.checked, true);
+      assert.equal(screen.workbench.sharedEditboxCore.editbox.flagInputs.task.checked, true);
+      assert.equal(screen.workbench.sharedEditboxCore.editbox.flagInputs.decision.checked, true);
+      assert.equal(screen.workbench.sharedEditboxCore.editbox.flagInputs.important.disabled, true);
+      assert.equal(screen.workbench.sharedEditboxCore.editbox.flagInputs.task.disabled, true);
+      assert.equal(screen.workbench.sharedEditboxCore.editbox.flagInputs.decision.disabled, true);
       assert.equal(screen.workbench.focusShortText(), false);
       const patch = buildPatchFromDraft(selected, screen.store.getState().editor);
       assert.equal(patch.title, undefined);
@@ -2549,6 +2643,131 @@ async function runTopsScreenIntegrationTests(run) {
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Tops v2 Integration: Uebernommene TOPs sperren nur B-T-W und geschuetzte Felder", () => {
+    const carriedTop = {
+      id: 702,
+      level: 2,
+      title: "Uebernommen",
+      longtext: "Weiter bearbeitbar",
+      status: "offen",
+      due_date: "2026-08-31",
+      responsible_label: "Firma A",
+      is_carried_over: 1,
+      is_important: 1,
+      is_task: 1,
+      is_decision: 1,
+    };
+    const workbenchVm = buildWorkbenchVm({
+      isReadOnly: false,
+      isWriting: false,
+      editor: editorFromTop(carriedTop),
+    }, carriedTop);
+
+    assert.equal(workbenchVm.editor.access.shortTextReadOnly, true);
+    assert.equal(workbenchVm.editor.access.longTextReadOnly, false);
+    assert.equal(workbenchVm.editor.access.flagsDisabled, true);
+    assert.equal(workbenchVm.meta.access.hidden, false);
+    assert.equal(workbenchVm.meta.access.disabled, false);
+    assert.equal(workbenchVm.meta.access.responsibleDisabled, false);
+    assert.equal(workbenchVm.actions.canSave, true);
+    assert.equal(workbenchVm.actions.canMove, false);
+    assert.equal(workbenchVm.actions.canDelete, false);
+  });
+
+  await run("Tops v2 Integration: B-T-W bleiben im Draft-Patch unabhaengig", () => {
+    const combinations = [
+      { is_decision: 0, is_task: 0, is_important: 0 },
+      { is_decision: 1, is_task: 0, is_important: 0 },
+      { is_decision: 0, is_task: 1, is_important: 0 },
+      { is_decision: 1, is_task: 1, is_important: 0 },
+      { is_decision: 1, is_task: 1, is_important: 1 },
+    ];
+
+    for (const [index, expected] of combinations.entries()) {
+      const selected = {
+        id: `flags-${index}`,
+        level: 2,
+        title: "Kennzeichnungen",
+        is_decision: 0,
+        is_task: 0,
+        is_important: 0,
+      };
+      const patch = buildPatchFromDraft(selected, { ...editorFromTop(selected), ...expected });
+      const roundTrip = editorFromTop({ ...selected, ...patch });
+      assert.deepEqual({
+        is_decision: roundTrip.is_decision,
+        is_task: roundTrip.is_task,
+        is_important: roundTrip.is_important,
+      }, expected);
+    }
+  });
+
+  await run("Tops v2 Integration: Legacy-State koppelt ToDo weder an Status noch an Beschluss", () => {
+    const checkbox = () => ({ checked: false, disabled: false });
+    const view = {
+      selectedTop: { is_carried_over: 1 },
+      inpTitle: { disabled: false },
+      taLongtext: { disabled: false },
+      inpDueDate: { disabled: false },
+      selStatus: { disabled: false, value: "" },
+      responsibleEditor: { applyDisabledState() {} },
+      chkHidden: checkbox(),
+      chkImportant: checkbox(),
+      chkTask: checkbox(),
+      chkDecision: checkbox(),
+      btnSaveTop: { disabled: true, style: {} },
+      _getTopMeta() {
+        return { status: "" };
+      },
+    };
+    const service = new EditBoxStateService({ view });
+
+    service.applyEditBoxDisabledState(false);
+    service.applyCheckboxValues({ is_task: 1, is_decision: 1, is_important: 1 });
+    service.applyMetaValues({ is_task: 1 });
+
+    assert.equal(view.chkTask.checked, true);
+    assert.equal(view.chkDecision.checked, true);
+    assert.equal(view.chkImportant.checked, true);
+    assert.equal(view.chkTask.disabled, true);
+    assert.equal(view.chkDecision.disabled, true);
+    assert.equal(view.chkImportant.disabled, true);
+    assert.equal(view.selStatus.value, "alle");
+    assert.equal(view.taLongtext.disabled, false);
+    assert.equal(view.selStatus.disabled, false);
+  });
+
+  await run("Tops v2 Integration: Legacy-Metaspalte liest ToDo und Beschluss nur aus ihren Fachflags", () => {
+    const prevDocument = globalThis.document;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+
+    try {
+      const view = {
+        META_COL_W: 120,
+        showAmpelInList: false,
+        _shouldShowMetaColumn: () => true,
+        _getTopMeta: () => ({ status: "todo", dueDate: "" }),
+        _parseActiveFlag: (value) => Number(value) === 1 ? 1 : 0,
+        _formatDue: () => "",
+        _resolveDisplayDueForTop: () => "",
+        _formatStatus: (status) => status,
+        responsibleService: { format: () => "" },
+      };
+      const renderer = new TopMetaColumnRenderer({ view });
+      const metaColumn = renderer.buildMetaColumn({ is_task: 0, is_decision: 1 }, () => null);
+      const statusRow = metaColumn.children[1];
+
+      assert.equal(statusRow.children.length, 2);
+      assert.equal(statusRow.children[1].alt, "Festlegung");
+
+      const withoutFlags = renderer.buildMetaColumn({ is_task: 0, is_decision: 0 }, () => null);
+      assert.equal(withoutFlags.children[1].children.length, 1);
+    } finally {
+      globalThis.document = prevDocument;
     }
   });
 

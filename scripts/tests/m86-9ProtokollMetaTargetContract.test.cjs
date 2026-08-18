@@ -109,8 +109,8 @@ async function runM869ProtokollMetaTargetContractTests(run) {
     const list = new TopsList({ onLevel1Toggle() {} });
     list.setItems([
       { id: 1, number: "1.1", createdAt: "01.08.2026", title: "Kurz A", preview: "Lang A", meta: ["02.08.2026", "offen", "Firma A"], ampelColor: "green" },
-      { id: 2, number: "1.2", title: "Kurz B", preview: "Lang B", meta: ["03.08.2026", "offen", "Firma B"], metaSymbolType: "task" },
-      { id: 3, number: "1.3", title: "Kurz C", preview: "Lang C", meta: ["04.08.2026", "offen", "Firma C"], metaSymbolType: "decision" },
+      { id: 2, number: "1.2", title: "Kurz B", preview: "Lang B", meta: ["03.08.2026", "offen", "Firma B"], isTask: true },
+      { id: 3, number: "1.3", title: "Kurz C", preview: "Lang C", meta: ["04.08.2026", "offen", "Firma C"], isDecision: true },
     ]);
 
     await run("M86.9 04: Alle sichtbaren Meta-Ziele lösen direkt auf ihren echten sichtbaren Knoten auf", () => {

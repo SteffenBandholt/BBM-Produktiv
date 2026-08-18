@@ -1,5 +1,33 @@
 # STATUS.md — BBM-Produktiv
 
+## Unabhängige TOP-Kennzeichnungen
+
+- Status: `[T]`; technische Korrektur und Guardrails abgeschlossen, erneute fachliche Sichtabnahme durch den Nutzer offen.
+- Ampel, Beschluss, ToDo und Wichtig werden nicht mehr zu einem priorisierten Einzelsymbol verdichtet. Der Quicklane-Schalter blendet nur den Ampelpunkt normaler TOPs; Beschluss und ToDo bleiben davon unberührt und können dort gemeinsam mit der Ampel sichtbar sein. Level-1-Titel besitzen keine Ampel. Wichtig bleibt ausschließlich roter Text.
+- UI, PDF-Mess-DOM und finaler Print-DOM verwenden dieselbe Reihenfolge Ampel, Beschluss, ToDo. Die rechtsorientierte PDF-Baseline sowie die getrennten Beschluss-/ToDo-Editorziele bleiben bestehen.
+- Gefundene Fehlkopplungen: `EditboxShell` erzwang B/T-Exklusivität; der Filter enthielt keinen Beschlussmodus; die Legacy-Metaspalte leitete ToDo/Beschluss teilweise aus dem Status ab; carried-over B/T/W waren im Workbench-Zugriff nicht gesperrt. Diese Stellen sind gezielt korrigiert.
+- Guardrails: unabhängige Persistenzkombinationen, getrennte Beschluss-/ToDo-Filter, UI A–G für normale TOPs und Titel ohne Ampel, carried-over B/T/W sichtbar und disabled sowie `PDF-V2-PROT-011` mit M85 p49/p50. Commit und Push: keiner.
+- Der neue Beschluss-Filter ist als stabiles, fachlich gesperrtes Buttonziel registriert. Registry/Manifest stehen auf Version 23; exakt bekannte Protokollprofile vor diesem additiven Ziel werden archiviert, nur um dessen Baselinezustand ergänzt und behalten alle vorhandenen Werte.
+- Grün: `core-protokoll`, `layout-output`, M81.1-Profilmigration, M86.7-Buttonvertrag, M85 mit 50 Fixtures, UI-Editor-Vertrags-Selbsttest, paketbezogenes ESLint ohne Fehler, `npm run pack` und `git diff --check`. Der vollständige `npm test` bleibt bei 4/10 Gruppen an bereits vorhandenen Alt-Sollständen außerhalb dieses Pakets rot; der vollständige Lintlauf an sechs bereits im Ausgangsstand vorhandenen Fehlern. Keine Prüfung wurde deaktiviert.
+- Die frühere reale K17.14-Abnahme enthielt fälschlich Ampeln bei Level-1-Titeln und gilt dafür nicht als aktueller Nachweis. Die korrigierte UI-/Vorschau-/Produkt-PDF-Darstellung ist nach diesem technischen Paket erneut fachlich sichtbar zu prüfen.
+
+## UI-basierte PDF-Baseline - Beschluss und ToDo
+
+- Status: `[A]`; Wichtig bleibt ausschliesslich roter Titeltext ohne Symbol. Beschluss und ToDo stehen in der PDF-Baseline jeweils rechts; zusammen erscheinen sie in der festen Reihenfolge Beschluss, ToDo innerhalb derselben vorhandenen Level-1-Zeile. UI, Fachwerte, Tabellen, Seitenraender, Paginierung und Druckpfad wurden nicht umgebaut.
+- Der gemeinsame rechte Bereich entsteht durch die vorhandene Flexzeile: Der Titel gibt den Restplatz vor den Markern frei. Einzelmarker liegen bei `x = 193,2 mm`; kombiniert liegt Beschluss bei `x = 187,9 mm` und ToDo bei `x = 193,2 mm`. Beide sind `3,8 x 3,8 mm` gross, haben denselben Y-Bezug, `1,5 mm` Abstand und `1,0 mm` rechten Innenabstand.
+- `pdf.bbm.protocol.tops.marker.decision` (`Red Flag · Beschluss`) bleibt erhalten. Neu ist `pdf.bbm.protocol.tops.marker.todo` (`Flag · ToDo`) mit demselben Parent `pdf.bbm.protocol.tops.rows` und ausschliesslich `move`/`setVisibility`. Bekannte 35-Ziel-Profile werden additiv um beide Marker, der 36-Ziel-Pilotstand nur um ToDo ergaenzt; bestehende Feinjustierungen bleiben erhalten.
+- Reale isolierte Zwei-Start-Abnahme: beide Ziele separat ausgewaehlt; je Ziel `-1 mm`, Undo, Sichtbarkeit AUS/EIN und Original bestanden. ToDo bei `192,2 mm` gespeichert, nach Neustart exakt wiederhergestellt und anschliessend per Original/Speichern auf `193,2 mm` zurueckgesetzt. Beide Starts Exit 0; das Temp-Profil wurde entfernt.
+- Der echte Abschlussweg erzeugte das zweiseitige Produktprotokoll `M86-DIAG_M86 Diagnose_M86 Sichtabnahme_#2 - 18.08.2026.pdf` sowie Firmen-, ToDo- und TOP-Liste. Das Produktprotokoll zeigt Wichtig rot ohne Flag, Beschluss rechts, ToDo rechts und beide rechts nebeneinander; der anschliessende Maildialog wurde ohne Versand abgebrochen.
+- Gruen: M81 17/17, M85 mit 48 Struktur-Goldens und realer Marker-Geometrie sowie komplette Testgruppe `layout-output`. Commit und Push: keiner.
+
+## UI-basierte PDF-Baseline - Pilot Red Flag
+
+- Status: `[A]`; die Beschlusskennzeichnung steht in UI und PDF-Baseline fachlich rechts in der Level-1-Titelzeile. Ursache der bisherigen Abweichung war die PDF-Flexgeometrie: Der Marker folgte direkt auf die begrenzte Titelbreite. Nur der vorhandene Beschlussmarker nutzt nun den Restplatz bis zur rechten Innenkante; ToDo-Marker, UI, Titel, Tabellen, Paginierung und Druckpfad bleiben unveraendert.
+- `pdf.bbm.protocol.tops.marker.decision` ist als `Red Flag · Beschluss` mit Parent `pdf.bbm.protocol.tops.rows` registriert. Erlaubt sind nur Position und Sichtbarkeit. Die Baseline ist `193,2 / 99 mm`, `3,8 x 3,8 mm`; der reale Print-DOM ergab `x = 193,2 mm` und `0,999 mm` Abstand zur rechten TOP-Tabellenkante.
+- Vorhandene 35-Element-Profile mit dem exakt bekannten Fingerprint werden additiv auf 36 Elemente erweitert: bisherige Feinjustierungen bleiben erhalten, die neue Flag startet auf Original. Beliebige inkompatible Profile werden weiterhin nicht uebernommen.
+- Reale isolierte Zwei-Start-Abnahme: UI und Baseline-PDF rechts dokumentiert; Auswahl, `-1 mm`, Undo, Sichtbarkeit AUS/EIN, Speichern und Neustart-Restore auf `x = 192,2 mm` bestanden. `Original`, erneutes Speichern und eine neue echte zweiseitige PDF stellten `x = 193,2 mm` wieder her. Beide Starts Exit 0; das isolierte Profil wurde danach entfernt.
+- Gruen: M81 16/16, M85 mit allen 47 unveraenderten Struktur-Goldens, komplette Testgruppe `layout-output`, UI-Editor-Vertrags-Selbsttest, gezieltes ESLint und `git diff --check`. Der breitere vorhandene UI-Editor-Gesamtlauf bleibt an bereits bekannten paketfremden Alt-Sollzahlen/Fingerprints, Licensing-Hashes und Harness-Zaehlern rot. Commit und Push: keiner.
+
 ## Seitenbezogener PDF-TableColumn-Readback
 
 - Status: `[A]`; der native PDF-Editor verwendet fuer ausgewaehlte `TableColumn`-Ziele dieselbe reale, seitenbezogene Rendererbox fuer Inspector und Auswahlrahmen. Die logische Registry-Baseline bleibt unveraendert Reset-/Layoutquelle.

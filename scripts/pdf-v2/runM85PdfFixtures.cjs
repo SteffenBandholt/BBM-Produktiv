@@ -178,6 +178,60 @@ async function readMetaColumnGeometry(win, fixture) {
   })()`, true);
 }
 
+async function readTitleMarkerGeometry(win, fixture) {
+  if (fixture.kind !== "protocol") return null;
+  return win.webContents.executeJavaScript(`(() => {
+    const mm = (px) => Math.round((Number(px || 0) * 25.4 / 96) * 1000) / 1000;
+    const box = (element) => {
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return { x: mm(rect.x), y: mm(rect.y), width: mm(rect.width), height: mm(rect.height), right: mm(rect.right) };
+    };
+    return Array.from(document.querySelectorAll("tr.lvl1Row")).map((row) => {
+      const title = row.querySelector(".lvl1Text");
+      return {
+        title: String(title?.textContent || "").trim(),
+        titleColor: title ? getComputedStyle(title).color : "",
+        titleBox: box(title),
+        important: row.classList.contains("isImportant"),
+        row: box(row),
+        markers: Array.from(row.querySelectorAll(".lvl1Marker")).map((marker) => ({
+          type: String(marker.dataset.marker || ""),
+          box: box(marker),
+          display: getComputedStyle(marker).display,
+        })),
+      };
+    });
+  })()`, true);
+}
+
+async function readTopIndicatorGeometry(win, fixture) {
+  if (fixture.kind !== "protocol") return null;
+  return win.webContents.executeJavaScript(`(() => {
+    const mm = (px) => Math.round((Number(px || 0) * 25.4 / 96) * 1000) / 1000;
+    const box = (element) => {
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return { x: mm(rect.x), y: mm(rect.y), width: mm(rect.width), height: mm(rect.height), right: mm(rect.right) };
+    };
+    return Array.from(document.querySelectorAll("tr.topRow")).map((row) => {
+      const title = row.querySelector(".lvl1Text, .shortText");
+      return {
+        title: String(title?.textContent || "").trim(),
+        level: row.classList.contains("lvl1Row") ? 1 : 2,
+        important: row.classList.contains("isImportant"),
+        titleColor: title ? getComputedStyle(title).color : "",
+        row: box(row),
+        indicators: Array.from(row.querySelectorAll(".ampelDot, .lvl1Marker")).map((indicator) => ({
+          type: indicator.classList.contains("ampelDot") ? "ampel" : String(indicator.dataset.marker || ""),
+          box: box(indicator),
+          display: getComputedStyle(indicator).display,
+        })),
+      };
+    });
+  })()`, true);
+}
+
 async function renderFixture(win, fixture, { pdfDir } = {}) {
   const jobId = `m85-${fixture.id}`;
   const ready = new Promise((resolve, reject) => {
@@ -209,6 +263,8 @@ async function renderFixture(win, fixture, { pdfDir } = {}) {
   );
   if (!snapshot) throw new Error(`M85-Struktursnapshot fehlt: ${fixture.id}`);
   const metaColumnGeometry = await readMetaColumnGeometry(win, fixture);
+  const titleMarkerGeometry = await readTitleMarkerGeometry(win, fixture);
+  const topIndicatorGeometry = await readTopIndicatorGeometry(win, fixture);
 
   let pdf = null;
   if (pdfDir) {
@@ -219,7 +275,7 @@ async function renderFixture(win, fixture, { pdfDir } = {}) {
     pdf = { fileName: path.basename(filePath), bytes: buffer.length };
   }
   return { id: fixture.id, number: fixture.number, title: fixture.title, kind: fixture.kind, snapshot,
-    previewMetadata: readyMessage?.previewMetadata || null, metaColumnGeometry, pdf };
+    previewMetadata: readyMessage?.previewMetadata || null, metaColumnGeometry, titleMarkerGeometry, topIndicatorGeometry, pdf };
 }
 
 async function main() {

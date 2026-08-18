@@ -35,6 +35,8 @@ function top(index, options = {}) {
     updated_at: "2026-08-01",
     isNewTop: options.isNewTop !== false,
     is_important: options.isImportant ? 1 : 0,
+    is_decision: options.isDecision ? 1 : 0,
+    is_task: options.isTask ? 1 : 0,
     is_touched: options.isTouched ? 1 : 0,
   };
 }
@@ -172,7 +174,7 @@ const FIXTURES = Object.freeze([
   }),
   protocolFixture("p06-level-one-near-end", "Level-1-TOP nahe Seitenende", (data) => {
     addTopSeries(data, 7, { longtextWords: 10 });
-    data.tops.push(top(8, { level: 1, number: "2", title: "Neutraler Abschnitt 2" }));
+    data.tops.push(top(8, { level: 1, number: "2", title: "Neutraler Abschnitt 2", isDecision: true }));
     data.tops.push(top(9, { number: "2.1", longtext: words(20, "abschnitt") }));
   }),
   protocolFixture("p07-short-longtext", "TOP mit kurzem Langtext", (data) => {
@@ -347,6 +349,50 @@ const FIXTURES = Object.freeze([
       longText: words(140, "lang"),
       note: words(80, "notiz"),
     }));
+  }),
+  protocolFixture("p48-title-markers", "Wichtig, Beschluss und ToDo", (data) => {
+    data.settings["tops.ampelEnabled"] = "false";
+    data.meeting.pdf_show_ampel = 0;
+    data.showAmpelInList = false;
+    data.tops.push(top(1, { level: 1, number: "1", title: "Nur wichtig", isImportant: true }));
+    data.tops.push(top(2, { number: "1.1", longtext: words(8, "wichtig") }));
+    data.tops.push(top(3, { level: 1, number: "2", title: "Nur Beschluss", isDecision: true }));
+    data.tops.push(top(4, { number: "2.1", longtext: words(8, "beschluss") }));
+    data.tops.push(top(5, { level: 1, number: "3", title: "Nur ToDo", isTask: true }));
+    data.tops.push(top(6, { number: "3.1", longtext: words(8, "todo") }));
+    data.tops.push(top(7, { level: 1, number: "4", title: "Beschluss und ToDo", isDecision: true, isTask: true }));
+    data.tops.push(top(8, { number: "4.1", longtext: words(8, "kombination") }));
+  }),
+  protocolFixture("p49-independent-markers-ampel-off", "Unabhaengige Kennzeichnungen ohne Ampel", (data) => {
+    data.settings["tops.ampelEnabled"] = "false";
+    data.meeting.pdf_show_ampel = 0;
+    data.showAmpelInList = false;
+    const cases = [
+      { key: "A", isDecision: false, isTask: false },
+      { key: "C", isDecision: true, isTask: false },
+      { key: "D", isDecision: false, isTask: true },
+      { key: "E", isDecision: true, isTask: true },
+    ];
+    let index = 20;
+    for (const markerCase of cases) {
+      data.tops.push(top(index++, { level: 1, number: `${index}`, title: `${markerCase.key} Titel`, status: "blockiert", ...markerCase }));
+      data.tops.push(top(index++, { level: 2, number: `${index}.1`, title: `${markerCase.key} TOP`, status: "blockiert", ...markerCase }));
+    }
+  }),
+  protocolFixture("p50-independent-markers-ampel-on", "Unabhaengige Kennzeichnungen mit Ampel", (data) => {
+    data.settings["tops.ampelEnabled"] = "true";
+    data.meeting.pdf_show_ampel = 1;
+    data.showAmpelInList = true;
+    const cases = [
+      { key: "B", isDecision: false, isTask: false, isImportant: false },
+      { key: "F", isDecision: true, isTask: true, isImportant: false },
+      { key: "G", isDecision: true, isTask: true, isImportant: true },
+    ];
+    let index = 40;
+    for (const markerCase of cases) {
+      data.tops.push(top(index++, { level: 1, number: `${index}`, title: `${markerCase.key} Titel`, status: "blockiert", ...markerCase }));
+      data.tops.push(top(index++, { level: 2, number: `${index}.1`, title: `${markerCase.key} TOP`, status: "blockiert", ...markerCase }));
+    }
   }),
 ]);
 

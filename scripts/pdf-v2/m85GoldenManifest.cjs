@@ -51,6 +51,9 @@ const GOLDEN_SNAPSHOT_SHA256 = Object.freeze({
   "r45-footer-boundary": "bd299e9c05d7530075b90f670697c14184b64ab236558292d80383508bf7e93b",
   "r46-landscape-contract": "6f4fa1db3ff1c0d0ae11227127d0fc629475da633c6d9eb4fdacaf5775e59c5d",
   "r47-mixed-long-fields": "09c58ae64219c9df76f54fd889c7136989bf9b91ea69b0857967882024d5eead",
+  "p48-title-markers": "98d314855b58d4ca35028a164efdaa024299e5a670db11cc88cf989cdc284f5a",
+  "p49-independent-markers-ampel-off": "de43e8ef413effda7a3ab3974603694900cacb9fc4610dc87bf9137d5a002f15",
+  "p50-independent-markers-ampel-on": "41ebac67f6be39f7151fff9afd7d261697cc67cbf8c4f361c613a9c591bc4aa8",
 });
 
 const GOLDEN_PAGE_COUNTS = Object.freeze({
@@ -101,6 +104,9 @@ const GOLDEN_PAGE_COUNTS = Object.freeze({
   "r45-footer-boundary": 2,
   "r46-landscape-contract": 1,
   "r47-mixed-long-fields": 1,
+  "p48-title-markers": 1,
+  "p49-independent-markers-ampel-off": 1,
+  "p50-independent-markers-ampel-on": 1,
 });
 
 // These fixtures record real, reproducible gaps in current main. They are not

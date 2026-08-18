@@ -169,11 +169,11 @@ export class WorkbenchMetaColumn {
     if (!this.metaSymbolSlot) return;
     const flags = this._readFlagState(metaValue);
     const icons = [];
-    if (flags.task) {
-      icons.push(this._createMetaSymbol(TODO_PNG, "ToDo", "ToDo", "task"));
-    }
     if (flags.decision) {
       icons.push(this._createMetaSymbol(RED_FLAG_PNG, "Beschluss", "Beschluss", "decision"));
+    }
+    if (flags.task) {
+      icons.push(this._createMetaSymbol(TODO_PNG, "ToDo", "ToDo", "task"));
     }
 
     if (typeof this.metaSymbolSlot.replaceChildren === "function") {

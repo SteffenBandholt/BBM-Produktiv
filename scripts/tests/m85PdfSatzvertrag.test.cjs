@@ -35,6 +35,9 @@ const CONTRACT = Object.freeze({
   restRecord: "PDF-V2-REST-002",
   restMeasure: "PDF-V2-REST-003",
   protocolMeta: "PDF-V2-PROT-006",
+  protocolDecisionMarker: "PDF-V2-PROT-009",
+  protocolTitleMarkers: "PDF-V2-PROT-010",
+  protocolTopIndicators: "PDF-V2-PROT-011",
   editorBoundary: "PDF-V2-EDIT-001",
   pageBreakLocked: "PDF-V2-EDIT-002",
   domainLocked: "PDF-V2-EDIT-003",
@@ -128,14 +131,15 @@ function editorBoundsOnPage(result, elementId, pageNumber, part) {
 async function runM85PdfSatzvertragTests(run) {
   let rendered = null;
 
-  await run("M85 Satzvertrag: 47 neutrale Fixtures sind vollständig und eindeutig", () => {
-    assert.equal(FIXTURES.length, 47);
-    assert.deepEqual(FIXTURES.map((fixture) => fixture.number), Array.from({ length: 47 }, (_value, index) => index + 1));
-    assert.equal(new Set(FIXTURES.map((fixture) => fixture.id)).size, 47);
-    assert.equal(Object.keys(GOLDEN_SNAPSHOT_SHA256).length, 47);
-    assert.equal(Object.keys(GOLDEN_PAGE_COUNTS).length, 47);
+  await run("M85 Satzvertrag: 50 neutrale Fixtures sind vollständig und eindeutig", () => {
+    assert.equal(FIXTURES.length, 50);
+    assert.deepEqual(FIXTURES.map((fixture) => fixture.number), Array.from({ length: 50 }, (_value, index) => index + 1));
+    assert.equal(new Set(FIXTURES.map((fixture) => fixture.id)).size, 50);
+    assert.equal(Object.keys(GOLDEN_SNAPSHOT_SHA256).length, 50);
+    assert.equal(Object.keys(GOLDEN_PAGE_COUNTS).length, 50);
     assert.equal(JSON.stringify(FIXTURES).includes("baubesprechungs-manager"), false);
-    const protocolManifestEntries = Object.entries(GOLDEN_SNAPSHOT_SHA256).filter(([id]) => id.startsWith("p"));
+    const protocolPilotIds = new Set(["p48-title-markers", "p49-independent-markers-ampel-off", "p50-independent-markers-ampel-on"]);
+    const protocolManifestEntries = Object.entries(GOLDEN_SNAPSHOT_SHA256).filter(([id]) => id.startsWith("p") && !protocolPilotIds.has(id));
     assert.equal(protocolManifestEntries.length, 25);
     assert.equal(snapshotHash(protocolManifestEntries), M85_1_PROTOCOL_MANIFEST_SHA256, "p01-p34 Baseline verändert");
   });
@@ -143,7 +147,7 @@ async function runM85PdfSatzvertragTests(run) {
   await run("M85 Satzvertrag: alle strukturellen Golden-Snapshots sind reproduzierbar", () => {
     rendered = runGoldenHarness();
     const byId = resultMap(rendered);
-    assert.equal(byId.size, 47);
+    assert.equal(byId.size, 50);
     for (const fixture of FIXTURES) {
       const actual = byId.get(fixture.id);
       assert.ok(actual, `Snapshot fehlt: ${fixture.id}`);
@@ -357,7 +361,7 @@ async function runM85PdfSatzvertragTests(run) {
 
   await run("M85 Satzvertrag: Editor darf Satz- und Fachoperationen nicht freigeben", () => {
     const registry = getBbmPdfRegistry();
-    assert.equal(registry.elements.length, 35);
+    assert.equal(registry.elements.length, 37);
     for (const element of registry.elements) {
       assert.equal(element.allowedOps.includes("setPageBreakRule"), false, `${CONTRACT.pageBreakLocked}:${element.id}`);
       assert.equal(element.lockedOps.includes("setPageBreakRule"), true, `${CONTRACT.pageBreakLocked}:${element.id}`);
@@ -415,6 +419,134 @@ async function runM85PdfSatzvertragTests(run) {
     assert.ok(pageAfter.box.width > pageBefore.box.width, `${pageValueId}:Schriftgroesse blieb visuell unveraendert`);
     assert.equal(editorBound(editorRun(pageValueId, { visible: false }), pageValueId), null,
       `${pageValueId}:ausgeblendeter Seitenwert blieb im Print-DOM sichtbar`);
+  });
+
+  await run("M85 PDF-Pilot: Red Flag folgt rechts der UI-Fachposition und bleibt separat feinjustierbar", () => {
+    const markerId = "pdf.bbm.protocol.tops.marker.decision";
+    const tableId = "pdf.bbm.protocol.tops";
+    const baseline = editorRun(markerId, { visible: true }, "p06-level-one-near-end");
+    const moved = editorRun(markerId, { x: 192.2 }, "p06-level-one-near-end");
+    const hidden = editorRun(markerId, { visible: false }, "p06-level-one-near-end");
+    const allBounds = (result, elementId) => (result?.previewMetadata?.renderBounds || []).filter((entry) => entry.elementId === elementId);
+    const markerBefore = allBounds(baseline, markerId)[0];
+    const markerAfter = allBounds(moved, markerId)[0];
+    assert.ok(markerBefore && markerAfter, `${CONTRACT.protocolDecisionMarker}:Red-Flag-Readback fehlt`);
+    const table = allBounds(baseline, tableId).find((entry) => entry.pageNumber === markerBefore.pageNumber);
+    assert.ok(table, `${CONTRACT.protocolDecisionMarker}:zugehoerige TOP-Tabelle fehlt`);
+    assert.ok(markerBefore.box.x > table.box.x + table.box.width * 0.75,
+      `${CONTRACT.protocolDecisionMarker}:Red Flag steht nicht auf der rechten fachlichen Titelseite`);
+    assert.ok(Math.abs((table.box.x + table.box.width) - (markerBefore.box.x + markerBefore.box.width) - 1) <= 0.15,
+      `${CONTRACT.protocolDecisionMarker}:Red Flag folgt nicht der rechten Innenkante`);
+    assert.ok(Math.abs(markerBefore.box.width - 3.8) <= 0.05 && Math.abs(markerBefore.box.height - 3.8) <= 0.05,
+      `${CONTRACT.protocolDecisionMarker}:Markergeometrie`);
+    assert.ok(Math.abs((markerAfter.box.x - markerBefore.box.x) + 1) <= 0.05,
+      `${CONTRACT.protocolDecisionMarker}:1-mm-Feinjustierung`);
+    assert.ok(Math.abs(markerAfter.box.y - markerBefore.box.y) <= 0.05,
+      `${CONTRACT.protocolDecisionMarker}:horizontale Feinjustierung veraendert Y`);
+    assert.equal(allBounds(hidden, markerId).length, 0,
+      `${CONTRACT.protocolDecisionMarker}:ausgeblendete Red Flag blieb sichtbar`);
+  });
+
+  await run("M85 PDF-Pilot: Wichtig bleibt Text; Beschluss und ToDo teilen den rechten Flag-Bereich", () => {
+    const decisionId = "pdf.bbm.protocol.tops.marker.decision";
+    const todoId = "pdf.bbm.protocol.tops.marker.todo";
+    const baseline = editorRun(todoId, { visible: true }, "p48-title-markers");
+    const rows = baseline.titleMarkerGeometry || [];
+    assert.equal(rows.length, 4, `${CONTRACT.protocolTitleMarkers}:vier Fachfaelle`);
+    const byTitle = new Map(rows.map((row) => [row.title, row]));
+    const important = byTitle.get("Nur wichtig");
+    const decision = byTitle.get("Nur Beschluss");
+    const todo = byTitle.get("Nur ToDo");
+    const combined = byTitle.get("Beschluss und ToDo");
+    assert.ok(important && decision && todo && combined, `${CONTRACT.protocolTitleMarkers}:Titelzeilen fehlen`);
+    assert.equal(important.important, true, `${CONTRACT.protocolTitleMarkers}:Wichtig-Klasse`);
+    assert.equal(important.titleColor, "rgb(198, 40, 40)", `${CONTRACT.protocolTitleMarkers}:roter Titeltext`);
+    assert.deepEqual(important.markers, [], `${CONTRACT.protocolTitleMarkers}:Wichtig erzeugt ein Symbol`);
+    assert.deepEqual(decision.markers.map((marker) => marker.type), ["decision"], `${CONTRACT.protocolTitleMarkers}:Beschluss`);
+    assert.deepEqual(todo.markers.map((marker) => marker.type), ["task"], `${CONTRACT.protocolTitleMarkers}:ToDo`);
+    assert.deepEqual(combined.markers.map((marker) => marker.type), ["decision", "task"], `${CONTRACT.protocolTitleMarkers}:Reihenfolge`);
+
+    for (const row of [decision, todo, combined]) {
+      const visible = row.markers.filter((marker) => marker.display !== "none");
+      assert.ok(visible.every((marker) => marker.box.x >= row.titleBox.right - 0.05), `${CONTRACT.protocolTitleMarkers}:${row.title}:Titelkollision`);
+      const last = visible[visible.length - 1];
+      assert.ok(Math.abs(row.row.right - last.box.right - 1) <= 0.15, `${CONTRACT.protocolTitleMarkers}:${row.title}:rechte Innenkante`);
+      assert.ok(visible.every((marker) => Math.abs(marker.box.y - visible[0].box.y) <= 0.05), `${CONTRACT.protocolTitleMarkers}:${row.title}:Y-Bezug`);
+    }
+    assert.ok(Math.abs(combined.markers[1].box.x - combined.markers[0].box.right - 1.5) <= 0.15,
+      `${CONTRACT.protocolTitleMarkers}:definierter Markerabstand`);
+
+    for (const [elementId, suffix] of [[decisionId, "decision"], [todoId, "todo"]]) {
+      const moved = editorRun(elementId, { x: 192.2 }, "p48-title-markers");
+      const hidden = editorRun(elementId, { visible: false }, "p48-title-markers");
+      const beforeBounds = (baseline.previewMetadata?.renderBounds || []).filter((entry) => entry.elementId === elementId);
+      const movedBounds = (moved.previewMetadata?.renderBounds || []).filter((entry) => entry.elementId === elementId);
+      assert.equal(beforeBounds.length, 2, `${CONTRACT.protocolTitleMarkers}:${suffix}:Baseline-Refs`);
+      assert.equal(movedBounds.length, 2, `${CONTRACT.protocolTitleMarkers}:${suffix}:Move-Refs`);
+      for (let index = 0; index < beforeBounds.length; index += 1) {
+        assert.ok(Math.abs(movedBounds[index].box.x - beforeBounds[index].box.x + 1) <= 0.05,
+          `${CONTRACT.protocolTitleMarkers}:${suffix}:1-mm-Feinjustierung`);
+        assert.ok(Math.abs(movedBounds[index].box.y - beforeBounds[index].box.y) <= 0.05,
+          `${CONTRACT.protocolTitleMarkers}:${suffix}:Y blieb unveraendert`);
+      }
+      assert.equal((hidden.previewMetadata?.renderBounds || []).filter((entry) => entry.elementId === elementId).length, 0,
+        `${CONTRACT.protocolTitleMarkers}:${suffix}:Sichtbarkeit AUS`);
+      const siblingId = elementId === decisionId ? todoId : decisionId;
+      assert.equal((hidden.previewMetadata?.renderBounds || []).filter((entry) => entry.elementId === siblingId).length, 2,
+        `${CONTRACT.protocolTitleMarkers}:${suffix}:Geschwisterziel wurde mit ausgeblendet`);
+    }
+  });
+
+  await run("M85 PDF-Fachvertrag: A-G bleiben unabhaengig, Titel jedoch immer ohne Ampel", () => {
+    const off = runGoldenHarness(["--fixture", "p49-independent-markers-ampel-off"]).results[0];
+    const on = runGoldenHarness(["--fixture", "p50-independent-markers-ampel-on"]).results[0];
+    const rows = [...(off.topIndicatorGeometry || []), ...(on.topIndicatorGeometry || [])];
+    const byTitle = new Map(rows.map((row) => [row.title, row]));
+    const expected = new Map([
+      ["A", []],
+      ["B", ["ampel"]],
+      ["C", ["decision"]],
+      ["D", ["task"]],
+      ["E", ["decision", "task"]],
+      ["F", ["ampel", "decision", "task"]],
+      ["G", ["ampel", "decision", "task"]],
+    ]);
+
+    for (const [key, indicatorTypes] of expected) {
+      for (const suffix of ["Titel", "TOP"]) {
+        const row = byTitle.get(`${key} ${suffix}`);
+        assert.ok(row, `${CONTRACT.protocolTopIndicators}:${key}:${suffix}:Zeile fehlt`);
+        const expectedTypes = suffix === "Titel"
+          ? indicatorTypes.filter((indicator) => indicator !== "ampel")
+          : indicatorTypes;
+        assert.deepEqual(row.indicators.map((indicator) => indicator.type), expectedTypes,
+          `${CONTRACT.protocolTopIndicators}:${key}:${suffix}:unabhaengige Reihenfolge`);
+        assert.ok(row.indicators.every((indicator) => indicator.display !== "none"),
+          `${CONTRACT.protocolTopIndicators}:${key}:${suffix}:Indikator ausgeblendet`);
+        assert.equal(row.important, key === "G", `${CONTRACT.protocolTopIndicators}:${key}:${suffix}:Wichtig-Zustand`);
+        if (key === "G") {
+          assert.equal(row.titleColor, "rgb(198, 40, 40)",
+            `${CONTRACT.protocolTopIndicators}:${key}:${suffix}:roter Text`);
+        }
+      }
+    }
+
+    const decisionId = "pdf.bbm.protocol.tops.marker.decision";
+    const todoId = "pdf.bbm.protocol.tops.marker.todo";
+    const hiddenDecision = editorRun(decisionId, { visible: false }, "p50-independent-markers-ampel-on");
+    assert.equal((hiddenDecision.previewMetadata?.renderBounds || []).filter((entry) => entry.elementId === decisionId).length, 0,
+      `${CONTRACT.protocolTopIndicators}:Beschluss separat ausblendbar`);
+    assert.equal((hiddenDecision.previewMetadata?.renderBounds || []).filter((entry) => entry.elementId === todoId).length, 4,
+      `${CONTRACT.protocolTopIndicators}:ToDo bleibt bei Beschluss-AUS sichtbar`);
+    const hiddenRows = new Map((hiddenDecision.topIndicatorGeometry || []).map((row) => [row.title, row]));
+    for (const title of ["F Titel", "G Titel"]) {
+      assert.deepEqual(hiddenRows.get(title)?.indicators.filter((indicator) => indicator.display !== "none").map((indicator) => indicator.type), ["task"],
+        `${CONTRACT.protocolTopIndicators}:${title}:Titel bleibt ohne Ampel`);
+    }
+    for (const title of ["F TOP", "G TOP"]) {
+      assert.deepEqual(hiddenRows.get(title)?.indicators.filter((indicator) => indicator.display !== "none").map((indicator) => indicator.type), ["ampel", "task"],
+        `${CONTRACT.protocolTopIndicators}:${title}:Ampel und ToDo bleiben gemeinsam sichtbar`);
+    }
   });
 
   await run("M85 PDF-Bedienung: innere Spaltengrenze bleibt in Track, Kopf und Daten lueckenlos", () => {

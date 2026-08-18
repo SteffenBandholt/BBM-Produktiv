@@ -43,7 +43,7 @@ function buildSharedEditorAccessVm(state, selectedTop) {
   return {
     shortTextReadOnly: isWriting || (!isReadOnly && isCarriedOver),
     longTextReadOnly: isWriting,
-    flagsDisabled: isWriting,
+    flagsDisabled: isWriting || isCarriedOver,
   };
 }
 

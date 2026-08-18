@@ -87,6 +87,9 @@ Aktueller Stand:
 - [x] K17.9 PDF-Nutzflaeche hart begrenzen und Teilnehmer-Spaltengrenzen atomar fuehren
 - [x] K17.10 Gespeichertes PDF-Layout im normalen Vorabzug und Produktdruck identisch anwenden
 - [x] K17.11 TableColumn-Inspector und Auswahlrahmen auf reale seitenbezogene PDF-Rendererbox vereinheitlichen
+- [x] K17.12 UI-basierte PDF-Baseline mit Beschluss-Flag rechts pilotieren
+- [x] K17.13 Titelkennzeichnungen Wichtig, Beschluss und ToDo in der PDF-Baseline fachlich vereinheitlichen
+- [x] K17.14 Ampel, Beschluss, ToDo und Wichtig für normale TOPs und Titel fachlich entkoppeln
 
 ## Statusupdate M86.25
 
@@ -1009,3 +1012,34 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
 - Reale Abnahme in `npm start`, Protokoll #22, vier Seiten: Meta Seite 1 `157,078 / 163,176 mm`, `40,921 x 108,166 mm`; Meta Seite 2 `157,078 / 22,301 mm`, `40,921 x 248,492 mm`; Gegenstand Seite 1 `36,177 / 163,176 mm`, `120,901 x 108,166 mm`. Teilnehmer und Vorbemerkung liegen ausserhalb des roten Rahmens. Tabellenkopf als separates Label blieb separat auswaehlbar.
 - Grenzschritt `+1 mm` aktualisierte die Meta-Box auf `x=158,078 mm`, Breite `39,922 mm` und die Gegenstand-Spalte auf `121,901 mm`; Inspector und Tabellenuebersicht zeigten die neuen Renderwerte im selben Zyklus. Undo stellte `x=157,078 mm`, Breite `40,921 mm` und Gegenstand `120,901 mm` sofort wieder her. Tabellenbreite/Spaltensumme blieben 186 mm. Kein Save, keine Profil-, Registry-, CSS-, Paginierungs- oder Druckpfadaenderung.
 - Guardrails: M85 mit 47 unveraenderten Golden-Fixtures und realer zweiseitiger Trackgeometrie, native M87-Readbacktests und ReferenceTargetApp 141/141.
+
+## K17.12 - UI-basierte PDF-Baseline: Pilot Red Flag
+
+- Status: `[A]`; Baseline, eigenes PDF-Editorziel, Profilkompatibilitaet, Print-DOM und isolierte Zwei-Start-Abnahme sind abgeschlossen.
+- Die UI-Beschlusskennzeichnung `is_decision` liegt im rechten Metabereich der Level-1-Titelzeile. Im PDF wurde derselbe Marker bisher direkt nach der begrenzten Titelbreite angeordnet und wirkte dadurch links versetzt. Die UI selbst blieb unveraendert.
+- Die vorhandene PDF-Struktur bleibt bestehen. Nur `.lvl1Marker[data-marker="decision"]` verwendet in der Baseline den verbleibenden Platz bis zur rechten Innenkante. Gemessen: `x = 193,2 mm`, `3,8 x 3,8 mm`, rechter Innenabstand `0,999 mm` bei `186,001 mm` TOP-Tabellenbreite.
+- Neues explizites Ziel: `pdf.bbm.protocol.tops.marker.decision`, Name `Red Flag · Beschluss`, Typ `image`, Parent `pdf.bbm.protocol.tops.rows`, Operationen `move` und `setVisibility`. Fachwert-, Titel-, Tabellen-, Satz- und UI-Operationen bleiben gesperrt.
+- Die additive Erweiterung von 35 auf 36 PDF-Ziele uebernimmt ausschliesslich das exakt bekannte vorherige Profil-Fingerprint und fuegt die neue Flag in Baseline ein. Alle vorhandenen individuellen PDF-Werte bleiben erhalten; andere inkompatible Profile bleiben blockiert.
+- Sichtabnahme im isolierten echten Protokoll: UI-Flag rechts dokumentiert; Baseline-PDF rechts; Flag direkt ausgewaehlt; `193,2 -> 192,2 mm`; Undo; Sichtbarkeit AUS/EIN; gespeichert; zweiter vollstaendiger Start stellte `192,2 mm` wieder her; `Original` und Speichern stellten `193,2 mm` und die rechtsorientierte Baseline wieder her. Beide App-Laeufe endeten mit Exit 0 und erzeugten echte zweiseitige PDFs.
+- Guardrails: `PDF-V2-PROT-009`, M81 16/16, M85 mit 47 unveraenderten Struktur-Goldens und realem Marker-Readback, Testgruppe `layout-output`, UI-Editor-Vertrags-Selbsttest und `git diff --check`.
+
+## K17.13 - UI-basierte PDF-Baseline: Beschluss und ToDo
+
+- Status: `[A]`; die drei Fachfaelle und ihre Kombination sind in Baseline, getrennten Editorzielen, Profilkompatibilitaet, Print-DOM und realem Produktdruck abgeschlossen.
+- Wichtig (`is_important`) erzeugt weiterhin kein Symbol und wirkt ausschliesslich ueber roten Titeltext. Beschluss (`is_decision`) und ToDo (`is_task`) werden innerhalb der vorhandenen Level-1-Zeile unabhaengig gerendert. Bei beiden Werten gilt die feste Reihenfolge Beschluss, ToDo; es wurde kein neuer Container und keine UI-Aenderung eingefuehrt.
+- Reale Baseline: Einzelmarker `x = 193,2 mm`; kombiniert Beschluss `x = 187,9 mm` und ToDo `x = 193,2 mm`; jeweils `3,8 x 3,8 mm`, gleicher Y-Bezug, `1,5 mm` Abstand und `1,0 mm` rechter Innenabstand. Titel und Marker kollidieren nicht.
+- Neues explizites Ziel: `pdf.bbm.protocol.tops.marker.todo`, Name `Flag · ToDo`, Typ `image`, Parent `pdf.bbm.protocol.tops.rows`, Operationen nur `move` und `setVisibility`. Das vorhandene Ziel `Red Flag · Beschluss` bleibt unveraendert getrennt bedienbar. Die additive Migration uebernimmt bekannte 35-Ziel-Profile und den 36-Ziel-Red-Flag-Pilotstand ohne Verlust bestehender Feinjustierungen.
+- Reale Zwei-Start-Abnahme: beide Ziele separat ausgewaehlt; je Ziel `-1 mm`, Undo, Sichtbarkeit AUS/EIN und Original bestanden. ToDo wurde bei `192,2 mm` gespeichert und nach vollstaendigem Neustart exakt wiederhergestellt; Original, Speichern und neue PDF stellten `193,2 mm` wieder her. Beide App-Laeufe endeten mit Exit 0; das isolierte Profil wurde entfernt.
+- Der echte Abschlussweg erzeugte danach ein zweiseitiges Produktprotokoll und die drei Produktlisten. Seite 2 zeigt Wichtig rot ohne Flag, ToDo allein rechts und Beschluss plus ToDo rechts nebeneinander; der Maildialog wurde ohne Versand abgebrochen.
+- Guardrails: `PDF-V2-PROT-009`, `PDF-V2-PROT-010`, M81 17/17, M85 mit 48 Struktur-Goldens und realem Marker-Readback sowie Testgruppe `layout-output`.
+
+## K17.14 - Unabhängige TOP-Kennzeichnungen
+
+- Status: `[T]`; technische Fachkorrektur und Guardrails abgeschlossen, erneute fachliche Sichtabnahme durch den Nutzer offen.
+- Fachvertrag: Ampel, Beschluss, ToDo und Wichtig sind voneinander unabhängig. Der Quicklane-Schalter „Ampel“ beeinflusst ausschließlich den Ampelpunkt normaler TOPs. Level-1-Titel besitzen weiterhin keine Ampel. Wichtig bleibt reiner roter Text ohne eigenes Symbol.
+- Die bisherige UI-Priorisierung `Beschluss > ToDo > Ampel` und das Ausblenden des gemeinsamen Workbench-Symbolcontainers wurden entfernt. Eine zwischenzeitliche, fachlich falsche Freigabe der Ampel für Level-1-Titel wurde zurückgenommen. Beschluss und ToDo werden in der festen Reihenfolge Beschluss, ToDo gleichzeitig gerendert; bei normalen TOPs bleiben mit Ampel alle drei Symbole sichtbar.
+- `EditboxShell` enthielt zusätzlich eine versteckte B/T-Gegenauswahl. Der Beschluss-Filter fehlte, carried-over B/T/W waren nicht gesperrt und zwei Legacy-Hilfspfade leiteten Marker teilweise aus dem Status ab. Diese Kopplungen sind entfernt; `is_decision`, `is_task` und `is_important` bleiben die unabhängigen persistierten Wahrheitsquellen.
+- PDF-Baseline rechts und die getrennten Ziele `pdf.bbm.protocol.tops.marker.decision` und `pdf.bbm.protocol.tops.marker.todo` bleiben erhalten. Tabellen, Seitenränder, Paginierung, Druckpfad und Fachwerte bleiben unverändert.
+- Guardrails: unabhängige DB-/Draft-Persistenzkombinationen, getrennte Beschluss-/ToDo-Filter, UI-Integration A–G für normale TOPs und Titel ohne Ampel, carried-over B/T/W sichtbar und disabled sowie `PDF-V2-PROT-011` mit M85 p49/p50 und realem Print-DOM-/Editor-Readback.
+- Der Beschluss-Filter besitzt die stabile ID `protokoll.topsScreen.quicklane.filter.option.decision` und bleibt als Fachaktion im Editorvertrag gesperrt. Registry/Manifest Version 23 und eine exakt begrenzte additive Protokollprofil-Migration erhalten bestehende Layoutwerte. Grün sind `core-protokoll`, `layout-output`, M81.1, M86.7, M85, Vertrags-Selbsttest, paketbezogenes ESLint, Build und `git diff --check`; bekannte paketfremde Gesamtcheck-Altfehler bleiben offen.
+- Die frühere reale K17.14-Abnahme ist hinsichtlich Level-1-Ampeln fachlich überholt und kein Nachweis für den korrigierten Sollzustand. UI, normale Vorschau, Produkt-PDF und PDF-Editor sind nach der technischen Reparatur erneut fachlich sichtbar zu prüfen. Commit und Push: keiner.

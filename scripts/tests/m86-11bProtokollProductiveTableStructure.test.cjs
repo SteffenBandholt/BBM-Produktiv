@@ -249,8 +249,8 @@ async function runM8611bProtokollProductiveTableStructureTests(run) {
     list.setItems([
       { id: 1, level: 1, isTitle: true, canToggleLevel1: true, number: "1.", createdAt: "03.08.2026", itemClass: "Titel", title: "Titel", showStar: true },
       { id: 2, level: 2, number: "1.1.", createdAt: "03.08.2026", itemClass: "TOP", title: "Kurztext Ampel", preview: "Langtext Ampel", due: "21.08.2026", status: "offen", responsible: "Firma A", ampelColor: "green", showStar: true },
-      { id: 3, level: 2, number: "1.2.", createdAt: "03.08.2026", itemClass: "TOP", title: "Kurztext ToDo", preview: "Langtext ToDo", due: "22.08.2026", status: "offen", responsible: "Firma B", metaSymbolType: "task", showStar: true },
-      { id: 4, level: 2, number: "1.3.", createdAt: "03.08.2026", itemClass: "TOP", title: "Kurztext Beschluss", preview: "Langtext Beschluss", due: "23.08.2026", status: "offen", responsible: "Firma C", metaSymbolType: "decision", showStar: true },
+      { id: 3, level: 2, number: "1.2.", createdAt: "03.08.2026", itemClass: "TOP", title: "Kurztext ToDo", preview: "Langtext ToDo", due: "22.08.2026", status: "offen", responsible: "Firma B", isTask: true, showStar: true },
+      { id: 4, level: 2, number: "1.3.", createdAt: "03.08.2026", itemClass: "TOP", title: "Kurztext Beschluss", preview: "Langtext Beschluss", due: "23.08.2026", status: "offen", responsible: "Firma C", isDecision: true, showStar: true },
     ]);
 
     await run("M86.11b 01: produktiver Tabellenkopf benennt die drei verbindlichen Hauptspalten", () => {

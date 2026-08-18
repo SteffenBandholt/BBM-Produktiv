@@ -103,6 +103,10 @@ async function runProtokollRouterFallbackTests(run) {
     const screenSource = fs.readFileSync(screenFile, "utf8");
     const routerSource = fs.readFileSync(routerFile, "utf8");
     const quicklaneSource = fs.readFileSync(quicklaneFile, "utf8");
+    const filterModeSource = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/protokoll/topFilterMode.js"),
+      "utf8"
+    );
 
     assert.equal(screenSource.includes("topFilter"), true);
     assert.equal(screenSource.includes("this.router.context.ui.topFilter"), true);
@@ -118,8 +122,9 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(quicklaneSource.includes("onTopFilterChange"), true);
     assert.equal(screenSource.includes("toggleAmpelDisplay"), true);
     assert.equal(screenSource.includes("toggleLongtextDisplay"), true);
-    assert.equal(quicklaneSource.includes("ToDo"), true);
-    assert.equal(quicklaneSource.includes("Beschluss"), true);
+    assert.equal(filterModeSource.includes('label: "ToDo"'), true);
+    assert.equal(filterModeSource.includes('mode: "decision"'), true);
+    assert.equal(filterModeSource.includes('label: "Beschluss"'), true);
     assert.equal(quicklaneSource.includes("Projektnummer"), false);
     assert.equal(quicklaneSource.includes("Kurzbezeichnung"), false);
     assert.equal(quicklaneSource.includes("Projekt-ID"), false);

@@ -1,5 +1,23 @@
 # TOP-Regeln
 
+## Fachvertrag: unabhängige TOP-Kennzeichnungen
+
+Beschluss, ToDo und Wichtig sind drei voneinander unabhängige persistierte Kennzeichnungen. Die Ampel ist davon vollständig unabhängig, aber kein gespeicherter TOP-Kennzeichnungszustand. Diese Regel gilt für UI, PDF und PDF-Editor.
+
+- Die Ampel wird ausschließlich über den Quicklane-Button „Ampel“ ein- oder ausgeschaltet.
+- Beschluss darf den Ampelzustand niemals verändern oder die Ampel ausblenden.
+- ToDo darf den Ampelzustand niemals verändern oder die Ampel ausblenden.
+- Beschluss und ToDo dürfen gleichzeitig gesetzt und gleichzeitig sichtbar sein.
+- Wichtig erzeugt kein eigenes Symbol, sondern färbt ausschließlich den TOP-/Titeltext rot.
+- Wichtig beeinflusst Ampel, Beschluss und ToDo nicht.
+- Bei Beschluss und ToDo werden beide Symbole gleichzeitig rechts nebeneinander in der Reihenfolge Beschluss, ToDo dargestellt.
+- Bei normalen TOPs bleiben Ampel, Beschluss und ToDo gleichzeitig sichtbar.
+- Titel beziehungsweise Level-1-TOPs besitzen weiterhin grundsätzlich keine Ampel.
+- Bei übernommenen schwarzen TOPs und Titeln bleiben B/T/W sichtbar, ihre Schalter sind jedoch deaktiviert.
+- Der Beschluss-Filter liest ausschließlich `is_decision`, der ToDo-Filter ausschließlich `is_task`; gemeinsam gekennzeichnete TOPs erscheinen in beiden Filtern.
+
+Eine Priorisierung oder Ausschlusslogik zwischen diesen Zuständen ist unzulässig. Die A–G-Kombinationen werden für normale TOPs vollständig und für Titel mit der verbindlichen Ausnahme „keine Ampel“ durch den UI-Integrationstest und durch `PDF-V2-PROT-011` mit den M85-Fixtures p49 und p50 abgesichert.
+
 ## Ampellogik
 
 Status hat Vorrang:

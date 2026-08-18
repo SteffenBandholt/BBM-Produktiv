@@ -51,7 +51,7 @@ Nicht zulässig ist:
    Jedes sichtbare Element, das der Nutzer sinnvoll separat feinjustieren können soll, muss als eigenes verständlich benanntes PDF-Editor-Ziel registriert sein.
 
    Beispiele:
-   - Red Flag / Wichtig-Kennzeichnung,
+   - Beschluss- und ToDo-Kennzeichnung,
    - Statuspunkt,
    - Seitennummer / Seitenwert,
    - Tabellenüberschrift,
@@ -71,13 +71,27 @@ Nicht zulässig ist:
 8. **Vorschau und Produkt-PDF müssen identisch reagieren**
    Nach dem Speichern eines PDF-Feintunings müssen Editor-Vorschau, normale Vorschau und erzeugte Produkt-PDF denselben gespeicherten Layoutzustand verwenden.
 
-## Beispiel: Red Flag
+## Beispiel: Titelkennzeichnungen
 
-Ist die Red Flag in der UI fachlich dem Titel zugeordnet und dort rechts angeordnet, soll die PDF-Baseline diese Zuordnung grundsätzlich übernehmen.
+Ist eine Symbolkennzeichnung in der UI fachlich dem Titel zugeordnet und dort rechts angeordnet, soll die PDF-Baseline diese Zuordnung grundsätzlich übernehmen.
 
-Eine abweichende Standardposition der Red Flag in der PDF ist nur zulässig, wenn ein konkreter Druckzwang dies erfordert.
+Eine abweichende Standardposition der Kennzeichnung in der PDF ist nur zulässig, wenn ein konkreter Druckzwang dies erfordert.
 
-Soll die Red Flag im Druck anschließend leicht anders stehen, wird sie als eigenes PDF-Editor-Ziel ausgewählt und nur für die PDF feinjustiert.
+Soll die Kennzeichnung im Druck anschließend leicht anders stehen, wird sie als eigenes PDF-Editor-Ziel ausgewählt und nur für die PDF feinjustiert.
+
+### Pilotnachweis BBM-Protokoll
+
+- UI-Struktur: Beschluss (`is_decision`) und ToDo (`is_task`) sind fachlich dem rechten Metabereich der Titelzeile zugeordnet. Wichtig (`is_important`) wirkt ausschließlich über roten Titeltext und besitzt kein zusätzliches Symbol.
+- PDF-Struktur: `PrintShell.appendProtocolTitleMarker` erzeugt innerhalb derselben vorhandenen Level-1-Zeile den Beschlussmarker `.lvl1Marker[data-marker="decision"]`, den ToDo-Marker `.lvl1Marker[data-marker="task"]` oder beide in der festen Reihenfolge Beschluss, ToDo. Es wurde kein neuer Container eingeführt.
+- PDF-Baseline: Ein einzelner Marker steht rechts innerhalb der Titelzeile bei `x = 193,2 mm`. Bei Beschluss und ToDo steht Beschluss bei `x = 187,9 mm`, ToDo bei `x = 193,2 mm`; beide sind `3,8 x 3,8 mm` groß, besitzen denselben Y-Bezug und `1,5 mm` Abstand. Der rechte Marker endet `1,0 mm` vor der rechten TOP-Tabellenkante.
+- PDF-Feintuning: `pdf.bbm.protocol.tops.marker.decision` (`Red Flag · Beschluss`) und `pdf.bbm.protocol.tops.marker.todo` (`Flag · ToDo`) sind getrennte Ziele unter `pdf.bbm.protocol.tops.rows`. Erlaubt sind ausschließlich `move` und `setVisibility`; Original stellt für jedes Ziel dessen UI-orientierte Baseline wieder her.
+- Unverändert: UI-Positionen, Wichtig-/Beschluss-/ToDo-Fachwerte, Titelinhalt, Tabellengeometrie, Paginierung und Druckpfad.
+
+Die Guardrails `PDF-V2-PROT-009` und `PDF-V2-PROT-010` prüfen mit den neutralen M85-Fixtures p06 und p48 die rechte Fachposition, die vier Kennzeichnungsfälle, reale Markergrößen, Reihenfolge, Abstand, Kollisionsfreiheit, unabhängige 1-mm-Bewegung und unabhängige Sichtbarkeit. M81 prüft Parent, Namen, erlaubte Operationen, Nutzflächengrenzen sowie additive Save-/Restore-Kompatibilität.
+
+### Guardrail für unabhängige TOP-Kennzeichnungen
+
+Ampel, Beschluss, ToDo und Wichtig werden weder in der UI noch im PDF zu einem priorisierten Einzelzustand verdichtet. Der Ampel-Schalter wirkt ausschließlich auf die Ampel normaler TOPs; Level-1-Titel besitzen weiterhin keine Ampel. Beschluss und ToDo bleiben gleichzeitig sichtbar und behalten ihre getrennten PDF-Editorziele. Wichtig fügt kein Symbol hinzu, sondern färbt nur den Text. `PDF-V2-PROT-011` und die neutralen Fixtures p49/p50 prüfen die A–G-Kombinationen für normale TOPs und für Level-1-Titel mit der verbindlichen Ausnahme „keine Ampel“ im finalen Print-DOM.
 
 ## Entwicklungsregel für Codex und manuelle Arbeiten
 

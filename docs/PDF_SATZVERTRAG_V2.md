@@ -71,8 +71,8 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 | `src/renderer/print/v2/header/headerUtils.js` | produktiv, Adapter | Gemeinsame Texte/Normalisierung für V2-Köpfe. |
 | `src/shared/tableLayouts/protokollTopsLayout.js` | produktiv, Quelle für TOP-Spalten | Drei logische TOP-Spalten, Labels, UI-/PDF-Standardwerte und validierte Overlays. |
 | `src/shared/ampel/pdfAmpelRule.js` | produktiv, Fachdarstellung | Ermittelt Ampelfarbe aus bereits gelieferten Fachwerten; der Editor ändert diese Werte nicht. |
-| `src/renderer/print/pdfEditorLayout.js` | produktiv, Designadapter | Überführt 35 Registryzustände in V2-Variablen/DOM-Styles und liest Vorschaugrenzen zurück. Keine Seitenzuweisung. |
-| `src/main/ui-editor/bbmPdfAdapter.cjs` | produktiv, Registry-/Adapterquelle | Explizite 35 Elemente, Baselines, Nutzflächen-/Bereichsgrenzen, atomare Tabellenoperationen, Rollback und Neuerzeugung. Keine Paginierung. |
+| `src/renderer/print/pdfEditorLayout.js` | produktiv, Designadapter | Überführt 37 Registryzustände in V2-Variablen/DOM-Styles und liest Vorschaugrenzen zurück. Keine Seitenzuweisung. |
+| `src/main/ui-editor/bbmPdfAdapter.cjs` | produktiv, Registry-/Adapterquelle | Explizite 37 Elemente, Baselines, Nutzflächen-/Bereichsgrenzen, atomare Tabellenoperationen, Rollback und Neuerzeugung. Keine Paginierung. |
 | `src/main/ipc/uiEditorIpc.js` | produktiv, Adapter | Bindet `generatePdfForUiEditor` an denselben `printToPDF`-Pfad. Kein zweiter Store/Renderer. |
 | `src/renderer/print/headerTest/**` | nur Diagnose/Test | Separater sichtbarer Kopf-Testmodus; nicht im normalen Ausgabedialog, nicht Quelle für Protokoll-/Restarbeiten-PDF. |
 | `print:openHtmlPreview` | produktive Alternative | Zeigt denselben Print-Renderer sichtbar, erzeugt aber noch keine Datei. |
@@ -89,7 +89,7 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 | Vertrags-ID | Regel | Dokumentarten | Codequelle | Test/Fixture | Status | Editorstatus |
 |---|---|---|---|---|---|---|
 | `PDF-V2-SATZ-001` | Chromium erzeugt A4. Orientierung ist explizit Hochformat oder Querformat; Standard ist Hochformat. Chromium-Ränder sind 0, der Inhalt nutzt V2-Padding. | alle kanonischen Modi | `printOrientation.js`, `printApp._applyPageOrientationStyle`, CSS `@page` | `printOrientation.test.cjs`, M85-Snapshots | fest | Papierformat gesperrt; Inhaltsränder explizit editierbar |
-| `PDF-V2-SATZ-002` | Seite 1 rendert in dieser Reihenfolge GlobalHeader, FullHeader, Abstand und Body. | Protokoll, Restarbeiten, Listen | `PrintShell.renderPrint` | alle 47 Snapshots | fest | Kopfart/-reihenfolge gesperrt; einzelne Designziele teils editierbar |
+| `PDF-V2-SATZ-002` | Seite 1 rendert in dieser Reihenfolge GlobalHeader, FullHeader, Abstand und Body. | Protokoll, Restarbeiten, Listen | `PrintShell.renderPrint` | alle 48 Snapshots | fest | Kopfart/-reihenfolge gesperrt; einzelne Designziele teils editierbar |
 | `PDF-V2-SATZ-003` | Seiten ab Nummer 2 rendern nur MiniHeader vor dem Body. | alle mehrseitigen Modi | `PrintShell.renderPrint` | mehrseitige Snapshots | fest | Kopfart/-reihenfolge gesperrt |
 | `PDF-V2-SATZ-004` | Jedes Seitenmodell erhält `pageNo`/`totalPages`. FullHeader auf Seite 1 und MiniHeader auf Folgeseiten rendern sichtbar `Seite n / gesamt`; der Zähler muss vollständig innerhalb der A4-Seitenbox liegen. | Protokoll, Restarbeiten, Preview/Vorabzug | Pager, `FullHeader.js`, `MiniHeader.js` | alle Snapshots, p03, r21, DOM-Grenzprüfung | fest | Zählerwerte/Fachtext gesperrt |
 | `PDF-V2-SATZ-005` | Standardmäßig werden 12 mm Fußreserve von der gemessenen Kapazität abgezogen und als absoluter Spacer gerendert. | alle | `_createMeasureContext`, `v2.css`, `PrintShell` | alle Snapshots | fest | Reserve nicht registriert/gesperrt |
@@ -116,6 +116,9 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 | `PDF-V2-PROT-006` | „Neu“, „übernommen/berührt“, „wichtig“, Status, Termin, Verantwortlich und Ampel beeinflussen Darstellung, nicht Satzsteuerung durch den Editor. | Zeilenrenderer, Ampelregel | fest, Farben nicht visuell golden-verriegelt |
 | `PDF-V2-PROT-007` | Eine registrierte TOP-`TableColumn` ist eine geometrische Einheit aus Spaltentrack, Tabellenkopf und sämtlichen Datenzellen. Ihre horizontale Geometrie wird nicht frei verschoben: `resizeColumnBoundary` verschiebt ausschließlich eine innere Grenze und ändert die Breiten der beiden direkten Nachbarspalten atomar und gegenläufig. Tabellensumme und beide Außenkanten bleiben unverändert; Header- und Datentracks bleiben lückenlos. Sichtbarkeit wirkt auf die vollständige Spalte. Der registrierte Tabellenkopf ist Kind seiner Spalte und darf nur seinen Text innerhalb der unveränderten Spaltengeometrie verschieben, skalieren, ausrichten oder ausblenden. | `bbmPdfAdapter.cjs`, `PrintShell._buildTableHead`, `pdfEditorLayout.js`, M81 und M85-Print-DOM-Nachweise | fest |
 | `PDF-V2-PROT-008` | Die bestehende Teilnehmertabelle ist ein explizites Tabellenziel mit den Tracks Name 34, Funktion 32, Firma 30, Telefon/E-Mail 72 und Anwesend/Verteiler 18 mm. Eine innere Grenze verändert nur direkte Nachbarn gegenläufig bei fester 186-mm-Gesamtsumme. Eine Änderung der Tabellenaußenbreite verändert atomar den äußersten rechten Track. Kein Track, Kopf, Zellhintergrund oder Text darf die Nutzflächenkante X = 198 mm überschreiten. Der Kopf Anwesend/Verteiler bleibt als Kind der rechten Spalte separat textpositionierbar. | vorhandene Teilnehmer-DOM-/CSS-Struktur, `bbmPdfAdapter.cjs`, `pdfEditorLayout.js` | M81 und M85 mit realem Header-/Datenzellen-Readback | fest |
+| `PDF-V2-PROT-009` | Die fachliche Beschlusskennzeichnung eines Level-1-Titels folgt in der PDF-Baseline der UI-Fachposition: rechts innerhalb der Titelzeile. Der 3,8-mm-Marker endet 1 mm vor der rechten TOP-Tabellenkante. `pdf.bbm.protocol.tops.marker.decision` ist ein eigenes Bildziel unter `.tops.rows`; nur Position und Sichtbarkeit sind editierbar. Fachwert, Titel, Tabellen, Satz und UI bleiben gesperrt. | `PrintShell.appendProtocolTitleMarker`, `print.css`, `bbmPdfAdapter.cjs` | M81 und M85 p06 mit realem Print-DOM-Readback | fest |
+| `PDF-V2-PROT-010` | Wichtig erzeugt kein Symbol und wirkt ausschließlich über roten Titeltext. Beschluss und ToDo sind eigenständige 3,8-mm-Marker im gemeinsamen rechten Bereich der vorhandenen Level-1-Titelzeile. Bei gleichzeitiger Kennzeichnung gilt die feste Reihenfolge Beschluss, ToDo bei gleichem Y-Bezug und 1,5 mm Abstand; der rechte Marker endet 1 mm vor der Tabellenkante und der Titel kollidiert nicht. `pdf.bbm.protocol.tops.marker.decision` und `.tops.marker.todo` erlauben unabhängig nur Position und Sichtbarkeit. Fachwerte, UI, Titel, Tabellen und Satz bleiben gesperrt. | `PrintShell.appendProtocolTitleMarker`, `print.css`, `bbmPdfAdapter.cjs` | M81 und M85 p48 mit realem Print-DOM-Readback | fest |
+| `PDF-V2-PROT-011` | Beschluss, ToDo und Wichtig sind unabhängige persistierte Kennzeichnungen. Die Ampel ist ein davon unabhängiger globaler Anzeigezustand und wird ausschließlich bei normalen TOPs gerendert; Level-1-Titel besitzen weiterhin keine Ampel. Beschluss und ToDo erscheinen unabhängig und gemeinsam in der Reihenfolge Beschluss, ToDo; bei normalen TOPs bleiben zusammen mit Ampel alle drei Symbole sichtbar. Wichtig fügt kein Symbol hinzu und färbt nur den Text rot. Dieselbe Regel gilt im UI-, Mess- und finalen Print-DOM. Die getrennten Beschluss-/ToDo-Editorziele bleiben erhalten. | `TopsScreenViewModel`, `TopsList`, `TopsScreen._applyAmpelVisibility`, `pdfAmpelRule`, `PrintShell`, `printApp` | UI A–G für normale TOPs und Titel ohne Ampel; M85 p49/p50 mit realem Print-DOM und getrenntem Editor-Readback | fest |
 
 ## B2. Dokumentartspezifische Regeln: Restarbeiten
 
@@ -210,6 +213,8 @@ Abkürzungen: `mm` = Millimeter, `pt` = Punkt, `×` = Breite × Höhe. Für Text
 | `.tops` | Position, Breite, Sichtbarkeit, Spaltengrenze | 12/91, 186×120 mm | Body-Area und Nutzfläche | innere Grenzen bei fester Gesamtsumme; Ausblenden ändert sichtbaren Inhalt, nicht Fachwerte |
 | `.tops.header` | Höhe, Textgröße, Ausrichtung, Sichtbarkeit | 12/91, 186×8 mm, 8 pt | Body-Area und Nutzfläche; Schrift >0 | direkte Neumessung; Sichtbarkeit kollidiert potenziell mit Tabellenkopfvertrag |
 | `.tops.rows` | Zeilenabstand | 12/99, 186×112 mm, 1,35 | Abstand >0 | direkte Neumessung; p18 |
+| `.tops.marker.decision` | Position, Sichtbarkeit | 193,2/99, 3,8×3,8 mm | Parent `.tops.rows`; Body-Area und aktuelle Nutzfläche | wiederholtes Bildziel; gleiche PDF-Feinjustierung für alle sichtbaren Beschlussmarker; Fachwert bleibt unverändert |
+| `.tops.marker.todo` | Position, Sichtbarkeit | 193,2/99, 3,8×3,8 mm | Parent `.tops.rows`; Body-Area und aktuelle Nutzfläche | wiederholtes Bildziel; gleiche PDF-Feinjustierung für alle sichtbaren ToDo-Marker; Fachwert bleibt unverändert |
 | `.tops.column.number` | Breite über Spaltengrenze, Sichtbarkeit | 12/91, 24,18×120 mm | ≥5 mm, Nutzfläche, exakte Spaltensumme 186 mm | Track, Kopf und alle Datenzellen gemeinsam; p16 |
 | `.tops.column.text` | wie oben | 36,18/91, 120,90×120 mm | wie oben | Track, Kopf und alle Datenzellen gemeinsam; p16 |
 | `.tops.column.meta` | wie oben | 157,08/91, 40,92×120 mm | wie oben | Track, Kopf und alle Datenzellen gemeinsam; p16 |
@@ -225,10 +230,10 @@ Für jedes Element sind außerdem `setPageBreakRule`, Seitenzuweisung, manuelle 
 
 ## Strukturelle Golden-Fixtures
 
-Die 47 neutralen Fälle liegen in `scripts/pdf-v2/m85Fixtures.cjs`. Der isolierte
+Die 48 neutralen Fälle liegen in `scripts/pdf-v2/m85Fixtures.cjs`. Der isolierte
 Electron-Harness verwendet ausschließlich diese Objekte, eigenes temporäres
-`userData`/`sessionData` und die echten Renderer-CSS-Dateien. Die 25
-Protokollfälle behalten einschließlich p01–p34 ihre M85.1-Goldenwerte; 22
+`userData`/`sessionData` und die echten Renderer-CSS-Dateien. Die 26
+Protokollfälle behalten einschließlich p01–p34 ihre M85.1-Goldenwerte und ergänzen p48 für die Titelkennzeichnungen; 22
 Restarbeiten-Fälle decken Leerzustand, Grenzfälle, Mehrseitenlisten, alle drei
 teilbaren Textfelder, einen Datensatz über mehrere Seiten, alle 13 Spalten,
 Status/Ampel, lange Verortung, sichtbare Filterreihenfolge, Löschfilter,
@@ -253,7 +258,7 @@ Die K17.8-Änderung aktualisiert ausschließlich die Strukturhashes der drei
 Editor-Layout-Fixtures p16 bis p18: Die Tabellenkopf-Inhalte besitzen nun
 explizite Label-Wrapper und die tatsächliche Tabellensumme folgt der
 gespeicherten Spaltensumme. Seitenzahlen, Datensatzzuweisung, Fortsetzungen und
-alle übrigen 44 Strukturhashes bleiben unverändert.
+alle übrigen bestehenden 44 Strukturhashes bleiben unverändert. Der neue Fall p48 besitzt einen eigenen zusätzlichen Strukturhash.
 
 ## Harte Sperren und derzeit offene Guardrails
 
@@ -262,7 +267,7 @@ Seitenzähler, Seitenmodell, Fußreserve, Tabellenkopf je Datenseite,
 Datensatzreihenfolge, p04/p05- und r24/r25-Grenzverhalten,
 Level-1-Keep-with-next, TOP- und Restarbeiten-Fortsetzungen, vollständige
 Teilnehmerzeilen mit wiederholtem Kopf, Wortgrenzen der Vorbemerkung, Abschluss
-auf letzter TOP-Seite, Restarbeiten-Querformat und 13-Spalten-Summe, 35
+auf letzter TOP-Seite, Restarbeiten-Querformat und 13-Spalten-Summe, 37
 Protokoll-Registryelemente, `setPageBreakRule`, Fachoperationen und die
 Einzelpfade für Renderer/Paginierung/Profil.
 
@@ -274,12 +279,12 @@ automatisierter und sichtbarer Prüfung beider Dokumentarten ist M85.0 `[A]`.
 
 ## Registrybewertung nach M83.0
 
-Die 35 Elemente bilden Dokument, Seite, Kopf, Logos, Projektzeile, Titel,
+Die 37 Elemente bilden Dokument, Seite, Kopf, Logos, Projektzeile, Titel,
 Mini-Seitenmetadaten, Body, Teilnehmer-Tabelle einschließlich ihrer fünf
 bestätigten Spaltentracks und des rechten Spaltenkopfs, TOP-Tabelle
 einschließlich drei Spalten/Köpfen, Abschluss und Aufgestellt-Bereich ab.
 Vollständig erfasst sind die groben Protokollbereiche, die Teilnehmertracks und
-die drei TOP-Spalten. Nicht als Einzelziele erfasst sind unter anderem
+die drei TOP-Spalten sowie Beschluss- und ToDo-Kennzeichnung eines Level-1-Titels. Nicht als Einzelziele erfasst sind unter anderem
 Vorbemerkung, einzelne Teilnehmer-Datenzellen, Kurz-/Langtextzeilen, drei
 Meta-Unterzeilen/Ampel, Legende,
 Nächster-Termin-Text, Global-/Full-/Mini-Kopf als getrennte Varianten und der

@@ -411,6 +411,34 @@ async function runTopServiceHierarchyTests(run) {
       assert.equal(repo.getMeetingTop("P4", "open-1").status, "offen");
     });
   });
+
+  await run("meetingTopsRepo: Beschluss, ToDo und Wichtig werden unabhaengig persistiert", () => {
+    withMockedMeetingTopsRepo((repo) => {
+      const combinations = [
+        { is_decision: 0, is_task: 0, is_important: 0 },
+        { is_decision: 1, is_task: 0, is_important: 0 },
+        { is_decision: 0, is_task: 1, is_important: 0 },
+        { is_decision: 1, is_task: 1, is_important: 0 },
+        { is_decision: 1, is_task: 1, is_important: 1 },
+      ];
+
+      combinations.forEach((expected, index) => {
+        const topId = `flags-${index}`;
+        repo.attachTopToMeeting({
+          meetingId: "P-FLAGS",
+          topId,
+          status: "offen",
+          ...expected,
+        });
+        const stored = repo.getMeetingTop("P-FLAGS", topId);
+        assert.deepEqual({
+          is_decision: stored.is_decision,
+          is_task: stored.is_task,
+          is_important: stored.is_important,
+        }, expected);
+      });
+    });
+  });
 }
 
 module.exports = { runTopServiceHierarchyTests };

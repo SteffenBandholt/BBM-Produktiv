@@ -268,14 +268,6 @@ export function buildListItemsFromState(state, options = {}) {
       if (status) meta.push(status);
       if (responsible) meta.push(responsible);
     }
-    const metaSymbolType = isDecision
-      ? "decision"
-      : isTask
-        ? "task"
-        : !isTitle && showAmpelInList && ampelColor
-          ? "ampel"
-          : null;
-
     let isMoveTarget = null;
     let moveState = "normal";
     if (state?.isMoveMode && movingTop) {
@@ -315,7 +307,6 @@ export function buildListItemsFromState(state, options = {}) {
       isCompleted,
       isTask,
       isDecision,
-      metaSymbolType,
       visualState: visual.visualState,
       showStar: visual.showStar,
       showChangedMarker: visual.showChangedMarker,

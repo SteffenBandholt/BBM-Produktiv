@@ -10,9 +10,8 @@ export class TopMetaColumnRenderer {
     if (!this.view._shouldShowMetaColumn(top)) return null;
 
     const meta = this.view._getTopMeta(top);
-    const statusLower = String(meta.status || "").trim().toLowerCase();
-    const isTask =
-      statusLower === "todo" || this.view._parseActiveFlag(top.is_task ?? top.isTask) === 1;
+    const isTask = this.view._parseActiveFlag(top.is_task ?? top.isTask) === 1;
+    const isDecision = this.view._parseActiveFlag(top.is_decision ?? top.isDecision) === 1;
 
     const metaCol = document.createElement("div");
     metaCol.style.display = "flex";
@@ -81,7 +80,7 @@ export class TopMetaColumnRenderer {
       stRow.append(taskMarker);
     }
 
-    if (this.view._shouldShowDecisionFlag(st)) {
+    if (isDecision) {
       const flag = document.createElement("img");
       flag.src = RED_FLAG_PNG;
       flag.alt = "Festlegung";

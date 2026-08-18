@@ -31,9 +31,9 @@ export class EditBoxStateService {
     this.view.responsibleEditor.applyDisabledState(false);
 
     this.view.chkHidden.disabled = false;
-    if (this.view.chkImportant) this.view.chkImportant.disabled = false;
-    if (this.view.chkTask) this.view.chkTask.disabled = false;
-    if (this.view.chkDecision) this.view.chkDecision.disabled = false;
+    if (this.view.chkImportant) this.view.chkImportant.disabled = isOld;
+    if (this.view.chkTask) this.view.chkTask.disabled = isOld;
+    if (this.view.chkDecision) this.view.chkDecision.disabled = isOld;
 
     if (this.view.btnSaveTop) {
       this.view.btnSaveTop.disabled = false;
@@ -66,11 +66,7 @@ export class EditBoxStateService {
 
     if (this.view.selStatus) {
       const st = (meta.status || "").toString().trim();
-      if (!st && Number(top.is_task ?? top.isTask ?? 0) === 1) {
-        this.view.selStatus.value = "todo";
-      } else {
-        this.view.selStatus.value = st ? st : "alle";
-      }
+      this.view.selStatus.value = st ? st : "alle";
     }
   }
 

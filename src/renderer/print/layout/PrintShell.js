@@ -33,21 +33,44 @@ function _el(tag, className, text) {
   return el;
 }
 
+function _appendProtocolIndicators(container, row = {}) {
+  if (!container) return [];
+  const indicators = [];
+  if (Number(row?.level) !== 1 && row?.ampelColor) {
+    const dot = _el("span", `ampelDot ${row.ampelColor}`);
+    dot.dataset.marker = "ampel";
+    container.appendChild(dot);
+    indicators.push(dot);
+  }
+
+  for (const markerType of [
+    ...(row?.isDecision ? ["decision"] : []),
+    ...(row?.isTask ? ["task"] : []),
+  ]) {
+    const marker = _el("span", "lvl1Marker");
+    marker.dataset.marker = markerType;
+    const img = document.createElement("img");
+    const isDecision = markerType === "decision";
+    img.src = isDecision ? DECISION_MARKER_URL : TODO_MARKER_URL;
+    img.alt = isDecision ? "Beschluss" : "ToDo";
+    img.title = img.alt;
+    marker.appendChild(img);
+    container.appendChild(marker);
+    indicators.push(marker);
+  }
+  return indicators;
+}
+
 export function appendProtocolTitleMarker(container, row = {}) {
   if (!container || Number(row?.level) !== 1) return null;
-  const markerType = row?.isDecision ? "decision" : row?.isTask ? "task" : "";
-  if (!markerType) return null;
+  const indicators = _appendProtocolIndicators(container, row);
+  return indicators.length === 1 ? indicators[0] : indicators;
+}
 
-  const marker = _el("span", "lvl1Marker");
-  marker.dataset.marker = markerType;
-  const img = document.createElement("img");
-  const isDecision = markerType === "decision";
-  img.src = isDecision ? DECISION_MARKER_URL : TODO_MARKER_URL;
-  img.alt = isDecision ? "Beschluss" : "ToDo";
-  img.title = img.alt;
-  marker.appendChild(img);
-  container.appendChild(marker);
-  return marker;
+export function appendProtocolMetaIndicators(container, row = {}) {
+  if (!container || Number(row?.level) === 1) return null;
+  const indicators = _appendProtocolIndicators(container, row);
+  return indicators.length === 1 ? indicators[0] : indicators;
 }
 
 export const RESTARBEITEN_PDF_COLUMNS = Object.freeze([
@@ -287,10 +310,7 @@ function _buildTopRow(row) {
   const meta3 = _el("div", "meta3");
   const metaLine1 = _el("div", "metaLine meta1");
   metaLine1.appendChild(_el("span", "metaText", row.status));
-  if (row.ampelColor) {
-    const dot = _el("span", `ampelDot ${row.ampelColor}`);
-    metaLine1.appendChild(dot);
-  }
+  appendProtocolMetaIndicators(metaLine1, row);
   meta3.appendChild(metaLine1);
   meta3.appendChild(_el("div", "metaLine meta2", row.due));
   meta3.appendChild(_el("div", "metaLine meta3", row.resp));

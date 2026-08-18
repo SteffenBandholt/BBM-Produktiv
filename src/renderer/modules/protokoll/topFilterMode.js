@@ -4,6 +4,7 @@ const PRIMARY_FILTER_OPTIONS = Object.freeze([
   Object.freeze({ mode: "all", label: "Alle", badge: "A", group: "primary", contractKey: "all" }),
   Object.freeze({ mode: "important", label: "Wichtig", badge: "!", group: "primary", contractKey: "important" }),
   Object.freeze({ mode: "todo", label: "ToDo", badge: "T", group: "primary", contractKey: "todo" }),
+  Object.freeze({ mode: "decision", label: "Beschluss", badge: "B", group: "primary", contractKey: "decision" }),
 ]);
 
 const STATUS_CONTRACT_KEYS = Object.freeze({
@@ -58,6 +59,7 @@ export function normalizeTopFilterMode(value) {
   const raw = String(value || "all").trim().toLowerCase();
   if (raw === "important" || raw === "wichtig") return "important";
   if (raw === "todo" || raw === "task") return "todo";
+  if (raw === "decision" || raw === "beschluss") return "decision";
   const status = normalizeStatus(raw.startsWith("status:") ? raw.slice(7) : raw);
   const statusMode = `status:${status}`;
   if (FILTER_OPTIONS_BY_MODE.has(statusMode)) return statusMode;
@@ -83,6 +85,9 @@ export function topMatchesFilter(top, value) {
   }
   if (filterMode === "important") {
     return Number(top?.is_important ?? top?.isImportant) === 1;
+  }
+  if (filterMode === "decision") {
+    return Number(top?.is_decision ?? top?.isDecision) === 1;
   }
   if (filterMode.startsWith("status:")) {
     return normalizeStatus(top?.status) === filterMode.slice(7);

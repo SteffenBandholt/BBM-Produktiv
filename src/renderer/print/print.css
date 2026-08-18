@@ -694,6 +694,10 @@ body[data-orientation="portrait"] .measureRoot,
   margin-left: 0;
 }
 
+.topsTable .metaLine.meta1 .lvl1Marker {
+  margin-left: 0;
+}
+
 .metaText {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -765,6 +769,7 @@ body[data-orientation="portrait"] .measureRoot,
 
 .lvl1Text {
   flex: 1 1 auto;
+  margin-right: auto;
   text-align: left;
   font-weight: 650;
   font-size: var(--bbm-top-short-font-size);
@@ -794,6 +799,10 @@ body[data-orientation="portrait"] .measureRoot,
   height: 100%;
   display: block;
   object-fit: contain;
+}
+
+.lvl1Wrap > .ampelDot {
+  margin-left: 1.5mm;
 }
 
 .lvl1Row .nrBox {

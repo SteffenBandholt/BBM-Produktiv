@@ -70,8 +70,8 @@ async function runM868ProtokollFullContractTests(run) {
       list.setItems([
         { id: 1, isTitle: true, canToggleLevel1: true, number: "1.", title: "Titel", showStar: true, meta: [] },
         { id: 2, number: "1.1", createdAt: "01.08.2026", title: "Kurz", preview: "Lang", meta: ["02.08.2026", "offen", "Firma A"], ampelColor: "green" },
-        { id: 3, number: "1.2", title: "Aufgabe", meta: ["03.08.2026", "offen", "Firma B"], metaSymbolType: "task" },
-        { id: 4, number: "1.3", title: "Beschluss", meta: ["04.08.2026", "offen", "Firma C"], metaSymbolType: "decision" },
+        { id: 3, number: "1.2", title: "Aufgabe", meta: ["03.08.2026", "offen", "Firma B"], isTask: true },
+        { id: 4, number: "1.3", title: "Beschluss", meta: ["04.08.2026", "offen", "Firma C"], isDecision: true },
       ]);
       assert.equal(refs.validateM83ComponentReferences(["bbm.protokoll.list.columns"]).ok, true);
       for (const id of LIST_IDS) {

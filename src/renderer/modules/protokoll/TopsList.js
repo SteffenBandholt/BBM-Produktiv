@@ -189,6 +189,39 @@ export class TopsList {
     };
   }
 
+  _appendMetaIndicators(container, item = {}) {
+    if (!container) return [];
+    const indicators = [];
+
+    if (!item.isTitle && item.showAmpelInList !== false && item.ampelColor) {
+      const dot = document.createElement("span");
+      dot.className = "bbm-tops-list-row-ampel";
+      dot.dataset.color = String(item.ampelColor || "");
+      dot.setAttribute("aria-label", `Ampel ${item.ampelColor}`);
+      container.appendChild(dot);
+      this._uiEditorRefs["protokoll.list.row.ampel"].push(dot);
+      indicators.push(dot);
+    }
+
+    for (const symbol of [
+      item.isDecision ? { key: "decision", src: RED_FLAG_PNG, label: "Beschluss" } : null,
+      item.isTask ? { key: "task", src: TODO_PNG, label: "ToDo" } : null,
+    ]) {
+      if (!symbol) continue;
+      const img = document.createElement("img");
+      img.className = "bbm-tops-list-row-meta-symbol";
+      img.src = symbol.src;
+      img.alt = symbol.label;
+      img.title = symbol.label;
+      img.dataset.symbol = symbol.key;
+      container.appendChild(img);
+      this._uiEditorRefs[`protokoll.list.row.${symbol.key === "task" ? "todo" : symbol.key}`].push(img);
+      indicators.push(img);
+    }
+
+    return indicators;
+  }
+
   _renderRow(item = {}) {
     const rowEl = document.createElement("li");
     rowEl.className = "bbm-tops-list-row";
@@ -306,22 +339,11 @@ export class TopsList {
     const meta = document.createElement("div");
     meta.className = "bbm-tops-list-row-meta";
     this._decorateLayoutZone(meta, "meta");
-    const titleSymbolType = item.isTitle ? String(item.metaSymbolType || "") : "";
-    if (titleSymbolType === "decision" || titleSymbolType === "task") {
+    if (item.isTitle && (item.ampelColor || item.isDecision || item.isTask)) {
       const symbolRow = document.createElement("div");
       symbolRow.className = "bbm-tops-list-row-meta-line bbm-tops-list-row-title-symbol";
-      const img = document.createElement("img");
-      const isDecision = titleSymbolType === "decision";
-      img.className = "bbm-tops-list-row-meta-symbol";
-      img.src = isDecision ? RED_FLAG_PNG : TODO_PNG;
-      img.alt = isDecision ? "Beschluss" : "ToDo";
-      img.title = img.alt;
-      img.dataset.symbol = titleSymbolType;
-      symbolRow.appendChild(img);
+      this._appendMetaIndicators(symbolRow, item);
       meta.appendChild(symbolRow);
-      this._uiEditorRefs[
-        isDecision ? "protokoll.list.row.decision" : "protokoll.list.row.todo"
-      ].push(img);
     }
     const legacyMeta = Array.isArray(item.meta) ? item.meta : [];
     const metaLines = [
@@ -331,7 +353,11 @@ export class TopsList {
     ];
     for (const line of metaLines) {
       const value = String(line.value || "").trim();
-      if (!value) continue;
+      const hasStatusIndicators =
+        !item.isTitle &&
+        line.kind === "status" &&
+        (item.ampelColor || item.isDecision || item.isTask);
+      if (!value && !hasStatusIndicators) continue;
       const el = document.createElement("div");
       el.className = "bbm-tops-list-row-meta-line";
       if (line.kind === "status") {
@@ -351,33 +377,7 @@ export class TopsList {
       if (line.kind === "status") {
         const ampelSlot = document.createElement("span");
         ampelSlot.className = "bbm-tops-list-row-meta-ampel-slot";
-        const symbolType = String(item.metaSymbolType || "");
-        if (symbolType === "decision") {
-          const img = document.createElement("img");
-          img.className = "bbm-tops-list-row-meta-symbol";
-          img.src = RED_FLAG_PNG;
-          img.alt = "Beschluss";
-          img.title = "Beschluss";
-          img.dataset.symbol = "decision";
-          ampelSlot.appendChild(img);
-          this._uiEditorRefs["protokoll.list.row.decision"].push(img);
-        } else if (symbolType === "task") {
-          const img = document.createElement("img");
-          img.className = "bbm-tops-list-row-meta-symbol";
-          img.src = TODO_PNG;
-          img.alt = "ToDo";
-          img.title = "ToDo";
-          img.dataset.symbol = "task";
-          ampelSlot.appendChild(img);
-          this._uiEditorRefs["protokoll.list.row.todo"].push(img);
-        } else if (item.showAmpelInList !== false && item.ampelColor) {
-          const dot = document.createElement("span");
-          dot.className = "bbm-tops-list-row-ampel";
-          dot.dataset.color = String(item.ampelColor || "");
-          dot.setAttribute("aria-label", `Ampel ${item.ampelColor}`);
-          ampelSlot.appendChild(dot);
-          this._uiEditorRefs["protokoll.list.row.ampel"].push(dot);
-        }
+        this._appendMetaIndicators(ampelSlot, item);
         el.appendChild(ampelSlot);
       }
       meta.appendChild(el);

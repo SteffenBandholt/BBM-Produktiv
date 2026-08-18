@@ -123,7 +123,6 @@ export class EditboxShell {
       const input = mkEl(doc, "input");
       input.type = "checkbox";
       input.dataset.flag = key;
-      input.addEventListener("change", () => this._handleFlagToggle(key));
       const text = mkEl(doc, "span", null, key);
       item.append(input, text);
       this.flagsWrap.appendChild(item);
@@ -206,38 +205,11 @@ export class EditboxShell {
     fieldWrap.classList.toggle("is-over-limit", evaluation.isOverLimit);
   }
 
-  _handleFlagToggle(changedKey) {
-    if (changedKey === "task" && this.flagInputs.task?.checked) {
-      this.flagInputs.decision.checked = false;
-      return;
-    }
-    if (changedKey === "decision" && this.flagInputs.decision?.checked) {
-      this.flagInputs.task.checked = false;
-    }
-  }
-
   _applyEditboxFlags(flags = {}) {
     const normalizedFlags = asFlags(flags);
     Object.entries(this.flagInputs).forEach(([key, input]) => {
       input.checked = normalizedFlags[key];
     });
-    this._enforceTaskDecisionExclusion();
-  }
-
-  _enforceTaskDecisionExclusion(preferredKey) {
-    const taskChecked = Boolean(this.flagInputs.task?.checked);
-    const decisionChecked = Boolean(this.flagInputs.decision?.checked);
-    if (!taskChecked || !decisionChecked) return;
-
-    if (preferredKey === "task") {
-      this.flagInputs.decision.checked = false;
-      return;
-    }
-    if (preferredKey === "decision") {
-      this.flagInputs.task.checked = false;
-      return;
-    }
-    this.flagInputs.task.checked = false;
   }
 
   setValue(value = {}) {

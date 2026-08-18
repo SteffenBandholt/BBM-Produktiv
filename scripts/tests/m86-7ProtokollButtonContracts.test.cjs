@@ -32,6 +32,7 @@ const BUTTONS = Object.freeze([
   ["protokoll.topsScreen.quicklane.filter.option.all", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
   ["protokoll.topsScreen.quicklane.filter.option.important", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
   ["protokoll.topsScreen.quicklane.filter.option.todo", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
+  ["protokoll.topsScreen.quicklane.filter.option.decision", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
   ["protokoll.topsScreen.quicklane.filter.option.status.open", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
   ["protokoll.topsScreen.quicklane.filter.option.status.inProgress", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],
   ["protokoll.topsScreen.quicklane.filter.option.status.done", "protokoll.topsScreen.quicklane.filter.menu", "menu.children[index]"],

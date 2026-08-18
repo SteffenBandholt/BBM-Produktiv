@@ -259,7 +259,7 @@ async function runM8622ProtokollAcceptanceSeederTests(run) {
     assert.equal(first.project.name, "M86 Diagnoseprojekt");
     assert.equal(first.meeting.title, "#2 14.08.2026 - M86 Sichtabnahme");
     assert.equal(first.participants.length, 8);
-    assert.equal(first.tops.length, 10);
+    assert.equal(first.tops.length, 26);
     assert.equal(PROTOKOLL_ACCEPTANCE_FIXTURE.childTopCount >= 6, true);
     assert.equal(state.projects.length, 1);
     assert.match(state.appSettings["pdf.preRemarks"], /M86-Sichtabnahme/);
@@ -267,11 +267,14 @@ async function runM8622ProtokollAcceptanceSeederTests(run) {
     assert.equal(state.firms.length, 4);
     assert.equal(state.persons.length, 8);
     assert.equal(state.meetingParticipants.length, 8);
-    assert.equal(state.tops.filter((top) => top.meeting_id === first.meeting.id).length, 10);
+    assert.equal(state.tops.filter((top) => top.meeting_id === first.meeting.id).length, 26);
     assert.equal(second.project.id, first.project.id);
     assert.equal(second.meeting.id, first.meeting.id);
-    assert.equal(state.topPatches.size, 10);
+    assert.equal(state.topPatches.size, 26);
     assert.equal([...state.topPatches.values()].some((patch) => patch.is_important === true), true);
+    assert.equal([...state.topPatches.values()].some((patch) => patch.is_decision === true && patch.is_task === false), true);
+    assert.equal([...state.topPatches.values()].some((patch) => patch.is_decision === false && patch.is_task === true), true);
+    assert.equal([...state.topPatches.values()].some((patch) => patch.is_decision === true && patch.is_task === true), true);
     assert.equal([...state.topPatches.values()].some((patch) => patch.status === "erledigt"), true);
     assert.equal([...state.topPatches.values()].some((patch) => String(patch.longtext).length > 200), true);
   });
@@ -308,7 +311,7 @@ async function runM8622ProtokollAcceptanceSeederTests(run) {
       assert.equal(printData.meeting.title, "#2 14.08.2026 - M86 Sichtabnahme");
       assert.equal(printData.protocolTitle, "M86 Sichtabnahme");
       assert.equal(printData.participants.length, 8);
-      assert.equal(printData.tops.length, 10);
+      assert.equal(printData.tops.length, 26);
       assert.equal(printData.tops.filter((top) => Number(top.level) === 1).length >= 1, true);
       assert.equal(printData.tops.filter((top) => Number(top.level) > 1).length >= 6, true);
       assert.equal(printData.settings["pdf.footerPlace"], "Musterstadt");

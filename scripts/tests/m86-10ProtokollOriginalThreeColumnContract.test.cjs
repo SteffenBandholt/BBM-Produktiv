@@ -80,8 +80,8 @@ function fullRows({ selectedId = 2 } = {}) {
   return [
     { id: 1, isTitle: true, canToggleLevel1: true, number: "1.", title: "Level 1", showStar: true, meta: [] },
     { id: 2, level: 2, level1TopId: 1, number: "1.1", createdAt: "01.08.2026", title: "Kurz A", preview: "Lang A", meta: ["02.08.2026", "offen", "Firma A"], ampelColor: "green", isSelected: selectedId === 2 },
-    { id: 3, level: 2, level1TopId: 1, number: "1.2", createdAt: "01.08.2026", title: "Kurz B", preview: "Lang B", meta: ["03.08.2026", "offen", "Firma B"], metaSymbolType: "task", isSelected: selectedId === 3 },
-    { id: 4, level: 2, level1TopId: 1, number: "1.3", createdAt: "01.08.2026", title: "Kurz C", preview: "Lang C", meta: ["04.08.2026", "offen", "Firma C"], metaSymbolType: "decision", isSelected: selectedId === 4 },
+    { id: 3, level: 2, level1TopId: 1, number: "1.2", createdAt: "01.08.2026", title: "Kurz B", preview: "Lang B", meta: ["03.08.2026", "offen", "Firma B"], isTask: true, isSelected: selectedId === 3 },
+    { id: 4, level: 2, level1TopId: 1, number: "1.3", createdAt: "01.08.2026", title: "Kurz C", preview: "Lang C", meta: ["04.08.2026", "offen", "Firma C"], isDecision: true, isSelected: selectedId === 4 },
   ];
 }
 

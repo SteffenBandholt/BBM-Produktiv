@@ -556,9 +556,9 @@ export default class TopsScreen {
   }
 
   _applyAmpelVisibility() {
-    const trafficWrap = this.workbench?.metaColumn?.statusAmpelBridge?.field?.trafficWrap || null;
-    if (trafficWrap) {
-      trafficWrap.style.display = this.showAmpelInList ? "" : "none";
+    const trafficDot = this.workbench?.metaColumn?.statusAmpelBridge?.field?.trafficDot || null;
+    if (trafficDot) {
+      trafficDot.style.display = this.showAmpelInList ? "" : "none";
     }
   }
 
