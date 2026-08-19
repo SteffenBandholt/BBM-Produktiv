@@ -1,6 +1,7 @@
 ﻿import TopsScreen from "./screens/TopsScreen.js";
 import { PROTOKOLL_WORK_SCREEN_ID } from "./screens/index.js";
 import * as protokollViewModels from "./viewmodel/index.js";
+import { PROTOKOLL_EDITOR_RUNTIME_SCOPE, PROTOKOLL_UI_EDITOR_REGISTRATION } from "./editor/protokollUiEditorRegistration.js";
 
 export const PROTOKOLL_MODULE_ID = "protokoll";
 export const PROTOKOLL_MODULE_LABEL = "Protokoll";
@@ -44,6 +45,8 @@ export function getProtokollModuleEntry() {
     screens: buildProtokollModuleScreens(),
     navigation: buildProtokollModuleNavigation(),
     movedParts: buildMovedProtocolModuleParts(),
+    uiEditor: PROTOKOLL_UI_EDITOR_REGISTRATION,
+    editorRuntimeScopes: Object.freeze([PROTOKOLL_EDITOR_RUNTIME_SCOPE]),
   });
 }
 

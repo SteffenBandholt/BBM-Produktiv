@@ -31,6 +31,7 @@ const {
   resolveProjectFolderName,
 } = require("./projectStoragePaths");
 const { resolveBuildIdentity } = require("../buildIdentity");
+const { getSharedBbmPdfAdapter } = require("../ui-editor/bbmPdfAdapter.cjs");
 
 let _printModesModulePromise = null;
 
@@ -572,7 +573,6 @@ function registerPrintIpc() {
         showAmpelInList: typeof p.showAmpelInList === "boolean" ? p.showAmpelInList : null,
       });
       if (_usesBbmProtocolPdfLayout(data.mode)) {
-        const { getSharedBbmPdfAdapter } = require("../ui-editor/bbmPdfAdapter.cjs");
         const pdfAdapter = getSharedBbmPdfAdapter();
         if (p.pdfEditorPreview === true) {
           data.pdfEditorLayoutState = pdfAdapter.getCurrentPdfLayoutState();

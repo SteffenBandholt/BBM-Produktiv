@@ -1043,3 +1043,12 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
 - Guardrails: unabhängige DB-/Draft-Persistenzkombinationen, getrennte Beschluss-/ToDo-Filter, UI-Integration A–G für normale TOPs und Titel ohne Ampel, carried-over B/T/W sichtbar und disabled sowie `PDF-V2-PROT-011` mit M85 p49/p50 und realem Print-DOM-/Editor-Readback.
 - Der Beschluss-Filter besitzt die stabile ID `protokoll.topsScreen.quicklane.filter.option.decision` und bleibt als Fachaktion im Editorvertrag gesperrt. Registry/Manifest Version 23 und eine exakt begrenzte additive Protokollprofil-Migration erhalten bestehende Layoutwerte. Grün sind `core-protokoll`, `layout-output`, M81.1, M86.7, M85, Vertrags-Selbsttest, paketbezogenes ESLint, Build und `git diff --check`; bekannte paketfremde Gesamtcheck-Altfehler bleiben offen.
 - Die frühere reale K17.14-Abnahme ist hinsichtlich Level-1-Ampeln fachlich überholt und kein Nachweis für den korrigierten Sollzustand. UI, normale Vorschau, Produkt-PDF und PDF-Editor sind nach der technischen Reparatur erneut fachlich sichtbar zu prüfen. Commit und Push: keiner.
+
+## M86.26 - Universelle UI-/PDF-Registrierungsarchitektur
+
+- Status: `[A]`; generische Entkopplung, neutraler UI-/PDF-Nachweis und produktive Regressionstests umgesetzt.
+- Fachseitige Registrierungen liefern Scope-Gruppen, Profilidentität, Komponentenverträge, Launcher, Runtime-Hosts und optionale Layoutprofilmigrationen. M80-Registry, Launcher, Host-Factory und Session enthalten keine Protokoll-/Restarbeiten-Zweige mehr.
+- Der zentrale UI-Editor-IPC verwendet eine dokumenttypneutrale PDF-Adapter-Registry. Dokumentadapter liefern Profilidentität und wahlweise eine eigene Regenerationsfunktion; die bestehende Protokoll-Druckstrecke bleibt fachseitig registrierter Konsument.
+- Neutraler Nachweis: drei UI-Scopes mit sieben Elementen, echte M80-Operationsengine, bidirektionale Selection, Sessionöffnung, Save/Load/Reset und getrennte Profilwurzeln; zweiter PDF-Typ mit eigener Registry, Operation, Profil, Regeneration und Rückwechsel.
+- Produktnachweis: Protokoll und Restarbeiten verwenden denselben generischen Pfad; M86.16 und M86.24 prüfen reale Chromium-/WPF-Bedienung, Save/Close und Neustart. M85 bleibt mit 50 Fixtures und allen Struktur-Goldens grün.
+- Schutz: keine UI-/PDF-Baseline, Fachlogik, Datenbank, Tabellenbreite, Seitenrand, Paginierung oder sichtbares Styling geändert; kein Commit, Push, Merge oder Branchwechsel.

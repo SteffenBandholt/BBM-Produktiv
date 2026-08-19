@@ -158,8 +158,8 @@ async function runM8614GlobalLayoutRestoreTests(run) {
 
     await run("M86.14 06: Der Renderer verwaltet den einmaligen Start-Restore getrennt je Modul", async () => {
       const host = await importEsmFromFile(path.join(ROOT, "src/renderer/ui-editor/m80HostAdapter.js"));
-      assert.equal(host.createM80StartupRestoreKey(PROTOKOLL_SCOPES), "module:protokoll");
-      assert.equal(host.createM80StartupRestoreKey(RESTARBEITEN_SCOPES), "module:restarbeiten");
+      assert.equal(host.createM80StartupRestoreKey(PROTOKOLL_SCOPES), "module-protokoll");
+      assert.equal(host.createM80StartupRestoreKey(RESTARBEITEN_SCOPES), "module-restarbeiten");
     });
 
     await run("M86.14 07: Neu gerenderte Multi-Refs behalten den gespeicherten Working State", async () => {

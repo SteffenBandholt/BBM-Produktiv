@@ -49,7 +49,7 @@ async function runM830ComponentContractTests(run) {
     for (const id of ["restarbeiten.list.table.number", "restarbeiten.list.table.number.header", "restarbeiten.list.table.number.cells", "restarbeiten.record.number", "restarbeiten.record.createdAt", "restarbeiten.record.itemClass", "restarbeiten.record.aftercare", "restarbeiten.record.photos"]) assert.equal(ids.has(id), true, id);
   });
   await run("M83.0 BBM 03: zentrale Registry aggregiert nur Komponenten und fuehrt keine Unterelement-Handliste", () => {
-    const source = read("src/renderer/ui-editor/m80Registry.js"); assert.doesNotMatch(source, /m83Element\(|restarbeiten\.record\.number|protokoll\.edit\.short/); assert.match(source, /aggregateBbmM83Components\(BBM_M83_COMPONENT_CONTRACTS\)/);
+    const source = read("src/renderer/ui-editor/m80Registry.js"); assert.doesNotMatch(source, /m83Element\(|restarbeiten\.record\.number|protokoll\.edit\.short/); assert.match(source, /createUiEditorRegistrationModel/);
   });
   await run("M83.0 BBM 04: Komponenten-IDs und Ref-Quellen enthalten keine Fachwerte oder Datenbank-IDs", () => {
     const source = contracts.map((component) => JSON.stringify(component)).join("\n") + read("src/renderer/ui-editor/m80Refs.js");

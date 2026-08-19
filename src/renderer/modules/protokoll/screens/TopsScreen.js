@@ -1788,7 +1788,7 @@ export default class TopsScreen {
 
   async load() {
     if (this.projectId && this.meetingId && typeof window.uiEditor?.preparePdfContext === "function") {
-      await window.uiEditor.preparePdfContext({ projectId: this.projectId, meetingId: this.meetingId });
+      await window.uiEditor.preparePdfContext({ documentTypeId: "protocol", projectId: this.projectId, meetingId: this.meetingId });
     }
     await this._loadTextLimits();
     this._bindTextLimitSettings();

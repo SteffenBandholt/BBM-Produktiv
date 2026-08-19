@@ -80,9 +80,9 @@ async function runM811ProfileRestoreTests(run) {
         scopes: [{ scopeId: scope.scopeId, registryFingerprint: oldFingerprint, layoutState: { elements: oldElements } }],
       }), "utf8");
 
-      const { migrateAdditiveProtokollDecisionFilterProfile } = require("../../src/main/ui-editor/electronUiEditorSession.js");
-      const registration = { registryScopes: registry.listM80RegistryScopes() };
-      assert.equal(migrateAdditiveProtokollDecisionFilterProfile(profileRoot, registration), 1);
+      const { applyRegisteredProfileMigrations } = require("../../src/main/ui-editor/electronUiEditorSession.js");
+      const registration = { registryScopes: registry.listM80RegistryScopes(), profileMigrations: registry.listM80ProfileMigrations() };
+      assert.equal(applyRegisteredProfileMigrations(profileRoot, registration), 1);
 
       const migrated = JSON.parse(fs.readFileSync(profilePath, "utf8"));
       const migratedScope = migrated.scopes[0];
@@ -100,7 +100,7 @@ async function runM811ProfileRestoreTests(run) {
         visible: true,
       });
       assert.equal(fs.readdirSync(path.join(profileRoot, "archive", "bbm-produktiv")).length, 1);
-      assert.equal(migrateAdditiveProtokollDecisionFilterProfile(profileRoot, registration), 0);
+      assert.equal(applyRegisteredProfileMigrations(profileRoot, registration), 0);
       assert.equal(loadTargetStartupLayout({
         profileRoot,
         applicationId: "bbm-produktiv",

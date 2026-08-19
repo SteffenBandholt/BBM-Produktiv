@@ -717,6 +717,23 @@ function createBbmPdfAdapter({ regenerate } = {}) {
 }
 
 const sharedBbmPdfAdapter = createBbmPdfAdapter();
+const { registerPdfEditorAdapter } = require("./pdfAdapterRegistry.cjs");
+
+registerPdfEditorAdapter({
+  documentTypeId: DOCUMENT_TYPE_ID,
+  displayName: DISPLAY_NAME,
+  layoutStorageKey: "module-protokoll",
+  adapter: sharedBbmPdfAdapter,
+  default: true,
+  buildRegenerationRequest: ({ projectId, meetingId, activeDocumentId }) => ({
+    mode: DOCUMENT_TYPE_ID,
+    projectId,
+    meetingId,
+    targetDir: "temp",
+    fileName: `BBM-UI-Editor-${activeDocumentId}.pdf`,
+    overwrite: true,
+  }),
+});
 
 module.exports = Object.freeze({
   APPLICATION_ID,

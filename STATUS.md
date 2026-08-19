@@ -4190,3 +4190,12 @@ Wichtig:
 - Reale DEV-Abnahme: Start ohne externe Lizenzdatei und ohne neue Lizenzabfrage; Protokoll, Restarbeiten und Pläne gleichzeitig sichtbar und jeweils separat geöffnet; keine `No handler registered`-Fehler.
 - Gezielte Navigationstests, UI-Editor-Vertragscheck, ESLint der geänderten Dateien und `git diff --check` sind grün. ESLint meldet ausschließlich bestehende Warnungen.
 - Die bereits dokumentierten globalen `npm test`-/`npm run lint`-Fehler bleiben paketfremd und wurden nicht verändert. Nächster offener Schritt: keiner für dieses Paket; Commit-SHA folgt im Abschlussbericht.
+
+## M86.26 - Universeller UI- und PDF-Editor
+
+- Status: Architekturpaket und binärer Universalitätsnachweis abgeschlossen; kein Commit erstellt.
+- UI-Registry, Launcher, ältere Runtime-Hostauflösung, Modulprofil und deklarative Migrationen werden aus der app-/fachseitigen Registrierung aggregiert. Die generischen Dateien besitzen keine Protokoll-, Restarbeiten-, Rechnungs-, Firmen- oder Testmodulentscheidung.
+- Der zentrale IPC löst PDF-Adapter über `documentTypeId`; Profilwurzel und Regeneration stammen aus der Adapterregistrierung. Der Protokolladapter ist nur noch fachseitiger Standardkonsument.
+- Neutraler Test: UI-Registrierung/Session/Selection/Operationen/Save/Load/Reset/Profiltrennung sowie zweiter PDF-Typ/Profil/Regeneration/Rückwechsel grün. Produktive M86.15-, M86.16- und M86.24-Nachweise sowie M85 mit 50 Goldens grün.
+- Der breite `npm test`-Lauf bleibt an dokumentierten Altprüfungen rot (unter anderem Registryversion 19 statt produktiv 23, Lizenz-Hash/-Features sowie alte MainHeader-/M52-Erwartungen); keine dieser roten Stellen wurde verdeckt oder deaktiviert.
+- Nächster offener Schritt: fachliche Sichtkontrolle durch den Nutzer; technisch ist für dieses Architekturpaket kein weiterer Editor-Core-Schritt offen.

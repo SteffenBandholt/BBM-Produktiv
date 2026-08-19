@@ -80,14 +80,11 @@ function topologyStableId(element, fallback) {
 }
 
 function isDynamicTopologyElement(element, stableId) {
-  if (stableId.startsWith("restarbeiten.record.") || stableId.startsWith("protokoll.record.")) return true;
-  let current = element;
-  while (current) {
-    const names = String(current.className || "").split(/\s+/);
-    if (names.includes("bbm-restarbeiten-record") || names.includes("bbm-tops-list-row")) return true;
-    current = current.parentElement;
-  }
-  return false;
+  const ids = elementIds.get(element) || new Set([stableId]);
+  return [...ids].some((id) => {
+    const entry = getM80RegistryEntry(id);
+    return entry?.referenceKind === "multi" || ["tableRow", "tableDataCell"].includes(entry?.type);
+  });
 }
 
 export function snapshotM80Topology() {

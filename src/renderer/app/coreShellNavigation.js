@@ -4,11 +4,7 @@ import {
   refreshM80StartupLayoutAfterRegistryMount,
 } from "../ui-editor/m80HostAdapter.js";
 import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../ui-editor/m80Refs.js";
-import {
-  PROTOKOLL_MAIN_HEADER_LAUNCHER,
-  RESTARBEITEN_MAIN_HEADER_LAUNCHER,
-  getMainHeaderLauncherContract,
-} from "../ui/MainHeader.uiEditorContract.js";
+import { getM80LauncherRegistration, getM80ScopeGroupRegistration, listM83ComponentContracts } from "../ui-editor/m80Registry.js";
 
 const REGISTRY_STATUS_SUCCESS_DURATION_MS = 2400;
 const REGISTRY_STATUS_ERROR_DURATION_MS = 6000;
@@ -43,17 +39,14 @@ function showRegistryRefreshStatus(message, state = "checking") {
 
 export const DEVELOPMENT_UI_EDITOR_BUTTON_LABEL = "UI-Editor öffnen";
 
-const MAIN_HEADER_LAUNCHER_COMPONENT_IDS = Object.freeze([
-  RESTARBEITEN_MAIN_HEADER_LAUNCHER.componentId,
-  PROTOKOLL_MAIN_HEADER_LAUNCHER.componentId,
-]);
-
 export function clearDevelopmentUiEditorOpenButtonRefs() {
-  MAIN_HEADER_LAUNCHER_COMPONENT_IDS.forEach((componentId) => beginM83ComponentBinding(componentId));
+  listM83ComponentContracts()
+    .filter((component) => component.slots?.some((slot) => slot.element?.componentKind === "developmentLauncher"))
+    .forEach((component) => beginM83ComponentBinding(component.componentId));
 }
 
 export function bindDevelopmentUiEditorOpenButtonRef({ scopeId, button } = {}) {
-  const launcher = getMainHeaderLauncherContract(scopeId);
+  const launcher = getM80LauncherRegistration(scopeId);
   if (!launcher || !button || typeof button.setAttribute !== "function") return false;
   beginM83ComponentBinding(launcher.componentId);
   registerM80Ref(launcher.elementId, button);
@@ -77,10 +70,11 @@ export async function openNativeUiEditor(context = {}) {
     alert("Der separate UI-Editor ist nicht installiert oder die sichere BBM-Brücke ist nicht verfügbar.");
     return { ok: false, errorCode: "electron_editor_not_installed" };
   }
-  if (typeof api.preparePdfContext === "function" && context?.projectId && context?.meetingId) {
-    await api.preparePdfContext({ projectId: context?.projectId || null, meetingId: context?.meetingId || null });
-  }
   const activeScopeId = String(context?.scopeId || "").trim();
+  const scopeGroup = activeScopeId ? getM80ScopeGroupRegistration(activeScopeId) : null;
+  if (typeof api.preparePdfContext === "function" && scopeGroup?.pdfDocumentTypeId && context?.projectId && context?.meetingId) {
+    await api.preparePdfContext({ documentTypeId: scopeGroup.pdfDocumentTypeId, projectId: context.projectId, meetingId: context.meetingId });
+  }
   if (activeScopeId && context?.launcherButton) {
     bindDevelopmentUiEditorOpenButtonRef({ scopeId: activeScopeId, button: context.launcherButton });
   }

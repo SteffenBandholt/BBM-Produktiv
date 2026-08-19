@@ -91,7 +91,10 @@ export async function installBbmM80DiagnosticModule({ router, module = "restarbe
   const onRegistryRevisionKey = async (event) => {
     if (!(event.ctrlKey && event.shiftKey && (event.code === "F9" || event.key === "F9"))) return;
     event.preventDefault();
-    const revision = advanceM80DiagnosticRegistryRevision();
+    const revision = advanceM80DiagnosticRegistryRevision({
+      elementId: DIAGNOSTIC_FAILURE_TARGET.replace("short.field", "validation"),
+      baseline: { maxWidth: 1201 },
+    });
     screen.root.dataset.bbmM80DiagnosticRegistryRevision = String(revision);
     await emitM80RegistryEvent("registryChanged");
   };

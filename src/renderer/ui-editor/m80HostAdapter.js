@@ -2,8 +2,10 @@ import {
   BBM_M80_ACTIVE_SCOPE_GROUPS,
   BBM_M80_REGISTRY_STATUS,
   BBM_M80_REGISTRY_VERSION,
+  getM80ScopeGroupRegistration,
   getM83ComponentContract,
   getM80RegistryEntry,
+  listM80ProfileMigrations,
   listM80RegistryScopes,
 } from "./m80Registry.js";
 import {
@@ -65,6 +67,7 @@ let editorSessionOperations = new Map();
 let editorSessionSaveAcknowledgements = new Map();
 let preparedEditorClose = null;
 let diagnosticRegistryRevision = 0;
+const diagnosticBaselineOverlays = new Map();
 const pendingGeometryRisks = new Map();
 const capturedRuntimeBaselines = new Map();
 const validatedStartupRequests = new WeakSet();
@@ -93,7 +96,7 @@ function number(value, field, { positive = false, nonNegative = false } = {}) {
   return result;
 }
 
-function desiredState(previous, entry, operation, payload, textResizeIntent = null) {
+export function applyM80RegisteredLayoutOperation(previous, entry, operation, payload, textResizeIntent = null) {
   const next = { ...previous, spacing: { ...(previous.spacing || {}) } };
   if (!payload || typeof payload !== "object" || Array.isArray(payload) || hasForbidden(payload)) throw Object.assign(new Error("Layout-Payload ist ungültig."), { code: "electron_editor_message_invalid" });
   if (operation === "move") {
@@ -431,7 +434,7 @@ function submitChange(changeRequest, scopeId) {
       if (!normalized.ok) throw Object.assign(new Error(normalized.message), { code: normalized.code, textResize: normalized.readback });
       textResizeIntent = normalized.intent;
     }
-    let desired = desiredState(previous, entry, request.operation, request.payload, textResizeIntent);
+    let desired = applyM80RegisteredLayoutOperation(previous, entry, request.operation, request.payload, textResizeIntent);
     if (confirmation && [RISK_ACTIONS.CLAMP_TO_GROUP, RISK_ACTIONS.CLAMP_TO_AREA].includes(confirmation.action)) desired = clampDesiredState(desired, confirmation.risk, confirmation.action);
     if (confirmation?.action === RISK_ACTIONS.PRESERVE_SPACE || confirmation?.action === RISK_ACTIONS.SHRINK_GROUP) {
       desired.spacing = { ...(desired.spacing || {}), reservedWidth: Number(desired.spacing?.reservedWidth || 0) + Number(confirmation.risk.technicalDetails?.freedWidth || 0) };
@@ -650,6 +653,7 @@ function mountedActiveScopeGroup() {
 
 export function createM80RegistrationDescriptor() {
   const mountedScopes = mountedActiveScopeGroup();
+  const scopeGroup = mountedScopes.length ? getM80ScopeGroupRegistration(mountedScopes[0]) : null;
   const mountedComponentIds = listM80RegistryScopes()
     .filter((scope) => mountedScopes.includes(scope.scopeId))
     .flatMap((scope) => scope.componentIds || []);
@@ -672,12 +676,12 @@ export function createM80RegistrationDescriptor() {
     }
     const elements = scope.elements.map((entry) => {
       const resolved = { ...entry, ...getM80ReferenceStatus(entry.id), capturedBaseline: capturedRuntimeBaseline(entry) };
-      if (diagnosticRegistryRevision > 0 && entry.id === "restarbeiten.edit.validation") {
+      if (diagnosticRegistryRevision > 0 && diagnosticBaselineOverlays.has(entry.id)) {
         return {
           ...resolved,
           baseline: {
             ...resolved.baseline,
-            maxWidth: Number(resolved.baseline?.maxWidth || 1200) + diagnosticRegistryRevision,
+            ...diagnosticBaselineOverlays.get(entry.id),
           },
         };
       }
@@ -702,6 +706,9 @@ export function createM80RegistrationDescriptor() {
     registryVersion: BBM_M80_REGISTRY_VERSION + diagnosticRegistryRevision,
     registryStatus: BBM_M80_REGISTRY_STATUS,
     activeScopes,
+    scopeGroupId: scopeGroup?.scopeGroupId || "",
+    layoutStorageKey: scopeGroup?.layoutStorageKey || "",
+    profileMigrations: listM80ProfileMigrations().filter((migration) => activeScopes.includes(migration.scopeId)),
     supportedOperations: [...SUPPORTED_OPERATIONS],
     uiCapability: "layout",
     pdfCapability: "unavailable",
@@ -753,10 +760,14 @@ export function setM80DiagnosticRegistryRevision(value) {
   const revision = Number(value);
   if (!Number.isInteger(revision) || revision < 0) throw new Error("Ungültige Diagnose-Registryrevision.");
   diagnosticRegistryRevision = revision;
+  if (revision === 0) diagnosticBaselineOverlays.clear();
   return diagnosticRegistryRevision;
 }
 
-export function advanceM80DiagnosticRegistryRevision() {
+export function advanceM80DiagnosticRegistryRevision({ elementId, baseline } = {}) {
+  if (elementId && baseline && typeof baseline === "object" && !Array.isArray(baseline)) {
+    diagnosticBaselineOverlays.set(String(elementId), { ...baseline });
+  }
   diagnosticRegistryRevision += 1;
   return diagnosticRegistryRevision;
 }
@@ -1093,9 +1104,12 @@ export function createM80StartupRequests(scopeId, element, explicitOperations = 
 
 export function createM80StartupRestoreKey(activeScopes) {
   const scopeIds = Array.isArray(activeScopes) ? activeScopes.map((scopeId) => String(scopeId || "").trim()).filter(Boolean) : [];
-  const moduleIds = [...new Set(scopeIds.map((scopeId) => scopeId.split(".", 1)[0]))];
-  if (moduleIds.length !== 1 || !/^[a-z0-9-]+$/.test(moduleIds[0])) throw new TypeError("Aktive Scopes ergeben keinen eindeutigen Modulschlüssel.");
-  return `module:${moduleIds[0]}`;
+  const registrations = scopeIds.map((scopeId) => getM80ScopeGroupRegistration(scopeId));
+  const layoutStorageKeys = [...new Set(registrations.map((entry) => entry?.layoutStorageKey).filter(Boolean))];
+  if (!scopeIds.length || registrations.some((entry) => !entry) || layoutStorageKeys.length !== 1) {
+    throw new TypeError("Aktive Scopes ergeben keinen eindeutigen Layout-Speicherschlüssel.");
+  }
+  return layoutStorageKeys[0];
 }
 
 export function restoreM80StartupLayout() {

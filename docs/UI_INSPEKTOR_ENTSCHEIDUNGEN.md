@@ -177,3 +177,9 @@
 **Beschluss:** Alle Ausgaben der vorhandenen Protokoll-PDF-Familie verwenden denselben BBM-PDF-Layoutzustand. Die Editor-Vorschau verwendet den aktuellen Arbeitszustand; normaler Vorabzug und Produktdruck verwenden den gespeicherten Zustand desselben Profils. Nach erfolgreichem Speichern muessen diese Zustaende geometrisch identisch sein.
 
 **Begruendung:** Der normale Vorabzug wird technisch mit `mode=preview` erzeugt, nutzt aber denselben Protokoll-Print-DOM, dieselben Seitenraender und dieselben Tabellen. Ein Rueckfall dieses Modus auf die Registry-Baseline widerspricht der sichtbaren Editorfreigabe. Die gemeinsame Modusklassifikation schliesst diese Luecke ohne neue Profilquelle, Rendererarchitektur oder Druckstrecke.
+
+## Entscheidung 034
+
+**Beschluss:** UI-Scope-Gruppen, Launcher, Runtime-Hosts, Modulprofilidentitäten und PDF-Dokumenttypen werden ausschließlich fach- bzw. appseitig registriert. Generische Registry-, Launcher-, Session-, Selection-, Profil- und IPC-Schichten dürfen keine Modul- oder Dokumenttypzweige enthalten. PDF-Regeneration darf direkt beim Dokumenttyp registriert werden; der bestehende gemeinsame Druckdienst bleibt eine optionale Adapterstrategie.
+
+**Begruendung:** Ein weiteres UI oder ein weiterer PDF-Typ muss ohne Änderung der generischen Editor-Infrastruktur integrierbar und mit demselben Operations-, Profil- und Sessionvertrag prüfbar sein. Der neutrale UI-/PDF-Fixture-Test und der Fachnamen-Negativtest sichern dieses binäre Universalitätskriterium ab, während explizite Registrierung, Parents, Refs und gesperrte Fachaktionen erhalten bleiben.

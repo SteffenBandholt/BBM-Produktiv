@@ -1,37 +1,15 @@
 import { EDITOR_SCOPE_KINDS, isEditorScopeKind } from "../scopes/editorScopeTypes.js";
-import { getProtokollTopsUiRegistry, PROTOKOLL_TOPS_UI_SCOPE_ID } from "../../modules/protokoll/editor/protokollEditorScopes.js";
-import { getRestarbeitenMainUiRegistry, RESTARBEITEN_MAIN_UI_SCOPE_ID } from "../../modules/restarbeiten/editor/restarbeitenEditorScopes.js";
+import { getActiveEditorModuleRegistrations } from "../../app/modules/moduleEditorRegistrations.js";
 
 export const BBM_EDITOR_CATALOG = Object.freeze({
   targetAppId: "bbm",
-  modules: Object.freeze([
-    Object.freeze({
-      moduleId: "protokoll",
-      moduleLabel: "Protokoll",
-      scopes: Object.freeze([
-        Object.freeze({
-          scopeId: PROTOKOLL_TOPS_UI_SCOPE_ID,
-          scopeLabel: "Protokoll TOPS",
-          kind: "ui",
-          registry: getProtokollTopsUiRegistry(),
-          status: "ready",
-        }),
-      ]),
-    }),
-    Object.freeze({
-      moduleId: "restarbeiten",
-      moduleLabel: "Restarbeiten",
-      scopes: Object.freeze([
-        Object.freeze({
-          scopeId: RESTARBEITEN_MAIN_UI_SCOPE_ID,
-          scopeLabel: "Restarbeiten Hauptansicht",
-          kind: "ui",
-          registry: getRestarbeitenMainUiRegistry(),
-          status: "ready",
-        }),
-      ]),
-    }),
-  ]),
+  modules: Object.freeze(getActiveEditorModuleRegistrations()
+    .filter((entry) => Array.isArray(entry.editorRuntimeScopes) && entry.editorRuntimeScopes.length)
+    .map((entry) => Object.freeze({
+      moduleId: entry.moduleId,
+      moduleLabel: entry.moduleLabel,
+      scopes: Object.freeze(entry.editorRuntimeScopes.map((scope) => Object.freeze({ ...scope }))),
+    }))),
 });
 
 export function listEditorModules() {

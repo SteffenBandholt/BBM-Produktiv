@@ -140,6 +140,13 @@ Das verbindliche Registry-Prinzip lautet:
 - Der Editor darf die Ziel-App-Oberflaeche nicht selbst untersuchen.
 - Keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung.
 
+Die BBM-Anbindung folgt demselben Prinzip jetzt auch durchgängig für Launcher,
+Scope-Gruppen, Runtime-Hosts, Modulprofile und PDF-Dokumenttypen. Die generischen
+Schichten lesen ausschließlich app- bzw. fachseitige Registrierungen; konkrete
+Modul-, Scope- und Dokumenttypentscheidungen sind dort unzulässig. Der
+verbindliche Integrationsablauf steht in
+`docs/UNIVERSALER_UI_PDF_EDITOR.md`.
+
 ---
 
 ## 4. Dauerhafte Leitplanken

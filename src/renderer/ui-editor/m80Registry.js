@@ -1,91 +1,43 @@
-import { restarbeitenFilterbarUiEditorContract } from "../modules/restarbeiten/RestarbeitenFilterbar.uiEditorContract.js";
-import { restarbeitenQuicklaneUiEditorContract } from "../modules/restarbeiten/RestarbeitenQuicklane.uiEditorContract.js";
-import { restarbeitenListUiEditorContract } from "../modules/restarbeiten/RestarbeitenList.uiEditorContract.js";
-import { restarbeitenEditboxUiEditorContract } from "../modules/restarbeiten/RestarbeitenEditbox.uiEditorContract.js";
-import { protokollQuicklaneUiEditorContract, protokollScreenUiEditorContract } from "../modules/protokoll/screens/TopsScreen.uiEditorContract.js";
-import { protokollListColumnsUiEditorContract, protokollListUiEditorContract } from "../modules/protokoll/TopsList.uiEditorContract.js";
-import { protokollEditUiEditorContract } from "../modules/protokoll/TopsWorkbench.uiEditorContract.js";
-import {
-  protokollMainHeaderLauncherUiEditorContract,
-  restarbeitenMainHeaderLauncherUiEditorContract,
-} from "../ui/MainHeader.uiEditorContract.js";
-import { aggregateBbmM83Components } from "./m83ComponentContract.js";
+import { getActiveEditorModuleRegistrations, getBlockedEditorScopes } from "../app/modules/moduleEditorRegistrations.js";
+import { createUiEditorRegistrationModel } from "./uiEditorRegistrationModel.js";
 
-export const BBM_M80_REGISTRY_VERSION = 23;
+const model = createUiEditorRegistrationModel(
+  getActiveEditorModuleRegistrations().map((entry) => entry?.uiEditor).filter(Boolean),
+  { blockedScopes: getBlockedEditorScopes() }
+);
+
+export const BBM_M80_REGISTRY_VERSION = model.registryVersion;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
-
-export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
-  restarbeitenFilterbarUiEditorContract,
-  restarbeitenQuicklaneUiEditorContract,
-  restarbeitenListUiEditorContract,
-  restarbeitenEditboxUiEditorContract,
-  restarbeitenMainHeaderLauncherUiEditorContract,
-  protokollScreenUiEditorContract,
-  protokollQuicklaneUiEditorContract,
-  protokollMainHeaderLauncherUiEditorContract,
-  protokollListUiEditorContract,
-  protokollListColumnsUiEditorContract,
-  protokollEditUiEditorContract,
-]);
-
-const aggregate = aggregateBbmM83Components(BBM_M83_COMPONENT_CONTRACTS);
-
-function completeScope(scopeId) {
-  const components = aggregate.components.filter((component) => component.scopeId === scopeId);
-  const elements = aggregate.elements.filter((entry) => entry.scopeId === scopeId);
-  return Object.freeze({
-    scopeId,
-    status: "complete",
-    inventoryStatus: "componentContractComplete",
-    componentIds: Object.freeze(components.map((component) => component.componentId)),
-    expectedElementIds: Object.freeze(elements.map((entry) => entry.id)),
-    elements: Object.freeze(elements),
-  });
-}
-
-function blockedScope(scopeId, name, reason = "registration_inventory_pending") {
-  return Object.freeze({ scopeId, name, status: "blocked", inventoryStatus: "notInventoried", componentIds: Object.freeze([]), expectedElementIds: Object.freeze([]), elements: Object.freeze([]), reason });
-}
-
-export const BBM_M80_ACTIVE_SCOPES = Object.freeze([
-  "restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root",
-  "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root",
-]);
-
-export const BBM_M80_ACTIVE_SCOPE_GROUPS = Object.freeze([
-  Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]),
-  Object.freeze(["protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root"]),
-]);
-
-export const BBM_M80_REGISTRY_SCOPES = Object.freeze([
-  ...BBM_M80_ACTIVE_SCOPES.map(completeScope),
-  blockedScope("bbm.shell", "Shell und Hauptnavigation"),
-  blockedScope("bbm.home", "Start"),
-  blockedScope("bbm.projects", "Projektverwaltung"),
-  blockedScope("bbm.project-workspace", "Projektarbeitsplatz"),
-  blockedScope("bbm.firms", "Firmen und Personen"),
-  blockedScope("bbm.project-firms", "Projektfirmen und Projektpersonen"),
-  blockedScope("bbm.settings", "Einstellungen"),
-  blockedScope("bbm.help", "Hilfe"),
-  blockedScope("bbm.dialogs", "Produktive Dialoge"),
-  blockedScope("restarbeiten.layout.root", "Restarbeiten · technischer Alt-Layoutcontainer", "M80_2_split_removed"),
-  blockedScope("restarbeiten.notes", "Restarbeiten · Notizdialog"),
-  blockedScope("restarbeiten.output-preview", "Restarbeiten · Ausgabevorschau", "M81_pdf_excluded"),
-]);
-
-const entries = new Map(aggregate.elements.map((entry) => [entry.id, entry]));
-const components = new Map(aggregate.components.map((component) => [component.componentId, component]));
+export const BBM_M83_COMPONENT_CONTRACTS = model.componentContracts;
+export const BBM_M80_ACTIVE_SCOPES = model.activeScopes;
+export const BBM_M80_ACTIVE_SCOPE_GROUPS = model.activeScopeGroups;
+export const BBM_M80_REGISTRY_SCOPES = model.scopes;
 
 export function getM80RegistryEntry(id) {
-  return entries.get(String(id || "")) || null;
+  return model.getEntry(id);
 }
 
 export function getM83ComponentContract(componentId) {
-  return components.get(String(componentId || "")) || null;
+  return model.getComponent(componentId);
 }
 
 export function listM83ComponentContracts() {
-  return [...aggregate.components];
+  return [...model.aggregate.components];
+}
+
+export function listM80ProfileMigrations() {
+  return model.profileMigrations.map((entry) => ({ ...entry }));
+}
+
+export function getM80ScopeGroupRegistration(scopeId) {
+  const registration = model.getScopeGroup(scopeId);
+  if (!registration) return null;
+  return { scopeGroupId: registration.scopeGroupId, layoutStorageKey: registration.layoutStorageKey, pdfDocumentTypeId: registration.pdfDocumentTypeId || "", scopeIds: [...registration.scopeIds] };
+}
+
+export function getM80LauncherRegistration(scopeId) {
+  const launcher = model.getLauncher(scopeId);
+  return launcher ? { componentId: launcher.componentId, scopeId: launcher.scopeId, elementId: launcher.elementId } : null;
 }
 
 export function listM80RegistryScopes() {

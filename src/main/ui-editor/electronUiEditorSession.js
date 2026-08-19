@@ -21,7 +21,6 @@ const {
 
 const APPLICATION_ID = "bbm-produktiv";
 const DISPLAY_NAME = "BBM";
-const ACTIVE_SCOPES = Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
 const NATIVE_REQUEST_ACTIONS = new Set(["getRegistry", "getLayoutState", "submitChange", "acknowledgeLayoutSave", "prepareEditorClose"]);
 const NATIVE_PDF_REQUEST_ACTIONS = new Set([
   "getPdfRegistry",
@@ -34,12 +33,6 @@ const NATIVE_EVENT_ACTIONS = new Set(["beginTargetSelection", "cancelTargetSelec
 const REGISTRY_EVENT_ACTIONS = new Set(["registryChanged", "registryStatusChanged", "scopeAdded", "scopeChanged", "scopeRemoved"]);
 const TARGET_EVENT_ACTIONS = new Set(["targetSelectionChanged", ...REGISTRY_EVENT_ACTIONS]);
 const RENDERER_RESPONSE_TIMEOUT_MS = 8_000;
-const PROTOKOLL_DECISION_FILTER_MIGRATION = Object.freeze({
-  scopeId: "protokoll.screen.root",
-  fromFingerprint: "sha256:7251a69f8243bb21a4768170d75ea0d51a4a43a48db0cb4b06caaca565185029",
-  toFingerprint: "sha256:8f7f5641264a4602fec6845bf98c2ba8fa14f2ecb60b95f97d9754e47f70a6ef",
-  addedElementId: "protokoll.topsScreen.quicklane.filter.option.decision",
-});
 
 function trustedEditorCandidates({ app, resourcesPath = process.resourcesPath, localAppData = process.env.LOCALAPPDATA } = {}) {
   const repositoryRoot = path.resolve(__dirname, "..", "..", "..");
@@ -120,18 +113,21 @@ function createBbmModuleLayoutStorageIdentity(registration = {}) {
   const activeScopes = Array.isArray(registration.activeScopes)
     ? registration.activeScopes.map((scopeId) => String(scopeId || "").trim()).filter(Boolean)
     : [];
+  const declaredStorageKey = String(registration.layoutStorageKey || "").trim();
+  const declaredScopeGroupId = String(registration.scopeGroupId || "").trim();
   const moduleIds = [...new Set(activeScopes.map((scopeId) => scopeId.split(".", 1)[0]))];
-  if (moduleIds.length !== 1 || !/^[a-z0-9-]+$/.test(moduleIds[0])) {
+  const fallbackModuleId = moduleIds.length === 1 ? moduleIds[0] : "";
+  const layoutStorageKey = declaredStorageKey || (fallbackModuleId ? `module-${fallbackModuleId}` : "");
+  if (!/^[a-z0-9][a-z0-9-]{1,80}$/.test(layoutStorageKey) || declaredScopeGroupId && declaredScopeGroupId !== layoutStorageKey) {
     throw new ElectronEditorError(
       ELECTRON_EDITOR_ERROR_CODES.REGISTRY_SCOPE_BLOCKED,
       "Der globale Modullayout-Schlüssel kann nicht eindeutig aus den aktiven Scopes gebildet werden."
     );
   }
   const registryScopes = Array.isArray(registration.registryScopes) ? registration.registryScopes : [];
-  const moduleId = moduleIds[0];
   return Object.freeze({
-    moduleId,
-    layoutStorageKey: `module-${moduleId}`,
+    moduleId: declaredScopeGroupId || fallbackModuleId || layoutStorageKey,
+    layoutStorageKey,
     registryVersion: Number(registration.registryVersion),
     registryFingerprint: createRegistryFingerprint(registryScopes),
   });
@@ -163,15 +159,15 @@ function migrateCompatibleLegacyLayoutProfile(baseProfileRoot, moduleProfileRoot
   catch (error) { if (error?.code !== "EEXIST") throw error; }
 }
 
-function migrateAdditiveProtokollDecisionFilterProfile(profileRoot, registration) {
-  const migration = PROTOKOLL_DECISION_FILTER_MIGRATION;
+function applyAdditiveElementProfileMigration(profileRoot, registration, migration) {
+  if (!migration || migration.kind !== "additiveElement") return 0;
   const registryScope = (Array.isArray(registration?.registryScopes) ? registration.registryScopes : [])
     .find((scope) => scope?.scopeId === migration.scopeId && scope?.status === "complete");
   if (!registryScope || createUiScopeFingerprint(registryScope) !== migration.toFingerprint) return 0;
 
   const addedEntry = (Array.isArray(registryScope.elements) ? registryScope.elements : [])
     .find((entry) => entry?.id === migration.addedElementId);
-  if (!addedEntry || addedEntry.parentId !== "protokoll.topsScreen.quicklane.filter.menu") return 0;
+  if (!addedEntry || addedEntry.parentId !== migration.expectedParentId) return 0;
 
   const currentIds = registryScope.elements.map((entry) => entry.id);
   const previousIds = new Set(currentIds.filter((elementId) => elementId !== migration.addedElementId));
@@ -210,7 +206,8 @@ function migrateAdditiveProtokollDecisionFilterProfile(profileRoot, registration
 
     const archiveDirectory = path.join(profileRoot, "archive", APPLICATION_ID);
     const stamp = new Date().toISOString().replace(/[-:.]/g, "");
-    const archivePath = path.join(archiveDirectory, `${stamp}_add-decision-filter_${profileId}.layout-profile.json`);
+    const archiveLabel = String(migration.archiveLabel || "additive-element").replace(/[^a-z0-9-]+/gi, "-").slice(0, 48) || "additive-element";
+    const archivePath = path.join(archiveDirectory, `${stamp}_${archiveLabel}_${profileId}.layout-profile.json`);
     const temporaryPath = `${filePath}.migrate-${process.pid}-${Date.now()}`;
     try {
       fs.mkdirSync(archiveDirectory, { recursive: true });
@@ -224,6 +221,11 @@ function migrateAdditiveProtokollDecisionFilterProfile(profileRoot, registration
     }
   }
   return migratedCount;
+}
+
+function applyRegisteredProfileMigrations(profileRoot, registration) {
+  const migrations = Array.isArray(registration?.profileMigrations) ? registration.profileMigrations : [];
+  return migrations.reduce((count, migration) => count + applyAdditiveElementProfileMigration(profileRoot, registration, migration), 0);
 }
 
 class ElectronUiEditorSessionController {
@@ -298,7 +300,7 @@ class ElectronUiEditorSessionController {
       const { profileRoot, identity } = resolveBbmModuleLayoutProfileRoot(baseProfileRoot, registration);
       this.ensureDirectory(profileRoot);
       migrateCompatibleLegacyLayoutProfile(baseProfileRoot, profileRoot, registration);
-      migrateAdditiveProtokollDecisionFilterProfile(profileRoot, registration);
+      applyRegisteredProfileMigrations(profileRoot, registration);
       const snapshot = this.#registrationSnapshot(registration, { sessionId: "startup-layout", profileRoot, identity });
       const manifestPath = this.#validateTargetManifest(snapshot.contract);
       const result = loadTargetStartupLayout({
@@ -353,7 +355,11 @@ class ElectronUiEditorSessionController {
 
   preparePdfContext(context = {}) {
     if (!this.pdfAdapter) return { ok: false, pdfRegistryStatus: "unavailable", activeDocumentId: "" };
-    const result = this.pdfAdapter.setActiveDocumentContext({ projectId: context?.projectId, meetingId: context?.meetingId });
+    const result = this.pdfAdapter.setActiveDocumentContext({
+      documentTypeId: context?.documentTypeId,
+      projectId: context?.projectId,
+      meetingId: context?.meetingId,
+    });
     console.info(`[ui-editor] PDF context: ${result.pdfRegistryStatus}`);
     return result;
   }
@@ -454,7 +460,7 @@ class ElectronUiEditorSessionController {
     const { profileRoot, identity } = resolveBbmModuleLayoutProfileRoot(baseProfileRoot, registration);
     this.ensureDirectory(profileRoot);
     migrateCompatibleLegacyLayoutProfile(baseProfileRoot, profileRoot, registration);
-    migrateAdditiveProtokollDecisionFilterProfile(profileRoot, registration);
+    applyRegisteredProfileMigrations(profileRoot, registration);
     const registrationSnapshot = this.#registrationSnapshot(registration, { sessionId: identifiers.sessionId, profileRoot, identity });
     const contract = registrationSnapshot.contract;
     console.info(`[ui-editor] editor start receipt: ${contract.startupLayout?.code || "none"}, applied=${contract.startupLayout?.applied === true}`);
@@ -699,10 +705,9 @@ class ElectronUiEditorSessionController {
 
 module.exports = Object.freeze({
   APPLICATION_ID,
-  ACTIVE_SCOPES,
+  applyRegisteredProfileMigrations,
   ElectronUiEditorSessionController,
   createBbmModuleLayoutStorageIdentity,
-  migrateAdditiveProtokollDecisionFilterProfile,
   publicError,
   resolveBbmModuleLayoutProfileRoot,
   resolveEditorRuntimeRoot,

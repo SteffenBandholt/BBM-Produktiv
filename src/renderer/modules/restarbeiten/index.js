@@ -2,6 +2,7 @@ import RestarbeitenScreen from "./screens/RestarbeitenScreen.js";
 import { RESTARBEITEN_WORK_SCREEN_ID } from "./screens/index.js";
 import PlaeneScreen from "../plaene/screens/PlaeneScreen.js";
 import { PLAENE_WORK_SCREEN_ID } from "../plaene/screens/index.js";
+import { RESTARBEITEN_EDITOR_RUNTIME_SCOPE, RESTARBEITEN_UI_EDITOR_REGISTRATION } from "./editor/restarbeitenUiEditorRegistration.js";
 
 export const RESTARBEITEN_MODULE_ID = "restarbeiten";
 export const RESTARBEITEN_MODULE_LABEL = "Restarbeiten";
@@ -48,6 +49,8 @@ export function getRestarbeitenModuleEntry() {
     shell: Object.freeze({
       hideSidebar: true,
     }),
+    uiEditor: RESTARBEITEN_UI_EDITOR_REGISTRATION,
+    editorRuntimeScopes: Object.freeze([RESTARBEITEN_EDITOR_RUNTIME_SCOPE]),
   });
 }
 

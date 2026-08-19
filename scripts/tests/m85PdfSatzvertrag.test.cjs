@@ -732,6 +732,8 @@ async function runM85PdfSatzvertragTests(run) {
     const printApp = read("src/renderer/print/printApp.js");
     const shell = read("src/renderer/print/layout/PrintShell.js");
     const editorIpc = read("src/main/ipc/uiEditorIpc.js");
+    const pdfAdapterRegistry = read("src/main/ui-editor/pdfAdapterRegistry.cjs");
+    const protocolPdfAdapter = read("src/main/ui-editor/bbmPdfAdapter.cjs");
     const restScreen = read("src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
     const restQuicklane = read("src/renderer/modules/restarbeiten/RestarbeitenQuicklane.js");
     assert.match(printApp, /import \{[\s\S]*renderPrint[\s\S]*\} from "\.\/layout\/PrintShell\.js"/, CONTRACT.singleRenderer);
@@ -741,8 +743,10 @@ async function runM85PdfSatzvertragTests(run) {
     assert.equal((printApp.match(/function _paginateGeneric\(/g) || []).length, 1, CONTRACT.singlePagination);
     assert.match(printIpc, /mode \|\| ""\)[\s\S]*=== "restarbeiten"[\s\S]*\? "landscape"/, CONTRACT.restColumns);
     assert.match(editorIpc, /generatePdfForUiEditor/, CONTRACT.singleProfile);
-    assert.match(editorIpc, /getSharedBbmPdfAdapter/, CONTRACT.singleProfile);
-    assert.match(editorIpc, /configureProfileRoot\([\s\S]*module-protokoll/, CONTRACT.singleProfile);
+    assert.match(editorIpc, /createPdfEditorAdapterResolver/, CONTRACT.singleProfile);
+    assert.doesNotMatch(editorIpc, /getSharedBbmPdfAdapter|module-protokoll|["']protocol["']/, CONTRACT.singleProfile);
+    assert.match(pdfAdapterRegistry, /registerPdfEditorAdapter[\s\S]*layoutStorageKey[\s\S]*configureProfileRoot/, CONTRACT.singleProfile);
+    assert.match(protocolPdfAdapter, /registerPdfEditorAdapter\([\s\S]*layoutStorageKey:\s*"module-protokoll"/, CONTRACT.singleProfile);
     assert.doesNotMatch(editorIpc, /new .*ProfileStore|create.*ProfileStore/, CONTRACT.singleProfile);
     assert.match(printIpc, /_usesBbmProtocolPdfLayout\(data\.mode\)[\s\S]*readPersistedPdfLayoutState\(\)/, CONTRACT.singleProfile);
     assert.match(printApp, /data\.mode === "headerTest"/, CONTRACT.historical);

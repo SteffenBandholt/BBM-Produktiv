@@ -28,7 +28,7 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 | Rendering | `src/renderer/print/layout/PrintShell.js` plus V2-Header | Aus dem Seitenmodell das endgültige DOM mit Voll-/Mini-Kopf, Blöcken, Tabellen und Fußreserve bauen. |
 | Designwerte | `src/main/ui-editor/bbmPdfAdapter.cjs`, `src/renderer/print/pdfEditorLayout.js` | Nur explizit registrierte Layoutwerte validieren, vor der Messung bereitstellen und auf das endgültige DOM anwenden. |
 | PDF-Datei | `src/main/ipc/printIpc.js` | Kontrollierten Ausgabepfad bestimmen und genau einmal `webContents.printToPDF` mit A4, Hintergrundfarben, deaktiviertem Chromium-Kopf/Fuß und Null-Druckrand aufrufen. |
-| Profilzustand | bestehender UI-Editor-kit-Sitzungs-/Profilweg über den BBM-Adapter | Save, Restore, Reset, Discard und Rollback; kein eigener BBM-Zweitstore. |
+| Profilzustand | bestehender UI-Editor-kit-Sitzungs-/Profilweg über die dokumenttypneutrale PDF-Adapter-Registry und den registrierten Fachadapter | Save, Restore, Reset, Discard und Rollback je `layoutStorageKey`; kein eigener BBM-Zweitstore und keine Dokumenttypentscheidung im zentralen IPC. |
 
 ## Produktiver Ablauf
 

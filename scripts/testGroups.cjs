@@ -186,6 +186,7 @@ const TEST_GROUPS = Object.freeze([
       ["m86-12ProtokollSourceGridRuntime.test.cjs", "runM8612ProtokollSourceGridRuntimeTests"],
       ["m86-14GlobalLayoutRestore.test.cjs", "runM8614GlobalLayoutRestoreTests"],
       ["m86-15UniversalEditorContract.test.cjs", "runM8615UniversalEditorContractTests"],
+      ["universalEditorArchitecture.test.cjs", "runUniversalEditorArchitectureTests"],
       ["m86-16RealEditorRuntime.test.cjs", "runM8616RealEditorRuntimeTests"],
       ["m86-21RestarbeitenViewport.test.cjs", "runM8621RestarbeitenViewportTests"],
       ["m86-22EditorMarkerCleanup.test.cjs", "runM8622EditorMarkerCleanupTests"],
