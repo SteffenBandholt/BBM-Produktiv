@@ -232,7 +232,42 @@ body[data-orientation="portrait"] .measureRoot,
 
 .restarbeitenTable th {
   font-size: 6pt;
+  font-weight: 500;
   line-height: 1.12;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.restarbeitenTable--vertical-column-separators :is(th, td):not([style*="display: none"]):has(~ :is(th, td):not([style*="display: none"])) {
+  border-right: 0.2mm solid #ddd;
+}
+
+.restarbeitenTable .restarbeitenHeaderLabel,
+.restarbeitenTable .restarbeitCellStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 100%;
+}
+
+.restarbeitenTable .restarbeitenHeaderLabel {
+  align-items: center;
+  gap: 0.15mm;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  overflow: visible;
+  hyphens: none;
+}
+
+.restarbeitenTable .restarbeitCellStack {
+  gap: 0.35mm;
+}
+
+.restarbeitenTable .restarbeitenHeaderLine,
+.restarbeitenTable .restarbeitCellLine {
+  display: block;
+  max-width: 100%;
 }
 
 .restarbeitenTable .restarbeitItemRow {
@@ -257,6 +292,16 @@ body[data-orientation="portrait"] .measureRoot,
   align-items: center;
   gap: 0.7mm;
   max-width: 100%;
+}
+
+.restarbeitenTable .restarbeitStatusWrap:has(.ampelDot) {
+  min-height: 3mm;
+}
+
+.restarbeitenTable .restarbeitStatusWrap .ampelDot {
+  width: 2mm;
+  height: 2mm;
+  border-width: 0.2mm;
 }
 
 .todoAmpelCell .ampelDot {

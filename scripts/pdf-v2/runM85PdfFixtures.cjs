@@ -8,6 +8,8 @@ const { pathToFileURL } = require("node:url");
 const electronModule = require("electron");
 const { createPrintToPdfOptions } = require("../../src/main/print/printOrientation.js");
 const { createBbmPdfAdapter } = require("../../src/main/ui-editor/bbmPdfAdapter.cjs");
+const { createDeclarativePdfAdapter } = require("../../src/main/ui-editor/declarativePdfAdapter.cjs");
+const { REGISTRY: RESTARBEITEN_PDF_REGISTRY } = require("../../src/main/ui-editor/restarbeitenPdfAdapter.cjs");
 const { getM85Fixtures } = require("./m85Fixtures.cjs");
 
 const IS_ELECTRON_PROCESS = Boolean(process.versions.electron);
@@ -65,15 +67,12 @@ function clone(value) {
   return structuredClone(value);
 }
 
-function dataForFixture(fixture, args) {
-  const data = clone(fixture.data);
-  if (!args.editorElement && !Number.isFinite(args.boundaryDelta)) return data;
-  if (fixture.kind !== "protocol") throw new Error("M85-Editorcheck ist nur fuer Protokoll-Fixtures erlaubt.");
-  const adapter = createBbmPdfAdapter();
+function applyEditorChanges(adapter, args) {
+  const scopeId = adapter.getPdfRegistry().scopeId;
   const submit = (operation, payload, elementId = args.editorElement) => {
     const result = adapter.submitPdfChangeRequest({
       changeId: `editor-check-${operation}-${elementId}`,
-      scopeId: "pdf.bbm.protocol",
+      scopeId,
       elementId,
       operation,
       payload,
@@ -98,6 +97,21 @@ function dataForFixture(fixture, args) {
   }
   if (Number.isFinite(args.editorFontSize)) submit("textResize", { text: { fontSize: args.editorFontSize } });
   if (args.editorVisible !== null) submit("setVisibility", { visible: args.editorVisible });
+}
+
+function dataForFixture(fixture, args) {
+  const data = clone(fixture.data);
+  if (fixture.kind === "restarbeiten") {
+    const adapter = createDeclarativePdfAdapter({ documentTypeId: "restarbeiten", displayName: "Restarbeitenliste", registry: RESTARBEITEN_PDF_REGISTRY, documentIdentityFields: ["projectId"] });
+    if (args.editorElement || Number.isFinite(args.boundaryDelta)) applyEditorChanges(adapter, args);
+    data.pdfEditorRegistry = adapter.getPdfRegistry();
+    data.pdfEditorLayoutState = adapter.getCurrentPdfLayoutState();
+    return data;
+  }
+  if (!args.editorElement && !Number.isFinite(args.boundaryDelta)) return data;
+  if (fixture.kind !== "protocol") throw new Error("M85-Editorcheck ist nur fuer Protokoll-Fixtures erlaubt.");
+  const adapter = createBbmPdfAdapter();
+  applyEditorChanges(adapter, args);
   data.pdfEditorRegistry = adapter.getPdfRegistry();
   data.pdfEditorLayoutState = adapter.getCurrentPdfLayoutState();
   return data;
@@ -232,6 +246,72 @@ async function readTopIndicatorGeometry(win, fixture) {
   })()`, true);
 }
 
+async function readRestarbeitenOptics(win, fixture) {
+  if (fixture.kind !== "restarbeiten") return null;
+  return win.webContents.executeJavaScript(`(() => {
+    const mm = (px) => Math.round((Number(px || 0) * 25.4 / 96) * 1000) / 1000;
+    const pt = (px) => Math.round((Number(px || 0) * 72 / 96) * 1000) / 1000;
+    const box = (element) => {
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return { widthMm: mm(rect.width), heightMm: mm(rect.height) };
+    };
+    const separator = (cell) => {
+      const style = getComputedStyle(cell);
+      return {
+        display: style.display,
+        borderRightMm: mm(parseFloat(style.borderRightWidth || "0")),
+        borderRightStyle: style.borderRightStyle,
+        borderRightColor: style.borderRightColor,
+      };
+    };
+    return Array.from(document.querySelectorAll(".page")).map((page, pageIndex) => {
+      const table = page.querySelector(".restarbeitenTable");
+      const headRow = table?.querySelector(".restarbeitenTableHeadRow") || null;
+      return {
+        pageNumber: pageIndex + 1,
+        verticalSeparatorsEnabled: table?.classList.contains("restarbeitenTable--vertical-column-separators") === true,
+        headerRow: box(headRow),
+        headers: Array.from(headRow?.querySelectorAll("th") || []).map((cell) => {
+          const cellStyle = getComputedStyle(cell);
+          const label = cell.querySelector(".restarbeitenHeaderLabel");
+          const labelStyle = label ? getComputedStyle(label) : null;
+          return {
+            key: String(cell.dataset.restarbeitenColumn || ""),
+            text: String(cell.textContent || "").replace(/\s+/g, " ").trim(),
+            textAlign: cellStyle.textAlign,
+            verticalAlign: cellStyle.verticalAlign,
+            fontWeight: cellStyle.fontWeight,
+            fontSizePt: pt(parseFloat(cellStyle.fontSize || "0")),
+            lineHeightPt: pt(parseFloat(cellStyle.lineHeight || "0")),
+            labelAlignItems: labelStyle?.alignItems || "",
+            labelTextAlign: labelStyle?.textAlign || "",
+            separator: separator(cell),
+            box: box(cell),
+          };
+        }),
+        bodyRows: Array.from(table?.querySelectorAll("tbody tr") || []).map((row) => ({
+          cells: Array.from(row.querySelectorAll("td")).map((cell) => ({
+            key: String(cell.dataset.restarbeitenColumn || ""),
+            separator: separator(cell),
+            box: box(cell),
+          })),
+        })),
+        ampels: Array.from(table?.querySelectorAll('[data-restarbeiten-column="dueStatus"] .restarbeitStatusWrap .ampelDot') || []).map((dot) => {
+          const style = getComputedStyle(dot);
+          return {
+            box: box(dot),
+            cssWidthMm: mm(parseFloat(style.width || "0")),
+            cssHeightMm: mm(parseFloat(style.height || "0")),
+            borderLeftMm: mm(parseFloat(style.borderLeftWidth || "0")),
+            borderTopMm: mm(parseFloat(style.borderTopWidth || "0")),
+          };
+        }),
+      };
+    });
+  })()`, true);
+}
+
 async function renderFixture(win, fixture, { pdfDir } = {}) {
   const jobId = `m85-${fixture.id}`;
   const ready = new Promise((resolve, reject) => {
@@ -265,6 +345,7 @@ async function renderFixture(win, fixture, { pdfDir } = {}) {
   const metaColumnGeometry = await readMetaColumnGeometry(win, fixture);
   const titleMarkerGeometry = await readTitleMarkerGeometry(win, fixture);
   const topIndicatorGeometry = await readTopIndicatorGeometry(win, fixture);
+  const restarbeitenOptics = await readRestarbeitenOptics(win, fixture);
 
   let pdf = null;
   if (pdfDir) {
@@ -275,7 +356,7 @@ async function renderFixture(win, fixture, { pdfDir } = {}) {
     pdf = { fileName: path.basename(filePath), bytes: buffer.length };
   }
   return { id: fixture.id, number: fixture.number, title: fixture.title, kind: fixture.kind, snapshot,
-    previewMetadata: readyMessage?.previewMetadata || null, metaColumnGeometry, titleMarkerGeometry, topIndicatorGeometry, pdf };
+    previewMetadata: readyMessage?.previewMetadata || null, metaColumnGeometry, titleMarkerGeometry, topIndicatorGeometry, restarbeitenOptics, pdf };
 }
 
 async function main() {

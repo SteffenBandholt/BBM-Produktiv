@@ -20,6 +20,13 @@ diesen Weg an. Nicht umgesetzt wurden eine neue PDF-Gestaltung, ein neuer
 Renderer, eine zweite Paginierung, ein zweiter Profilstore, eine
 Registry-Migration, eine Fachlogikänderung oder ein neuer PDF-Editor.
 
+Nachtrag 2026-08-19: Ein späteres, getrenntes Paket hat die damals bewusst
+offene Restarbeiten-Registrierung umgesetzt. Der historische M85.2-Satz bleibt
+unverändert; neu hinzugekommen sind ausschließlich der explizite Descriptor,
+die 13 additiv editierbaren Spaltenbreiten, der eigene Profilkey und der
+registrierte Regenerationsweg. Satz-, Split-, Wiederholungs- und
+Seitenzuweisungsregeln bleiben gesperrt.
+
 Der verbindliche Satzvertrag steht in `docs/PDF_SATZVERTRAG_V2.md`.
 
 ## Umgesetzter Nachweis
@@ -77,13 +84,13 @@ HTML-Vorschau bleibt vorhanden, wird aber nicht mehr als Produktweg verwendet.
 | 18 | `p18-changed-line-spacing` | geänderter TOP-Zeilenabstand | 3 |
 | 19 | `r19-empty` | leere Restarbeitenliste | 1 |
 | 20 | `r20-one-page` | einseitige Restarbeitenliste | 1 |
-| 21 | `r21-multiple-pages` | mehrseitige Restarbeitenliste | 4 |
-| 22 | `r22-short-record` | kurzer Restarbeit-Datensatz | 1 |
-| 23 | `r23-very-long-record` | sehr langer Langtext mit Fortsetzung | 4 |
+| 21 | `r21-multiple-pages` | mehrseitige Restarbeitenliste | 3 |
+| 22 | `r22-short-record` | fehlende Unterwerte ohne Leerraum | 1 |
+| 23 | `r23-very-long-record` | sehr langer Langtext mit Fortsetzung | 3 |
 | 24 | `r24-just-before-end` | Datensatz passt gerade noch vollständig | 1 |
 | 25 | `r25-just-misses-end` | Datensatz beginnt vollständig auf Seite 2 | 2 |
-| 26 | `r26-many-short` | viele kurze Datensätze | 3 |
-| 27 | `r27-columns-unsupported` | verriegelte 13 Spalten | 1 |
+| 26 | `r26-many-short` | viele kurze Datensätze | 4 |
+| 27 | `r27-columns-unsupported` | verriegelte 9 Spalten | 1 |
 | 28 | `p28-participants-exact-boundary` | Teilnehmer füllen den Teilnehmerbereich exakt; Abschluss folgt regelkonform | 2 |
 | 29 | `p29-participants-miss-boundary` | eine weitere vollständige Teilnehmerzeile benötigt Seite 2 | 2 |
 | 30 | `p30-participants-three-pages` | 40 Teilnehmer über mindestens drei Seiten | 3 |
@@ -91,10 +98,10 @@ HTML-Vorschau bleibt vorhanden, wird aber nicht mehr als Produktweg verwendet.
 | 32 | `p32-preremarks-over-boundary` | Vorbemerkung überschreitet den Restplatz | 2; Wortgrenzen und Fortsetzung |
 | 33 | `p33-preremarks-multiple-pages` | Vorbemerkung über mehrere Seiten | 4 |
 | 34 | `p34-participants-preremarks-tops` | Teilnehmer, Vorbemerkung und TOPs kombiniert | 4 |
-| 35 | `r35-very-long-short-text` | sehr langer Kurztext | 6 |
-| 36 | `r36-very-long-note` | sehr lange Notiz/Maßnahme | 6 |
+| 35 | `r35-very-long-short-text` | sehr langer Kurztext | 2 |
+| 36 | `r36-very-long-note` | sehr lange Notiz/Maßnahme | 5 |
 | 37 | `r37-two-page-record` | ein Datensatz über genau zwei Seiten | 2 |
-| 38 | `r38-all-columns-max` | alle 13 Spalten stark belegt | 2 |
+| 38 | `r38-all-columns-max` | alle Restarbeiten-Felder stark belegt | 2 |
 | 39 | `r39-status-ampel` | Status- und Ampelvarianten | 1 |
 | 40 | `r40-long-locations` | lange Verortungsangaben | 1 |
 | 41 | `r41-filtered-order` | gefilterte sichtbare Reihenfolge | 1 |
@@ -142,14 +149,17 @@ Durch M85.2 geschlossen und verriegelt:
   überhohes Kurztext-, Langtext- oder Notizfeld wird an Wortgrenzen mit stabiler
   Quell-ID und sichtbarer Fortsetzung geteilt.
 - `PDF-V2-REST-003`: Mess- und Renderkontext verwenden dieselben V2-Köpfe,
-  dieselbe Restarbeiten-Tabelle, dieselben 13 Spalten, Zeilenbuilder, Schriften
+  dieselbe Restarbeiten-Tabelle, dieselben 9 sichtbaren Spalten, kombinierten Zeilenbuilder, Schriften
   und CSS-Werte.
 - `PDF-V2-REST-005`: der Produktaufrufer übergibt ausschließlich sichtbare,
   gefilterte, nicht gelöschte Datensätze in sichtbarer Listenreihenfolge; der
   PDF-Pfad sortiert nicht nach.
-- `PDF-V2-REST-006`: A4-Querformat und 273-mm-Baseline der 13 Spalten sind fest
-  dokumentiert. Die Spalten sind bewusst noch nicht als Editorziele
-  registriert; Satzregeln und Gesamtbreite bleiben gesperrt.
+- `PDF-V2-REST-006`: A4-Querformat und 273-mm-Baseline der 9 sichtbaren Spalten
+  sind fest dokumentiert. Alle neun Tracks sind explizite Editorziele;
+  direktes `resizeWidth` wirkt nur auf den gewählten Track, 0 mm ist reversibel
+  und lückenlos, Min/Max sind Empfehlungen und die rechte Arbeitsbereichsgrenze
+  bleibt hart. Die getrennte Grenzoperation bleibt konstant-summig;
+  Satzregeln und Spaltenreihenfolge bleiben gesperrt.
 
 ## Registrybewertung
 
@@ -161,17 +171,18 @@ TOP-Kurz-/Langtext/Meta-Unterzeilen, Legende, Nächster-Termin-Text und getrennt
 Kopfvarianten. Satzträger wie Seite, Split, Wiederholung und Fußreserve dürfen
 nie Editorziele werden.
 
-Für eine spätere Restarbeiten-Registrierung kommen Tabellenbereich,
-Tabellenkopf und die 13 expliziten Spalten mit den in
-`PDF_SATZVERTRAG_V2.md` dokumentierten Grenzen in Betracht. M85.2 erzeugt keine
-Registry und keinen Profilwert. Papierformat, Gesamtbreite, Reihenfolge,
+Die Restarbeiten-Registrierung enthält Tabellenbereich, Wiederholungsbereich
+und die 9 expliziten sichtbaren Spalten mit den in
+`PDF_SATZVERTRAG_V2.md` dokumentierten Baselines und Empfehlungen. Entfallene kompatible
+Einzelspalten bleiben im Dokumenttypdatensatz historisch inaktiv und ihre
+Profilwerte erhalten. Papierformat, Reihenfolge,
 Kopfwiederholung, Fußreserve und Splitregeln bleiben gesperrt.
 
 Eine spätere M83.0-artige Vollregistrierung ist sinnvoll, wurde hier aber nicht begonnen. Das UI-Editor-kit war für die appinterne Verriegelung nicht zu ändern.
 
 ## Automatisierte Prüfung
 
-- `npm run test:m85:pdf`: grün; alle 47 Fixtures, Golden-Seitenzahlen und
+- `npm run test:m85:pdf`: grün; alle 50 Fixtures, Golden-Seitenzahlen und
   vollständigen Strukturhashes stimmen; ein zusätzlicher Guardrail bestätigt,
   dass dabei kein neues isoliertes Electron-Profil zurückbleibt.
 - `npm test`: grün, 8/8 Gruppen einschließlich der bestehenden
@@ -208,7 +219,7 @@ sichtbar geprüft:
 - `p34-participants-preremarks-tops`: vier Seiten; Teilnehmer, Vorbemerkung,
   TOP-Tabelle und Schlusszone bleiben in fester Reihenfolge vollständig.
 
-Für M85.2 wurden zehn neutrale Restarbeiten-PDFs mit insgesamt 20 Seiten
+In der ursprünglichen M85.2-Abnahme wurden zehn neutrale Restarbeiten-PDFs mit insgesamt 20 Seiten
 vollständig angesehen: Leerzustand, ein-/mehrseitige Liste, gerade passender und
 knapp nicht passender Datensatz, sehr langer Langtext, ein Datensatz über genau
 zwei Seiten, alle 13 stark belegten Spalten, gefilterte Reihenfolge und
@@ -217,7 +228,17 @@ Acceptance-Profil über `Ausgabevorschau` und anschließend ausdrücklich über
 `Drucken` betätigt. Beide Aktionen öffneten die interne BBM-Vorschau mit der
 tatsächlich erzeugten dreiseitigen Querformat-PDF und 60 synthetischen Zeilen.
 Tabellenkopf, 13 Spalten, Seitenzähler und Fußreserve waren auf allen drei
-Seiten vollständig sichtbar.
+Seiten vollständig sichtbar. Diese Aussage dokumentiert die damalige
+13-Spalten-Baseline und ist nicht mehr der aktuelle Restarbeiten-Descriptor.
+
+Die Restarbeiten-Designaktualisierung vom 19.08.2026 ersetzt diese Baseline
+durch neun sichtbare Spalten bei unveränderter 273-mm-Gesamtsumme. Die reale
+Fixture `r38-all-columns-max` wurde erneut als zweiseitige A4-Querformat-PDF
+erzeugt und auf beiden Seiten gerendert angesehen: kombinierte Werte, zweizeilige
+Köpfe, Ampel/Status, Fortsetzungskennzeichnung, wiederholter Tabellenkopf und
+Fußreserve sind vollständig sichtbar. Der native Editorlauf zeigt genau diese
+neun aktuellen Ziele, ändert `Nr. | Klasse`, speichert und lädt den Profilwert
+in einem getrennten Prozess wieder.
 
 Als Protokoll-Kurzregression wurden p03, p09, p30, p33 und p34 mit insgesamt 16
 Seiten erneut vollständig angesehen. Die Golden-Hashes aller 25

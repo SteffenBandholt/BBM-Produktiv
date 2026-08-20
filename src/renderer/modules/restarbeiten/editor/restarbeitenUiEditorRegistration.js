@@ -18,6 +18,7 @@ export const RESTARBEITEN_UI_EDITOR_REGISTRATION = Object.freeze({
   registryOrder: 10,
   scopeGroupId: "module-restarbeiten",
   layoutStorageKey: "module-restarbeiten",
+  pdfDocumentTypeId: "restarbeiten",
   registryVersion: 23,
   scopeIds: Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]),
   componentContracts: Object.freeze([

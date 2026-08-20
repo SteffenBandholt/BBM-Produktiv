@@ -1,5 +1,30 @@
 # STATUS.md — BBM-Produktiv
 
+## Restarbeiten-PDF - ruhiger Tabellenkopf und kleinere Statusampel (19.08.2026)
+
+- Status: `[A]`; ausschließlich die Restarbeiten-PDF verwendet für alle neun Tabellenüberschriften weiterhin 6 pt, nun mit Gewicht 600 sowie horizontaler und vertikaler Zentrierung. Zweizeilige Köpfe bleiben innerhalb derselben unveränderten Kopfzeile mittig lesbar.
+- Der Ampelpunkt in `Fertig bis/Status` misst 2 × 2 mm statt 3 × 3 mm. Die bisherige 3-mm-Statuszeilenhöhe bleibt erhalten, damit Satz, Datenzeilen und Umbruch trotz kleinerem Symbol unverändert bleiben. Farbe, Status- und Ampellogik sind unberührt.
+- Reale Sichtprüfung: das r38-Maximalfixture wurde final als zweiseitige A4-Querformat-PDF und als zwei PNG-Seiten erzeugt. Beide Seiten zeigen neun zentrierte Köpfe, den wiederholten Tabellenkopf und die kleinere Ampel ohne Kollision, Abschneidung oder Layoutverschiebung. Die gemessene Kopfzeilenhöhe blieb auf beiden Seiten 6,565 mm.
+- Grün: alle 50 M85-Struktur-Goldens ohne Aktualisierung, Restarbeiten-PDF-Registrierung, neutrale Portrait-/Landscape-Registrierung, universelle UI-/PDF-Architektur und UI-Editor-Vertrags-Selftest. Alle Protokoll-Goldens blieben unverändert.
+- Schutz: keine Spaltenbreite/-reihenfolge, Paginierung, Registry, Editoroperation, Fachlogik, Datenbank, Druckweg, Protokoll-PDF oder `rechnung-entwicklung` geändert. Commit, Push, Merge und Branchwechsel: keiner.
+
+## Unabhängige PDF-Tabellenspaltenbreite — K17.12 — 2026-08-19
+
+- Status: `[A]`; der dokumenttypneutrale Adapter und Renderer behandeln direktes `TableColumn.resizeWidth` unabhängig. Nur die gewählte Spalte ändert ihre Breite, folgende Spalten verschieben sich und Nachbarbreiten bleiben unverändert. Die Tabellensumme darf bis zur tatsächlichen rechten PDF-Arbeitsbereichsgrenze wachsen oder schrumpfen.
+- 0 mm entfernt Track, Kopf, Datenzellen und Lücke vollständig, erhält aber Registry-/Baumidentität und den bestehenden Profil-/Undo-Weg. Negative Werte bleiben ungültig; Min/Max sind bei direktem Resize Empfehlungen. `resizeColumnBoundary` bleibt getrennt konstant-summig und darf Min/Max hart prüfen.
+- Neutral grün: A20/B30/C40, Werte 9/5/3,5/20/0, isolierter 0-mm-Profilneustart, Reaktivierung, Renderer- und Readbacknachweise. Real sichtbar grün: Restarbeiten Nr 9→5 bei Klasse 10, physischer Mauszug 5→6,973 bei Klasse 10, Nr 0 samt Baum und Neustart sowie Nr 9 samt Neustart. Bestehende gekoppelte Grenze 9/10→10/9 bleibt ebenfalls grün. Keine neue Operation, Registry, Fachlogik oder Profilarchitektur; Commit und Push: keiner.
+
+## BBM-weiter universeller PDF-Dokumenttypvertrag — 2026-08-19
+
+- Status: `[A]`; Code, gezielte Guardrails und praktische native Save-/Close-/Neustartabnahme abgeschlossen.
+- Der zentrale Resolver löst PDF-Typen nur noch exakt auf. Der frühere stille Fallback eines unbekannten Typs auf `protocol` ist entfernt.
+- Ein eigener persistenter Descriptor-Katalog trennt Dokumenttypvertrag von Layoutprofil, erkennt neue, aktuell fehlende, wiederkehrende, inkompatible, unvollständige und doppelte Elemente. Neue IDs werden additiv ergänzt; aktuell fehlende IDs bleiben historisch erhalten und werden mit Archiv vor Änderung inaktiv gesetzt.
+- Restarbeiten ist als realer zweiter Produkttyp registriert: eigener Dokumenttyp/Scope/Profilkey/Regenerationsweg, A4 quer und 9 explizite sichtbare Spalten mit 273-mm-Gesamtbreite. Satz, Paginierung, Split, Kopf-Wiederholung und Fußreserve bleiben unverändert und gesperrt.
+- DEV zeigt für einen vollständigen unbekannten Descriptor „Dieser PDF-Typ ist noch nicht für den Editor registriert.“ und „PDF-Typ registrieren“. Produktbuilds erzeugen keinen Registrierungsbutton.
+- Reale Zwei-Prozess-Abnahme: Restarbeiten-PDF im nativen Editor geöffnet, erste Spaltengrenze von 9/10 auf 10/9 mm verschoben, atomar gespeichert und über den registrierten Restarbeiten-Querformatweg neu erzeugt; Editor und isolierte BBM-Instanz wurden geschlossen und in einem neuen Prozess exakt mit 10/9 mm wiederhergestellt. Der bestehende M86.24-Lauf für UI-Profile von Protokoll und Restarbeiten ist ebenfalls grün.
+- Grün: A/B/C→A/C→A/B/C-, Inkompatibilitäts-, Restart-, Duplikat- und Neutraltyp-Guardrails, neutraler Portrait-/Landscape-Descriptor, realer Restarbeiten- und Protokoll-Regenerationsguard, Universalarchitektur, M81, M81.1, M86.15, UI-Vertrags-Selftest, M85 einschließlich aller 50 reproduzierbaren Struktur-Goldens und beide sichtbaren Save-/Restart-Läufe.
+- Der vollständige UI-Editor-Gruppenlauf bleibt an bereits im Ausgangsstand vorhandenen Registry-Sollzahlen, Licensing-Hash, Feldbreiten-, Chromium- und Harness-Zählguards rot; der bisher bekannte Restarbeiten-Quicklane-Transformtest bleibt ebenfalls rot. Commit/Push/PR: keiner.
+
 ## Unabhängige TOP-Kennzeichnungen
 
 - Status: `[T]`; technische Korrektur und Guardrails abgeschlossen, erneute fachliche Sichtabnahme durch den Nutzer offen.
@@ -4199,3 +4224,25 @@ Wichtig:
 - Neutraler Test: UI-Registrierung/Session/Selection/Operationen/Save/Load/Reset/Profiltrennung sowie zweiter PDF-Typ/Profil/Regeneration/Rückwechsel grün. Produktive M86.15-, M86.16- und M86.24-Nachweise sowie M85 mit 50 Goldens grün.
 - Der breite `npm test`-Lauf bleibt an dokumentierten Altprüfungen rot (unter anderem Registryversion 19 statt produktiv 23, Lizenz-Hash/-Features sowie alte MainHeader-/M52-Erwartungen); keine dieser roten Stellen wurde verdeckt oder deaktiviert.
 - Nächster offener Schritt: fachliche Sichtkontrolle durch den Nutzer; technisch ist für dieses Architekturpaket kein weiterer Editor-Core-Schritt offen.
+
+## Restarbeiten-PDF - erster fachlicher Design-Umbau und generischer Descriptor-Sync (19.08.2026)
+
+- Status: `[A]`; die produktive Restarbeiten-PDF bleibt A4 quer und verwendet neun sichtbare Spalten. Gegenstand, Ort, Einheit/Raum sowie Fertig bis/Status fassen die weiterhin getrennt vorliegenden Fachwerte nur im Renderer zusammen.
+- Der generische PDF-Dokumenttyp-Sync unterscheidet aktuell aktive, historisch bekannte und inaktive stabile Element-IDs. Im aktuellen Descriptor fehlende IDs werden weder aus der Registry noch aus der Profilhistorie gelöscht; kompatible Wiederkehr reaktiviert die früheren Layoutwerte, inkompatible Wiederkehr bleibt durch die bestehende Konfliktprüfung gesperrt.
+- Die aktive native Profil-Datei bleibt ein exakter Vertrag der aktuellen Registry. Historische Layoutwerte liegen getrennt von Registry- und Contractdaten in der PDF-Profilhistorie. Es gibt keine Restarbeiten- oder Spaltennamen-Sonderlogik im generischen Pfad.
+- Automatische Nachweise: neutraler A/B/C -> A/C -> A/B/C-Lebenszyklus, reale Restarbeiten-v1/v2-Migration, neun Element-ID-zu-Renderer-Track-Zuordnungen auf allen 22 Restarbeiten-Fixtures, universeller UI/PDF-Test, Adapter-/Orientierungstests, 50 M85-Goldens und sichtbarer nativer Save-/Close-/Prozessneustart-Ablauf sind grün. Die Protokoll-Goldens und der Protokoll-Satzvertrag blieben unverändert.
+- Sichtprüfung: Das reale r38-Maximalfixture wurde über Electron als zweiseitige A4-Querformat-PDF erzeugt und seitenweise gerendert. Beide Seiten zeigen die neun Spalten, wiederholten Tabellenkopf, kombinierte Zellen und Ampel/Statustext ohne sichtbares Abschneiden.
+- Der breite Repository-Testkatalog erreicht alle Testgruppen, bleibt aber an bereits im beibehaltenen Arbeitsstand vorhandenen paketfremden UI-Editor-Altguardrails rot, unter anderem Registryversion 19 statt 23, alter Licensing-Hash, alte Navigationsannahmen und Testkatalog-Zählung. Der reguläre `npm test`-Wrapper konnte wegen einer parallel laufenden BBM-Instanz den Electron-ABI-Baustein nicht ersetzen; der eigentliche Katalog wurde deshalb mit der bereits aktiven Electron-ABI direkt ausgeführt.
+- Schutz: keine fachlichen Spaltenbreiten außerhalb des neuen Neun-Spalten-Entwurfs, keine Protokoll-Änderung, kein Eingriff in `rechnung-entwicklung`, kein UI-Editor-kit-Umbau. Commit, Push, Merge und Branchwechsel: keiner.
+- Nächster Schritt: fachliche Nutzerabnahme des neuen Restarbeiten-PDF-Designs; weitere Breiten- oder Designanpassungen nur als eigenes Paket.
+
+## Restarbeiten-PDF - Kopfgewicht und schaltbare Spaltentrennlinien (20.08.2026)
+
+- Status: `[A]`; die neun Spalten, ihre Breiten, Reihenfolge, Inhalte und Satzlogik blieben unverändert. Die Tabellenköpfe verwenden nun Noto Sans mit weiterhin 6 pt und Zentrierung, aber Gewicht 500 statt 600.
+- Eine gemeinsame registrierte Darstellungsoption steuert ausschließlich die inneren senkrechten Grenzen von Kopf- und Datenzellen. Baseline ist EIN; die Linie verwendet `0.2mm solid #ddd`. Letzte und auf 0 mm gesetzte Spalten erzeugen keine zusätzliche oder doppelte Grenze.
+- Stabile ID: `pdf.bbm.restarbeiten.table.vertical-column-separators`; Parent: `pdf.bbm.restarbeiten.table`; einzige erlaubte Operation: `setVisibility`. Der dokumenttypneutrale Renderer bindet die Sichtbarkeit deklarativ an eine CSS-Klasse und enthält keine Restarbeiten-Entscheidung.
+- Der native Editor verwendet seine vorhandene Sichtbarkeitsbedienung sowie denselben PDF-Profilweg. EIN und AUS wurden jeweils gespeichert und nach vollständigem Prozessneustart wiederhergestellt; `Original` stellte aus AUS die Descriptor-Baseline EIN wieder her und speicherte sie erneut.
+- Automatische Nachweise: Restarbeiten-Registrierung, neutraler PDF-Toggle-/Profiltest, M80/M81, PDF-Dokumenttyp-Registrierung, UI-Editor-Vertrags-Selbsttest und M85 mit 50 unveränderten Struktur-Goldens sind grün. Darin blieben alle 28 Protokoll-Fixtures unverändert.
+- Sichtprüfung: reale dreiseitige Restarbeiten-PDFs mit EIN/AUS sowie eine 0-mm-Variante wurden als PNG gerendert. Kopf und Body sind deckungsgleich, der wiederholte Kopf auf Seite 2 behält den Zustand, AUS entfernt alle inneren Linien ohne Geometrieänderung und `Nr. = 0 mm` hinterlässt weder Lücke noch Phantomlinie.
+- Schutz: UI-Editor-kit, `rechnung-entwicklung`, Protokoll-PDF, Fachlogik, Datenbank, Paginierung und Druckweg wurden nicht verändert. Commit, Push, Merge und Branchwechsel: keiner.
+- Nächster Schritt: fachliche Sichtfreigabe der feinen Linienwirkung; technisch ist für dieses Paket kein Restpunkt offen.

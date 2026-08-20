@@ -64,6 +64,71 @@ export async function isDevelopmentUiEditorBuild({ api = globalThis.window?.bbmD
   }
 }
 
+export function showPdfDocumentTypeRegistrationDialog(status, { doc = globalThis.document } = {}) {
+  if (!doc?.body || typeof doc.createElement !== "function") return Promise.resolve("cancel");
+  return new Promise((resolve) => {
+    const backdrop = doc.createElement("div");
+    backdrop.setAttribute("data-bbm-pdf-registration-dialog", "true");
+    backdrop.style.cssText = "position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;background:rgba(15,23,42,.42);padding:24px";
+    const panel = doc.createElement("section");
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-modal", "true");
+    panel.setAttribute("aria-label", "PDF-Typ registrieren");
+    panel.style.cssText = "box-sizing:border-box;width:min(520px,100%);padding:22px;border:1px solid #d7e0ea;border-radius:12px;background:#fff;color:#172033;box-shadow:0 18px 50px rgba(15,23,42,.28);font:14px/1.45 system-ui,sans-serif";
+    const title = doc.createElement("h2");
+    title.textContent = status?.pdfRegistryStatus === "unregistered" ? "Dieser PDF-Typ ist noch nicht für den Editor registriert." : "PDF-Descriptor hat sich geändert.";
+    title.style.cssText = "margin:0 0 10px;font-size:18px";
+    const details = doc.createElement("p");
+    const parts = [
+      status?.newElementIds?.length ? `${status.newElementIds.length} neue Elemente` : "",
+      status?.missingElementIds?.length ? `${status.missingElementIds.length} derzeit fehlende Elemente` : "",
+      status?.incompatibleElementIds?.length ? `${status.incompatibleElementIds.length} inkompatible Elemente` : "",
+      status?.incompleteElementIds?.length ? `${status.incompleteElementIds.length} unvollständige Elemente` : "",
+    ].filter(Boolean);
+    details.textContent = parts.join(" · ") || String(status?.displayName || status?.documentTypeId || "PDF-Dokumenttyp");
+    details.style.cssText = "margin:0 0 18px;color:#536377";
+    const actions = doc.createElement("div");
+    actions.style.cssText = "display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap";
+    const close = (value) => { backdrop.remove?.(); resolve(value); };
+    const cancel = doc.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = status?.editorAvailable ? "Mit bestehendem Vertrag fortfahren" : "Abbrechen";
+    cancel.style.cssText = "padding:8px 12px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;color:#334155;cursor:pointer";
+    cancel.addEventListener("click", () => close(status?.editorAvailable ? "continue" : "cancel"));
+    actions.appendChild(cancel);
+    if (status?.canRegister || status?.canSynchronizeElements || status?.canAcceptNewElements) {
+      const register = doc.createElement("button");
+      register.type = "button";
+      register.textContent = status?.canRegister ? "PDF-Typ registrieren" : "PDF-Elementstruktur übernehmen";
+      register.style.cssText = "padding:8px 12px;border:1px solid #1d4ed8;border-radius:7px;background:#2563eb;color:#fff;font-weight:650;cursor:pointer";
+      register.addEventListener("click", () => close("register"));
+      actions.appendChild(register);
+      queueMicrotask(() => register.focus?.());
+    } else queueMicrotask(() => cancel.focus?.());
+    panel.append(title, details, actions);
+    backdrop.appendChild(panel);
+    doc.body.appendChild(backdrop);
+  });
+}
+
+async function ensurePdfDocumentTypeReady({ api, documentTypeId, buildApi, doc = globalThis.document } = {}) {
+  if (!documentTypeId || typeof api?.getPdfDocumentTypeStatus !== "function") return { ok: true, pdfRegistryStatus: "unavailable" };
+  let status = await api.getPdfDocumentTypeStatus({ documentTypeId });
+  if (status?.pdfRegistryStatus === "available") return status;
+  const isDev = await isDevelopmentUiEditorBuild({ api: buildApi });
+  if (!isDev) return status;
+  if (!["unregistered", "changed", "incomplete", "incompatible"].includes(status?.pdfRegistryStatus)) return status;
+  const choice = await showPdfDocumentTypeRegistrationDialog(status, { doc });
+  if (choice === "register" && typeof api.registerPdfDocumentType === "function") {
+    const accepted = await api.registerPdfDocumentType({ documentTypeId });
+    if (!accepted?.ok) return accepted;
+    status = await api.getPdfDocumentTypeStatus({ documentTypeId });
+  } else if (choice !== "continue") {
+    return { ...status, ok: false, errorCode: "pdf_document_registration_cancelled" };
+  }
+  return status;
+}
+
 export async function openNativeUiEditor(context = {}) {
   const api = context?.api || window.uiEditor;
   if (!api || typeof api.open !== "function") {
@@ -74,6 +139,15 @@ export async function openNativeUiEditor(context = {}) {
   const scopeGroup = activeScopeId ? getM80ScopeGroupRegistration(activeScopeId) : null;
   if (typeof api.preparePdfContext === "function" && scopeGroup?.pdfDocumentTypeId && context?.projectId && context?.meetingId) {
     await api.preparePdfContext({ documentTypeId: scopeGroup.pdfDocumentTypeId, projectId: context.projectId, meetingId: context.meetingId });
+  }
+  if (scopeGroup?.pdfDocumentTypeId) {
+    const pdfStatus = await ensurePdfDocumentTypeReady({ api, documentTypeId: scopeGroup.pdfDocumentTypeId, buildApi: context?.buildApi || globalThis.window?.bbmDb, doc: context?.doc || globalThis.document });
+    if (pdfStatus?.editorAvailable !== true && pdfStatus?.pdfRegistryStatus !== "available") {
+      const message = pdfStatus?.message || "Dieser PDF-Typ ist noch nicht für den Editor registriert.";
+      showRegistryRefreshStatus(message, "blocked");
+      if (pdfStatus?.errorCode !== "pdf_document_registration_cancelled") alert(message);
+      return { ok: false, errorCode: pdfStatus?.errorCode || "pdf_document_type_unavailable", message };
+    }
   }
   if (activeScopeId && context?.launcherButton) {
     bindDevelopmentUiEditorOpenButtonRef({ scopeId: activeScopeId, button: context.launcherButton });

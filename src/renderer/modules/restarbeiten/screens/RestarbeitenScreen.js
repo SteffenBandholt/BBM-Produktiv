@@ -212,6 +212,7 @@ export default class RestarbeitenScreen {
       this._publishQuicklaneState();
     }
     this._bindTextLimitSettings();
+    void this._syncPdfEditorContext();
   }
 
   _bindTextLimitSettings() {
@@ -226,6 +227,7 @@ export default class RestarbeitenScreen {
     this.showAmpelInList = !this.showAmpelInList;
     this._renderShell();
     this._publishQuicklaneState();
+    void this._syncPdfEditorContext();
   }
 
   toggleLongtextDisplay() {
@@ -240,6 +242,7 @@ export default class RestarbeitenScreen {
       .map((row) => ({ ...row }));
     return {
       mode: "restarbeiten",
+      documentTypeId: "restarbeiten",
       orientation: "landscape",
       projectId: this.projectId,
       restarbeitenRows,
@@ -252,6 +255,16 @@ export default class RestarbeitenScreen {
       showAmpelInList: this.showAmpelInList,
       previewTitle: "Restarbeitenliste",
     };
+  }
+
+  async _syncPdfEditorContext() {
+    const preparePdfContext = globalThis.window?.uiEditor?.preparePdfContext;
+    if (!this.projectId || typeof preparePdfContext !== "function") return null;
+    try {
+      return await preparePdfContext(this._buildRestarbeitenPdfPayload());
+    } catch (_error) {
+      return null;
+    }
   }
 
   async openRestarbeitenPreview() {
@@ -612,6 +625,7 @@ export default class RestarbeitenScreen {
         onFilterChange: (patch) => {
           this.filters = { ...this.filters, ...patch };
           this._renderShell();
+          void this._syncPdfEditorContext();
         },
         onClose: () => this.router?.showProjectWorkspace?.(this.projectId, { project: this.project }),
       });

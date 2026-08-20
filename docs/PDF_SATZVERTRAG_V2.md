@@ -71,8 +71,11 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 | `src/renderer/print/v2/header/headerUtils.js` | produktiv, Adapter | Gemeinsame Texte/Normalisierung für V2-Köpfe. |
 | `src/shared/tableLayouts/protokollTopsLayout.js` | produktiv, Quelle für TOP-Spalten | Drei logische TOP-Spalten, Labels, UI-/PDF-Standardwerte und validierte Overlays. |
 | `src/shared/ampel/pdfAmpelRule.js` | produktiv, Fachdarstellung | Ermittelt Ampelfarbe aus bereits gelieferten Fachwerten; der Editor ändert diese Werte nicht. |
-| `src/renderer/print/pdfEditorLayout.js` | produktiv, Designadapter | Überführt 37 Registryzustände in V2-Variablen/DOM-Styles und liest Vorschaugrenzen zurück. Keine Seitenzuweisung. |
+| `src/renderer/print/pdfEditorLayout.js` | produktiv, dokumenttypneutraler Designadapter | Überführt die aktive explizite Registry in V2-Variablen/DOM-Styles und liest Vorschaugrenzen zurück. Keine Dokumenttypentscheidung und keine Seitenzuweisung. |
 | `src/main/ui-editor/bbmPdfAdapter.cjs` | produktiv, Registry-/Adapterquelle | Explizite 37 Elemente, Baselines, Nutzflächen-/Bereichsgrenzen, atomare Tabellenoperationen, Rollback und Neuerzeugung. Keine Paginierung. |
+| `src/main/ui-editor/restarbeitenPdfAdapter.cjs` | produktiv, Restarbeiten-Descriptor/Registrar | Explizite 20 Elemente einschließlich 9 sichtbarer Spalten und einer gemeinsamen Darstellungsoption, A4-Querformat, Grenzen, Profilkey und Regenerationsrequest. Keine Paginierung. |
+| `src/main/ui-editor/pdfDocumentTypeRegistry.cjs` | produktiv, dokumenttypneutraler Vertragsspeicher | Persistiert akzeptierte Descriptor-Snapshots sowie aktive/inaktive Element-IDs, vergleicht neue/fehlende/wiederkehrende/inkompatible Elemente und archiviert vor Synchronisation. Keine Layoutwerte. |
+| `src/main/ui-editor/declarativePdfAdapter.cjs` | produktiv, dokumenttypneutraler Adapter | Stellt die aktuell aktive Registry, Layoutzustand, werterhaltende Profilmigration, Spaltengrenzen und Regeneration bereit. Inaktive Profilwerte bleiben in einer registryfreien PDF-Profilhistorie neben dem strikt aktiven Hauptprofil erhalten. Keine BBM-Fachtypen. |
 | `src/main/ipc/uiEditorIpc.js` | produktiv, Adapter | Bindet `generatePdfForUiEditor` an denselben `printToPDF`-Pfad. Kein zweiter Store/Renderer. |
 | `src/renderer/print/headerTest/**` | nur Diagnose/Test | Separater sichtbarer Kopf-Testmodus; nicht im normalen Ausgabedialog, nicht Quelle für Protokoll-/Restarbeiten-PDF. |
 | `print:openHtmlPreview` | produktive Alternative | Zeigt denselben Print-Renderer sichtbar, erzeugt aber noch keine Datei. |
@@ -88,7 +91,7 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 
 | Vertrags-ID | Regel | Dokumentarten | Codequelle | Test/Fixture | Status | Editorstatus |
 |---|---|---|---|---|---|---|
-| `PDF-V2-SATZ-001` | Chromium erzeugt A4. Orientierung ist explizit Hochformat oder Querformat; Standard ist Hochformat. Chromium-Ränder sind 0, der Inhalt nutzt V2-Padding. | alle kanonischen Modi | `printOrientation.js`, `printApp._applyPageOrientationStyle`, CSS `@page` | `printOrientation.test.cjs`, M85-Snapshots | fest | Papierformat gesperrt; Inhaltsränder explizit editierbar |
+| `PDF-V2-SATZ-001` | Chromium erzeugt A4. Orientierung ist explizit Hochformat oder Querformat; Standard ist Hochformat. Bei einer registrierten Editor-Regeneration setzt der generische Resolver die Orientierung ausschließlich aus `pageSettings` der aktuell wirksamen Dokumenttyp-Registry. Chromium-Ränder sind 0, der Inhalt nutzt V2-Padding. | alle kanonischen Modi | `pdfAdapterRegistry.cjs`, `printOrientation.js`, `printApp._applyPageOrientationStyle`, CSS `@page` | `pdfDocumentTypeRegistration.test.cjs` mit neutralem Portrait/Landscape sowie Protokoll/Restarbeiten, `printOrientation.test.cjs`, M85-Snapshots | fest | Papierformat gesperrt; Inhaltsränder explizit editierbar |
 | `PDF-V2-SATZ-002` | Seite 1 rendert in dieser Reihenfolge GlobalHeader, FullHeader, Abstand und Body. | Protokoll, Restarbeiten, Listen | `PrintShell.renderPrint` | alle 48 Snapshots | fest | Kopfart/-reihenfolge gesperrt; einzelne Designziele teils editierbar |
 | `PDF-V2-SATZ-003` | Seiten ab Nummer 2 rendern nur MiniHeader vor dem Body. | alle mehrseitigen Modi | `PrintShell.renderPrint` | mehrseitige Snapshots | fest | Kopfart/-reihenfolge gesperrt |
 | `PDF-V2-SATZ-004` | Jedes Seitenmodell erhält `pageNo`/`totalPages`. FullHeader auf Seite 1 und MiniHeader auf Folgeseiten rendern sichtbar `Seite n / gesamt`; der Zähler muss vollständig innerhalb der A4-Seitenbox liegen. | Protokoll, Restarbeiten, Preview/Vorabzug | Pager, `FullHeader.js`, `MiniHeader.js` | alle Snapshots, p03, r21, DOM-Grenzprüfung | fest | Zählerwerte/Fachtext gesperrt |
@@ -114,7 +117,7 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 | `PDF-V2-PROT-004` | Abschlussreihenfolge: Legende, optionaler Nächster-Termin-Text, danach `Aufgestellt:` mit Footerzeilen. Der gesamte Block liegt auf der letzten TOP-Seite. | `_buildTopsTailElement`, `_buildProtocolFooterElement`, p15 | fest für getestete Größen |
 | `PDF-V2-PROT-005` | Ein Protokoll ohne TOPs rendert keine leere TOP-Tabelle, aber Teilnehmer-Leerzustand und Abschlussblock. | p01, `PrintShell.renderPrint` | fest |
 | `PDF-V2-PROT-006` | „Neu“, „übernommen/berührt“, „wichtig“, Status, Termin, Verantwortlich und Ampel beeinflussen Darstellung, nicht Satzsteuerung durch den Editor. | Zeilenrenderer, Ampelregel | fest, Farben nicht visuell golden-verriegelt |
-| `PDF-V2-PROT-007` | Eine registrierte TOP-`TableColumn` ist eine geometrische Einheit aus Spaltentrack, Tabellenkopf und sämtlichen Datenzellen. Ihre horizontale Geometrie wird nicht frei verschoben: `resizeColumnBoundary` verschiebt ausschließlich eine innere Grenze und ändert die Breiten der beiden direkten Nachbarspalten atomar und gegenläufig. Tabellensumme und beide Außenkanten bleiben unverändert; Header- und Datentracks bleiben lückenlos. Sichtbarkeit wirkt auf die vollständige Spalte. Der registrierte Tabellenkopf ist Kind seiner Spalte und darf nur seinen Text innerhalb der unveränderten Spaltengeometrie verschieben, skalieren, ausrichten oder ausblenden. | `bbmPdfAdapter.cjs`, `PrintShell._buildTableHead`, `pdfEditorLayout.js`, M81 und M85-Print-DOM-Nachweise | fest |
+| `PDF-V2-PROT-007` | Eine registrierte TOP-`TableColumn` ist eine geometrische Einheit aus Spaltentrack, Tabellenkopf und sämtlichen Datenzellen. Direktes `resizeWidth` ändert ausschließlich diese Spaltenbreite; folgende Spalten verschieben sich, Nachbarbreiten bleiben unverändert und die resultierende Tabelle darf bis zur tatsächlichen rechten Arbeitsbereichsgrenze wachsen oder schrumpfen. 0 mm entfernt Track, Kopf, Datenzellen und Lücke reversibel aus dem Renderbild, erhält aber Registry-/Profilidentität. Registrierte Min/Max sind dabei Empfehlungen. Getrennt davon verschiebt `resizeColumnBoundary` ausschließlich eine innere Grenze und ändert zwei direkte Nachbarbreiten atomar und gegenläufig bei fester Summe und verbindlichen Min-/Max-Grenzen. Der registrierte Tabellenkopf bleibt Kind seiner Spalte und darf nur seinen Text bearbeiten. | `bbmPdfAdapter.cjs`, `PrintShell._buildTableHead`, `pdfEditorLayout.js`, neutrale K17.12-, M81- und M85-Nachweise | fest |
 | `PDF-V2-PROT-008` | Die bestehende Teilnehmertabelle ist ein explizites Tabellenziel mit den Tracks Name 34, Funktion 32, Firma 30, Telefon/E-Mail 72 und Anwesend/Verteiler 18 mm. Eine innere Grenze verändert nur direkte Nachbarn gegenläufig bei fester 186-mm-Gesamtsumme. Eine Änderung der Tabellenaußenbreite verändert atomar den äußersten rechten Track. Kein Track, Kopf, Zellhintergrund oder Text darf die Nutzflächenkante X = 198 mm überschreiten. Der Kopf Anwesend/Verteiler bleibt als Kind der rechten Spalte separat textpositionierbar. | vorhandene Teilnehmer-DOM-/CSS-Struktur, `bbmPdfAdapter.cjs`, `pdfEditorLayout.js` | M81 und M85 mit realem Header-/Datenzellen-Readback | fest |
 | `PDF-V2-PROT-009` | Die fachliche Beschlusskennzeichnung eines Level-1-Titels folgt in der PDF-Baseline der UI-Fachposition: rechts innerhalb der Titelzeile. Der 3,8-mm-Marker endet 1 mm vor der rechten TOP-Tabellenkante. `pdf.bbm.protocol.tops.marker.decision` ist ein eigenes Bildziel unter `.tops.rows`; nur Position und Sichtbarkeit sind editierbar. Fachwert, Titel, Tabellen, Satz und UI bleiben gesperrt. | `PrintShell.appendProtocolTitleMarker`, `print.css`, `bbmPdfAdapter.cjs` | M81 und M85 p06 mit realem Print-DOM-Readback | fest |
 | `PDF-V2-PROT-010` | Wichtig erzeugt kein Symbol und wirkt ausschließlich über roten Titeltext. Beschluss und ToDo sind eigenständige 3,8-mm-Marker im gemeinsamen rechten Bereich der vorhandenen Level-1-Titelzeile. Bei gleichzeitiger Kennzeichnung gilt die feste Reihenfolge Beschluss, ToDo bei gleichem Y-Bezug und 1,5 mm Abstand; der rechte Marker endet 1 mm vor der Tabellenkante und der Titel kollidiert nicht. `pdf.bbm.protocol.tops.marker.decision` und `.tops.marker.todo` erlauben unabhängig nur Position und Sichtbarkeit. Fachwerte, UI, Titel, Tabellen und Satz bleiben gesperrt. | `PrintShell.appendProtocolTitleMarker`, `print.css`, `bbmPdfAdapter.cjs` | M81 und M85 p48 mit realem Print-DOM-Readback | fest |
@@ -124,34 +127,40 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 
 | Vertrags-ID | Regel | Nachweis | Status |
 |---|---|---|---|
-| `PDF-V2-REST-001` | Das Print-DOM besitzt 13 Spalten in dieser Reihenfolge: Nr., Klasse, Kurztext, Langtext, vier Verortungen, Status/Ampel, Fertig bis, Verantwortlich, erledigt am, Notiz/Maßnahmen. Dieselben Descriptoren bauen Mess- und Rendertabelle. | `_buildPages`, `RESTARBEITEN_PDF_COLUMNS`, gemeinsame `buildRestarbeiten*`-Funktionen | fest |
+| `PDF-V2-REST-001` | Das Print-DOM besitzt 9 sichtbare Spalten in dieser Reihenfolge: Nr., Klasse, Gegenstand, Ort, Einheit/Raum, Fertig bis/Status, Verantwortlich, erledigt am, Notiz/Maßnahmen. Gegenstand stapelt Kurztext vor Langtext; Ort stapelt Haus vor Geschoss; Einheit/Raum stapelt beide Fachwerte; Fertig bis/Status stapelt das Datum vor der gemeinsamen Ampel-/Statuszeile. Fehlende Unterwerte erzeugen kein leeres Kind. Alle neun Tabellenüberschriften verwenden 6 pt/500 und sind horizontal sowie vertikal zentriert; der Ampelpunkt der kombinierten Statuszeile misst 2 × 2 mm. Dieselben Descriptoren bauen Mess- und Rendertabelle. | `_buildPages`, `RESTARBEITEN_PDF_COLUMNS`, gemeinsame `buildRestarbeiten*`-Funktionen, M85-Optik-Readback | fest |
 | `PDF-V2-REST-002` | Ein vollständig passender Datensatz bleibt eine vollständige Zeile. Passt er nicht mehr auf eine belegte Seite, beginnt er auf der Folgeseite. Nur wenn ein einzelnes Kurztext-, Langtext- oder Notizfeld selbst höher als der freie Raum einer leeren Seite ist, wird es an Wortgrenzen geteilt; nur ein einzelnes überbreites Wort verwendet den deterministischen Zeichen-Fallback. Quell-ID bleibt stabil, Meta wird wiederholt und Folgezeilen tragen `Fortsetzung`. | `_paginateGeneric`, `_fitRestarbeitenTextSegment`, r23/r35–r38 | fest |
-| `PDF-V2-REST-003` | Messung und End-DOM verwenden denselben Full-/MiniHeader, dieselbe `restarbeitenTable`, denselben 13-spaltigen `colgroup`, dieselben Zeilen-/Ampelbuilder, dieselben Schriften und dieselben CSS-Werte. Verwendete Höhe überschreitet nie die Kapazität vor der 12-mm-Fußreserve. | `_createMeasureContext`, `PrintShell`, r21/r24/r25/r37/r38/r45 | fest |
-| `PDF-V2-REST-004` | Die leere Liste rendert eine Seitentabelle mit 13-spaltigem Kopf und „Keine Restpunkte für den Druck vorhanden.“ | r19 | fest |
+| `PDF-V2-REST-003` | Messung und End-DOM verwenden denselben Full-/MiniHeader, dieselbe `restarbeitenTable`, denselben 9-spaltigen `colgroup`, dieselben kombinierten Zeilen-/Ampelbuilder, dieselben Schriften und dieselben CSS-Werte. Verwendete Höhe überschreitet nie die Kapazität vor der 12-mm-Fußreserve. | `_createMeasureContext`, `PrintShell`, r21/r24/r25/r37/r38/r45 | fest |
+| `PDF-V2-REST-004` | Die leere Liste rendert eine Seitentabelle mit 9-spaltigem Kopf und „Keine Restpunkte für den Druck vorhanden.“ | r19 | fest |
 | `PDF-V2-REST-005` | Der Screen übergibt ausschließlich `_getFilteredItems()` ohne gelöschte Datensätze und ohne zusätzliche PDF-Sortierung. Die Reihenfolge entspricht exakt der sichtbaren Liste; Fotos/Anhänge werden nicht in `restarbeitenRows` aufgenommen. | `RestarbeitenScreen._buildRestarbeitenPdfRows`, `printData`, r41/r42 und Modultest | fest |
-| `PDF-V2-REST-006` | Der Satz verwendet A4-Querformat und 273 mm feste Tabellenbreite bei je 12 mm horizontalem Inhaltsrand. Die 13 Baselines und ihre zulässigen späteren Editorgrenzen stehen in der folgenden Tabelle. M85.2 registriert sie nicht als Editorziele; Orientierung, Gesamtsumme, Mindestlesbarkeit und Satz-/Splitregeln bleiben gesperrt. | `RESTARBEITEN_PDF_COLUMNS`, `printIpc._resolveRequestedOrientation`, r27/r38/r47 | fest; noch nicht editorfähig |
+| `PDF-V2-REST-006` | Der Satz startet in A4-Querformat mit 273 mm Tabellenbreite bei je 12 mm horizontalem Inhaltsrand. Die 9 Baselines und Empfehlungsbereiche stehen in der folgenden Tabelle. Alle 9 Spalten sind explizite `TableColumn`-Ziele; jede ID löst denselben Track, Kopf und dieselben Datenzellen auf. Direktes `resizeWidth` ändert nur die gewählte Spalte, akzeptiert 0 mm als reversible vollständige Ausblendung und endet spätestens an der rechten Arbeitsbereichsgrenze. Innere Grenzen bleiben eine getrennte atomare, gegenläufige Zwei-Nachbar-Operation. Die Tabellenbreiten-Capability führt bei einer äußeren Breitenänderung weiterhin die letzte Spalte atomar mit und ist auf 268–273 mm begrenzt. Orientierung, Satz-/Splitregeln und Spaltenreihenfolge bleiben gesperrt. | `RESTARBEITEN_PDF_COLUMNS`, `restarbeitenPdfAdapter.cjs`, `restarbeitenPdfEditorRegistration.test.cjs`, `restarbeitenPdfVisibleAcceptance.test.cjs`, r27/r38/r47 | Satzbaseline fest; Tabellenbreiten editorfähig |
+| `PDF-V2-REST-007` | Die inneren senkrechten Spaltentrennlinien sind eine gemeinsame registrierte Darstellungsoption mit Baseline EIN. Sie verwenden 0,2 mm in der vorhandenen neutralen Linienfarbe `#ddd`, laufen deckungsgleich durch Kopf und Datenzeilen und erscheinen nur zwischen tatsächlich sichtbaren Spalten. Bei AUS oder 0-mm-Spalten bleiben weder Phantomlinien noch zusätzliche Außenlinien zurück. Der boolesche Zustand nutzt ausschließlich `setVisibility` und den bestehenden PDF-Profilweg. | `restarbeitenPdfAdapter.cjs`, `pdfEditorLayout.js`, `print.css`, M85-Optik-Readback, Registrierungs-/Profil- und sichtbarer Neustarttest | editorfähige Darstellungsoption |
 
 ### Verriegeltes Restarbeiten-Spaltenlayout
 
-| Spalte | Baseline mm | mögliche spätere Editorgrenze mm | Umbruch |
+| Spalte | Baseline mm | Empfehlung für direktes `resizeWidth` mm | Umbruch |
 |---|---:|---:|---|
 | Nr. | 9 | 7–12 | kompakt |
 | Klasse | 10 | 8–14 | kompakt |
-| Kurztext | 31 | 24–42 | Wortgrenze; bei überhohem Datensatz teilbar |
-| Langtext | 46 | 34–60 | Wortgrenze; bei überhohem Datensatz teilbar |
-| Verortung 1 | 17 | 13–24 | Wortgrenze |
-| Verortung 2 | 17 | 13–24 | Wortgrenze |
-| Verortung 3 | 18 | 13–24 | Wortgrenze |
-| Verortung 4 | 18 | 13–24 | Wortgrenze |
-| Status/Ampel | 19 | 15–25 | kompakt; Ampelsymbol bleibt in der Zelle |
-| Fertig bis | 20 | 17–24 | kompakt |
+| Gegenstand | 77 | 58–102 | Kurztext vor Langtext; beide an Wortgrenzen, bei überhohem Datensatz teilbar |
+| Ort | 34 | 26–48 | Haus vor Geschoss; Wortgrenze |
+| Einheit/Raum | 36 | 26–48 | Einheit vor Raum; Wortgrenze |
+| Fertig bis/Status | 39 | 32–49 | Datum vor gemeinsamer Ampel-/Statuszeile |
 | Verantwortlich | 25 | 19–34 | Wortgrenze |
 | erledigt am | 20 | 17–24 | kompakt |
 | Notiz/Maßnahmen | 23 | 18–34 | Wortgrenze; bei überhohem Datensatz teilbar |
 
-Alle Baselines summieren sich auf 273 mm. Eine spätere Editorfreigabe müsste
-die Summe weiterhin exakt innerhalb des verfügbaren Querformat-Inhalts halten;
-M85.2 führt dafür weder Registryeinträge noch einen Profilwert ein.
+Alle Baselines summieren sich auf 273 mm. Direkte Einzelspaltenänderungen dürfen
+diese Summe verkleinern oder bis zur rechten Arbeitsbereichsgrenze vergrößern;
+die übrigen Breiten bleiben dabei exakt erhalten. Innere Grenzänderungen halten
+ihre aktuelle Summe durch `adjacentPreserveTotal` exakt. Eine äußere
+Tabellenbreitenänderung führt ausschließlich die letzte Spalte mit und bleibt
+innerhalb 268–273 mm.
+Der Restarbeiten-Descriptor v3 registriert genau diese neun sichtbaren Tracks
+und die gemeinsame Darstellungsoption für die inneren Spaltentrennlinien.
+Die vier kombinierten Baselines entsprechen jeweils der Summe ihrer früheren
+Einzelspalten. Dadurch bleiben die fünf unveränderten stabilen Spaltenverträge
+kompatibel; acht entfallene Einzelspalten bleiben historisch bekannt, sind aber
+keine aktuellen Editorziele.
 
 ## C. Editorfähige Designwerte
 
@@ -162,18 +171,19 @@ Protokoll-TOP-Spalten verwenden bei 186 mm 24,18/120,90/40,92 mm (13/65/22).
 `setPageBreakRule`, Paginierung, Mindestzeilen und Fußreserve bleiben davon
 unberührt und gesperrt.
 
-K17.8 präzisiert ausschließlich die Bedienwirkung der bereits registrierten
-TOP-Spalten: Eine horizontale `TableColumn`-Translation wird nicht angeboten.
-Stattdessen verschiebt `resizeColumnBoundary` am Tabellenparent genau eine
-innere Grenze; die linke und rechte Nachbarbreite ändern sich im selben
-atomaren Vorgang um entgegengesetzte Beträge. `resizeWidth` bleibt die interne
-Zustands-/Restore-Operation der einzelnen Tracks, ist für die Spaltenauswahl
-aber kein direkter Bedienmodus. `setVisibility` wirkt auf Track, Überschrift
-und alle Datenzellen derselben `TableColumn`. Die drei Überschriften sind
-explizite Kinder ihrer jeweiligen Spalte; `textMove` wirkt nur auf den
-Überschriftentext. Spaltenreihenfolge, Spaltenzahl, Gesamtbreite,
-Außenkanten, Paginierung, Tabellenkopfwiederholung, Fachwerte und
-Seitenzuweisung bleiben unverändert gesperrt.
+K17.12 präzisiert die Bedienwirkung aller registrierten PDF-`TableColumn`-Ziele.
+Eine horizontale Translation wird nicht angeboten. Direkte Millimetereingabe
+und Ziehen an der rechten ausgewählten Spaltenkante senden dieselbe bestehende
+`resizeWidth`-Operation und ändern ausschließlich diesen Track. Nachfolgende
+Tracks verschieben sich, Nachbarbreiten bleiben unverändert. 0 mm entfernt die
+vollständige Spalte ohne Phantomlücke, lässt ID, Baumziel, Undo und Profilwert
+aber bestehen. Negative Werte und Überschreitungen der tatsächlichen rechten
+PDF-Arbeitsbereichsgrenze werden abgewiesen. Min/Max bleiben für diesen direkten
+Vorgang Empfehlungen. `resizeColumnBoundary` am Tabellenparent bleibt separat:
+linke und rechte Nachbarbreite ändern sich atomar um entgegengesetzte Beträge,
+die Summe bleibt fest und Min/Max dürfen hart wirken. Paginierung,
+Tabellenkopfwiederholung, Fachwerte, Reihenfolge und Seitenzuweisung bleiben
+unverändert gesperrt.
 
 Bekannter separater Readback-Punkt: Die Registry-Baseline der TOP-Tabelle
 meldet `y = 91 mm`, während der tatsächliche Tabellenkopf im gemessenen
@@ -183,7 +193,7 @@ Diese vertikale Abweichung ist nicht Bestandteil der horizontalen
 Meta-Spalten-Innengeometrie und bleibt in diesem Paket ausdrücklich
 unverändert.
 
-Alle Werte stammen aus `bbmPdfAdapter.cjs`. `min/max` meint die dort tatsächlich validierten Grenzen, nicht eine gewünschte Gestaltung. Nach jeder erfolgreichen Änderung wird die Vorschau „veraltet“ und muss explizit über denselben PDF-Weg neu erzeugt werden. Apply-Fehler und ungültige Spaltensummen lassen den vorherigen Zustand als Rollback stehen.
+Alle Werte stammen aus `bbmPdfAdapter.cjs`. Bei direktem `TableColumn.resizeWidth` sind `min/max` Gestaltungsempfehlungen; bei `resizeColumnBoundary` und den übrigen ausdrücklich begrenzten Operationen bleiben sie validierte Grenzen. Nach jeder erfolgreichen Änderung wird die Vorschau „veraltet“ und über denselben PDF-Weg neu erzeugt. Apply-Fehler und unzulässige Geometrien lassen den vorherigen Zustand als Rollback stehen.
 
 Abkürzungen: `mm` = Millimeter, `pt` = Punkt, `×` = Breite × Höhe. Für Textgröße und Zeilenabstand ist nur `> 0` kodiert; es gibt keinen kodierten Höchstwert. Positions-/Größenlimits werden zusätzlich durch A4 und die jeweilige Area begrenzt.
 
@@ -235,8 +245,8 @@ Electron-Harness verwendet ausschließlich diese Objekte, eigenes temporäres
 `userData`/`sessionData` und die echten Renderer-CSS-Dateien. Die 26
 Protokollfälle behalten einschließlich p01–p34 ihre M85.1-Goldenwerte und ergänzen p48 für die Titelkennzeichnungen; 22
 Restarbeiten-Fälle decken Leerzustand, Grenzfälle, Mehrseitenlisten, alle drei
-teilbaren Textfelder, einen Datensatz über mehrere Seiten, alle 13 Spalten,
-Status/Ampel, lange Verortung, sichtbare Filterreihenfolge, Löschfilter,
+teilbaren Textfelder, einen Datensatz über mehrere Seiten, alle 9 sichtbaren
+Spalten und ihre kombinierten Unterwerte, Status/Ampel, lange Verortung, sichtbare Filterreihenfolge, Löschfilter,
 Kopfwiederholung, Fußreserve, Querformat und gemischte Datensätze ab. Er erfasst
 je Seite:
 
@@ -249,8 +259,8 @@ je Seite:
 - verfügbare, verwendete und verbleibende Höhe;
 - Orientierung, Tabellen-/Seitenbreite, angewandte Spaltenbreiten und
   Schriftgrößen;
-- Restarbeiten-Filterfolge, Leerzustand und sichtbare
-  Fortsetzungskennzeichnung.
+- Restarbeiten-Filterfolge, Leerzustand, kombinierte Zellen, Kopf-/Zell-Clipping,
+  elementId-zu-Track-Geometrie und sichtbare Fortsetzungskennzeichnung.
 
 `scripts/pdf-v2/m85GoldenManifest.cjs` speichert Seitenzahlen und SHA-256 der vollständigen neutralen Zwischenrepräsentation. Binäre PDFs werden nicht versioniert. `npm run test:m85:pdf` erzeugt alle Snapshots neu und vergleicht sie.
 
@@ -267,14 +277,14 @@ Seitenzähler, Seitenmodell, Fußreserve, Tabellenkopf je Datenseite,
 Datensatzreihenfolge, p04/p05- und r24/r25-Grenzverhalten,
 Level-1-Keep-with-next, TOP- und Restarbeiten-Fortsetzungen, vollständige
 Teilnehmerzeilen mit wiederholtem Kopf, Wortgrenzen der Vorbemerkung, Abschluss
-auf letzter TOP-Seite, Restarbeiten-Querformat und 13-Spalten-Summe, 37
+auf letzter TOP-Seite, Restarbeiten-Querformat und 9-Spalten-Summe, 37
 Protokoll-Registryelemente, `setPageBreakRule`, Fachoperationen und die
 Einzelpfade für Renderer/Paginierung/Profil.
 
 M85.1 schließt die vier Protokoll-Lücken `PDF-V2-SATZ-004`,
 `PDF-V2-SATZ-010`, `PDF-V2-PROT-001` und `PDF-V2-PROT-002`. M85.2 schließt
 `PDF-V2-REST-002`, `PDF-V2-REST-003` und `PDF-V2-REST-005`; REST-006 ist als
-fester, nicht editorfähiger 13-Spalten-Vertrag dokumentiert. Nach gemeinsamer
+expliziter editorfähiger 9-Spalten-Vertrag dokumentiert. Nach gemeinsamer
 automatisierter und sichtbarer Prüfung beider Dokumentarten ist M85.0 `[A]`.
 
 ## Registrybewertung nach M83.0
@@ -290,13 +300,20 @@ Meta-Unterzeilen/Ampel, Legende,
 Nächster-Termin-Text, Global-/Full-/Mini-Kopf als getrennte Varianten und der
 Fußreserve-Spacer.
 
-Restarbeiten-PDF besitzt weiterhin keine Registry. Später registrierbar wären
-der Restarbeiten-Tabellenbereich, Tabellenkopf und die 13 expliziten Spalten
-mit den dokumentierten Min-/Max-Werten. Gesperrt bleiben Papierformat,
-Gesamtbreite, Spaltenreihenfolge, Tabellenkopfwiederholung, Fußreserve,
+Restarbeiten-PDF besitzt nun eine eigene explizite Registry mit Dokument,
+Seite, Kopf, Projekt-/Titelgruppe, Body, Tabellenbereich, Wiederholungsbereich,
+9 sichtbaren Spalten und Fußreserve. Editierbar sind die 9 Spaltenbreiten, die atomare
+innere Tabellengrenze sowie die technisch gekoppelte äußere Tabellenbreite
+innerhalb 268–273 mm mit den dokumentierten Min-/Max-Werten.
+Gesperrt bleiben Papierformat,
+Spaltenreihenfolge, Tabellenkopfwiederholung, Fußreserve,
 Datensatzidentität, Seitenzuweisung und Splitregeln.
 
-Eine spätere komponentennahe Vollregistrierung nach M83.0 ist fachlich sinnvoll, aber kein Teil von M85.0. Sie darf keine automatische DOM-Erkennung verwenden und muss zuerst fachlich entscheiden, welche sichtbaren Unterelemente Designziele sind. Satzträger wie Seitenart, Tabellenwiederholung, Fußreserve, Datensatzsegment und Blockreihenfolge bleiben immer gesperrt.
+Die Registrierung verwendet ausschließlich explizite Ref-/Rendererkeys und
+keine automatische DOM-Erkennung. Weitere sichtbare Unterelemente dürfen erst
+nach eigener fachlicher Entscheidung additiv folgen. Satzträger wie Seitenart,
+Tabellenwiederholung, Fußreserve, Datensatzsegment und Blockreihenfolge bleiben
+immer gesperrt.
 
 ## Änderungsregel
 

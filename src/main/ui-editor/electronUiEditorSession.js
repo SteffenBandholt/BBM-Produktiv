@@ -263,6 +263,8 @@ class ElectronUiEditorSessionController {
     this.ipcMain.handle("uiEditor:respond", (_event, message) => this.respondFromRenderer(message));
     this.ipcMain.handle("uiEditor:targetEvent", (_event, message) => this.forwardTargetEvent(message));
     this.ipcMain.handle("uiEditor:preparePdfContext", (_event, context) => this.preparePdfContext(context));
+    this.ipcMain.handle("uiEditor:getPdfDocumentTypeStatus", (_event, context) => this.getPdfDocumentTypeStatus(context));
+    this.ipcMain.handle("uiEditor:registerPdfDocumentType", (_event, context) => this.registerPdfDocumentType(context));
     this.ipcMain.handle("uiEditor:loadStartupLayout", (_event, registration) => this.loadStartupLayout(registration));
     this.ipcMain.handle("uiEditor:completeStartupLayout", (_event, result) => this.completeStartupLayout(result));
   }
@@ -355,13 +357,26 @@ class ElectronUiEditorSessionController {
 
   preparePdfContext(context = {}) {
     if (!this.pdfAdapter) return { ok: false, pdfRegistryStatus: "unavailable", activeDocumentId: "" };
-    const result = this.pdfAdapter.setActiveDocumentContext({
-      documentTypeId: context?.documentTypeId,
-      projectId: context?.projectId,
-      meetingId: context?.meetingId,
-    });
+    ensureSmallPlainObject(context, "PDF-Dokumentkontext");
+    const result = this.pdfAdapter.setActiveDocumentContext(context);
     console.info(`[ui-editor] PDF context: ${result.pdfRegistryStatus}`);
     return result;
+  }
+
+  getPdfDocumentTypeStatus(context = {}) {
+    if (!this.pdfAdapter?.inspectPdfDocumentType) return { ok: false, pdfRegistryStatus: "unavailable", editorAvailable: false };
+    ensureSmallPlainObject(context, "PDF-Dokumenttypabfrage");
+    return { ok: true, ...this.pdfAdapter.inspectPdfDocumentType(context.documentTypeId) };
+  }
+
+  registerPdfDocumentType(context = {}) {
+    if (!this.pdfAdapter?.activateAcceptedDocumentType) return { ok: false, pdfRegistryStatus: "unavailable", editorAvailable: false };
+    ensureSmallPlainObject(context, "PDF-Dokumenttypregistrierung");
+    try {
+      return { ok: true, ...this.pdfAdapter.activateAcceptedDocumentType(context.documentTypeId) };
+    } catch (error) {
+      return { ok: false, errorCode: String(error?.code || "pdf_document_registration_failed"), message: String(error?.message || "PDF-Dokumenttyp konnte nicht registriert werden."), diagnostics: error?.diagnostics || null };
+    }
   }
 
   async open(registration, reason = "open") {
@@ -474,7 +489,9 @@ class ElectronUiEditorSessionController {
       `--profile-root=${profileRoot}`,
       `--editor-runtime-root=${editorRuntimeRoot}`,
     ];
+    let pdfSessionPreparation = null;
     try {
+      if (contract.pdfContract) pdfSessionPreparation = this.pdfAdapter?.preparePdfEditorSessionBaseline?.() || null;
       this.sessionId = identifiers.sessionId;
       this.child = this.spawnProcess(executablePath, args, {
         cwd: path.dirname(executablePath),
@@ -496,6 +513,7 @@ class ElectronUiEditorSessionController {
       return { ok: true, started: true, focused: false, sessionId: identifiers.sessionId, registryRefreshStatus: "changed" };
     } catch (error) {
       await this.#disposeSession("editor_start_failed", true);
+      if (pdfSessionPreparation) this.pdfAdapter?.rollbackPdfEditorSessionPreparation?.(pdfSessionPreparation);
       throw error;
     }
   }

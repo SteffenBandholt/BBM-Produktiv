@@ -17,6 +17,7 @@ const {
   getBbmPdfRegistry,
   createBbmPdfAdapter,
 } = require("../../src/main/ui-editor/bbmPdfAdapter.cjs");
+const { REGISTRY: RESTARBEITEN_PDF_REGISTRY } = require("../../src/main/ui-editor/restarbeitenPdfAdapter.cjs");
 
 const ROOT = path.resolve(__dirname, "../..");
 const CONTRACT = Object.freeze({
@@ -34,6 +35,8 @@ const CONTRACT = Object.freeze({
   closing: "PDF-V2-PROT-003",
   restRecord: "PDF-V2-REST-002",
   restMeasure: "PDF-V2-REST-003",
+  restColumns: "PDF-V2-REST-001",
+  restSeparators: "PDF-V2-REST-007",
   protocolMeta: "PDF-V2-PROT-006",
   protocolDecisionMarker: "PDF-V2-PROT-009",
   protocolTitleMarkers: "PDF-V2-PROT-010",
@@ -126,6 +129,22 @@ function editorBounds(result, elementId, part) {
 function editorBoundsOnPage(result, elementId, pageNumber, part) {
   return (result?.previewMetadata?.renderBounds || [])
     .filter((entry) => entry.elementId === elementId && entry.pageNumber === pageNumber && (!part || entry.part === part));
+}
+
+function assertVerticalSeparators(cells, enabled, label) {
+  const visibleCells = cells.filter((cell) => cell.separator.display !== "none");
+  for (const [index, cell] of visibleCells.entries()) {
+    const expected = enabled && index < visibleCells.length - 1;
+    assert.equal(cell.separator.borderRightStyle, expected ? "solid" : "none", `${label}:${cell.key}:Linienstil`);
+    if (expected) {
+      assert.ok(cell.separator.borderRightMm >= 0.1 && cell.separator.borderRightMm <= 0.25, `${label}:${cell.key}:Linienbreite`);
+      assert.equal(cell.separator.borderRightColor, "rgb(221, 221, 221)", `${label}:${cell.key}:Linienfarbe`);
+    } else assert.equal(cell.separator.borderRightMm, 0, `${label}:${cell.key}:keine Aussen-/Restlinie`);
+  }
+  for (const cell of cells.filter((candidate) => candidate.separator.display === "none")) {
+    assert.equal(cell.separator.borderRightMm, 0, `${label}:${cell.key}:keine Phantomlinie`);
+  }
+  return visibleCells;
 }
 
 async function runM85PdfSatzvertragTests(run) {
@@ -265,34 +284,82 @@ async function runM85PdfSatzvertragTests(run) {
     assert.deepEqual(KNOWN_OPEN_GUARDRAILS[CONTRACT.restMeasure], []);
   });
 
-  await run("M85.2 Restarbeiten: Querformat, 13 Spalten, Filterfolge, Tabellenkopf und Fortsetzungen sind verriegelt", () => {
+  await run("M85.2 Restarbeiten: Querformat, 9 Spalten, Filterfolge, Tabellenkopf und Fortsetzungen sind verriegelt", () => {
     const byId = resultMap(rendered);
     const restFixtures = FIXTURES.filter((fixture) => fixture.kind === "restarbeiten");
     assert.ok(restFixtures.length >= 20);
     const expectedColumnKeys = [
-      "number", "class", "shortText", "longText", "location1", "location2", "location3",
-      "location4", "status", "dueDate", "responsible", "completedAt", "completionNote",
+      "number", "class", "subject", "location", "unitRoom", "dueStatus", "responsible", "completedAt", "completionNote",
     ];
+    const expectedHeaderLines = [["Nr."], ["Klasse"], ["Gegenstand"], ["Ort"], ["Einheit", "Raum"], ["Fertig bis", "Status"], ["Verantwortlich"], ["erledigt am"], ["Notiz/Maßnahmen"]];
+    let restarbeitenAmpelCount = 0;
     for (const fixture of restFixtures) {
-      const snapshot = byId.get(fixture.id).snapshot;
+      const fixtureResult = byId.get(fixture.id);
+      const snapshot = fixtureResult.snapshot;
       const sourceOrder = fixture.data.restarbeitenItems
         .filter((row) => !String(row.deleted_at || "").trim())
         .map((row) => String(row.id || row.running_number));
       assert.equal(snapshot.orientation, "landscape", `${fixture.id}:Querformat`);
       assert.deepEqual(snapshot.restarbeitenSourceOrder, sourceOrder, `${fixture.id}:Filterfolge`);
-      assert.equal(snapshot.appliedDesign.restarbeitenColumnCount, 13, `${fixture.id}:Spaltenzahl`);
+      assert.equal(snapshot.appliedDesign.restarbeitenColumnCount, 9, `${fixture.id}:Spaltenzahl`);
+      assert.deepEqual(snapshot.appliedDesign.restarbeitenHeaderLines, expectedHeaderLines, `${fixture.id}:Kopfstruktur`);
       assert.equal(snapshot.appliedDesign.restarbeitenTableWidthMm, 273, `${fixture.id}:Spaltenbreite`);
       assert.equal(snapshot.appliedDesign.restarbeitenColumns.every((column) => column.widthMm >= column.minWidthMm && column.widthMm <= column.maxWidthMm), true, `${fixture.id}:Breitengrenzen`);
+      assert.equal(fixtureResult.restarbeitenOptics.length, snapshot.pageCount, `${fixture.id}:Optik-Readback je Seite`);
+      for (const pageOptics of fixtureResult.restarbeitenOptics) {
+        assert.equal(pageOptics.headers.length, 9, `${fixture.id}:Seite${pageOptics.pageNumber}:neun Kopfzellen`);
+        for (const header of pageOptics.headers) {
+          assert.equal(header.textAlign, "center", `${fixture.id}:Seite${pageOptics.pageNumber}:${header.key}:horizontal zentriert`);
+          assert.equal(header.verticalAlign, "middle", `${fixture.id}:Seite${pageOptics.pageNumber}:${header.key}:vertikal zentriert`);
+          assert.equal(header.fontWeight, "500", `${fixture.id}:Seite${pageOptics.pageNumber}:${header.key}:Schriftgewicht`);
+          assert.equal(header.fontSizePt, 6, `${fixture.id}:Seite${pageOptics.pageNumber}:${header.key}:Schriftgröße`);
+          assert.equal(header.labelAlignItems, "center", `${fixture.id}:Seite${pageOptics.pageNumber}:${header.key}:mehrzeilig zentriert`);
+          assert.equal(header.labelTextAlign, "center", `${fixture.id}:Seite${pageOptics.pageNumber}:${header.key}:Textausrichtung`);
+        }
+        assert.equal(pageOptics.verticalSeparatorsEnabled, true, `${CONTRACT.restSeparators}:${fixture.id}:Seite${pageOptics.pageNumber}:Baseline EIN`);
+        assert.equal(assertVerticalSeparators(pageOptics.headers, true, `${fixture.id}:Seite${pageOptics.pageNumber}:Kopf`).length, 9);
+        for (const [rowIndex, row] of pageOptics.bodyRows.entries()) {
+          assertVerticalSeparators(row.cells, true, `${fixture.id}:Seite${pageOptics.pageNumber}:Zeile${rowIndex + 1}`);
+        }
+        restarbeitenAmpelCount += pageOptics.ampels.length;
+        for (const ampel of pageOptics.ampels) {
+          assert.ok(Math.abs(ampel.box.widthMm - 2) <= 0.05, `${fixture.id}:Seite${pageOptics.pageNumber}:Ampelbreite`);
+          assert.ok(Math.abs(ampel.box.heightMm - 2) <= 0.05, `${fixture.id}:Seite${pageOptics.pageNumber}:Ampelhöhe`);
+        }
+      }
       for (const page of snapshot.pages) {
         assert.equal(page.tableWithinPage, true, `${fixture.id}:Seite${page.pageNumber}:Tabellenbreite`);
-        assert.equal(page.columnCount, 13, `${fixture.id}:Seite${page.pageNumber}:Spalten`);
+        assert.equal(page.columnCount, 9, `${fixture.id}:Seite${page.pageNumber}:Spalten`);
         assert.deepEqual(page.columnKeys, expectedColumnKeys, `${fixture.id}:Seite${page.pageNumber}:Spaltenfolge`);
         assert.equal(page.tableHeaderPresent, true, `${fixture.id}:Seite${page.pageNumber}:Tabellenkopf`);
+        assert.equal(page.combinedCellStructureValid, true, `${fixture.id}:Seite${page.pageNumber}:kombinierte Zellen`);
+        assert.equal(page.statusAmpelTogether, true, `${fixture.id}:Seite${page.pageNumber}:Status/Ampel`);
+        assert.equal(page.contentWithinCells, true, `${fixture.id}:Seite${page.pageNumber}:Inhalt abgeschnitten`);
+        assert.equal(page.headerContentWithinCells, true, `${fixture.id}:Seite${page.pageNumber}:Kopf abgeschnitten`);
+      }
+      const bounds = byId.get(fixture.id).previewMetadata?.renderBounds || [];
+      const registryColumns = RESTARBEITEN_PDF_REGISTRY.elements.filter((entry) => entry.kind === "tableColumn").sort((left, right) => left.order - right.order);
+      for (const [columnIndex, column] of registryColumns.entries()) {
+        const expectedKey = expectedColumnKeys[columnIndex];
+        assert.match(column.rendererKey, new RegExp(`data-restarbeiten-column=["']${expectedKey}["']`), `${fixture.id}:${column.id}:Renderer-Key`);
+        for (const page of snapshot.pages) {
+          const pageBounds = bounds.filter((entry) => entry.elementId === column.id && entry.pageNumber === page.pageNumber);
+          const track = pageBounds.find((entry) => entry.part === "track");
+          const header = pageBounds.find((entry) => entry.part === "header");
+          assert.ok(track && header, `${fixture.id}:Seite${page.pageNumber}:${column.id}:Geometrie fehlt`);
+          assert.ok(Math.abs(track.box.x - column.baseline.x) <= 0.05, `${fixture.id}:Seite${page.pageNumber}:${column.id}:falsche sichtbare Spalte`);
+          assert.ok(Math.abs(track.box.width - column.baseline.width) <= 0.05, `${fixture.id}:Seite${page.pageNumber}:${column.id}:falsche Breite`);
+          assert.ok(Math.abs(header.box.x - track.box.x) <= 0.05 && Math.abs(header.box.width - track.box.width) <= 0.05, `${fixture.id}:Seite${page.pageNumber}:${column.id}:Kopf/Track versetzt`);
+          for (const dataBound of pageBounds.filter((entry) => entry.part === "data")) {
+            assert.ok(Math.abs(dataBound.box.x - track.box.x) <= 0.05 && Math.abs(dataBound.box.width - track.box.width) <= 0.05, `${fixture.id}:Seite${page.pageNumber}:${column.id}:Daten/Track versetzt`);
+          }
+        }
       }
       if (snapshot.pageCount > 1) {
         assert.ok(snapshot.pages.at(-1).records.length > 0, `${fixture.id}:leere Zusatzseite`);
       }
     }
+    assert.ok(restarbeitenAmpelCount > 0, "Restarbeiten-Optikguard hat keine Ampel geprüft.");
     assert.equal(byId.get("r19-empty").snapshot.pages[0].emptyStatePresent, true);
     assert.equal(byId.get("r24-just-before-end").snapshot.pageCount, 1, `${CONTRACT.recordFit}:r24`);
     assert.equal(byId.get("r24-just-before-end").snapshot.pages[0].records.length, 13, `${CONTRACT.recordFit}:r24:vollständig`);
@@ -306,6 +373,38 @@ async function runM85PdfSatzvertragTests(run) {
       assert.equal(segments[0], "start", `${id}:Fortsetzungsstart`);
       assert.equal(segments.at(-1), "end", `${id}:Fortsetzungsende`);
       assert.equal(segments.some((segment) => segment === "continuation") || segments.length === 2, true, `${id}:Fortsetzung`);
+    }
+  });
+
+  await run("M85.2 Restarbeiten: gemeinsame Vertikallinien-Option ist geometrieneutral, wiederholt und 0-mm-sicher", () => {
+    const optionId = "pdf.bbm.restarbeiten.table.vertical-column-separators";
+    const numberId = "pdf.bbm.restarbeiten.table.column.number";
+    const enabled = editorRun(optionId, { visible: true }, "r44-repeated-head");
+    const disabled = editorRun(optionId, { visible: false }, "r44-repeated-head");
+    assert.ok(enabled.snapshot.pageCount > 1, `${CONTRACT.tableHead}:Folgeseite fehlt`);
+    assert.deepEqual(disabled.snapshot, enabled.snapshot, `${CONTRACT.restSeparators}:EIN/AUS veraendert Satzgeometrie`);
+    for (const page of enabled.restarbeitenOptics) {
+      assert.equal(page.verticalSeparatorsEnabled, true, `${CONTRACT.restSeparators}:EIN`);
+      assert.equal(assertVerticalSeparators(page.headers, true, `EIN:Seite${page.pageNumber}:Kopf`).length, 9);
+      for (const [rowIndex, row] of page.bodyRows.entries()) assertVerticalSeparators(row.cells, true, `EIN:Seite${page.pageNumber}:Zeile${rowIndex + 1}`);
+    }
+    for (const page of disabled.restarbeitenOptics) {
+      assert.equal(page.verticalSeparatorsEnabled, false, `${CONTRACT.restSeparators}:AUS`);
+      assertVerticalSeparators(page.headers, false, `AUS:Seite${page.pageNumber}:Kopf`);
+      for (const [rowIndex, row] of page.bodyRows.entries()) assertVerticalSeparators(row.cells, false, `AUS:Seite${page.pageNumber}:Zeile${rowIndex + 1}`);
+    }
+
+    const zero = editorRun(numberId, { width: 0 }, "r44-repeated-head");
+    for (const page of zero.restarbeitenOptics) {
+      assert.equal(page.verticalSeparatorsEnabled, true, `${CONTRACT.restSeparators}:0-mm mit EIN`);
+      const visibleHeaders = assertVerticalSeparators(page.headers, true, `0-mm:Seite${page.pageNumber}:Kopf`);
+      assert.deepEqual(visibleHeaders.map((cell) => cell.key), ["class", "subject", "location", "unitRoom", "dueStatus", "responsible", "completedAt", "completionNote"]);
+      const hiddenNumber = page.headers.find((cell) => cell.key === "number");
+      assert.deepEqual([hiddenNumber.separator.display, hiddenNumber.separator.borderRightMm], ["none", 0]);
+      for (const [rowIndex, row] of page.bodyRows.entries()) {
+        const visibleCells = assertVerticalSeparators(row.cells, true, `0-mm:Seite${page.pageNumber}:Zeile${rowIndex + 1}`);
+        if (row.cells.length > 1) assert.equal(visibleCells.some((cell) => cell.key === "number"), false);
+      }
     }
   });
 
@@ -734,6 +833,7 @@ async function runM85PdfSatzvertragTests(run) {
     const editorIpc = read("src/main/ipc/uiEditorIpc.js");
     const pdfAdapterRegistry = read("src/main/ui-editor/pdfAdapterRegistry.cjs");
     const protocolPdfAdapter = read("src/main/ui-editor/bbmPdfAdapter.cjs");
+    const restPdfAdapter = read("src/main/ui-editor/restarbeitenPdfAdapter.cjs");
     const restScreen = read("src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
     const restQuicklane = read("src/renderer/modules/restarbeiten/RestarbeitenQuicklane.js");
     assert.match(printApp, /import \{[\s\S]*renderPrint[\s\S]*\} from "\.\/layout\/PrintShell\.js"/, CONTRACT.singleRenderer);
@@ -745,10 +845,11 @@ async function runM85PdfSatzvertragTests(run) {
     assert.match(editorIpc, /generatePdfForUiEditor/, CONTRACT.singleProfile);
     assert.match(editorIpc, /createPdfEditorAdapterResolver/, CONTRACT.singleProfile);
     assert.doesNotMatch(editorIpc, /getSharedBbmPdfAdapter|module-protokoll|["']protocol["']/, CONTRACT.singleProfile);
-    assert.match(pdfAdapterRegistry, /registerPdfEditorAdapter[\s\S]*layoutStorageKey[\s\S]*configureProfileRoot/, CONTRACT.singleProfile);
-    assert.match(protocolPdfAdapter, /registerPdfEditorAdapter\([\s\S]*layoutStorageKey:\s*"module-protokoll"/, CONTRACT.singleProfile);
+    assert.match(pdfAdapterRegistry, /registerPdfEditorAdapter[\s\S]*profileStorageKey[\s\S]*configureProfileRoot/, CONTRACT.singleProfile);
+    assert.match(protocolPdfAdapter, /registerPdfEditorAdapter\([\s\S]*profileStorageKey:\s*"module-protokoll"/, CONTRACT.singleProfile);
+    assert.match(restPdfAdapter, /PROFILE_STORAGE_KEY = "module-restarbeiten"[\s\S]*registerPdfEditorAdapter/, CONTRACT.singleProfile);
     assert.doesNotMatch(editorIpc, /new .*ProfileStore|create.*ProfileStore/, CONTRACT.singleProfile);
-    assert.match(printIpc, /_usesBbmProtocolPdfLayout\(data\.mode\)[\s\S]*readPersistedPdfLayoutState\(\)/, CONTRACT.singleProfile);
+    assert.match(printIpc, /resolvePrintRegistration\([\s\S]*readPersistedPdfLayoutState\(\)/, CONTRACT.singleProfile);
     assert.match(printApp, /data\.mode === "headerTest"/, CONTRACT.historical);
     assert.match(restScreen, /printPdfAndPreviewInternal\(this\._buildRestarbeitenPdfPayload\(\)\)/, CONTRACT.historical);
     assert.match(restScreen, /mode:\s*"restarbeiten"[\s\S]*orientation:\s*"landscape"/, CONTRACT.historical);

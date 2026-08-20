@@ -109,6 +109,10 @@ function collectAppliedDesign(root, data = {}) {
         maxWidthMm: Number(column?.dataset?.maxWidthMm || 0),
       }))
     : [];
+  const restarbeitenHeaderLines = firstRestarbeiten
+    ? Array.from(firstRestarbeiten.querySelectorAll?.("thead th") || []).map((cell) =>
+        Array.from(cell.querySelectorAll?.(".restarbeitenHeaderLine") || []).map((line) => String(line.textContent || "").trim()))
+    : [];
   return {
     globalHeaderHeightMm: Number(data?.v2Layout?.globalHeaderHeightMm) || null,
     globalLogoBoxHeightMm: Number(data?.v2Layout?.globalLogoBoxHeightMm) || 0,
@@ -123,6 +127,7 @@ function collectAppliedDesign(root, data = {}) {
     restarbeitenColumnCount: firstRestarbeiten?.querySelectorAll?.("thead th")?.length || 0,
     ...(firstRestarbeiten ? {
       restarbeitenColumns,
+      restarbeitenHeaderLines,
       restarbeitenTableWidthMm: round(restarbeitenColumns.reduce((sum, column) => sum + column.widthMm, 0)),
     } : {}),
     fontSizesPx: {
@@ -169,6 +174,47 @@ export function buildPdfSatzvertragSnapshot({ fixtureId, pages, data, root } = {
       const pageBodyRect = pageBody?.getBoundingClientRect?.() || {};
       const restarbeitenTable = element?.querySelector?.(".restarbeitenTable") || null;
       const restarbeitenTableRect = restarbeitenTable?.getBoundingClientRect?.() || {};
+      const restarbeitenRowElements = Array.from(restarbeitenTable?.querySelectorAll?.("tbody .restarbeitItemRow") || []);
+      const normalizedText = (value) => String(value ?? "").trim();
+      const expectedStack = (row, indexes) => indexes.map((index) => normalizedText(row?.cells?.[index])).filter(Boolean);
+      const actualStack = (rowElement, columnKey, selector = ".restarbeitCellLine") =>
+        Array.from(rowElement?.querySelectorAll?.(`[data-restarbeiten-column="${columnKey}"] ${selector}`) || []).map((node) => normalizedText(node.textContent)).filter(Boolean);
+      const sameTexts = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+      const combinedCellStructureValid = rows.length === restarbeitenRowElements.length && rows.every((row, rowIndex) => {
+        const rowElement = restarbeitenRowElements[rowIndex];
+        return sameTexts(actualStack(rowElement, "subject"), expectedStack(row, [2, 3]))
+          && sameTexts(actualStack(rowElement, "location"), expectedStack(row, [4, 5]))
+          && sameTexts(actualStack(rowElement, "unitRoom"), expectedStack(row, [6, 7]))
+          && sameTexts(actualStack(rowElement, "dueStatus", ".restarbeitDueDate"), expectedStack(row, [9]))
+          && sameTexts(actualStack(rowElement, "dueStatus", ".restarbeitStatusText"), expectedStack(row, [8]));
+      });
+      const statusAmpelTogether = rows.length === restarbeitenRowElements.length && rows.every((row, rowIndex) => {
+        const cell = restarbeitenRowElements[rowIndex]?.querySelector?.('[data-restarbeiten-column="dueStatus"]');
+        const wrap = cell?.querySelector?.(".restarbeitStatusWrap") || null;
+        const expectsStatusLine = Boolean(normalizedText(row?.cells?.[8])) || Boolean(row?.showAmpelInList !== false && row?.ampelState);
+        const expectsAmpel = Boolean(row?.showAmpelInList !== false && row?.ampelState);
+        return Boolean(wrap) === expectsStatusLine
+          && Boolean(wrap?.querySelector?.(".ampelDot")) === expectsAmpel
+          && (!wrap?.querySelector?.(".restarbeitStatusText") || wrap.querySelector(".restarbeitStatusText").parentElement === wrap);
+      });
+      const contentWithinCells = restarbeitenRowElements.every((rowElement) =>
+        Array.from(rowElement.querySelectorAll?.(".restarbeitCellLine,.restarbeitStatusWrap") || []).every((content) => {
+          const cell = content.closest?.("td");
+          const cellRect = cell?.getBoundingClientRect?.() || {};
+          const contentRect = content.getBoundingClientRect?.() || {};
+          return Number(contentRect.left) >= Number(cellRect.left) - 0.5
+            && Number(contentRect.right) <= Number(cellRect.right) + 0.5
+            && Number(contentRect.top) >= Number(cellRect.top) - 0.5
+            && Number(contentRect.bottom) <= Number(cellRect.bottom) + 0.5;
+        }));
+      const headerContentWithinCells = Array.from(restarbeitenTable?.querySelectorAll?.("thead th .restarbeitenHeaderLabel") || []).every((content) => {
+        const cellRect = content.closest?.("th")?.getBoundingClientRect?.() || {};
+        const contentRect = content.getBoundingClientRect?.() || {};
+        return Number(contentRect.left) >= Number(cellRect.left) - 0.5
+          && Number(contentRect.right) <= Number(cellRect.right) + 0.5
+          && Number(contentRect.top) >= Number(cellRect.top) - 0.5
+          && Number(contentRect.bottom) <= Number(cellRect.bottom) + 0.5;
+      });
       const pageCounterWithinPage = Number(pageCounterRect.width) > 0
         && Number(pageCounterRect.height) > 0
         && Number(pageCounterRect.left) >= Number(pageRect.left)
@@ -218,7 +264,11 @@ export function buildPdfSatzvertragSnapshot({ fixtureId, pages, data, root } = {
           columnCount: restarbeitenTable?.querySelectorAll?.("thead th")?.length || 0,
           columnKeys: Array.from(restarbeitenTable?.querySelectorAll?.("colgroup col") || [])
             .map((column) => String(column?.dataset?.restarbeitenColumn || "")),
-          emptyStatePresent: Boolean(restarbeitenTable?.querySelector?.("tbody td[colspan='13']")),
+          emptyStatePresent: Boolean(restarbeitenTable?.querySelector?.("tbody td[colspan='9']")),
+          combinedCellStructureValid,
+          statusAmpelTogether,
+          contentWithinCells,
+          headerContentWithinCells,
           continuationCount: rows.filter((row) => ["continuation", "end"].includes(String(row?.segment || ""))).length,
         } : {}),
         tableType: String(page?.table?.type || ""),

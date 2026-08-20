@@ -63,6 +63,7 @@ function element(values) {
     rendererKey: values.rendererKey,
     ...(values.columnRole ? { columnRole: values.columnRole } : {}),
     ...(values.boundaryResizePolicy ? { boundaryResizePolicy: values.boundaryResizePolicy } : {}),
+    ...(values.layoutBinding ? { layoutBinding: Object.freeze({ ...values.layoutBinding }) } : {}),
   });
 }
 
@@ -157,12 +158,15 @@ const ELEMENTS = Object.freeze([
     refKey: "protocol.tops.marker.todo", rendererKey: '.topsTable .lvl1Marker[data-marker="task"]' }),
   element({ id: `${SCOPE_ID}.tops.column.number`, name: "Spalte TOP", parentId: `${SCOPE_ID}.tops`, kind: "tableColumn", role: "structure", columnRole: "structureColumn", pageArea: "body", order: 230,
     capabilities: ["resizeWidth", "setVisibility"], baseline: box(12, 91, 24.18, 120, { visible: true }), layoutBounds: BODY_BOUNDS,
+    layoutBinding: { type: "tableLayoutColumnWidth", tableLayoutKey: "protokoll_tops", columnKey: "number" },
     refKey: "protocol.tops.column.number", rendererKey: ".topsTable .colNr" }),
   element({ id: `${SCOPE_ID}.tops.column.text`, name: "Spalte Gegenstand", parentId: `${SCOPE_ID}.tops`, kind: "tableColumn", role: "content", columnRole: "contentColumn", pageArea: "body", order: 231,
     capabilities: ["resizeWidth", "setVisibility"], baseline: box(36.18, 91, 120.9, 120, { visible: true }), layoutBounds: BODY_BOUNDS,
+    layoutBinding: { type: "tableLayoutColumnWidth", tableLayoutKey: "protokoll_tops", columnKey: "text" },
     refKey: "protocol.tops.column.text", rendererKey: ".topsTable .colText" }),
   element({ id: `${SCOPE_ID}.tops.column.meta`, name: "Spalte Status / Fertig bis / verantw", parentId: `${SCOPE_ID}.tops`, kind: "tableColumn", role: "meta", columnRole: "metaColumn", pageArea: "body", order: 232,
     capabilities: ["resizeWidth", "setVisibility"], baseline: box(157.08, 91, 40.92, 120, { visible: true }), layoutBounds: BODY_BOUNDS,
+    layoutBinding: { type: "tableLayoutColumnWidth", tableLayoutKey: "protokoll_tops", columnKey: "meta" },
     refKey: "protocol.tops.column.meta", rendererKey: ".topsTable .colMeta" }),
   element({ id: `${SCOPE_ID}.tops.heading.number`, name: "Tabellenkopf TOP", parentId: `${SCOPE_ID}.tops.column.number`, kind: "label", role: "columnHeader", pageArea: "body", order: 240,
     capabilities: ["textMove", "textResize", "setTextAlignment", "setVisibility"], baseline: box(12, 91, 24.18, 8, { textOffsetX: 0, textOffsetY: 0, fontSize: 8, textAlignment: "left", visible: true }), layoutBounds: BODY_BOUNDS,
@@ -721,9 +725,15 @@ const { registerPdfEditorAdapter } = require("./pdfAdapterRegistry.cjs");
 
 registerPdfEditorAdapter({
   documentTypeId: DOCUMENT_TYPE_ID,
+  moduleId: "protokoll",
+  scopeId: SCOPE_ID,
   displayName: DISPLAY_NAME,
-  layoutStorageKey: "module-protokoll",
+  profileStorageKey: "module-protokoll",
+  contractVersion: PDF_TARGET_CONTRACT_VERSION,
+  descriptorVersion: PDF_REGISTRY_VERSION,
+  printModes: ["protocol", "preview"],
   adapter: sharedBbmPdfAdapter,
+  builtIn: true,
   default: true,
   buildRegenerationRequest: ({ projectId, meetingId, activeDocumentId }) => ({
     mode: DOCUMENT_TYPE_ID,

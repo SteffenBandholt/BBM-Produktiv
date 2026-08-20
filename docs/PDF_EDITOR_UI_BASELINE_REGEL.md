@@ -1,6 +1,6 @@
 # PDF-Editor – UI als verbindliche Baseline
 
-Stand: 2026-08-18
+Stand: 2026-08-19
 Status: verbindliche Gestaltungs- und Bedienregel für BBM-PDFs
 
 ## Grundsatz
@@ -41,6 +41,9 @@ Nicht zulässig ist:
    - Sichtbarkeit ein-/ausschalten,
    - Textposition innerhalb eines Containers anpassen,
    - Spaltengrenzen innerhalb der gültigen Seitenfläche feinjustieren,
+   - eine ausgewählte PDF-Spalte unabhängig in Millimetern skalieren oder mit
+     0 mm reversibel vollständig ausblenden; Nachbarbreiten bleiben dabei
+     unverändert und die rechte Arbeitsbereichsgrenze bleibt hart,
    - druckbedingte Abstände korrigieren.
 
 4. **Feintuning bleibt PDF-spezifisch**
@@ -70,6 +73,16 @@ Nicht zulässig ist:
 
 8. **Vorschau und Produkt-PDF müssen identisch reagieren**
    Nach dem Speichern eines PDF-Feintunings müssen Editor-Vorschau, normale Vorschau und erzeugte Produkt-PDF denselben gespeicherten Layoutzustand verwenden.
+
+9. **Dokumenttyp und Elemente werden explizit synchronisiert**
+   - Ein PDF-Typ besitzt einen stabilen Descriptor mit Dokumenttyp, Modul,
+     Scope, Profilkey, Version, Regenerationsweg und expliziten Elementen.
+   - Der Editor scannt weder DOM noch PDF. Ein unbekannter Typ fällt nicht auf
+     einen anderen Dokumenttyp zurück.
+   - Neue Elemente werden nur additiv angenommen. Vorhandene Layoutwerte werden
+     dabei erhalten; fehlende Elemente werden nicht automatisch gelöscht.
+   - Registrierung und Synchronisation sind DEV-Werkzeuge. Produktbuilds zeigen
+     dafür keine Schaltflächen.
 
 ## Beispiel: Titelkennzeichnungen
 

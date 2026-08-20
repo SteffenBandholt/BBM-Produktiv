@@ -474,12 +474,12 @@ async function runM81BbmPdfAdapterTests(run) {
     const nativeEditor = read("../UI-Editor-kit/reference-target-app/src/ReferenceTargetApp.Wpf/UI/Editor/ElectronTargetEditor.cs");
     assert.match(printIpc, /generatePdfForUiEditor/);
     assert.match(printIpc, /printToPDF/);
-    assert.match(printIpc, /_usesBbmProtocolPdfLayout\(data\.mode\)/);
+    assert.match(printIpc, /resolvePrintRegistration\(\{ documentTypeId: p\.documentTypeId, mode: data\.mode \}\)/);
     assert.match(printIpc, /p\.pdfEditorPreview === true[\s\S]*getCurrentPdfLayoutState\(\)[\s\S]*readPersistedPdfLayoutState\(\)/);
-    assert.match(printIpc, /function _usesBbmProtocolPdfLayout\(mode\)[\s\S]*normalizedMode === "protocol" \|\| normalizedMode === "preview"/);
-    assert.match(printIpc, /if \(_usesBbmProtocolPdfLayout\(data\.mode\)\)[\s\S]*readPersistedPdfLayoutState\(\)/);
+    assert.doesNotMatch(printIpc, /function _usesBbmProtocolPdfLayout/);
+    assert.match(printIpc, /if \(pdfResolution\)[\s\S]*readPersistedPdfLayoutState\(\)/);
     assert.match(printIpc, /catch \(error\)[\s\S]*Editorprofil wird beim Produktdruck ignoriert/);
-    assert.match(renderer, /pdf\.bbm\.protocol/);
+    assert.doesNotMatch(renderer, /pdf\.bbm\.protocol|restarbeiten/);
     assert.doesNotMatch([printIpc, renderer, nativeEditor].join("\n"), /ReferenceOrderFactory/);
     assert.doesNotMatch([printIpc, renderer].join("\n"), /https?:|WebSocket|fetch\s*\(/i);
   });

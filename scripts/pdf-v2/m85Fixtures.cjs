@@ -236,7 +236,9 @@ const FIXTURES = Object.freeze([
   restarbeitenFixture("r19-empty", "Leere Restarbeitenliste", () => {}),
   restarbeitenFixture("r20-one-page", "Restarbeiten eine Seite", (data) => addRestarbeitenSeries(data, 4, { longtextWords: 5 })),
   restarbeitenFixture("r21-multiple-pages", "Restarbeiten mehrere Seiten", (data) => addRestarbeitenSeries(data, 45, { longtextWords: 14 })),
-  restarbeitenFixture("r22-short-record", "Kurzer Restarbeit-Datensatz", (data) => addRestarbeitenSeries(data, 1, { longtextWords: 3 })),
+  restarbeitenFixture("r22-short-record", "Fehlende Unterwerte ohne Leerraum", (data) => {
+    data.restarbeitenItems.push(restarbeit(1, { longText: "", location2: "", location3: "", dueDate: "" }));
+  }),
   restarbeitenFixture("r23-very-long-record", "Sehr langer Restarbeiten-Langtext", (data) => {
     data.restarbeitenItems.push(restarbeit(1, { longText: words(700, "rest-lang") }));
   }),
@@ -251,7 +253,7 @@ const FIXTURES = Object.freeze([
   restarbeitenFixture("r26-many-short", "Viele kurze Restarbeiten", (data) => addRestarbeitenSeries(data, 70, { longtextWords: 2 })),
   restarbeitenFixture("r27-columns-unsupported", "Verriegelte Restarbeiten-Spaltenbreiten", (data) => {
     addRestarbeitenSeries(data, 12, { longtextWords: 8 });
-    data.lockedRestarbeitenLayout = { orientation: "landscape", columnCount: 13 };
+    data.lockedRestarbeitenLayout = { orientation: "landscape", columnCount: 9 };
   }),
   protocolFixture("p28-participants-exact-boundary", "Teilnehmerzeile passt genau auf die erste Seite", (data) => {
     data.participants = Array.from({ length: 11 }, (_value, index) => participant(index + 1));
@@ -291,7 +293,7 @@ const FIXTURES = Object.freeze([
   restarbeitenFixture("r37-two-page-record", "Ein Restarbeiten-Datensatz auf zwei Seiten", (data) => {
     data.restarbeitenItems.push(restarbeit(1, { longText: words(280, "zweiseitig") }));
   }),
-  restarbeitenFixture("r38-all-columns-max", "Alle 13 Restarbeiten-Spalten stark belegt", (data) => {
+  restarbeitenFixture("r38-all-columns-max", "Alle Restarbeiten-Felder stark belegt", (data) => {
     data.restarbeitenItems.push(restarbeit(1, {
       shortText: words(80, "kurz"),
       longText: words(120, "lang"),
@@ -340,7 +342,7 @@ const FIXTURES = Object.freeze([
     addRestarbeitenSeries(data, 10, { longtextWords: 7 });
     data.restarbeitenItems.push(restarbeit(11, { longText: words(150, "reserve") }));
   }),
-  restarbeitenFixture("r46-landscape-contract", "A4-Querformat für 13 Spalten", (data) => {
+  restarbeitenFixture("r46-landscape-contract", "A4-Querformat für 9 Spalten", (data) => {
     addRestarbeitenSeries(data, 3, { longtextWords: 8 });
   }),
   restarbeitenFixture("r47-mixed-long-fields", "Lange Texte in mehreren Spalten", (data) => {
