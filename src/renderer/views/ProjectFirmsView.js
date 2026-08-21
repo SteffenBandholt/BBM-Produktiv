@@ -97,37 +97,19 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     }
   }
 
-  _makeTypeBadge(kind) {
-    const badge = document.createElement("span");
-    const isProject = kind === "project";
-    badge.textContent = isProject ? "Projekt" : "Firmenstamm";
-    style(badge, {
-      display: "inline-flex",
-      alignItems: "center",
-      minHeight: "20px",
-      padding: "0 7px",
-      borderRadius: "999px",
-      background: isProject ? "#f2f4f7" : "#eef4ff",
-      color: isProject ? "#475467" : "#175cd3",
-      fontSize: "10px",
-      fontWeight: "750",
-      whiteSpace: "nowrap",
-    });
-    return badge;
-  }
-
   _createFirmRow(firm, kind) {
     const row = document.createElement("button");
     row.type = "button";
+    const isProject = kind === "project";
     const selected = this.selectedEntry?.kind === kind && text(this.selectedEntry?.firm?.id) === text(firm?.id);
     style(row, {
       width: "100%",
       border: selected ? "1px solid #84adff" : "1px solid transparent",
       borderBottom: "1px solid #edf0f4",
-      background: selected ? "#eef4ff" : "#fff",
+      background: selected ? (isProject ? "#e9eef5" : "#eef4ff") : (isProject ? "#f4f6f8" : "#ffffff"),
       padding: "10px 12px",
       display: "grid",
-      gridTemplateColumns: "minmax(190px, 1.8fr) minmax(140px, 1fr) auto",
+      gridTemplateColumns: "minmax(190px, 1.8fr) minmax(140px, 1fr)",
       gap: "12px",
       alignItems: "center",
       textAlign: "left",
@@ -155,7 +137,7 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     });
     secondary.textContent = firmSecondary(firm) || "–";
 
-    row.append(name, secondary, this._makeTypeBadge(kind));
+    row.append(name, secondary);
     row.addEventListener("click", () => {
       this.selectedEntry = { kind, firm };
       this._renderContent();
@@ -163,7 +145,7 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     return row;
   }
 
-  _createSection(titleText, firms, kind, emptyText) {
+  _createFirmList() {
     const section = style(document.createElement("section"), {
       background: "#fff",
       border: "1px solid #dfe5ec",
@@ -171,6 +153,7 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
       overflow: "hidden",
     });
 
+    const total = this.projectLocalFirms.length + this.assignedGlobalFirms.length;
     const head = style(document.createElement("div"), {
       padding: "10px 12px",
       borderBottom: "1px solid #e7ebf0",
@@ -183,27 +166,28 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
       fontWeight: "850",
       color: "#172033",
     });
-    title.textContent = titleText;
+    title.textContent = "Firmen im Projekt";
     const count = style(document.createElement("span"), {
       fontSize: "10.5px",
       color: "#667085",
     });
-    count.textContent = `${firms.length}`;
+    count.textContent = `${total}`;
     head.append(title, count);
     section.append(head);
 
-    if (!firms.length) {
+    if (!total) {
       const empty = style(document.createElement("div"), {
         padding: "14px 12px",
         fontSize: "11.5px",
         color: "#98a2b3",
       });
-      empty.textContent = emptyText;
+      empty.textContent = "Noch keine Firma diesem Projekt zugeordnet.";
       section.append(empty);
       return section;
     }
 
-    for (const firm of firms) section.append(this._createFirmRow(firm, kind));
+    for (const firm of this.projectLocalFirms) section.append(this._createFirmRow(firm, "project"));
+    for (const firm of this.assignedGlobalFirms) section.append(this._createFirmRow(firm, "global"));
     return section;
   }
 
@@ -234,19 +218,12 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
       gap: "10px",
     });
 
-    const titleRow = style(document.createElement("div"), {
-      display: "flex",
-      alignItems: "flex-start",
-      justifyContent: "space-between",
-      gap: "10px",
-    });
     const title = style(document.createElement("div"), {
       fontSize: "16px",
       fontWeight: "850",
       color: "#172033",
     });
     title.textContent = firmName(firm);
-    titleRow.append(title, this._makeTypeBadge(kind));
 
     const addressParts = [text(firm?.street), [text(firm?.zip), text(firm?.city)].filter(Boolean).join(" ")].filter(Boolean);
     const details = style(document.createElement("div"), {
@@ -270,7 +247,7 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     });
     contactTitle.textContent = "Ansprechpartner";
 
-    card.append(titleRow, details, divider, contactTitle);
+    card.append(title, details, divider, contactTitle);
 
     const key = `${kind}:${text(firm?.id)}`;
     const contacts = this.contactsByKey.get(key) || [];
@@ -499,15 +476,10 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
       alignItems: "start",
     });
 
-    const lists = style(document.createElement("div"), { display: "grid", gap: "12px", minWidth: "0" });
-    lists.append(
-      this._createSection("Projektfirmen", this.projectLocalFirms, "project", "Noch keine reine Projektfirma angelegt."),
-      this._createSection("Firmen aus dem Firmenstamm", this.assignedGlobalFirms, "global", "Noch keine Firma aus dem Firmenstamm zugeordnet.")
-    );
-
+    const list = this._createFirmList();
     const detail = document.createElement("div");
     this._renderDetails(detail);
-    layout.append(lists, detail);
+    layout.append(list, detail);
 
     this.hostEl.append(intro, toolbar, layout);
   }
