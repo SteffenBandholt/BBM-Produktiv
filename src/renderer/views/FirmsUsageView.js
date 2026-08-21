@@ -42,26 +42,50 @@ function makeUsageCheckbox(label, checked = false) {
   input.type = "checkbox";
   input.checked = !!checked;
   Object.assign(input.style, {
-    width: "16px",
-    height: "16px",
-    margin: "0",
-    accentColor: "#2563eb",
-    flex: "0 0 auto",
+    position: "absolute",
+    opacity: "0",
+    width: "1px",
+    height: "1px",
+    pointerEvents: "none",
   });
+
+  const indicator = document.createElement("span");
+  indicator.setAttribute("aria-hidden", "true");
+  Object.assign(indicator.style, {
+    width: "14px",
+    height: "14px",
+    border: "1px solid #aeb8c7",
+    borderRadius: "4px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxSizing: "border-box",
+    flex: "0 0 auto",
+    fontSize: "10px",
+    lineHeight: "1",
+    fontWeight: "500",
+    color: "transparent",
+    background: "#ffffff",
+    transition: "background .12s ease, border-color .12s ease, color .12s ease",
+  });
+  indicator.textContent = "✓";
 
   const text = document.createElement("span");
   text.textContent = label;
 
   const sync = () => {
     const active = input.checked;
-    wrap.style.background = active ? "#eef4ff" : "#ffffff";
-    wrap.style.borderColor = active ? "#84adff" : "#d5dce7";
-    wrap.style.color = active ? "#175cd3" : "#344054";
+    wrap.style.background = active ? "#f3f7ff" : "#ffffff";
+    wrap.style.borderColor = active ? "#a8c0ef" : "#d5dce7";
+    wrap.style.color = active ? "#2459a9" : "#344054";
+    indicator.style.background = active ? "#3d6fc4" : "#ffffff";
+    indicator.style.borderColor = active ? "#3d6fc4" : "#aeb8c7";
+    indicator.style.color = active ? "#ffffff" : "transparent";
   };
   input.addEventListener("change", sync);
   sync();
 
-  wrap.append(input, text);
+  wrap.append(input, indicator, text);
   return { wrap, input, sync };
 }
 
