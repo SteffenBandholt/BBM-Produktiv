@@ -27,6 +27,7 @@ function fixture({ settings = { "invoice.paymentTermDays": "8" } } = {}) {
 }
 
 const complete = (overrides = {}) => ({ source_type: "FREE", document_type: "INVOICE", invoice_date: "2026-08-15", service_period_type: "RANGE", service_period_start: "2026-03-01", service_period_end: "2026-06-30", customer_ref_kind: "global_firm", customer_firm_id: "f1", project_id: "p1", service_reference: "Neubau Musterstraße", construction_project: "Haus A", positions: [{ id: "p1", type: "service", short_text: "Montage", quantity: "2", unit: "h", unit_price_cents: 5000 }], payment_term_days: 8, ...overrides });
+const positionSnapshot = (entries) => entries.map((entry) => [entry.id, entry.parent_id, entry.type, entry.is_title, entry.short_text, entry.long_text, entry.quantity, entry.unit, entry.unit_price_cents, entry.is_nep, entry.position_number]);
 
 async function runRechnungBookingTests(run) {
   await run("Rechnung Step 2 A-B: neuer und gespeicherter Entwurf bleiben nummernlos und vollständig bearbeitbar", async () => {
@@ -40,6 +41,30 @@ async function runRechnungBookingTests(run) {
       assert.equal(updated.service_reference, "Gespeicherter Stand"); assert.equal(updated.due_date, "2026-08-25"); assert.equal(updated.invoice_number, null);
       assert.equal(updated.construction_project, "Haus A"); assert.equal(updated.positions[0].total_cents, 10000);
       assert.equal(env.service.get(draft.id).service_period_start, "2026-03-01");
+    } finally { env.close(); }
+  });
+
+  await run("Rechnung MwSt. Step 1: der aus einer Quelle uebernommene Satz bleibt als Rechnungspositionswert erhalten", async () => {
+    const env = fixture();
+    try {
+      const draft = await env.service.createDraft(complete({ positions: [{ id: "catalog-position", type: "service", short_text: "Katalogleistung", quantity: "1", unit: "St", unit_price_cents: 10000, vat_rate_percent: 7 }] }));
+      assert.equal(draft.positions[0].vat_rate_percent, 7);
+      const saved = await env.service.updateDraft(draft.id, { service_reference: "Unabhaengiger Rechnungsstand" });
+      const stored = JSON.parse(env.db.prepare("SELECT positions_json FROM invoices WHERE id = ?").get(draft.id).positions_json);
+      assert.equal(saved.positions[0].vat_rate_percent, 7);
+      assert.equal(stored[0].vat_rate_percent, 7);
+      assert.equal((await env.service.bookDraft(draft.id)).positions[0].vat_rate_percent, 7);
+    } finally { env.close(); }
+  });
+
+  await run("Rechnung Preisbedienung: DRAFT, erneutes Laden und Buchung bewahren Brutto-Eingabemodus und Preis", async () => {
+    const env = fixture();
+    try {
+      const draft = await env.service.createDraft(complete({ positions: [{ id: "gross-position", type: "service", short_text: "Bruttoleistung", quantity: "1", unit: "St", unit_price_cents: 11900, price_input_cents: 11900, price_input_mode: "GROSS", vat_rate_percent: 19 }] }));
+      assert.deepEqual(draft.positions.map((entry) => [entry.unit_price_cents, entry.price_input_mode, entry.price_input_cents]), [[10000, "GROSS", 11900]]);
+      const saved = await env.service.updateDraft(draft.id, { service_reference: "Brutto bleibt gespeichert" });
+      assert.deepEqual(env.service.get(saved.id).positions.map((entry) => [entry.unit_price_cents, entry.price_input_mode, entry.price_input_cents]), [[10000, "GROSS", 11900]]);
+      assert.deepEqual((await env.service.bookDraft(draft.id)).positions.map((entry) => [entry.unit_price_cents, entry.price_input_mode, entry.price_input_cents]), [[10000, "GROSS", 11900]]);
     } finally { env.close(); }
   });
 
@@ -64,13 +89,46 @@ async function runRechnungBookingTests(run) {
       const invoicePositions = [
         { id: "title", type: "heading", short_text: "Abschnitt" },
         { id: "child", type: "service", parent_id: "title", short_text: "Leistung", quantity: "2", unit: "h", unit_price_cents: 5000 },
+        { id: "nep", type: "service", parent_id: "title", short_text: "Bedarfsposition", quantity: "1", unit: "Stk", unit_price_cents: 1200, is_nep: true },
       ];
       const draft = await env.service.createDraft(complete({ positions: invoicePositions }));
-      assert.deepEqual(draft.positions.map((entry) => [entry.id, entry.parent_id, entry.position_number]), [["title", null, "1"], ["child", "title", "1.01"]]);
+      assert.deepEqual(draft.positions.map((entry) => [entry.id, entry.parent_id, entry.position_number, entry.is_nep]), [["title", null, "1", false], ["child", "title", "1.01", false], ["nep", "title", "1.02", true]]);
       const preview = await env.service.previewDraft(draft.id);
-      assert.deepEqual(preview.positions.map((entry) => entry.position_number), ["1", "1.01"]);
+      assert.deepEqual(preview.positions.map((entry) => entry.position_number), ["1", "1.01", "1.02"]);
       const booked = await env.service.bookDraft(draft.id);
-      assert.deepEqual(booked.positions.map((entry) => [entry.id, entry.parent_id, entry.position_number]), [["title", null, "1"], ["child", "title", "1.01"]]);
+      assert.deepEqual(booked.positions.map((entry) => [entry.id, entry.parent_id, entry.position_number, entry.is_nep]), [["title", null, "1", false], ["child", "title", "1.01", false], ["nep", "title", "1.02", true]]);
+      assert.deepEqual(env.service.get(draft.id).positions.map((entry) => [entry.id, entry.parent_id, entry.position_number, entry.is_nep]), [["title", null, "1", false], ["child", "title", "1.01", false], ["nep", "title", "1.02", true]]);
+    } finally { env.close(); }
+  });
+
+  await run("Rechnung Positions-Text: DRAFT speichert und laedt Kurz- und mehrzeiligen Langtext unveraendert", async () => {
+    const env = fixture();
+    try {
+      const positions = [{ id: "text-1", type: "heading", is_title: false, short_text: "Hinweis zum Leistungsumfang", long_text: "Erste Zeile\nZweite Zeile", quantity: null, unit: null, unit_price_cents: null }];
+      const draft = await env.service.createDraft(complete({ positions }));
+      assert.deepEqual(draft.positions.map((entry) => [entry.is_title, entry.position_number, entry.short_text, entry.long_text]), [[false, null, "Hinweis zum Leistungsumfang", "Erste Zeile\nZweite Zeile"]]);
+      const saved = await env.service.updateDraft(draft.id, { positions: draft.positions });
+      assert.deepEqual(env.service.get(saved.id).positions.map((entry) => [entry.is_title, entry.position_number, entry.short_text, entry.long_text]), [[false, null, "Hinweis zum Leistungsumfang", "Erste Zeile\nZweite Zeile"]]);
+    } finally { env.close(); }
+  });
+
+  await run("Rechnung Positions-Persistenz: DRAFT behaelt Editboxwerte, NEP und Hierarchie bis positions_json und erneutem Laden", async () => {
+    const env = fixture();
+    try {
+      const draft = await env.service.createDraft(complete({ positions: [
+        { id: "title", type: "heading", is_title: true, short_text: "Fensterarbeiten" },
+        { id: "remove", type: "service", parent_id: "title", short_text: "Ausbau Fenster", long_text: "Vorhandenes Fenster fachgerecht ausbauen und entsorgen.", quantity: "1", unit: "St", unit_price_cents: 12500 },
+        { id: "supply", type: "service", parent_id: "title", short_text: "Lieferung Fenster", long_text: "Kunststofffenster liefern.", quantity: "1", unit: "St", unit_price_cents: 75000 },
+        { id: "nep", type: "service", parent_id: "title", short_text: "Bedarfsposition", long_text: "Nur bei Bedarf ausfuehren.", quantity: "2", unit: "St", unit_price_cents: 10000, is_nep: true },
+      ] }));
+      const edited = draft.positions.map((entry) => entry.id === "remove" ? { ...entry, short_text: "Ausbau Bestandsfenster", long_text: "Bestandsfenster fachgerecht ausbauen und entsorgen." } : entry);
+      const saved = await env.service.updateDraft(draft.id, { positions: edited });
+      const raw = JSON.parse(env.db.prepare("SELECT positions_json FROM invoices WHERE id = ?").get(draft.id).positions_json);
+      const expected = [["title", null, "heading", true, "Fensterarbeiten", "", null, null, null, false, "1"], ["remove", "title", "service", false, "Ausbau Bestandsfenster", "Bestandsfenster fachgerecht ausbauen und entsorgen.", "1", "St", 12500, false, "1.01"], ["supply", "title", "service", false, "Lieferung Fenster", "Kunststofffenster liefern.", "1", "St", 75000, false, "1.02"], ["nep", "title", "service", false, "Bedarfsposition", "Nur bei Bedarf ausfuehren.", "2", "St", 10000, true, "1.03"]];
+      assert.deepEqual(positionSnapshot(saved.positions), expected);
+      assert.deepEqual(positionSnapshot(raw), expected);
+      assert.deepEqual(positionSnapshot(env.service.get(draft.id).positions), expected);
+      assert.equal(saved.positions.find((entry) => entry.id === "nep").total_cents, null);
     } finally { env.close(); }
   });
 

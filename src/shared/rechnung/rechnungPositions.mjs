@@ -1,4 +1,6 @@
 export const POSITION_TYPES = Object.freeze({ SERVICE: "service", HEADING: "heading", NOTE: "note" });
+export const DEFAULT_VAT_RATE_PERCENT = 19;
+export const PRICE_INPUT_MODES = Object.freeze({ NET: "NET", GROSS: "GROSS" });
 
 const text = (value) => String(value ?? "").trim();
 
@@ -22,9 +24,69 @@ function cents(value) {
   return number;
 }
 
+function vatRatePercent(value) {
+  if (value == null || String(value).trim() === "") return DEFAULT_VAT_RATE_PERCENT;
+  const number = Number(value);
+  if (!Number.isInteger(number) || number < 0 || number > 100) throw new Error("Der Mehrwertsteuersatz ist ungültig.");
+  return number;
+}
+
+function priceInputMode(value) {
+  const mode = text(value).toUpperCase() || PRICE_INPUT_MODES.NET;
+  if (!Object.values(PRICE_INPUT_MODES).includes(mode)) throw new Error("Der Preiseingabemodus ist ungültig.");
+  return mode;
+}
+
+function netFromGrossCents(grossCents, ratePercent) {
+  return Math.round(cents(grossCents) * 100 / (100 + ratePercent));
+}
+
+function grossFromNetCents(netCents, ratePercent) {
+  return cents(netCents) + Math.round(cents(netCents) * ratePercent / 100);
+}
+
+export function calculatePositionInputPriceCents(position) {
+  if (position?.type !== POSITION_TYPES.SERVICE) return null;
+  if (priceInputMode(position?.price_input_mode) === PRICE_INPUT_MODES.GROSS) return cents(position?.price_input_cents ?? position?.unit_price_cents);
+  return cents(position?.unit_price_cents);
+}
+
+export function calculatePositionGrossUnitPriceCents(position) {
+  if (position?.type !== POSITION_TYPES.SERVICE) return null;
+  const ratePercent = vatRatePercent(position?.vat_rate_percent);
+  if (priceInputMode(position?.price_input_mode) === PRICE_INPUT_MODES.GROSS) return calculatePositionInputPriceCents(position);
+  return grossFromNetCents(position?.unit_price_cents, ratePercent);
+}
+
 export function calculatePositionTotalCents(position) {
   if (position?.type !== POSITION_TYPES.SERVICE || position?.is_nep) return null;
+  if (priceInputMode(position?.price_input_mode) === PRICE_INPUT_MODES.GROSS) {
+    const grossTotalCents = Math.round(decimal(position.quantity, "Die Menge") * calculatePositionInputPriceCents(position));
+    return netFromGrossCents(grossTotalCents, vatRatePercent(position?.vat_rate_percent));
+  }
   return Math.round(decimal(position.quantity, "Die Menge") * cents(position.unit_price_cents));
+}
+
+export function calculatePositionVatCents(position) {
+  const netCents = calculatePositionTotalCents(position);
+  if (netCents == null) return null;
+  if (priceInputMode(position?.price_input_mode) === PRICE_INPUT_MODES.GROSS) {
+    const grossTotalCents = Math.round(decimal(position.quantity, "Die Menge") * calculatePositionInputPriceCents(position));
+    return grossTotalCents - netCents;
+  }
+  return Math.round(netCents * vatRatePercent(position?.vat_rate_percent) / 100);
+}
+
+export function calculateInvoiceTotalsCents(positions = []) {
+  let net_cents = 0;
+  let vat_cents = 0;
+  for (const position of positions) {
+    const positionNetCents = calculatePositionTotalCents(position);
+    if (positionNetCents == null) continue;
+    net_cents += positionNetCents;
+    vat_cents += calculatePositionVatCents(position) || 0;
+  }
+  return Object.freeze({ net_cents, vat_cents, gross_cents: net_cents + vat_cents });
 }
 
 function normalizeParentIds(entries) {
@@ -60,8 +122,8 @@ function assignPositionNumbers(entries, parentIds) {
   let rootTitleNumber = 0;
   let rootPositionNumber = 0;
   for (const entry of roots) {
-    if (entry.type === POSITION_TYPES.NOTE) continue;
-    if (entry.type === POSITION_TYPES.HEADING) positionNumbers.set(entry.id, String(++rootTitleNumber));
+    if (entry.type !== POSITION_TYPES.SERVICE && !entry.is_title) continue;
+    if (entry.is_title) positionNumbers.set(entry.id, String(++rootTitleNumber));
     else positionNumbers.set(entry.id, String(++rootPositionNumber).padStart(2, "0"));
   }
 
@@ -70,7 +132,7 @@ function assignPositionNumbers(entries, parentIds) {
     if (!parentNumber) return;
     let siblingNumber = 0;
     for (const entry of childrenByParentId.get(parentId) || []) {
-      if (entry.type !== POSITION_TYPES.NOTE) positionNumbers.set(entry.id, `${parentNumber}.${String(++siblingNumber).padStart(2, "0")}`);
+      if (entry.type === POSITION_TYPES.SERVICE) positionNumbers.set(entry.id, `${parentNumber}.${String(++siblingNumber).padStart(2, "0")}`);
       visit(entry.id);
     }
   }
@@ -89,9 +151,13 @@ export function normalizeInvoicePositions(input = [], { idFactory } = {}) {
     ids.add(id);
     const shortText = text(source?.short_text);
     if (!shortText) throw new Error("Kurztext der Rechnungsposition fehlt.");
-    const base = { id, type, parent_id: text(source?.parent_id) || null, short_text: shortText, long_text: text(source?.long_text) };
-    if (type !== POSITION_TYPES.SERVICE) return { ...base, quantity: null, unit: null, unit_price_cents: null, total_cents: null, is_nep: false };
-    const position = { ...base, quantity: String(decimal(source?.quantity, "Die Menge")), unit: text(source?.unit), unit_price_cents: cents(source?.unit_price_cents), is_nep: Boolean(source?.is_nep) };
+    const isTitle = type === POSITION_TYPES.HEADING && source?.is_title !== false;
+    const base = { id, type, is_title: isTitle, parent_id: text(source?.parent_id) || null, short_text: shortText, long_text: text(source?.long_text) };
+    if (type !== POSITION_TYPES.SERVICE) return { ...base, quantity: null, unit: null, unit_price_cents: null, total_cents: null, is_nep: false, vat_rate_percent: null, price_input_mode: null, price_input_cents: null };
+    const vat_rate_percent = vatRatePercent(source?.vat_rate_percent);
+    const price_input_mode = priceInputMode(source?.price_input_mode);
+    const price_input_cents = price_input_mode === PRICE_INPUT_MODES.GROSS ? cents(source?.price_input_cents ?? source?.unit_price_cents) : null;
+    const position = { ...base, quantity: String(decimal(source?.quantity, "Die Menge")), unit: text(source?.unit), unit_price_cents: price_input_mode === PRICE_INPUT_MODES.GROSS ? netFromGrossCents(price_input_cents, vat_rate_percent) : cents(source?.unit_price_cents), is_nep: Boolean(source?.is_nep), vat_rate_percent, price_input_mode, price_input_cents };
     return { ...position, total_cents: calculatePositionTotalCents(position) };
   });
   const parentIds = normalizeParentIds(entries);
@@ -99,6 +165,6 @@ export function normalizeInvoicePositions(input = [], { idFactory } = {}) {
   return Object.freeze(entries.map((entry) => Object.freeze({
     ...entry,
     parent_id: parentIds.get(entry.id),
-    position_number: entry.type === POSITION_TYPES.NOTE ? null : positionNumbers.get(entry.id) || null,
+    position_number: entry.type === POSITION_TYPES.SERVICE || entry.is_title ? positionNumbers.get(entry.id) || null : null,
   })));
 }

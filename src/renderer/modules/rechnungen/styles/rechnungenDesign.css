@@ -408,3 +408,317 @@ select.invoice-control { padding-right: 28px; }
   .invoice-page-actions,
   .invoice-dialog__actions { width: 100%; flex-wrap: wrap; }
 }
+
+/* Echter Arbeitsweg: dokumentartiges Rechnungsblatt statt Gesamtformular. */
+.rechnung-live-editor { padding: 10px; background: #edf1f5; }
+.rechnung-action-rail { border: 0; border-radius: 0; background: transparent; }
+.rechnung-live-editor__body.rechnung-sheet { width: min(980px, 100%); margin: 0 auto; padding: clamp(26px, 5vw, 60px); overflow: auto; border: 0; border-radius: 0; background: #fff; box-shadow: 0 2px 16px rgba(15, 23, 42, .11); color: #182230; }
+.rechnung-sheet { display: grid; align-content: start; gap: 30px; }
+.rechnung-sheet__head { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(190px, .75fr); gap: 26px; padding-bottom: 22px; border-bottom: 2px solid var(--invoice-color-primary); }
+.rechnung-sheet__issuer, .rechnung-sheet__title-block, .rechnung-sheet__facts, .rechnung-sheet__recipient, .rechnung-sheet__service, .rechnung-sheet__context, .rechnung-sheet__payment { display: grid; align-content: start; gap: 10px; }
+.rechnung-sheet__title-block { text-align: right; }
+.rechnung-sheet__title { margin: 0; color: var(--invoice-color-primary); font-size: clamp(28px, 4vw, 42px); font-weight: 500; letter-spacing: .02em; }
+.rechnung-sheet__number { justify-self: end; width: min(240px, 100%); text-align: left; }
+.rechnung-sheet__facts { grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); padding-top: 6px; }
+.rechnung-sheet__address { white-space: pre-line; font-size: 13px; line-height: 1.55; }
+.rechnung-sheet__recipient { width: min(430px, 100%); min-height: 150px; padding-top: 18px; }
+.rechnung-sheet__details { display: grid; gap: 18px; padding: 18px 0; border-top: 1px solid var(--invoice-color-border); border-bottom: 1px solid var(--invoice-color-border); }
+.rechnung-sheet__service { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rechnung-sheet__context { grid-template-columns: minmax(0, 2fr) repeat(3, minmax(120px, 1fr)); }
+.rechnung-sheet__positions { display: grid; gap: 14px; }
+.rechnung-sheet__section-head { display: grid; gap: 3px; }
+.rechnung-sheet__section-title, .rechnung-sheet__position-title { margin: 0; font-size: 15px; font-weight: 700; }
+.rechnung-sheet__section-note { margin: 0; color: var(--invoice-color-muted); font-size: 11px; }
+.rechnung-lv-list { gap: 0; border-top: 1px solid var(--invoice-color-border); }
+.rechnung-lv-position { display: grid; gap: 7px; padding: 14px 0; border-bottom: 1px solid var(--invoice-color-border); }
+.rechnung-lv-position.is-selected { margin-inline: -10px; padding-inline: 10px; background: #f4f8fc; }
+.rechnung-lv-position__select { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 10px; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.rechnung-lv-position__select:hover .rechnung-lv-position__short { color: var(--invoice-color-primary); }
+.rechnung-lv-position__number { color: var(--invoice-color-muted); font-variant-numeric: tabular-nums; }
+.rechnung-lv-position__short { font-size: 13px; line-height: 1.4; }
+.rechnung-lv-position__long { margin-left: 52px; color: var(--invoice-color-muted); font-size: 12px; line-height: 1.5; }
+.rechnung-lv-position__long summary { cursor: pointer; color: var(--invoice-color-primary); }
+.rechnung-lv-position__long p { margin: 5px 0 0; white-space: pre-line; }
+.rechnung-lv-position__pricing { display: grid; grid-template-columns: minmax(0, 1fr) 130px 130px; gap: 12px; margin-left: 52px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.rechnung-lv-position__pricing span:nth-child(2), .rechnung-lv-position__pricing strong { text-align: right; }
+.rechnung-sheet__position-editor { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 4px; padding: 16px; border: 1px solid var(--invoice-color-border); background: #f8fafc; }
+.rechnung-sheet__position-editor .rechnung-sheet__position-title { grid-column: 1 / -1; }
+.rechnung-sheet__payment { grid-template-columns: 150px 150px minmax(0, 1fr); align-items: end; padding-top: 8px; }
+.rechnung-sheet__totals { display: grid; grid-template-columns: minmax(120px, 1fr) auto; gap: 6px 24px; min-width: 250px; padding: 14px 0 14px 24px; border-left: 1px solid var(--invoice-color-border); font-size: 12px; }
+.rechnung-sheet__amount, .rechnung-sheet__grand-amount { text-align: right; font-variant-numeric: tabular-nums; }
+.rechnung-sheet__total-note { color: var(--invoice-color-muted); text-align: right; }
+.rechnung-sheet__grand-label, .rechnung-sheet__grand-amount { margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--invoice-color-border); color: var(--invoice-color-primary); }
+.rechnung-sheet__payment-text { grid-column: 1 / -1; margin: 0; color: var(--invoice-color-muted); font-size: 12px; line-height: 1.5; }
+.rechnung-sheet__application-note { color: var(--invoice-color-muted); font-size: 11px; }
+
+/* Rechnungsshell wie Protokoll/Restarbeiten: feste Bar und Editbox, nur Blattinhalt scrollt. */
+.rechnung-live-editor { display: flex; flex-direction: column; gap: 0; min-height: 0; overflow: hidden; padding: 0; }
+.rechnung-live-editor__header { flex: 0 0 auto; width: 100%; max-width: none; border-bottom: 1px solid var(--invoice-color-border); border-radius: 0; background: var(--invoice-color-surface); }
+.rechnung-live-editor__body.rechnung-sheet { flex: 1 1 0; width: 100%; min-height: 0; margin: 0; padding: clamp(22px, 4vw, 48px) max(18px, calc((100% - 980px) / 2)); overflow: auto; box-shadow: none; }
+.rechnung-sheet__head-content { display: grid; gap: 24px; }
+.rechnung-sheet__head-content[hidden] { display: none; }
+.rechnung-sheet__recipient { gap: 8px; }
+.rechnung-recipient-picker { width: min(430px, 100%); }
+.rechnung-sheet__recipient-address { min-height: 112px; padding: 12px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-control); background: var(--invoice-color-surface-subtle); }
+.rechnung-sheet__issuer-facts { align-self: end; color: var(--invoice-color-muted); font-size: 11px; line-height: 1.45; white-space: pre-line; }
+.rechnung-sheet__intro { grid-column: 1 / -1; }
+.rechnung-sheet__intro textarea { min-height: 78px; resize: vertical; }
+.rechnung-live-position-editor { flex: 0 0 auto; max-height: min(310px, calc(100% - 150px)); margin: 0; padding: 12px max(18px, calc((100% - 980px) / 2)); overflow: auto; border: 0; border-top: 1px solid var(--invoice-color-border); border-radius: 0; background: #f8fafc; box-shadow: 0 -5px 16px rgba(15, 23, 42, .06); }
+.rechnung-live-message { flex: 0 0 auto; margin: 0; padding: 4px 12px; background: var(--invoice-color-surface); }
+.rechnung-live-editor__footer { display: none; }
+
+/* Protokoll-Geometrie: eine gemeinsame Arbeitsbreite, genau ein Scrollbereich. */
+.bbm-rechnung-live { display: flex; flex-direction: column; height: 100%; max-height: 100%; min-height: 0; overflow: hidden; }
+.rechnung-live-content { flex: 1 1 0; min-height: 0; overflow: hidden; }
+.rechnung-live-editor { --rechnung-doc-width: 940px; width: 100%; }
+.rechnung-screen__header-canvas, .rechnung-screen__sheet-canvas, .rechnung-screen__edit-canvas { width: 100%; max-width: var(--rechnung-doc-width); min-width: 0; box-sizing: border-box; margin: 0 auto; }
+.rechnung-screen__header-canvas { flex: 0 0 auto; }
+.rechnung-live-editor__header { min-height: 0; padding: 4px 10px; gap: 6px; font-size: 11px; }
+.rechnung-live-editor__header .invoice-button { min-height: 26px; padding: 3px 7px; font-size: 11px; }
+.rechnung-screen__sheet-area { flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 12px 22px 14px; background: #f6f8fc; }
+.rechnung-screen__sheet-canvas { min-height: 100%; display: flex; flex-direction: column; }
+.rechnung-live-editor__body.rechnung-sheet { min-height: 100%; padding: 18px 22px 22px; border: 1px solid var(--invoice-color-border); border-radius: 8px; box-shadow: 0 10px 24px rgba(31, 41, 55, .06); overflow: visible; }
+.rechnung-sheet__positions { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--invoice-color-border); }
+.rechnung-screen__edit-area { flex: 0 0 auto; max-height: 230px; overflow: hidden; border-top: 1px solid var(--invoice-color-border); background: #f6f8fc; padding: 6px 10px 8px; }
+.rechnung-screen__edit-canvas { max-height: 216px; overflow: auto; }
+.rechnung-live-position-editor { max-height: none; padding: 8px 0; box-shadow: none; }
+
+/* Kopf bleibt Rechnungsinhalt: Werte sind ruhig, Felder erst bei Fokus sichtbar. */
+.rechnung-sheet { gap: 18px; }
+.rechnung-sheet__head-content { gap: 14px; }
+.rechnung-sheet__head { gap: 18px; padding-bottom: 12px; border-bottom-width: 1px; }
+.rechnung-sheet__recipient { min-height: 0; padding-top: 0; }
+.rechnung-sheet__recipient .invoice-button--quiet { justify-self: start; min-height: 0; padding: 0; border: 0; background: transparent; color: var(--invoice-color-text); font: inherit; font-weight: 700; }
+.rechnung-sheet__recipient .invoice-button--quiet:hover { color: var(--invoice-color-primary); text-decoration: underline; }
+.rechnung-sheet__recipient-address { min-height: 0; padding: 4px 0; border: 0; background: transparent; }
+.rechnung-sheet__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 14px; }
+.rechnung-sheet__facts .invoice-field { grid-template-columns: 108px minmax(0, 1fr); align-items: center; gap: 4px; }
+.rechnung-sheet__facts .invoice-field__label { font-size: 10px; }
+.rechnung-sheet__facts .invoice-control, .rechnung-sheet__number .invoice-control, .rechnung-sheet__service .invoice-control, .rechnung-sheet__context .invoice-control { min-height: 24px; padding: 2px 4px; border-color: transparent; background: transparent; }
+.rechnung-sheet__facts .invoice-control:focus, .rechnung-sheet__number .invoice-control:focus, .rechnung-sheet__service .invoice-control:focus, .rechnung-sheet__context .invoice-control:focus { border-color: var(--invoice-color-focus); background: #fff; }
+.rechnung-sheet__details { gap: 10px; padding: 10px 0; }
+.rechnung-sheet__service { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; }
+.rechnung-sheet__context { grid-template-columns: 1fr; gap: 4px; }
+.rechnung-sheet__context > .invoice-field:not(:first-child) { display: none; }
+.rechnung-sheet__intro textarea { min-height: 48px; padding: 4px 0; border-color: transparent; background: transparent; }
+.rechnung-sheet__intro textarea:focus { padding-inline: 4px; border-color: var(--invoice-color-focus); background: #fff; }
+.rechnung-sheet__payment > .invoice-field { display: none; }
+.rechnung-sheet__payment { grid-template-columns: 1fr; gap: 8px; }
+.rechnung-live-position-editor { grid-template-columns: 90px minmax(180px, 2fr) repeat(3, minmax(72px, 1fr)); gap: 5px 8px; }
+.rechnung-live-position-editor .invoice-field { gap: 2px; }
+.rechnung-live-position-editor .invoice-field__label { display: flex; align-items: baseline; gap: 4px; font-size: 9px; }
+.rechnung-live-position-editor__remaining { margin-left: auto; color: var(--invoice-color-muted); font-variant-numeric: tabular-nums; }
+.rechnung-live-position-editor__remaining[data-level="warning"] { color: #a16207; }
+.rechnung-live-position-editor__remaining[data-level="limit"] { color: var(--invoice-color-danger); }
+.rechnung-live-position-editor .invoice-control { min-height: 24px; padding: 2px 5px; }
+.rechnung-live-position-editor .invoice-control[type="checkbox"] { appearance: none; width: 14px; height: 14px; min-height: 14px; padding: 0; margin: 3px 0 0; border: 1px solid #9aa8ba; border-radius: 3px; background: #fff; box-shadow: none; }
+.rechnung-live-position-editor .invoice-control[type="checkbox"]:checked { border-color: var(--invoice-color-primary); background: var(--invoice-color-primary); }
+.rechnung-live-position-editor .invoice-control[type="checkbox"]:checked::after { content: ""; display: block; width: 4px; height: 7px; margin: 1px 0 0 4px; border: solid #fff; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
+.rechnung-live-position-editor .invoice-field--wide { grid-column: span 2; }
+.rechnung-live-position-editor__actions { gap: 5px; }
+.rechnung-live-position-editor__actions .invoice-button { min-height: 24px; padding: 2px 7px; font-size: 10px; }
+@media (max-width: 780px) {
+  .rechnung-sheet__head, .rechnung-sheet__facts, .rechnung-sheet__service, .rechnung-sheet__context, .rechnung-sheet__payment, .rechnung-sheet__position-editor { grid-template-columns: 1fr; }
+  .rechnung-sheet__title-block, .rechnung-sheet__number { justify-self: start; text-align: left; }
+  .rechnung-lv-position__pricing { grid-template-columns: 1fr; gap: 3px; }
+  .rechnung-lv-position__pricing span:nth-child(2), .rechnung-lv-position__pricing strong { text-align: left; }
+  .rechnung-sheet__totals { padding-left: 0; border-left: 0; border-top: 1px solid var(--invoice-color-border); }
+}
+
+/* Brief-/Rechnungskopf: vorhandene Ausstellerdaten, ohne eigene Logo- oder PDF-Logik. */
+.rechnung-sheet__head { display: grid; grid-template-columns: 1fr; gap: 18px; padding-bottom: 0; border-bottom: 0; }
+.rechnung-sheet__letterhead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, .8fr); gap: 34px; padding-bottom: 16px; border-bottom: 1px solid var(--invoice-color-border); }
+.rechnung-sheet__letterhead .rechnung-sheet__recipient { width: auto; padding: 0; }
+.rechnung-sheet__issuer-column { display: grid; align-content: start; justify-items: stretch; gap: 8px; min-width: 0; }
+.rechnung-sheet__issuer, .rechnung-sheet__issuer-column .rechnung-sheet__facts, .rechnung-sheet__issuer-column .rechnung-sheet__service { width: 100%; }
+.rechnung-sheet__issuer .rechnung-sheet__address { padding: 0; text-align: right; }
+.rechnung-sheet__issuer-column .rechnung-sheet__facts { grid-template-columns: 1fr; gap: 3px; }
+.rechnung-sheet__issuer-column .rechnung-sheet__facts .invoice-field { grid-template-columns: 112px minmax(0, 1fr); justify-items: end; }
+.rechnung-sheet__issuer-column .rechnung-sheet__facts .invoice-field__label { justify-self: start; }
+.rechnung-sheet__document-type, .rechnung-sheet__installment-number { display: none; }
+.rechnung-sheet__issuer-column .rechnung-sheet__service { grid-template-columns: 1fr; gap: 3px; }
+.rechnung-sheet__issuer-column .rechnung-sheet__service .invoice-field { grid-template-columns: 112px minmax(0, 1fr); align-items: center; }
+.rechnung-sheet__issuer-column .rechnung-sheet__service .invoice-field__label { font-size: 10px; }
+.rechnung-sheet__title-block { display: grid; grid-template-columns: minmax(0, 1fr) minmax(230px, .55fr); align-items: end; gap: 20px; text-align: left; }
+.rechnung-sheet__title { font-size: clamp(26px, 3.2vw, 34px); font-weight: 600; }
+.rechnung-sheet__number { justify-self: stretch; width: auto; }
+.rechnung-sheet__number .invoice-field__label { display: block; }
+.rechnung-sheet__details { gap: 9px; padding: 0; border: 0; }
+.rechnung-sheet__context .invoice-field__label { color: var(--invoice-color-text); font-size: 12px; font-weight: 700; }
+.rechnung-sheet__intro { margin-top: 2px; }
+.rechnung-sheet__intro .invoice-field__label { display: none; }
+.rechnung-sheet__intro textarea { min-height: 34px; max-height: 96px; line-height: 1.45; }
+.rechnung-sheet__positions { margin-top: 6px; padding-top: 18px; border-top-color: var(--invoice-color-text); }
+.rechnung-sheet__payment { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .7fr); align-items: start; gap: 12px 28px; }
+.rechnung-sheet__totals { grid-column: 2; width: 100%; min-width: 0; padding: 10px 0 12px 20px; }
+.rechnung-sheet__payment-text { grid-column: 1 / -1; max-width: 580px; }
+.rechnung-sheet__grand-label, .rechnung-sheet__grand-amount { color: var(--invoice-color-text); }
+@media (max-width: 780px) {
+  .rechnung-sheet__letterhead, .rechnung-sheet__title-block, .rechnung-sheet__payment { grid-template-columns: 1fr; }
+  .rechnung-sheet__issuer .rechnung-sheet__address { text-align: left; }
+  .rechnung-sheet__totals { grid-column: auto; padding-left: 0; }
+}
+
+/* DIN-5008-orientierter sichtbarer Blattbeginn: kein Mainheader in der Arbeits-UI. */
+.rechnung-sheet__letterhead { align-items: start; min-height: 132px; }
+.rechnung-sheet__recipient { align-content: start; }
+.rechnung-sheet__recipient .invoice-button--quiet { color: var(--invoice-color-muted); font-weight: 500; }
+.rechnung-sheet__recipient .rechnung-sheet__address { max-width: 340px; min-height: 74px; padding-top: 8px; }
+.rechnung-sheet__issuer-column { gap: 6px; }
+.rechnung-sheet__issuer .rechnung-sheet__address { font-size: 12px; line-height: 1.45; }
+.rechnung-sheet__title-block { grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 18px; }
+.rechnung-sheet__number { justify-self: start; max-width: none; }
+.rechnung-sheet__number .invoice-field__label { display: none; }
+.rechnung-sheet__number .invoice-control { min-width: 0; color: var(--invoice-color-text); font-weight: 600; }
+.rechnung-sheet__issuer-column .rechnung-sheet__service { gap: 2px; }
+.rechnung-sheet__service > .invoice-field { display: none; }
+.rechnung-sheet__service.is-editing > .invoice-field { display: grid; }
+.rechnung-sheet__service > .invoice-button--quiet { justify-self: start; min-height: 24px; padding: 1px 0; border: 0; color: var(--invoice-color-text); font: inherit; text-align: left; }
+.rechnung-sheet__service > .invoice-button--quiet:hover { color: var(--invoice-color-primary); text-decoration: underline; }
+.rechnung-sheet__service.is-editing > .invoice-button--quiet { color: var(--invoice-color-primary); }
+.rechnung-sheet__details { gap: 12px; }
+.rechnung-sheet__intro textarea { min-height: 42px; max-height: 112px; }
+.rechnung-sheet__positions { margin-top: 10px; padding-top: 16px; }
+.rechnung-lv-list .invoice-empty { padding: 10px 0 !important; text-align: left !important; }
+.rechnung-sheet__payment { margin-top: 2px; }
+
+/* Maßliche und typografische Feinabstimmung des festgelegten Rechnungsblatts. */
+.rechnung-live-editor { --rechnung-rhythm: 14px; --rechnung-muted-line: #cbd4df; }
+.rechnung-live-editor__body.rechnung-sheet { padding: 26px 42px 30px; }
+.rechnung-sheet { gap: var(--rechnung-rhythm); }
+.rechnung-sheet__head-content { gap: 16px; }
+.rechnung-sheet__letterhead { grid-template-columns: minmax(0, 1fr) 310px; column-gap: 58px; min-height: 126px; padding-bottom: 18px; border-bottom-color: var(--rechnung-muted-line); }
+.rechnung-sheet__recipient .rechnung-sheet__address { max-width: 360px; min-height: 78px; padding-top: 7px; font-size: 12.5px; line-height: 1.55; }
+.rechnung-sheet__issuer-column { gap: 5px; font-size: 11px; font-weight: 400; }
+.rechnung-sheet__issuer .rechnung-sheet__address { font-size: 11px; font-weight: 400; line-height: 1.48; }
+.rechnung-sheet__issuer-column .invoice-control, .rechnung-sheet__issuer-column .invoice-button--quiet { font-size: 11px; font-weight: 400; }
+.rechnung-sheet__issuer-column .rechnung-sheet__facts .invoice-field,
+.rechnung-sheet__issuer-column .rechnung-sheet__service .invoice-field { grid-template-columns: 102px minmax(0, 1fr); }
+.rechnung-sheet__issuer-column .rechnung-sheet__facts .invoice-field__label,
+.rechnung-sheet__issuer-column .rechnung-sheet__service .invoice-field__label { font-size: 10px; font-weight: 600; line-height: 1.3; }
+.rechnung-sheet__title-block { gap: 22px; margin-top: 2px; }
+.rechnung-sheet__title { font-size: 29px; line-height: 1.15; letter-spacing: 0; }
+.rechnung-sheet__number .invoice-control { font-size: 14px; line-height: 1.25; }
+.rechnung-sheet__details { gap: 13px; }
+.rechnung-sheet__context .invoice-field { max-width: 680px; }
+.rechnung-sheet__context .invoice-field__label { font-size: 11px; line-height: 1.35; }
+.rechnung-sheet__context .invoice-control { font-size: 12.5px; line-height: 1.45; }
+.rechnung-sheet__intro { max-width: 650px; margin-top: 0; }
+.rechnung-sheet__intro textarea { min-height: 48px; max-height: 120px; padding-block: 3px; font-size: 12.5px; line-height: 1.6; }
+.rechnung-sheet__positions { margin-top: 12px; padding-top: 14px; border-top-color: var(--rechnung-muted-line); }
+.rechnung-lv-position { gap: 8px; padding-block: 13px; border-bottom-color: #dde3eb; }
+.rechnung-lv-position__number { font-size: 11px; }
+.rechnung-lv-position__short { font-size: 12.5px; line-height: 1.45; }
+.rechnung-lv-position__long { margin-top: 1px; font-size: 11.5px; line-height: 1.55; }
+.rechnung-lv-position__pricing { grid-template-columns: minmax(0, 1fr) 122px 130px; gap: 14px; margin-top: 2px; font-size: 11.5px; }
+.rechnung-sheet__payment { grid-template-columns: minmax(0, 1fr) 310px; row-gap: 10px; margin-top: 8px; }
+.rechnung-sheet__totals { padding: 8px 0 10px 16px; gap: 5px 20px; border-left-color: var(--rechnung-muted-line); font-size: 11.5px; }
+.rechnung-sheet__amount, .rechnung-sheet__grand-amount { min-width: 130px; }
+.rechnung-sheet__grand-label, .rechnung-sheet__grand-amount { margin-top: 5px; padding-top: 7px; font-size: 13px; }
+.rechnung-sheet__payment-text { grid-column: 2; max-width: 310px; padding-top: 2px; font-size: 11.5px; line-height: 1.55; }
+@media (max-width: 780px) {
+  .rechnung-live-editor__body.rechnung-sheet { padding: 22px 20px 26px; }
+  .rechnung-sheet__letterhead { grid-template-columns: 1fr; row-gap: 18px; min-height: 0; }
+  .rechnung-sheet__payment-text { grid-column: auto; max-width: 580px; }
+}
+
+/* LV-Hierarchie: Titel bleiben ruhig, Kinder werden nur dezent eingerueckt. */
+.rechnung-live-position-editor__actions { grid-column: 1 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+.rechnung-live-position-editor__action-spacer { flex: 1 1 14px; }
+.rechnung-live-position-editor__move-root { margin-left: auto; }
+.rechnung-lv-position.is-title { padding-top: 16px; }
+.rechnung-lv-position.is-title .rechnung-lv-position__short { font-weight: 700; }
+.rechnung-lv-position.is-depth-1 .rechnung-lv-position__select,
+.rechnung-lv-position.is-depth-1 .rechnung-lv-position__long,
+.rechnung-lv-position.is-depth-1 .rechnung-lv-position__pricing { margin-left: 16px; }
+.rechnung-lv-position.is-depth-2 .rechnung-lv-position__select,
+.rechnung-lv-position.is-depth-2 .rechnung-lv-position__long,
+.rechnung-lv-position.is-depth-2 .rechnung-lv-position__pricing { margin-left: 28px; }
+.rechnung-lv-position.is-depth-3 .rechnung-lv-position__select,
+.rechnung-lv-position.is-depth-3 .rechnung-lv-position__long,
+.rechnung-lv-position.is-depth-3 .rechnung-lv-position__pricing,
+.rechnung-lv-position.is-depth-4 .rechnung-lv-position__select,
+.rechnung-lv-position.is-depth-4 .rechnung-lv-position__long,
+.rechnung-lv-position.is-depth-4 .rechnung-lv-position__pricing { margin-left: 40px; }
+.rechnung-lv-list.is-move-mode .rechnung-lv-position { opacity: .6; }
+.rechnung-lv-list.is-move-mode .rechnung-lv-position.is-selected { opacity: 1; }
+.rechnung-lv-list.is-move-mode .rechnung-lv-position.is-move-target { opacity: 1; background: #edf5ee; }
+.rechnung-lv-list.is-move-mode .rechnung-lv-position.is-move-target .rechnung-lv-position__select { cursor: move; }
+
+/* LV-Nachschaerfung: jede freie Position bleibt als ruhiger Dreizeilenblock lesbar. */
+.rechnung-lv-list { display: grid; gap: 0; }
+.rechnung-lv-list__pricing-head,
+.rechnung-lv-position__pricing { display: grid; grid-template-columns: 42px minmax(0, 1.4fr) minmax(0, .9fr) 122px 136px; gap: 14px; margin-left: 0; font-variant-numeric: tabular-nums; }
+.rechnung-lv-list__pricing-head { padding: 7px 12px 6px; color: var(--invoice-color-muted); font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
+.rechnung-lv-list__pricing-head span:first-child { grid-column: 1 / 3; }
+.rechnung-lv-list__pricing-head span:nth-child(3),
+.rechnung-lv-list__pricing-head strong,
+.rechnung-lv-position__pricing span:nth-child(2),
+.rechnung-lv-position__pricing strong { text-align: right; }
+.rechnung-lv-position__pricing span:first-child { grid-column: 3; }
+.rechnung-lv-position { gap: 7px; margin: 0; padding: 13px 12px; border-bottom: 1px solid #dce3eb; background: transparent; }
+.rechnung-lv-position + .rechnung-lv-position { border-top: 5px solid #f5f7fa; }
+.rechnung-lv-position.is-selected { margin: 0; padding: 13px 12px; background: #edf3f8; box-shadow: inset 2px 0 0 #9eafbe; }
+.rechnung-lv-position__long { margin: 0 0 0 52px; color: var(--invoice-color-muted); font-size: 12px; line-height: 1.5; white-space: pre-line; }
+.rechnung-lv-position__pricing { margin-top: 1px; font-size: 12px; }
+.rechnung-lv-position.is-title { gap: 0; padding-top: 15px; padding-bottom: 9px; border-bottom-color: #cfd9e3; background: transparent; box-shadow: none; }
+.rechnung-lv-position.is-title .rechnung-lv-position__select { cursor: pointer; }
+.rechnung-lv-position.is-title .rechnung-lv-position__number { color: var(--invoice-color-primary); font-weight: 700; }
+.rechnung-lv-position.is-title .rechnung-lv-position__short { color: var(--invoice-color-primary); font-size: 13px; font-weight: 650; }
+.rechnung-lv-position.is-depth-1 .rechnung-lv-position__select,
+.rechnung-lv-position.is-depth-1 .rechnung-lv-position__long,
+.rechnung-lv-position.is-depth-1 .rechnung-lv-position__pricing { margin-left: 16px; }
+.rechnung-lv-position.is-depth-2 .rechnung-lv-position__select,
+.rechnung-lv-position.is-depth-2 .rechnung-lv-position__long,
+.rechnung-lv-position.is-depth-2 .rechnung-lv-position__pricing { margin-left: 32px; }
+@media (max-width: 780px) {
+  .rechnung-lv-list__pricing-head { display: none; }
+  .rechnung-lv-position__pricing { grid-template-columns: 1fr; gap: 3px; }
+  .rechnung-lv-position__pricing span:first-child { grid-column: auto; }
+  .rechnung-lv-position__pricing span:nth-child(2), .rechnung-lv-position__pricing strong { text-align: left; }
+}
+
+/* Rechter Ausstellerblock: eine ruhige linke Lesekante und feste Informationsachse. */
+.rechnung-sheet__issuer .rechnung-sheet__address { padding: 0; text-align: left; }
+.rechnung-sheet__issuer-names { margin: 0; }
+.rechnung-sheet__issuer-names__line { color: var(--invoice-color-text); font-size: 12px; font-weight: 600; line-height: 1.35; }
+.rechnung-sheet__issuer-address { margin-top: 3px; color: var(--invoice-color-text); font-size: 11px; font-weight: 400; line-height: 1.48; }
+.rechnung-sheet__issuer-address-lines { margin-top: 3px; }
+.rechnung-sheet__issuer-tax, .rechnung-sheet__issuer-bank { margin-top: 6px; }
+.rechnung-sheet__issuer-bank { margin-top: 6px; }
+.rechnung-sheet__issuer-tax__row, .rechnung-sheet__issuer-bank__row, .rechnung-sheet__issuer-column .rechnung-sheet__facts .invoice-field, .rechnung-sheet__issuer-column .rechnung-sheet__service .invoice-field, .rechnung-sheet__issuer-column .rechnung-sheet__service > .invoice-button--quiet { display: grid; grid-template-columns: 102px 8px minmax(0, 1fr); align-items: baseline; column-gap: 4px; }
+.rechnung-sheet__issuer-tax__label, .rechnung-sheet__issuer-bank__label, .rechnung-sheet__issuer-column .invoice-field__label, .rechnung-sheet__issuer-meta-label { grid-column: 1; justify-self: end; color: var(--invoice-color-text); font-size: 10px; font-weight: 400; text-align: right; }
+.rechnung-sheet__issuer-tax__colon, .rechnung-sheet__issuer-bank__colon, .rechnung-sheet__issuer-meta-colon { grid-column: 2; color: var(--invoice-color-text); font-size: 10px; font-weight: 400; text-align: center; }
+.rechnung-sheet__issuer-tax__value, .rechnung-sheet__issuer-bank__value, .rechnung-sheet__issuer-meta-value { grid-column: 3; min-width: 0; color: var(--invoice-color-text); font-size: 11px; font-weight: 400; text-align: left; }
+.rechnung-sheet__issuer-column .rechnung-sheet__facts .invoice-field__label::after, .rechnung-sheet__issuer-column .rechnung-sheet__service .invoice-field__label::after { content: ":"; margin-left: 4px; }
+.rechnung-sheet__issuer-column .rechnung-sheet__facts .invoice-control, .rechnung-sheet__issuer-column .rechnung-sheet__service .invoice-control { grid-column: 3; min-width: 0; font-size: 11px; font-weight: 400; text-align: left; }
+.rechnung-sheet__issuer-column .rechnung-sheet__service > .invoice-button--quiet { width: 100%; margin-top: 6px; padding: 1px 0; color: var(--invoice-color-text); font-size: 11px; font-weight: 400; text-align: left; }
+.rechnung-sheet__issuer-column .rechnung-sheet__service > .invoice-button--quiet .rechnung-sheet__issuer-meta-label { grid-column: 1; }
+.rechnung-sheet__issuer-column .rechnung-sheet__service > .invoice-button--quiet .rechnung-sheet__issuer-meta-colon { grid-column: 2; }
+.rechnung-sheet__issuer-column .rechnung-sheet__service > .invoice-button--quiet .rechnung-sheet__issuer-meta-value { grid-column: 3; }
+
+/* Der sichtbare Briefkopf zeigt nur Anschrift und reine Belegmetadaten. */
+.rechnung-sheet__issuer-column > .rechnung-sheet__facts[hidden], .rechnung-sheet__issuer-column > .rechnung-sheet__service[hidden] { display: none; }
+.rechnung-sheet__issuer-meta { display: grid; gap: 2px; margin-top: 8px; }
+.rechnung-sheet__issuer-meta__row { display: grid; grid-template-columns: 102px 8px minmax(0, 1fr); align-items: baseline; column-gap: 4px; }
+.rechnung-sheet__issuer-footer { display: grid; gap: 2px; margin-top: 18px; padding-top: 8px; border-top: 1px solid var(--invoice-color-line); color: var(--invoice-color-muted); font-size: 10px; line-height: 1.45; }
+.rechnung-sheet__issuer-footer[hidden] { display: none; }
+.rechnung-sheet__issuer-footer__line { min-width: 0; }
+
+/* Rechter Kopfblock: klar im rechten Blattdrittel, mit ruhiger Informationsachse. */
+@media (min-width: 781px) {
+  .rechnung-sheet__letterhead { grid-template-columns: minmax(0, 1fr) 360px; column-gap: 58px; }
+  .rechnung-sheet__issuer-column { justify-self: stretch; width: auto; }
+  .rechnung-sheet__issuer { width: 100%; justify-items: end; gap: 10px; }
+  .rechnung-sheet__issuer-address { width: fit-content; min-width: 210px; max-width: 100%; justify-self: end; text-align: left; }
+  .rechnung-sheet__issuer-meta { width: fit-content; min-width: 270px; max-width: 100%; justify-self: end; }
+}
+.rechnung-sheet__letterhead, .rechnung-sheet__positions, .rechnung-lv-list { inline-size: 100%; box-sizing: border-box; }
+.rechnung-sheet__issuer-names__line { font-weight: 600; }
+.rechnung-sheet__issuer-address, .rechnung-sheet__issuer-meta-label, .rechnung-sheet__issuer-meta-colon, .rechnung-sheet__issuer-meta-value { font-weight: 500; }
+.rechnung-sheet__issuer-address { margin-top: 0; }
+
+/* Rechnungsblatt: endloser, zusammenhaengender Papierbereich; die Editbox bleibt ausserhalb. */
+.rechnung-screen__sheet-area { padding: 0; background: #fff; }
+.rechnung-screen__sheet-canvas { min-height: 100%; background: #fff; }
+.rechnung-live-editor__body.rechnung-sheet { min-height: 100%; box-sizing: border-box; border: 0; border-radius: 0; background: transparent; box-shadow: none; }

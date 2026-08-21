@@ -1,5 +1,149 @@
 # STATUS.md â€” BBM-Produktiv
 
+## 2026-08-21 - Rechnung: rechter Kopf feingranular für UI-Editor registriert
+
+- Status: `[A]`; der aktive Rechnungsscreen besitzt acht neue echte Kopf-Refs: `issuerBlock` mit Name 1, Name 2, Straße und PLZ/Ort sowie `invoiceMetaBlock` mit Rechnungsdatum und Leistungszeitraum. Die Einzelzeilen sind direkte gemountete DOM-Ziele mit textuellen Layoutoperationen.
+- Die alten groben Refs `issuerAddress` und `issuerMeta` wurden aus dem aktiven Screen und Vertrag entfernt; es bestehen keine parallelen Editor-Ziele auf denselben sichtbaren Bereich. Der Rechnungsscope umfasst nun 81 Refs.
+- Sichtbare Kopfgeometrie, Schriftwerte, Fachlogik, Autosave, Fußzeile, PDF und ZUGFeRD blieben unverändert.
+- Prüfung: `rechnungen-design` mit Electron-Node, isolierter M83-Rechnungsmount mit 81 Refs, UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün. Kein Commit und kein Push.
+
+## 2026-08-21 - Rechnung: rechter Kopfbereich an LV-Rechtskante verankert
+
+- Status: `[A]`; Briefkopf, Positionsbereich und LV-Liste verwenden nun ausdrücklich dieselbe volle Content-Breite. Bei 940 px Blattbreite und 42 px Innenrand liegt die rechte Außenkante des LV wie des Kopfbereichs bei x=898; die geprüfte Abweichung beträgt 0 px.
+- Die zwei Kopfteilblöcke behalten die gemeinsame rechte Kante, verwenden aber `fit-content` mit sinnvollen Mindestbreiten. Dadurch liegt keine ungenutzte feste Breite mehr rechts vom sichtbaren Text; intern bleiben beide linksbündig.
+- Prüfung: `rechnungen-design` mit Electron-Node, UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün. Kein Commit und kein Push.
+
+## 2026-08-21 - Rechnung: rechter Kopfbereich in zwei rechts verankerte Teilblöcke geteilt
+
+- Status: `[A]`; `issuerAddress` ist Teilblock A (270 px), `issuerMeta` Teilblock B (360 px). Beide sind direkte Kinder des rechten Kopfcontainers, jeweils am rechten Blattinnenrand verankert und intern linksbündig.
+- Das äußere Desktop-Briefkopfgrid besitzt jetzt 360 px für den rechten Bereich. Bei 940 px Blattbreite endet Teilblock B bei x=898 und beginnt bei x=538; Teilblock A endet ebenfalls bei x=898, beginnt aber erst bei x=628. Der Datumsblock darf daher kontrolliert 90 px weiter in die Blattmitte reichen.
+- Typografie, Metadatenachse, Fachlogik, Fußzeile, PDF und ZUGFeRD sind unverändert. Prüfung: `rechnungen-design` mit Electron-Node, UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün.
+- Kein Commit und kein Push. Nächster sinnvoller Schritt: Rechnungstests und sichtbare Fachabnahme.
+
+## 2026-08-21 - Rechnung: rechter Kopfblock als echte Grid-Spalte verankert
+
+- Status: `[A]`; das Desktop-Briefkopfgrid ist nun `minmax(0, 1fr) 270px` mit 58 px Gap. Bei 940 px Blattbreite und 42 px Innenrändern beginnt die rechte Kopfspalte bei x=628, endet bei x=898 und hat damit weiterhin 42 px rechten Innenabstand.
+- Der Regressionstest berechnet diese Geometrie aus den echten CSS-Maßen und stellt sicher, dass die finale 270-px-Spalte die frühere 310-px-Spalte überschreibt. Typografie und Metadatenachse blieben unverändert.
+- Prüfung: `rechnungen-design` mit Electron-Node, UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün.
+- Kein Commit und kein Push. Sichtabnahme im Rechnungsfenster bleibt als menschlicher Restnachweis offen.
+
+## 2026-08-21 - Rechnung: rechter Kopfblock nach rechts und Typografie geschärft
+
+- Status: `[A]`; der Ausstellerblock nutzt auf Desktopbreiten einen 270-px-Bereich mit rechter Selbst-Ausrichtung. Er liegt damit klarer im rechten Blattdrittel, behält aber den vorhandenen rechten Blattrandabstand.
+- Beide Namenszeilen haben Gewicht 600. Straße, PLZ/Ort sowie Rechnungsdatum und Leistungszeitraum haben einheitlich Gewicht 500; die bestehende Label-/Doppelpunkt-/Wert-Achse bleibt unverändert.
+- Nur lokale Rechnung-CSS, ein vorhandener Regressionstest sowie die zugehörige Entwurfsdokumentation wurden angepasst. Keine Fachlogik, Fußzeile, PDF oder ZUGFeRD geändert.
+- Prüfung: `rechnungen-design` mit Electron-Node, UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün.
+- Kein Commit und kein Push. Nächster sinnvoller Schritt: technische Tests und Sichtabnahme des Rechnungsfensters.
+
+## 2026-08-21 - Rechnung: Kopf bereinigt, Bank- und Steuerwerte im Blattfuß
+
+- Status: `[A]`; der sichtbare rechte Rechnungskopf enthält nur vorhandene Ausstellernamen, Straße sowie PLZ/Ort und die reinen Anzeigezeilen Rechnungsdatum und Leistungszeitraum. Belegart, Abschlagsnummer und alle Kopf-Controls bleiben für die bestehende Fachlogik erzeugt, sind dort aber nicht sichtbar.
+- Steuer-/USt-IdNr., IBAN/BIC sowie vorhandene Register- und Geschäftsführerdaten werden jetzt nur im Fuß des Endlosblatts dargestellt; leere Werte erzeugen keine Platzhalter und der Bankname bleibt unsichtbar. PDF, ZUGFeRD, Autosave, Buchung und Datenpflege blieben unverändert.
+- Die zwei neuen reinen Layoutziele `rechnung.editor.issuerMeta` und `rechnung.editor.issuerFooter` erhöhen den Rechnungsscope auf 75 Refs; ihre Fachdaten- und Aktionsoperationen bleiben gesperrt.
+- Prüfung: `rechnungen-design` mit Electron-Node, isolierter M83-Rechnungsmount, UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün.
+- Kein Commit und kein Push. Nächster sinnvoller Schritt: technische Vertrags- und Rechnungstests, danach sichtbare Fachabnahme im lokalen Rechnungsfenster.
+
+## 2026-08-19 - Rechnung: Ausstellerblock neu geordnet, Fußzeile vorbereitet
+
+- Status: `[A]`; die Überschrift `Rechnungsaussteller` entfällt. Der rechte Block beginnt direkt mit ein bis zwei Ausstellernamen (12 px, Gewicht 600), danach Adresse, Steuerangabe, ausschließlich IBAN/BIC sowie Rechnungsdatum und Leistungszeitraum.
+- Die Datenzeilen folgen einer festen Dreispaltenachse: Label rechts, Doppelpunkt mittig, Wert links. Steuer, Bank- und Rechnungsdaten verwenden dieselbe Grundschrift und kompakte Gruppenabstände; der vorhandene rechte 310-px-Blattbereich und Außenabstand bleiben erhalten.
+- Bankname wird nicht mehr im Rechnungsblock gerendert. USt-IdNr. hat weiterhin Vorrang vor Steuernummer; bei leerer BIC gibt es keine Leerzeile.
+- `commercial_register`, `register_number` und `managing_director` werden als vorhandene Fußzeilendaten vorbereitet, aber wegen leerer lokaler Profilwerte nicht sichtbar gerendert. Keine PDF- oder Endlosblattänderung.
+- PrÃ¼fung: Navigationstest, Rechnungstestgruppe, isolierter M83-Rechnungsmount, UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün.
+- Kein Commit und kein Push. NÃ¤chster sinnvoller Schritt: sichtbare Fachabnahme des neu geordneten Blocks im lokalen Rechnungsfenster.
+
+## 2026-08-19 - Rechnung: Briefkopf-Sichtprüfung und lokale Musterkunden
+
+- Status: `[A]`; NEP und Brutto sind in der festen Positions-Editbox nun dezente 14-px-Checkboxen mit schmaler Kontur. Ihre bestehende Funktion, Buchung und das DRAFT-Autosave blieben unverändert.
+- Der rechte Briefkopf verwendet eine einheitliche Grundschrift. Die bestehende Ausstelleranzeige ergänzt aus `user_profile` Bankname, IBAN und optional BIC sowie bei vorhandener USt-IdNr. diese, ansonsten die vorhandene Steuernummer. Die persönliche Steuer-ID wird nicht verwendet.
+- Im lokalen Acer-Profil waren IBAN, BIC, Bankname und Steuernummer vorhanden; USt-IdNr., Registergericht, Registernummer und Geschäftsführung sind leer und wurden nicht verändert. Die vorhandenen Felder `commercial_register`, `register_number` und `managing_director` bleiben für eine spätere Fußzeile verfügbar; diese Fußzeile wurde nicht gebaut.
+- Ausschließlich lokal in `C:\Users\SB\AppData\Roaming\baubesprechungs-manager\app.db` angelegt: `Malermeister Mustermann GmbH`, Farbweg 12, 24500 Musterstadt, sowie `Elfriede Sonntag`, Sonnenweg 7, 24500 Musterstadt. Beide tragen nur die bestehende Rechnungskunden-Nutzung; keine Seeds, Migrationen oder Produktcode-Testdaten.
+- PrÃ¼fung: Navigationstest, Rechnungstestgruppe, UI-Editor-Vertrags-Selbsttest, isolierter M83-Rechnungsmount, lokale Rechnungskundenabfrage und `git diff --check` sind grün. Der breite M83-Lauf bleibt zusätzlich am bekannten, paketfremden Schutz-Hash von `docs/licensing.md` auffällig.
+- Kein Commit und kein Push. NÃ¤chster sinnvoller Schritt: sichtbare Fachabnahme mit beiden Musterkunden im lokalen Rechnungsfenster.
+
+## 2026-08-19 - Rechnung: zentrale Kurz- und Langtextlimits
+
+- Status: `[A]`; Kurztext und Langtext der festen Rechnungs-Editbox verwenden jetzt den vorhandenen `TextLimitSettingsService` mit ausschließlich `tops.titleMax` und `tops.longMax`. Fehlende oder ungültige Settings folgen den zentralen Fallbacks 100 und 500.
+- Beide Felder übernehmen `maxlength` beim Laden und bei der bestehenden Settings-Änderungsbenachrichtigung. Ihre kompakten Restzeichenanzeigen verwenden die zentralen Textregeln einschließlich Warnstufe, ändern keine Daten und lösen kein separates Autosave aus.
+- Die zwei sichtbaren Counter sind als Statuslabels im Rechnungsscope registriert; der M83-Rechnungsmount umfasst damit 73 Refs. Keine neuen Rechnungs-Settings, keine DB-/PDF-/ZUGFeRD-Änderung und keine Änderung des bestehenden Autosave-Pfads.
+- PrÃ¼fung: Navigationstest, Rechnungstestgruppe, UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün. Der breite M83-Lauf bleibt am bekannten, paketfremden Hash von `docs/licensing.md` blockiert; der Rechnungsmount selbst ist grün.
+- Kein Commit und kein Push. NÃ¤chster sinnvoller Schritt: fachliche Sicht- und Bedienabnahme der Editbox im lokalen Rechnungsfenster.
+
+## 2026-08-19 - Rechnung: Preisbedienung mit Brutto-Haken
+
+- Status: `[A]`; die untere Positions-Editbox besitzt bei Leistungspositionen genau einen Preisumschalter `Brutto`. Ohne Haken bedeutet der sichtbare Einzelpreis netto, mit Haken brutto; die Beschriftung folgt als `Einzelpreis netto` beziehungsweise `Einzelpreis brutto`.
+- MwSt. wird in der Editbox schreibgeschützt aus dem gespeicherten Positionswert angezeigt. Eine vorhandene zentrale Rechnungs-MwSt.-Einstellung wurde im Scope nicht gefunden; daher wurde weder eine parallele Setting-Struktur noch eine neue Stammdatenquelle angelegt. Fehlende Bestandswerte bleiben beim vorhandenen Step-1-Standard 19 %.
+- Leistungspositionen speichern den Eingabemodus als `price_input_mode` (`NET`/`GROSS`). Im Brutto-Modus wird zusätzlich der eingegebene Brutto-Centwert gespeichert, während die Nettobasis für Berechnung und Buchung kanonisch bleibt. NEP sowie Titel, Text und Hinweis bleiben preis- und summenneutral.
+- PrÃ¼fung: Positions- und Navigationstest decken Netto/Brutto, 100 â†” 119, 199 brutto sowie NEP ab. `rechnungen-design`, M83-Rechnungskomponentenvertrag, UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün.
+- Kein Commit und kein Push. NÃ¤chster sinnvoller Schritt: fachliche Sicht- und Bedienabnahme im lokalen Rechnungsfenster.
+
+## 2026-08-19 - Rechnung: Startfehler Fokuslistener repariert
+
+- Status: `[A]`; die aktive `_sheetEditor()`-Initialisierung erzeugte `positionVatRate` nicht, verwendete die Property aber anschließend in der Fokus-Listenerliste. Dadurch war das MwSt.-Feld `undefined` und der Aufruf `addEventListener` schlug beim Start fehl.
+- Minimal repariert: Das bestehende MwSt.-Input wird nun im aktiven Editor vor Feldaufbau und Listenerregistrierung erzeugt. Die ungenutzte Legacy-Ansicht und sämtliche Fachlogik blieben unangetastet.
+- Eine gezielte Navigationstest-Regression sichert die Erzeugungsreihenfolge aller sechs Select-All-Felder. `npm start` läuft wieder bis zur laufenden Electron-Anwendung; die vorherige EBUSY-Sperre betraf nur zurückgebliebene Testprozesse und wurde vor dem erneuten Start bereinigt.
+- Prüfung: Rechnung-Navigation, `rechnungen-design`, M83-Rechnungsteil, UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün. Sichtprüfung im Fenster steht mangels Computer Use aus.
+- Kein Commit und kein Push. Nächster sinnvoller Schritt: lokale Sicht- und Bedienabnahme der Rechnungs-Editbox.
+
+## 2026-08-19 - Rechnung: MwSt.-Editbox, Fokus, Proberechnungskennung und Text/Hinweis
+
+- Status: `[A]`; die Positions-Editbox besitzt nun das persistente Feld `MwSt. %` (Standard 19). Es ist nur für Leistungspositionen sichtbar, wird mit dem vorhandenen Autosave gespeichert und bleibt bei DRAFT/BOOKED Teil von `positions_json`.
+- Kurztext, Langtext, Menge, Einheit, Einzelpreis und MwSt. markieren ihren vorhandenen Inhalt beim tatsächlichen Fokuswechsel. Select, NEP-Checkbox, Buttons und nicht-editierbare Felder bleiben ausgenommen.
+- DRAFT-Proberechnungen zeigen die stabile, nicht-offizielle Kennung `PR-…` aus der DRAFT-ID und den klaren Hinweis auf die erst bei Buchung vergebene Rechnungsnummer. Es gibt weder Nummernreservierung noch eine neue Sequenz.
+- Text/Hinweis-Prüfung: Hinweis war bereits nummernneutral; Text war es noch nicht. Minimal korrigiert: beide haben keine Positionsnummer, zeigen ihre Kennzeichnung und beeinflussen die Leistungsnummern nicht (`1.01` → `1.02`).
+- Prüfung: Positions- und Navigationstests, `rechnungen-design` mit Electron-Node (ABI 123), direkter M83-Rechnungskomponentenvertrag mit 70 Refs und UI-Editor-Vertrags-Selbsttest sind grün. Sicht-/Bedienabnahme steht mangels Computer Use aus.
+- Kein Commit und kein Push. Nächster sinnvoller Schritt: fachliche Sicht- und Bedienabnahme im lokalen Rechnungsfenster.
+
+## 2026-08-19 - Rechnung: MwSt. und Brutto Step 1
+
+- Status: `[A]`; jede normale Leistungsposition besitzt den gespeicherten Wert `vat_rate_percent`. Fehlt er bei bestehenden Positionsdaten, ergänzt die Normalisierung den Standard 19 %. Ein explizit beim Übernehmen gelieferter Satz bleibt an der Rechnungsposition und damit unabhängig von späteren Katalogänderungen.
+- Die Summenanzeige berechnet Summe Netto, MwSt. und Summe Brutto aus den nicht-NEP-Leistungspositionen. Titel, Text und Hinweis bleiben betrag- und MwSt.-frei; NEP bleibt wie bisher außerhalb aller Summen.
+- Keine Migration, keine neue Stammdatenstruktur und keine Änderung an Rechnungskopf, PDF oder ZUGFeRD. Der UI-Editor-Vertrag umfasste in diesem Schritt 69 Ziele; MwSt. und Brutto sind reine abgeleitete Anzeigen.
+- Prüfung: Positions- und Navigationsprüfungen, `rechnungen-design` mit Electron-Node (ABI 123), direkter M83-Rechnungskomponentenvertrag, UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün.
+- Kein Commit und kein Push. Nächster sinnvoller Schritt: fachliche Sicht- und Bedienabnahme im lokalen Rechnungsfenster.
+
+## 2026-08-19 - Rechnung: automatische DRAFT-Speicherung
+
+- Status: `[A]`; alle Änderungen am echten Rechnungsscreen werden seriell in den vorhandenen DRAFT-Pfad übernommen. Das umfasst Belegangaben, Empfänger, Leistungszeitraum, Bezug, Freitext und die vollständige Positions-Editbox.
+- `Entwurf speichern` und `Position übernehmen` sind aus dem aktiven Screen und dem UI-Editor-Vertrag entfernt. Die Positions-Editbox behält `+Titel`, `+Position`, `Schieben` und `Löschen`; die Actionbar behält Kopf, Proberechnung, Buchen, Schließen und Verwerfen.
+- Positionswechsel, Anlegen, Verschieben und Löschen stellen jeweils einen DRAFT-Speichervorgang an. Proberechnung und Buchung warten die laufende Autosave-Warteschlange ab. Nur die Buchung vergibt weiterhin eine Rechnungsnummer und setzt BOOKED.
+- Prüfung: Rechnungsgruppe mit der Electron-Node-Laufzeit (ABI 123), direkter M83-Rechnungskomponentenvertrag mit 69/69 Refs und `git diff --check` sind grün.
+- Kein Commit und kein Push. Nächster sinnvoller Schritt: fachliche Sicht- und Bedienabnahme in der lokalen Anwendung.
+
+## 2026-08-19 - Rechnung: Entwürfe in der Übersicht eindeutig auffindbar
+
+- Status: `[A]`; DRAFT-Karten verwenden ausschließlich bereits vorhandene Daten: Rechnungsempfänger, Bauvorhaben und/oder Leistungsbezug sowie Rechnungsdatum. Das Datum wird lesbar als `TT.MM.JJJJ` angezeigt.
+- Fehlt Kunde oder Bezug, fällt die Darstellung geordnet zurück; ein nahezu leerer Entwurf erscheint als `Entwurf vom <Datum>`. Es wurden weder ein Name noch eine künstliche Rechnungsnummer eingeführt.
+- Bei mehreren DRAFTs mit derselben sichtbaren Kunde-/Bezug-/Datums-Kombination erscheint zusätzlich der erste vorhandene Positions-Kurztext. BOOKED-Karten behalten unverändert Nummer und bisherige Metazeile.
+- Prüfung: Der neue Laufzeittest deckt Kunde + Bezug + Datum, fehlenden Kunden, fehlenden Bezug, Fast-leer, gleichartige Entwürfe mit Positions-Kurztext und BOOKED ab. `rechnungen-design` ist unter dem mitgelieferten Electron-Node (ABI 123) grün; `git diff --check` und der UI-Editor-Vertrags-Selbsttest sind grün.
+- Kein Commit und kein Push. Nächster sinnvoller Schritt: fachliche Sichtprüfung der Kartenanzeige in der lokalen Anwendung.
+
+## 2026-08-18 - Rechnung: Positionshierarchie, Anlegen und Schieben
+
+- Status: `[A]`; die feste Positions-Editbox besitzt nun `+Titel`, `+Position` und `Schieben`. Der Anlegekontext ist getrennt von der Auswahl: Nach `1.01` erzeugt ein weiterer unmittelbarer Klick erneut ein Geschwisterelement `1.02`.
+- Freie Rechnungen erzeugen Leistungspositionen auf Ebene 0 (`01`, `02`); Titel bleiben optional und erhalten `1`, `2`. Bis Meilenstein 3 ist die sichtbare Anlage auf Titel plus eine Unterebene begrenzt. Bestehende tiefere Daten bleiben unangetastet.
+- Der bestehende Typ `heading` trennt mittels `is_title` strukturelle Titel von freien Textpositionen. Titel tragen keine Mengen-, EP-, GP- oder NEP-Werte. FREE-DRAFTs koennen Positionen innerhalb einer Ebene umsortieren, unter einen Titel haengen oder auf Ebene 0 zurueckholen; FROM_ORDER sperrt alle neuen Strukturaktionen.
+- Der UI-Editor-Vertrag umfasst 71 Refs; die neue reale Aktionsgruppe und ihre Fachaktionssperren sind dokumentiert. PrÃ¼fung: Rechnungstestgruppe und UI-Vertrags-Selbsttest grÃ¼n; der M83-Rechnungsmount ist 71/71 grÃ¼n, der Gesamtlauf bleibt allein am bekannten Schutz-Hash von `docs/licensing.md` rot. `npm start` lief interaktiv bis zum Timeout; sichtbare Nutzerabnahme steht mangels Computer Use noch aus.
+- Nachschaerfung Positionsdarstellung: Leistungspositionen besitzen keinen eigenen Hintergrund und liegen direkt auf dem hellen Rechnungsblatt; nur Haarlinie und zarter Zwischenstreifen trennen sie ohne Zebra-, Karten- oder Kapseloptik. Die LV-Kopfzeile benennt Pos./Gegenstand, Menge/Einheit, EP und GP, waehrend die Zeilen nur Werte auf festen Achsen zeigen. Titel, Text und Hinweise bleiben preisfrei; eine DRAFT-Speicher-/Ladepruefung bestaetigt mehrzeiligen Positionslangtext unveraendert.
+- Endlosblatt-Korrektur: Der Sheet-Scrollbereich ist nun eine durchgehende helle Rechnungsflaeche ohne Rahmen, Schatten oder gerundete untere Blattkante. Positionsbereich, Summen und weiterer Inhalt teilen dieselbe Flaeche; die feste Editbox bleibt separat darunter.
+- Positions-Persistenznachweis: Kein Datenverlust im aktuellen DRAFT-Pfad reproduzierbar. Editboxuebernahme, nachfolgende Position, Bearbeitung, Speicherung, rohe `positions_json`-Spalte und erneutes Laden bewahren Titel-/Leistungstexte, Menge, Einheit, EP, NEP, IDs, Elternbezug und Nummerierung. Es gibt keine Katalogrueckschreibung.
+- Kein Commit und kein Push. NÃ¤chster offener Schritt: Meilenstein 3 fÃ¼r die konfigurierbare maximale Gliederungstiefe.
+
+## 2026-08-18 - Rechnung: Hierarchie-Kern fÃ¼r freie Rechnungspositionen
+
+- Status: `[A]`; `positions_json` trÃ¤gt nun pro Position die stabile `id` und optional `parent_id`. Fehlende `parent_id` aus bestehenden EntwÃ¼rfen werden als Ebene 0 behandelt; eine neue SQL-Tabelle oder Migration ist nicht erforderlich.
+- Die sichtbare `position_number` wird bei jeder Normalisierung aus Elternbezug und Listenreihenfolge abgeleitet: freie Wurzeln `01`, `02`, Titel `1`, `2`, untergeordnete Elemente `1.01`, `1.01.01` usw. UngÃ¼ltige Eltern werden sicher gelÃ¶st; bei Zyklen wird eine schlieÃŸende Kante deterministisch entkoppelt, ohne Positionen, IDs oder Fachwerte zu verlieren.
+- Service-, Titel-/Text-, Hinweis- und NEP-Regeln bleiben im bestehenden Typmodell erhalten. Titel bleiben mengen-, EP-, GP- und summenneutral. DRAFT, Vorschau und Buchung verwenden die gleiche Normalisierung und bewahren die Hierarchie.
+- PrÃ¼fung: `node scripts/test.cjs --group rechnungen-design` und der UI-Editor-Vertrags-Selbsttest sind grÃ¼n. Kein Commit und kein Push. NÃ¤chster offener Schritt: separater Meilenstein fÃ¼r die Bedienung `+Titel` / `+Position`.
+
+## 2026-08-18 - Rechnung: Rechnungsblatt statt Gesamtformular
+
+- Status: `[P]`; der echte `RechnungScreen` rendert DRAFTs jetzt als direkt bearbeitbares Rechnungsblatt. Rechnungssteller, Empfänger, Belegangaben, Bauvorhaben/Leistungsbezug, Bau-LV, Netto-Summe und Zahlungstext sind in der Dokumentenstruktur angeordnet; Anwendungsaktionen liegen außerhalb des Blatts.
+- Die Positionsansicht zeigt Kurztext, ein- und ausblendbaren Langtext sowie Menge/Einheit, EP und GP. NEP erscheint sichtbar als NEP und bleibt außerhalb der Netto-Summe. Mehrwertsteuer ist im bestehenden Fachmodell nicht berechnet und wird daher nur als fehlender Wert ausgewiesen.
+- Der Scope `rechnung.screen` behält 61 explizite Ziele; der Vertrag und die Entwurfsentscheidung dokumentieren die Rechnungsblatt-Semantik. Fachaktionen bleiben für den UI-Editor gesperrt. Die historische `RechnungenDesignScreen`-Referenz blieb unverändert und ist nicht der normale Rechnungsweg.
+- Nachweise: Rechnungstestgruppe, UI-Editor-Vertragscheck-Selbsttest und 61/61-Mounted-Ref-Vertrag grün. Der M83-Gesamtlauf bleibt nur am bestehenden, paketfremden Schutz-Hash von `docs/licensing.md` rot. `npm start` wurde normal gestartet; die native Klickabnahme ist ohne Computer-Use-Anbindung noch offen.
+- Kein Commit und kein Push. Nächster Schritt: fachliche Sicht- und Bedienabnahme im gestarteten BBM, insbesondere Kunde/Datum/Leistungsbezug ändern, DRAFT speichern, erneut öffnen und den UI-Editor für `rechnung.screen` öffnen.
+
 ## 2026-08-16 - Rechnungen im normalen Modulpfad erreichbar
 
 - Status: `[A]`; `rechnung` ist als globales Fachmodul im kanonischen Modulkatalog registriert. Die normale Shell leitet sichtbare globale Module aus deren Deskriptoren ab und oeffnet sie ueber den generischen Routerpfad.
@@ -4126,6 +4270,37 @@ Wichtig:
   und 26 bestehende Warnungen.
 - Nächster Schritt: ausschließlich Sichtfreigabe dieser Welle; keine automatische
   Löschung oder weitere Massenmigration.
+
+## Rechnung - Mini-Paket Rechnungs-Freitext
+
+- Status: abgeschlossen, ohne UI-, PDF- oder Fachlogikumbau.
+- Das optionale persistente Rechnungsfeld `intro_text` wurde in Migration, Repository und `InvoiceService` durchgängig ergänzt. Mehrzeiliger Text bleibt unverändert erhalten; leere Werte sind für DRAFTs zulässig.
+- BOOKED-Rechnungen führen den zum Buchungszeitpunkt vorhandenen Text unverändert mit und verwenden weiterhin die bestehende Änderungs-Sperre.
+- Prüfung: Die Gruppe `rechnungen-design` einschließlich der neuen Persistenz-, Legacy-Migrations- und BOOKED-Sperrtests ist grün. Der reguläre Acer-Entwicklungsstart hat die aktive Datenbank migriert; `intro_text` ist vorhanden, die Datenbank enthält fünf Rechnungen.
+- Kein Commit, kein Push. Nächster offener Schritt: Der separat beauftragte Rechnungs-UI-Umbau kann auf `intro_text` aufbauen.
+
+## Rechnung - UI nach Protokoll-Prinzip
+
+- Status: technisch umgesetzt. Der echte Rechnungsscreen besitzt eine modulinterne Steuerungsbar, einen allein scrollenden Rechnungsinhalt und eine feste untere Positions-Editbox.
+- Der einklappbare Kopf umfasst Empfänger, Rechnungsdaten, Bau-/Leistungsbezug und `intro_text`; der Freitext bleibt über die vorhandene Rechnungspersistenz angebunden.
+- Der UI-Editor-Vertrag umfasst nun 63 explizite Ziele. Neue Ziele sind Kopfumschaltung und Freitext; der Empfänger ist ein kompakter Auswahl-Button statt einer dauerhaft sichtbaren Selectbox.
+- Prüfung: Rechnungsgruppe, Vertrags-Selbsttest und Rechnung-Mounted-Refs sind grün. Der breite Editor-Lauf bleibt außerhalb des Pakets an bekannten Lizenzhash-/Manifest-Altguardrails rot.
+- Kein Commit, kein Push. Offene Abnahme: sichtbarer Nutzerablauf im normalen Electron-Fenster.
+
+## Rechnung - Brief-/Rechnungskopf
+
+- Status: technisch umgesetzt. Der echte Rechnungsscreen ordnet Empfänger,
+  vorhandenen Rechnungssteller, Rechnungsdatum und Leistungszeitraum nun als
+  Briefkopf; Titel, Rechnungsnummer, Leistungsbezug und der optionale Freitext
+  folgen vor dem unveränderten Bau-LV.
+- Die MainHeader-Logooption wird nicht in das Rechnungsmodul kopiert. Netto
+  zeigt die vorhandene Positionssumme; 19 % MwSt. und Summe Brutto sind bis zu
+  einem getrennten Fachpaket sichtbar als nicht berechnete Anzeige vorbereitet.
+- Prüfung: Die Gruppe `rechnungen-design`, der UI-Editor-Vertrags-Selbsttest
+  und `git diff --check` sind grün. Der gemountete M83-Rechnungsteil bestätigt
+  69/69 Referenzen; sein Gesamtlauf bleibt allein am bekannten, paketfremden
+  Schutz-Hash von `docs/licensing.md` rot. `npm start` hat Electron technisch
+  gestartet; die sichtbare Fachabnahme steht noch aus. Kein Commit, kein Push.
 
 ## Core-Stabilisierung - Main-/IPC-Modulvertrag und Projektmodul-Navigation
 
