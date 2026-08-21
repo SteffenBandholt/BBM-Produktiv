@@ -1,5 +1,41 @@
 // src/main/domain/FirmService.js
 
+const firmUsagesRepo = require("../db/firmUsagesRepo");
+
+function _usageCodesFromInput(input = {}) {
+  if (Array.isArray(input.usages)) return input.usages;
+
+  const codes = [];
+  if (input.projectParticipant === true || input.project_participant === true) {
+    codes.push(firmUsagesRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT);
+  }
+  if (input.invoiceCustomer === true || input.invoice_customer === true) {
+    codes.push(firmUsagesRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER);
+  }
+  return codes;
+}
+
+function _hasExplicitUsageInput(input = {}) {
+  return (
+    Array.isArray(input.usages) ||
+    Object.prototype.hasOwnProperty.call(input, "projectParticipant") ||
+    Object.prototype.hasOwnProperty.call(input, "project_participant") ||
+    Object.prototype.hasOwnProperty.call(input, "invoiceCustomer") ||
+    Object.prototype.hasOwnProperty.call(input, "invoice_customer")
+  );
+}
+
+function _decorateFirm(firm) {
+  if (!firm?.id) return firm;
+  const usages = firmUsagesRepo.listCodesByFirm(firm.id);
+  return {
+    ...firm,
+    usages,
+    project_participant: usages.includes(firmUsagesRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT),
+    invoice_customer: usages.includes(firmUsagesRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER),
+  };
+}
+
 class FirmService {
   constructor({ firmsRepo, personsRepo }) {
     if (!firmsRepo) throw new Error("FirmService: firmsRepo required");
@@ -10,13 +46,14 @@ class FirmService {
   }
 
   listGlobal() {
-    return this.firmsRepo.listActive();
+    firmUsagesRepo.ensureProjectParticipantUsageForAssignedFirms();
+    return this.firmsRepo.listActive().map(_decorateFirm);
   }
 
   createGlobal(input) {
     if (!input) throw new Error("input required");
 
-    return this.firmsRepo.createFirm({
+    const firm = this.firmsRepo.createFirm({
       short: input.short,
       name: input.name,
       name2: input.name2,
@@ -28,6 +65,15 @@ class FirmService {
       gewerk: input.gewerk,
       notes: input.notes,
     });
+
+    if (_hasExplicitUsageInput(input)) {
+      firmUsagesRepo.replaceUsages({
+        firmId: firm.id,
+        usageCodes: _usageCodesFromInput(input),
+      });
+    }
+
+    return _decorateFirm(firm);
   }
 
   updateGlobal({ firmId, patch }) {
@@ -37,7 +83,16 @@ class FirmService {
     const firm = this.firmsRepo.getFirmById(firmId);
     if (!firm || firm.removed_at) throw new Error("Firma nicht gefunden");
 
-    return this.firmsRepo.updateFirm({ firmId, patch });
+    const updated = this.firmsRepo.updateFirm({ firmId, patch });
+
+    if (_hasExplicitUsageInput(patch)) {
+      firmUsagesRepo.replaceUsages({
+        firmId,
+        usageCodes: _usageCodesFromInput(patch),
+      });
+    }
+
+    return _decorateFirm(updated);
   }
 
   deleteGlobal({ firmId }) {
