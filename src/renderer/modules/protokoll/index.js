@@ -41,17 +41,13 @@ function buildProtokollModulePresentation() {
     icon: "protocol",
     description: "Besprechungen dokumentieren und Protokolle fortschreiben.",
     start: Object.freeze({
-      mode: "module-home",
+      mode: "project",
       screenId: PROTOKOLL_START_SCREEN_ID,
       label: "Öffnen",
     }),
   });
 }
 
-// Technische Heimat fuer das Fachmodul `Protokoll`.
-// Der heutige Bestand bleibt vorerst in seinen vorhandenen Pfaden und wird hier
-// nur ueber kleine Einstiegspunkte angedockt.
-// Kein globaler Modulkatalog, keine Plattformlogik und kein Vollumzug.
 export function getProtokollModuleEntry() {
   return Object.freeze({
     moduleId: PROTOKOLL_MODULE_ID,
