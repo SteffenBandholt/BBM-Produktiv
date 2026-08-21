@@ -2835,7 +2835,7 @@ async _openMailClient(mailType = "", options = {}) {
       return;
     }
 
-    const files = Array.isArray(listRes?.files) ? listRes.files : [];
+    const files = this._filterStoredMeetingPdfFiles(listRes?.files);
     const closedMeetings = kindKey === "protocol" ? await this._fetchClosedMeetings(pid) : [];
     const popupTitle = this._getStoredPdfPopupTitle(kindKey);
 
@@ -2962,16 +2962,24 @@ async _openMailClient(mailType = "", options = {}) {
     return "Keine gespeicherten Firmenlisten-PDFs gefunden.";
   }
 
-  _formatStoredProjectPdfListEntry(item = {}, kind = "", meetings = []) {
+  _getStoredMeetingPdfReference(item = {}) {
     const fileName = String(item?.fileName || "").trim();
     const match = fileName.match(/#\s*(\d+)\s*[-_ ]?\s*(\d{2}\.\d{2}\.\d{4}|\d{4}-\d{2}-\d{2})/i);
-    let meetingLabel = "";
-    let meetingIndex = "";
-    if (match) {
-      meetingIndex = String(match[1] || "").trim();
-      const dateLabel = /^\d{4}-\d{2}-\d{2}$/.test(match[2]) ? this._formatEmailDate(match[2]) : match[2];
-      meetingLabel = `#${meetingIndex} - ${dateLabel}`;
-    }
+    if (!match) return null;
+    const meetingIndex = String(match[1] || "").trim();
+    const dateLabel = /^\d{4}-\d{2}-\d{2}$/.test(match[2]) ? this._formatEmailDate(match[2]) : match[2];
+    return { meetingIndex, dateLabel };
+  }
+
+  _filterStoredMeetingPdfFiles(files = []) {
+    return (Array.isArray(files) ? files : []).filter((item) => !!this._getStoredMeetingPdfReference(item));
+  }
+
+  _formatStoredProjectPdfListEntry(item = {}, kind = "", meetings = []) {
+    const fileName = String(item?.fileName || "").trim();
+    const reference = this._getStoredMeetingPdfReference(item);
+    const meetingIndex = reference?.meetingIndex || "";
+    const meetingLabel = reference ? `#${meetingIndex} - ${reference.dateLabel}` : "";
     if (kind === "protocol") {
       const protocolKeyword =
         this._extractProtocolKeywordFromMeetings(meetingIndex, meetings) ||

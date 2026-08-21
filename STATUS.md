@@ -4246,3 +4246,12 @@ Wichtig:
 - Sichtprüfung: reale dreiseitige Restarbeiten-PDFs mit EIN/AUS sowie eine 0-mm-Variante wurden als PNG gerendert. Kopf und Body sind deckungsgleich, der wiederholte Kopf auf Seite 2 behält den Zustand, AUS entfernt alle inneren Linien ohne Geometrieänderung und `Nr. = 0 mm` hinterlässt weder Lücke noch Phantomlinie.
 - Schutz: UI-Editor-kit, `rechnung-entwicklung`, Protokoll-PDF, Fachlogik, Datenbank, Paginierung und Druckweg wurden nicht verändert. Commit, Push, Merge und Branchwechsel: keiner.
 - Nächster Schritt: fachliche Sichtfreigabe der feinen Linienwirkung; technisch ist für dieses Paket kein Restpunkt offen.
+
+## Druckart-Auswahl und gespeicherte Besprechungsfassungen (21.08.2026)
+
+- Status: `[A]`; das Popup zeigt korrekte deutsche Umlaute und besitzt keinen doppelten oberen Schließen-Button. Im Footer bleiben ausschließlich `Abbrechen` und `Weiter`.
+- Einfachklick markiert nur. `Weiter` und der bestehende Doppelklickweg bestätigen jeweils den tatsächlich gewählten Eintrag für Protokoll, Firmenliste, ToDo-Liste und TOP-Liste.
+- Die vier Auswahllisten zeigen nur Dateien mit fachlicher Zuordnung über `#Besprechungsnummer + Datum`. Unpassende Vorschau-/Entwicklungs-/Altdateien werden nur aus der Anzeige gefiltert; die Dateien selbst bleiben unverändert. Gültige Protokoll-Stichwörter bleiben sichtbar.
+- Praktische Electron-Abnahme: acht reale Mausabläufe (`Weiter` und Doppelklick für alle vier Druckarten), jeweils vorgeschalteter Einfachklick, passende Folgeauswahl, gültiger Einzellisteneintrag und unveränderte SHA-256-Prüfsummen aller acht isolierten PDF-Sentinels. Keine Warnung oder Dateiaktion wurde ausgelöst.
+- Der gezielte Ausgabe-Test, UI-Editor-Vertrags-Selbsttest, `git diff --check` und der diff-bezogene KREBS-/Event-Guardrail sind grün. Der breite `npm test`-Lauf bleibt an bestehenden auftragsfremden UI-Editor-/Registry-/Licensing-/M86-Altprüfungen rot; keiner dieser Fehler referenziert eine der drei Produkt-/Testdateien dieses Pakets.
+- Schutz: PDF-Renderer, Drucklayout, IPC, Datenbank, Ablage, Mailweg, Registry, Licensing, UI-Editor, HostAdapter und M86 blieben unverändert. Nächster technischer Schritt: keiner; Commit-SHA folgt im Abschlussbericht.

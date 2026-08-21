@@ -190,6 +190,41 @@ async function runAusgabeModuleTests(run) {
     assert.equal(byId["firms-preview"]?.disabled, false);
   });
 
+  await run("Ausgabe: Gespeicherte PDF-Auswahl zeigt nur Besprechungsfassungen", () => {
+    const header = new MainHeader({ router: { currentProjectId: "17" } });
+    const validProtocol = {
+      fileName: "4711_Baustelle_Nordfluegel_#13-2026-05-07.pdf",
+      filePath: "C:/pdf/valid-protocol.pdf",
+    };
+    const validFirms = {
+      fileName: "4711 - Baustelle - Firmenliste - Stand #13 - 07.05.2026.pdf",
+      filePath: "C:/pdf/valid-firms.pdf",
+    };
+    const invalidPreview = {
+      fileName: "BBM 04-2026 UI-Polish für BBM Firmenliste.pdf",
+      filePath: "C:/pdf/invalid-preview.pdf",
+    };
+    const invalidWithoutDate = {
+      fileName: "4711 - Baustelle - TOP-Liste - Stand #13.pdf",
+      filePath: "C:/pdf/invalid-without-date.pdf",
+    };
+
+    assert.deepEqual(
+      header
+        ._filterStoredMeetingPdfFiles([validProtocol, invalidPreview, validFirms, invalidWithoutDate])
+        .map((item) => item.filePath),
+      ["C:/pdf/valid-protocol.pdf", "C:/pdf/valid-firms.pdf"],
+    );
+    assert.equal(
+      header._formatStoredProjectPdfListEntry(
+        validProtocol,
+        "protocol",
+        [{ meeting_index: 13, title: "#13 - Nordflügel" }],
+      ),
+      "#13 - 07.05.2026 - Nordflügel",
+    );
+  });
+
   await run("Ausgabe: Gespeicherte PDF-Auswahl wird vor dem Oeffnen der Vorschau geschlossen", () => {
     assert.match(
       mainHeaderSource,
@@ -677,8 +712,13 @@ async function runAusgabeModuleTests(run) {
     assert.equal(mainHeaderSource.includes("_openPrintTypeSelectorFlow"), true);
     assert.equal(mainHeaderSource.includes('mode: "output"'), true);
     assert.equal(mainHeaderSource.includes("getVisiblePrintDialogActions"), true);
-    assert.equal(closedProtocolSelectorSource.includes("Druckart waehlen"), true);
+    assert.equal(closedProtocolSelectorSource.includes("Druckart wählen"), true);
+    assert.equal(closedProtocolSelectorSource.includes("Wähle zuerst die gewünschte Ausgabeart."), true);
+    assert.equal(closedProtocolSelectorSource.includes("Schliessen"), false);
+    assert.match(closedProtocolSelectorSource, /onClick:\s*\(\) => setCurrentId\(item\.id\)/);
+    assert.match(closedProtocolSelectorSource, /onDoubleClick:\s*\(\) => submitActiveItem\(item\)/);
     assert.equal(closedProtocolSelectorSource.includes("Weiter"), true);
+    assert.equal(closedProtocolSelectorSource.includes("Abbrechen"), true);
   });
 }
 

@@ -5,18 +5,18 @@ function getPrimaryLabel(mode) {
   if (mode === "output") return "Weiter";
   if (mode === "mail") return "E-Mail senden";
   if (mode === "print") return "PDF-Vorschau";
-  return "Protokoll oeffnen";
+  return "Protokoll öffnen";
 }
 
 function getTitle(mode) {
-  if (mode === "output") return "Druckart waehlen";
-  if (mode === "mail") return "Geschlossenes Protokoll fuer E-Mail waehlen";
-  if (mode === "print") return "Geschlossenes Protokoll fuer Druck waehlen";
-  return "Geschlossenes Protokoll waehlen";
+  if (mode === "output") return "Druckart wählen";
+  if (mode === "mail") return "Geschlossenes Protokoll für E-Mail wählen";
+  if (mode === "print") return "Geschlossenes Protokoll für Druck wählen";
+  return "Geschlossenes Protokoll wählen";
 }
 
 function getSubtitle(mode) {
-  if (mode === "output") return "Waehle zuerst die gewuenschte Ausgabeart.";
+  if (mode === "output") return "Wähle zuerst die gewünschte Ausgabeart.";
   if (mode === "mail") return "Listenbasierte Auswahl geschlossener Protokolle.";
   if (mode === "print") return "Listenbasierte Auswahl geschlossener Protokolle.";
   return "Listenbasierte Auswahl geschlossener Protokolle.";
@@ -197,19 +197,6 @@ export async function openClosedProtocolSelector({
               { style: { marginTop: "4px", fontSize: "12px", color: "var(--bbm-popup-muted)" } },
               getSubtitle(props.mode)
             )
-          ),
-          React.createElement(
-            "button",
-            {
-              type: "button",
-              onClick: () => props.onCancel(),
-              style: {
-                border: "1px solid var(--bbm-popup-border-strong)",
-                background: "var(--bbm-popup-surface)",
-                cursor: "pointer",
-              },
-            },
-            "Schliessen"
           )
         ),
         React.createElement(
