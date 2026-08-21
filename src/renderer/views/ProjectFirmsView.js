@@ -23,11 +23,7 @@ function firmSearchText(firm) {
     firm?.name,
     firm?.name2,
     firm?.gewerk,
-    firm?.street,
-    firm?.zip,
     firm?.city,
-    firm?.email,
-    firm?.phone,
   ]
     .map(text)
     .filter(Boolean)
@@ -136,17 +132,6 @@ export default class ProjectFirmsView {
       color: "#172033",
     });
     title.textContent = firmLabel(firm);
-
-    const second = firmSecondary(firm);
-    if (second) {
-      const sub = style(document.createElement("div"), {
-        fontSize: "12px",
-        fontWeight: "650",
-        color: "#475467",
-      });
-      sub.textContent = second;
-      card.append(sub);
-    }
 
     const address = style(document.createElement("div"), {
       fontSize: "12px",
@@ -359,12 +344,11 @@ export default class ProjectFirmsView {
         : available;
 
       list.innerHTML = "";
-      status.textContent = `${filtered.length} von ${available.length} Firma${available.length === 1 ? "" : "en"}`;
+      status.textContent = `${filtered.length} von ${available.length} Firmen`;
 
       if (!filtered.length) {
         const empty = style(document.createElement("div"), {
-          padding: "20px",
-          textAlign: "center",
+          padding: "18px",
           color: "#667085",
           fontSize: "12.5px",
         });
@@ -375,25 +359,20 @@ export default class ProjectFirmsView {
       }
 
       for (const firm of filtered) {
-        const firmId = text(firm?.id);
         const row = style(document.createElement("button"), {
           width: "100%",
           border: "1px solid transparent",
           borderBottom: "1px solid #edf0f4",
           background: "#fff",
+          padding: "11px 12px",
           textAlign: "left",
-          padding: "11px 13px",
           cursor: "pointer",
           display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) auto",
-          gap: "10px",
-          alignItems: "center",
-          boxSizing: "border-box",
+          gap: "3px",
         });
         row.type = "button";
-        row.dataset.firmId = firmId;
+        row.dataset.firmId = String(firm?.id || "");
 
-        const main = document.createElement("div");
         const primary = style(document.createElement("div"), {
           fontSize: "13px",
           fontWeight: "800",
@@ -401,36 +380,28 @@ export default class ProjectFirmsView {
         });
         primary.textContent = firmPrimary(firm);
 
-        const secondaryParts = [
-          text(firm?.short) && text(firm?.short) !== firmPrimary(firm) ? text(firm?.short) : "",
-          firmSecondary(firm),
-          text(firm?.city),
-        ].filter(Boolean);
+        const secondaryParts = [];
+        const short = text(firm?.short);
+        const second = firmSecondary(firm);
+        if (short && short !== firmPrimary(firm)) secondaryParts.push(short);
+        if (second && !secondaryParts.includes(second)) secondaryParts.push(second);
+
         const secondary = style(document.createElement("div"), {
-          marginTop: "3px",
           fontSize: "11.5px",
           color: "#667085",
         });
-        secondary.textContent = [...new Set(secondaryParts)].join(" · ") || "Keine Zusatzangabe";
-        main.append(primary, secondary);
+        secondary.textContent = secondaryParts.join(" · ") || firmAddress(firm) || "Keine Zusatzangabe";
 
-        const right = style(document.createElement("div"), {
-          fontSize: "11px",
-          color: "#98a2b3",
-          whiteSpace: "nowrap",
-        });
-        right.textContent = text(firm?.gewerk) || "";
-
-        row.append(main, right);
-        row.addEventListener("click", () => setSelected(firmId));
+        row.append(primary, secondary);
+        row.addEventListener("click", () => setSelected(firm?.id));
         row.addEventListener("dblclick", async () => {
-          setSelected(firmId);
+          setSelected(firm?.id);
           assign.click();
         });
         list.append(row);
       }
 
-      if (selectedFirmId && !filtered.some((firm) => text(firm?.id) === selectedFirmId)) {
+      if (selectedFirmId && !filtered.some((firm) => String(firm?.id || "") === selectedFirmId)) {
         setSelected("");
       } else {
         setSelected(selectedFirmId);
@@ -446,20 +417,15 @@ export default class ProjectFirmsView {
     overlay.addEventListener("mousedown", (event) => {
       if (event.target === overlay) close();
     });
-    overlay.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") close();
-    });
 
     assign.addEventListener("click", async () => {
       const firmId = text(selectedFirmId);
       if (!firmId) return;
       assign.disabled = true;
-      assign.style.opacity = ".55";
       const api = window.bbmDb || {};
       const res = await api.projectFirmsAssignGlobalFirm?.({ projectId: this.projectId, firmId });
       if (!res?.ok) {
         assign.disabled = false;
-        assign.style.opacity = "1";
         alert(res?.error || "Firma konnte nicht zugeordnet werden.");
         return;
       }
@@ -471,16 +437,13 @@ export default class ProjectFirmsView {
       display: "flex",
       justifyContent: "flex-end",
       gap: "8px",
-      marginTop: "2px",
+      marginTop: "4px",
     });
     actions.append(cancel, assign);
 
-    const resultsBlock = document.createElement("div");
-    resultsBlock.append(status, listWrap);
-    modal.append(title, hint, search, resultsBlock, actions);
+    modal.append(title, hint, search, status, listWrap, actions);
     overlay.append(modal);
     document.body.append(overlay);
-
     renderList();
     setTimeout(() => search.focus(), 0);
   }
