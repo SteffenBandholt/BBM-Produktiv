@@ -1,3 +1,5 @@
+import { openProtocolSettingsModal } from "../../protokoll/ProtocolSettingsModal.js";
+
 function normalizeText(value) {
   return String(value || "").trim();
 }
@@ -217,6 +219,26 @@ export default class ProjectWorkspaceScreen {
       });
       actions.appendChild(btn);
     });
+
+    if (group.moduleId === "protokoll") {
+      const settings = setStyles(document.createElement("button"), {
+        border: `1px solid ${style.color}55`,
+        borderRadius: "8px",
+        background: "#ffffff",
+        color: style.color,
+        padding: "7px 11px",
+        fontSize: "11.5px",
+        fontWeight: "750",
+        cursor: "pointer",
+      });
+      settings.type = "button";
+      settings.textContent = "Einstellungen";
+      settings.title = "Projektspezifische Protokoll- und PDF-Einstellungen";
+      settings.addEventListener("click", async () => {
+        await openProtocolSettingsModal({ projectId: this.projectId || this.router?.currentProjectId || null });
+      });
+      actions.appendChild(settings);
+    }
 
     card.append(iconWrap, title, description, actions);
     return card;
