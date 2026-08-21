@@ -2,8 +2,7 @@ import LegacyProjectFormScreen from "./ProjectFormScreen.js";
 
 function walk(root, predicate) {
   if (!root || typeof root.querySelectorAll !== "function") return [];
-  return Array.from(root.querySelectorAll("*"))
-    .filter((el) => predicate(el));
+  return Array.from(root.querySelectorAll("*")).filter((el) => predicate(el));
 }
 
 function findByText(root, text) {
@@ -21,8 +20,8 @@ function renameExact(root, from, to) {
  * Neutrale Projektformular-Huelle fuer den modularen BBM-Projektkern.
  *
  * Die bestehende Speicher-/IPC-Logik bleibt unveraendert. Die Huelle raeumt
- * nur die fachliche Darstellung auf und macht technische bzw. Protokoll-
- * spezifische Bestandsfunktionen als Uebergang ehrlich sichtbar.
+ * nur die fachliche Darstellung auf. Fachmodul-Funktionen gehoeren nicht in
+ * dieses Formular und werden hier deshalb ausgeblendet.
  */
 export default class ProjectFormHubScreen extends LegacyProjectFormScreen {
   _decorateNeutralProjectForm(root) {
@@ -86,17 +85,13 @@ export default class ProjectFormHubScreen extends LegacyProjectFormScreen {
     return root;
   }
 
-  _renameLegacyModuleSettings(buttonRow) {
+  _removeModuleSettingsButton(buttonRow) {
     if (!buttonRow) return buttonRow;
     const settingsButton = Array.from(buttonRow.querySelectorAll?.("button") || []).find(
-      (btn) => String(btn.textContent || "").trim() === "Einstellungen"
+      (btn) => ["Einstellungen", "Protokoll-Einstellungen"].includes(String(btn.textContent || "").trim())
     );
-    if (settingsButton) {
-      settingsButton.textContent = "Protokoll-Einstellungen";
-      settingsButton.title =
-        "Uebergang: Diese Einstellungen gehoeren fachlich zum Protokollmodul und werden spaeter dorthin verschoben.";
-      settingsButton.style.opacity = "0.78";
-    }
+    if (settingsButton) settingsButton.remove();
+    this.btnSettings = null;
     return buttonRow;
   }
 
@@ -106,10 +101,10 @@ export default class ProjectFormHubScreen extends LegacyProjectFormScreen {
   }
 
   _buildPageButtonRow() {
-    return this._renameLegacyModuleSettings(super._buildPageButtonRow());
+    return this._removeModuleSettingsButton(super._buildPageButtonRow());
   }
 
   _buildModalFooter() {
-    return this._renameLegacyModuleSettings(super._buildModalFooter());
+    return this._removeModuleSettingsButton(super._buildModalFooter());
   }
 }
