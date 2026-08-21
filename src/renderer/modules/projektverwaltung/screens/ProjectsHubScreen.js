@@ -26,6 +26,7 @@ function clearStorage(key) {
  *
  * Normaler Projektklick: Projekt-Arbeitsbereich.
  * Einstieg aus der Protokoll-Kachel: zuerst Protokoll-Startsicht.
+ * Die Projektkachel selbst ist bewusst keine Modulnavigation mehr.
  */
 export default class ProjectsHubScreen extends LegacyProjectsScreen {
   constructor(args = {}) {
@@ -35,6 +36,54 @@ export default class ProjectsHubScreen extends LegacyProjectsScreen {
 
   _startsFromProtocolTile() {
     return readStorage(START_TARGET_KEY) === "protokoll";
+  }
+
+  // Module gehoeren in den Projekt-Arbeitsbereich und nicht als Mini-Menue
+  // direkt in jede Projektkachel.
+  _getProjectTileModuleActions() {
+    return [];
+  }
+
+  _polishNeutralProjectCards() {
+    const host = this.hostEl || null;
+    if (!host?.querySelectorAll) return;
+
+    for (const card of host.querySelectorAll('[data-project-card="true"]')) {
+      card.style.minHeight = "150px";
+      card.style.padding = "16px";
+      card.style.borderRadius = "12px";
+      card.style.boxShadow = "0 3px 10px rgba(15,23,42,.035)";
+      card.style.gap = "10px";
+
+      const rail = card.querySelector('[data-project-action-rail="true"]');
+      if (rail) {
+        rail.style.flex = "0 0 auto";
+        rail.style.minWidth = "0";
+        rail.style.paddingLeft = "8px";
+        rail.style.borderLeft = "none";
+        rail.style.alignSelf = "flex-start";
+      }
+
+      const edit = card.querySelector('[data-project-action="edit"]');
+      if (edit) {
+        edit.textContent = "Bearbeiten";
+        edit.style.border = "1px solid #d8dee8";
+        edit.style.borderRadius = "7px";
+        edit.style.background = "#ffffff";
+        edit.style.color = "#475467";
+        edit.style.padding = "6px 9px";
+        edit.style.fontSize = "11px";
+        edit.style.fontWeight = "700";
+        edit.style.textDecoration = "none";
+      }
+
+      card.title = "Projekt öffnen";
+    }
+  }
+
+  _renderGrid() {
+    super._renderGrid();
+    this._polishNeutralProjectCards();
   }
 
   async _openProjectFormModal({ projectId } = {}) {
