@@ -38,6 +38,18 @@ function buildRestarbeitenModuleNavigation() {
   });
 }
 
+function buildRestarbeitenModulePresentation() {
+  return Object.freeze({
+    color: "#f59e0b",
+    icon: "restarbeiten",
+    description: "Restarbeiten und Mängel projektbezogen erfassen und nachverfolgen.",
+    start: Object.freeze({
+      mode: "project",
+      label: "Projekt auswählen",
+    }),
+  });
+}
+
 export function getRestarbeitenModuleEntry() {
   return Object.freeze({
     moduleId: RESTARBEITEN_MODULE_ID,
@@ -45,6 +57,7 @@ export function getRestarbeitenModuleEntry() {
     workScreenId: RESTARBEITEN_WORK_SCREEN_ID,
     screens: buildRestarbeitenModuleScreens(),
     navigation: buildRestarbeitenModuleNavigation(),
+    presentation: buildRestarbeitenModulePresentation(),
     shell: Object.freeze({
       hideSidebar: true,
     }),
