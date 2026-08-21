@@ -16,6 +16,40 @@ function renameExact(root, from, to) {
   return el;
 }
 
+function getFieldByLabel(root, labelText) {
+  const label = findByText(root, labelText);
+  return label?.closest?.(".bbm-form-field") || label?.parentElement || null;
+}
+
+function getRowForField(field) {
+  return field?.closest?.(".project-form-row") || field?.parentElement || null;
+}
+
+function makeFieldFluid(field) {
+  if (!field) return;
+  field.style.flex = "1 1 0";
+  field.style.minWidth = "0";
+  field.style.width = "auto";
+  field.style.maxWidth = "none";
+
+  const control = field.querySelector?.("input, textarea, select");
+  if (!control) return;
+  control.style.width = "100%";
+  control.style.maxWidth = "100%";
+  control.style.minWidth = "0";
+  control.style.boxSizing = "border-box";
+}
+
+function setGridRow(row, columns) {
+  if (!row) return;
+  row.style.display = "grid";
+  row.style.gridTemplateColumns = columns;
+  row.style.columnGap = "12px";
+  row.style.rowGap = "8px";
+  row.style.alignItems = "end";
+  row.style.width = "100%";
+}
+
 /**
  * Neutrale Projektformular-Huelle fuer den modularen BBM-Projektkern.
  *
@@ -24,12 +58,61 @@ function renameExact(root, from, to) {
  * dieses Formular und werden hier deshalb ausgeblendet.
  */
 export default class ProjectFormHubScreen extends LegacyProjectFormScreen {
+  _stabilizeProjectFormLayout(root) {
+    const nameField = getFieldByLabel(root, "Projektbezeichnung *");
+    const numberField = getFieldByLabel(root, "Projektnummer");
+    const shortField = getFieldByLabel(root, "Kurzbezeichnung");
+    const streetField = getFieldByLabel(root, "Straße");
+    const zipField = getFieldByLabel(root, "PLZ");
+    const cityField = getFieldByLabel(root, "Ort");
+    const leadField = getFieldByLabel(root, "Interne Projektleitung");
+    const phoneField = getFieldByLabel(root, "Telefon");
+    const startField = getFieldByLabel(root, "Startdatum");
+    const endField = getFieldByLabel(root, "Enddatum");
+    const notesField = getFieldByLabel(root, "Notizen");
+
+    [
+      nameField,
+      numberField,
+      shortField,
+      streetField,
+      zipField,
+      cityField,
+      leadField,
+      phoneField,
+      startField,
+      endField,
+      notesField,
+    ].forEach(makeFieldFluid);
+
+    setGridRow(getRowForField(nameField), "minmax(0, 1fr)");
+    setGridRow(getRowForField(numberField), "minmax(120px, .34fr) minmax(180px, .66fr)");
+    setGridRow(getRowForField(streetField), "minmax(0, 1fr)");
+    setGridRow(getRowForField(zipField), "120px minmax(0, 1fr)");
+    setGridRow(getRowForField(leadField), "minmax(0, 1fr) minmax(170px, .72fr)");
+    setGridRow(getRowForField(startField), "minmax(0, 1fr) minmax(0, 1fr)");
+    setGridRow(getRowForField(notesField), "minmax(0, 1fr)");
+
+    const mainForm = root.querySelector?.(".bbm-form-card > div");
+    if (mainForm?.style?.gridTemplateColumns) {
+      mainForm.style.gridTemplateColumns = "minmax(0, 1fr) 1px minmax(0, 1fr)";
+      mainForm.style.columnGap = "18px";
+    }
+
+    const separator = mainForm?.children?.[1] || null;
+    if (separator) {
+      separator.style.height = "100%";
+      separator.style.opacity = "0.55";
+    }
+  }
+
   _decorateNeutralProjectForm(root) {
     if (!root) return root;
 
     renameExact(root, "Bezeichnung *", "Projektbezeichnung *");
     renameExact(root, "Kurzbez.", "Kurzbezeichnung");
     renameExact(root, "Projektleiter", "Interne Projektleitung");
+    renameExact(root, "PL-Handy", "Telefon");
 
     const intro = document.createElement("div");
     intro.setAttribute("data-bbm-project-core-hint", "true");
@@ -82,6 +165,7 @@ export default class ProjectFormHubScreen extends LegacyProjectFormScreen {
       }
     }
 
+    this._stabilizeProjectFormLayout(root);
     return root;
   }
 
