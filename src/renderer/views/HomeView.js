@@ -2,53 +2,89 @@
 
 import { getCachedActiveModuleCatalog } from "../app/modules/moduleAccessState.js";
 
-const DASHBOARD_ICON_SVGS = Object.freeze({
+const COLORS = Object.freeze({
+  invoice: "#1769d2",
+  protocol: "#37a447",
+  restarbeiten: "#ef7d00",
+  sigeko: "#7b3fb3",
+  editor: "#d92d20",
+  navy: "#0b2d53",
+  text: "#172033",
+  muted: "#667085",
+  border: "#dfe5ec",
+  canvas: "#f5f7fa",
+});
+
+const ICONS = Object.freeze({
+  invoice: `
+    <svg viewBox="0 0 48 48" aria-hidden="true">
+      <path d="M13 6h18l7 7v29H13V6Z" fill="currentColor" opacity=".12"/>
+      <path d="M13 6h18l7 7v29H13V6Z" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linejoin="round"/>
+      <path d="M31 6v8h7" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linejoin="round"/>
+      <text x="24" y="33" text-anchor="middle" font-size="19" font-family="Arial,sans-serif" font-weight="700" fill="currentColor">€</text>
+    </svg>`,
   protocol: `
     <svg viewBox="0 0 48 48" aria-hidden="true">
-      <rect x="10" y="7" width="28" height="34" rx="4" fill="none" stroke="currentColor" stroke-width="3"/>
-      <path d="M17 17h14M17 24h14M17 31h9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      <path d="M12 7h24v34H12z" fill="currentColor" opacity=".10"/>
+      <rect x="12" y="7" width="24" height="34" rx="3.5" fill="none" stroke="currentColor" stroke-width="2.7"/>
+      <path d="M18 17h12M18 23h12M18 29h8" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/>
+      <circle cx="18" cy="35" r="1.7" fill="currentColor"/>
+      <path d="M22 35h8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
     </svg>`,
   restarbeiten: `
     <svg viewBox="0 0 48 48" aria-hidden="true">
-      <path d="M24 7 42 39H6L24 7Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
-      <path d="M24 18v10M24 34h.01" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+      <path d="M12 8h24v32H12z" fill="currentColor" opacity=".10"/>
+      <rect x="12" y="8" width="24" height="32" rx="3.5" fill="none" stroke="currentColor" stroke-width="2.7"/>
+      <path d="m18 23 4 4 8-9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M17 34h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
     </svg>`,
-  invoice: `
+  sigeko: `
     <svg viewBox="0 0 48 48" aria-hidden="true">
-      <path d="M13 6h18l6 6v30H13V6Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
-      <path d="M31 6v8h7M18 21h14M18 28h14M18 35h9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      <path d="M10 30c1-9 6-16 14-16s13 7 14 16" fill="currentColor" opacity=".11"/>
+      <path d="M10 30c1-9 6-16 14-16s13 7 14 16" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/>
+      <path d="M18 14v9M30 14v9M8 31h32M16 36h16" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/>
     </svg>`,
   editor: `
     <svg viewBox="0 0 48 48" aria-hidden="true">
-      <rect x="6" y="8" width="36" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="3"/>
-      <path d="M13 16h22M13 23h14M13 30h18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-      <path d="m31 30 8 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      <rect x="7" y="9" width="34" height="28" rx="4" fill="currentColor" opacity=".10"/>
+      <rect x="7" y="9" width="34" height="28" rx="4" fill="none" stroke="currentColor" stroke-width="2.7"/>
+      <path d="M13 16h22M13 23h15M13 30h11" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/>
+      <path d="m28 29 8 8" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/>
     </svg>`,
-  module: `
-    <svg viewBox="0 0 48 48" aria-hidden="true">
-      <rect x="7" y="7" width="14" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="3"/>
-      <rect x="27" y="7" width="14" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="3"/>
-      <rect x="7" y="27" width="14" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="3"/>
-      <rect x="27" y="27" width="14" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="3"/>
-    </svg>`,
+  project: `
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5h7l2 2h9v10.5H3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>`,
+  firm: `
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V6h10v14M14 10h6v10M7 9h1M10 9h1M7 13h1M10 13h1M7 17h1M10 17h1M17 13h1M17 17h1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
+  settings: `
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm8 3.5-2.1-.8-.5-1.2.9-2-2.3-2.3-2 .9-1.2-.5L12 4H9l-.8 2.1-1.2.5-2-.9L2.7 8l.9 2-.5 1.2L1 12v3l2.1.8.5 1.2-.9 2L5 21.3l2-.9 1.2.5L9 23h3l.8-2.1 1.2-.5 2 .9 2.3-2.3-.9-2 .5-1.2L20 15v-3Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
+  shield: `
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v5c0 5-3.2 8.4-8 10-4.8-1.6-8-5-8-10V6l8-3Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m8.5 12 2.2 2.2 4.8-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 });
 
-function iconSvg(iconId) {
-  return DASHBOARD_ICON_SVGS[String(iconId || "").trim()] || DASHBOARD_ICON_SVGS.module;
+function styles(el, values) {
+  Object.assign(el.style, values || {});
+  return el;
 }
 
-function setStyles(el, styles = {}) {
-  Object.assign(el.style, styles);
-  return el;
+function svgIcon(name, size = 24) {
+  const wrap = document.createElement("span");
+  wrap.innerHTML = ICONS[name] || ICONS.protocol;
+  const svg = wrap.querySelector("svg");
+  if (svg) {
+    svg.style.width = `${size}px`;
+    svg.style.height = `${size}px`;
+    svg.style.display = "block";
+  }
+  return wrap;
 }
 
 export default class HomeView {
   constructor({ router } = {}) {
     this.router = router || null;
-    this.root = null;
-    this.footerEl = null;
-    this.devEditorEnabled = false;
     this.moduleCatalog = [];
+    this.devBuild = false;
+    this.licenseHintEl = null;
+    this.versionEl = null;
   }
 
   async _isDevBuild() {
@@ -64,29 +100,23 @@ export default class HomeView {
 
   _readLastProjectId() {
     try {
-      const raw = String(window.localStorage?.getItem?.("bbm.lastProjectId") || "").trim();
-      return raw || null;
+      return String(window.localStorage?.getItem?.("bbm.lastProjectId") || "").trim() || null;
     } catch (_e) {
       return null;
     }
   }
 
-  async _openLastProject() {
-    const lastId = this._readLastProjectId();
-    if (!lastId) {
-      await this.router?.showProjects?.();
-      return;
-    }
-
-    await this.router?.showProjects?.();
-    const view = this.router?.currentView || null;
-    if (!view || typeof view.openProjectById !== "function") return;
-    await view.openProjectById(lastId);
+  _underConstruction() {
+    alert("under construktion");
   }
 
   async _openModule(entry) {
-    const mode = String(entry?.presentation?.start?.mode || "project").trim().toLowerCase();
+    if (entry?.placeholder === true) {
+      this._underConstruction();
+      return;
+    }
 
+    const mode = String(entry?.presentation?.start?.mode || "project").trim().toLowerCase();
     if (mode === "project") {
       try {
         window.localStorage?.setItem?.("bbm.startTargetModuleId", String(entry?.moduleId || ""));
@@ -102,190 +132,214 @@ export default class HomeView {
       if (opened) return;
     }
 
-    alert(`${entry?.moduleLabel || "Dieses Modul"} ist für den direkten Start noch nicht angebunden.`);
+    this._underConstruction();
+  }
+
+  _presentation(entry) {
+    const moduleId = String(entry?.moduleId || "").toLowerCase();
+    const p = entry?.presentation || {};
+    const presets = {
+      protokoll: {
+        color: COLORS.protocol,
+        icon: "protocol",
+        description: "Baustellenprotokolle erstellen und verwalten.",
+      },
+      restarbeiten: {
+        color: COLORS.restarbeiten,
+        icon: "restarbeiten",
+        description: "Restarbeiten erfassen, verfolgen und abschließen.",
+      },
+      rechnung: {
+        color: COLORS.invoice,
+        icon: "invoice",
+        description: "Angebote, Aufträge und Rechnungen erstellen und verwalten.",
+      },
+      sigeko: {
+        color: COLORS.sigeko,
+        icon: "sigeko",
+        description: "SiGeKo-Projekte, Berichte und Dokumentation.",
+      },
+    };
+    const fallback = presets[moduleId] || {};
+    return {
+      color: String(p.color || fallback.color || "#2563eb"),
+      icon: String(p.icon || fallback.icon || "protocol"),
+      description: String(p.description || fallback.description || "Arbeitsbereich öffnen."),
+      label: String(entry?.moduleLabel || entry?.moduleId || "Modul"),
+      startMode: String(p.start?.mode || "project"),
+    };
   }
 
   _createModuleCard(entry) {
-    const color = String(entry?.presentation?.color || "#2563eb");
-    const title = String(entry?.moduleLabel || entry?.moduleId || "Modul");
-    const description = String(entry?.presentation?.description || "Arbeitsbereich öffnen.");
-    const startLabel = String(entry?.presentation?.start?.label || "Öffnen");
-    const icon = String(entry?.presentation?.icon || "module");
-
-    const card = setStyles(document.createElement("button"), {
-      appearance: "none",
-      border: "0",
-      borderRadius: "18px",
-      padding: "0",
+    const p = this._presentation(entry);
+    const card = styles(document.createElement("article"), {
+      border: `1px solid ${COLORS.border}`,
+      borderRadius: "12px",
       background: "#ffffff",
-      boxShadow: "0 10px 30px rgba(15,23,42,0.08)",
-      overflow: "hidden",
-      textAlign: "left",
-      cursor: "pointer",
-      minHeight: "230px",
+      minHeight: "286px",
       display: "flex",
       flexDirection: "column",
-      transition: "transform 140ms ease, box-shadow 140ms ease",
+      alignItems: "center",
+      textAlign: "center",
+      padding: "22px 18px 16px",
+      boxSizing: "border-box",
+      boxShadow: "0 3px 10px rgba(15,23,42,.045)",
+      transition: "transform .14s ease, box-shadow .14s ease, border-color .14s ease",
     });
-    card.type = "button";
     card.setAttribute("data-bbm-home-module", String(entry?.moduleId || ""));
 
-    const colorBand = setStyles(document.createElement("div"), {
-      height: "8px",
-      background: color,
-      width: "100%",
-    });
-
-    const body = setStyles(document.createElement("div"), {
-      padding: "24px",
-      display: "flex",
-      flexDirection: "column",
-      gap: "12px",
-      flex: "1",
-      width: "100%",
-      boxSizing: "border-box",
-    });
-
-    const iconWrap = setStyles(document.createElement("div"), {
+    const iconBox = styles(document.createElement("div"), {
       width: "58px",
       height: "58px",
-      borderRadius: "16px",
+      borderRadius: "10px",
       display: "grid",
       placeItems: "center",
-      background: `${color}18`,
-      color,
+      color: "#ffffff",
+      background: p.color,
+      boxShadow: `0 8px 18px ${p.color}2b`,
+      marginBottom: "14px",
     });
-    iconWrap.innerHTML = iconSvg(icon);
-    const svg = iconWrap.querySelector("svg");
-    if (svg) {
-      svg.style.width = "34px";
-      svg.style.height = "34px";
-    }
+    iconBox.append(svgIcon(p.icon, 38));
 
-    const heading = setStyles(document.createElement("div"), {
-      fontSize: "22px",
+    const title = styles(document.createElement("div"), {
+      fontSize: "16px",
       fontWeight: "800",
-      color: "#172033",
-      letterSpacing: "-0.3px",
+      color: COLORS.text,
+      marginBottom: "10px",
     });
-    heading.textContent = title;
+    title.textContent = p.label;
 
-    const desc = setStyles(document.createElement("div"), {
-      fontSize: "13px",
-      lineHeight: "1.45",
-      color: "#667085",
-      flex: "1",
+    const desc = styles(document.createElement("div"), {
+      maxWidth: "165px",
+      minHeight: "58px",
+      fontSize: "11.5px",
+      lineHeight: "1.48",
+      color: COLORS.muted,
+      marginBottom: "16px",
     });
-    desc.textContent = description;
+    desc.textContent = p.description;
 
-    const action = setStyles(document.createElement("div"), {
-      fontSize: "12px",
+    const open = styles(document.createElement("button"), {
+      width: "88px",
+      height: "30px",
+      border: "0",
+      borderRadius: "4px",
+      background: p.color,
+      color: "#fff",
+      fontSize: "11px",
       fontWeight: "750",
-      color,
-      display: "flex",
-      alignItems: "center",
-      gap: "6px",
+      cursor: "pointer",
+      boxShadow: `0 3px 8px ${p.color}25`,
     });
-    action.textContent = `${startLabel}  →`;
+    open.type = "button";
+    open.textContent = "Öffnen";
+    open.addEventListener("click", async () => this._openModule(entry));
 
-    body.append(iconWrap, heading, desc, action);
-    card.append(colorBand, body);
+    const quick = styles(document.createElement("button"), {
+      border: "0",
+      background: "transparent",
+      color: p.color,
+      fontSize: "10px",
+      fontWeight: "700",
+      padding: "10px 3px 0",
+      cursor: "pointer",
+    });
+    quick.type = "button";
+    quick.textContent = entry?.placeholder === true ? "under construktion" : "Schnellstart →";
+    quick.addEventListener("click", async () => this._openModule(entry));
 
+    card.append(iconBox, title, desc, open, quick);
     card.addEventListener("mouseenter", () => {
       card.style.transform = "translateY(-2px)";
-      card.style.boxShadow = "0 16px 38px rgba(15,23,42,0.13)";
+      card.style.boxShadow = "0 10px 24px rgba(15,23,42,.09)";
+      card.style.borderColor = `${p.color}55`;
     });
     card.addEventListener("mouseleave", () => {
       card.style.transform = "translateY(0)";
-      card.style.boxShadow = "0 10px 30px rgba(15,23,42,0.08)";
+      card.style.boxShadow = "0 3px 10px rgba(15,23,42,.045)";
+      card.style.borderColor = COLORS.border;
     });
-    card.addEventListener("click", async () => this._openModule(entry));
-
     return card;
   }
 
-  _createDevEditorCard() {
-    const entry = Object.freeze({
+  _createEditorCard() {
+    const entry = {
       moduleId: "dev-ui-editor",
       moduleLabel: "UI-Editor",
-      presentation: Object.freeze({
-        color: "#dc2626",
+      presentation: {
+        color: COLORS.editor,
         icon: "editor",
-        description: "Entwicklungswerkzeug. Erst Zielbereich auswählen, dann Editor im geladenen Bereich öffnen.",
-        start: Object.freeze({ label: "Zielbereich wählen" }),
-      }),
-    });
-
+        description: "Entwicklungswerkzeug für die aktuell geladenen BBM-Oberflächen.",
+        start: { mode: "dev" },
+      },
+    };
     const card = this._createModuleCard(entry);
-    card.setAttribute("data-bbm-dev-editor-card", "true");
-    card.onclick = null;
-    card.addEventListener("click", async (event) => {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      this._openEditorChooser();
-    }, true);
+    const buttons = card.querySelectorAll("button");
+    buttons.forEach((button) => {
+      const replacement = button.cloneNode(true);
+      button.replaceWith(replacement);
+      replacement.addEventListener("click", () => this._openEditorChooser());
+    });
     return card;
   }
 
   _openEditorChooser() {
-    const existing = document.querySelector('[data-bbm-editor-start-chooser="true"]');
-    existing?.remove?.();
+    document.querySelector('[data-bbm-editor-start-chooser="true"]')?.remove?.();
 
-    const overlay = setStyles(document.createElement("div"), {
+    const overlay = styles(document.createElement("div"), {
       position: "fixed",
       inset: "0",
       zIndex: "12000",
-      background: "rgba(15,23,42,0.34)",
+      background: "rgba(15,23,42,.32)",
       display: "grid",
       placeItems: "center",
-      padding: "24px",
+      padding: "20px",
     });
     overlay.setAttribute("data-bbm-editor-start-chooser", "true");
 
-    const panel = setStyles(document.createElement("div"), {
-      width: "min(520px, 92vw)",
-      background: "#ffffff",
-      borderRadius: "18px",
-      boxShadow: "0 24px 70px rgba(15,23,42,0.28)",
-      padding: "22px",
-      display: "flex",
-      flexDirection: "column",
-      gap: "14px",
+    const panel = styles(document.createElement("div"), {
+      width: "min(470px, 92vw)",
+      borderRadius: "12px",
+      background: "#fff",
+      boxShadow: "0 24px 60px rgba(15,23,42,.24)",
+      padding: "20px",
     });
 
-    const title = setStyles(document.createElement("div"), {
-      fontSize: "19px",
-      fontWeight: "800",
-      color: "#172033",
+    const title = styles(document.createElement("h3"), {
+      margin: "0 0 6px",
+      color: COLORS.text,
+      fontSize: "17px",
     });
-    title.textContent = "UI-Editor – Zielbereich";
+    title.textContent = "UI-Editor – Zielbereich wählen";
 
-    const text = setStyles(document.createElement("div"), {
-      color: "#667085",
-      fontSize: "13px",
-      lineHeight: "1.5",
+    const hint = styles(document.createElement("div"), {
+      color: COLORS.muted,
+      fontSize: "12px",
+      lineHeight: "1.45",
+      marginBottom: "14px",
     });
-    text.textContent = "Der Editor wird nicht ohne Zielbereich gestartet. Wähle zuerst den Bereich; BBM führt dich in den passenden Arbeitskontext.";
+    hint.textContent = "BBM lädt zuerst den Zielbereich. Der Editor wird nicht ohne aktiven Bereich gestartet.";
 
-    const list = setStyles(document.createElement("div"), {
+    const list = styles(document.createElement("div"), {
       display: "grid",
       gap: "8px",
     });
 
     for (const entry of this.moduleCatalog) {
-      const btn = setStyles(document.createElement("button"), {
-        appearance: "none",
-        border: "1px solid #d7dee8",
-        borderRadius: "10px",
+      const p = this._presentation(entry);
+      const btn = styles(document.createElement("button"), {
+        border: "1px solid #dce3eb",
+        borderRadius: "8px",
         background: "#f8fafc",
-        color: "#172033",
-        padding: "11px 12px",
+        minHeight: "40px",
+        padding: "8px 10px",
         textAlign: "left",
+        color: COLORS.text,
         cursor: "pointer",
         fontWeight: "700",
       });
       btn.type = "button";
-      btn.textContent = entry?.moduleLabel || entry?.moduleId || "Modul";
+      btn.textContent = p.label;
       btn.addEventListener("click", async () => {
         try {
           window.localStorage?.setItem?.("bbm.devEditorTargetModuleId", String(entry?.moduleId || ""));
@@ -298,21 +352,20 @@ export default class HomeView {
       list.append(btn);
     }
 
-    const close = setStyles(document.createElement("button"), {
-      alignSelf: "flex-end",
-      appearance: "none",
+    const close = styles(document.createElement("button"), {
       border: "0",
       background: "transparent",
-      color: "#667085",
+      color: COLORS.muted,
+      float: "right",
+      marginTop: "12px",
       cursor: "pointer",
       fontWeight: "700",
-      padding: "8px 4px 0",
     });
     close.type = "button";
     close.textContent = "Abbrechen";
     close.addEventListener("click", () => overlay.remove());
 
-    panel.append(title, text, list, close);
+    panel.append(title, hint, list, close);
     overlay.append(panel);
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay) overlay.remove();
@@ -320,229 +373,277 @@ export default class HomeView {
     document.body.append(overlay);
   }
 
-  _createQuickAction({ label, sub, onClick }) {
-    const button = setStyles(document.createElement("button"), {
-      appearance: "none",
-      border: "1px solid #e3e8ef",
-      borderRadius: "12px",
-      background: "#ffffff",
+  _createInfoPanel(titleText) {
+    const panel = styles(document.createElement("section"), {
+      border: `1px solid ${COLORS.border}`,
+      borderRadius: "10px",
+      background: "#fff",
+      minHeight: "162px",
       padding: "14px 16px",
-      textAlign: "left",
-      cursor: "pointer",
-      minHeight: "72px",
+      boxSizing: "border-box",
     });
-    button.type = "button";
-
-    const title = setStyles(document.createElement("div"), {
-      color: "#172033",
+    const title = styles(document.createElement("div"), {
+      fontSize: "12px",
       fontWeight: "800",
-      fontSize: "13px",
+      color: COLORS.text,
+      marginBottom: "10px",
     });
-    title.textContent = label;
+    title.textContent = titleText;
+    panel.append(title);
+    return panel;
+  }
 
-    const description = setStyles(document.createElement("div"), {
-      marginTop: "5px",
-      color: "#7a8596",
-      fontSize: "11.5px",
+  _createRow({ icon, label, meta, badge, badgeColor = COLORS.protocol, onClick }) {
+    const row = styles(document.createElement(onClick ? "button" : "div"), {
+      width: "100%",
+      minHeight: "31px",
+      border: "0",
+      borderBottom: "1px solid #edf0f4",
+      background: "transparent",
+      padding: "6px 0",
+      display: "grid",
+      gridTemplateColumns: "20px minmax(0,1fr) auto auto",
+      alignItems: "center",
+      gap: "7px",
+      textAlign: "left",
+      color: COLORS.text,
+      cursor: onClick ? "pointer" : "default",
+      fontSize: "10.5px",
     });
-    description.textContent = sub;
+    if (onClick) row.type = "button";
 
-    button.append(title, description);
-    button.addEventListener("click", async () => onClick?.());
-    return button;
+    const iconWrap = styles(document.createElement("span"), { color: badgeColor });
+    iconWrap.append(svgIcon(icon || "project", 15));
+    const text = document.createElement("span");
+    text.textContent = label;
+    text.style.overflow = "hidden";
+    text.style.textOverflow = "ellipsis";
+    text.style.whiteSpace = "nowrap";
+
+    const badgeEl = document.createElement("span");
+    if (badge) {
+      badgeEl.textContent = badge;
+      Object.assign(badgeEl.style, {
+        borderRadius: "5px",
+        padding: "2px 5px",
+        background: `${badgeColor}18`,
+        color: badgeColor,
+        fontSize: "9px",
+        fontWeight: "700",
+      });
+    }
+
+    const metaEl = styles(document.createElement("span"), {
+      color: "#98a2b3",
+      fontSize: "9.5px",
+      whiteSpace: "nowrap",
+    });
+    metaEl.textContent = meta || "";
+
+    row.append(iconWrap, text, badgeEl, metaEl);
+    if (onClick) row.addEventListener("click", onClick);
+    return row;
+  }
+
+  async _newProject() {
+    await this.router?.showProjects?.();
+    const view = this.router?.currentView || null;
+    if (typeof view?.openCreateProject === "function") await view.openCreateProject();
+  }
+
+  async _newFirm() {
+    await this.router?.showFirms?.();
+    const view = this.router?.currentView || null;
+    if (view?.btnNewFirm?.click) view.btnNewFirm.click();
   }
 
   render() {
     this.moduleCatalog = Array.from(getCachedActiveModuleCatalog() || []);
 
-    const root = setStyles(document.createElement("div"), {
+    const root = styles(document.createElement("div"), {
       minHeight: "100%",
+      background: COLORS.canvas,
+      padding: "22px clamp(18px, 2.5vw, 34px) 20px",
       boxSizing: "border-box",
-      background: "#f4f6f9",
-      padding: "30px clamp(22px, 4vw, 54px) 18px",
       overflow: "auto",
-      color: "#172033",
+      fontFamily: "var(--bbm-font-ui, system-ui, sans-serif)",
     });
     root.setAttribute("data-bbm-home-dashboard", "true");
 
-    const wrap = setStyles(document.createElement("div"), {
-      width: "min(1180px, 100%)",
+    const content = styles(document.createElement("div"), {
+      width: "min(1120px, 100%)",
       margin: "0 auto",
-      display: "flex",
-      flexDirection: "column",
-      gap: "24px",
     });
 
-    const heading = setStyles(document.createElement("div"), {
+    const headline = styles(document.createElement("div"), {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "flex-end",
-      gap: "18px",
-      flexWrap: "wrap",
+      gap: "16px",
+      marginBottom: "18px",
     });
-
-    const headingText = document.createElement("div");
-    const h1 = setStyles(document.createElement("h1"), {
+    const left = document.createElement("div");
+    const h1 = styles(document.createElement("h1"), {
       margin: "0",
-      fontSize: "28px",
-      lineHeight: "1.15",
-      letterSpacing: "-0.5px",
+      fontSize: "24px",
+      lineHeight: "1.1",
+      color: COLORS.text,
+      letterSpacing: "-.35px",
     });
-    h1.textContent = "Guten Tag";
-    const sub = setStyles(document.createElement("div"), {
-      marginTop: "7px",
-      color: "#667085",
-      fontSize: "13px",
+    h1.textContent = "Willkommen bei BBM";
+    const sub = styles(document.createElement("div"), {
+      marginTop: "5px",
+      fontSize: "11.5px",
+      color: COLORS.muted,
     });
-    sub.textContent = "Womit möchtest du heute arbeiten?";
-    headingText.append(h1, sub);
+    sub.textContent = "Wählen Sie einen Bereich, um zu starten.";
+    left.append(h1, sub);
 
-    const moduleCount = setStyles(document.createElement("div"), {
-      color: "#8a94a5",
-      fontSize: "12px",
+    const license = styles(document.createElement("div"), {
+      color: "#7c8798",
+      fontSize: "10.5px",
       fontWeight: "650",
     });
-    moduleCount.textContent = `${this.moduleCatalog.length} aktive${this.moduleCatalog.length === 1 ? "s Modul" : " Module"}`;
-    heading.append(headingText, moduleCount);
+    license.textContent = `${this.moduleCatalog.length} aktive${this.moduleCatalog.length === 1 ? "s Modul" : " Module"}`;
+    headline.append(left, license);
 
-    const moduleGrid = setStyles(document.createElement("div"), {
+    const moduleGrid = styles(document.createElement("div"), {
       display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
-      gap: "18px",
+      gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))",
+      gap: "14px",
+      alignItems: "stretch",
     });
+    moduleGrid.setAttribute("data-bbm-home-module-grid", "true");
 
-    for (const entry of this.moduleCatalog) {
-      moduleGrid.append(this._createModuleCard(entry));
-    }
+    for (const entry of this.moduleCatalog) moduleGrid.append(this._createModuleCard(entry));
 
-    if (this.moduleCatalog.length === 0) {
-      const empty = setStyles(document.createElement("div"), {
-        gridColumn: "1 / -1",
-        border: "1px solid #e2e8f0",
-        borderRadius: "16px",
-        background: "#ffffff",
-        padding: "28px",
-        color: "#667085",
-      });
-      empty.textContent = "Für diese Installation ist derzeit kein Fachmodul freigeschaltet.";
-      moduleGrid.append(empty);
-    }
+    const devExtraHost = styles(document.createElement("div"), { display: "contents" });
+    devExtraHost.setAttribute("data-bbm-home-dev-extra", "true");
+    moduleGrid.append(devExtraHost);
 
-    const lowerGrid = setStyles(document.createElement("div"), {
+    const lower = styles(document.createElement("div"), {
       display: "grid",
-      gridTemplateColumns: "minmax(0, 1.45fr) minmax(260px, .75fr)",
-      gap: "18px",
+      gridTemplateColumns: "1.45fr .9fr .65fr",
+      gap: "14px",
+      marginTop: "16px",
     });
 
-    const recentCard = setStyles(document.createElement("div"), {
-      background: "#ffffff",
-      borderRadius: "16px",
-      border: "1px solid #e5e9f0",
-      padding: "18px",
-    });
-    const recentTitle = setStyles(document.createElement("div"), {
-      fontSize: "15px",
-      fontWeight: "800",
-      marginBottom: "12px",
-    });
-    recentTitle.textContent = "Zuletzt verwendet";
-    const recentAction = this._createQuickAction({
-      label: "Letztes Projekt öffnen",
-      sub: this._readLastProjectId() ? "Zum zuletzt verwendeten Projekt zurückkehren." : "Projektübersicht öffnen.",
-      onClick: async () => this._openLastProject(),
-    });
-    recentCard.append(recentTitle, recentAction);
-
-    const quickCard = setStyles(document.createElement("div"), {
-      background: "#ffffff",
-      borderRadius: "16px",
-      border: "1px solid #e5e9f0",
-      padding: "18px",
-    });
-    const quickTitle = setStyles(document.createElement("div"), {
-      fontSize: "15px",
-      fontWeight: "800",
-      marginBottom: "12px",
-    });
-    quickTitle.textContent = "Schnellzugriff";
-
-    const quickGrid = setStyles(document.createElement("div"), {
-      display: "grid",
-      gap: "8px",
-    });
-    quickGrid.append(
-      this._createQuickAction({ label: "Projekte", sub: "Projektübersicht öffnen", onClick: () => this.router?.showProjects?.() }),
-      this._createQuickAction({ label: "Firmen / Kunden", sub: "Gemeinsame Stammdaten", onClick: () => this.router?.showFirms?.() }),
-      this._createQuickAction({ label: "Einstellungen", sub: "BBM konfigurieren", onClick: () => this.router?.showSettings?.() })
+    const recent = this._createInfoPanel("Zuletzt verwendet");
+    const lastProjectId = this._readLastProjectId();
+    recent.append(
+      this._createRow({
+        icon: "project",
+        label: lastProjectId ? `Zuletzt geöffnetes Projekt #${lastProjectId}` : "Noch kein Projekt geöffnet",
+        meta: lastProjectId ? "zuletzt" : "",
+        badge: lastProjectId ? "Projekt" : "",
+        badgeColor: COLORS.protocol,
+        onClick: lastProjectId ? async () => {
+          await this.router?.showProjects?.();
+          const view = this.router?.currentView || null;
+          if (typeof view?.openProjectById === "function") await view.openProjectById(lastProjectId);
+        } : null,
+      })
     );
-    quickCard.append(quickTitle, quickGrid);
+    if (this.moduleCatalog.some((x) => String(x?.moduleId || "") === "protokoll")) {
+      recent.append(this._createRow({ icon: "project", label: "Protokolle", badge: "Protokoll", badgeColor: COLORS.protocol, meta: "Arbeitsbereich" }));
+    }
+    if (this.moduleCatalog.some((x) => String(x?.moduleId || "") === "restarbeiten")) {
+      recent.append(this._createRow({ icon: "project", label: "Restarbeiten", badge: "Restarbeiten", badgeColor: COLORS.restarbeiten, meta: "Arbeitsbereich" }));
+    }
 
-    lowerGrid.append(recentCard, quickCard);
+    const quick = this._createInfoPanel("Schnellaktionen");
+    quick.append(
+      this._createRow({ icon: "project", label: "Neues Projekt anlegen", meta: "→", onClick: async () => this._newProject() }),
+      this._createRow({ icon: "firm", label: "Neue Firma / Kunde anlegen", meta: "→", onClick: async () => this._newFirm() }),
+      this._createRow({ icon: "settings", label: "Einstellungen öffnen", meta: "→", onClick: async () => this.router?.showSettings?.() })
+    );
 
-    const devSlot = setStyles(document.createElement("div"), {
-      display: "none",
+    const hints = this._createInfoPanel("Hinweise");
+    const status = styles(document.createElement("div"), {
+      display: "grid",
+      gridTemplateColumns: "28px 1fr",
+      gap: "8px",
+      alignItems: "start",
+      color: COLORS.text,
+      fontSize: "10.5px",
+      lineHeight: "1.45",
     });
-    devSlot.setAttribute("data-bbm-dev-dashboard-slot", "true");
-
-    const footerWrap = setStyles(document.createElement("div"), {
-      marginTop: "6px",
-      paddingTop: "12px",
-      borderTop: "1px solid #e5e9f0",
-      color: "#8a94a5",
-      fontSize: "11px",
-      display: "flex",
-      justifyContent: "space-between",
-      gap: "12px",
-      flexWrap: "wrap",
+    const shield = styles(document.createElement("span"), {
+      width: "26px",
+      height: "26px",
+      display: "grid",
+      placeItems: "center",
+      borderRadius: "50%",
+      background: "#eaf7ee",
+      color: COLORS.protocol,
     });
-    const credit = document.createElement("div");
-    credit.textContent = "BBM · gemeinsame Module, Stammdaten und Dokumente";
-    const footer = document.createElement("div");
-    footer.textContent = `© ${new Date().getFullYear()} BBM`;
-    this.footerEl = footer;
-    footerWrap.append(credit, footer);
+    shield.append(svgIcon("shield", 16));
+    this.licenseHintEl = document.createElement("div");
+    this.licenseHintEl.textContent = "Lizenzstatus wird geprüft …";
+    status.append(shield, this.licenseHintEl);
 
-    wrap.append(heading, moduleGrid, devSlot, lowerGrid, footerWrap);
-    root.append(wrap);
-    this.root = root;
+    this.versionEl = styles(document.createElement("div"), {
+      marginTop: "12px",
+      color: "#98a2b3",
+      fontSize: "9.5px",
+    });
+    this.versionEl.textContent = "BBM";
+    hints.append(status, this.versionEl);
+
+    lower.append(recent, quick, hints);
+    content.append(headline, moduleGrid, lower);
+    root.append(content);
+
+    Promise.resolve().then(async () => {
+      this.devBuild = await this._isDevBuild();
+      if (!this.devBuild || !devExtraHost.isConnected) return;
+
+      const existingIds = new Set(this.moduleCatalog.map((x) => String(x?.moduleId || "").toLowerCase()));
+      if (!existingIds.has("rechnung")) {
+        devExtraHost.append(this._createModuleCard({
+          moduleId: "rechnung",
+          moduleLabel: "Rechnung",
+          placeholder: true,
+          presentation: { color: COLORS.invoice, icon: "invoice", description: "Angebote, Aufträge und Rechnungen erstellen und verwalten.", start: { mode: "free" } },
+        }));
+      }
+      if (!existingIds.has("sigeko")) {
+        devExtraHost.append(this._createModuleCard({
+          moduleId: "sigeko",
+          moduleLabel: "SiGeKo",
+          placeholder: true,
+          presentation: { color: COLORS.sigeko, icon: "sigeko", description: "SiGeKo-Projekte, Berichte und Dokumentation.", start: { mode: "project" } },
+        }));
+      }
+      devExtraHost.append(this._createEditorCard());
+    });
+
     return root;
   }
 
   async load() {
-    this.devEditorEnabled = await this._isDevBuild();
-
-    if (this.devEditorEnabled && this.root) {
-      const slot = this.root.querySelector('[data-bbm-dev-dashboard-slot="true"]');
-      if (slot) {
-        slot.style.display = "block";
-
-        const title = setStyles(document.createElement("div"), {
-          fontSize: "12px",
-          fontWeight: "800",
-          color: "#9f1239",
-          textTransform: "uppercase",
-          letterSpacing: ".7px",
-          marginBottom: "8px",
-        });
-        title.textContent = "Entwicklung";
-
-        const grid = setStyles(document.createElement("div"), {
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
-          gap: "18px",
-        });
-        grid.append(this._createDevEditorCard());
-        slot.append(title, grid);
+    try {
+      const status = await window.bbmDb?.licenseGetStatus?.();
+      if (this.licenseHintEl) {
+        if (status?.valid === false) {
+          this.licenseHintEl.textContent = "Lizenz derzeit nicht gültig.";
+        } else if (status && typeof status === "object") {
+          const modules = Array.isArray(status.modules) ? status.modules.length : this.moduleCatalog.length;
+          this.licenseHintEl.textContent = `Lizenz aktiv · ${modules} Modul${modules === 1 ? "" : "e"} freigeschaltet.`;
+        } else {
+          this.licenseHintEl.textContent = "Lizenz aktiv.";
+        }
       }
+    } catch (_e) {
+      if (this.licenseHintEl) this.licenseHintEl.textContent = "Lizenzstatus verfügbar.";
     }
 
     try {
       const res = await window.bbmDb?.appGetVersion?.();
-      const year = new Date().getFullYear();
-      const version = res?.ok && res?.version ? ` v${res.version}` : "";
-      if (this.footerEl) this.footerEl.textContent = `© ${year} BBM${version}`;
+      const version = String(res?.version || "").trim();
+      if (this.versionEl) this.versionEl.textContent = version ? `BBM ${version}` : "BBM";
     } catch (_e) {
-      // keep default footer
+      // ignore
     }
   }
 }
