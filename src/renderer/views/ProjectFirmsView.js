@@ -1,40 +1,22 @@
+import ProjectFirmsBaseView from "./ProjectFirmsBaseView.js";
+
+const PROJECT_USAGE = "project_participant";
+
 function text(value) {
   return String(value == null ? "" : value).trim();
 }
 
-function firmLabel(firm) {
-  const short = text(firm?.short);
-  const name = text(firm?.name);
-  if (short && name && short !== name) return `${short} · ${name}`;
-  return short || name || "(ohne Name)";
+function hasProjectUsage(firm) {
+  const usages = Array.isArray(firm?.usages) ? firm.usages : [];
+  return usages.map((value) => text(value)).includes(PROJECT_USAGE);
 }
 
-function firmPrimary(firm) {
-  return text(firm?.name) || text(firm?.short) || "(ohne Name)";
+function personName(person) {
+  return [text(person?.first_name), text(person?.last_name)].filter(Boolean).join(" ") || "(ohne Name)";
 }
 
-function firmSecondary(firm) {
-  return text(firm?.name2) || text(firm?.gewerk) || text(firm?.city) || "";
-}
-
-function firmSearchText(firm) {
-  return [
-    firm?.short,
-    firm?.name,
-    firm?.name2,
-    firm?.gewerk,
-    firm?.city,
-  ]
-    .map(text)
-    .filter(Boolean)
-    .join(" ")
-    .toLocaleLowerCase("de-DE");
-}
-
-function firmAddress(firm) {
-  const street = text(firm?.street);
-  const place = [text(firm?.zip), text(firm?.city)].filter(Boolean).join(" ");
-  return [street, place].filter(Boolean).join(", ");
+function personRole(person) {
+  return text(person?.rolle) || text(person?.funktion) || "";
 }
 
 function style(el, values = {}) {
@@ -42,529 +24,146 @@ function style(el, values = {}) {
   return el;
 }
 
-function button(label, { primary = false, danger = false } = {}) {
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.textContent = label;
-  style(btn, {
-    border: danger ? "1px solid #dc2626" : primary ? "1px solid #2563eb" : "1px solid #d0d7e2",
-    borderRadius: "8px",
-    background: danger ? "#fff" : primary ? "#2563eb" : "#fff",
-    color: danger ? "#b91c1c" : primary ? "#fff" : "#344054",
-    padding: "7px 11px",
-    fontSize: "12px",
-    fontWeight: "700",
-    cursor: "pointer",
-  });
-  return btn;
-}
-
-export default class ProjectFirmsView {
-  constructor({ router, projectId, returnContext } = {}) {
-    this.router = router || null;
-    this.projectId = projectId || this.router?.currentProjectId || null;
-    this.returnContext = returnContext || null;
-
-    this.root = null;
-    this.hostEl = null;
-    this.msgEl = null;
-
-    this.allGlobalFirms = [];
-    this.projectCandidates = [];
-    this.assignedGlobalFirms = [];
-    this.legacyLocalFirms = [];
-    this.loading = false;
-  }
-
-  _setMsg(value) {
-    if (this.msgEl) this.msgEl.textContent = text(value);
-  }
-
-  async _backToProject() {
-    if (typeof this.router?.showProjectWorkspace === "function" && this.projectId) {
-      await this.router.showProjectWorkspace(this.projectId);
-      return;
-    }
-    await this.router?.showProjects?.();
-  }
-
-  async _openFirmMaster() {
-    await this.router?.showFirms?.();
+export default class ProjectFirmsView extends ProjectFirmsBaseView {
+  constructor(args = {}) {
+    super(args);
+    this.contactsByFirmId = new Map();
   }
 
   async _loadData() {
+    await super._loadData();
+
+    // In Projekten werden nur zentrale Firmen angeboten, die ausdrücklich
+    // als Projektteilnehmer gekennzeichnet sind. Bereits zugeordnete Firmen
+    // bleiben davon unberührt und weiterhin sichtbar.
+    this.allGlobalFirms = (this.allGlobalFirms || []).filter((firm) => hasProjectUsage(firm));
+
     const api = window.bbmDb || {};
-    if (!this.projectId) throw new Error("Projekt fehlt.");
+    this.contactsByFirmId = new Map();
+    if (typeof api.personsListByFirm !== "function") return;
 
-    const [globalRes, projectRes] = await Promise.all([
-      typeof api.firmsListGlobal === "function"
-        ? api.firmsListGlobal()
-        : Promise.resolve({ ok: false, error: "Firmenstamm nicht verfügbar." }),
-      typeof api.projectFirmsListFirmCandidatesByProject === "function"
-        ? api.projectFirmsListFirmCandidatesByProject(this.projectId)
-        : Promise.resolve({ ok: false, error: "Projektfirmen nicht verfügbar." }),
-    ]);
-
-    if (!globalRes?.ok) throw new Error(globalRes?.error || "Firmenstamm konnte nicht geladen werden.");
-    if (!projectRes?.ok) throw new Error(projectRes?.error || "Projektfirmen konnten nicht geladen werden.");
-
-    this.allGlobalFirms = Array.isArray(globalRes.list) ? globalRes.list : [];
-    this.projectCandidates = Array.isArray(projectRes.list) ? projectRes.list : [];
-    this.assignedGlobalFirms = this.projectCandidates.filter((item) => item?.kind === "global_firm");
-    this.legacyLocalFirms = this.projectCandidates.filter((item) => item?.kind === "project_firm");
-  }
-
-  _createFirmCard(firm) {
-    const card = style(document.createElement("article"), {
-      border: "1px solid #dfe5ec",
-      borderRadius: "12px",
-      background: "#fff",
-      padding: "14px",
-      display: "grid",
-      gap: "6px",
-      minHeight: "116px",
-      boxSizing: "border-box",
-    });
-
-    const title = style(document.createElement("div"), {
-      fontSize: "15px",
-      fontWeight: "800",
-      color: "#172033",
-    });
-    title.textContent = firmLabel(firm);
-
-    const address = style(document.createElement("div"), {
-      fontSize: "12px",
-      color: "#667085",
-      minHeight: "18px",
-    });
-    address.textContent = firmAddress(firm) || "Keine Adresse hinterlegt";
-
-    const meta = style(document.createElement("div"), {
-      fontSize: "11.5px",
-      color: "#7b8493",
-    });
-    meta.textContent = [text(firm?.gewerk), text(firm?.email), text(firm?.phone)].filter(Boolean).join(" · ") || "Projektteilnehmer";
-
-    const actions = style(document.createElement("div"), {
-      display: "flex",
-      gap: "8px",
-      marginTop: "5px",
-      flexWrap: "wrap",
-    });
-
-    const remove = button("Aus Projekt entfernen", { danger: true });
-    remove.addEventListener("click", async () => {
-      await this._unassignFirm(firm);
-    });
-    actions.append(remove);
-
-    card.append(title, address, meta, actions);
-    return card;
-  }
-
-  _renderAssigned(container) {
-    container.innerHTML = "";
-
-    if (!this.assignedGlobalFirms.length) {
-      const empty = style(document.createElement("div"), {
-        border: "1px dashed #cfd7e3",
-        borderRadius: "12px",
-        padding: "18px",
-        color: "#667085",
-        fontSize: "12.5px",
-        background: "#fff",
-      });
-      empty.textContent = "Diesem Projekt ist noch keine zentrale Firma zugeordnet.";
-      container.append(empty);
-      return;
-    }
-
-    for (const firm of this.assignedGlobalFirms) container.append(this._createFirmCard(firm));
+    await Promise.all(
+      (this.assignedGlobalFirms || []).map(async (firm) => {
+        const firmId = text(firm?.id);
+        if (!firmId) return;
+        try {
+          const res = await api.personsListByFirm(firmId);
+          this.contactsByFirmId.set(firmId, res?.ok && Array.isArray(res.list) ? res.list : []);
+        } catch (_error) {
+          this.contactsByFirmId.set(firmId, []);
+        }
+      })
+    );
   }
 
   _renderLegacy(container) {
+    // Der lokale Projektfirmen-Bestand ist nur Entwicklungs-/Spieldaten und
+    // wird in der neuen zentralen Firmenwelt nicht mehr dargestellt.
+    if (!container) return;
     container.innerHTML = "";
-    if (!this.legacyLocalFirms.length) {
-      container.style.display = "none";
-      return;
-    }
+    container.style.display = "none";
+  }
 
-    container.style.display = "block";
-    const box = style(document.createElement("section"), {
-      marginTop: "20px",
-      border: "1px solid #f3c37a",
-      borderRadius: "12px",
-      background: "#fffaf0",
-      padding: "14px",
+  _createContactsSection(firm) {
+    const firmId = text(firm?.id);
+    const contacts = this.contactsByFirmId.get(firmId) || [];
+
+    const section = style(document.createElement("div"), {
+      borderTop: "1px solid #edf0f4",
+      paddingTop: "9px",
+      marginTop: "3px",
+      display: "grid",
+      gap: "6px",
     });
+    section.setAttribute("data-bbm-project-firm-contacts", "true");
 
-    const title = style(document.createElement("div"), {
+    const heading = style(document.createElement("div"), {
+      fontSize: "11px",
       fontWeight: "800",
-      color: "#8a5200",
-      marginBottom: "6px",
+      color: "#344054",
     });
-    title.textContent = "Altbestand: lokale Projektfirmen";
+    heading.textContent = "Ansprechpartner";
+    section.append(heading);
 
-    const hint = style(document.createElement("div"), {
-      fontSize: "12px",
-      lineHeight: "1.45",
-      color: "#8a6430",
-      marginBottom: "10px",
-    });
-    hint.textContent = "Diese Firmen stammen aus der alten Projekt-Firmenwelt. Sie bleiben sichtbar, werden aber nicht mehr neu angelegt. Die Migration in den zentralen Firmenstamm erfolgt kontrolliert in einem folgenden Schritt.";
+    if (!contacts.length) {
+      const empty = style(document.createElement("div"), {
+        fontSize: "11px",
+        color: "#98a2b3",
+      });
+      empty.textContent = "Keine Ansprechpartner im Firmenstamm hinterlegt";
+      section.append(empty);
+      return section;
+    }
 
     const list = style(document.createElement("div"), {
       display: "grid",
-      gap: "7px",
+      gap: "5px",
     });
-    for (const firm of this.legacyLocalFirms) {
+
+    for (const person of contacts) {
       const row = style(document.createElement("div"), {
-        background: "#fff",
-        border: "1px solid #f0d8b2",
+        border: "1px solid #edf0f4",
         borderRadius: "8px",
-        padding: "8px 10px",
-        fontSize: "12px",
-        color: "#5d4930",
+        background: "#fafbfc",
+        padding: "7px 8px",
+        display: "grid",
+        gap: "2px",
       });
-      row.textContent = firmLabel(firm);
+
+      const top = style(document.createElement("div"), {
+        display: "flex",
+        alignItems: "baseline",
+        gap: "6px",
+        flexWrap: "wrap",
+      });
+
+      const name = style(document.createElement("span"), {
+        fontSize: "11.5px",
+        fontWeight: "750",
+        color: "#172033",
+      });
+      name.textContent = personName(person);
+      top.append(name);
+
+      const role = personRole(person);
+      if (role) {
+        const roleEl = style(document.createElement("span"), {
+          fontSize: "10.5px",
+          color: "#667085",
+        });
+        roleEl.textContent = role;
+        top.append(roleEl);
+      }
+
+      const contactParts = [text(person?.email), text(person?.phone)].filter(Boolean);
+      row.append(top);
+      if (contactParts.length) {
+        const contact = style(document.createElement("div"), {
+          fontSize: "10.5px",
+          color: "#667085",
+          overflowWrap: "anywhere",
+        });
+        contact.textContent = contactParts.join(" · ");
+        row.append(contact);
+      }
+
       list.append(row);
     }
 
-    box.append(title, hint, list);
-    container.append(box);
+    section.append(list);
+    return section;
   }
 
-  async _openAssignDialog() {
-    const assignedIds = new Set(this.assignedGlobalFirms.map((firm) => String(firm?.id || "")));
-    const available = this.allGlobalFirms.filter((firm) => !assignedIds.has(String(firm?.id || "")));
+  _createFirmCard(firm) {
+    const card = super._createFirmCard(firm);
+    const contacts = this._createContactsSection(firm);
 
-    if (!available.length) {
-      alert("Alle Firmen aus dem Firmenstamm sind diesem Projekt bereits zugeordnet.");
-      return;
-    }
+    // Der letzte Block der Basis-Karte enthält die Aktionen. Ansprechpartner
+    // stehen davor, damit "Aus Projekt entfernen" weiterhin am Kartenende bleibt.
+    const actionBlock = card.lastElementChild || null;
+    if (actionBlock) card.insertBefore(contacts, actionBlock);
+    else card.append(contacts);
 
-    let selectedFirmId = "";
-    let searchValue = "";
-
-    const overlay = style(document.createElement("div"), {
-      position: "fixed",
-      inset: "0",
-      background: "rgba(15,23,42,.38)",
-      display: "grid",
-      placeItems: "center",
-      zIndex: "10000",
-      padding: "20px",
-    });
-
-    const modal = style(document.createElement("div"), {
-      width: "min(760px, calc(100vw - 40px))",
-      maxHeight: "calc(100vh - 40px)",
-      overflow: "hidden",
-      background: "#fff",
-      borderRadius: "14px",
-      boxShadow: "0 22px 60px rgba(15,23,42,.22)",
-      padding: "18px",
-      display: "grid",
-      gridTemplateRows: "auto auto auto minmax(220px, 1fr) auto",
-      gap: "12px",
-    });
-
-    const title = style(document.createElement("div"), {
-      fontSize: "18px",
-      fontWeight: "850",
-      color: "#172033",
-    });
-    title.textContent = "Firma aus Firmenstamm zuordnen";
-
-    const hint = style(document.createElement("div"), {
-      fontSize: "12px",
-      color: "#667085",
-      lineHeight: "1.45",
-    });
-    hint.textContent = "Die Firma bleibt einmalig im zentralen Firmenstamm. Hier wird nur die Projektzuordnung gespeichert.";
-
-    const search = document.createElement("input");
-    search.type = "search";
-    search.placeholder = "Firma, Kurzbezeichnung, Branche/Gewerk oder Ort suchen ...";
-    search.autocomplete = "off";
-    style(search, {
-      width: "100%",
-      minHeight: "42px",
-      border: "1px solid #cfd7e3",
-      borderRadius: "8px",
-      padding: "0 12px",
-      fontSize: "13px",
-      boxSizing: "border-box",
-      outline: "none",
-    });
-
-    const listWrap = style(document.createElement("div"), {
-      border: "1px solid #dfe5ec",
-      borderRadius: "10px",
-      overflow: "auto",
-      background: "#fff",
-      minHeight: "220px",
-      maxHeight: "420px",
-    });
-
-    const status = style(document.createElement("div"), {
-      fontSize: "11.5px",
-      color: "#667085",
-      marginBottom: "6px",
-    });
-
-    const list = style(document.createElement("div"), {
-      display: "grid",
-    });
-    listWrap.append(list);
-
-    const cancel = button("Abbrechen");
-    const assign = button("Zuordnen", { primary: true });
-    assign.disabled = true;
-    assign.style.opacity = ".55";
-
-    const close = () => overlay.remove();
-
-    const setSelected = (firmId) => {
-      selectedFirmId = text(firmId);
-      assign.disabled = !selectedFirmId;
-      assign.style.opacity = selectedFirmId ? "1" : ".55";
-      for (const row of list.querySelectorAll("[data-firm-id]")) {
-        const active = row.dataset.firmId === selectedFirmId;
-        row.style.background = active ? "#eef4ff" : "#fff";
-        row.style.borderColor = active ? "#84adff" : "transparent";
-      }
-    };
-
-    const renderList = () => {
-      const needle = searchValue.toLocaleLowerCase("de-DE");
-      const filtered = needle
-        ? available.filter((firm) => firmSearchText(firm).includes(needle))
-        : available;
-
-      list.innerHTML = "";
-      status.textContent = `${filtered.length} von ${available.length} Firmen`;
-
-      if (!filtered.length) {
-        const empty = style(document.createElement("div"), {
-          padding: "18px",
-          color: "#667085",
-          fontSize: "12.5px",
-        });
-        empty.textContent = "Keine passende Firma gefunden.";
-        list.append(empty);
-        setSelected("");
-        return;
-      }
-
-      for (const firm of filtered) {
-        const row = style(document.createElement("button"), {
-          width: "100%",
-          border: "1px solid transparent",
-          borderBottom: "1px solid #edf0f4",
-          background: "#fff",
-          padding: "11px 12px",
-          textAlign: "left",
-          cursor: "pointer",
-          display: "grid",
-          gap: "3px",
-        });
-        row.type = "button";
-        row.dataset.firmId = String(firm?.id || "");
-
-        const primary = style(document.createElement("div"), {
-          fontSize: "13px",
-          fontWeight: "800",
-          color: "#172033",
-        });
-        primary.textContent = firmPrimary(firm);
-
-        const secondaryParts = [];
-        const short = text(firm?.short);
-        const second = firmSecondary(firm);
-        if (short && short !== firmPrimary(firm)) secondaryParts.push(short);
-        if (second && !secondaryParts.includes(second)) secondaryParts.push(second);
-
-        const secondary = style(document.createElement("div"), {
-          fontSize: "11.5px",
-          color: "#667085",
-        });
-        secondary.textContent = secondaryParts.join(" · ") || firmAddress(firm) || "Keine Zusatzangabe";
-
-        row.append(primary, secondary);
-        row.addEventListener("click", () => setSelected(firm?.id));
-        row.addEventListener("dblclick", async () => {
-          setSelected(firm?.id);
-          assign.click();
-        });
-        list.append(row);
-      }
-
-      if (selectedFirmId && !filtered.some((firm) => String(firm?.id || "") === selectedFirmId)) {
-        setSelected("");
-      } else {
-        setSelected(selectedFirmId);
-      }
-    };
-
-    search.addEventListener("input", () => {
-      searchValue = text(search.value);
-      renderList();
-    });
-
-    cancel.addEventListener("click", close);
-    overlay.addEventListener("mousedown", (event) => {
-      if (event.target === overlay) close();
-    });
-
-    assign.addEventListener("click", async () => {
-      const firmId = text(selectedFirmId);
-      if (!firmId) return;
-      assign.disabled = true;
-      const api = window.bbmDb || {};
-      const res = await api.projectFirmsAssignGlobalFirm?.({ projectId: this.projectId, firmId });
-      if (!res?.ok) {
-        assign.disabled = false;
-        alert(res?.error || "Firma konnte nicht zugeordnet werden.");
-        return;
-      }
-      close();
-      await this.reload();
-    });
-
-    const actions = style(document.createElement("div"), {
-      display: "flex",
-      justifyContent: "flex-end",
-      gap: "8px",
-      marginTop: "4px",
-    });
-    actions.append(cancel, assign);
-
-    modal.append(title, hint, search, status, listWrap, actions);
-    overlay.append(modal);
-    document.body.append(overlay);
-    renderList();
-    setTimeout(() => search.focus(), 0);
-  }
-
-  async _unassignFirm(firm) {
-    const api = window.bbmDb || {};
-    const firmId = text(firm?.id);
-    if (!firmId) return;
-
-    if (typeof api.projectFirmsCanDeactivate === "function") {
-      const check = await api.projectFirmsCanDeactivate({ projectId: this.projectId, firmId });
-      if (check?.ok && check?.result?.canDeactivate === false) {
-        alert(`Firma kann derzeit nicht aus dem Projekt entfernt werden. Es bestehen noch ${Number(check?.result?.count || 0)} Verknüpfung(en).`);
-        return;
-      }
-    }
-
-    if (!confirm(`${firmLabel(firm)} aus diesem Projekt entfernen?\n\nDie Firma bleibt im zentralen Firmenstamm erhalten.`)) return;
-
-    const res = await api.projectFirmsUnassignGlobalFirm?.({ projectId: this.projectId, firmId });
-    if (!res?.ok) {
-      alert(res?.error || "Projektzuordnung konnte nicht entfernt werden.");
-      return;
-    }
-    await this.reload();
-  }
-
-  _renderContent() {
-    if (!this.hostEl) return;
-    this.hostEl.innerHTML = "";
-
-    const toolbar = style(document.createElement("div"), {
-      display: "flex",
-      gap: "8px",
-      flexWrap: "wrap",
-      marginBottom: "14px",
-    });
-    const assign = button("Firma zuordnen", { primary: true });
-    assign.addEventListener("click", () => this._openAssignDialog());
-    toolbar.append(assign);
-
-    const title = style(document.createElement("div"), {
-      fontSize: "14px",
-      fontWeight: "800",
-      color: "#172033",
-      marginBottom: "8px",
-    });
-    title.textContent = "Zugeordnete Firmen";
-
-    const grid = style(document.createElement("div"), {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-      gap: "10px",
-    });
-    this._renderAssigned(grid);
-
-    const legacy = document.createElement("div");
-    this._renderLegacy(legacy);
-
-    this.hostEl.append(toolbar, title, grid, legacy);
-  }
-
-  render() {
-    const root = style(document.createElement("div"), {
-      minHeight: "100%",
-      padding: "18px clamp(16px, 2.5vw, 30px)",
-      boxSizing: "border-box",
-      background: "#f4f6f9",
-      color: "#172033",
-    });
-
-    const head = style(document.createElement("div"), {
-      display: "flex",
-      alignItems: "center",
-      gap: "10px",
-      marginBottom: "14px",
-    });
-    const back = button("← Projekt");
-    back.addEventListener("click", () => this._backToProject());
-
-    const title = style(document.createElement("h2"), {
-      margin: "0",
-      fontSize: "20px",
-      fontWeight: "850",
-    });
-    title.textContent = "Firmen im Projekt";
-
-    const msg = style(document.createElement("div"), {
-      marginLeft: "auto",
-      fontSize: "11px",
-      color: "#8a94a5",
-    });
-
-    head.append(back, title, msg);
-    const host = document.createElement("div");
-    root.append(head, host);
-
-    this.root = root;
-    this.hostEl = host;
-    this.msgEl = msg;
-    this._renderContent();
-    return root;
-  }
-
-  async reload() {
-    if (this.loading) return;
-    this.loading = true;
-    this._setMsg("Lade ...");
-    try {
-      await this._loadData();
-      this._renderContent();
-    } catch (error) {
-      console.error("[ProjectFirmsView] load failed", error);
-      alert(error?.message || "Firmen im Projekt konnten nicht geladen werden.");
-    } finally {
-      this.loading = false;
-      this._setMsg("");
-    }
-  }
-
-  async load() {
-    await this.reload();
+    return card;
   }
 }
