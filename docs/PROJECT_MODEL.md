@@ -34,6 +34,8 @@ Ein Projekt referenziert diese Daten nur; es besitzt keine eigene parallele Firm
 
 Besprechungen, TOPs, Teilnehmerzustand, Protokolltitel, Protokollfuss und sonstige Protokoll-/PDF-Einstellungen gehoeren zum Fachmodul `Protokoll` bzw. zu gemeinsamen Dokumentdiensten, nicht zu den Projektstammdaten.
 
+Projektspezifische Protokoll- und PDF-Einstellungen werden weiterhin projektbezogen gespeichert, aber im Projekt-Arbeitsbereich innerhalb des Protokollbereichs bedient. Sie erscheinen nicht mehr im Projektstammformular.
+
 ### Restarbeiten / Plaene
 
 Restarbeiten, Maengel, Fotos, Planbezug und WEB-PDFs sind Fach-/Unterbereich von `Restarbeiten` und perspektivisch `BBM Mobil`.
