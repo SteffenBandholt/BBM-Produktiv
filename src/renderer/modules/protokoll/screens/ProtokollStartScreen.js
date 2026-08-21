@@ -89,7 +89,8 @@ export default class ProtokollStartScreen {
 
   async _chooseProject() {
     try {
-      window.localStorage?.setItem?.("bbm.startTargetModuleId", "protokoll");
+      window.localStorage?.removeItem?.("bbm.startTargetModuleId");
+      window.localStorage?.removeItem?.("bbm.protokollStartIntent");
     } catch (_e) {
       // ignore
     }
@@ -97,10 +98,8 @@ export default class ProtokollStartScreen {
   }
 
   async _newProtocol() {
-    // Das eigentliche Erzeugen einer Besprechung bleibt im bestehenden
-    // Protokollpfad. Diese Startsicht setzt nur den gewünschten Zielbereich.
     try {
-      window.localStorage?.setItem?.("bbm.startTargetModuleId", "protokoll");
+      window.localStorage?.removeItem?.("bbm.startTargetModuleId");
       window.localStorage?.setItem?.("bbm.protokollStartIntent", "new");
     } catch (_e) {
       // ignore
