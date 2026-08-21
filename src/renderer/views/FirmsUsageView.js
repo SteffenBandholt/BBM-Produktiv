@@ -24,25 +24,45 @@ function makeUsageCheckbox(label, checked = false) {
   Object.assign(wrap.style, {
     display: "inline-flex",
     alignItems: "center",
-    gap: "7px",
-    minHeight: "34px",
-    padding: "0 10px",
-    border: "1px solid #d7dee8",
+    gap: "8px",
+    minHeight: "38px",
+    padding: "0 12px",
+    border: "1px solid #d5dce7",
     borderRadius: "8px",
-    background: "#fff",
+    background: "#ffffff",
     cursor: "pointer",
     fontSize: "12px",
     fontWeight: "650",
     color: "#344054",
+    boxSizing: "border-box",
+    transition: "background .12s ease, border-color .12s ease, color .12s ease",
   });
+
   const input = document.createElement("input");
   input.type = "checkbox";
   input.checked = !!checked;
-  input.style.accentColor = "#2563eb";
+  Object.assign(input.style, {
+    width: "16px",
+    height: "16px",
+    margin: "0",
+    accentColor: "#2563eb",
+    flex: "0 0 auto",
+  });
+
   const text = document.createElement("span");
   text.textContent = label;
+
+  const sync = () => {
+    const active = input.checked;
+    wrap.style.background = active ? "#eef4ff" : "#ffffff";
+    wrap.style.borderColor = active ? "#84adff" : "#d5dce7";
+    wrap.style.color = active ? "#175cd3" : "#344054";
+  };
+  input.addEventListener("change", sync);
+  sync();
+
   wrap.append(input, text);
-  return { wrap, input };
+  return { wrap, input, sync };
 }
 
 export default class FirmsUsageView extends FirmsView {
@@ -50,6 +70,8 @@ export default class FirmsUsageView extends FirmsView {
     super(args);
     this.usageProjectParticipantEl = null;
     this.usageInvoiceCustomerEl = null;
+    this.usageProjectParticipantSync = null;
+    this.usageInvoiceCustomerSync = null;
   }
 
   render() {
@@ -90,43 +112,28 @@ export default class FirmsUsageView extends FirmsView {
   }
 
   _injectUsageControls(options = {}) {
-    const host = this.editWrapEl || this.firmPopupBodyEl || null;
+    const host = this.firmGridEl || null;
     if (!host) return;
 
-    let box = host.querySelector?.("[data-bbm-firm-usages]") || null;
-    if (!box) {
-      box = document.createElement("div");
-      box.setAttribute("data-bbm-firm-usages", "true");
-      Object.assign(box.style, {
-        border: "1px solid #dfe5ec",
-        borderRadius: "10px",
-        background: "#f8fafc",
-        padding: "11px 12px",
+    let panel = host.querySelector?.("[data-bbm-firm-usages]") || null;
+    if (!panel) {
+      const label = document.createElement("div");
+      label.className = "bbm-form-label";
+      label.setAttribute("data-bbm-firm-usages-label", "true");
+      label.textContent = "Verwendung in BBM";
+
+      panel = document.createElement("div");
+      panel.setAttribute("data-bbm-firm-usages", "true");
+      Object.assign(panel.style, {
         display: "grid",
-        gap: "8px",
-        marginTop: "10px",
-        width: "100%",
-        boxSizing: "border-box",
-      });
-
-      const title = document.createElement("div");
-      title.textContent = "Verwendung in BBM";
-      Object.assign(title.style, {
-        fontSize: "12px",
-        fontWeight: "800",
-        color: "#172033",
-      });
-
-      const hint = document.createElement("div");
-      hint.textContent = "Eine Firma kann mehrere Verwendungen gleichzeitig haben.";
-      Object.assign(hint.style, {
-        fontSize: "11px",
-        color: "#667085",
+        gap: "6px",
+        minWidth: "0",
       });
 
       const choices = document.createElement("div");
       Object.assign(choices.style, {
         display: "flex",
+        alignItems: "center",
         gap: "8px",
         flexWrap: "wrap",
       });
@@ -135,11 +142,22 @@ export default class FirmsUsageView extends FirmsView {
       const invoice = makeUsageCheckbox("Rechnungskunde");
       this.usageProjectParticipantEl = project.input;
       this.usageInvoiceCustomerEl = invoice.input;
+      this.usageProjectParticipantSync = project.sync;
+      this.usageInvoiceCustomerSync = invoice.sync;
       choices.append(project.wrap, invoice.wrap);
-      box.append(title, hint, choices);
-      host.append(box);
+
+      const hint = document.createElement("div");
+      hint.textContent = "Mehrfachauswahl möglich";
+      Object.assign(hint.style, {
+        fontSize: "10.5px",
+        color: "#8a94a5",
+        lineHeight: "1.2",
+      });
+
+      panel.append(choices, hint);
+      host.append(label, panel);
     } else {
-      const inputs = box.querySelectorAll?.('input[type="checkbox"]') || [];
+      const inputs = panel.querySelectorAll?.('input[type="checkbox"]') || [];
       this.usageProjectParticipantEl = inputs[0] || null;
       this.usageInvoiceCustomerEl = inputs[1] || null;
     }
@@ -148,6 +166,8 @@ export default class FirmsUsageView extends FirmsView {
     const codes = new Set(usageCodes(firm));
     if (this.usageProjectParticipantEl) this.usageProjectParticipantEl.checked = codes.has(PROJECT);
     if (this.usageInvoiceCustomerEl) this.usageInvoiceCustomerEl.checked = codes.has(INVOICE);
+    this.usageProjectParticipantSync?.();
+    this.usageInvoiceCustomerSync?.();
   }
 
   async _openFirmEditor(options = {}) {
