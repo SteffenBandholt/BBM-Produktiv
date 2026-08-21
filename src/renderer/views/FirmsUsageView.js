@@ -2,6 +2,7 @@ import FirmsView from "./FirmsLegacyView.js";
 
 const PROJECT = "project_participant";
 const INVOICE = "invoice_customer";
+const INVOICE_MODULE_IDS = new Set(["rechnung", "rechnungen"]);
 
 function usageCodes(firm) {
   if (Array.isArray(firm?.usages)) return firm.usages.map((value) => String(value || "").trim());
@@ -11,12 +12,30 @@ function usageCodes(firm) {
   return result;
 }
 
-function usageLabels(firm) {
+function usageLabels(firm, { invoiceLicensed = false } = {}) {
   const codes = new Set(usageCodes(firm));
   const labels = [];
   if (codes.has(PROJECT)) labels.push("Projektteilnehmer");
-  if (codes.has(INVOICE)) labels.push("Rechnungskunde");
+  if (invoiceLicensed && codes.has(INVOICE)) labels.push("Rechnungskunde");
   return labels;
+}
+
+function makeUsageBadge(label) {
+  const badge = document.createElement("span");
+  badge.textContent = label;
+  Object.assign(badge.style, {
+    display: "inline-flex",
+    alignItems: "center",
+    minHeight: "22px",
+    padding: "0 7px",
+    borderRadius: "999px",
+    background: label === "Rechnungskunde" ? "#eef4ff" : "#edf8ef",
+    color: label === "Rechnungskunde" ? "#175cd3" : "#287a38",
+    fontSize: "10px",
+    fontWeight: "750",
+    whiteSpace: "nowrap",
+  });
+  return badge;
 }
 
 function makeUsageCheckbox(label, checked = false) {
@@ -96,6 +115,7 @@ export default class FirmsUsageView extends FirmsView {
     this.usageInvoiceCustomerEl = null;
     this.usageProjectParticipantSync = null;
     this.usageInvoiceCustomerSync = null;
+    this.invoiceModuleLicensed = false;
   }
 
   render() {
@@ -123,6 +143,28 @@ export default class FirmsUsageView extends FirmsView {
     return root;
   }
 
+  async _loadInvoiceLicenseState() {
+    this.invoiceModuleLicensed = false;
+    const api = window.bbmDb || {};
+    if (typeof api.licenseGetStatus !== "function") return;
+
+    try {
+      const status = await api.licenseGetStatus();
+      if (!status || status.valid === false) return;
+      const moduleIds = Array.isArray(status.modules) ? status.modules : [];
+      this.invoiceModuleLicensed = moduleIds.some((moduleId) =>
+        INVOICE_MODULE_IDS.has(String(moduleId || "").trim().toLowerCase())
+      );
+    } catch (_error) {
+      this.invoiceModuleLicensed = false;
+    }
+  }
+
+  async load() {
+    await this._loadInvoiceLicenseState();
+    await super.load();
+  }
+
   async _openEditorWindow(payload, onSaved, onDeleted) {
     if (payload?.kind === "firm") return false;
     return await super._openEditorWindow(payload, onSaved, onDeleted);
@@ -139,37 +181,48 @@ export default class FirmsUsageView extends FirmsView {
     const host = this.firmGridEl || null;
     if (!host) return;
 
-    let panel = host.querySelector?.("[data-bbm-firm-usages]") || null;
-    if (!panel) {
-      const label = document.createElement("div");
-      label.className = "bbm-form-label";
-      label.setAttribute("data-bbm-firm-usages-label", "true");
-      label.textContent = "Verwendung in BBM";
+    const oldLabel = host.querySelector?.("[data-bbm-firm-usages-label]") || null;
+    const oldPanel = host.querySelector?.("[data-bbm-firm-usages]") || null;
+    oldLabel?.remove();
+    oldPanel?.remove();
 
-      panel = document.createElement("div");
-      panel.setAttribute("data-bbm-firm-usages", "true");
-      Object.assign(panel.style, {
-        display: "grid",
-        gap: "6px",
-        minWidth: "0",
-      });
+    const label = document.createElement("div");
+    label.className = "bbm-form-label";
+    label.setAttribute("data-bbm-firm-usages-label", "true");
+    label.textContent = "Verwendung in BBM";
 
-      const choices = document.createElement("div");
-      Object.assign(choices.style, {
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        flexWrap: "wrap",
-      });
+    const panel = document.createElement("div");
+    panel.setAttribute("data-bbm-firm-usages", "true");
+    Object.assign(panel.style, {
+      display: "grid",
+      gap: "6px",
+      minWidth: "0",
+    });
 
-      const project = makeUsageCheckbox("Projektteilnehmer");
+    const choices = document.createElement("div");
+    Object.assign(choices.style, {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      flexWrap: "wrap",
+    });
+
+    const project = makeUsageCheckbox("Projektteilnehmer");
+    this.usageProjectParticipantEl = project.input;
+    this.usageProjectParticipantSync = project.sync;
+    choices.append(project.wrap);
+
+    this.usageInvoiceCustomerEl = null;
+    this.usageInvoiceCustomerSync = null;
+    if (this.invoiceModuleLicensed) {
       const invoice = makeUsageCheckbox("Rechnungskunde");
-      this.usageProjectParticipantEl = project.input;
       this.usageInvoiceCustomerEl = invoice.input;
-      this.usageProjectParticipantSync = project.sync;
       this.usageInvoiceCustomerSync = invoice.sync;
-      choices.append(project.wrap, invoice.wrap);
+      choices.append(invoice.wrap);
+    }
 
+    panel.append(choices);
+    if (this.invoiceModuleLicensed) {
       const hint = document.createElement("div");
       hint.textContent = "Mehrfachauswahl möglich";
       Object.assign(hint.style, {
@@ -177,14 +230,9 @@ export default class FirmsUsageView extends FirmsView {
         color: "#8a94a5",
         lineHeight: "1.2",
       });
-
-      panel.append(choices, hint);
-      host.append(label, panel);
-    } else {
-      const inputs = panel.querySelectorAll?.('input[type="checkbox"]') || [];
-      this.usageProjectParticipantEl = inputs[0] || null;
-      this.usageInvoiceCustomerEl = inputs[1] || null;
+      panel.append(hint);
     }
+    host.append(label, panel);
 
     const firm = this._usageFirmForEditor(options);
     const codes = new Set(usageCodes(firm));
@@ -204,8 +252,67 @@ export default class FirmsUsageView extends FirmsView {
     const data = super._getFirmFormData();
     const usages = [];
     if (this.usageProjectParticipantEl?.checked) usages.push(PROJECT);
-    if (this.usageInvoiceCustomerEl?.checked) usages.push(INVOICE);
+
+    if (this.invoiceModuleLicensed) {
+      if (this.usageInvoiceCustomerEl?.checked) usages.push(INVOICE);
+    } else {
+      const existingCodes = new Set(usageCodes(this.selectedFirm));
+      if (existingCodes.has(INVOICE)) usages.push(INVOICE);
+    }
+
     return { ...data, usages };
+  }
+
+  _renderFirmsOnly() {
+    super._renderFirmsOnly();
+    const table = this.tableBodyEl?.parentElement || null;
+    const headRow = table?.querySelector?.("thead tr") || null;
+    if (!headRow || !this.tableBodyEl) return;
+
+    let usageHead = headRow.querySelector?.("[data-bbm-usage-head]") || null;
+    if (!usageHead) {
+      usageHead = document.createElement("th");
+      usageHead.setAttribute("data-bbm-usage-head", "true");
+      usageHead.textContent = "Verwendung";
+      Object.assign(usageHead.style, {
+        textAlign: "left",
+        padding: "6px",
+        borderBottom: "1px solid #ddd",
+        width: this.invoiceModuleLicensed ? "230px" : "150px",
+      });
+      headRow.append(usageHead);
+    }
+
+    const rows = Array.from(this.tableBodyEl.children || []);
+    rows.forEach((row, index) => {
+      row.querySelector?.("[data-bbm-usage-cell]")?.remove();
+      const firm = this.firms[index];
+      if (!firm) return;
+
+      const cell = document.createElement("td");
+      cell.setAttribute("data-bbm-usage-cell", "true");
+      Object.assign(cell.style, {
+        padding: "6px",
+        borderBottom: "1px solid #eee",
+      });
+
+      const labels = usageLabels(firm, { invoiceLicensed: this.invoiceModuleLicensed });
+      const badges = document.createElement("div");
+      Object.assign(badges.style, {
+        display: "flex",
+        gap: "5px",
+        flexWrap: "wrap",
+      });
+      for (const label of labels) badges.append(makeUsageBadge(label));
+      if (!labels.length) {
+        const none = document.createElement("span");
+        none.textContent = "–";
+        none.style.color = "#98a2b3";
+        badges.append(none);
+      }
+      cell.append(badges);
+      row.append(cell);
+    });
   }
 
   async _saveFirm() {
@@ -265,7 +372,7 @@ export default class FirmsUsageView extends FirmsView {
     super._renderFirmDetails();
     if (!this.selectedFirm || !this.detailBodyEl) return;
 
-    const labels = usageLabels(this.selectedFirm);
+    const labels = usageLabels(this.selectedFirm, { invoiceLicensed: this.invoiceModuleLicensed });
     const row = document.createElement("div");
     row.setAttribute("data-bbm-firm-usage-badges", "true");
     Object.assign(row.style, {
@@ -282,22 +389,7 @@ export default class FirmsUsageView extends FirmsView {
       Object.assign(none.style, { fontSize: "11px", color: "#8a94a5" });
       row.append(none);
     } else {
-      for (const label of labels) {
-        const badge = document.createElement("span");
-        badge.textContent = label;
-        Object.assign(badge.style, {
-          display: "inline-flex",
-          alignItems: "center",
-          minHeight: "24px",
-          padding: "0 8px",
-          borderRadius: "999px",
-          background: label === "Rechnungskunde" ? "#eef4ff" : "#edf8ef",
-          color: label === "Rechnungskunde" ? "#175cd3" : "#287a38",
-          fontSize: "10.5px",
-          fontWeight: "750",
-        });
-        row.append(badge);
-      }
+      for (const label of labels) row.append(makeUsageBadge(label));
     }
 
     const actions = Array.from(this.detailBodyEl.children || []).find(
