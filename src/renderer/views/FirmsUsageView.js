@@ -52,6 +52,31 @@ export default class FirmsUsageView extends FirmsView {
     this.usageInvoiceCustomerEl = null;
   }
 
+  render() {
+    const root = super.render();
+
+    const listTitle = Array.from(root.querySelectorAll("div")).find(
+      (el) => String(el.textContent || "").trim() === "Firmenliste"
+    );
+    const listHead = listTitle?.parentElement || null;
+    const listWrap = listHead?.parentElement || null;
+
+    if (listHead && listWrap && !listWrap.querySelector("[data-bbm-firm-list-hint]")) {
+      const hint = document.createElement("div");
+      hint.setAttribute("data-bbm-firm-list-hint", "true");
+      hint.textContent = "Firma anklicken zum Auswählen · Doppelklick zum Bearbeiten";
+      Object.assign(hint.style, {
+        fontSize: "12px",
+        color: "#667085",
+        margin: "-2px 0 8px 0",
+        lineHeight: "1.35",
+      });
+      listHead.insertAdjacentElement("afterend", hint);
+    }
+
+    return root;
+  }
+
   async _openEditorWindow(payload, onSaved, onDeleted) {
     if (payload?.kind === "firm") return false;
     return await super._openEditorWindow(payload, onSaved, onDeleted);
