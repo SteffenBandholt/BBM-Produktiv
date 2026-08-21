@@ -1,5 +1,5 @@
-import ProjectsScreen from "./screens/ProjectsScreen.js";
-import ProjectFormScreen from "./screens/ProjectFormScreen.js";
+import ProjectsScreen from "./screens/ProjectsHubScreen.js";
+import ProjectFormScreen from "./screens/ProjectFormHubScreen.js";
 import ArchiveScreen from "./screens/ArchiveScreen.js";
 import ProjectWorkspaceScreen from "./screens/ProjectWorkspaceScreen.js";
 
