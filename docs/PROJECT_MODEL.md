@@ -34,7 +34,7 @@ Ein Projekt referenziert diese Daten nur; es besitzt keine eigene parallele Firm
 
 Besprechungen, TOPs, Teilnehmerzustand, Protokolltitel, Protokollfuss und sonstige Protokoll-/PDF-Einstellungen gehoeren zum Fachmodul `Protokoll` bzw. zu gemeinsamen Dokumentdiensten, nicht zu den Projektstammdaten.
 
-Projektspezifische Protokoll- und PDF-Einstellungen werden weiterhin projektbezogen gespeichert, aber im Projekt-Arbeitsbereich innerhalb des Protokollbereichs bedient. Sie erscheinen nicht mehr im Projektstammformular.
+Projektspezifische Protokoll- und PDF-Einstellungen werden weiterhin projektbezogen gespeichert, aber im Projekt-Arbeitsbereich innerhalb des Protokollbereichs bedient. Sie erscheinen nicht im Projektstammformular.
 
 ### Restarbeiten / Plaene
 
