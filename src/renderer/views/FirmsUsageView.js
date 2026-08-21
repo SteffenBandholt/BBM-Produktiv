@@ -3,6 +3,7 @@ import FirmsView from "./FirmsLegacyView.js";
 const PROJECT = "project_participant";
 const INVOICE = "invoice_customer";
 const INVOICE_MODULE_IDS = new Set(["rechnung", "rechnungen"]);
+const PROJECT_MODULE_IDS = new Set(["protokoll", "restarbeiten", "sigeko"]);
 
 function usageCodes(firm) {
   if (Array.isArray(firm?.usages)) return firm.usages.map((value) => String(value || "").trim());
@@ -116,6 +117,7 @@ export default class FirmsUsageView extends FirmsView {
     this.usageProjectParticipantSync = null;
     this.usageInvoiceCustomerSync = null;
     this.invoiceModuleLicensed = false;
+    this.projectModuleLicensed = true;
   }
 
   render() {
@@ -145,18 +147,21 @@ export default class FirmsUsageView extends FirmsView {
 
   async _loadInvoiceLicenseState() {
     this.invoiceModuleLicensed = false;
+    this.projectModuleLicensed = true;
     const api = window.bbmDb || {};
     if (typeof api.licenseGetStatus !== "function") return;
 
     try {
       const status = await api.licenseGetStatus();
       if (!status || status.valid === false) return;
-      const moduleIds = Array.isArray(status.modules) ? status.modules : [];
-      this.invoiceModuleLicensed = moduleIds.some((moduleId) =>
-        INVOICE_MODULE_IDS.has(String(moduleId || "").trim().toLowerCase())
-      );
+      const moduleIds = (Array.isArray(status.modules) ? status.modules : [])
+        .map((moduleId) => String(moduleId || "").trim().toLowerCase())
+        .filter(Boolean);
+      this.invoiceModuleLicensed = moduleIds.some((moduleId) => INVOICE_MODULE_IDS.has(moduleId));
+      this.projectModuleLicensed = moduleIds.some((moduleId) => PROJECT_MODULE_IDS.has(moduleId));
     } catch (_error) {
       this.invoiceModuleLicensed = false;
+      this.projectModuleLicensed = true;
     }
   }
 
@@ -175,6 +180,12 @@ export default class FirmsUsageView extends FirmsView {
     const id = String(firmId || this.selectedFirmId || "").trim();
     if (!id) return this.selectedFirm || null;
     return (this.firms || []).find((firm) => String(firm?.id || "") === id) || this.selectedFirm || null;
+  }
+
+  _createUsageMode() {
+    if (!this.invoiceModuleLicensed) return "project_only";
+    if (!this.projectModuleLicensed) return "invoice_only";
+    return "both";
   }
 
   _injectUsageControls(options = {}) {
@@ -207,37 +218,53 @@ export default class FirmsUsageView extends FirmsView {
       flexWrap: "wrap",
     });
 
-    const project = makeUsageCheckbox("Projektteilnehmer");
-    this.usageProjectParticipantEl = project.input;
-    this.usageProjectParticipantSync = project.sync;
-    choices.append(project.wrap);
+    const isCreate = options?.mode === "create";
+    const createMode = this._createUsageMode();
+    const showProject = !isCreate || createMode !== "invoice_only";
+    const showInvoice = this.invoiceModuleLicensed && (!isCreate || createMode !== "project_only");
+
+    this.usageProjectParticipantEl = null;
+    this.usageProjectParticipantSync = null;
+    if (showProject) {
+      const project = makeUsageCheckbox("Projektteilnehmer", isCreate && createMode === "project_only");
+      this.usageProjectParticipantEl = project.input;
+      this.usageProjectParticipantSync = project.sync;
+      choices.append(project.wrap);
+    }
 
     this.usageInvoiceCustomerEl = null;
     this.usageInvoiceCustomerSync = null;
-    if (this.invoiceModuleLicensed) {
-      const invoice = makeUsageCheckbox("Rechnungskunde");
+    if (showInvoice) {
+      const invoice = makeUsageCheckbox("Rechnungskunde", isCreate && createMode === "invoice_only");
       this.usageInvoiceCustomerEl = invoice.input;
       this.usageInvoiceCustomerSync = invoice.sync;
       choices.append(invoice.wrap);
     }
 
     panel.append(choices);
-    if (this.invoiceModuleLicensed) {
-      const hint = document.createElement("div");
+
+    const hint = document.createElement("div");
+    Object.assign(hint.style, {
+      fontSize: "10.5px",
+      color: "#8a94a5",
+      lineHeight: "1.2",
+    });
+    if (isCreate && createMode === "both") {
+      hint.textContent = "Bitte Verwendung wählen · Mehrfachauswahl möglich";
+      panel.append(hint);
+    } else if (!isCreate && this.invoiceModuleLicensed) {
       hint.textContent = "Mehrfachauswahl möglich";
-      Object.assign(hint.style, {
-        fontSize: "10.5px",
-        color: "#8a94a5",
-        lineHeight: "1.2",
-      });
       panel.append(hint);
     }
+
     host.append(label, panel);
 
-    const firm = this._usageFirmForEditor(options);
-    const codes = new Set(usageCodes(firm));
-    if (this.usageProjectParticipantEl) this.usageProjectParticipantEl.checked = codes.has(PROJECT);
-    if (this.usageInvoiceCustomerEl) this.usageInvoiceCustomerEl.checked = codes.has(INVOICE);
+    if (!isCreate) {
+      const firm = this._usageFirmForEditor(options);
+      const codes = new Set(usageCodes(firm));
+      if (this.usageProjectParticipantEl) this.usageProjectParticipantEl.checked = codes.has(PROJECT);
+      if (this.usageInvoiceCustomerEl) this.usageInvoiceCustomerEl.checked = codes.has(INVOICE);
+    }
     this.usageProjectParticipantSync?.();
     this.usageInvoiceCustomerSync?.();
   }
@@ -303,7 +330,7 @@ export default class FirmsUsageView extends FirmsView {
         gap: "5px",
         flexWrap: "wrap",
       });
-      for (const label of labels) badges.append(makeUsageBadge(label));
+      for (const usageLabel of labels) badges.append(makeUsageBadge(usageLabel));
       if (!labels.length) {
         const none = document.createElement("span");
         none.textContent = "–";
@@ -321,6 +348,10 @@ export default class FirmsUsageView extends FirmsView {
     const data = this._getFirmFormData();
     if (!data.name) {
       alert("Name 1 ist Pflicht.");
+      return;
+    }
+    if (this.firmMode === "create" && this._createUsageMode() === "both" && !data.usages.length) {
+      alert("Bitte festlegen, ob die Firma Projektteilnehmer, Rechnungskunde oder beides ist.");
       return;
     }
 
@@ -389,7 +420,7 @@ export default class FirmsUsageView extends FirmsView {
       Object.assign(none.style, { fontSize: "11px", color: "#8a94a5" });
       row.append(none);
     } else {
-      for (const label of labels) row.append(makeUsageBadge(label));
+      for (const usageLabel of labels) row.append(makeUsageBadge(usageLabel));
     }
 
     const actions = Array.from(this.detailBodyEl.children || []).find(
