@@ -1,4 +1,4 @@
-import ProjectFirmsView from "./ProjectFirmsView.js";
+import ProjectFirmsView from "./ProjectFirmsWorkView.js";
 
 function text(value) {
   return String(value == null ? "" : value).trim();
