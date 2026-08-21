@@ -1,1 +1,1 @@
-export { default } from "./ProjectFirmsContactsView.js";
+export { default } from "./ProjectFirmsPromotionView.js";
