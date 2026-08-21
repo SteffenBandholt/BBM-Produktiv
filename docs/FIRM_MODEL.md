@@ -2,68 +2,114 @@
 
 ## Grundsatz
 
-Eine Firma existiert in BBM genau einmal im zentralen Firmenstamm `firms`.
+BBM kennt zwei bewusst getrennte Firmenwelten:
 
-Projekte, Protokoll, Restarbeiten, SiGeKo und kaufmaennische Vorgaenge legen keine eigenen Kopien derselben Firma an. Sie referenzieren die zentrale Firma.
+1. zentrale Stammfirmen im Firmenstamm `firms`
+2. lokale Projektfirmen in `project_firms`
 
-## Verwendungen / Rollen
+Eine lokale Projektfirma gilt nur in genau einem Projekt. Sie erscheint nicht automatisch im zentralen Firmenstamm.
 
-Eine Firma kann gleichzeitig mehrere Verwendungen haben. Fuer den ersten verbindlichen Stand gelten:
+Eine zentrale Stammfirma ist projektuebergreifend verfuegbar und kann einem oder mehreren Projekten zugeordnet werden.
 
-- `project_participant` – Firma kann als Projektteilnehmer verwendet und Projekten zugeordnet werden.
-- `invoice_customer` – Firma kann als Rechnungskunde / kaufmaennischer Geschaeftspartner verwendet werden.
+## Anlegen
 
-Eine Firma kann damit sein:
+### Firma innerhalb eines Projekts
+
+Wird eine Firma innerhalb eines Projekts angelegt, entsteht immer eine lokale Projektfirma in `project_firms`.
+
+Typische Faelle sind einmalige Projektbeteiligte wie Nutzergruppen, Lehrerkollegien oder andere nur fuer dieses Projekt relevante Organisationen.
+
+### Firma ueber den Firmenstamm
+
+Wird eine Firma ueber `Firmen` in der Sidebar angelegt, entsteht eine zentrale Stammfirma in `firms`.
+
+Diese Firma kann danach einem oder mehreren Projekten zugeordnet werden.
+
+## Projektbezug zentraler Firmen
+
+Die Zuordnung einer zentralen Firma zu einem konkreten Projekt erfolgt ueber:
+
+`project_global_firms(project_id, firm_id, ...)`
+
+Eine zentrale Firma bleibt dabei ein einzelner Stammdatensatz und wird nicht pro Projekt kopiert.
+
+## Projektfirma in Firmenstamm uebernehmen
+
+Eine lokale Projektfirma kann bewusst ueber die Aktion `In Firmenstamm uebernehmen` in eine zentrale Stammfirma ueberfuehrt werden.
+
+Dabei gilt:
+
+1. aus den Daten der Projektfirma wird eine zentrale Firma angelegt
+2. die zentrale Firma erhaelt die Verwendung `project_participant`
+3. lokale Ansprechpartner der Projektfirma werden in die zentrale Personenwelt uebernommen
+4. die neue zentrale Firma wird dem aktuellen Projekt ueber `project_global_firms` zugeordnet
+5. erst nach erfolgreicher Uebernahme werden lokale Ansprechpartner und die lokale Projektfirma entfernt
+6. bei einer bereits vorhandenen gleichnamigen Stammfirma wird die automatische Uebernahme gestoppt, damit keine Dublette entsteht
+
+Die Uebernahme ist eine bewusste Nutzeraktion und geschieht nicht automatisch.
+
+## Personen / Ansprechpartner
+
+### Lokale Projektfirma
+
+Ansprechpartner einer lokalen Projektfirma liegen in `project_persons` und gehoeren nur zu dieser Projektfirma in diesem Projekt.
+
+### Zentrale Stammfirma
+
+Ansprechpartner einer zentralen Stammfirma liegen in `persons` und referenzieren die Stammfirma ueber `firm_id`.
+
+Bei einer Uebernahme der Projektfirma in den Firmenstamm werden ihre lokalen Ansprechpartner in zentrale Ansprechpartner ueberfuehrt.
+
+## Verwendungen zentraler Stammfirmen
+
+Zentrale Firmen koennen mehrere Verwendungen besitzen:
+
+- `project_participant` – als Projektteilnehmer verwendbar
+- `invoice_customer` – als Rechnungskunde / kaufmaennischer Geschaeftspartner verwendbar
+
+Eine zentrale Firma kann damit sein:
 
 - nur Projektteilnehmer
 - nur Rechnungskunde
 - Projektteilnehmer und Rechnungskunde
 
-Die Verwendungen werden nicht ueber das vorhandene Feld `role_code` abgebildet. `role_code` bleibt Bestandslogik fuer fachliche Sortierung/Rollen und hat eine andere Bedeutung.
+Die Verwendungen werden nicht ueber `role_code` abgebildet. `role_code` bleibt eine separate fachliche Bestandslogik.
 
-## Projektbezug
+## Lizenzabhaengige Verwendung Rechnungskunde
 
-Die Zuordnung einer zentralen Firma zu einem konkreten Projekt ist eine eigene Relation:
+Die Verwendung `invoice_customer` wird in der Oberflaeche nur angeboten und angezeigt, wenn das Modul Rechnung lizenziert ist.
 
-`project_global_firms(project_id, firm_id, ...)`
+Beim Anlegen einer zentralen Firma gilt:
 
-Die Projektzuordnung ist nicht dasselbe wie die allgemeine Verwendung `project_participant`:
+- kein Rechnungsmodul: standardmaessig Projektteilnehmer
+- nur Rechnungsmodul: standardmaessig Rechnungskunde
+- Rechnungsmodul plus projektbezogene Module: aktive Auswahl zwischen Projektteilnehmer, Rechnungskunde oder beidem
 
-- `project_participant` sagt: Die Firma darf/funktioniert als Projektteilnehmer.
-- `project_global_firms` sagt: Die Firma ist diesem konkreten Projekt zugeordnet.
-
-Eine Firma kann mehreren Projekten zugeordnet sein.
-
-## Personen / Mitarbeiter
-
-Personen gehoeren ebenfalls in die zentrale Personenwelt `persons` und referenzieren eine zentrale Firma ueber `firm_id`.
-
-Projektbezogene Teilnehmerzustande (z. B. anwesend, Verteiler, aktiv in einem Projekt) sind Beziehungen bzw. Zustandsdaten des Projekts/Protokolls und keine Kopien der Person.
-
-## Legacy-Bestand
-
-Die Tabellen `project_firms` und `project_persons` enthalten historische lokale Projektkopien. Diese Daten werden in diesem Umbau nicht geloescht.
-
-Verbindliche Migrationsregel:
-
-1. Bestehende lokale Projektfirmen bleiben lesbar, bis sie sicher migriert wurden.
-2. Neue Firmen werden nur noch im zentralen Firmenstamm angelegt.
-3. Neue Projektzuordnungen verwenden `project_global_firms`.
-4. Lokale Projektfirmen werden schrittweise einer zentralen Firma zugeordnet bzw. in den zentralen Stamm ueberfuehrt.
-5. Erst nach erfolgreicher Datenmigration und Referenzumstellung duerfen `project_firms` / `project_persons` entfernt werden.
-
-## Kaufmaennische Vorgaenge
-
-Angebot, Auftrag und Rechnung referenzieren spaeter die zentrale Firma als Geschaeftspartner/Rechnungskunde.
-
-Ein Projekt ist dabei optional. Die Firma ist nicht "im Projekt" gespeichert, nur weil ein kaufmaennischer Vorgang auf dasselbe Projekt verweist.
+Bereits gespeicherte Rechnungs-Verwendungen werden durch eine fehlende Rechnungslizenz nicht geloescht, sondern nur nicht angeboten bzw. angezeigt.
 
 ## Technische Verwendungsablage
 
-Mehrfach-Verwendungen werden in `firm_usages` abgelegt:
+Mehrfach-Verwendungen zentraler Firmen werden in `firm_usages` abgelegt:
 
 - `firm_id`
 - `usage_code`
 - Zeitstempel
 
-Primaerschluessel ist `(firm_id, usage_code)`. Dadurch kann eine Firma mehrere Verwendungen gleichzeitig besitzen, ohne doppelte Firmenstammsaetze zu erzeugen.
+Primaerschluessel ist `(firm_id, usage_code)`.
+
+## Kaufmaennische Vorgaenge
+
+Angebot, Auftrag und Rechnung referenzieren spaeter eine zentrale Stammfirma als Geschaeftspartner bzw. Rechnungskunde.
+
+Ein Projekt ist dabei optional. Kaufmaennische Vorgaenge erzwingen keine Projektzuordnung.
+
+## Verbindliche Ordnung
+
+- `firms` = zentrale Stammfirmen
+- `persons` = zentrale Ansprechpartner zentraler Stammfirmen
+- `firm_usages` = Mehrfach-Verwendungen zentraler Stammfirmen
+- `project_global_firms` = Zuordnung zentraler Stammfirma zu einem Projekt
+- `project_firms` = lokale Firmen, die nur in einem Projekt existieren
+- `project_persons` = lokale Ansprechpartner einer Projektfirma
+
+Damit bleibt der zentrale Firmenstamm schlank, waehrend einmalige Projektbeteiligte trotzdem sauber innerhalb eines Projekts verwaltet werden koennen.
