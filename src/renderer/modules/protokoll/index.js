@@ -32,6 +32,18 @@ function buildProtokollModuleNavigation() {
   });
 }
 
+function buildProtokollModulePresentation() {
+  return Object.freeze({
+    color: "#22c55e",
+    icon: "protocol",
+    description: "Besprechungen dokumentieren und Protokolle fortschreiben.",
+    start: Object.freeze({
+      mode: "project",
+      label: "Projekt auswählen",
+    }),
+  });
+}
+
 // Technische Heimat fuer das Fachmodul `Protokoll`.
 // Der heutige Bestand bleibt vorerst in seinen vorhandenen Pfaden und wird hier
 // nur ueber kleine Einstiegspunkte angedockt.
@@ -43,6 +55,7 @@ export function getProtokollModuleEntry() {
     workScreenId: PROTOKOLL_WORK_SCREEN_ID,
     screens: buildProtokollModuleScreens(),
     navigation: buildProtokollModuleNavigation(),
+    presentation: buildProtokollModulePresentation(),
     movedParts: buildMovedProtocolModuleParts(),
   });
 }
