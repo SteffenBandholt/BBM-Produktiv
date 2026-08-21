@@ -1,4 +1,5 @@
 import LegacyProjectsScreen from "./ProjectsScreen.js";
+import ProjectFormHubScreen from "./ProjectFormHubScreen.js";
 import ProtokollStartScreen from "../../protokoll/screens/ProtokollStartScreen.js";
 
 const START_TARGET_KEY = "bbm.startTargetModuleId";
@@ -34,6 +35,35 @@ export default class ProjectsHubScreen extends LegacyProjectsScreen {
 
   _startsFromProtocolTile() {
     return readStorage(START_TARGET_KEY) === "protokoll";
+  }
+
+  async _openProjectFormModal({ projectId } = {}) {
+    if (this._projectFormModal) return;
+
+    try {
+      this._projectFormPrevProjectId = this.router.currentProjectId || null;
+      this.router.currentProjectId = projectId || null;
+      this.router.currentMeetingId = null;
+
+      const view = new ProjectFormHubScreen({
+        router: this.router,
+        projectId: projectId || null,
+        mode: "modal",
+        onClose: () => this._cleanupProjectFormModal(),
+        onSaved: async () => {
+          await this.reloadProjects();
+          this._cleanupProjectFormModal();
+        },
+      });
+
+      this._projectFormModal = view;
+      view.render();
+      await view.load();
+      view.openModal();
+    } catch (err) {
+      console.error("[ProjectsHubScreen] Project modal failed:", err);
+      this._cleanupProjectFormModal();
+    }
   }
 
   render() {
