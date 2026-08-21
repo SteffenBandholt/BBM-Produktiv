@@ -11,6 +11,14 @@ function usageCodes(firm) {
   return result;
 }
 
+function usageLabels(firm) {
+  const codes = new Set(usageCodes(firm));
+  const labels = [];
+  if (codes.has(PROJECT)) labels.push("Projektteilnehmer");
+  if (codes.has(INVOICE)) labels.push("Rechnungskunde");
+  return labels;
+}
+
 function makeUsageCheckbox(label, checked = false) {
   const wrap = document.createElement("label");
   Object.assign(wrap.style, {
@@ -44,6 +52,11 @@ export default class FirmsUsageView extends FirmsView {
     this.usageInvoiceCustomerEl = null;
   }
 
+  async _openEditorWindow(payload, onSaved, onDeleted) {
+    if (payload?.kind === "firm") return false;
+    return await super._openEditorWindow(payload, onSaved, onDeleted);
+  }
+
   _usageFirmForEditor({ mode = "edit", firmId = null } = {}) {
     if (mode !== "edit") return null;
     const id = String(firmId || this.selectedFirmId || "").trim();
@@ -52,7 +65,7 @@ export default class FirmsUsageView extends FirmsView {
   }
 
   _injectUsageControls(options = {}) {
-    const host = this.firmPopupBodyEl || this.editWrapEl || null;
+    const host = this.editWrapEl || this.firmPopupBodyEl || null;
     if (!host) return;
 
     let box = host.querySelector?.("[data-bbm-firm-usages]") || null;
@@ -67,6 +80,8 @@ export default class FirmsUsageView extends FirmsView {
         display: "grid",
         gap: "8px",
         marginTop: "10px",
+        width: "100%",
+        boxSizing: "border-box",
       });
 
       const title = document.createElement("div");
@@ -106,17 +121,13 @@ export default class FirmsUsageView extends FirmsView {
 
     const firm = this._usageFirmForEditor(options);
     const codes = new Set(usageCodes(firm));
-    if (this.usageProjectParticipantEl) {
-      this.usageProjectParticipantEl.checked = codes.has(PROJECT);
-    }
-    if (this.usageInvoiceCustomerEl) {
-      this.usageInvoiceCustomerEl.checked = codes.has(INVOICE);
-    }
+    if (this.usageProjectParticipantEl) this.usageProjectParticipantEl.checked = codes.has(PROJECT);
+    if (this.usageInvoiceCustomerEl) this.usageInvoiceCustomerEl.checked = codes.has(INVOICE);
   }
 
   async _openFirmEditor(options = {}) {
     const result = await super._openFirmEditor(options);
-    queueMicrotask(() => this._injectUsageControls(options));
+    this._injectUsageControls(options);
     return result;
   }
 
@@ -126,5 +137,104 @@ export default class FirmsUsageView extends FirmsView {
     if (this.usageProjectParticipantEl?.checked) usages.push(PROJECT);
     if (this.usageInvoiceCustomerEl?.checked) usages.push(INVOICE);
     return { ...data, usages };
+  }
+
+  async _saveFirm() {
+    if (this.savingFirm) return;
+
+    const data = this._getFirmFormData();
+    if (!data.name) {
+      alert("Name 1 ist Pflicht.");
+      return;
+    }
+
+    this.savingFirm = true;
+    this._setMsg("Speichere…");
+    this._applyFirmFormState();
+    this._applyPersonFormState();
+
+    try {
+      let res = null;
+      if (this.firmMode === "create") {
+        res = await window.bbmDb.firmsCreateGlobal({ ...data });
+        if (!res?.ok) {
+          alert(res?.error || "Fehler beim Anlegen");
+          return;
+        }
+        this.selectedFirmId = res?.firm?.id || null;
+      } else if (this.firmMode === "edit" && this.selectedFirmId) {
+        res = await window.bbmDb.firmsUpdateGlobal({
+          firmId: this.selectedFirmId,
+          patch: { ...data },
+        });
+        if (!res?.ok) {
+          alert(res?.error || "Fehler beim Speichern");
+          return;
+        }
+      } else {
+        return;
+      }
+
+      this._closeFirmEditor();
+      await this.reloadFirms();
+      if (this.selectedFirmId) {
+        this.selectedFirm =
+          (this.firms || []).find((firm) => this._sameId(firm?.id, this.selectedFirmId)) || null;
+      }
+      this._renderFirmsOnly();
+      this._renderFirmDetails();
+    } finally {
+      this.savingFirm = false;
+      this._setMsg("");
+      this._applyFirmFormState();
+      this._applyPersonFormState();
+      this._updateVisibility();
+    }
+  }
+
+  _renderFirmDetails() {
+    super._renderFirmDetails();
+    if (!this.selectedFirm || !this.detailBodyEl) return;
+
+    const labels = usageLabels(this.selectedFirm);
+    const row = document.createElement("div");
+    row.setAttribute("data-bbm-firm-usage-badges", "true");
+    Object.assign(row.style, {
+      display: "flex",
+      gap: "6px",
+      flexWrap: "wrap",
+      marginTop: "2px",
+      marginBottom: "2px",
+    });
+
+    if (!labels.length) {
+      const none = document.createElement("span");
+      none.textContent = "Keine Verwendung festgelegt";
+      Object.assign(none.style, { fontSize: "11px", color: "#8a94a5" });
+      row.append(none);
+    } else {
+      for (const label of labels) {
+        const badge = document.createElement("span");
+        badge.textContent = label;
+        Object.assign(badge.style, {
+          display: "inline-flex",
+          alignItems: "center",
+          minHeight: "24px",
+          padding: "0 8px",
+          borderRadius: "999px",
+          background: label === "Rechnungskunde" ? "#eef4ff" : "#edf8ef",
+          color: label === "Rechnungskunde" ? "#175cd3" : "#287a38",
+          fontSize: "10.5px",
+          fontWeight: "750",
+        });
+        row.append(badge);
+      }
+    }
+
+    const actions = Array.from(this.detailBodyEl.children || []).find(
+      (el) => el?.querySelector?.("button")
+    );
+    if (actions) this.detailBodyEl.insertBefore(row, actions);
+    else this.detailBodyEl.append(row);
   }
 }
