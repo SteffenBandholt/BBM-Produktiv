@@ -10,14 +10,24 @@ function findByText(root, text) {
   return walk(root, (el) => String(el.textContent || "").trim() === target)[0] || null;
 }
 
+function findLabelByText(root, text) {
+  if (!root || typeof root.querySelectorAll !== "function") return null;
+  const target = String(text || "").trim();
+  return (
+    Array.from(root.querySelectorAll(".bbm-form-label")).find(
+      (el) => String(el.textContent || "").trim() === target
+    ) || null
+  );
+}
+
 function renameExact(root, from, to) {
-  const el = findByText(root, from);
-  if (el) el.textContent = to;
-  return el;
+  const label = findLabelByText(root, from);
+  if (label) label.textContent = to;
+  return label;
 }
 
 function getFieldByLabel(root, labelText) {
-  const label = findByText(root, labelText);
+  const label = findLabelByText(root, labelText);
   return label?.closest?.(".bbm-form-field") || label?.parentElement || null;
 }
 
