@@ -1,17 +1,11 @@
-import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
-
 function normalizeText(value) {
   return String(value || "").trim();
 }
 
 function getProjectNumber(project) {
-  const raw =
-    project?.project_number ??
-    project?.projectNumber ??
-    project?.nummer ??
-    project?.number ??
-    "";
-  return normalizeText(raw);
+  return normalizeText(
+    project?.project_number ?? project?.projectNumber ?? project?.nummer ?? project?.number ?? ""
+  );
 }
 
 function getProjectName(project) {
@@ -23,12 +17,65 @@ function getProjectName(project) {
 function getProjectTitle(project, fallbackProjectId = null) {
   const number = getProjectNumber(project);
   const name = getProjectName(project);
-
   if (number && name) return `${number} - ${name}`;
   if (number) return number;
   if (name) return name;
-  if (fallbackProjectId) return `#${fallbackProjectId}`;
-  return "Projekt";
+  return fallbackProjectId ? `#${fallbackProjectId}` : "Projekt";
+}
+
+function projectAddress(project) {
+  const street = normalizeText(project?.street);
+  const zip = normalizeText(project?.zip);
+  const city = normalizeText(project?.city);
+  const place = [zip, city].filter(Boolean).join(" ");
+  return [street, place].filter(Boolean).join(", ");
+}
+
+function setStyles(el, styles = {}) {
+  Object.assign(el.style, styles);
+  return el;
+}
+
+const MODULE_STYLE = Object.freeze({
+  protokoll: { color: "#22c55e", icon: "protocol" },
+  restarbeiten: { color: "#f59e0b", icon: "rest" },
+  projectFirms: { color: "#475569", icon: "firms" },
+});
+
+const ICONS = Object.freeze({
+  protocol: `<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="10" y="7" width="28" height="34" rx="4" fill="none" stroke="currentColor" stroke-width="3"/><path d="M17 17h14M17 24h14M17 31h9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`,
+  rest: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 7 42 39H6L24 7Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M24 18v10M24 34h.01" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>`,
+  firms: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 40V17h18v23M26 25h14v15M14 23h5M14 29h5M14 35h5M32 31h3M32 36h3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+});
+
+function groupProjectModules(items = []) {
+  const groups = [];
+  const byModule = new Map();
+
+  for (const item of Array.isArray(items) ? items : []) {
+    const moduleId = normalizeText(item?.moduleId);
+    if (!moduleId) continue;
+
+    if (moduleId === "projectFirms") {
+      groups.push({ moduleId, label: "Firmen im Projekt", description: item?.description || "Projektbeteiligte und Firmen verwalten.", entries: [item] });
+      continue;
+    }
+
+    let group = byModule.get(moduleId);
+    if (!group) {
+      group = {
+        moduleId,
+        label: normalizeText(item?.label) || moduleId,
+        description: normalizeText(item?.description),
+        entries: [],
+      };
+      byModule.set(moduleId, group);
+      groups.push(group);
+    }
+    group.entries.push(item);
+  }
+
+  return groups;
 }
 
 export default class ProjectWorkspaceScreen {
@@ -37,11 +84,9 @@ export default class ProjectWorkspaceScreen {
     this.projectId = projectId || null;
     this.project = project || null;
     this.projectModules = Array.isArray(projectModules) ? projectModules : [];
-
     this.root = null;
     this.hostEl = null;
     this.msgEl = null;
-
     this.loading = false;
     this.projectMissing = false;
   }
@@ -55,13 +100,11 @@ export default class ProjectWorkspaceScreen {
   }
 
   _setMsg(text) {
-    if (!this.msgEl) return;
-    this.msgEl.textContent = String(text || "");
+    if (this.msgEl) this.msgEl.textContent = String(text || "");
   }
 
   async _loadProject() {
     if (this.project) return this.project;
-
     const effectiveProjectId = this.projectId || this.router?.currentProjectId || null;
     if (!effectiveProjectId) return null;
 
@@ -74,20 +117,14 @@ export default class ProjectWorkspaceScreen {
     try {
       const res = await api.projectsList();
       if (res?.ok && Array.isArray(res.list)) {
-        const foundProject = res.list.find(
-          (item) => String(item?.id ?? "") === String(effectiveProjectId)
-        );
-        this.project = foundProject || null;
-        this.projectMissing = !foundProject;
+        this.project = res.list.find((item) => String(item?.id ?? "") === String(effectiveProjectId)) || null;
+        this.projectMissing = !this.project;
       } else {
         this.project = { id: effectiveProjectId };
-        this.projectMissing = false;
       }
     } catch (_err) {
       this.project = { id: effectiveProjectId };
-      this.projectMissing = false;
     }
-
     return this.project;
   }
 
@@ -97,49 +134,17 @@ export default class ProjectWorkspaceScreen {
     return true;
   }
 
-  _pickLatestOpenMeeting(openMeetings) {
-    const list = Array.isArray(openMeetings) ? openMeetings : [];
-    if (!list.length) return null;
-
-    return list.reduce((best, cur) => {
-      const bestIdx = Number(best?.meeting_index ?? best?.meetingIndex ?? 0);
-      const curIdx = Number(cur?.meeting_index ?? cur?.meetingIndex ?? 0);
-      if (curIdx > bestIdx) return cur;
-      if (curIdx === bestIdx) {
-        const bestId = Number(best?.id ?? 0);
-        const curId = Number(cur?.id ?? 0);
-        return curId > bestId ? cur : best;
-      }
-      return best;
-    }, list[0]);
-  }
-
   async _openProtocolModule(projectId) {
     const effectiveProjectId = projectId || this.projectId || this.router?.currentProjectId || null;
     if (!effectiveProjectId) return false;
     if (typeof this.router?.openProjectModule === "function") {
-      const result = await this.router.openProjectModule(effectiveProjectId, "protokoll", {
-        project: this.project || null,
-      });
+      const result = await this.router.openProjectModule(effectiveProjectId, "protokoll", { project: this.project || null });
       return typeof result === "object" ? !!result?.ok : result !== false;
     }
-
     if (typeof this.router?.openProjectProtocol === "function") {
-      const result = await this.router.openProjectProtocol(effectiveProjectId, {
-        project: this.project || null,
-      });
+      const result = await this.router.openProjectProtocol(effectiveProjectId, { project: this.project || null });
       return typeof result === "object" ? !!result?.ok : result !== false;
     }
-
-    if (typeof this.router?.showMeetings === "function") {
-      await this.router.showMeetings(effectiveProjectId, {
-        startMode: true,
-        startReason: "protocol-start-unavailable",
-        integrityError: false,
-      });
-      return true;
-    }
-
     return false;
   }
 
@@ -154,12 +159,9 @@ export default class ProjectWorkspaceScreen {
       await this.router.showProjectFirms(projectId);
       return true;
     }
-
-    if (normalizedModuleId === "protokoll") {
-      return await this._openProtocolModule(projectId);
-    }
-
+    if (normalizedModuleId === "protokoll") return await this._openProtocolModule(projectId);
     if (typeof this.router?.openProjectModule !== "function") return false;
+
     const result = await this.router.openProjectModule(projectId, normalizedModuleId, {
       project: this.project || null,
       navigationKey: normalizedNavigationKey,
@@ -167,157 +169,157 @@ export default class ProjectWorkspaceScreen {
     return typeof result === "object" ? !!result?.ok : result !== false;
   }
 
-  _renderModuleTiles(container) {
-    container.innerHTML = "";
+  _createModuleCard(group) {
+    const style = MODULE_STYLE[group.moduleId] || { color: "#2563eb", icon: "protocol" };
+    const card = setStyles(document.createElement("div"), {
+      background: "#ffffff",
+      border: "1px solid #e3e8ef",
+      borderRadius: "14px",
+      padding: "16px",
+      minHeight: "180px",
+      boxShadow: "0 6px 20px rgba(15,23,42,0.055)",
+      display: "flex",
+      flexDirection: "column",
+      gap: "10px",
+    });
 
-    for (const moduleItem of this.getAvailableProjectModules()) {
-      const tile = document.createElement("div");
-      tile.style.border = "1px solid var(--card-border)";
-      tile.style.borderRadius = "10px";
-      tile.style.padding = "12px";
-      tile.style.background = "var(--card-bg)";
-      tile.style.display = "flex";
-      tile.style.flexDirection = "column";
-      tile.style.gap = "8px";
+    const iconWrap = setStyles(document.createElement("div"), {
+      width: "46px", height: "46px", borderRadius: "12px", display: "grid", placeItems: "center",
+      background: `${style.color}16`, color: style.color,
+    });
+    iconWrap.innerHTML = ICONS[style.icon] || ICONS.protocol;
+    const svg = iconWrap.querySelector("svg");
+    if (svg) Object.assign(svg.style, { width: "28px", height: "28px" });
 
-      const title = document.createElement("div");
-      title.textContent = moduleItem.label;
-      title.style.fontWeight = "800";
-      title.style.fontSize = "16px";
+    const title = setStyles(document.createElement("div"), { fontWeight: "800", fontSize: "17px", color: "#172033" });
+    title.textContent = group.label;
 
-      const description = document.createElement("div");
-      description.textContent = moduleItem.description;
-      description.style.fontSize = "12px";
-      description.style.opacity = "0.8";
+    const description = setStyles(document.createElement("div"), { fontSize: "12px", lineHeight: "1.45", color: "#667085", flex: "1" });
+    description.textContent = group.description || "Arbeitsbereich im aktuellen Projekt öffnen.";
 
-      const btn = document.createElement("button");
+    const actions = setStyles(document.createElement("div"), { display: "flex", gap: "7px", flexWrap: "wrap", marginTop: "2px" });
+    group.entries.forEach((entry, index) => {
+      const btn = setStyles(document.createElement("button"), {
+        border: index === 0 ? "0" : `1px solid ${style.color}55`,
+        borderRadius: "8px",
+        background: index === 0 ? style.color : "#ffffff",
+        color: index === 0 ? "#ffffff" : style.color,
+        padding: "7px 11px",
+        fontSize: "11.5px",
+        fontWeight: "750",
+        cursor: "pointer",
+      });
       btn.type = "button";
-      btn.textContent = moduleItem.label;
-      applyPopupButtonStyle(btn, { variant: "primary" });
-      btn.onclick = async () => {
-        await this.openProjectModule(moduleItem.moduleId, moduleItem.navigationKey);
-      };
+      btn.textContent = index === 0 ? "Öffnen" : normalizeText(entry?.label) || "Unterbereich";
+      btn.title = normalizeText(entry?.description);
+      btn.addEventListener("click", async () => {
+        await this.openProjectModule(entry?.moduleId, entry?.navigationKey);
+      });
+      actions.appendChild(btn);
+    });
 
-      tile.append(title, description, btn);
-      container.appendChild(tile);
-    }
-  }
-
-  _renderProjectInfo(container) {
-    container.innerHTML = "";
-
-    const project = this.project || null;
-    const title = document.createElement("div");
-    title.textContent = this.getProjectDisplayText();
-    title.style.fontWeight = "900";
-    title.style.fontSize = "20px";
-    title.style.marginBottom = "6px";
-
-    const numberLine = document.createElement("div");
-    numberLine.textContent = `Projektnummer: ${getProjectNumber(project) || "-"}`;
-    numberLine.style.fontSize = "12px";
-    numberLine.style.opacity = "0.85";
-
-    const nameLine = document.createElement("div");
-    nameLine.textContent = `Projektname: ${getProjectName(project) || "-"}`;
-    nameLine.style.fontSize = "12px";
-    nameLine.style.opacity = "0.85";
-
-    container.append(title, numberLine, nameLine);
+    card.append(iconWrap, title, description, actions);
+    return card;
   }
 
   _renderContent() {
     if (!this.hostEl) return;
-
     this.hostEl.innerHTML = "";
 
-    const info = document.createElement("div");
-    info.style.marginBottom = "16px";
-    this._renderProjectInfo(info);
-
-    const availableModules = this.getAvailableProjectModules();
-
-    const sectionTitle = document.createElement("h3");
-    sectionTitle.textContent = "Arbeitsbereiche im Projekt";
-    sectionTitle.style.margin = "0 0 10px";
-
-    const grid = document.createElement("div");
-    grid.style.display = "grid";
-    grid.style.gridTemplateColumns = "1fr";
-    grid.style.gap = "8px";
-
-    if (availableModules.length > 0) {
-      this._renderModuleTiles(grid);
-    } else {
-      const empty = document.createElement("div");
-      empty.textContent = "Für dieses Projekt sind keine Arbeitsmodule freigeschaltet.";
-      empty.style.border = "1px solid var(--card-border)";
-      empty.style.borderRadius = "8px";
-      empty.style.padding = "10px 12px";
-      empty.style.background = "var(--card-bg)";
-      empty.style.fontSize = "13px";
-      empty.style.opacity = "0.85";
-      grid.appendChild(empty);
-    }
-
-    this.hostEl.append(info);
-
     if (this.projectMissing) {
-      const missing = document.createElement("div");
+      const missing = setStyles(document.createElement("div"), { padding: "16px", color: "#b42318", fontWeight: "700" });
       missing.textContent = "Projekt konnte nicht gefunden werden.";
-      missing.style.fontSize = "14px";
-      missing.style.fontWeight = "700";
-      missing.style.color = "var(--danger-text, #a40000)";
       this.hostEl.appendChild(missing);
       return;
     }
 
-    this.hostEl.append(sectionTitle, grid);
+    const project = this.project || {};
+    const info = setStyles(document.createElement("div"), {
+      background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+      border: "1px solid #e3e8ef",
+      borderRadius: "14px",
+      padding: "16px 18px",
+      marginBottom: "16px",
+      display: "grid",
+      gap: "5px",
+    });
+
+    const title = setStyles(document.createElement("div"), { fontSize: "21px", fontWeight: "850", color: "#172033" });
+    title.textContent = this.getProjectDisplayText();
+
+    const address = setStyles(document.createElement("div"), { fontSize: "12px", color: "#667085" });
+    address.textContent = projectAddress(project) || "Keine Projektadresse hinterlegt";
+
+    const meta = setStyles(document.createElement("div"), { fontSize: "11px", color: "#8a94a5" });
+    const lead = normalizeText(project?.project_lead);
+    const dates = [normalizeText(project?.start_date)?.slice(0, 10), normalizeText(project?.end_date)?.slice(0, 10)].filter(Boolean).join(" – ");
+    meta.textContent = [lead ? `Projektleitung: ${lead}` : "", dates ? `Zeitraum: ${dates}` : ""].filter(Boolean).join("   ·   ") || "Projektstammdaten";
+    info.append(title, address, meta);
+
+    const sectionHead = setStyles(document.createElement("div"), { display: "flex", alignItems: "baseline", justifyContent: "space-between", margin: "0 2px 9px" });
+    const sectionTitle = setStyles(document.createElement("div"), { fontSize: "14px", fontWeight: "800", color: "#172033" });
+    sectionTitle.textContent = "Arbeitsbereiche im Projekt";
+    const sectionHint = setStyles(document.createElement("div"), { fontSize: "11px", color: "#8a94a5" });
+    sectionHint.textContent = "Nur freigeschaltete Bereiche";
+    sectionHead.append(sectionTitle, sectionHint);
+
+    const grid = setStyles(document.createElement("div"), {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+      gap: "12px",
+    });
+
+    const groups = groupProjectModules(this.getAvailableProjectModules());
+    if (!groups.length) {
+      const empty = setStyles(document.createElement("div"), { padding: "14px", border: "1px solid #e3e8ef", borderRadius: "12px", background: "#ffffff", color: "#667085", fontSize: "12px" });
+      empty.textContent = "Für dieses Projekt sind keine Arbeitsmodule freigeschaltet.";
+      grid.appendChild(empty);
+    } else {
+      groups.forEach((group) => grid.appendChild(this._createModuleCard(group)));
+    }
+
+    this.hostEl.append(info, sectionHead, grid);
   }
 
   render() {
-    const root = document.createElement("div");
+    const root = setStyles(document.createElement("div"), {
+      minHeight: "100%",
+      boxSizing: "border-box",
+      padding: "18px clamp(16px, 2.5vw, 30px)",
+      background: "#f4f6f9",
+      color: "#172033",
+    });
 
-    const head = document.createElement("div");
-    head.style.display = "flex";
-    head.style.alignItems = "center";
-    head.style.gap = "10px";
-    head.style.marginBottom = "10px";
+    const head = setStyles(document.createElement("div"), {
+      display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px",
+    });
 
-    const h = document.createElement("h2");
-    h.textContent = "Projekt-Arbeitsbereich";
-    h.style.margin = "0";
+    const back = setStyles(document.createElement("button"), {
+      border: "1px solid #d7dee8", borderRadius: "8px", background: "#ffffff", color: "#344054",
+      padding: "7px 10px", fontSize: "11.5px", fontWeight: "700", cursor: "pointer",
+    });
+    back.type = "button";
+    back.textContent = "← Projekte";
+    back.onclick = async () => this.showProjectsList();
 
-    const navBtn = document.createElement("button");
-    navBtn.type = "button";
-    navBtn.textContent = "Zur Projektliste";
-    applyPopupButtonStyle(navBtn, { variant: "secondary" });
-    navBtn.onclick = async () => {
-      await this.showProjectsList();
-    };
+    const h = setStyles(document.createElement("h2"), { margin: "0", fontSize: "20px", fontWeight: "850" });
+    h.textContent = "Projekt";
 
-    const msg = document.createElement("div");
-    msg.style.marginLeft = "auto";
-    msg.style.fontSize = "12px";
-    msg.style.opacity = "0.85";
-
-    head.append(h, navBtn, msg);
+    const msg = setStyles(document.createElement("div"), { marginLeft: "auto", fontSize: "11px", color: "#8a94a5" });
+    head.append(back, h, msg);
 
     const host = document.createElement("div");
     root.append(head, host);
-
     this.root = root;
     this.hostEl = host;
     this.msgEl = msg;
-
     this._renderContent();
-
     return root;
   }
 
   async load() {
     this.loading = true;
-    this._setMsg("Lade...");
+    this._setMsg("Lade ...");
     try {
       await this._loadProject();
       this._renderContent();
