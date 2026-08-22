@@ -22,10 +22,9 @@
 
   /*
    * BBM-weiter Quicklane-Marker-Standard.
-   * WICHTIG: Das sind die beiden aktuell produktiv gerenderten Quicklanes:
-   * - Protokoll: .bbm-tops-screen-quicklane
-   * - Restarbeiten: .bbm-restarbeiten-quicklane
-   * Beide Marker beziehen ihre sichtbare Gestaltung ausschließlich hier.
+   * Aktive produktive Quicklanes:
+   * - Protokoll: .bbm-tops-screen-quicklane::before
+   * - Restarbeiten: .bbm-restarbeiten-quicklane > button:first-child
    */
   body .bbm-tops-screen-quicklane,
   body .bbm-restarbeiten-quicklane {
@@ -58,17 +57,29 @@
     visibility: visible !important;
   }
 
-  /* Protokoll: echter aktiver TopsScreenQuicklane-Marker. */
+  /*
+   * Protokoll: der aktive TopsScreen besitzt keinen eigenen Marker-Button.
+   * Deshalb wird sein vorhandenes ::before zum echten Marker gemacht.
+   * Im eingeklappten Zustand sitzt er fest am rechten Fensterrand.
+   */
   body .bbm-tops-screen-quicklane::before {
     content: "Tools" !important;
-    position: absolute !important;
-    left: calc(-1 * var(--bbm-quicklane-marker-width)) !important;
-    top: 18px !important;
-    z-index: 2 !important;
+    position: fixed !important;
+    right: 0 !important;
+    left: auto !important;
+    top: 110px !important;
+    z-index: 12031 !important;
     pointer-events: none !important;
+    background-image: none !important;
   }
 
-  /* Restarbeiten: vorhandener echter Marker, gleiche Darstellung. */
+  body .bbm-tops-screen-quicklane:hover::before,
+  body .bbm-tops-screen-quicklane:focus-within::before,
+  body .bbm-tops-screen-quicklane[data-open="true"]::before {
+    right: 64px !important;
+  }
+
+  /* Restarbeiten: vorhandener echter Marker, gleiche Darstellung und Bewegung. */
   body .bbm-restarbeiten-quicklane > button:first-child {
     position: fixed !important;
     top: 110px !important;
