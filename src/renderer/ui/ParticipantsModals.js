@@ -16,6 +16,7 @@ export default class ParticipantsModals extends ParticipantsModalsBase {
     if (!hint) return row;
 
     hint.remove();
+
     const softHint = document.createElement("div");
     softHint.textContent = hintText;
     Object.assign(softHint.style, {
