@@ -1,13 +1,16 @@
-﻿import TopsScreen from "./screens/TopsScreen.js";
+﻿import TopsScreen from "./screens/TopsScreenIntegrationView.js";
+import ProtokollStartScreen from "./screens/ProtokollStartScreen.js";
 import { PROTOKOLL_WORK_SCREEN_ID } from "./screens/index.js";
 import * as protokollViewModels from "./viewmodel/index.js";
 
 export const PROTOKOLL_MODULE_ID = "protokoll";
 export const PROTOKOLL_MODULE_LABEL = "Protokoll";
 export const PROTOKOLL_NAV_ENTRY_KEY = "protokoll";
+export const PROTOKOLL_START_SCREEN_ID = "protokoll.start";
 
 function buildProtokollModuleScreens() {
   return Object.freeze({
+    [PROTOKOLL_START_SCREEN_ID]: ProtokollStartScreen,
     [PROTOKOLL_WORK_SCREEN_ID]: TopsScreen,
   });
 }
@@ -32,21 +35,32 @@ function buildProtokollModuleNavigation() {
   });
 }
 
-// Technische Heimat fuer das Fachmodul `Protokoll`.
-// Der heutige Bestand bleibt vorerst in seinen vorhandenen Pfaden und wird hier
-// nur ueber kleine Einstiegspunkte angedockt.
-// Kein globaler Modulkatalog, keine Plattformlogik und kein Vollumzug.
+function buildProtokollModulePresentation() {
+  return Object.freeze({
+    color: "#22c55e",
+    icon: "protocol",
+    description: "Besprechungen dokumentieren und Protokolle fortschreiben.",
+    start: Object.freeze({
+      mode: "project",
+      screenId: PROTOKOLL_START_SCREEN_ID,
+      label: "Öffnen",
+    }),
+  });
+}
+
 export function getProtokollModuleEntry() {
   return Object.freeze({
     moduleId: PROTOKOLL_MODULE_ID,
     moduleLabel: PROTOKOLL_MODULE_LABEL,
+    startScreenId: PROTOKOLL_START_SCREEN_ID,
     workScreenId: PROTOKOLL_WORK_SCREEN_ID,
     screens: buildProtokollModuleScreens(),
     navigation: buildProtokollModuleNavigation(),
+    presentation: buildProtokollModulePresentation(),
     movedParts: buildMovedProtocolModuleParts(),
   });
 }
 
-export { TopsScreen, PROTOKOLL_WORK_SCREEN_ID };
+export { ProtokollStartScreen, TopsScreen, PROTOKOLL_WORK_SCREEN_ID };
 export * from "./screens/index.js";
 export * from "./viewmodel/index.js";

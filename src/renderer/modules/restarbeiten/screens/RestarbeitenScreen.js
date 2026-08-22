@@ -139,6 +139,7 @@ export default class RestarbeitenScreen {
     this.uiEditorScopeId = "restarbeiten.header.root";
 
     this.root = null;
+    this.quicklaneEl = null;
     this.items = [];
     this.viewItems = [];
     this.settings = {};
@@ -578,6 +579,14 @@ export default class RestarbeitenScreen {
     this.notesOverlay.appendChild(card);
   }
 
+  _mountQuicklane(quicklane) {
+    this.quicklaneEl?.remove?.();
+    this.quicklaneEl = quicklane || null;
+    if (this.quicklaneEl && document.body?.appendChild) {
+      document.body.appendChild(this.quicklaneEl);
+    }
+  }
+
   _renderShell() {
     if (!this.root) return;
     beginM80PilotRender();
@@ -594,39 +603,40 @@ export default class RestarbeitenScreen {
       .filter((entry) => entry.value && entry.label);
 
     const quicklane = buildRestarbeitenQuicklane({
-        pinned: this.quicklanePinned,
-        showAmpel: this.showAmpelInList,
-        showLongtext: this.showLongtextInList,
-        onPinToggle: () => {
-          this.quicklanePinned = !this.quicklanePinned;
-          this._renderShell();
-        },
-        onProject: () => this.router?.openProjectFormModal?.({ projectId: this.projectId, project: this.project }),
-        onFirms: () =>
-          this.router?.showProjectFirms?.(this.projectId, {
-            project: this.project,
-            returnContext: { section: "restarbeiten", projectId: this.projectId, project: this.project },
-          }),
-        onAmpelToggle: () => this.toggleAmpelDisplay(),
-        onLongtextToggle: () => this.toggleLongtextDisplay(),
-        onPreview: () => this.openRestarbeitenPreview(),
-        onPrint: () => this.openRestarbeitenOutput({ mode: "print" }),
-      });
+      pinned: this.quicklanePinned,
+      showAmpel: this.showAmpelInList,
+      showLongtext: this.showLongtextInList,
+      onPinToggle: () => {
+        this.quicklanePinned = !this.quicklanePinned;
+        this._renderShell();
+      },
+      onProject: () => this.router?.openProjectFormModal?.({ projectId: this.projectId, project: this.project }),
+      onFirms: () =>
+        this.router?.showProjectFirms?.(this.projectId, {
+          project: this.project,
+          returnContext: { section: "restarbeiten", projectId: this.projectId, project: this.project },
+        }),
+      onAmpelToggle: () => this.toggleAmpelDisplay(),
+      onLongtextToggle: () => this.toggleLongtextDisplay(),
+      onPreview: () => this.openRestarbeitenPreview(),
+      onPrint: () => this.openRestarbeitenOutput({ mode: "print" }),
+    });
     const filterbar = buildRestarbeitenFilterbar({
-        settings: this.settings,
-        filters: this.filters,
-        filterOptions: this._buildFilterOptions(),
-        onFilterChange: (patch) => {
-          this.filters = { ...this.filters, ...patch };
-          this._renderShell();
-        },
-        onClose: () => this.router?.showProjectWorkspace?.(this.projectId, { project: this.project }),
-      });
+      settings: this.settings,
+      filters: this.filters,
+      filterOptions: this._buildFilterOptions(),
+      onFilterChange: (patch) => {
+        this.filters = { ...this.filters, ...patch };
+        this._renderShell();
+      },
+      onClose: () => this.router?.showProjectWorkspace?.(this.projectId, { project: this.project }),
+    });
     const header = document.createElement("header");
     header.className = "bbm-restarbeiten-header";
     header.appendChild(filterbar);
     registerM80Ref("restarbeiten.header.root", header);
-    this.root.append(header, quicklane);
+    this.root.append(header);
+    this._mountQuicklane(quicklane);
 
     if (!this.outputPreviewOpen) {
       const main = buildRestarbeitenMainBody({
@@ -675,5 +685,7 @@ export default class RestarbeitenScreen {
     this._textLimitUnsubscribe = null;
     this.notesOverlay?.remove?.();
     this.notesOverlay = null;
+    this.quicklaneEl?.remove?.();
+    this.quicklaneEl = null;
   }
 }

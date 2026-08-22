@@ -1,8 +1,8 @@
 # PDF-Satzvertrag V2
 
-Stand: 2026-08-01
+Stand: 2026-08-17
 Inventarbasis: `main` / `54a8b432f961403202cd81341f6ddd25a06c5de2`
-Vertragsversion: `m85.2-v1`
+Vertragsversion: `m85.2-v3`
 
 ## Zweck und Geltungsgrenze
 
@@ -71,8 +71,8 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 | `src/renderer/print/v2/header/headerUtils.js` | produktiv, Adapter | Gemeinsame Texte/Normalisierung für V2-Köpfe. |
 | `src/shared/tableLayouts/protokollTopsLayout.js` | produktiv, Quelle für TOP-Spalten | Drei logische TOP-Spalten, Labels, UI-/PDF-Standardwerte und validierte Overlays. |
 | `src/shared/ampel/pdfAmpelRule.js` | produktiv, Fachdarstellung | Ermittelt Ampelfarbe aus bereits gelieferten Fachwerten; der Editor ändert diese Werte nicht. |
-| `src/renderer/print/pdfEditorLayout.js` | produktiv, Designadapter | Überführt 28 Registryzustände in V2-Variablen/DOM-Styles und liest Vorschaugrenzen zurück. Keine Seitenzuweisung. |
-| `src/main/ui-editor/bbmPdfAdapter.cjs` | produktiv, Registry-/Adapterquelle | Explizite 28 Elemente, Baselines, Bounds, Operationen, Rollback und Neuerzeugung. Keine Paginierung. |
+| `src/renderer/print/pdfEditorLayout.js` | produktiv, Designadapter | Überführt 35 Registryzustände in V2-Variablen/DOM-Styles und liest Vorschaugrenzen zurück. Keine Seitenzuweisung. |
+| `src/main/ui-editor/bbmPdfAdapter.cjs` | produktiv, Registry-/Adapterquelle | Explizite 35 Elemente, Baselines, Nutzflächen-/Bereichsgrenzen, atomare Tabellenoperationen, Rollback und Neuerzeugung. Keine Paginierung. |
 | `src/main/ipc/uiEditorIpc.js` | produktiv, Adapter | Bindet `generatePdfForUiEditor` an denselben `printToPDF`-Pfad. Kein zweiter Store/Renderer. |
 | `src/renderer/print/headerTest/**` | nur Diagnose/Test | Separater sichtbarer Kopf-Testmodus; nicht im normalen Ausgabedialog, nicht Quelle für Protokoll-/Restarbeiten-PDF. |
 | `print:openHtmlPreview` | produktive Alternative | Zeigt denselben Print-Renderer sichtbar, erzeugt aber noch keine Datei. |
@@ -101,6 +101,8 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 | `PDF-V2-SATZ-011` | Der Abschlussblock wird nur an die letzte TOP-Seite angehängt. Vorher werden letzte TOP-Zeilen seitenweise nach hinten verschoben, bis der gemessene Abschluss passt. | Protokoll/Preview/Vorabzug; Legende auch TOP-Liste | `_measureTopsTailHeight`, Tail-Schleife, `PrintShell._buildTopsTail` | p15 | fest für Fixture; übergroßer Abschluss ungetestet | Position/Größe/Sichtbarkeit derzeit explizit editierbar, Satzzuordnung gesperrt |
 | `PDF-V2-SATZ-012` | Druckfarben werden mit `print-color-adjust: exact` erhalten; neue TOPs blau, wichtige rot, berührte übernommene Langtexte blau. | Protokoll/TOP | `PrintShell`, `print.css`, `v2.css` | bestehende Ampel-/Printtests | dokumentiert, aber ohne Pixel-Golden | Fachfarbe gesperrt |
 | `PDF-V2-SATZ-013` | PDF-Erzeugung erfolgt nur über das dedizierte Print-Fenster und genau einen `webContents.printToPDF`-Aufruf. | alle PDF-Modi | `printIpc.js` | M81 und M85 Architekturguard | fest | nicht anwendbar |
+| `PDF-V2-SATZ-014` | Die editierbare A4-Nutzfläche ist Papier minus die tatsächlich gesetzten vier Inhaltsränder. Bei 210 × 297 mm und O/R/U/L = 5/12/0/12 mm gilt X 12–198 mm, Y 5–297 mm. Kein normales PDF-Layoutziel darf diese Fläche verlassen. Verletzungen werden vor der Zustandsübernahme mit horizontaler oder vertikaler Randmeldung atomar abgewiesen; eine Randänderung wird gegen alle registrierten Ziele geprüft. | Protokoll-PDF-Editor | `bbmPdfAdapter.cjs` | M81 Nutzflächentest, M85 Print-DOM | fest | Ränder editierbar; Papierformat gesperrt |
+| `PDF-V2-SATZ-015` | Editor-Vorschau, normaler Vorabzug und Produkt-PDF der Protokollfamilie verwenden denselben bestehenden Layoutvertrag. Die Editor-Vorschau liest den aktuellen Arbeitszustand; `preview` und `protocol` lesen den gespeicherten Zustand desselben Profils. Nach `Speichern` müssen Seitenränder, Tabellenbreiten, Tracks, Textpositionen, Sichtbarkeit und Schriftgrößen in allen drei Ausgaben geometrisch identisch sein. | Protokoll/Preview/Vorabzug | `printIpc.js`, `printApp.js`, `pdfEditorLayout.js` | M81 Modusguard, M85 Print-DOM und reale Drei-PDF-Bounding-Box-Abnahme | fest | keine zweite Profilquelle; Satz- und Fachoperationen gesperrt |
 
 ## B1. Dokumentartspezifische Regeln: Protokoll
 
@@ -112,6 +114,8 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 | `PDF-V2-PROT-004` | Abschlussreihenfolge: Legende, optionaler Nächster-Termin-Text, danach `Aufgestellt:` mit Footerzeilen. Der gesamte Block liegt auf der letzten TOP-Seite. | `_buildTopsTailElement`, `_buildProtocolFooterElement`, p15 | fest für getestete Größen |
 | `PDF-V2-PROT-005` | Ein Protokoll ohne TOPs rendert keine leere TOP-Tabelle, aber Teilnehmer-Leerzustand und Abschlussblock. | p01, `PrintShell.renderPrint` | fest |
 | `PDF-V2-PROT-006` | „Neu“, „übernommen/berührt“, „wichtig“, Status, Termin, Verantwortlich und Ampel beeinflussen Darstellung, nicht Satzsteuerung durch den Editor. | Zeilenrenderer, Ampelregel | fest, Farben nicht visuell golden-verriegelt |
+| `PDF-V2-PROT-007` | Eine registrierte TOP-`TableColumn` ist eine geometrische Einheit aus Spaltentrack, Tabellenkopf und sämtlichen Datenzellen. Ihre horizontale Geometrie wird nicht frei verschoben: `resizeColumnBoundary` verschiebt ausschließlich eine innere Grenze und ändert die Breiten der beiden direkten Nachbarspalten atomar und gegenläufig. Tabellensumme und beide Außenkanten bleiben unverändert; Header- und Datentracks bleiben lückenlos. Sichtbarkeit wirkt auf die vollständige Spalte. Der registrierte Tabellenkopf ist Kind seiner Spalte und darf nur seinen Text innerhalb der unveränderten Spaltengeometrie verschieben, skalieren, ausrichten oder ausblenden. | `bbmPdfAdapter.cjs`, `PrintShell._buildTableHead`, `pdfEditorLayout.js`, M81 und M85-Print-DOM-Nachweise | fest |
+| `PDF-V2-PROT-008` | Die bestehende Teilnehmertabelle ist ein explizites Tabellenziel mit den Tracks Name 34, Funktion 32, Firma 30, Telefon/E-Mail 72 und Anwesend/Verteiler 18 mm. Eine innere Grenze verändert nur direkte Nachbarn gegenläufig bei fester 186-mm-Gesamtsumme. Eine Änderung der Tabellenaußenbreite verändert atomar den äußersten rechten Track. Kein Track, Kopf, Zellhintergrund oder Text darf die Nutzflächenkante X = 198 mm überschreiten. Der Kopf Anwesend/Verteiler bleibt als Kind der rechten Spalte separat textpositionierbar. | vorhandene Teilnehmer-DOM-/CSS-Struktur, `bbmPdfAdapter.cjs`, `pdfEditorLayout.js` | M81 und M85 mit realem Header-/Datenzellen-Readback | fest |
 
 ## B2. Dokumentartspezifische Regeln: Restarbeiten
 
@@ -155,6 +159,27 @@ Protokoll-TOP-Spalten verwenden bei 186 mm 24,18/120,90/40,92 mm (13/65/22).
 `setPageBreakRule`, Paginierung, Mindestzeilen und Fußreserve bleiben davon
 unberührt und gesperrt.
 
+K17.8 präzisiert ausschließlich die Bedienwirkung der bereits registrierten
+TOP-Spalten: Eine horizontale `TableColumn`-Translation wird nicht angeboten.
+Stattdessen verschiebt `resizeColumnBoundary` am Tabellenparent genau eine
+innere Grenze; die linke und rechte Nachbarbreite ändern sich im selben
+atomaren Vorgang um entgegengesetzte Beträge. `resizeWidth` bleibt die interne
+Zustands-/Restore-Operation der einzelnen Tracks, ist für die Spaltenauswahl
+aber kein direkter Bedienmodus. `setVisibility` wirkt auf Track, Überschrift
+und alle Datenzellen derselben `TableColumn`. Die drei Überschriften sind
+explizite Kinder ihrer jeweiligen Spalte; `textMove` wirkt nur auf den
+Überschriftentext. Spaltenreihenfolge, Spaltenzahl, Gesamtbreite,
+Außenkanten, Paginierung, Tabellenkopfwiederholung, Fachwerte und
+Seitenzuweisung bleiben unverändert gesperrt.
+
+Bekannter separater Readback-Punkt: Die Registry-Baseline der TOP-Tabelle
+meldet `y = 91 mm`, während der tatsächliche Tabellenkopf im gemessenen
+produktiven Print-DOM bei etwa `y = 79 mm` beginnt. Die Track-Metadaten geben
+hier den logischen Registry-Wert und nicht die reale DOM-Bounding-Box zurück.
+Diese vertikale Abweichung ist nicht Bestandteil der horizontalen
+Meta-Spalten-Innengeometrie und bleibt in diesem Paket ausdrücklich
+unverändert.
+
 Alle Werte stammen aus `bbmPdfAdapter.cjs`. `min/max` meint die dort tatsächlich validierten Grenzen, nicht eine gewünschte Gestaltung. Nach jeder erfolgreichen Änderung wird die Vorschau „veraltet“ und muss explizit über denselben PDF-Weg neu erzeugt werden. Apply-Fehler und ungültige Spaltensummen lassen den vorherigen Zustand als Rollback stehen.
 
 Abkürzungen: `mm` = Millimeter, `pt` = Punkt, `×` = Breite × Höhe. Für Textgröße und Zeilenabstand ist nur `> 0` kodiert; es gibt keinen kodierten Höchstwert. Positions-/Größenlimits werden zusätzlich durch A4 und die jeweilige Area begrenzt.
@@ -162,29 +187,35 @@ Abkürzungen: `mm` = Millimeter, `pt` = Punkt, `×` = Breite × Höhe. Für Text
 | Element-ID | Freigegebene Operationen | Baseline | Kodierte Grenze | Paginierung / Risiko |
 |---|---|---|---|---|
 | `pdf.bbm.protocol` | keine | 0/0, 210×297 mm | gesperrt | keine |
-| `.page-template` | `setPageMargins` | O/R/U/L = 2/12/0/12 mm | je Rand ≥0; horizontal <210, vertikal <297 | direkte Neumessung; sehr große Ränder risikobehaftet |
-| `.header` | Höhe, Sichtbarkeit | 12/2, 186×90 mm | H 2–120 mm | direkte Neumessung; Ausblenden kann den sichtbaren Kopfvertrag unterlaufen |
-| `.header.logos` | Position, Breite, Höhe, Sichtbarkeit | 12/2, 186×50 mm | X 0–210, Y 0–120, B 5–210, H 2–120 mm plus A4 | direkte Neumessung; risikobehaftet |
-| `.header.project` | Position, Breite | 12/62, 120×12 mm | Header-Area | direkte Neumessung; risikobehaftet |
-| `.header.project.label` | Position, Breite, Textgröße, Ausrichtung, Sichtbarkeit | 12/62, 28×6 mm, 16 pt, links | Header-Area; Schrift >0; links/zentriert/rechts | direkte Neumessung |
-| `.header.project.value` | wie Label | 40/62, 92×6 mm, 16 pt, links | wie oben | direkte Neumessung |
-| `.header.title` | Position, Breite, Textgröße, Ausrichtung, Zeilenabstand, Sichtbarkeit | 12/74, 120×10 mm, 14 pt, 1,1 | Header-Area; Schrift/Abstand >0 | direkte Neumessung; risikobehaftet |
-| `.header.meta` | Position, Breite, Höhe | 145/62, 53×22 mm | Header-Area | direkte Neumessung |
-| `.header.meta.page-label` | Position, Breite, Textgröße, Ausrichtung, Sichtbarkeit | 145/62, 16×6 mm, 9 pt, rechts | Header-Area; Schrift >0 | gemeinsamer Wert für sichtbaren Full-/Mini-Seitenzähler |
-| `.header.meta.page-value` | wie Label | 161/62, 37×6 mm, 9 pt, rechts | wie oben | darf Seitenwert nicht ändern |
-| `.body` | keine | 12/95, 186×165 mm | gesperrt | keine |
-| `.participants` | Position, Breite, Sichtbarkeit | 12/95, 186×32 mm | Body-Area X 0–210, Y 70–297, B 5–210 | direkte Neumessung; Seitenaufteilung bleibt Rendererbesitz |
-| `.participants.title` | Position, Breite, Textgröße, Ausrichtung, Sichtbarkeit | 12/95, 186×6 mm, 10 pt | Body-Area; Schrift >0 | direkte Neumessung |
-| `.participants.rows` | Breite, Zeilenabstand | 12/101, 186×26 mm, 1,1 | Body-Area; Abstand >0 | direkte Neumessung; risikobehaftet |
-| `.tops` | Position, Breite, Sichtbarkeit | 12/130, 186×120 mm | Body-Area | direkte Neumessung; Ausblenden ändert sichtbaren Inhalt, nicht Fachwerte |
-| `.tops.header` | Höhe, Textgröße, Ausrichtung, Sichtbarkeit | 12/130, 186×8 mm, 8 pt | Body-Area; H 2–227; Schrift >0 | direkte Neumessung; Sichtbarkeit kollidiert potenziell mit Tabellenkopfvertrag |
-| `.tops.rows` | Zeilenabstand | 12/138, 186×112 mm, 1,35 | Abstand >0 | direkte Neumessung; p18 |
-| `.tops.column.number` | Breite | 12/130, 23×120 mm | ≥5 mm, Body-Area, Spaltensumme ≤186 mm | direkte Neumessung; p16 |
-| `.tops.column.text` | Breite | 35/130, 133×120 mm | wie oben | direkte Neumessung; p16 |
-| `.tops.column.meta` | Breite | 168/130, 30×120 mm | wie oben | direkte Neumessung; p16 |
-| `.tops.heading.number` | Textgröße, Ausrichtung, Sichtbarkeit | 12/130, 23×8 mm, 8 pt | Schrift >0; Alignment-Enum | direkte Neumessung |
-| `.tops.heading.text` | wie oben | 35/130, 133×8 mm, 8 pt | wie oben | direkte Neumessung; p17 |
-| `.tops.heading.meta` | wie oben | 168/130, 30×8 mm, 8 pt | wie oben | direkte Neumessung |
+| `.page-template` | `setPageMargins` | O/R/U/L = 5/12/0/12 mm | je Rand ≥0; alle Ziele müssen in X 12–198 und Y 5–297 mm bleiben | Randänderung wird vor Übernahme vollständig validiert |
+| `.header` | Höhe, Sichtbarkeit | 12/5, 186×51 mm | Header-Area und Nutzfläche | direkte Neumessung; Ausblenden kann den sichtbaren Kopfvertrag unterlaufen |
+| `.header.logos` | Position, Breite, Höhe, Sichtbarkeit | 12/5, 186×8 mm | Header-Area und Nutzfläche | direkte Neumessung; risikobehaftet |
+| `.header.project` | Position, Breite | 12/14, 120×16 mm | Header-Area und Nutzfläche | direkte Neumessung; risikobehaftet |
+| `.header.project.label` | Position, Breite, Textgröße, Ausrichtung, Sichtbarkeit | 16/14, 28×6 mm, 9 pt, links | Header-Area und Nutzfläche; Schrift >0 | direkte Neumessung |
+| `.header.project.value` | wie Label | 16/20, 116×7 mm, 16 pt, links | wie oben | direkte Neumessung |
+| `.header.title` | Position, Breite, Textgröße, Ausrichtung, Zeilenabstand, Sichtbarkeit | 16/28, 116×8 mm, 12,5 pt, 1,1 | Header-Area und Nutzfläche; Schrift/Abstand >0 | direkte Neumessung; risikobehaftet |
+| `.header.meta` | Position, Breite, Höhe | 143/14, 55×22 mm | Header-Area und Nutzfläche | direkte Neumessung |
+| `.header.meta.page-label` | Position, Breite, Textgröße, Ausrichtung, Sichtbarkeit | 143/14, 16×6 mm, 9 pt, rechts | Header-Area und Nutzfläche; Schrift >0 | gemeinsamer Wert für sichtbaren Full-/Mini-Seitenzähler |
+| `.header.meta.page-value` | wie Label | 159/14, 39×6 mm, 9 pt, rechts | wie oben | darf Seitenwert nicht ändern |
+| `.body` | keine | 12/56, 186×204 mm | Nutzfläche, gesperrt | keine |
+| `.participants` | Position, Breite, Sichtbarkeit, äußere Breite, Spaltengrenze | 12/56, 186×32 mm | Body-Area und Nutzfläche; rechte Kante höchstens 198 mm | Tabelle und äußerster rechter Track werden atomar geändert; Seitenaufteilung bleibt Rendererbesitz |
+| `.participants.title` | Position, Breite, Textgröße, Ausrichtung, Sichtbarkeit | 12/56, 186×6 mm, 10 pt | Body-Area und Nutzfläche; Schrift >0 | direkte Neumessung |
+| `.participants.rows` | Zeilenabstand | 12/62, 186×26 mm, 1,1 | Body-Area und Nutzfläche; Abstand >0 | Breite folgt der Tabelle; Seitenaufteilung bleibt Rendererbesitz |
+| `.participants.column.name` | Breite über Spaltengrenze | 12/62, 34×26 mm | ≥5 mm; exakte Tabellensumme | Kopf und Datenzellen gemeinsam |
+| `.participants.column.function` | Breite über Spaltengrenze | 46/62, 32×26 mm | wie oben | Kopf und Datenzellen gemeinsam |
+| `.participants.column.company` | Breite über Spaltengrenze | 78/62, 30×26 mm | wie oben | Kopf und Datenzellen gemeinsam |
+| `.participants.column.contact` | Breite über Spaltengrenze | 108/62, 72×26 mm | wie oben | Kopf und Datenzellen gemeinsam |
+| `.participants.column.attendance` | Breite über Spaltengrenze | 180/62, 18×26 mm | ≥5 mm; rechte Kante höchstens 198 mm | äußerster rechter Track; Kopf und Datenzellen gemeinsam |
+| `.participants.heading.attendance` | Textposition, Textgröße, Ausrichtung, Sichtbarkeit | 180/62, 18×8 mm, 7 pt, zentriert | Parent `.participants.column.attendance`; Nutzfläche | Textziel separat, Tabellencontainer unverändert |
+| `.tops` | Position, Breite, Sichtbarkeit, Spaltengrenze | 12/91, 186×120 mm | Body-Area und Nutzfläche | innere Grenzen bei fester Gesamtsumme; Ausblenden ändert sichtbaren Inhalt, nicht Fachwerte |
+| `.tops.header` | Höhe, Textgröße, Ausrichtung, Sichtbarkeit | 12/91, 186×8 mm, 8 pt | Body-Area und Nutzfläche; Schrift >0 | direkte Neumessung; Sichtbarkeit kollidiert potenziell mit Tabellenkopfvertrag |
+| `.tops.rows` | Zeilenabstand | 12/99, 186×112 mm, 1,35 | Abstand >0 | direkte Neumessung; p18 |
+| `.tops.column.number` | Breite über Spaltengrenze, Sichtbarkeit | 12/91, 24,18×120 mm | ≥5 mm, Nutzfläche, exakte Spaltensumme 186 mm | Track, Kopf und alle Datenzellen gemeinsam; p16 |
+| `.tops.column.text` | wie oben | 36,18/91, 120,90×120 mm | wie oben | Track, Kopf und alle Datenzellen gemeinsam; p16 |
+| `.tops.column.meta` | wie oben | 157,08/91, 40,92×120 mm | wie oben | Track, Kopf und alle Datenzellen gemeinsam; p16 |
+| `.tops.heading.number` | Textposition, Textgröße, Ausrichtung, Sichtbarkeit | 12/91, 24,18×8 mm, 8 pt | Schrift >0; Alignment-Enum; Parent `.tops.column.number` | direkte Neumessung; Spaltencontainer unverändert |
+| `.tops.heading.text` | Textposition, Textgröße, Ausrichtung, Sichtbarkeit | 36,18/91, 120,90×8 mm, 8 pt | Schrift >0; Alignment-Enum; Parent `.tops.column.text` | direkte Neumessung; Spaltencontainer unverändert; p17 |
+| `.tops.heading.meta` | Textposition, Textgröße, Ausrichtung, Sichtbarkeit | 157,08/91, 40,92×8 mm, 8 pt | Schrift >0; Alignment-Enum; Parent `.tops.column.meta` | direkte Neumessung; Spaltencontainer unverändert |
 | `.closing` | Position, Breite, Sichtbarkeit | 12/225, 186×35 mm | Body-Area | Tail wird neu gemessen; Satzzuordnung bleibt Rendererbesitz |
 | `.footer` | Position, Breite, Höhe, Sichtbarkeit | 12/260, 186×30 mm | Footer-Area X 0–210, Y 180–297, B 5–210, H 2–100 | Teil des Abschlusses, nicht der 12-mm-Seitenreserve |
 | `.footer.label` | Position, Breite, Textgröße, Ausrichtung, Sichtbarkeit | 12/260, 40×6 mm, 9 pt | Footer-Area; Schrift >0 | Tail-Neumessung |
@@ -218,6 +249,12 @@ je Seite:
 
 `scripts/pdf-v2/m85GoldenManifest.cjs` speichert Seitenzahlen und SHA-256 der vollständigen neutralen Zwischenrepräsentation. Binäre PDFs werden nicht versioniert. `npm run test:m85:pdf` erzeugt alle Snapshots neu und vergleicht sie.
 
+Die K17.8-Änderung aktualisiert ausschließlich die Strukturhashes der drei
+Editor-Layout-Fixtures p16 bis p18: Die Tabellenkopf-Inhalte besitzen nun
+explizite Label-Wrapper und die tatsächliche Tabellensumme folgt der
+gespeicherten Spaltensumme. Seitenzahlen, Datensatzzuweisung, Fortsetzungen und
+alle übrigen 44 Strukturhashes bleiben unverändert.
+
 ## Harte Sperren und derzeit offene Guardrails
 
 Grün verriegelt sind Voll-/Mini-Kopfstruktur einschließlich sichtbarem
@@ -225,7 +262,7 @@ Seitenzähler, Seitenmodell, Fußreserve, Tabellenkopf je Datenseite,
 Datensatzreihenfolge, p04/p05- und r24/r25-Grenzverhalten,
 Level-1-Keep-with-next, TOP- und Restarbeiten-Fortsetzungen, vollständige
 Teilnehmerzeilen mit wiederholtem Kopf, Wortgrenzen der Vorbemerkung, Abschluss
-auf letzter TOP-Seite, Restarbeiten-Querformat und 13-Spalten-Summe, 28
+auf letzter TOP-Seite, Restarbeiten-Querformat und 13-Spalten-Summe, 35
 Protokoll-Registryelemente, `setPageBreakRule`, Fachoperationen und die
 Einzelpfade für Renderer/Paginierung/Profil.
 
@@ -237,12 +274,14 @@ automatisierter und sichtbarer Prüfung beider Dokumentarten ist M85.0 `[A]`.
 
 ## Registrybewertung nach M83.0
 
-Die 28 Elemente bilden Dokument, Seite, Kopf, Logos, Projektzeile, Titel,
-Mini-Seitenmetadaten, Body, Teilnehmer, TOP-Tabelle einschließlich drei
-Spalten/Köpfen, Abschluss und Aufgestellt-Bereich ab. Vollständig erfasst sind
-die groben Protokollbereiche und die drei TOP-Spalten. Nicht als Einzelziele
-erfasst sind unter anderem Vorbemerkung, einzelne Teilnehmer-Spalten/-Zellen,
-Kurz-/Langtextzeilen, drei Meta-Unterzeilen/Ampel, Legende,
+Die 35 Elemente bilden Dokument, Seite, Kopf, Logos, Projektzeile, Titel,
+Mini-Seitenmetadaten, Body, Teilnehmer-Tabelle einschließlich ihrer fünf
+bestätigten Spaltentracks und des rechten Spaltenkopfs, TOP-Tabelle
+einschließlich drei Spalten/Köpfen, Abschluss und Aufgestellt-Bereich ab.
+Vollständig erfasst sind die groben Protokollbereiche, die Teilnehmertracks und
+die drei TOP-Spalten. Nicht als Einzelziele erfasst sind unter anderem
+Vorbemerkung, einzelne Teilnehmer-Datenzellen, Kurz-/Langtextzeilen, drei
+Meta-Unterzeilen/Ampel, Legende,
 Nächster-Termin-Text, Global-/Full-/Mini-Kopf als getrennte Varianten und der
 Fußreserve-Spacer.
 

@@ -31,6 +31,23 @@ const {
   resolveProjectFolderName,
 } = require("./projectStoragePaths");
 const { resolveBuildIdentity } = require("../buildIdentity");
+require("../ui-editor/bbmPdfAdapter.cjs");
+require("../ui-editor/restarbeitenPdfAdapter.cjs");
+const { createPdfEditorAdapterResolver } = require("../ui-editor/pdfAdapterRegistry.cjs");
+
+let _pdfEditorAdapterResolver = null;
+
+function _getPdfEditorAdapterResolver() {
+  if (!_pdfEditorAdapterResolver) {
+    const uiEditorRoot = path.join(app.getPath("userData"), "ui-editor");
+    _pdfEditorAdapterResolver = createPdfEditorAdapterResolver({
+      profileBaseRoot: path.join(uiEditorRoot, "profiles"),
+      registrationRoot: uiEditorRoot,
+      regeneratePdf: (request) => generatePdfForUiEditor(request),
+    });
+  }
+  return _pdfEditorAdapterResolver;
+}
 
 let _printModesModulePromise = null;
 
@@ -280,7 +297,7 @@ function listStoredProjectPdfs({ baseDir, project, kind } = {}) {
     if (kindKey === "protocol") return true;
     if (kindKey === "firms") return normalized.includes("firmenliste");
     if (kindKey === "todo") return normalized.includes("todo-liste");
-    if (kindKey === "topsall") return normalized.includes("topliste-alle");
+    if (kindKey === "topsall") return normalized.includes("top-liste") || normalized.includes("topliste-alle");
     return false;
   };
 
@@ -517,6 +534,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
       win.webContents.send("print:init", {
         jobId,
         mode,
+        documentTypeId: payload.documentTypeId || null,
         projectId,
         meetingId,
         restarbeitenRows: payload.restarbeitenRows || null,
@@ -566,11 +584,28 @@ function registerPrintIpc() {
         restarbeitenLocationLabels: p.restarbeitenLocationLabels || null,
         showAmpelInList: typeof p.showAmpelInList === "boolean" ? p.showAmpelInList : null,
       });
-      if (p.pdfEditorPreview === true && data.mode === "protocol") {
-        const { getSharedBbmPdfAdapter } = require("../ui-editor/bbmPdfAdapter.cjs");
-        const pdfAdapter = getSharedBbmPdfAdapter();
-        data.pdfEditorLayoutState = pdfAdapter.getCurrentPdfLayoutState();
-        data.pdfEditorRegistry = pdfAdapter.getPdfRegistry();
+      const pdfResolution = _getPdfEditorAdapterResolver().resolvePrintRegistration({ documentTypeId: p.documentTypeId, mode: data.mode });
+      if (pdfResolution) {
+        const pdfAdapter = pdfResolution.adapter;
+        if (p.pdfEditorPreview === true) {
+          data.pdfEditorLayoutState = pdfAdapter.getCurrentPdfLayoutState();
+          data.pdfEditorRegistry = pdfAdapter.getPdfRegistry();
+        } else {
+          try {
+            const persistedLayoutState = pdfAdapter.readPersistedPdfLayoutState();
+            if (persistedLayoutState) {
+              data.pdfEditorLayoutState = persistedLayoutState;
+              data.pdfEditorRegistry = pdfAdapter.getPdfRegistry();
+            }
+          } catch (error) {
+            console.warn("[BBM PDF] Gespeichertes Editorprofil wird beim Produktdruck ignoriert.", {
+              documentTypeId: pdfResolution.registration.documentTypeId,
+              profilePath: pdfAdapter.getPdfProfilePath(),
+              code: error?.code || "pdf_profile_read_failed",
+              message: error?.message || String(error),
+            });
+          }
+        }
       }
       // Version/Channel für PDF-Footer mitgeben
       data.appVersion = app.getVersion ? app.getVersion() : "";
@@ -593,6 +628,7 @@ function registerPrintIpc() {
         win.webContents.send("print:init", {
           jobId,
           mode: p.mode || "topsAll",
+          documentTypeId: p.documentTypeId || null,
           projectId: p.projectId || null,
           meetingId: p.meetingId || null,
           restarbeitenRows: p.restarbeitenRows || null,

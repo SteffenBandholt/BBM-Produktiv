@@ -1,0 +1,8 @@
+.bbm-restarbeiten-quicklane {
+  clip-path: none !important;
+  overflow: visible !important;
+}
+
+.bbm-restarbeiten-quicklane[data-open="false"] {
+  clip-path: none !important;
+}

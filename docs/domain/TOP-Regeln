@@ -23,7 +23,7 @@ Sie gelten insbesondere für:
 - geschlossene Protokolle
 - TOPs innerhalb eines Projekts
 - Bearbeitung, Verschiebung, Löschung und Abschluss
-- Status-, Ampel- und Folgeprotokoll-Logik
+- Status-, Ampel-, Kennzeichnungs- und Folgeprotokoll-Logik
 
 Diese Datei beschreibt keine Regeln für andere Fachmodule wie `weitere Module`.
 
@@ -96,6 +96,7 @@ Für Titel gilt:
 - kein `Fertig bis`
 - keine Ampel
 - kein Langtext
+- die Kennzeichnungen `Beschluss`, `ToDo` und `Wichtig` sind zulässig
 
 Titel dienen der Strukturierung, nicht der operativen Abarbeitung.
 
@@ -230,17 +231,26 @@ Andere Status sind nicht Teil des verbindlichen Regelwerks, solange sie nicht au
 
 ---
 
-## 15. Ampellogik
+## 15. Ampellogik und globaler Anzeigeschalter
 
-Die Ampel ist ein Symbol neben `Fertig bis` bzw. beim Statusfeld.
+Die Ampel ist **kein eigener gespeicherter TOP-Zustand**. Ihre Farbe wird aus dem vorhandenen Status-/Terminregelwerk abgeleitet.
 
-Die Ampel ist getrennt von der Schriftfarbe.
+Der Quicklane-Button `Ampel` ist ausschließlich ein globaler Anzeige-Schalter – fachlich wie Licht `an / aus`:
 
-### Schriftfarbe
+- `Ampel EIN` = die vorhandenen Ampelsymbole normaler TOPs werden angezeigt.
+- `Ampel AUS` = die Ampelsymbole normaler TOPs werden ausgeblendet.
+- Der Schalter verändert keinen TOP-Datensatz.
+- Der Schalter verändert weder Status noch `Fertig bis`, `Beschluss`, `ToDo` oder `Wichtig`.
+- Es gibt keine weitere intelligente oder auslösende Logik hinter diesem Schalter.
+- Titel haben grundsätzlich keine Ampel – unabhängig vom globalen Anzeigeschalter.
+
+Die Ampel ist getrennt von Herkunfts- und Wichtig-Farbe.
+
+### Herkunftsfarbe
 - blau = neu
 - schwarz = übernommen
 
-### Status-Ausnahmen
+### Status-Ausnahmen der Ampelfarbe
 - blockiert = blaue Ampel
 - verzug = rote Ampel
 - erledigt = grüne Ampel
@@ -286,18 +296,29 @@ Nicht erlaubt sind:
 - Löschung
 - Verschiebung
 
-### Offenes Protokoll – neue blaue TOPs
+### Offenes Protokoll – neue blaue TOPs und Titel
 
-Bearbeitbar sind:
+Bearbeitbar sind nach den jeweiligen Feldregeln insbesondere:
 
 - Titel/Kurztext
-- Langtext
-- `Fertig bis`
-- Status
-- Verantwortlich
-- Ansprechpartner
+- Langtext bei normalen TOPs
+- `Fertig bis` bei normalen TOPs
+- Status bei normalen TOPs
+- Verantwortlich bei normalen TOPs
+- Ansprechpartner bei normalen TOPs
+- `Beschluss`
+- `ToDo`
+- `Wichtig`
 
-### Offenes Protokoll – übernommene schwarze TOPs
+Für neu angelegte blaue TOPs und Titel gilt als Startzustand:
+
+- `Beschluss = AUS`
+- `ToDo = AUS`
+- `Wichtig = AUS`
+
+Die drei Kennzeichnungen können bei blauen/neuen Elementen unabhängig voneinander ein- und ausgeschaltet werden.
+
+### Offenes Protokoll – übernommene schwarze TOPs und Titel
 
 Nicht bearbeitbar sind:
 
@@ -305,8 +326,13 @@ Nicht bearbeitbar sind:
 - Nummer / Position
 - Löschen
 - Verschieben
+- `Beschluss`
+- `ToDo`
+- `Wichtig`
 
-Weiterhin bearbeitbar sind:
+Die gesetzten Kennzeichnungen bleiben sichtbar, ihre Schalter sind jedoch deaktiviert.
+
+Bei übernommenen schwarzen normalen TOPs weiterhin bearbeitbar sind:
 
 - `Fertig bis`
 - Status
@@ -330,9 +356,9 @@ Bestehende Marker bleiben stehen.
 
 ## 20. Erledigte TOPs über Folgeprotokolle
 
-Wird ein TOP auf `erledigt` gesetzt, gilt:
+Wird ein normaler TOP auf `erledigt` gesetzt, gilt:
 
-- Ampel = grün
+- die abgeleitete Ampelfarbe ist grün, sofern die globale Ampelanzeige eingeschaltet ist
 - `Fertig bis` = heute
 
 Im nächsten Protokoll gilt:
@@ -346,31 +372,103 @@ Im darauf folgenden Protokoll gilt:
 
 Wenn der Nutzer den Status später wieder ändert, gilt diese Ausblendekette nicht unverändert weiter.
 
+**Nur der Status `erledigt` steuert diesen Auslauf über Folgeprotokolle.** Die Kennzeichnungen `Beschluss`, `ToDo` und `Wichtig` lösen keinen Auslauf und keine Ausblendung aus.
+
 ---
 
-## 21. Nicht Teil des verbindlichen Regelwerks
+## 21. Kennzeichnungen Beschluss, ToDo und Wichtig
 
-Nicht Teil des aktuell verbindlichen Regelwerks sind:
+### Grundregel
+
+`Beschluss`, `ToDo` und `Wichtig` sind drei voneinander unabhängige Kennzeichnungen.
+
+- `Beschluss` und `ToDo` müssen getrennt persistent gespeichert werden.
+- Eine gemeinsame exklusive Speicherung oder Priorisierung ist nicht zulässig.
+- `Beschluss` und `ToDo` dürfen gleichzeitig gesetzt sein.
+- `Wichtig` ist davon unabhängig.
+- Die Regeln gelten für alle vorhandenen und neuen Datensätze. Es gibt derzeit nur Spieldaten; eine alte exklusive Beschluss-/ToDo-Logik ist nicht zu erhalten.
+
+### Reine Marker – keine auslösende Wirkung
+
+`Beschluss` und `ToDo` sind ausschließlich Marker. Sie lösen nichts aus.
+
+Insbesondere lösen sie **nicht** aus:
+
+- Mail oder Versand
+- Workflow oder Aufgabe
+- Statusänderung
+- Terminänderung
+- Ampeländerung
+- automatische Ausblendung
+- Protokollabschluss
+- sonstige Folgeaktionen
+
+Sie dürfen lediglich angezeigt, gespeichert, gefiltert und in dafür vorgesehenen Listen/Auswertungen berücksichtigt werden.
+
+### Wichtig
+
+`Wichtig` erzeugt kein eigenes Symbol.
+
+- `Wichtig = EIN` färbt den Titel-/TOP-Text rot.
+- `Wichtig` verändert `Beschluss`, `ToDo`, Status oder Ampel nicht.
+
+### UI-Bedienung
+
+Bei blauen/neuen TOPs und Titeln:
+
+- `Beschluss`, `ToDo` und `Wichtig` sind getrennte Schalter.
+- Jeder Schalter ändert ausschließlich seinen eigenen Zustand.
+- `Beschluss` darf `ToDo` niemals ausschalten.
+- `ToDo` darf `Beschluss` niemals ausschalten.
+- Beide Schalter dürfen gleichzeitig aktiv sein.
+
+Bei schwarzen/übernommenen TOPs und Titeln:
+
+- die drei Kennzeichnungen bleiben sichtbar,
+- gesetzte Zustände bleiben erkennbar,
+- die Schalter sind deaktiviert und nicht mehr änderbar.
+
+### Darstellung in UI und PDF
+
+Für Titel und normale TOPs gilt:
+
+- `Beschluss` und `ToDo` werden rechts im jeweiligen Titel-/Zeilenbereich dargestellt.
+- Sind beide gesetzt, stehen sie gleichzeitig nebeneinander.
+- Reihenfolge von links nach rechts: `Beschluss | ToDo`.
+- `Wichtig` wird ausschließlich durch roten Text dargestellt.
+- Titel zeigen niemals eine Ampel.
+
+### Filter und Listen
+
+- Der Filter `Beschluss` zeigt alle Elemente mit `Beschluss = EIN`, unabhängig von `ToDo`.
+- Der Filter `ToDo` zeigt alle Elemente mit `ToDo = EIN`, unabhängig von `Beschluss`.
+- Ein Element mit `Beschluss = EIN` und `ToDo = EIN` erscheint in beiden Filtern.
+- Eine ToDo-Liste berücksichtigt alle Elemente mit `ToDo = EIN`.
+- Eine Beschlussauswertung berücksichtigt alle Elemente mit `Beschluss = EIN`.
+
+---
+
+## 22. Nicht Teil des verbindlichen Regelwerks
+
+Nicht Teil des aktuell verbindlichen Regelwerks ist:
 
 - manuelles hidden / TOP ausblenden
-- `task`
-- `decision`
 
-Diese Punkte dürfen nicht stillschweigend als verbindlicher Fachkern behandelt werden.
+`task`/`ToDo` und `decision`/`Beschluss` sind ab jetzt ausdrücklich Teil des verbindlichen Fachkerns gemäß Abschnitt 21.
 
 ---
 
-## 22. Abschluss
+## 23. Abschluss
 
 Mit dem Abschluss-Button wird das Protokoll geschlossen.
 
 Danach ist der Protokollstand vollständig read only.
 
-Übernommene TOPs im nächsten offenen Protokoll bleiben nach den oben genannten Regeln teilweise bearbeitbar.
+Übernommene TOPs im nächsten offenen Protokoll bleiben nach den oben genannten Regeln teilweise bearbeitbar. Die Kennzeichnungen `Beschluss`, `ToDo` und `Wichtig` gehören bei schwarzen übernommenen Elementen ausdrücklich **nicht** zu den weiter bearbeitbaren Feldern.
 
 ---
 
-## 23. Prozess beim Abschluss
+## 24. Prozess beim Abschluss
 
 Fachlich gehört zum Abschluss:
 
@@ -381,9 +479,11 @@ Technisch muss das nicht in jedem Schritt bereits vollständig umgesetzt sein.
 
 Die technische Umsetzung dieser Schritte ist von den fachlichen Regeln zu trennen.
 
+Die Kennzeichnungen `Beschluss`, `ToDo` und `Wichtig` lösen dabei keine zusätzliche Aktion aus.
+
 ---
 
-## 24. Noch offen
+## 25. Noch offen
 
 Noch offen ist insbesondere:
 
@@ -412,6 +512,6 @@ Diese Trennung ist gewollt und verbindlich.
 
 TOPs sind fachliche Langläufer innerhalb eines Projekts und nicht nur Zeilen eines einzelnen Protokolls.
 
-Änderungen an Verhalten, Bearbeitung, Nummerierung oder Folgeprotokollen müssen mit diesem Regelwerk vereinbar sein.
+Änderungen an Verhalten, Bearbeitung, Nummerierung, Kennzeichnungen oder Folgeprotokollen müssen mit diesem Regelwerk vereinbar sein.
 
 Diese Datei ist die verbindliche fachliche Grundlage für TOP-Verhalten im Modul `Protokoll`.

@@ -7,13 +7,14 @@ const { spawnSync } = require("node:child_process");
 const { pathToFileURL } = require("node:url");
 const electronModule = require("electron");
 const { createPrintToPdfOptions } = require("../../src/main/print/printOrientation.js");
+const { createBbmPdfAdapter } = require("../../src/main/ui-editor/bbmPdfAdapter.cjs");
 const { getM85Fixtures } = require("./m85Fixtures.cjs");
 
 const IS_ELECTRON_PROCESS = Boolean(process.versions.electron);
 const { app, BrowserWindow, ipcMain } = IS_ELECTRON_PROCESS ? electronModule : {};
 
 function parseArgs(argv) {
-  const result = { output: "", pdfDir: "", fixtureIds: [], isolatedRoot: "" };
+  const result = { output: "", pdfDir: "", fixtureIds: [], isolatedRoot: "", editorElement: "", editorX: null, editorY: null, editorWidth: null, editorTextOffsetX: null, editorTextOffsetY: null, editorFontSize: null, editorVisible: null, boundaryTable: "pdf.bbm.protocol.tops", boundaryLeft: "", boundaryRight: "", boundaryDelta: null };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = String(argv[index] || "");
     if (arg === "--output") result.output = path.resolve(String(argv[++index] || ""));
@@ -21,8 +22,24 @@ function parseArgs(argv) {
     else if (arg === "--isolated-root") result.isolatedRoot = path.resolve(String(argv[++index] || ""));
     else if (arg === "--fixture") result.fixtureIds.push(String(argv[++index] || ""));
     else if (arg.startsWith("--fixture=")) result.fixtureIds.push(arg.slice("--fixture=".length));
+    else if (arg === "--editor-element") result.editorElement = String(argv[++index] || "");
+    else if (arg === "--editor-x") result.editorX = Number(argv[++index]);
+    else if (arg === "--editor-y") result.editorY = Number(argv[++index]);
+    else if (arg === "--editor-width") result.editorWidth = Number(argv[++index]);
+    else if (arg === "--editor-text-offset-x") result.editorTextOffsetX = Number(argv[++index]);
+    else if (arg === "--editor-text-offset-y") result.editorTextOffsetY = Number(argv[++index]);
+    else if (arg === "--editor-font-size") result.editorFontSize = Number(argv[++index]);
+    else if (arg === "--editor-visible") result.editorVisible = String(argv[++index] || "") === "true";
+    else if (arg === "--boundary-table") result.boundaryTable = String(argv[++index] || "");
+    else if (arg === "--boundary-left") result.boundaryLeft = String(argv[++index] || "");
+    else if (arg === "--boundary-right") result.boundaryRight = String(argv[++index] || "");
+    else if (arg === "--boundary-delta") result.boundaryDelta = Number(argv[++index]);
   }
   if (!result.output) throw new Error("M85-Snapshot-Ausgabedatei fehlt (--output)." );
+  if (result.editorElement && ![result.editorX, result.editorY, result.editorWidth, result.editorTextOffsetX, result.editorTextOffsetY, result.editorFontSize].some(Number.isFinite) && result.editorVisible === null && !Number.isFinite(result.boundaryDelta))
+    throw new Error("M85-Editorcheck benoetigt mindestens eine Layoutaenderung.");
+  if (Number.isFinite(result.boundaryDelta) && (!result.boundaryLeft || !result.boundaryRight))
+    throw new Error("M85-Grenzencheck benoetigt linke und rechte Nachbarspalte.");
   return result;
 }
 
@@ -46,6 +63,44 @@ function runNodeLauncher() {
 
 function clone(value) {
   return structuredClone(value);
+}
+
+function dataForFixture(fixture, args) {
+  const data = clone(fixture.data);
+  if (!args.editorElement && !Number.isFinite(args.boundaryDelta)) return data;
+  if (fixture.kind !== "protocol") throw new Error("M85-Editorcheck ist nur fuer Protokoll-Fixtures erlaubt.");
+  const adapter = createBbmPdfAdapter();
+  const submit = (operation, payload, elementId = args.editorElement) => {
+    const result = adapter.submitPdfChangeRequest({
+      changeId: `editor-check-${operation}-${elementId}`,
+      scopeId: "pdf.bbm.protocol",
+      elementId,
+      operation,
+      payload,
+    });
+    if (!result.success) throw new Error(`M85-Editorcheck abgewiesen: ${result.errorCode}`);
+  };
+  if (Number.isFinite(args.boundaryDelta)) {
+    submit("resizeColumnBoundary", { table: { leftColumnId: args.boundaryLeft, rightColumnId: args.boundaryRight, delta: args.boundaryDelta } }, args.boundaryTable);
+  }
+  if (Number.isFinite(args.editorX) || Number.isFinite(args.editorY)) {
+    const payload = {};
+    if (Number.isFinite(args.editorX)) payload.x = args.editorX;
+    if (Number.isFinite(args.editorY)) payload.y = args.editorY;
+    submit("move", payload);
+  }
+  if (Number.isFinite(args.editorWidth)) submit("resizeWidth", { width: args.editorWidth });
+  if (Number.isFinite(args.editorTextOffsetX) || Number.isFinite(args.editorTextOffsetY)) {
+    const text = {};
+    if (Number.isFinite(args.editorTextOffsetX)) text.offsetX = args.editorTextOffsetX;
+    if (Number.isFinite(args.editorTextOffsetY)) text.offsetY = args.editorTextOffsetY;
+    submit("textMove", { text });
+  }
+  if (Number.isFinite(args.editorFontSize)) submit("textResize", { text: { fontSize: args.editorFontSize } });
+  if (args.editorVisible !== null) submit("setVisibility", { visible: args.editorVisible });
+  data.pdfEditorRegistry = adapter.getPdfRegistry();
+  data.pdfEditorLayoutState = adapter.getCurrentPdfLayoutState();
+  return data;
 }
 
 function createHarnessWindow() {
@@ -75,6 +130,54 @@ function createHarnessWindow() {
   return win;
 }
 
+async function readMetaColumnGeometry(win, fixture) {
+  if (fixture.kind !== "protocol") return null;
+  return win.webContents.executeJavaScript(`(() => {
+    const mm = (px) => Math.round((Number(px || 0) * 25.4 / 96) * 1000) / 1000;
+    const box = (element) => {
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return { x: mm(rect.x), y: mm(rect.y), width: mm(rect.width), height: mm(rect.height), right: mm(rect.right) };
+    };
+    const style = (element) => element ? getComputedStyle(element) : null;
+    const table = document.querySelector("table.topsTable");
+    if (!table) return null;
+    const header = table.querySelector("thead th.colMeta");
+    const heading = header?.querySelector(":scope > .columnHeadingContent") || null;
+    const cells = Array.from(table.querySelectorAll("tbody td.colMeta")).map((cell) => {
+      const cellStyle = style(cell);
+      const wrapper = cell.querySelector(":scope > .meta3");
+      const lines = Array.from(wrapper?.querySelectorAll(":scope > .metaLine") || []).map((line) => {
+        const lineStyle = style(line);
+        return {
+          classes: line.className,
+          box: box(line),
+          display: lineStyle?.display || "",
+          maxWidth: lineStyle?.maxWidth || "",
+          position: lineStyle?.position || "",
+          transform: lineStyle?.transform || "",
+        };
+      });
+      return {
+        box: box(cell),
+        paddingLeft: mm(parseFloat(cellStyle?.paddingLeft || "0")),
+        paddingRight: mm(parseFloat(cellStyle?.paddingRight || "0")),
+        innerWidth: mm(cell.getBoundingClientRect().width - parseFloat(cellStyle?.paddingLeft || "0") - parseFloat(cellStyle?.paddingRight || "0")),
+        wrapper: box(wrapper),
+        lines,
+        statusText: box(wrapper?.querySelector(".metaLine.meta1 .metaText")),
+        ampelDot: box(wrapper?.querySelector(".metaLine.meta1 .ampelDot")),
+      };
+    });
+    return {
+      track: box(table.querySelector("colgroup col.colMeta")),
+      header: box(header),
+      heading: box(heading),
+      cells,
+    };
+  })()`, true);
+}
+
 async function renderFixture(win, fixture, { pdfDir } = {}) {
   const jobId = `m85-${fixture.id}`;
   const ready = new Promise((resolve, reject) => {
@@ -99,12 +202,13 @@ async function renderFixture(win, fixture, { pdfDir } = {}) {
     pdfSatzvertragSnapshot: true,
     debug: false,
   });
-  await ready;
+  const readyMessage = await ready;
   const snapshot = await win.webContents.executeJavaScript(
     "structuredClone(globalThis.__bbmPdfSatzvertragSnapshot || null)",
     true
   );
   if (!snapshot) throw new Error(`M85-Struktursnapshot fehlt: ${fixture.id}`);
+  const metaColumnGeometry = await readMetaColumnGeometry(win, fixture);
 
   let pdf = null;
   if (pdfDir) {
@@ -114,7 +218,8 @@ async function renderFixture(win, fixture, { pdfDir } = {}) {
     fs.writeFileSync(filePath, buffer);
     pdf = { fileName: path.basename(filePath), bytes: buffer.length };
   }
-  return { id: fixture.id, number: fixture.number, title: fixture.title, kind: fixture.kind, snapshot, pdf };
+  return { id: fixture.id, number: fixture.number, title: fixture.title, kind: fixture.kind, snapshot,
+    previewMetadata: readyMessage?.previewMetadata || null, metaColumnGeometry, pdf };
 }
 
 async function main() {
@@ -131,7 +236,7 @@ async function main() {
   ipcMain.handle("print:getData", (_event, payload) => {
     const fixture = fixtures.find((entry) => entry.id === payload?.fixtureId) || null;
     if (!fixture) return { ok: false, error: `Unbekannte M85-Fixture: ${String(payload?.fixtureId || "")}` };
-    return { ok: true, data: clone(fixture.data) };
+    return { ok: true, data: dataForFixture(fixture, args) };
   });
   ipcMain.handle("tableLayouts:getOne", () => ({ ok: false, error: "M85-Fixture verwendet nur explizite neutrale Daten." }));
   ipcMain.handle("appSettings:getMany", () => ({ ok: true, data: {} }));

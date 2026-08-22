@@ -1424,7 +1424,7 @@ export default class Router {
       return;
     }
     try {
-      const res = await pm.printFirmsDirect({ projectId: effectiveProjectId });
+      const res = await pm.printFirmsDirect({ projectId: effectiveProjectId, meetingId: meetingId || this.currentMeetingId || null });
       return res;
     } finally {
       await this.closePrintModal({ keepPreview: false });
@@ -1447,7 +1447,7 @@ export default class Router {
       return;
     }
     try {
-      const res = await pm.printTodoDirect({ projectId: effectiveProjectId });
+      const res = await pm.printTodoDirect({ projectId: effectiveProjectId, meetingId: meetingId || this.currentMeetingId || null });
       return res;
     } finally {
       await this.closePrintModal({ keepPreview: false });
@@ -1470,7 +1470,7 @@ export default class Router {
       return;
     }
     try {
-      const res = await pm.printTopListAllDirect({ projectId: effectiveProjectId });
+      const res = await pm.printTopListAllDirect({ projectId: effectiveProjectId, meetingId: meetingId || this.currentMeetingId || null });
       return res;
     } finally {
       await this.closePrintModal({ keepPreview: false });

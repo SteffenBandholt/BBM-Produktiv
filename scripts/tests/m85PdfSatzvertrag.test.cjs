@@ -34,6 +34,7 @@ const CONTRACT = Object.freeze({
   closing: "PDF-V2-PROT-003",
   restRecord: "PDF-V2-REST-002",
   restMeasure: "PDF-V2-REST-003",
+  protocolMeta: "PDF-V2-PROT-006",
   editorBoundary: "PDF-V2-EDIT-001",
   pageBreakLocked: "PDF-V2-EDIT-002",
   domainLocked: "PDF-V2-EDIT-003",
@@ -42,7 +43,7 @@ const CONTRACT = Object.freeze({
   singleProfile: "PDF-V2-ARCH-003",
   historical: "PDF-V2-ARCH-004",
 });
-const M85_1_PROTOCOL_MANIFEST_SHA256 = "9315e0fb70dc91940e1e26b461625d4cbe8f7a3c4b94ecb363d24be461f1d3e5";
+const M85_1_PROTOCOL_MANIFEST_SHA256 = "8b522de3097c67770088ceaed7bdfa5def7c85034e64b2c393005d1233a92049";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
@@ -54,13 +55,13 @@ function m85ProfileRoots() {
     .sort();
 }
 
-function runGoldenHarness() {
+function runGoldenHarness(extraArgs = []) {
   const output = path.join(os.tmpdir(), `bbm-m85-snapshots-${process.pid}-${Date.now()}.json`);
   const profileRootsBefore = m85ProfileRoots();
   try {
     const result = spawnSync(
       process.execPath,
-      [path.join(ROOT, "scripts/pdf-v2/runM85PdfFixtures.cjs"), "--node-launcher", "--output", output],
+      [path.join(ROOT, "scripts/pdf-v2/runM85PdfFixtures.cjs"), "--node-launcher", "--output", output, ...extraArgs],
       { cwd: ROOT, env: process.env, encoding: "utf8", maxBuffer: 20 * 1024 * 1024, windowsHide: true }
     );
     assert.equal(
@@ -91,6 +92,37 @@ function resultMap(runResult) {
 function compactRecordOrder(snapshot) {
   const ids = snapshot.pages.flatMap((page) => page.records.map((record) => record.id));
   return ids.filter((id, index) => index === 0 || ids[index - 1] !== id);
+}
+
+function editorRun(elementId, changes, fixtureId = "p02-one-page") {
+  const args = ["--fixture", fixtureId, "--editor-element", elementId];
+  for (const [name, value] of Object.entries(changes)) args.push(`--editor-${name}`, String(value));
+  return runGoldenHarness(args).results[0];
+}
+
+function boundaryRun(delta, tableId = "pdf.bbm.protocol.tops", leftId = `${tableId}.column.text`, rightId = `${tableId}.column.meta`, fixtureId = "p02-one-page") {
+  return runGoldenHarness([
+    "--fixture", fixtureId,
+    "--boundary-table", tableId,
+    "--boundary-left", leftId,
+    "--boundary-right", rightId,
+    "--boundary-delta", String(delta),
+  ]).results[0];
+}
+
+function editorBound(result, elementId) {
+  return (result?.previewMetadata?.renderBounds || [])
+    .find((entry) => entry.elementId === elementId && entry.pageNumber === 1) || null;
+}
+
+function editorBounds(result, elementId, part) {
+  return (result?.previewMetadata?.renderBounds || [])
+    .filter((entry) => entry.elementId === elementId && entry.pageNumber === 1 && (!part || entry.part === part));
+}
+
+function editorBoundsOnPage(result, elementId, pageNumber, part) {
+  return (result?.previewMetadata?.renderBounds || [])
+    .filter((entry) => entry.elementId === elementId && entry.pageNumber === pageNumber && (!part || entry.part === part));
 }
 
 async function runM85PdfSatzvertragTests(run) {
@@ -325,7 +357,7 @@ async function runM85PdfSatzvertragTests(run) {
 
   await run("M85 Satzvertrag: Editor darf Satz- und Fachoperationen nicht freigeben", () => {
     const registry = getBbmPdfRegistry();
-    assert.equal(registry.elements.length, 28);
+    assert.equal(registry.elements.length, 35);
     for (const element of registry.elements) {
       assert.equal(element.allowedOps.includes("setPageBreakRule"), false, `${CONTRACT.pageBreakLocked}:${element.id}`);
       assert.equal(element.lockedOps.includes("setPageBreakRule"), true, `${CONTRACT.pageBreakLocked}:${element.id}`);
@@ -365,6 +397,204 @@ async function runM85PdfSatzvertragTests(run) {
     }
   });
 
+  await run("M85 PDF-Bedienung: Position, Schrift und Seitenwert-Sichtbarkeit wirken im echten Print-DOM", () => {
+    const titleId = "pdf.bbm.protocol.header.title";
+    const titleBefore = editorBound(editorRun(titleId, { x: 16, y: 28 }), titleId);
+    const titleAfter = editorBound(editorRun(titleId, { x: 26, y: 28 }), titleId);
+    assert.ok(titleBefore && titleAfter, `${titleId}:Renderer-Readback fehlt`);
+    assert.ok(Math.abs(titleBefore.appliedX - 16) <= 0.05, `${titleId}:Baseline-Readback X`);
+    assert.ok(Math.abs(titleAfter.appliedX - 26) <= 0.05, `${titleId}:Move-Readback X`);
+    assert.ok(Math.abs((titleAfter.box.x - titleBefore.box.x) - 10) <= 0.05, `${titleId}:reale DOM-Verschiebung X`);
+
+    const pageValueId = "pdf.bbm.protocol.header.meta.page-value";
+    const pageBefore = editorBound(editorRun(pageValueId, { x: 159, y: 14, "font-size": 9 }), pageValueId);
+    const pageAfter = editorBound(editorRun(pageValueId, { x: 158, y: 14, "font-size": 14 }), pageValueId);
+    assert.ok(pageBefore && pageAfter, `${pageValueId}:Renderer-Readback fehlt`);
+    assert.ok(Math.abs(pageAfter.appliedX - 158) <= 0.05, `${pageValueId}:Move-Readback X`);
+    assert.ok(Math.abs((pageAfter.box.x - pageBefore.box.x) + 1) <= 0.05, `${pageValueId}:reale DOM-Verschiebung X`);
+    assert.ok(pageAfter.box.width > pageBefore.box.width, `${pageValueId}:Schriftgroesse blieb visuell unveraendert`);
+    assert.equal(editorBound(editorRun(pageValueId, { visible: false }), pageValueId), null,
+      `${pageValueId}:ausgeblendeter Seitenwert blieb im Print-DOM sichtbar`);
+  });
+
+  await run("M85 PDF-Bedienung: innere Spaltengrenze bleibt in Track, Kopf und Daten lueckenlos", () => {
+    const tableId = "pdf.bbm.protocol.tops";
+    const numberId = `${tableId}.column.number`;
+    const textId = `${tableId}.column.text`;
+    const metaId = `${tableId}.column.meta`;
+    const before = editorRun(tableId, { visible: true });
+    const right = boundaryRun(1);
+    const left = boundaryRun(-1);
+    const tableBefore = editorBounds(before, tableId)[0];
+    assert.ok(tableBefore, `${tableId}:Readback fehlt`);
+
+    for (const [result, delta] of [[right, 1], [left, -1]]) {
+      const table = editorBounds(result, tableId)[0];
+      assert.ok(table, `${tableId}:Grenzen-Readback fehlt`);
+      assert.ok(Math.abs(table.box.x - tableBefore.box.x) <= 0.05, `${tableId}:linke Aussenkante`);
+      assert.ok(Math.abs(table.box.width - tableBefore.box.width) <= 0.05, `${tableId}:Gesamtbreite`);
+      assert.ok(Math.abs((table.box.x + table.box.width) - (tableBefore.box.x + tableBefore.box.width)) <= 0.05, `${tableId}:rechte Aussenkante`);
+
+      for (const part of ["track", "header", "data"]) {
+        const numberBefore = editorBounds(before, numberId, part);
+        const numberAfter = editorBounds(result, numberId, part);
+        const textBefore = editorBounds(before, textId, part);
+        const textAfter = editorBounds(result, textId, part);
+        const metaBefore = editorBounds(before, metaId, part);
+        const metaAfter = editorBounds(result, metaId, part);
+        assert.ok(numberBefore.length > 0 && numberAfter.length === numberBefore.length, `${numberId}:${part}:Readback`);
+        assert.equal(textAfter.length, textBefore.length, `${textId}:${part}:Readback`);
+        assert.equal(metaAfter.length, metaBefore.length, `${metaId}:${part}:Readback`);
+        for (let index = 0; index < textAfter.length; index += 1) {
+          assert.ok(Math.abs(textAfter[index].box.width - textBefore[index].box.width - delta) <= 0.05, `${textId}:${part}:Nachbarbreite`);
+          assert.ok(Math.abs(metaAfter[index].box.width - metaBefore[index].box.width + delta) <= 0.05, `${metaId}:${part}:Nachbarbreite`);
+          assert.ok(Math.abs((textAfter[index].box.x + textAfter[index].box.width) - metaAfter[index].box.x) <= 0.05, `${part}:Gap oder Ueberlappung Gegenstand/Meta`);
+          assert.ok(Math.abs((numberAfter[index].box.x + numberAfter[index].box.width) - textAfter[index].box.x) <= 0.05, `${part}:Gap oder Ueberlappung TOP/Gegenstand`);
+          assert.ok(Math.abs((metaAfter[index].box.x + metaAfter[index].box.width) - (metaBefore[index].box.x + metaBefore[index].box.width)) <= 0.05, `${part}:rechte Tabellenkante`);
+        }
+      }
+    }
+    assert.equal(editorBounds(editorRun(metaId, { visible: false }), metaId).length, 0,
+      `${metaId}:vollstaendige Spalte blieb sichtbar`);
+  });
+
+  await run("M85 PDF-Readback: Tabellenspalten liefern reale seitenbezogene Track-Geometrie", () => {
+    const tableId = "pdf.bbm.protocol.tops";
+    const columnIds = [`${tableId}.column.text`, `${tableId}.column.meta`];
+    const result = editorRun(`${tableId}.column.meta`, { visible: true }, "p03-two-pages");
+    assert.equal(result.previewMetadata.pageCount, 2, `${CONTRACT.editorBoundary}:Mehrseitenfixture`);
+
+    for (const columnId of columnIds) {
+      for (const pageNumber of [1, 2]) {
+        const tracks = editorBoundsOnPage(result, columnId, pageNumber, "track");
+        const headers = editorBoundsOnPage(result, columnId, pageNumber, "header");
+        const dataCells = editorBoundsOnPage(result, columnId, pageNumber, "data");
+        assert.equal(tracks.length, 1, `${columnId}:Seite${pageNumber}:eindeutiger Track`);
+        assert.equal(headers.length, 1, `${columnId}:Seite${pageNumber}:eindeutiger Kopf`);
+        assert.ok(dataCells.length > 0, `${columnId}:Seite${pageNumber}:Datenzellen fehlen`);
+        const track = tracks[0].box;
+        const header = headers[0].box;
+        const dataBottom = Math.max(...dataCells.map((entry) => entry.box.y + entry.box.height));
+        assert.ok(Math.abs(track.x - header.x) <= 0.05, `${columnId}:Seite${pageNumber}:linke Kante`);
+        assert.ok(Math.abs(track.y - header.y) <= 0.05, `${columnId}:Seite${pageNumber}:reale Kopfkante`);
+        assert.ok(Math.abs(track.width - header.width) <= 0.05, `${columnId}:Seite${pageNumber}:Trackbreite`);
+        assert.ok(Math.abs(track.y + track.height - dataBottom) <= 0.05, `${columnId}:Seite${pageNumber}:sichtbare Trackhoehe`);
+      }
+      const firstPageTrack = editorBoundsOnPage(result, columnId, 1, "track")[0].box;
+      const secondPageTrack = editorBoundsOnPage(result, columnId, 2, "track")[0].box;
+      assert.ok(Math.abs(firstPageTrack.y - secondPageTrack.y) > 1,
+        `${columnId}:Seitengeometrie wurde zu einer globalen Box vermischt`);
+    }
+  });
+
+  await run("M85 PDF-Bedienung: Teilnehmer-Tabelle bleibt bis zur Nutzflaechenkante lueckenlos", () => {
+    const tableId = "pdf.bbm.protocol.participants";
+    const contactId = `${tableId}.column.contact`;
+    const attendanceId = `${tableId}.column.attendance`;
+    const headingId = `${tableId}.heading.attendance`;
+    const fixtureId = "p11-small-participants";
+    const before = editorRun(tableId, { visible: true }, fixtureId);
+    const right = boundaryRun(1, tableId, contactId, attendanceId, fixtureId);
+    const left = boundaryRun(-1, tableId, contactId, attendanceId, fixtureId);
+    const tableBefore = editorBound(before, tableId);
+    assert.ok(tableBefore, `${tableId}:Readback fehlt`);
+    assert.ok(Math.abs(tableBefore.box.x - 12) <= 0.05, `${tableId}:linke Nutzflaechenkante`);
+    assert.ok(Math.abs(tableBefore.box.width - 186) <= 0.05, `${tableId}:Baselinebreite`);
+    assert.ok(Math.abs(tableBefore.box.x + tableBefore.box.width - 198) <= 0.05, `${tableId}:rechte Nutzflaechenkante`);
+
+    for (const [result, delta] of [[right, 1], [left, -1]]) {
+      const table = editorBound(result, tableId);
+      assert.ok(Math.abs(table.box.x - tableBefore.box.x) <= 0.05, `${tableId}:linke Aussenkante`);
+      assert.ok(Math.abs(table.box.width - tableBefore.box.width) <= 0.05, `${tableId}:Gesamtbreite`);
+      for (const part of ["header", "data"]) {
+        const contactBefore = editorBounds(before, contactId, part);
+        const contactAfter = editorBounds(result, contactId, part);
+        const attendanceBefore = editorBounds(before, attendanceId, part);
+        const attendanceAfter = editorBounds(result, attendanceId, part);
+        assert.ok(contactBefore.length > 0 && contactAfter.length === contactBefore.length, `${contactId}:${part}:Readback`);
+        assert.equal(attendanceAfter.length, attendanceBefore.length, `${attendanceId}:${part}:Readback`);
+        for (let index = 0; index < contactAfter.length; index += 1) {
+          assert.ok(Math.abs(contactAfter[index].box.width - contactBefore[index].box.width - delta) <= 0.05, `${contactId}:${part}:Nachbarbreite`);
+          assert.ok(Math.abs(attendanceAfter[index].box.width - attendanceBefore[index].box.width + delta) <= 0.05, `${attendanceId}:${part}:Aussenspaltenbreite`);
+          assert.ok(Math.abs(contactAfter[index].box.x + contactAfter[index].box.width - attendanceAfter[index].box.x) <= 0.05,
+            `${tableId}:${part}:Gap oder Ueberlappung`);
+          assert.ok(Math.abs(attendanceAfter[index].box.x + attendanceAfter[index].box.width - 198) <= 0.05,
+            `${tableId}:${part}:rechte Nutzflaechenkante`);
+        }
+      }
+    }
+
+    const narrow = editorRun(tableId, { width: 185 }, fixtureId);
+    const narrowTable = editorBound(narrow, tableId);
+    assert.ok(Math.abs(narrowTable.box.width - 185) <= 0.05, `${tableId}:atomare Tabellenbreite`);
+    assert.ok(Math.abs(narrowTable.box.x + narrowTable.box.width - 197) <= 0.05, `${tableId}:schmalere rechte Aussenkante`);
+    const narrowAttendance = editorBounds(narrow, attendanceId, "header")[0];
+    assert.ok(Math.abs(narrowAttendance.box.width - 17) <= 0.05, `${attendanceId}:folgt Tabellenbreite`);
+
+    const headingBefore = editorBound(editorRun(headingId, { "text-offset-x": 0, "text-offset-y": 0 }, fixtureId), headingId);
+    const headingAfter = editorBound(editorRun(headingId, { "text-offset-x": 1, "text-offset-y": 0 }, fixtureId), headingId);
+    assert.ok(headingBefore && headingAfter, `${headingId}:Readback fehlt`);
+    assert.ok(Math.abs(headingAfter.box.x - headingBefore.box.x - 1) <= 0.05, `${headingId}:separate Textposition`);
+    assert.ok(Math.abs(editorBound(editorRun(headingId, { "text-offset-x": 1, "text-offset-y": 0 }, fixtureId), tableId).box.width - tableBefore.box.width) <= 0.05,
+      `${headingId}:Tabellencontainer veraendert`);
+  });
+
+  await run("M85 PDF-Meta: Body-Zeilen nutzen die gemeinsame innere Spaltenbreite", () => {
+    const baseline = resultMap(rendered).get("p02-one-page")?.metaColumnGeometry;
+    assert.ok(baseline?.header && baseline?.heading && baseline.cells.length > 0, `${CONTRACT.protocolMeta}:Geometrie fehlt`);
+    assert.ok(Math.abs(baseline.heading.width - baseline.cells[0].innerWidth) <= 0.05,
+      `${CONTRACT.protocolMeta}:Header und Body haben unterschiedliche Innenbreiten`);
+    for (const cell of baseline.cells) {
+      assert.ok(Math.abs(cell.wrapper.width - cell.innerWidth) <= 0.05,
+        `${CONTRACT.protocolMeta}:Meta-Container nutzt nicht die Zellinnenbreite`);
+      assert.equal(cell.lines.length, 3, `${CONTRACT.protocolMeta}:Meta-Zeilen fehlen`);
+      for (const line of cell.lines) {
+        assert.ok(Math.abs(line.box.width - cell.innerWidth) <= 0.05,
+          `${CONTRACT.protocolMeta}:${line.classes}:Zeile nutzt nicht die Zellinnenbreite`);
+        assert.equal(line.maxWidth, "none", `${CONTRACT.protocolMeta}:${line.classes}:alte Maximalbreite wirkt noch`);
+        assert.equal(line.position, "static", `${CONTRACT.protocolMeta}:${line.classes}:unerwartete Positionierung`);
+        assert.equal(line.transform, "none", `${CONTRACT.protocolMeta}:${line.classes}:unerwarteter Transform`);
+      }
+      assert.equal(cell.lines[2].display, "block", `${CONTRACT.protocolMeta}:Verantwortlicher erbt die Container-Flexregel`);
+      if (cell.ampelDot) {
+        assert.ok(Math.abs((cell.ampelDot.x - cell.statusText.right) - 1.5) <= 0.05,
+          `${CONTRACT.protocolMeta}:Statuspunkt hat keinen stabilen Abstand zum Status`);
+      }
+    }
+
+    const resized = boundaryRun(1).metaColumnGeometry;
+    assert.ok(resized?.cells?.length === baseline.cells.length, `${CONTRACT.protocolMeta}:Resize-Geometrie fehlt`);
+    for (const cell of resized.cells) {
+      for (const line of cell.lines) {
+        assert.ok(Math.abs(line.box.width - cell.innerWidth) <= 0.05,
+          `${CONTRACT.protocolMeta}:${line.classes}:Zeile folgt der geaenderten Spaltenbreite nicht`);
+      }
+      if (cell.ampelDot) {
+        assert.ok(Math.abs((cell.ampelDot.x - cell.statusText.right) - 1.5) <= 0.05,
+          `${CONTRACT.protocolMeta}:Statuspunkt verliert beim Resize den Statusbezug`);
+        const baselineCell = baseline.cells[resized.cells.indexOf(cell)];
+        assert.ok(Math.abs((cell.ampelDot.x - cell.lines[0].box.x) - (baselineCell.ampelDot.x - baselineCell.lines[0].box.x)) <= 0.05,
+          `${CONTRACT.protocolMeta}:Statuspunkt wandert mit der Spaltenbreite`);
+      }
+    }
+  });
+
+  await run("M85 PDF-Bedienung: Tabellenkopf-Text bewegt sich innerhalb der unveraenderten Spalte", () => {
+    const headingId = "pdf.bbm.protocol.tops.heading.meta";
+    const columnId = "pdf.bbm.protocol.tops.column.meta";
+    const before = editorRun(headingId, { "text-offset-x": 0, "text-offset-y": 0 });
+    const after = editorRun(headingId, { "text-offset-x": 1, "text-offset-y": 0 });
+    const headingBefore = editorBound(before, headingId);
+    const headingAfter = editorBound(after, headingId);
+    assert.ok(headingBefore && headingAfter, `${headingId}:Renderer-Readback fehlt`);
+    assert.ok(Math.abs((headingAfter.box.x - headingBefore.box.x) - 1) <= 0.05, `${headingId}:Textverschiebung`);
+    const columnBefore = editorBounds(before, columnId, "track")[0];
+    const columnAfter = editorBounds(after, columnId, "track")[0];
+    assert.ok(columnBefore && columnAfter, `${columnId}:Spaltentrack fehlt`);
+    assert.ok(Math.abs(columnAfter.box.x - columnBefore.box.x) <= 0.05, `${columnId}:Spaltencontainer wurde mitverschoben`);
+    assert.ok(Math.abs(columnAfter.box.width - columnBefore.box.width) <= 0.05, `${columnId}:Spaltenbreite wurde veraendert`);
+  });
+
   await run("M85 Satzvertrag: Renderer, Paginierung, Profilweg und Altpfade bleiben eindeutig", () => {
     const printIpc = read("src/main/ipc/printIpc.js");
     const printApp = read("src/renderer/print/printApp.js");
@@ -380,7 +610,9 @@ async function runM85PdfSatzvertragTests(run) {
     assert.match(printIpc, /mode \|\| ""\)[\s\S]*=== "restarbeiten"[\s\S]*\? "landscape"/, CONTRACT.restColumns);
     assert.match(editorIpc, /generatePdfForUiEditor/, CONTRACT.singleProfile);
     assert.match(editorIpc, /getSharedBbmPdfAdapter/, CONTRACT.singleProfile);
+    assert.match(editorIpc, /configureProfileRoot\([\s\S]*module-protokoll/, CONTRACT.singleProfile);
     assert.doesNotMatch(editorIpc, /new .*ProfileStore|create.*ProfileStore/, CONTRACT.singleProfile);
+    assert.match(printIpc, /_usesBbmProtocolPdfLayout\(data\.mode\)[\s\S]*readPersistedPdfLayoutState\(\)/, CONTRACT.singleProfile);
     assert.match(printApp, /data\.mode === "headerTest"/, CONTRACT.historical);
     assert.match(restScreen, /printPdfAndPreviewInternal\(this\._buildRestarbeitenPdfPayload\(\)\)/, CONTRACT.historical);
     assert.match(restScreen, /mode:\s*"restarbeiten"[\s\S]*orientation:\s*"landscape"/, CONTRACT.historical);

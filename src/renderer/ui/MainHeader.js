@@ -577,25 +577,22 @@ export default class MainHeader {
 
     const itemFirms = mkPrintItem("Firmenliste", async (state) => {
       if (!(await this._ensureProtocolOutputEnabled())) return;
-      if (typeof this.router?.openFirmsPrintPreview !== "function") return;
-      await this.router.openFirmsPrintPreview({ projectId: state.projectId });
+      await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "firms" });
     });
 
     const itemTodo = mkPrintItem("ToDo-Liste", async (state) => {
       if (!(await this._ensureProtocolOutputEnabled())) return;
-      if (typeof this.router?.openTodoPrintPreview !== "function") return;
-      await this.router.openTodoPrintPreview({ projectId: state.projectId });
+      await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "todo" });
     });
 
-      const itemTopList = mkPrintItem("TOP-Liste", async (state) => {
-        if (!(await this._ensureProtocolOutputEnabled())) return;
-        if (typeof this.router?.openTopListAllPrintPreview !== "function") return;
-        await this.router.openTopListAllPrintPreview({ projectId: state.projectId });
-      });
-
-    const itemMeetingsClosed = mkPrintItem("Protokoll drucken", async () => {
+    const itemTopList = mkPrintItem("TOP-Liste", async (state) => {
       if (!(await this._ensureProtocolOutputEnabled())) return;
-      await this._openClosedProtocolSelectorFlow("print");
+      await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "topsall" });
+    });
+
+    const itemMeetingsClosed = mkPrintItem("Protokoll", async (state) => {
+      if (!(await this._ensureProtocolOutputEnabled())) return;
+      await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "protocol" });
     });
 
     printMenu.append(itemPreview, itemFirms, itemTodo, itemTopList, itemMeetingsClosed);
@@ -2457,25 +2454,25 @@ async _openMailClient(mailType = "", options = {}) {
     await this._openPrintTypeSelectorFlow();
   }
 
-  _buildPrintTypeSelectionItems({ projectId, meetingId } = {}) {
+  _buildPrintTypeSelectionItems({ projectId } = {}) {
     const currentProjectId =
       projectId ||
       this.router?.currentProjectId ||
       this.router?.context?.projectId ||
       this.router?.context?.project?.id ||
       null;
-    const currentMeetingId =
-      meetingId ||
-      this.router?.currentMeetingId ||
-      this.router?.context?.meetingId ||
-      this.router?.context?.meeting?.id ||
-      null;
     const actions = getVisiblePrintDialogActions();
     return actions
+      .filter((action) => ["protocol-print", "firms-preview", "todo-preview", "topsAll-preview"].includes(String(action?.key || "").trim()))
       .map((action) => {
         const key = String(action?.key || "").trim();
-        const label = String(action?.label || "").trim() || "Druckart";
-        const method = String(action?.method || "").trim();
+        const labels = {
+          "protocol-print": "Protokoll",
+          "firms-preview": "Firmenliste",
+          "todo-preview": "ToDo-Liste",
+          "topsAll-preview": "TOP-Liste",
+        };
+        const label = labels[key] || String(action?.label || "").trim() || "Druckart";
         const helper = {
           id: key,
           key,
@@ -2493,36 +2490,29 @@ async _openMailClient(mailType = "", options = {}) {
         }
 
         if (key === "protocol-print") {
-          helper.subLabel = "Geschlossene Protokolle auswaehlen";
+          helper.subLabel = "Gespeicherte Protokollfassungen auswählen";
           helper.disabled = !currentProjectId;
           helper.disabledReason = helper.disabled ? "Benötigt ein ausgewähltes Projekt." : "";
           return helper;
         }
 
-        if (key === "protocol-preview") {
-          helper.subLabel = "PDF-Vorschau für eine Besprechung";
-          helper.disabled = !currentProjectId || !currentMeetingId || typeof this.router?.openMeetingPrintPreview !== "function";
-          helper.disabledReason = helper.disabled ? "Benötigt eine geöffnete Besprechung." : "";
-          return helper;
-        }
-
         if (key === "firms-preview") {
-          helper.subLabel = "Aktuelle Projektfirmen zum Druckdatum";
-          helper.disabled = !currentProjectId || typeof this.router?.openFirmsPrintPreview !== "function";
+          helper.subLabel = "Gespeicherte Firmenlistenfassungen auswählen";
+          helper.disabled = !currentProjectId;
           helper.disabledReason = helper.disabled ? "Benötigt ein ausgewähltes Projekt." : "";
           return helper;
         }
 
         if (key === "todo-preview") {
-          helper.subLabel = "Projektweite offene ToDos";
-          helper.disabled = !currentProjectId || typeof this.router?.openTodoPrintPreview !== "function";
+          helper.subLabel = "Gespeicherte ToDo-Listenfassungen auswählen";
+          helper.disabled = !currentProjectId;
           helper.disabledReason = helper.disabled ? "Benötigt ein ausgewähltes Projekt." : "";
           return helper;
         }
 
         if (key === "topsAll-preview") {
-          helper.subLabel = "TOP-Liste mit allen TOPs";
-          helper.disabled = !currentProjectId || typeof this.router?.openTopListAllPrintPreview !== "function";
+          helper.subLabel = "Gespeicherte TOP-Listenfassungen auswählen";
+          helper.disabled = !currentProjectId;
           helper.disabledReason = helper.disabled ? "Benötigt ein ausgewähltes Projekt." : "";
           return helper;
         }
@@ -2567,53 +2557,23 @@ async _openMailClient(mailType = "", options = {}) {
     });
   }
 
-  async _handlePrintTypeSelection(item, { projectId, meetingId } = {}) {
+  async _handlePrintTypeSelection(item, { projectId } = {}) {
     const key = String(item?.id || item?.key || item?.action?.key || "").trim();
     if (!key) return;
     if (key === "protocol-print") {
-      await this._openClosedProtocolSelectorFlow("print");
-      return;
-    }
-    if (key === "protocol-preview") {
-      if (typeof this.router?.openMeetingPrintPreview !== "function") {
-        alert("PDF-Vorschau ist nicht verfuegbar.");
-        return;
-      }
-      await this.router.openMeetingPrintPreview({
-        projectId,
-        meetingId,
-        mode: "closed",
-      });
+      await this._openStoredProjectPdfSelectionPopup({ projectId, kind: "protocol" });
       return;
     }
     if (key === "firms-preview") {
-      if (typeof this.router?.openFirmsPrintPreview !== "function") {
-        alert("Firmenliste ist nicht verfuegbar.");
-        return;
-      }
-      setTimeout(() => {
-        void this.router.openFirmsPrintPreview({ projectId });
-      }, 0);
+      await this._openStoredProjectPdfSelectionPopup({ projectId, kind: "firms" });
       return;
     }
     if (key === "todo-preview") {
-      if (typeof this.router?.openTodoPrintPreview !== "function") {
-        alert("ToDo-Liste ist nicht verfuegbar.");
-        return;
-      }
-      setTimeout(() => {
-        void this.router.openTodoPrintPreview({ projectId });
-      }, 0);
+      await this._openStoredProjectPdfSelectionPopup({ projectId, kind: "todo" });
       return;
     }
     if (key === "topsAll-preview") {
-      if (typeof this.router?.openTopListAllPrintPreview !== "function") {
-        alert("TOP-Liste ist nicht verfuegbar.");
-        return;
-      }
-      setTimeout(() => {
-        void this.router.openTopListAllPrintPreview({ projectId });
-      }, 0);
+      await this._openStoredProjectPdfSelectionPopup({ projectId, kind: "topsall" });
       return;
     }
   }
@@ -2949,10 +2909,13 @@ async _openMailClient(mailType = "", options = {}) {
           nameEl.style.wordBreak = "break-word";
 
           btn.onclick = async () => {
+            const filePath = item?.filePath;
+            cleanup();
+            resolve();
             const PrintModal = (await import("./PrintModal.js")).default;
             const pm = new PrintModal({ router: this.router });
             await pm.openExistingPdfPreview({
-              filePath: item?.filePath,
+              filePath,
               title: `${popupTitle} (Vorschau)`,
             });
           };
