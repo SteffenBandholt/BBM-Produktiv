@@ -8,48 +8,30 @@
 }
 
 /*
- * BBM-Quicklane-Marker-Standard:
- * Der seitliche Restarbeiten-Marker entspricht dem bestehenden
- * ProjectContext-/Protokoll-Marker. Die jeweilige Quicklane-Logik bleibt
- * unangetastet; vereinheitlicht wird nur der sichtbare Randmarker.
+ * Verbindliche Marker-Referenz: ProjectContextQuicklane / Protokoll.
+ * Restarbeiten übernimmt diese Werte 1:1, damit alle seitlichen
+ * Quicklane-Marker in BBM gleich aussehen.
  */
 .bbm-restarbeiten-quicklane > button:first-child {
-  position: fixed !important;
-  right: 0 !important;
   top: 110px !important;
   width: 30px !important;
   height: 132px !important;
-  z-index: 12031 !important;
-  border: 1px solid #c9d2df !important;
-  border-right: 0 !important;
+  border: 1px solid #d9d9d9 !important;
+  border-right: none !important;
   border-radius: 10px 0 0 10px !important;
-  background: #ffffff !important;
-  color: #1f2937 !important;
-  cursor: pointer !important;
-  align-items: center !important;
-  justify-content: center !important;
+  background: #f1f1f1 !important;
+  color: #333 !important;
   padding: 8px 0 !important;
-  font-family: "Noto Sans", Arial, sans-serif !important;
-  font-size: 12px !important;
-  font-weight: 800 !important;
-  line-height: 1 !important;
-  letter-spacing: 0.08em !important;
   writing-mode: vertical-rl !important;
   transform: rotate(180deg) !important;
-  box-shadow: -4px 0 12px rgba(0,0,0,0.16) !important;
+  font-family: "Noto Sans", system-ui, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.08em !important;
+  box-shadow: -4px 0 12px rgba(0,0,0,0.08) !important;
   opacity: 1 !important;
   visibility: visible !important;
-  overflow: visible !important;
-}
-
-.bbm-restarbeiten-quicklane[data-open="false"] > button:first-child {
-  display: flex !important;
-  pointer-events: auto !important;
-}
-
-.bbm-restarbeiten-quicklane[data-open="true"] > button:first-child {
-  display: none !important;
-  pointer-events: none !important;
 }
 
 .bbm-restarbeiten-quicklane > button:first-child::before,
