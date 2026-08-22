@@ -25,6 +25,9 @@ export function getRechnungModuleEntry() {
         }),
       ]),
     }),
+    presentation: Object.freeze({
+      start: Object.freeze({ mode: "global" }),
+    }),
     shell: Object.freeze({ hideSidebar: false }),
   });
 }
