@@ -7,14 +7,40 @@
   clip-path: none !important;
 }
 
-/* BBM-Standard: Der eingeklappte Quicklane-Marker heißt sichtbar immer "Tools". */
+/*
+ * BBM-Quicklane-Standard:
+ * Der Randmarker bleibt sichtbar und trägt immer die Bezeichnung "Tools".
+ * Die Beschriftung wird bewusst unabhängig vom nativen Buttontext gerendert,
+ * damit Writing-Mode-, Font- und Alt-CSS-Regeln sie nicht verschlucken können.
+ */
 .bbm-restarbeiten-quicklane > button:first-child {
+  position: fixed !important;
   font-size: 0 !important;
+  writing-mode: horizontal-tb !important;
+  transform: none !important;
+  color: #1f2937 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  overflow: visible !important;
 }
 
 .bbm-restarbeiten-quicklane > button:first-child::after {
   content: "Tools";
-  font-size: 12px;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1f2937;
+  font-family: "Noto Sans", Arial, sans-serif;
+  font-size: 12px !important;
   font-weight: 800;
+  line-height: 1;
   letter-spacing: 0.08em;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: none;
 }
