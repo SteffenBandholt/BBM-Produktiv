@@ -158,6 +158,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const router = new Router();
 
+  // Zentraler Startvertrag für nicht projektgebundene Fachmodule.
+  // HomeView kann damit globale Module (z. B. Rechnung) direkt öffnen.
+  router.openStartModule = async (moduleId, options = {}) => {
+    return await router.openGlobalModule(moduleId, options);
+  };
+
   await router.ensureActiveModuleAccess({ force: true });
 
   applyThemeForSettings(DEFAULT_THEME_SETTINGS);
