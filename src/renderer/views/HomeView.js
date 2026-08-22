@@ -120,9 +120,13 @@ export default class HomeView {
       ? entry.navigation.global[0]
       : entry?.navigation?.global || null;
     const globalNavigationKey = String(globalNavigation?.key || "").trim();
-    if (globalNavigationKey && typeof this.router?.openGlobalModule === "function") {
-      await this.router.openGlobalModule(globalNavigationKey, { source: "home" });
-      return;
+    const moduleId = String(entry?.moduleId || "").trim();
+    if (globalNavigationKey && moduleId && typeof this.router?.openGlobalModule === "function") {
+      const opened = await this.router.openGlobalModule(moduleId, {
+        navigationKey: globalNavigationKey,
+        source: "home",
+      });
+      if (opened) return;
     }
 
     const mode = String(entry?.presentation?.start?.mode || "project").trim().toLowerCase();
