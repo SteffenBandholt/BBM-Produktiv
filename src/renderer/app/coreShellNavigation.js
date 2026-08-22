@@ -56,7 +56,7 @@ export function clearDevelopmentUiEditorOpenButtonRefs() {
 
 export function bindDevelopmentUiEditorOpenButtonRef({ scopeId, button } = {}) {
   const launcher = getMainHeaderLauncherContract(scopeId);
-  if (!launcher || !button || typeof button.setAttribute !== "function") return false;
+  if (!launcher || !MAIN_HEADER_LAUNCHER_COMPONENT_IDS.includes(launcher.componentId) || !button || typeof button.setAttribute !== "function") return false;
   beginM83ComponentBinding(launcher.componentId);
   registerM80Ref(launcher.elementId, button);
   completeM80PilotRender();
