@@ -153,6 +153,12 @@ export async function installDevelopmentUiEditorOpenButton({
     button.disabled = true;
     try {
       await openNativeUiEditor({ scopeId, api: uiEditorApi, ...(registeredLauncher ? { launcherButton: button } : {}) });
+    } catch (error) {
+      const code = String(error?.code || error?.name || "ui_editor_open_error");
+      const message = String(error?.message || error || "Unbekannter Fehler beim Öffnen des UI-Editors.");
+      console.error("[ui-editor] open button failed", error);
+      showRegistryRefreshStatus(`${code}: ${message}`, "blocked");
+      alert(`${code}\n${message}`);
     } finally {
       button.disabled = false;
     }
