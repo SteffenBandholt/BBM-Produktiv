@@ -50,6 +50,11 @@ const MAIN_HEADER_LAUNCHER_COMPONENT_IDS = Object.freeze([
   PROTOKOLL_MAIN_HEADER_LAUNCHER.componentId,
 ]);
 
+function isRegisteredMainHeaderLauncher(scopeId) {
+  const launcher = getMainHeaderLauncherContract(scopeId);
+  return Boolean(launcher && MAIN_HEADER_LAUNCHER_COMPONENT_IDS.includes(launcher.componentId));
+}
+
 export function clearDevelopmentUiEditorOpenButtonRefs() {
   MAIN_HEADER_LAUNCHER_COMPONENT_IDS.forEach((componentId) => beginM83ComponentBinding(componentId));
 }
@@ -83,7 +88,7 @@ export async function openNativeUiEditor(context = {}) {
     await api.preparePdfContext({ projectId: context?.projectId || null, meetingId: context?.meetingId || null });
   }
   const activeScopeId = String(context?.scopeId || "").trim();
-  if (activeScopeId && context?.launcherButton) {
+  if (activeScopeId && context?.launcherButton && isRegisteredMainHeaderLauncher(activeScopeId)) {
     bindDevelopmentUiEditorOpenButtonRef({ scopeId: activeScopeId, button: context.launcherButton });
   }
   let registration = createM80RegistrationDescriptor();
@@ -136,6 +141,7 @@ export async function installDevelopmentUiEditorOpenButton({
   if (!host || !doc?.createElement || !await isDevelopmentUiEditorBuild({ api: buildApi })) return null;
   if (host.querySelector?.('[data-bbm-development-ui-editor-open="true"]')) return null;
 
+  const registeredLauncher = isRegisteredMainHeaderLauncher(scopeId);
   const button = doc.createElement("button");
   button.type = "button";
   button.className = "bbm-development-ui-editor-open-button";
@@ -146,14 +152,16 @@ export async function installDevelopmentUiEditorOpenButton({
     if (button.disabled) return;
     button.disabled = true;
     try {
-      await openNativeUiEditor({ scopeId, api: uiEditorApi, launcherButton: button });
+      await openNativeUiEditor({ scopeId, api: uiEditorApi, ...(registeredLauncher ? { launcherButton: button } : {}) });
     } finally {
       button.disabled = false;
     }
   });
   host.appendChild(button);
-  clearDevelopmentUiEditorOpenButtonRefs();
-  bindDevelopmentUiEditorOpenButtonRef({ scopeId, button });
+  if (registeredLauncher) {
+    clearDevelopmentUiEditorOpenButtonRefs();
+    bindDevelopmentUiEditorOpenButtonRef({ scopeId, button });
+  }
   return button;
 }
 
