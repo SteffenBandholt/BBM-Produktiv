@@ -1,1 +1,1 @@
-export { default } from "./FirmsUsageCompactView.js";
+export { default } from "./FirmsUsageView.js";
