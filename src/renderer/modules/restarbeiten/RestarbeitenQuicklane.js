@@ -34,6 +34,12 @@ function setQuicklaneOpen(root, open) {
   root.style.right = open ? "0" : "-64px";
   root.style.borderColor = open ? "rgba(29, 78, 216, 0.42)" : "rgba(154, 168, 189, 0.72)";
   root.style.boxShadow = open ? "0 14px 28px rgba(31, 41, 55, 0.15)" : "0 10px 22px rgba(31, 41, 55, 0.1)";
+
+  const grip = root._bbmEdgeGrip || null;
+  if (grip) {
+    grip.style.right = open ? "64px" : "0";
+    grip.setAttribute("aria-expanded", open ? "true" : "false");
+  }
 }
 
 function createTextIcon(label) {
@@ -153,19 +159,20 @@ export function buildRestarbeitenQuicklane({
   root.setAttribute("aria-label", "Restarbeiten Quicklane");
   setUiEditorId(root, "restarbeiten.quicklane");
   applyQuicklaneRootStyles(root);
-  syncOpenState(root, pinned);
 
   const edgeGrip = document.createElement("button");
   edgeGrip.type = "button";
   edgeGrip.textContent = "Tools";
   edgeGrip.title = "Restarbeiten-Werkzeuge";
   edgeGrip.setAttribute("aria-label", "Restarbeiten-Werkzeuge öffnen");
+  edgeGrip.setAttribute("aria-expanded", "false");
   Object.assign(edgeGrip.style, {
-    position: "absolute",
-    left: "-28px",
-    top: "18px",
+    position: "fixed",
+    right: "0",
+    top: "122px",
     width: "28px",
     height: "132px",
+    zIndex: "12031",
     border: "1px solid #c9d2df",
     borderRight: "0",
     borderRadius: "10px 0 0 10px",
@@ -182,7 +189,10 @@ export function buildRestarbeitenQuicklane({
     fontWeight: "800",
     letterSpacing: "0.08em",
     boxShadow: "-4px 0 12px rgba(0,0,0,0.12)",
+    transition: "right 180ms ease-out",
   });
+  root._bbmEdgeGrip = edgeGrip;
+  syncOpenState(root, pinned);
 
   const openTemporarily = () => setQuicklaneOpen(root, true);
   edgeGrip.addEventListener("mouseenter", openTemporarily);
