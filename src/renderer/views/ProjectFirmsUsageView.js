@@ -1,4 +1,5 @@
 import ProjectFirmsParticipantsView from "./ProjectFirmsParticipantsView.js";
+import { isModuleActive } from "../app/modules/moduleAccessState.js";
 
 const PROJECT = "project_participant";
 const INVOICE = "invoice_customer";
@@ -25,6 +26,8 @@ function style(el, values = {}) {
 export default class ProjectFirmsUsageView extends ProjectFirmsParticipantsView {
   _renderDetails(container) {
     super._renderDetails(container);
+
+    if (!isModuleActive("rechnung")) return;
 
     const entry = this.selectedEntry || null;
     const firm = entry?.firm || null;
@@ -64,7 +67,9 @@ export default class ProjectFirmsUsageView extends ProjectFirmsParticipantsView 
       color: "#98a2b3",
       fontSize: "10px",
     });
-    hint.textContent = codes.has(PROJECT) ? "Projektteilnehmer und Rechnungskunde sind kombinierbar" : "Als Rechnungskunde verwendbar";
+    hint.textContent = codes.has(PROJECT)
+      ? "Projektteilnehmer und Rechnungskunde sind kombinierbar"
+      : "Als Rechnungskunde verwendbar";
     usageRow.append(label, hint);
 
     checkbox.addEventListener("change", async () => {
