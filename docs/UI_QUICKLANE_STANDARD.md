@@ -5,43 +5,54 @@ Status: verbindliche UI-Regel fuer bestehende und kuenftige BBM-Module
 
 ## Grundsatz
 
-Projekt- oder modulbezogene Schnellwerkzeuge koennen als seitliche Quicklane am rechten Fensterrand angeboten werden. Eine eingeklappte Quicklane darf niemals vollstaendig verschwinden oder nur ueber eine unsichtbare Hover-Zone erreichbar sein.
+Projekt- oder modulbezogene Schnellwerkzeuge koennen als seitliche Quicklane am rechten Fensterrand angeboten werden. Der sichtbare Randmarker aller seitlichen Quicklanes muss innerhalb der App gleich aussehen und sich gleich verhalten.
 
-## Verbindlicher Marker
+## Verbindlicher Marker-Standard
 
-- Der sichtbare Marker einer eingeklappten Quicklane heisst immer **Tools**.
-- Der Marker sitzt dauerhaft am rechten Fensterrand und bleibt auch dann sichtbar, wenn die eigentliche Quicklane ausserhalb des sichtbaren Bereichs steht.
-- Der Marker darf nicht durch `overflow: hidden`, `clip-path`, Modulcontainer oder Scrollbereiche abgeschnitten werden.
-- Der Marker ist ein echter erreichbarer Bedieneinstieg; reine unsichtbare Hover-Flaechen oder nur dekorative Striche sind kein Ersatz.
+Referenz ist der bestehende ProjectContext-/Protokoll-Marker.
+
+Alle seitlichen Quicklane-Marker verwenden deshalb dieselbe sichtbare Grundform:
+
+- Breite: 30 px
+- Hoehe: 132 px
+- Position: rechter Fensterrand, 110 px von oben
+- weisser Hintergrund
+- Rand `#c9d2df`, rechts offen
+- Radius `10px 0 0 10px`
+- Schatten `-4px 0 12px rgba(0,0,0,0.16)`
+- gleiche Schrift-/Markerbehandlung wie die Referenz-Quicklane
+
+Die sichtbare Bezeichnung darf nur dann erscheinen, wenn sie von der Referenz-Quicklane in diesem Zustand ebenfalls dargestellt wird. Es gibt keine modulbezogenen Sondermarker mehr.
 
 ## Verhalten
 
-- Hover oder Klick auf **Tools** oeffnet die Quicklane.
-- Ohne Fixierung darf die Quicklane nach Verlassen wieder einklappen.
-- Eine Fixieren-/Loesen-Funktion darf die Quicklane dauerhaft offen halten.
-- Beim Oeffnen darf der Marker mit der Quicklane nach links wandern, muss aber sichtbar und bedienbar bleiben.
-- Beim Verlassen eines Moduls werden Quicklane und Marker sauber entfernt.
+- Eingeklappte Marker muessen am rechten Fensterrand erreichbar bleiben.
+- Beim Oeffnen darf der Randmarker entsprechend der bestehenden Referenz-Quicklane verschwinden; es wird kein zusaetzlicher freischwebender Marker neben einer offenen Quicklane angezeigt.
+- Die jeweilige fachliche Quicklane-Logik bleibt modulspezifisch, die Markeroptik nicht.
+- Eine vorhandene Fixieren-/Loesen-Funktion darf erhalten bleiben.
+- Beim Verlassen eines Moduls werden modulbezogene Quicklane-Elemente sauber entfernt.
 
 ## Technische Regel
 
-Quicklane und Marker muessen ausserhalb von geclippten Fachinhalten gemountet werden oder technisch so entkoppelt sein, dass Modul-`overflow` und `clip-path` den Marker nicht beeinflussen koennen. Der Marker soll `position: fixed` beziehungsweise eine gleichwertig robuste Shell-Loesung verwenden.
+Marker duerfen nicht durch `overflow: hidden`, `clip-path`, Modulcontainer oder Scrollbereiche abgeschnitten werden. Sie werden robust am Fensterrand bzw. in der Shell positioniert.
 
-Alte Clipping-Loesungen, bei denen die gesamte Quicklane beschnitten wird und nur ein zufaelliger Rest sichtbar bleibt, sind fuer neue Implementierungen nicht zulaessig.
+Neue Module bauen keinen eigenen Marker-Stil. Sie verwenden den BBM-Quicklane-Marker-Standard oder eine spaeter daraus abgeleitete gemeinsame Komponente.
 
-## Referenz
+## Referenz und Bestand
 
-- Protokoll: Referenz fuer Bedienprinzip und kompakte seitliche Werkzeugleiste.
-- Restarbeiten: gleicher Quicklane-Grundsatz; Markerbezeichnung **Tools**, dauerhaft am rechten Fensterrand erreichbar.
+- ProjectContext-/Protokoll-Quicklane: visuelle Referenz fuer den Marker.
+- Restarbeiten: Marker wird auf dieselbe Geometrie und Darstellung gezogen; die bestehende Restarbeiten-Fachlogik bleibt erhalten.
+- Inline-Werkzeuge innerhalb einer Leiste, z. B. TOP-Filter, sind keine Quicklane-Randmarker und fallen nicht unter diese Regel.
 
 ## Abnahmekriterien fuer neue Module
 
-Eine Quicklane gilt erst als fertig, wenn alle folgenden Punkte sichtbar geprueft sind:
+Eine seitliche Quicklane gilt erst als fertig, wenn:
 
-1. eingeklappt ist **Tools** sichtbar;
-2. Klick und Hover oeffnen die Quicklane;
-3. die Leiste kann wieder einklappen;
-4. ein Fixieren-Zustand bleibt offen;
-5. Marker und Leiste werden von keinem Modulcontainer abgeschnitten;
-6. Wechsel auf eine andere Seite entfernt die alte Quicklane vollstaendig.
+1. ihr Randmarker optisch dem Referenzmarker entspricht;
+2. Position, Breite und Hoehe gleich sind;
+3. keine modulbezogene Sonderbeschriftung oder Sonderform entsteht;
+4. der Marker nicht durch Container-Clipping verschwindet;
+5. offener und geschlossener Zustand der Referenzlogik folgen;
+6. beim Seitenwechsel keine verwaisten Marker uebrig bleiben.
 
 Diese Regel ist bei neuen BBM-Modulen wiederzuverwenden und nicht pro Modul neu zu erfinden.
