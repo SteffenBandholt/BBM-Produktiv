@@ -5,6 +5,7 @@
 const { ipcMain } = require("electron");
 const projectFirmsRepo = require("../db/projectFirmsRepo");
 const projectPersonsRepo = require("../db/projectPersonsRepo");
+const firmUsagesRepo = require("../db/firmUsagesRepo");
 const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const { initDatabase } = require("../db/database");
 
@@ -176,6 +177,14 @@ function _cleanupGlobalFirmLinks({ projectId, firmId }) {
 }
 
 function registerProjectFirmsIpc() {
+  // Bestehende zentrale Projektzuordnungen automatisch als Verwendung markieren.
+  // Das ist idempotent und erzeugt keine Firmenkopien.
+  try {
+    firmUsagesRepo.ensureProjectParticipantUsageForAssignedFirms();
+  } catch (e) {
+    console.warn("[main] firm usage bootstrap failed:", _err(e));
+  }
+
   // --------------------------------------------
   // HINWEIS:
   // 'firms:listGlobal' wird bereits global registriert (Stammdaten).
@@ -183,7 +192,7 @@ function registerProjectFirmsIpc() {
   // --------------------------------------------
 
   // --------------------------------------------
-  // Project Firms
+  // Project Firms (LEGACY-BESTAND)
   // --------------------------------------------
   ipcMain.handle("projectFirms:listByProject", (_evt, projectId) => {
     try {
@@ -198,8 +207,9 @@ function registerProjectFirmsIpc() {
 
   ipcMain.handle("projectFirms:create", (_evt, data) => {
     try {
+      // Nur noch fuer Legacy-Kompatibilitaet. Neue UI darf diesen Pfad nicht mehr anbieten.
       const firm = projectFirmsRepo.createProjectFirm(data || {});
-      return { ok: true, firm };
+      return { ok: true, firm, legacy: true };
     } catch (e) {
       return { ok: false, error: _err(e) };
     }
@@ -210,7 +220,7 @@ function registerProjectFirmsIpc() {
       const projectFirmId = data?.projectFirmId;
       const patch = data?.patch;
       const firm = projectFirmsRepo.updateProjectFirm({ projectFirmId, patch });
-      return { ok: true, firm };
+      return { ok: true, firm, legacy: true };
     } catch (e) {
       return { ok: false, error: _err(e) };
     }
@@ -219,14 +229,14 @@ function registerProjectFirmsIpc() {
   ipcMain.handle("projectFirms:delete", (_evt, projectFirmId) => {
     try {
       const res = projectFirmsRepo.softDeleteProjectFirm(projectFirmId);
-      return { ok: true, result: res };
+      return { ok: true, result: res, legacy: true };
     } catch (e) {
       return { ok: false, error: _err(e) };
     }
   });
 
   // --------------------------------------------
-  // Global-Firma ↔ Projekt-Zuordnung + Kandidaten
+  // Zentrale Firma ↔ Projekt-Zuordnung + Kandidaten
   // --------------------------------------------
   ipcMain.handle("projectFirms:listFirmCandidatesByProject", (_evt, projectId) => {
     try {
@@ -239,11 +249,15 @@ function registerProjectFirmsIpc() {
 
   ipcMain.handle("projectFirms:assignGlobalFirm", (_evt, data) => {
     try {
-      const result = projectFirmsRepo.assignGlobalFirmToProject({
-        projectId: data?.projectId,
-        firmId: data?.firmId,
+      const projectId = data?.projectId;
+      const firmId = data?.firmId;
+      const usage = firmUsagesRepo.setUsage({
+        firmId,
+        usageCode: firmUsagesRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT,
+        enabled: true,
       });
-      return { ok: true, result };
+      const result = projectFirmsRepo.assignGlobalFirmToProject({ projectId, firmId });
+      return { ok: true, result, usage };
     } catch (e) {
       return { ok: false, error: _err(e) };
     }
@@ -259,6 +273,8 @@ function registerProjectFirmsIpc() {
         projectId: data?.projectId,
         firmId: data?.firmId,
       });
+      // Verwendung bleibt bestehen: Eine Firma kann Projektteilnehmer sein,
+      // auch wenn sie aktuell keinem konkreten Projekt zugeordnet ist.
       return { ok: true, result, cleanup };
     } catch (e) {
       return { ok: false, error: _err(e) };
@@ -291,7 +307,53 @@ function registerProjectFirmsIpc() {
   });
 
   // --------------------------------------------
-  // Project Persons
+  // Zentrale Firmen-Verwendungen
+  // --------------------------------------------
+  ipcMain.handle("firmUsages:list", (_evt, firmId) => {
+    try {
+      const usages = firmUsagesRepo.listCodesByFirm(firmId);
+      return { ok: true, firmId, usages };
+    } catch (e) {
+      return { ok: false, error: _err(e) };
+    }
+  });
+
+  ipcMain.handle("firmUsages:set", (_evt, data) => {
+    try {
+      const result = firmUsagesRepo.setUsage({
+        firmId: data?.firmId,
+        usageCode: data?.usageCode,
+        enabled: data?.enabled,
+      });
+      return { ok: true, result };
+    } catch (e) {
+      return { ok: false, error: _err(e) };
+    }
+  });
+
+  ipcMain.handle("firmUsages:replace", (_evt, data) => {
+    try {
+      const result = firmUsagesRepo.replaceUsages({
+        firmId: data?.firmId,
+        usageCodes: data?.usageCodes,
+      });
+      return { ok: true, result };
+    } catch (e) {
+      return { ok: false, error: _err(e) };
+    }
+  });
+
+  ipcMain.handle("firmUsages:listFirms", (_evt, usageCode) => {
+    try {
+      const list = firmUsagesRepo.listFirmsByUsage(usageCode);
+      return { ok: true, usageCode, list };
+    } catch (e) {
+      return { ok: false, error: _err(e) };
+    }
+  });
+
+  // --------------------------------------------
+  // Project Persons (LEGACY-BESTAND)
   // --------------------------------------------
   ipcMain.handle("projectPersons:listByProjectFirm", (_evt, projectFirmId) => {
     try {
@@ -305,7 +367,7 @@ function registerProjectFirmsIpc() {
   ipcMain.handle("projectPersons:create", (_evt, data) => {
     try {
       const person = projectPersonsRepo.createProjectPerson(data || {});
-      return { ok: true, person };
+      return { ok: true, person, legacy: true };
     } catch (e) {
       return { ok: false, error: _err(e) };
     }
@@ -316,7 +378,7 @@ function registerProjectFirmsIpc() {
       const projectPersonId = data?.projectPersonId;
       const patch = data?.patch;
       const person = projectPersonsRepo.updateProjectPerson({ projectPersonId, patch });
-      return { ok: true, person };
+      return { ok: true, person, legacy: true };
     } catch (e) {
       return { ok: false, error: _err(e) };
     }
@@ -326,13 +388,13 @@ function registerProjectFirmsIpc() {
     try {
       const cleanup = _cleanupProjectPersonLinks(projectPersonId);
       const res = projectPersonsRepo.softDeleteProjectPerson(projectPersonId);
-      return { ok: true, result: res, cleanup };
+      return { ok: true, result: res, cleanup, legacy: true };
     } catch (e) {
       return { ok: false, error: _err(e) };
     }
   });
 
-  console.log("[main] projectFirms/projectPersons IPC registered");
+  console.log("[main] projectFirms/projectPersons/firmUsages IPC registered");
 }
 
 module.exports = { registerProjectFirmsIpc };

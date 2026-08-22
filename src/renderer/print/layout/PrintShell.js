@@ -33,53 +33,77 @@ function _el(tag, className, text) {
   return el;
 }
 
+function _appendProtocolIndicators(container, row = {}) {
+  if (!container) return [];
+  const indicators = [];
+  if (Number(row?.level) !== 1 && row?.ampelColor) {
+    const dot = _el("span", `ampelDot ${row.ampelColor}`);
+    dot.dataset.marker = "ampel";
+    container.appendChild(dot);
+    indicators.push(dot);
+  }
+
+  for (const markerType of [
+    ...(row?.isDecision ? ["decision"] : []),
+    ...(row?.isTask ? ["task"] : []),
+  ]) {
+    const marker = _el("span", "lvl1Marker");
+    marker.dataset.marker = markerType;
+    const img = document.createElement("img");
+    const isDecision = markerType === "decision";
+    img.src = isDecision ? DECISION_MARKER_URL : TODO_MARKER_URL;
+    img.alt = isDecision ? "Beschluss" : "ToDo";
+    img.title = img.alt;
+    marker.appendChild(img);
+    container.appendChild(marker);
+    indicators.push(marker);
+  }
+  return indicators;
+}
+
 export function appendProtocolTitleMarker(container, row = {}) {
   if (!container || Number(row?.level) !== 1) return null;
-  const markerType = row?.isDecision ? "decision" : row?.isTask ? "task" : "";
-  if (!markerType) return null;
+  const indicators = _appendProtocolIndicators(container, row);
+  return indicators.length === 1 ? indicators[0] : indicators;
+}
 
-  const marker = _el("span", "lvl1Marker");
-  marker.dataset.marker = markerType;
-  const img = document.createElement("img");
-  const isDecision = markerType === "decision";
-  img.src = isDecision ? DECISION_MARKER_URL : TODO_MARKER_URL;
-  img.alt = isDecision ? "Beschluss" : "ToDo";
-  img.title = img.alt;
-  marker.appendChild(img);
-  container.appendChild(marker);
-  return marker;
+export function appendProtocolMetaIndicators(container, row = {}) {
+  if (!container || Number(row?.level) === 1) return null;
+  const indicators = _appendProtocolIndicators(container, row);
+  return indicators.length === 1 ? indicators[0] : indicators;
 }
 
 export const RESTARBEITEN_PDF_COLUMNS = Object.freeze([
-  Object.freeze({ key: "number", label: "Nr.", widthMm: 9, minMm: 7, maxMm: 12 }),
-  Object.freeze({ key: "class", label: "Klasse", widthMm: 10, minMm: 8, maxMm: 14 }),
-  Object.freeze({ key: "shortText", label: "Kurztext", widthMm: 31, minMm: 24, maxMm: 42 }),
-  Object.freeze({ key: "longText", label: "Langtext", widthMm: 46, minMm: 34, maxMm: 60 }),
-  Object.freeze({ key: "location1", labelKey: "level_1_label", fallbackLabel: "Haus", widthMm: 17, minMm: 13, maxMm: 24 }),
-  Object.freeze({ key: "location2", labelKey: "level_2_label", fallbackLabel: "Geschoss", widthMm: 17, minMm: 13, maxMm: 24 }),
-  Object.freeze({ key: "location3", labelKey: "level_3_label", fallbackLabel: "Einheit", widthMm: 18, minMm: 13, maxMm: 24 }),
-  Object.freeze({ key: "location4", labelKey: "level_4_label", fallbackLabel: "Raum", widthMm: 18, minMm: 13, maxMm: 24 }),
-  Object.freeze({ key: "status", label: "Status", widthMm: 19, minMm: 15, maxMm: 25 }),
-  Object.freeze({ key: "dueDate", label: "Fertig bis", widthMm: 20, minMm: 17, maxMm: 24 }),
-  Object.freeze({ key: "responsible", label: "Verantwortlich", widthMm: 25, minMm: 19, maxMm: 34 }),
-  Object.freeze({ key: "completedAt", label: "erledigt am", widthMm: 20, minMm: 17, maxMm: 24 }),
-  Object.freeze({ key: "completionNote", label: "Notiz/Maßnahmen", widthMm: 23, minMm: 18, maxMm: 34 }),
+  Object.freeze({ key: "number", labelLines: ["Nr."], sourceIndexes: [0], contentKind: "number", widthMm: 9, minMm: 7, maxMm: 12 }),
+  Object.freeze({ key: "class", labelLines: ["Klasse"], sourceIndexes: [1], contentKind: "text", widthMm: 10, minMm: 8, maxMm: 14 }),
+  Object.freeze({ key: "subject", labelLines: ["Gegenstand"], sourceIndexes: [2, 3], contentKind: "stack", widthMm: 77, minMm: 58, maxMm: 102 }),
+  Object.freeze({ key: "location", labelLines: ["Ort"], sourceIndexes: [4, 5], contentKind: "stack", widthMm: 34, minMm: 26, maxMm: 48 }),
+  Object.freeze({ key: "unitRoom", labelLines: ["Einheit", "Raum"], sourceIndexes: [6, 7], contentKind: "stack", widthMm: 36, minMm: 26, maxMm: 48 }),
+  Object.freeze({ key: "dueStatus", labelLines: ["Fertig bis", "Status"], sourceIndexes: [9, 8], contentKind: "dueStatus", widthMm: 39, minMm: 32, maxMm: 49 }),
+  Object.freeze({ key: "responsible", labelLines: ["Verantwortlich"], sourceIndexes: [10], contentKind: "text", widthMm: 25, minMm: 19, maxMm: 34 }),
+  Object.freeze({ key: "completedAt", labelLines: ["erledigt am"], sourceIndexes: [11], contentKind: "text", widthMm: 20, minMm: 17, maxMm: 24 }),
+  Object.freeze({ key: "completionNote", labelLines: ["Notiz/Maßnahmen"], sourceIndexes: [12], contentKind: "text", widthMm: 23, minMm: 18, maxMm: 34 }),
 ]);
 
-function _restarbeitenColumnLabel(column, labels = {}) {
-  if (column.labelKey) {
-    return String(labels?.[column.labelKey] || "").trim() || column.fallbackLabel;
-  }
-  return column.label;
+function _appendRestarbeitenStack(container, values, lineClasses = []) {
+  values.forEach((value, index) => {
+    const text = String(value ?? "").trim();
+    if (!text) return;
+    container.appendChild(_el("span", `restarbeitCellLine ${lineClasses[index] || ""}`.trim(), text));
+  });
+  return container;
 }
 
-export function buildRestarbeitenTableHead(labels = {}) {
+export function buildRestarbeitenTableHead(_labels = {}) {
   const thead = document.createElement("thead");
   const tr = document.createElement("tr");
   tr.className = "tableHeadRow restarbeitenTableHeadRow";
   for (const column of RESTARBEITEN_PDF_COLUMNS) {
-    const th = _el("th", `restarbeitenCol restarbeitenCol--${column.key}`, _restarbeitenColumnLabel(column, labels));
+    const th = _el("th", `restarbeitenCol restarbeitenCol--${column.key}`);
     th.dataset.restarbeitenColumn = column.key;
+    const label = _el("span", "restarbeitenHeaderLabel");
+    for (const line of column.labelLines) label.appendChild(_el("span", "restarbeitenHeaderLine", line));
+    th.appendChild(label);
     tr.appendChild(th);
   }
   thead.appendChild(tr);
@@ -107,25 +131,37 @@ export function buildRestarbeitenRow(row = {}) {
   tr.dataset.restarbeitenSourceId = String(row.sourceId || "");
   tr.dataset.restarbeitenSegment = segment;
   const cells = Array.isArray(row.cells) ? row.cells : [];
-  for (let index = 0; index < RESTARBEITEN_PDF_COLUMNS.length; index += 1) {
-    const column = RESTARBEITEN_PDF_COLUMNS[index];
-    const cell = cells[index] ?? "";
+  for (const column of RESTARBEITEN_PDF_COLUMNS) {
+    const values = column.sourceIndexes.map((index) => cells[index] ?? "");
     const td = _el("td", `restarbeitenCol restarbeitenCol--${column.key}`);
-    if (index === 0) {
-      td.appendChild(_el("span", "restarbeitNumber", cell));
+    td.dataset.restarbeitenColumn = column.key;
+    if (column.contentKind === "number") {
+      td.appendChild(_el("span", "restarbeitNumber", values[0]));
       if (segment !== "complete" && segment !== "start") {
         td.appendChild(_el("span", "restarbeitContinuationLabel", "Fortsetzung"));
       }
-    } else if (index === 8) {
-      const statusWrap = _el("span", "restarbeitStatusWrap", cell);
+    } else if (column.contentKind === "stack") {
+      const stack = _el("span", "restarbeitCellStack");
+      const lineClasses = column.key === "subject"
+        ? ["restarbeitShortText", "restarbeitLongText"]
+        : ["restarbeitCellPrimary", "restarbeitCellSecondary"];
+      _appendRestarbeitenStack(stack, values, lineClasses);
+      td.appendChild(stack);
+    } else if (column.contentKind === "dueStatus") {
+      const stack = _el("span", "restarbeitCellStack restarbeitDueStatus");
+      _appendRestarbeitenStack(stack, [values[0]], ["restarbeitDueDate"]);
       const shouldShowAmpel = row.showAmpelInList !== false && row.ampelState;
       const ampelClassMap = { rot: "red", gruen: "green", orange: "orange", neutral: "neutral" };
-      if (shouldShowAmpel) {
-        statusWrap.appendChild(_el("span", `ampelDot ${ampelClassMap[row.ampelState] || "neutral"}`));
+      const statusText = String(values[1] ?? "").trim();
+      if (shouldShowAmpel || statusText) {
+        const statusWrap = _el("span", "restarbeitStatusWrap");
+        if (shouldShowAmpel) statusWrap.appendChild(_el("span", `ampelDot ${ampelClassMap[row.ampelState] || "neutral"}`));
+        if (statusText) statusWrap.appendChild(_el("span", "restarbeitStatusText", statusText));
+        stack.appendChild(statusWrap);
       }
-      td.appendChild(statusWrap);
+      td.appendChild(stack);
     } else {
-      td.textContent = String(cell || "");
+      td.textContent = String(values[0] || "");
     }
     tr.appendChild(td);
   }
@@ -287,10 +323,7 @@ function _buildTopRow(row) {
   const meta3 = _el("div", "meta3");
   const metaLine1 = _el("div", "metaLine meta1");
   metaLine1.appendChild(_el("span", "metaText", row.status));
-  if (row.ampelColor) {
-    const dot = _el("span", `ampelDot ${row.ampelColor}`);
-    metaLine1.appendChild(dot);
-  }
+  appendProtocolMetaIndicators(metaLine1, row);
   meta3.appendChild(metaLine1);
   meta3.appendChild(_el("div", "metaLine meta2", row.due));
   meta3.appendChild(_el("div", "metaLine meta3", row.resp));
@@ -515,7 +548,7 @@ function _buildTable(page, data) {
               ? "Keine Restpunkte für den Druck vorhanden."
             : "Keine Einträge vorhanden.";
     const td = _el("td", "", msg);
-    td.colSpan = type === "todo" ? 5 : type === "firms" ? 3 : type === "restarbeiten" ? 13 : 1;
+    td.colSpan = type === "todo" ? 5 : type === "firms" ? 3 : type === "restarbeiten" ? RESTARBEITEN_PDF_COLUMNS.length : 1;
     tr.appendChild(td);
     tbody.appendChild(tr);
   }

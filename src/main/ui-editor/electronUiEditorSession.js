@@ -13,6 +13,7 @@ const {
   compareRegistrySnapshots,
   createElectronTargetContract,
   createRegistryFingerprint,
+  createUiScopeFingerprint,
   createSessionIdentifiers,
   loadTargetStartupLayout,
   validateRegistrationSnapshot,
@@ -20,7 +21,6 @@ const {
 
 const APPLICATION_ID = "bbm-produktiv";
 const DISPLAY_NAME = "BBM";
-const ACTIVE_SCOPES = Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]);
 const NATIVE_REQUEST_ACTIONS = new Set(["getRegistry", "getLayoutState", "submitChange", "acknowledgeLayoutSave", "prepareEditorClose"]);
 const NATIVE_PDF_REQUEST_ACTIONS = new Set([
   "getPdfRegistry",
@@ -113,18 +113,21 @@ function createBbmModuleLayoutStorageIdentity(registration = {}) {
   const activeScopes = Array.isArray(registration.activeScopes)
     ? registration.activeScopes.map((scopeId) => String(scopeId || "").trim()).filter(Boolean)
     : [];
+  const declaredStorageKey = String(registration.layoutStorageKey || "").trim();
+  const declaredScopeGroupId = String(registration.scopeGroupId || "").trim();
   const moduleIds = [...new Set(activeScopes.map((scopeId) => scopeId.split(".", 1)[0]))];
-  if (moduleIds.length !== 1 || !/^[a-z0-9-]+$/.test(moduleIds[0])) {
+  const fallbackModuleId = moduleIds.length === 1 ? moduleIds[0] : "";
+  const layoutStorageKey = declaredStorageKey || (fallbackModuleId ? `module-${fallbackModuleId}` : "");
+  if (!/^[a-z0-9][a-z0-9-]{1,80}$/.test(layoutStorageKey) || declaredScopeGroupId && declaredScopeGroupId !== layoutStorageKey) {
     throw new ElectronEditorError(
       ELECTRON_EDITOR_ERROR_CODES.REGISTRY_SCOPE_BLOCKED,
       "Der globale Modullayout-Schlüssel kann nicht eindeutig aus den aktiven Scopes gebildet werden."
     );
   }
   const registryScopes = Array.isArray(registration.registryScopes) ? registration.registryScopes : [];
-  const moduleId = moduleIds[0];
   return Object.freeze({
-    moduleId,
-    layoutStorageKey: `module-${moduleId}`,
+    moduleId: declaredScopeGroupId || fallbackModuleId || layoutStorageKey,
+    layoutStorageKey,
     registryVersion: Number(registration.registryVersion),
     registryFingerprint: createRegistryFingerprint(registryScopes),
   });
@@ -154,6 +157,75 @@ function migrateCompatibleLegacyLayoutProfile(baseProfileRoot, moduleProfileRoot
   if (!fs.existsSync(source) || fs.existsSync(destination)) return;
   try { fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL); }
   catch (error) { if (error?.code !== "EEXIST") throw error; }
+}
+
+function applyAdditiveElementProfileMigration(profileRoot, registration, migration) {
+  if (!migration || migration.kind !== "additiveElement") return 0;
+  const registryScope = (Array.isArray(registration?.registryScopes) ? registration.registryScopes : [])
+    .find((scope) => scope?.scopeId === migration.scopeId && scope?.status === "complete");
+  if (!registryScope || createUiScopeFingerprint(registryScope) !== migration.toFingerprint) return 0;
+
+  const addedEntry = (Array.isArray(registryScope.elements) ? registryScope.elements : [])
+    .find((entry) => entry?.id === migration.addedElementId);
+  if (!addedEntry || addedEntry.parentId !== migration.expectedParentId) return 0;
+
+  const currentIds = registryScope.elements.map((entry) => entry.id);
+  const previousIds = new Set(currentIds.filter((elementId) => elementId !== migration.addedElementId));
+  let migratedCount = 0;
+
+  for (const profileId of ["standard", "compact"]) {
+    const filePath = path.join(profileRoot, `${profileId}.layout-profile.json`);
+    if (!fs.existsSync(filePath)) continue;
+    let document;
+    try { document = JSON.parse(fs.readFileSync(filePath, "utf8")); }
+    catch { continue; }
+    if (document?.schemaVersion !== 2 || document?.applicationId !== APPLICATION_ID || document?.profileId !== profileId || !Array.isArray(document?.scopes)) continue;
+
+    const savedScope = document.scopes.find((scope) => scope?.scopeId === migration.scopeId);
+    const savedElements = savedScope?.layoutState?.elements;
+    if (savedScope?.registryFingerprint !== migration.fromFingerprint || !Array.isArray(savedElements)) continue;
+    const savedIds = savedElements.map((entry) => entry?.elementId);
+    if (savedIds.includes(migration.addedElementId) || savedIds.length !== previousIds.size || savedIds.some((elementId) => !previousIds.has(elementId))) continue;
+
+    const addedState = {
+      elementId: migration.addedElementId,
+      scopeId: migration.scopeId,
+      x: Number(addedEntry.baseline?.x) || 0,
+      y: Number(addedEntry.baseline?.y) || 0,
+      width: Number(addedEntry.baseline?.width) || Number(addedEntry.baseline?.minWidth),
+      height: Number(addedEntry.baseline?.height) || Number(addedEntry.baseline?.minHeight),
+      fontSize: Number(addedEntry.baseline?.fontSize),
+      visible: addedEntry.baseline?.visible !== false,
+    };
+    if (![addedState.width, addedState.height, addedState.fontSize].every(Number.isFinite)) continue;
+
+    const statesById = new Map(savedElements.map((entry) => [entry.elementId, entry]));
+    statesById.set(migration.addedElementId, addedState);
+    savedScope.layoutState.elements = currentIds.map((elementId) => statesById.get(elementId));
+    savedScope.registryFingerprint = migration.toFingerprint;
+
+    const archiveDirectory = path.join(profileRoot, "archive", APPLICATION_ID);
+    const stamp = new Date().toISOString().replace(/[-:.]/g, "");
+    const archiveLabel = String(migration.archiveLabel || "additive-element").replace(/[^a-z0-9-]+/gi, "-").slice(0, 48) || "additive-element";
+    const archivePath = path.join(archiveDirectory, `${stamp}_${archiveLabel}_${profileId}.layout-profile.json`);
+    const temporaryPath = `${filePath}.migrate-${process.pid}-${Date.now()}`;
+    try {
+      fs.mkdirSync(archiveDirectory, { recursive: true });
+      fs.copyFileSync(filePath, archivePath, fs.constants.COPYFILE_EXCL);
+      fs.writeFileSync(temporaryPath, `${JSON.stringify(document, null, 2)}\n`, { encoding: "utf8", flag: "wx" });
+      fs.renameSync(temporaryPath, filePath);
+      migratedCount += 1;
+    } catch (error) {
+      try { fs.unlinkSync(temporaryPath); } catch (cleanupError) { if (cleanupError?.code !== "ENOENT") void cleanupError; }
+      throw error;
+    }
+  }
+  return migratedCount;
+}
+
+function applyRegisteredProfileMigrations(profileRoot, registration) {
+  const migrations = Array.isArray(registration?.profileMigrations) ? registration.profileMigrations : [];
+  return migrations.reduce((count, migration) => count + applyAdditiveElementProfileMigration(profileRoot, registration, migration), 0);
 }
 
 class ElectronUiEditorSessionController {
@@ -191,6 +263,8 @@ class ElectronUiEditorSessionController {
     this.ipcMain.handle("uiEditor:respond", (_event, message) => this.respondFromRenderer(message));
     this.ipcMain.handle("uiEditor:targetEvent", (_event, message) => this.forwardTargetEvent(message));
     this.ipcMain.handle("uiEditor:preparePdfContext", (_event, context) => this.preparePdfContext(context));
+    this.ipcMain.handle("uiEditor:getPdfDocumentTypeStatus", (_event, context) => this.getPdfDocumentTypeStatus(context));
+    this.ipcMain.handle("uiEditor:registerPdfDocumentType", (_event, context) => this.registerPdfDocumentType(context));
     this.ipcMain.handle("uiEditor:loadStartupLayout", (_event, registration) => this.loadStartupLayout(registration));
     this.ipcMain.handle("uiEditor:completeStartupLayout", (_event, result) => this.completeStartupLayout(result));
   }
@@ -228,6 +302,7 @@ class ElectronUiEditorSessionController {
       const { profileRoot, identity } = resolveBbmModuleLayoutProfileRoot(baseProfileRoot, registration);
       this.ensureDirectory(profileRoot);
       migrateCompatibleLegacyLayoutProfile(baseProfileRoot, profileRoot, registration);
+      applyRegisteredProfileMigrations(profileRoot, registration);
       const snapshot = this.#registrationSnapshot(registration, { sessionId: "startup-layout", profileRoot, identity });
       const manifestPath = this.#validateTargetManifest(snapshot.contract);
       const result = loadTargetStartupLayout({
@@ -282,9 +357,26 @@ class ElectronUiEditorSessionController {
 
   preparePdfContext(context = {}) {
     if (!this.pdfAdapter) return { ok: false, pdfRegistryStatus: "unavailable", activeDocumentId: "" };
-    const result = this.pdfAdapter.setActiveDocumentContext({ projectId: context?.projectId, meetingId: context?.meetingId });
+    ensureSmallPlainObject(context, "PDF-Dokumentkontext");
+    const result = this.pdfAdapter.setActiveDocumentContext(context);
     console.info(`[ui-editor] PDF context: ${result.pdfRegistryStatus}`);
     return result;
+  }
+
+  getPdfDocumentTypeStatus(context = {}) {
+    if (!this.pdfAdapter?.inspectPdfDocumentType) return { ok: false, pdfRegistryStatus: "unavailable", editorAvailable: false };
+    ensureSmallPlainObject(context, "PDF-Dokumenttypabfrage");
+    return { ok: true, ...this.pdfAdapter.inspectPdfDocumentType(context.documentTypeId) };
+  }
+
+  registerPdfDocumentType(context = {}) {
+    if (!this.pdfAdapter?.activateAcceptedDocumentType) return { ok: false, pdfRegistryStatus: "unavailable", editorAvailable: false };
+    ensureSmallPlainObject(context, "PDF-Dokumenttypregistrierung");
+    try {
+      return { ok: true, ...this.pdfAdapter.activateAcceptedDocumentType(context.documentTypeId) };
+    } catch (error) {
+      return { ok: false, errorCode: String(error?.code || "pdf_document_registration_failed"), message: String(error?.message || "PDF-Dokumenttyp konnte nicht registriert werden."), diagnostics: error?.diagnostics || null };
+    }
   }
 
   async open(registration, reason = "open") {
@@ -383,6 +475,7 @@ class ElectronUiEditorSessionController {
     const { profileRoot, identity } = resolveBbmModuleLayoutProfileRoot(baseProfileRoot, registration);
     this.ensureDirectory(profileRoot);
     migrateCompatibleLegacyLayoutProfile(baseProfileRoot, profileRoot, registration);
+    applyRegisteredProfileMigrations(profileRoot, registration);
     const registrationSnapshot = this.#registrationSnapshot(registration, { sessionId: identifiers.sessionId, profileRoot, identity });
     const contract = registrationSnapshot.contract;
     console.info(`[ui-editor] editor start receipt: ${contract.startupLayout?.code || "none"}, applied=${contract.startupLayout?.applied === true}`);
@@ -396,7 +489,9 @@ class ElectronUiEditorSessionController {
       `--profile-root=${profileRoot}`,
       `--editor-runtime-root=${editorRuntimeRoot}`,
     ];
+    let pdfSessionPreparation = null;
     try {
+      if (contract.pdfContract) pdfSessionPreparation = this.pdfAdapter?.preparePdfEditorSessionBaseline?.() || null;
       this.sessionId = identifiers.sessionId;
       this.child = this.spawnProcess(executablePath, args, {
         cwd: path.dirname(executablePath),
@@ -418,6 +513,7 @@ class ElectronUiEditorSessionController {
       return { ok: true, started: true, focused: false, sessionId: identifiers.sessionId, registryRefreshStatus: "changed" };
     } catch (error) {
       await this.#disposeSession("editor_start_failed", true);
+      if (pdfSessionPreparation) this.pdfAdapter?.rollbackPdfEditorSessionPreparation?.(pdfSessionPreparation);
       throw error;
     }
   }
@@ -627,7 +723,7 @@ class ElectronUiEditorSessionController {
 
 module.exports = Object.freeze({
   APPLICATION_ID,
-  ACTIVE_SCOPES,
+  applyRegisteredProfileMigrations,
   ElectronUiEditorSessionController,
   createBbmModuleLayoutStorageIdentity,
   publicError,

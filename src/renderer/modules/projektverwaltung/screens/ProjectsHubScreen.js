@@ -1,6 +1,5 @@
 import LegacyProjectsScreen from "./ProjectsScreen.js";
 import ProjectFormHubScreen from "./ProjectFormHubScreen.js";
-import ProtokollStartScreen from "../../protokoll/screens/ProtokollStartScreen.js";
 
 const START_TARGET_KEY = "bbm.startTargetModuleId";
 const PROTOCOL_START_INTENT_KEY = "bbm.protokollStartIntent";
@@ -25,17 +24,13 @@ function clearStorage(key) {
  * Neutraler Projekteinstieg fuer die modulare BBM-Struktur.
  *
  * Normaler Projektklick: Projekt-Arbeitsbereich.
- * Einstieg aus der Protokoll-Kachel: zuerst Protokoll-Startsicht.
+ * Einstieg aus einer projektbezogenen Modulkachel: Projekt waehlen und danach
+ * direkt im zuvor gewaehlten Fachmodul weiterarbeiten.
  * Die Projektkachel selbst ist bewusst keine Modulnavigation mehr.
  */
 export default class ProjectsHubScreen extends LegacyProjectsScreen {
-  constructor(args = {}) {
-    super(args);
-    this.protocolStartScreen = null;
-  }
-
-  _startsFromProtocolTile() {
-    return readStorage(START_TARGET_KEY) === "protokoll";
+  _pendingStartTargetModuleId() {
+    return readStorage(START_TARGET_KEY);
   }
 
   // Module gehoeren in den Projekt-Arbeitsbereich und nicht als Mini-Menue
@@ -77,7 +72,9 @@ export default class ProjectsHubScreen extends LegacyProjectsScreen {
         edit.style.textDecoration = "none";
       }
 
-      card.title = "Projekt öffnen";
+      card.title = this._pendingStartTargetModuleId()
+        ? "Projekt auswählen und im gewählten Modul öffnen"
+        : "Projekt öffnen";
     }
   }
 
@@ -115,23 +112,6 @@ export default class ProjectsHubScreen extends LegacyProjectsScreen {
     }
   }
 
-  render() {
-    if (this._startsFromProtocolTile()) {
-      clearStorage(START_TARGET_KEY);
-      this.protocolStartScreen = new ProtokollStartScreen({ router: this.router });
-      return this.protocolStartScreen.render();
-    }
-    return super.render();
-  }
-
-  async load() {
-    if (this.protocolStartScreen) {
-      await this.protocolStartScreen.load?.();
-      return;
-    }
-    await super.load();
-  }
-
   async openProjectById(projectId) {
     if (this.loading) return false;
 
@@ -160,6 +140,18 @@ export default class ProjectsHubScreen extends LegacyProjectsScreen {
       clearStorage(PROTOCOL_START_INTENT_KEY);
       const result = await this.router?.openProjectModule?.(project.id, "protokoll", { project });
       return typeof result === "object" ? !!result?.ok : result !== false;
+    }
+
+    const startTargetModuleId = this._pendingStartTargetModuleId();
+    if (startTargetModuleId) {
+      clearStorage(START_TARGET_KEY);
+      const result = await this.router?.openProjectModule?.(project.id, startTargetModuleId, {
+        project,
+        source: "home-project-selection",
+      });
+      const opened = typeof result === "object" ? !!result?.ok : result !== false;
+      if (opened) return true;
+      this._flashMsg?.("Der gewählte Arbeitsbereich konnte nicht direkt geöffnet werden.", 7000);
     }
 
     if (typeof this.router?.showProjectWorkspace !== "function") {

@@ -25,18 +25,22 @@ function applyQuicklaneRootStyles(root) {
   root.style.borderRadius = "10px 0 0 10px";
   root.style.background = "rgba(255, 255, 255, 0.96)";
   root.style.boxShadow = "0 10px 22px rgba(31, 41, 55, 0.1)";
-  root.style.overflow = "hidden";
-  root.style.clipPath = "inset(0 0 0 46px)";
-  root.style.transition = "clip-path 160ms ease, box-shadow 140ms ease, border-color 140ms ease";
+  root.style.overflow = "visible";
+  root.style.transition = "right 180ms ease-out, box-shadow 140ms ease, border-color 140ms ease";
 }
 
 function setQuicklaneOpen(root, open) {
   root.dataset.open = open ? "true" : "false";
-  root.style.clipPath = open ? "inset(0)" : "inset(0 0 0 46px)";
+  root.style.right = open ? "0" : "-64px";
   root.style.borderColor = open ? "rgba(29, 78, 216, 0.42)" : "rgba(154, 168, 189, 0.72)";
   root.style.boxShadow = open ? "0 14px 28px rgba(31, 41, 55, 0.15)" : "0 10px 22px rgba(31, 41, 55, 0.1)";
-}
 
+  const grip = root._bbmEdgeGrip || null;
+  if (grip) {
+    grip.style.right = open ? "64px" : "0";
+    grip.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+}
 
 function createTextIcon(label) {
   const icon = document.createElement("span");
@@ -155,11 +159,45 @@ export function buildRestarbeitenQuicklane({
   root.setAttribute("aria-label", "Restarbeiten Quicklane");
   setUiEditorId(root, "restarbeiten.quicklane");
   applyQuicklaneRootStyles(root);
+
+  const edgeGrip = document.createElement("button");
+  edgeGrip.type = "button";
+  edgeGrip.textContent = "Tools";
+  edgeGrip.title = "Restarbeiten-Werkzeuge";
+  edgeGrip.setAttribute("aria-label", "Restarbeiten-Werkzeuge öffnen");
+  edgeGrip.setAttribute("aria-expanded", "false");
+  Object.assign(edgeGrip.style, {
+    position: "fixed",
+    right: "0",
+    top: "122px",
+    width: "28px",
+    height: "132px",
+    zIndex: "12031",
+    border: "1px solid #c9d2df",
+    borderRight: "0",
+    borderRadius: "10px 0 0 10px",
+    background: "#ffffff",
+    color: "#1f2937",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "8px 0",
+    writingMode: "vertical-rl",
+    transform: "rotate(180deg)",
+    fontSize: "12px",
+    fontWeight: "800",
+    letterSpacing: "0.08em",
+    boxShadow: "-4px 0 12px rgba(0,0,0,0.12)",
+    transition: "right 180ms ease-out",
+  });
+  root._bbmEdgeGrip = edgeGrip;
   syncOpenState(root, pinned);
 
-  root.addEventListener("mouseenter", () => {
-    setQuicklaneOpen(root, true);
-  });
+  const openTemporarily = () => setQuicklaneOpen(root, true);
+  edgeGrip.addEventListener("mouseenter", openTemporarily);
+  edgeGrip.addEventListener("click", openTemporarily);
+  root.addEventListener("mouseenter", openTemporarily);
   root.addEventListener("mouseleave", () => {
     if (root.dataset.pinned !== "true") setQuicklaneOpen(root, false);
   });
@@ -234,7 +272,7 @@ export function buildRestarbeitenQuicklane({
     })
   );
 
-  root.append(navigation, visibility, output);
+  root.append(edgeGrip, navigation, visibility, output);
   beginM83ComponentBinding("bbm.restarbeiten.quicklane");
   registerM80Ref("restarbeiten.quicklane", root);
   const groups = [
