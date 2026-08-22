@@ -22,10 +22,17 @@
 
   /*
    * BBM-weiter Quicklane-Marker-Standard.
-   * Protokoll/Projektkontext und Restarbeiten benutzen unterschiedliche
-   * Quicklane-Container, aber exakt dieselbe sichtbare Marker-Gestaltung.
+   * WICHTIG: Das sind die beiden aktuell produktiv gerenderten Quicklanes:
+   * - Protokoll: .bbm-tops-screen-quicklane
+   * - Restarbeiten: .bbm-restarbeiten-quicklane
+   * Beide Marker beziehen ihre sichtbare Gestaltung ausschließlich hier.
    */
-  body [data-bbm-quicklane="project-context"] > button:first-child,
+  body .bbm-tops-screen-quicklane,
+  body .bbm-restarbeiten-quicklane {
+    overflow: visible !important;
+  }
+
+  body .bbm-tops-screen-quicklane::before,
   body .bbm-restarbeiten-quicklane > button:first-child {
     width: var(--bbm-quicklane-marker-width) !important;
     height: var(--bbm-quicklane-marker-height) !important;
@@ -51,14 +58,17 @@
     visibility: visible !important;
   }
 
-  /* Protokoll: Marker ist Bestandteil der gemeinsamen Projektkontext-Quicklane. */
-  body [data-bbm-quicklane="project-context"] > button:first-child {
+  /* Protokoll: echter aktiver TopsScreenQuicklane-Marker. */
+  body .bbm-tops-screen-quicklane::before {
+    content: "Tools" !important;
     position: absolute !important;
     left: calc(-1 * var(--bbm-quicklane-marker-width)) !important;
     top: 18px !important;
+    z-index: 2 !important;
+    pointer-events: none !important;
   }
 
-  /* Restarbeiten: Marker ist vom geclippten Modulinhalt entkoppelt. */
+  /* Restarbeiten: vorhandener echter Marker, gleiche Darstellung. */
   body .bbm-restarbeiten-quicklane > button:first-child {
     position: fixed !important;
     top: 110px !important;
