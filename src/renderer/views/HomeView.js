@@ -116,6 +116,15 @@ export default class HomeView {
       return;
     }
 
+    const globalNavigation = Array.isArray(entry?.navigation?.global)
+      ? entry.navigation.global[0]
+      : entry?.navigation?.global || null;
+    const globalNavigationKey = String(globalNavigation?.key || "").trim();
+    if (globalNavigationKey && typeof this.router?.openGlobalModule === "function") {
+      await this.router.openGlobalModule(globalNavigationKey, { source: "home" });
+      return;
+    }
+
     const mode = String(entry?.presentation?.start?.mode || "project").trim().toLowerCase();
     if (mode === "project") {
       try {
