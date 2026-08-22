@@ -1,6 +1,5 @@
 import LegacyProjectsScreen from "./ProjectsScreen.js";
 import ProjectFormHubScreen from "./ProjectFormHubScreen.js";
-import ProtokollStartScreen from "../../protokoll/screens/ProtokollStartScreen.js";
 
 const START_TARGET_KEY = "bbm.startTargetModuleId";
 const PROTOCOL_START_INTENT_KEY = "bbm.protokollStartIntent";
@@ -30,18 +29,8 @@ function clearStorage(key) {
  * Die Projektkachel selbst ist bewusst keine Modulnavigation mehr.
  */
 export default class ProjectsHubScreen extends LegacyProjectsScreen {
-  constructor(args = {}) {
-    super(args);
-    this.protocolStartScreen = null;
-  }
-
-  _startsFromProtocolTile() {
-    return readStorage(START_TARGET_KEY) === "protokoll";
-  }
-
   _pendingStartTargetModuleId() {
-    const target = readStorage(START_TARGET_KEY);
-    return target && target !== "protokoll" ? target : "";
+    return readStorage(START_TARGET_KEY);
   }
 
   // Module gehoeren in den Projekt-Arbeitsbereich und nicht als Mini-Menue
@@ -121,23 +110,6 @@ export default class ProjectsHubScreen extends LegacyProjectsScreen {
       console.error("[ProjectsHubScreen] Project modal failed:", err);
       this._cleanupProjectFormModal();
     }
-  }
-
-  render() {
-    if (this._startsFromProtocolTile()) {
-      clearStorage(START_TARGET_KEY);
-      this.protocolStartScreen = new ProtokollStartScreen({ router: this.router });
-      return this.protocolStartScreen.render();
-    }
-    return super.render();
-  }
-
-  async load() {
-    if (this.protocolStartScreen) {
-      await this.protocolStartScreen.load?.();
-      return;
-    }
-    await super.load();
   }
 
   async openProjectById(projectId) {
