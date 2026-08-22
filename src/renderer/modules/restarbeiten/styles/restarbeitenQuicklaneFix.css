@@ -6,35 +6,3 @@
 .bbm-restarbeiten-quicklane[data-open="false"] {
   clip-path: none !important;
 }
-
-/*
- * Verbindliche Marker-Referenz: ProjectContextQuicklane / Protokoll.
- * Restarbeiten übernimmt diese Werte 1:1, damit alle seitlichen
- * Quicklane-Marker in BBM gleich aussehen.
- */
-.bbm-restarbeiten-quicklane > button:first-child {
-  top: 110px !important;
-  width: 30px !important;
-  height: 132px !important;
-  border: 1px solid #d9d9d9 !important;
-  border-right: none !important;
-  border-radius: 10px 0 0 10px !important;
-  background: #f1f1f1 !important;
-  color: #333 !important;
-  padding: 8px 0 !important;
-  writing-mode: vertical-rl !important;
-  transform: rotate(180deg) !important;
-  font-family: "Noto Sans", system-ui, sans-serif !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  line-height: 1 !important;
-  letter-spacing: 0.08em !important;
-  box-shadow: -4px 0 12px rgba(0,0,0,0.08) !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-.bbm-restarbeiten-quicklane > button:first-child::before,
-.bbm-restarbeiten-quicklane > button:first-child::after {
-  content: none !important;
-}
