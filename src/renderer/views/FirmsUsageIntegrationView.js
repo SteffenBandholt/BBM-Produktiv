@@ -1,7 +1,9 @@
 import FirmsUsageView from "./FirmsUsageView.js";
+import { isModuleActive } from "../app/modules/moduleAccessState.js";
 
 const PROJECT = "project_participant";
 const INVOICE = "invoice_customer";
+const PROJECT_MODULE_IDS = ["protokoll", "restarbeiten", "sigeko"];
 
 function codesFromFirm(firm) {
   if (Array.isArray(firm?.usages)) return firm.usages.map((value) => String(value || "").trim());
@@ -22,6 +24,11 @@ function usesPayload(codes = []) {
 }
 
 export default class FirmsUsageIntegrationView extends FirmsUsageView {
+  async _loadInvoiceLicenseState() {
+    this.invoiceModuleLicensed = isModuleActive("rechnung");
+    this.projectModuleLicensed = PROJECT_MODULE_IDS.some((moduleId) => isModuleActive(moduleId));
+  }
+
   _decorateFirmUsages() {
     this.firms = (this.firms || []).map((firm) => ({ ...firm, usages: codesFromFirm(firm) }));
     if (this.selectedFirmId) {
