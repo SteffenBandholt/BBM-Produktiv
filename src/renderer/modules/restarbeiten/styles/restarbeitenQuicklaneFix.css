@@ -9,38 +9,25 @@
 
 /*
  * BBM-Quicklane-Standard:
- * Der Randmarker bleibt sichtbar und trägt immer die Bezeichnung "Tools".
- * Die Beschriftung wird bewusst unabhängig vom nativen Buttontext gerendert,
- * damit Writing-Mode-, Font- und Alt-CSS-Regeln sie nicht verschlucken können.
+ * Der Randmarker bleibt sichtbar und verwendet den echten Buttontext "Tools".
+ * Keine Pseudo-Elemente und kein Ausblenden des nativen Textes.
  */
 .bbm-restarbeiten-quicklane > button:first-child {
   position: fixed !important;
-  font-size: 0 !important;
-  writing-mode: horizontal-tb !important;
-  transform: none !important;
   color: #1f2937 !important;
+  font-family: "Noto Sans", Arial, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.08em !important;
+  writing-mode: vertical-rl !important;
+  transform: rotate(180deg) !important;
   opacity: 1 !important;
   visibility: visible !important;
   overflow: visible !important;
 }
 
+.bbm-restarbeiten-quicklane > button:first-child::before,
 .bbm-restarbeiten-quicklane > button:first-child::after {
-  content: "Tools";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #1f2937;
-  font-family: "Noto Sans", Arial, sans-serif;
-  font-size: 12px !important;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0.08em;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  opacity: 1;
-  visibility: visible;
-  pointer-events: none;
+  content: none !important;
 }
