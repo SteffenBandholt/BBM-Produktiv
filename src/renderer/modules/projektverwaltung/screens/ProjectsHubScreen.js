@@ -25,7 +25,8 @@ function clearStorage(key) {
  * Neutraler Projekteinstieg fuer die modulare BBM-Struktur.
  *
  * Normaler Projektklick: Projekt-Arbeitsbereich.
- * Einstieg aus der Protokoll-Kachel: zuerst Protokoll-Startsicht.
+ * Einstieg aus einer projektbezogenen Modulkachel: Projekt waehlen und danach
+ * direkt im zuvor gewaehlten Fachmodul weiterarbeiten.
  * Die Projektkachel selbst ist bewusst keine Modulnavigation mehr.
  */
 export default class ProjectsHubScreen extends LegacyProjectsScreen {
@@ -36,6 +37,11 @@ export default class ProjectsHubScreen extends LegacyProjectsScreen {
 
   _startsFromProtocolTile() {
     return readStorage(START_TARGET_KEY) === "protokoll";
+  }
+
+  _pendingStartTargetModuleId() {
+    const target = readStorage(START_TARGET_KEY);
+    return target && target !== "protokoll" ? target : "";
   }
 
   // Module gehoeren in den Projekt-Arbeitsbereich und nicht als Mini-Menue
@@ -77,7 +83,9 @@ export default class ProjectsHubScreen extends LegacyProjectsScreen {
         edit.style.textDecoration = "none";
       }
 
-      card.title = "Projekt öffnen";
+      card.title = this._pendingStartTargetModuleId()
+        ? "Projekt auswählen und im gewählten Modul öffnen"
+        : "Projekt öffnen";
     }
   }
 
@@ -160,6 +168,18 @@ export default class ProjectsHubScreen extends LegacyProjectsScreen {
       clearStorage(PROTOCOL_START_INTENT_KEY);
       const result = await this.router?.openProjectModule?.(project.id, "protokoll", { project });
       return typeof result === "object" ? !!result?.ok : result !== false;
+    }
+
+    const startTargetModuleId = this._pendingStartTargetModuleId();
+    if (startTargetModuleId) {
+      clearStorage(START_TARGET_KEY);
+      const result = await this.router?.openProjectModule?.(project.id, startTargetModuleId, {
+        project,
+        source: "home-project-selection",
+      });
+      const opened = typeof result === "object" ? !!result?.ok : result !== false;
+      if (opened) return true;
+      this._flashMsg?.("Der gewählte Arbeitsbereich konnte nicht direkt geöffnet werden.", 7000);
     }
 
     if (typeof this.router?.showProjectWorkspace !== "function") {
