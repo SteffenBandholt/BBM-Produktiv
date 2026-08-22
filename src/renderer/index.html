@@ -7,9 +7,61 @@
 <style>
   :root {
     --bbm-font-ui: "Noto Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --bbm-quicklane-marker-width: 30px;
+    --bbm-quicklane-marker-height: 132px;
+    --bbm-quicklane-marker-bg: #f1f1f1;
+    --bbm-quicklane-marker-border: #d9d9d9;
+    --bbm-quicklane-marker-color: #333333;
+    --bbm-quicklane-marker-radius: 10px 0 0 10px;
+    --bbm-quicklane-marker-shadow: -4px 0 12px rgba(0, 0, 0, 0.08);
   }
+
   html, body {
     font-family: var(--bbm-font-ui);
+  }
+
+  /*
+   * BBM-weiter Quicklane-Marker-Standard.
+   * Protokoll/Projektkontext und Restarbeiten benutzen unterschiedliche
+   * Quicklane-Container, aber exakt dieselbe sichtbare Marker-Gestaltung.
+   */
+  body [data-bbm-quicklane="project-context"] > button:first-child,
+  body .bbm-restarbeiten-quicklane > button:first-child {
+    width: var(--bbm-quicklane-marker-width) !important;
+    height: var(--bbm-quicklane-marker-height) !important;
+    box-sizing: border-box !important;
+    border: 1px solid var(--bbm-quicklane-marker-border) !important;
+    border-right: 0 !important;
+    border-radius: var(--bbm-quicklane-marker-radius) !important;
+    background: var(--bbm-quicklane-marker-bg) !important;
+    color: var(--bbm-quicklane-marker-color) !important;
+    box-shadow: var(--bbm-quicklane-marker-shadow) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px 0 !important;
+    font-family: var(--bbm-font-ui) !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    letter-spacing: 0.08em !important;
+    writing-mode: vertical-rl !important;
+    transform: rotate(180deg) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Protokoll: Marker ist Bestandteil der gemeinsamen Projektkontext-Quicklane. */
+  body [data-bbm-quicklane="project-context"] > button:first-child {
+    position: absolute !important;
+    left: calc(-1 * var(--bbm-quicklane-marker-width)) !important;
+    top: 18px !important;
+  }
+
+  /* Restarbeiten: Marker ist vom geclippten Modulinhalt entkoppelt. */
+  body .bbm-restarbeiten-quicklane > button:first-child {
+    position: fixed !important;
+    top: 110px !important;
   }
 </style>
 </head>
