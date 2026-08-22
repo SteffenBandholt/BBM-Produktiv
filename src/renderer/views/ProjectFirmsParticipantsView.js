@@ -260,6 +260,19 @@ export default class ProjectFirmsParticipantsView extends ProjectFirmsPromotionV
         }
       }
 
+      if (!text(person?.email)) {
+        const missingMail = style(document.createElement("div"), {
+          marginTop: "3px",
+          fontSize: "9.5px",
+          fontWeight: "500",
+          color: "#98a2b3",
+          lineHeight: "1.25",
+        });
+        missingMail.textContent = "E-Mail fehlt";
+        missingMail.setAttribute("data-bbm-participant-email-note", "missing");
+        content.append(missingMail);
+      }
+
       const controls = style(document.createElement("div"), {
         display: "flex",
         alignItems: "center",
