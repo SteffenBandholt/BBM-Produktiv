@@ -1,4 +1,4 @@
-﻿import TopsScreen from "./screens/TopsScreen.js";
+﻿import TopsScreen from "./screens/TopsScreenIntegrationView.js";
 import ProtokollStartScreen from "./screens/ProtokollStartScreen.js";
 import { PROTOKOLL_WORK_SCREEN_ID } from "./screens/index.js";
 import * as protokollViewModels from "./viewmodel/index.js";
