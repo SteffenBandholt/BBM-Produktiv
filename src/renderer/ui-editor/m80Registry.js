@@ -8,12 +8,11 @@ import { protokollEditUiEditorContract } from "../modules/protokoll/TopsWorkbenc
 import { rechnungUiEditorContract } from "../modules/rechnungen/RechnungScreen.uiEditorContract.js";
 import {
   protokollMainHeaderLauncherUiEditorContract,
-  rechnungMainHeaderLauncherUiEditorContract,
   restarbeitenMainHeaderLauncherUiEditorContract,
 } from "../ui/MainHeader.uiEditorContract.js";
 import { aggregateBbmM83Components } from "./m83ComponentContract.js";
 
-export const BBM_M80_REGISTRY_VERSION = 25;
+export const BBM_M80_REGISTRY_VERSION = 24;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
@@ -29,7 +28,6 @@ export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
   protokollListColumnsUiEditorContract,
   protokollEditUiEditorContract,
   rechnungUiEditorContract,
-  rechnungMainHeaderLauncherUiEditorContract,
 ]);
 
 const aggregate = aggregateBbmM83Components(BBM_M83_COMPONENT_CONTRACTS);
