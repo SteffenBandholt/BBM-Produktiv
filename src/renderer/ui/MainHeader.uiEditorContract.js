@@ -39,6 +39,12 @@ export const PROTOKOLL_MAIN_HEADER_LAUNCHER = Object.freeze({
   elementId: "protokoll.header.action.openUiEditor",
 });
 
+export const RECHNUNG_MAIN_HEADER_LAUNCHER = Object.freeze({
+  componentId: "bbm.rechnung.mainHeaderLauncher",
+  scopeId: "rechnung.screen",
+  elementId: "rechnung.header.action.openUiEditor",
+});
+
 export const restarbeitenMainHeaderLauncherUiEditorContract = launcherComponent({
   ...RESTARBEITEN_MAIN_HEADER_LAUNCHER,
   parentId: "restarbeiten.header.root",
@@ -51,7 +57,13 @@ export const protokollMainHeaderLauncherUiEditorContract = launcherComponent({
   order: 43,
 });
 
+export const rechnungMainHeaderLauncherUiEditorContract = launcherComponent({
+  ...RECHNUNG_MAIN_HEADER_LAUNCHER,
+  parentId: "rechnung.screen",
+  order: 9,
+});
+
 export function getMainHeaderLauncherContract(scopeId) {
-  return [RESTARBEITEN_MAIN_HEADER_LAUNCHER, PROTOKOLL_MAIN_HEADER_LAUNCHER]
+  return [RESTARBEITEN_MAIN_HEADER_LAUNCHER, PROTOKOLL_MAIN_HEADER_LAUNCHER, RECHNUNG_MAIN_HEADER_LAUNCHER]
     .find((entry) => entry.scopeId === String(scopeId || "").trim()) || null;
 }
