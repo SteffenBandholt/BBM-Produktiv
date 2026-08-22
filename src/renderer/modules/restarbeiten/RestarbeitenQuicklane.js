@@ -2,8 +2,6 @@ import { beginM83ComponentBinding, registerM80Ref } from "../../ui-editor/m80Ref
 
 const QUICKLANE_ICON_CLASS = "bbm-project-context-quicklane-icon";
 const AMPEL_STATUS_ICON_URL = "./assets/icons/ampel-status.svg";
-const QUICKLANE_OPEN_RIGHT = "0";
-const QUICKLANE_CLOSED_RIGHT = "-54px";
 
 function setUiEditorId(el, id) {
   if (el && id) el.setAttribute("data-ui-editor-id", id);
@@ -13,7 +11,7 @@ function setUiEditorId(el, id) {
 function applyQuicklaneRootStyles(root) {
   root.style.position = "fixed";
   root.style.top = "104px";
-  root.style.right = QUICKLANE_CLOSED_RIGHT;
+  root.style.right = "0";
   root.style.bottom = "16px";
   root.style.zIndex = "12030";
   root.style.inlineSize = "64px";
@@ -26,17 +24,16 @@ function applyQuicklaneRootStyles(root) {
   root.style.borderRight = "0";
   root.style.borderRadius = "10px 0 0 10px";
   root.style.background = "rgba(255, 255, 255, 0.96)";
-  root.style.boxShadow = "none";
-  root.style.overflow = "hidden";
-  root.style.transition = "right 220ms ease-out, box-shadow 160ms ease, border-color 160ms ease";
-  root.style.willChange = "right";
+  root.style.boxShadow = "0 10px 22px rgba(31, 41, 55, 0.1)";
+  root.style.overflow = "visible";
+  root.style.transition = "right 180ms ease-out, box-shadow 140ms ease, border-color 140ms ease";
 }
 
 function setQuicklaneOpen(root, open) {
   root.dataset.open = open ? "true" : "false";
-  root.style.right = open ? QUICKLANE_OPEN_RIGHT : QUICKLANE_CLOSED_RIGHT;
+  root.style.right = open ? "0" : "-64px";
   root.style.borderColor = open ? "rgba(29, 78, 216, 0.42)" : "rgba(154, 168, 189, 0.72)";
-  root.style.boxShadow = open ? "0 14px 28px rgba(31, 41, 55, 0.15)" : "none";
+  root.style.boxShadow = open ? "0 14px 28px rgba(31, 41, 55, 0.15)" : "0 10px 22px rgba(31, 41, 55, 0.1)";
 }
 
 function createTextIcon(label) {
@@ -158,9 +155,39 @@ export function buildRestarbeitenQuicklane({
   applyQuicklaneRootStyles(root);
   syncOpenState(root, pinned);
 
-  root.addEventListener("mouseenter", () => {
-    setQuicklaneOpen(root, true);
+  const edgeGrip = document.createElement("button");
+  edgeGrip.type = "button";
+  edgeGrip.textContent = "Tools";
+  edgeGrip.title = "Restarbeiten-Werkzeuge";
+  edgeGrip.setAttribute("aria-label", "Restarbeiten-Werkzeuge öffnen");
+  Object.assign(edgeGrip.style, {
+    position: "absolute",
+    left: "-28px",
+    top: "18px",
+    width: "28px",
+    height: "132px",
+    border: "1px solid #c9d2df",
+    borderRight: "0",
+    borderRadius: "10px 0 0 10px",
+    background: "#ffffff",
+    color: "#1f2937",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "8px 0",
+    writingMode: "vertical-rl",
+    transform: "rotate(180deg)",
+    fontSize: "12px",
+    fontWeight: "800",
+    letterSpacing: "0.08em",
+    boxShadow: "-4px 0 12px rgba(0,0,0,0.12)",
   });
+
+  const openTemporarily = () => setQuicklaneOpen(root, true);
+  edgeGrip.addEventListener("mouseenter", openTemporarily);
+  edgeGrip.addEventListener("click", openTemporarily);
+  root.addEventListener("mouseenter", openTemporarily);
   root.addEventListener("mouseleave", () => {
     if (root.dataset.pinned !== "true") setQuicklaneOpen(root, false);
   });
@@ -235,7 +262,7 @@ export function buildRestarbeitenQuicklane({
     })
   );
 
-  root.append(navigation, visibility, output);
+  root.append(edgeGrip, navigation, visibility, output);
   beginM83ComponentBinding("bbm.restarbeiten.quicklane");
   registerM80Ref("restarbeiten.quicklane", root);
   const groups = [
