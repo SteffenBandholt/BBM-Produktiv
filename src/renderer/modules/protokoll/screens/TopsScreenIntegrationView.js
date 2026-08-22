@@ -1,68 +1,61 @@
 import TopsScreen from "./TopsScreen.js";
 
-function buildToolsMarker() {
-  const marker = document.createElement("button");
-  marker.type = "button";
-  marker.textContent = "Tools";
-  marker.title = "Protokoll-Werkzeuge";
-  marker.setAttribute("aria-label", "Protokoll-Werkzeuge");
-  marker.setAttribute("data-bbm-protokoll-tools-marker", "true");
-  Object.assign(marker.style, {
-    position: "fixed",
-    right: "176px",
-    top: "110px",
-    width: "30px",
-    height: "132px",
-    zIndex: "12040",
-    border: "1px solid #c9d2df",
-    borderRight: "0",
-    borderRadius: "10px 0 0 10px",
-    background: "#ffffff",
-    color: "#1f2937",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "8px 0",
-    writingMode: "vertical-rl",
-    transform: "rotate(180deg)",
-    fontFamily: '"Noto Sans", Arial, sans-serif',
-    fontSize: "12px",
-    fontWeight: "800",
-    lineHeight: "1",
-    letterSpacing: "0.08em",
-    boxShadow: "-4px 0 12px rgba(0,0,0,0.12)",
-  });
-  return marker;
+function applySharedToolsBehavior(lane) {
+  if (!lane || lane._bbmProtocolToolsStandardApplied === true) return lane;
+
+  const originalApplyState = typeof lane._applyState === "function"
+    ? lane._applyState.bind(lane)
+    : null;
+  if (!originalApplyState) return lane;
+
+  lane._applyState = function applyUnifiedQuicklaneState() {
+    originalApplyState();
+
+    const isRestarbeiten = typeof this._isRestarbeitenMode === "function"
+      ? this._isRestarbeitenMode()
+      : String(this.router?.activeSection || "").trim() === "restarbeiten";
+    if (isRestarbeiten) return;
+
+    const shouldRender = this._enabled === true && this.router?.context?.ui?.isTopsView === true;
+    if (!shouldRender) {
+      if (this.edgeGripEl) {
+        this.edgeGripEl.style.display = "none";
+        this.edgeGripEl.style.pointerEvents = "none";
+      }
+      return;
+    }
+
+    const isOpen = typeof this._isQuicklaneOpen === "function"
+      ? this._isQuicklaneOpen()
+      : !!(this._isOpen || this._isPinned || this._isHoveringTab || this._isHoveringPanel);
+
+    if (this.root) {
+      this.root.style.width = isOpen ? "176px" : "56px";
+      this.root.style.right = isOpen ? "0" : "-56px";
+      this.root.style.transform = "none";
+    }
+
+    if (this.edgeGripEl) {
+      this.edgeGripEl.textContent = "Tools";
+      this.edgeGripEl.style.display = isOpen ? "none" : "flex";
+      this.edgeGripEl.style.pointerEvents = isOpen ? "none" : "auto";
+      this.edgeGripEl.style.right = "0";
+      this.edgeGripEl.style.visibility = "visible";
+      this.edgeGripEl.style.opacity = "1";
+    }
+  };
+
+  lane._bbmProtocolToolsStandardApplied = true;
+  lane._applyState();
+  return lane;
 }
 
 export default class TopsScreenIntegrationView extends TopsScreen {
   render() {
     const root = super.render();
-    const marker = buildToolsMarker();
-    marker.addEventListener("mouseenter", async () => {
-      try {
-        const lane = await this.router?._ensureProjectContextQuicklane?.();
-        lane?.open?.({
-          projectId: this._getQuicklaneProjectId(),
-          meetingId: this._getQuicklaneMeetingId(),
-        });
-      } catch (_e) {
-        // Die Beschriftung bleibt auch ohne programmatisches Oeffnen sichtbar.
-      }
-    });
-    marker.addEventListener("click", async () => {
-      try {
-        const lane = await this.router?._ensureProjectContextQuicklane?.();
-        lane?.open?.({
-          projectId: this._getQuicklaneProjectId(),
-          meetingId: this._getQuicklaneMeetingId(),
-        });
-      } catch (_e) {
-        // ignore
-      }
-    });
-    root?.appendChild?.(marker);
+    Promise.resolve(this.router?._ensureProjectContextQuicklane?.())
+      .then((lane) => applySharedToolsBehavior(lane))
+      .catch(() => {});
     return root;
   }
 
