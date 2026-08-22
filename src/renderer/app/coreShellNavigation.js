@@ -6,7 +6,6 @@ import {
 import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../ui-editor/m80Refs.js";
 import {
   PROTOKOLL_MAIN_HEADER_LAUNCHER,
-  RECHNUNG_MAIN_HEADER_LAUNCHER,
   RESTARBEITEN_MAIN_HEADER_LAUNCHER,
   getMainHeaderLauncherContract,
 } from "../ui/MainHeader.uiEditorContract.js";
@@ -49,7 +48,6 @@ export const DEVELOPMENT_UI_EDITOR_BUTTON_LABEL = "UI-Editor öffnen";
 const MAIN_HEADER_LAUNCHER_COMPONENT_IDS = Object.freeze([
   RESTARBEITEN_MAIN_HEADER_LAUNCHER.componentId,
   PROTOKOLL_MAIN_HEADER_LAUNCHER.componentId,
-  RECHNUNG_MAIN_HEADER_LAUNCHER.componentId,
 ]);
 
 export function clearDevelopmentUiEditorOpenButtonRefs() {
