@@ -6,3 +6,15 @@
 .bbm-restarbeiten-quicklane[data-open="false"] {
   clip-path: none !important;
 }
+
+/* BBM-Standard: Der eingeklappte Quicklane-Marker heißt sichtbar immer "Tools". */
+.bbm-restarbeiten-quicklane > button:first-child {
+  font-size: 0 !important;
+}
+
+.bbm-restarbeiten-quicklane > button:first-child::after {
+  content: "Tools";
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
