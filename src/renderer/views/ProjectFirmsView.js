@@ -1,1 +1,1 @@
-export { default } from "./ProjectFirmsPromotionView.js";
+export { default } from "./ProjectFirmsParticipantsView.js";
