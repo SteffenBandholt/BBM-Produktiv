@@ -2,6 +2,7 @@
 
 const { ipcMain: electronIpcMain } = require("electron");
 const projectsRepo = require("../db/projectsRepo");
+const firmUsagesRepo = require("../db/firmUsagesRepo");
 const { getFirmDirectoryService } = require("../domain/firms/FirmDirectoryService");
 const { getInvoiceService } = require("../domain/rechnung/InvoiceService");
 
@@ -20,7 +21,15 @@ function registerRechnungIpc({ ipcMain = electronIpcMain, service = getInvoiceSe
   handle("rechnung:deleteDraft", (data) => service.deleteDraft(data.id));
   handle("rechnung:previewDraft", (data) => service.previewDraft(data.id, data.header));
   handle("rechnung:bookDraft", (data) => service.bookDraft(data.id, data.header));
-  handle("rechnung:listCustomers", () => firmDirectory.listCustomers({}).filter((entry) => entry.kind === "global_firm"), "list");
+  handle(
+    "rechnung:listCustomers",
+    () =>
+      firmUsagesRepo
+        .listFirmsByUsage(firmUsagesRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER)
+        .map((firm) => firmDirectory.get({ kind: "global_firm", id: firm.id }))
+        .filter(Boolean),
+    "list"
+  );
   handle("rechnung:listProjects", () => projectRepository.listAll(), "list");
   console.log("[main] Rechnung IPC registered");
 }
