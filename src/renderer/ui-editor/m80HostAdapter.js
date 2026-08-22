@@ -251,9 +251,15 @@ function isLogicalConditionalStartup(entry, request) {
   return Boolean(ref) && targets.length === 0;
 }
 function isLayoutEffective(element) {
-  if (!element || element.hidden === true) return false;
-  const style = globalThis.window?.getComputedStyle?.(element) || element.style || {};
-  return String(style.display || "").trim().toLowerCase() !== "none";
+  let current = element;
+  while (current) {
+    if (current.hidden === true) return false;
+    const style = globalThis.window?.getComputedStyle?.(current) || current.style || {};
+    if (String(style.display || "").trim().toLowerCase() === "none") return false;
+    if (["hidden", "collapse"].includes(String(style.visibility || "").trim().toLowerCase())) return false;
+    current = current.parentElement;
+  }
+  return Boolean(element);
 }
 export function isM80GeometryNeighborActive(candidate, beforeGeometry, afterGeometry) {
   const ref = candidate?.id ? getM80Ref(candidate.id) : null;
@@ -410,12 +416,16 @@ function submitChange(changeRequest, scopeId) {
   try {
     const beforeTopology = snapshotM80Topology();
     const beforeGeometry = snapshotM80Geometry();
+    const ref = getM80Ref(entry.id);
     const logicalConditionalStartup = isLogicalConditionalStartup(entry, request);
+    const validatedHiddenStartup = request.source === "target-app-start" &&
+      validatedStartupRequests.has(request) &&
+      Boolean(ref?.element) &&
+      !isLayoutEffective(ref.element);
     if (!logicalConditionalStartup) {
       requireMountedTarget(entry);
-      requirePositiveTargetGeometry(entry, beforeGeometry);
+      if (!validatedHiddenStartup) requirePositiveTargetGeometry(entry, beforeGeometry);
     }
-    const ref = getM80Ref(entry.id);
     if (ref?.element?.dataset?.uiEditorFailNextApply === "true") {
       delete ref.element.dataset.uiEditorFailNextApply;
       throw Object.assign(new Error("Kontrollierter Diagnosefehler."), { code: "electron_change_apply_failed" });
@@ -478,7 +488,14 @@ function submitChange(changeRequest, scopeId) {
       const unexpectedLocal = [...beforeGeometry].filter(([id, before]) => id !== entry.id && geometryChanged(before, afterGeometry.get(id))).map(([id]) => id);
       if (unexpectedLocal.length) throw Object.assign(new Error("Die Position weiterer Elemente würde sich unerwartet verändern."), { code: "electron_unexpected_layout_effect" });
     }
-    const affected = inspectGeometryEffect(entry, request.operation, beforeGeometry, afterGeometry);
+    const affected = validatedHiddenStartup
+      ? { ...allowedGeometryChanges(entry, request.operation), unexpected: [] }
+      : inspectGeometryEffect(entry, request.operation, beforeGeometry, afterGeometry);
+    if (affected.effect === "forbidden") {
+      throw Object.assign(new Error("Operation besitzt keine zulaessige Wirkungsmenge."), {
+        code: "electron_operation_not_allowed",
+      });
+    }
     const interactive = request.source === "ui-editor-panel";
     // Reset und bestaetigte Fit-Operationen sind bereits durch den
     // Ziel-App-Vertrag und den Tabellen-Core begrenzt. Sie duerfen deshalb
