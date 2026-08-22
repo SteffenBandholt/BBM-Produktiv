@@ -5,6 +5,7 @@
 const { ipcMain } = require("electron");
 const projectFirmsRepo = require("../db/projectFirmsRepo");
 const projectPersonsRepo = require("../db/projectPersonsRepo");
+const firmUsagesRepo = require("../db/firmUsagesRepo");
 const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const { initDatabase } = require("../db/database");
 const { getFirmDirectoryService } = require("../domain/firms/FirmDirectoryService");
@@ -169,7 +170,7 @@ function _cleanupGlobalFirmLinks({ projectId, firmId }) {
         )
     `
     )
-    .run(projectId, firmId);
+    .run(projectId, String(firmId));
 
   return {
     openMeetingsRemoved: Number(delOpen?.changes || 0),
@@ -179,6 +180,15 @@ function _cleanupGlobalFirmLinks({ projectId, firmId }) {
 
 function registerProjectFirmsIpc() {
   const firmDirectory = getFirmDirectoryService();
+
+  // Bestehende zentrale Projektzuordnungen automatisch als Verwendung markieren.
+  // Idempotent: keine Firmenkopien, nur fehlende Verwendung ergänzen.
+  try {
+    firmUsagesRepo.ensureProjectParticipantUsageForAssignedFirms();
+  } catch (e) {
+    console.warn("[main] firm usage bootstrap failed:", _err(e));
+  }
+
   // --------------------------------------------
   // HINWEIS:
   // 'firms:listGlobal' wird bereits global registriert (Stammdaten).
@@ -256,11 +266,15 @@ function registerProjectFirmsIpc() {
 
   ipcMain.handle("projectFirms:assignGlobalFirm", (_evt, data) => {
     try {
-      const result = projectFirmsRepo.assignGlobalFirmToProject({
-        projectId: data?.projectId,
-        firmId: data?.firmId,
+      const projectId = data?.projectId;
+      const firmId = data?.firmId;
+      const usage = firmUsagesRepo.setUsage({
+        firmId,
+        usageCode: firmUsagesRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT,
+        enabled: true,
       });
-      return { ok: true, result };
+      const result = projectFirmsRepo.assignGlobalFirmToProject({ projectId, firmId });
+      return { ok: true, result, usage };
     } catch (e) {
       return { ok: false, error: _err(e) };
     }
@@ -276,6 +290,8 @@ function registerProjectFirmsIpc() {
         projectId: data?.projectId,
         firmId: data?.firmId,
       });
+      // Verwendung bleibt bestehen: Projektteilnehmer ist eine Eigenschaft der
+      // Stammfirma; die konkrete Projektzuordnung ist davon getrennt.
       return { ok: true, result, cleanup };
     } catch (e) {
       return { ok: false, error: _err(e) };
@@ -304,6 +320,52 @@ function registerProjectFirmsIpc() {
         kind: data?.kind,
       });
       return { ok: true, result };
+    } catch (e) {
+      return { ok: false, error: _err(e) };
+    }
+  });
+
+  // --------------------------------------------
+  // Zentrale Firmen-Verwendungen
+  // --------------------------------------------
+  ipcMain.handle("firmUsages:list", (_evt, firmId) => {
+    try {
+      const usages = firmUsagesRepo.listCodesByFirm(firmId);
+      return { ok: true, firmId, usages };
+    } catch (e) {
+      return { ok: false, error: _err(e) };
+    }
+  });
+
+  ipcMain.handle("firmUsages:set", (_evt, data) => {
+    try {
+      const result = firmUsagesRepo.setUsage({
+        firmId: data?.firmId,
+        usageCode: data?.usageCode,
+        enabled: data?.enabled,
+      });
+      return { ok: true, result };
+    } catch (e) {
+      return { ok: false, error: _err(e) };
+    }
+  });
+
+  ipcMain.handle("firmUsages:replace", (_evt, data) => {
+    try {
+      const result = firmUsagesRepo.replaceUsages({
+        firmId: data?.firmId,
+        usageCodes: data?.usageCodes,
+      });
+      return { ok: true, result };
+    } catch (e) {
+      return { ok: false, error: _err(e) };
+    }
+  });
+
+  ipcMain.handle("firmUsages:listFirms", (_evt, usageCode) => {
+    try {
+      const list = firmUsagesRepo.listFirmsByUsage(usageCode);
+      return { ok: true, usageCode, list };
     } catch (e) {
       return { ok: false, error: _err(e) };
     }
@@ -351,7 +413,7 @@ function registerProjectFirmsIpc() {
     }
   });
 
-  console.log("[main] projectFirms/projectPersons IPC registered");
+  console.log("[main] projectFirms/projectPersons/firmUsages IPC registered");
 }
 
 module.exports = { registerProjectFirmsIpc };
