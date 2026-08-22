@@ -1,10 +1,18 @@
 import RechnungenDesignScreen from "./screens/RechnungenDesignScreen.js";
 import RechnungScreen from "./screens/RechnungScreen.js";
 import { RECHNUNG_WORK_SCREEN_ID } from "./screens/index.js";
+import { RECHNUNG_SCOPE_ID } from "./RechnungScreen.uiEditorContract.js";
 
 export const RECHNUNG_MODULE_ID = "rechnung";
 export const RECHNUNG_MODULE_LABEL = "Rechnungen";
 export const RECHNUNG_NAV_ENTRY_KEY = "rechnungen";
+
+class RechnungEditorScreen extends RechnungScreen {
+  constructor(args = {}) {
+    super(args);
+    this.uiEditorScopeId = RECHNUNG_SCOPE_ID;
+  }
+}
 
 export function getRechnungModuleEntry() {
   return Object.freeze({
@@ -12,7 +20,7 @@ export function getRechnungModuleEntry() {
     moduleLabel: RECHNUNG_MODULE_LABEL,
     workScreenId: RECHNUNG_WORK_SCREEN_ID,
     screens: Object.freeze({
-      [RECHNUNG_WORK_SCREEN_ID]: RechnungScreen,
+      [RECHNUNG_WORK_SCREEN_ID]: RechnungEditorScreen,
     }),
     navigation: Object.freeze({
       global: Object.freeze([
