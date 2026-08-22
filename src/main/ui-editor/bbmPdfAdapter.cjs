@@ -15,8 +15,12 @@ const APPLICATION_ID = "bbm-produktiv";
 const DOCUMENT_TYPE_ID = "protocol";
 const DISPLAY_NAME = "BBM-Protokoll";
 const SCOPE_ID = "pdf.bbm.protocol";
-const PDF_REGISTRY_VERSION = 3;
+const PDF_REGISTRY_VERSION = 5;
 const PDF_PROFILE_FILE_NAME = "bbm-produktiv.protocol.pdf-standard.pdf-layout.json";
+const DECISION_MARKER_ID = `${SCOPE_ID}.tops.marker.decision`;
+const TODO_MARKER_ID = `${SCOPE_ID}.tops.marker.todo`;
+const PRE_DECISION_MARKER_PERSISTED_FINGERPRINT = "950fceaf11909cf53f813c4959b178db0a3eacbd267c46dcfc9cd18cf832d73a";
+const PRE_TODO_MARKER_PERSISTED_FINGERPRINT = "82f19c97ef62bc16d86ba92c2b4424daa32d70cfb2cafbf7e8e3a2952bca3c22";
 const DOMAIN_LOCKS = Object.freeze([
   "changeText", "changeValue", "modifyDomainData", "createRecord", "deleteRecord", "saveDomainData",
   "upload", "import", "export", "autosave", "sortRecords", "filterRecords", "changeStatus",
@@ -59,12 +63,14 @@ function element(values) {
     rendererKey: values.rendererKey,
     ...(values.columnRole ? { columnRole: values.columnRole } : {}),
     ...(values.boundaryResizePolicy ? { boundaryResizePolicy: values.boundaryResizePolicy } : {}),
+    ...(values.layoutBinding ? { layoutBinding: Object.freeze({ ...values.layoutBinding }) } : {}),
   });
 }
 
 const PAGE_BOUNDS = bounds(0, 210, 0, 297, 1, 210, 1, 297);
 const HEADER_BOUNDS = bounds(0, 210, 0, 120, 5, 210, 2, 120);
 const BODY_BOUNDS = bounds(0, 210, 50, 297, 5, 210, 2, 247);
+const BODY_MARKER_BOUNDS = bounds(0, 210, 50, 297, 1, 20, 1, 20);
 const FOOTER_BOUNDS = bounds(0, 210, 180, 297, 5, 210, 2, 100);
 const TEXT = Object.freeze(["move", "resizeWidth", "textResize", "setTextAlignment", "setVisibility"]);
 
@@ -144,14 +150,23 @@ const ELEMENTS = Object.freeze([
   element({ id: `${SCOPE_ID}.tops.rows`, name: "TOP-Tabelle · Wiederholung", parentId: `${SCOPE_ID}.tops`, kind: "repeatingArea", role: "content", pageArea: "body", order: 220,
     capabilities: ["setLineSpacing"], baseline: box(12, 99, 186, 112, { lineSpacing: 1.35, visible: true }), layoutBounds: BODY_BOUNDS,
     refKey: "protocol.tops.rows", rendererKey: ".topsTable tbody" }),
+  element({ id: DECISION_MARKER_ID, name: "Red Flag · Beschluss", parentId: `${SCOPE_ID}.tops.rows`, kind: "image", role: "content", pageArea: "body", order: 225,
+    capabilities: ["move", "setVisibility"], baseline: box(193.2, 99, 3.8, 3.8, { visible: true }), layoutBounds: BODY_MARKER_BOUNDS,
+    refKey: "protocol.tops.marker.decision", rendererKey: '.topsTable .lvl1Marker[data-marker="decision"]' }),
+  element({ id: TODO_MARKER_ID, name: "Flag · ToDo", parentId: `${SCOPE_ID}.tops.rows`, kind: "image", role: "content", pageArea: "body", order: 226,
+    capabilities: ["move", "setVisibility"], baseline: box(193.2, 99, 3.8, 3.8, { visible: true }), layoutBounds: BODY_MARKER_BOUNDS,
+    refKey: "protocol.tops.marker.todo", rendererKey: '.topsTable .lvl1Marker[data-marker="task"]' }),
   element({ id: `${SCOPE_ID}.tops.column.number`, name: "Spalte TOP", parentId: `${SCOPE_ID}.tops`, kind: "tableColumn", role: "structure", columnRole: "structureColumn", pageArea: "body", order: 230,
     capabilities: ["resizeWidth", "setVisibility"], baseline: box(12, 91, 24.18, 120, { visible: true }), layoutBounds: BODY_BOUNDS,
+    layoutBinding: { type: "tableLayoutColumnWidth", tableLayoutKey: "protokoll_tops", columnKey: "number" },
     refKey: "protocol.tops.column.number", rendererKey: ".topsTable .colNr" }),
   element({ id: `${SCOPE_ID}.tops.column.text`, name: "Spalte Gegenstand", parentId: `${SCOPE_ID}.tops`, kind: "tableColumn", role: "content", columnRole: "contentColumn", pageArea: "body", order: 231,
     capabilities: ["resizeWidth", "setVisibility"], baseline: box(36.18, 91, 120.9, 120, { visible: true }), layoutBounds: BODY_BOUNDS,
+    layoutBinding: { type: "tableLayoutColumnWidth", tableLayoutKey: "protokoll_tops", columnKey: "text" },
     refKey: "protocol.tops.column.text", rendererKey: ".topsTable .colText" }),
   element({ id: `${SCOPE_ID}.tops.column.meta`, name: "Spalte Status / Fertig bis / verantw", parentId: `${SCOPE_ID}.tops`, kind: "tableColumn", role: "meta", columnRole: "metaColumn", pageArea: "body", order: 232,
     capabilities: ["resizeWidth", "setVisibility"], baseline: box(157.08, 91, 40.92, 120, { visible: true }), layoutBounds: BODY_BOUNDS,
+    layoutBinding: { type: "tableLayoutColumnWidth", tableLayoutKey: "protokoll_tops", columnKey: "meta" },
     refKey: "protocol.tops.column.meta", rendererKey: ".topsTable .colMeta" }),
   element({ id: `${SCOPE_ID}.tops.heading.number`, name: "Tabellenkopf TOP", parentId: `${SCOPE_ID}.tops.column.number`, kind: "label", role: "columnHeader", pageArea: "body", order: 240,
     capabilities: ["textMove", "textResize", "setTextAlignment", "setVisibility"], baseline: box(12, 91, 24.18, 8, { textOffsetX: 0, textOffsetY: 0, fontSize: 8, textAlignment: "left", visible: true }), layoutBounds: BODY_BOUNDS,
@@ -219,6 +234,10 @@ function createPersistedRegistryFingerprint() {
   return crypto.createHash("sha256").update(canonical, "utf8").digest("hex");
 }
 const PERSISTED_REGISTRY_FINGERPRINT = createPersistedRegistryFingerprint();
+const ADDITIVE_PROFILE_COMPATIBILITY = Object.freeze(new Map([
+  [PRE_DECISION_MARKER_PERSISTED_FINGERPRINT, Object.freeze([DECISION_MARKER_ID, TODO_MARKER_ID])],
+  [PRE_TODO_MARKER_PERSISTED_FINGERPRINT, Object.freeze([TODO_MARKER_ID])],
+]));
 const REGISTRY_VALIDATION = validatePdfRegistry(REGISTRY);
 if (!REGISTRY_VALIDATION.ok) {
   const error = new TypeError("BBM-PDF-Registry ist ungültig.");
@@ -262,15 +281,19 @@ function persistedLayoutFields(definition) {
 
 function validatePersistedProfileDocument(document) {
   assertExactKeys(document, ["schemaVersion", "documentKind", "applicationId", "documentType", "profileId", "scopeId", "savedAt", "registryFingerprint", "layoutState"], "PDF-Profildokument");
+  const additiveMissingIds = document?.registryFingerprint === PERSISTED_REGISTRY_FINGERPRINT
+    ? Object.freeze([])
+    : ADDITIVE_PROFILE_COMPATIBILITY.get(document?.registryFingerprint);
   if (document.schemaVersion !== 1 || document.documentKind !== "pdf-layout-profile" ||
       document.applicationId !== APPLICATION_ID || document.documentType !== DOCUMENT_TYPE_ID ||
       document.profileId !== "pdf-standard" || document.scopeId !== SCOPE_ID ||
-      document.registryFingerprint !== PERSISTED_REGISTRY_FINGERPRINT || !Number.isFinite(Date.parse(document.savedAt))) {
+      !additiveMissingIds || !Number.isFinite(Date.parse(document.savedAt))) {
     throw pdfProfileError("pdf_layout_incompatible", "Das gespeicherte PDF-Layoutprofil ist nicht mit der aktuellen BBM-PDF-Registry kompatibel.");
   }
   const state = document.layoutState;
   assertExactKeys(state, ["scopeId", "capturedAt", "elements"], "PDF-LayoutState");
-  if (state.scopeId !== SCOPE_ID || !Number.isFinite(Date.parse(state.capturedAt)) || !Array.isArray(state.elements) || state.elements.length !== ELEMENTS.length) {
+  if (state.scopeId !== SCOPE_ID || !Number.isFinite(Date.parse(state.capturedAt)) || !Array.isArray(state.elements) ||
+      state.elements.length !== ELEMENTS.length - additiveMissingIds.length) {
     throw pdfProfileError("pdf_profile_invalid", "Der gespeicherte PDF-LayoutState ist unvollständig.");
   }
   const byId = new Map();
@@ -283,6 +306,10 @@ function validatePersistedProfileDocument(document) {
   const normalized = [];
   for (const definition of ELEMENTS) {
     const current = byId.get(definition.id);
+    if (!current && additiveMissingIds.includes(definition.id)) {
+      normalized.push({ elementId: definition.id, scopeId: SCOPE_ID, ...clone(definition.baseline) });
+      continue;
+    }
     if (!current || current.scopeId !== SCOPE_ID) {
       throw pdfProfileError("pdf_profile_invalid", `PDF-Layout-Element fehlt oder hat einen falschen Scope: ${definition.id}`);
     }
@@ -304,6 +331,43 @@ function validatePersistedProfileDocument(document) {
   const states = new Map(normalized.map((entry) => [entry.elementId, entry]));
   for (const definition of ELEMENTS) validateState(definition, states.get(definition.id), states);
   return normalizedState;
+}
+
+function migrateAdditivePersistedProfile(filePath) {
+  if (!filePath || !fs.existsSync(filePath)) return false;
+  let document;
+  try {
+    document = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch (_error) {
+    return false;
+  }
+  if (!ADDITIVE_PROFILE_COMPATIBILITY.has(document?.registryFingerprint)) return false;
+  let normalized;
+  try {
+    normalized = validatePersistedProfileDocument(document);
+  } catch (_error) {
+    return false;
+  }
+  const definitions = new Map(ELEMENTS.map((entry) => [entry.id, entry]));
+  const migrated = {
+    ...document,
+    registryFingerprint: PERSISTED_REGISTRY_FINGERPRINT,
+    layoutState: {
+      ...normalized,
+      elements: normalized.elements.map((current) => {
+        const definition = definitions.get(current.elementId);
+        return Object.fromEntries(["elementId", "scopeId", ...persistedLayoutFields(definition)].map((field) => [field, current[field]]));
+      }),
+    },
+  };
+  const temporaryPath = `${filePath}.migrate-${process.pid}-${Date.now()}`;
+  try {
+    fs.writeFileSync(temporaryPath, JSON.stringify(migrated), "utf8");
+    fs.renameSync(temporaryPath, filePath);
+    return true;
+  } finally {
+    if (fs.existsSync(temporaryPath)) fs.rmSync(temporaryPath, { force: true });
+  }
 }
 
 function stateFromRegistry() {
@@ -462,6 +526,7 @@ function createBbmPdfAdapter({ regenerate } = {}) {
   function configureProfileRoot(value) {
     if (typeof value !== "string" || !value.trim()) throw new TypeError("PDF-Profilwurzel fehlt.");
     profileRoot = path.resolve(value);
+    migrateAdditivePersistedProfile(getPdfProfilePath());
     return getPdfProfilePath();
   }
   function getPdfProfilePath() {
@@ -656,6 +721,29 @@ function createBbmPdfAdapter({ regenerate } = {}) {
 }
 
 const sharedBbmPdfAdapter = createBbmPdfAdapter();
+const { registerPdfEditorAdapter } = require("./pdfAdapterRegistry.cjs");
+
+registerPdfEditorAdapter({
+  documentTypeId: DOCUMENT_TYPE_ID,
+  moduleId: "protokoll",
+  scopeId: SCOPE_ID,
+  displayName: DISPLAY_NAME,
+  profileStorageKey: "module-protokoll",
+  contractVersion: PDF_TARGET_CONTRACT_VERSION,
+  descriptorVersion: PDF_REGISTRY_VERSION,
+  printModes: ["protocol", "preview"],
+  adapter: sharedBbmPdfAdapter,
+  builtIn: true,
+  default: true,
+  buildRegenerationRequest: ({ projectId, meetingId, activeDocumentId }) => ({
+    mode: DOCUMENT_TYPE_ID,
+    projectId,
+    meetingId,
+    targetDir: "temp",
+    fileName: `BBM-UI-Editor-${activeDocumentId}.pdf`,
+    overwrite: true,
+  }),
+});
 
 module.exports = Object.freeze({
   APPLICATION_ID,
