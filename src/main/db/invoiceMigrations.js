@@ -29,6 +29,8 @@ const CURRENT_INVOICE_COLUMN_DEFINITIONS = Object.freeze([
   ["due_date", "TEXT"],
   ["customer_snapshot_json", "TEXT"],
   ["issuer_snapshot_json", "TEXT"],
+  ["pdf_finalization_status", "TEXT NOT NULL DEFAULT 'NONE' CHECK (pdf_finalization_status IN ('NONE', 'PENDING', 'READY', 'FAILED', 'LEGACY_MISSING'))"],
+  ["pdf_finalization_error", "TEXT"],
   ["created_at", "TEXT"],
   ["updated_at", "TEXT"],
 ]);
@@ -67,6 +69,8 @@ const CREATE_INVOICES_SQL = `
     due_date TEXT NOT NULL,
     customer_snapshot_json TEXT,
     issuer_snapshot_json TEXT,
+    pdf_finalization_status TEXT NOT NULL DEFAULT 'NONE' CHECK (pdf_finalization_status IN ('NONE', 'PENDING', 'READY', 'FAILED', 'LEGACY_MISSING')),
+    pdf_finalization_error TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     CHECK (installment_number IS NULL OR installment_number > 0),
@@ -100,6 +104,7 @@ function applySafeLegacyDefaults(db) {
     UPDATE invoices SET positions_json = '[]' WHERE positions_json IS NULL;
     UPDATE invoices SET payment_term_days = 8 WHERE payment_term_days IS NULL;
     UPDATE invoices SET status = 'DRAFT' WHERE status IS NULL;
+    UPDATE invoices SET pdf_finalization_status = 'NONE' WHERE pdf_finalization_status IS NULL;
   `);
 }
 
@@ -172,6 +177,8 @@ function rebuildIncompatibleLegacyInvoices(db, columns) {
       due_date TEXT,
       customer_snapshot_json TEXT,
       issuer_snapshot_json TEXT,
+      pdf_finalization_status TEXT NOT NULL DEFAULT 'NONE',
+      pdf_finalization_error TEXT,
       created_at TEXT,
       updated_at TEXT${legacyDefinitions}
     )
@@ -186,6 +193,9 @@ function rebuildIncompatibleLegacyInvoices(db, columns) {
     if (name === "document_type") return "COALESCE(document_type, 'INVOICE')";
     if (name === "positions_json") return "COALESCE(positions_json, '[]')";
     if (name === "payment_term_days") return "COALESCE(payment_term_days, 8)";
+    if (name === "pdf_finalization_status") {
+      return "COALESCE(pdf_finalization_status, CASE WHEN status IN ('BOOKED', 'posted') THEN 'LEGACY_MISSING' ELSE 'NONE' END)";
+    }
     if (name === "legacy_status" && !hasLegacyStatus) return "status";
     return quoteIdentifier(name);
   });
@@ -361,6 +371,52 @@ function ensureInvoiceSchema(db) {
         last_value INTEGER NOT NULL CHECK (last_value > 0),
         updated_at TEXT NOT NULL
       )
+    `);
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS commercial_document_files (
+        id TEXT PRIMARY KEY,
+        commercial_document_type TEXT NOT NULL,
+        commercial_document_id TEXT NOT NULL,
+        file_role TEXT NOT NULL DEFAULT 'FINAL',
+        file_type TEXT NOT NULL CHECK (file_type = 'PDF'),
+        file_name TEXT NOT NULL,
+        local_path TEXT NOT NULL,
+        version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+        size_bytes INTEGER NOT NULL CHECK (size_bytes >= 5),
+        sha256 TEXT NOT NULL CHECK (length(sha256) = 64),
+        is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+        is_final INTEGER NOT NULL DEFAULT 1 CHECK (is_final IN (0, 1)),
+        created_at TEXT NOT NULL
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_commercial_document_files_active_final
+        ON commercial_document_files(
+          commercial_document_type,
+          commercial_document_id,
+          file_role,
+          file_type
+        )
+        WHERE is_active = 1 AND is_final = 1;
+      CREATE INDEX IF NOT EXISTS idx_commercial_document_files_document
+        ON commercial_document_files(
+          commercial_document_type,
+          commercial_document_id,
+          created_at DESC
+        );
+      UPDATE invoices
+      SET pdf_finalization_status = 'LEGACY_MISSING',
+          pdf_finalization_error = NULL
+      WHERE status = 'BOOKED'
+        AND pdf_finalization_status = 'NONE'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM commercial_document_files f
+          WHERE f.commercial_document_type = 'INVOICE'
+            AND f.commercial_document_id = invoices.id
+            AND f.file_role = 'FINAL'
+            AND f.file_type = 'PDF'
+            AND f.is_active = 1
+            AND f.is_final = 1
+        );
     `);
     customerMigration = migrateDraftCustomerRefs(db);
   };

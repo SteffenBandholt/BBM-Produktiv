@@ -31,6 +31,12 @@ const PRINT_MODE_DEFINITIONS = Object.freeze([
     dialogLabel: "Restarbeitenliste",
   }),
   Object.freeze({
+    key: "invoice",
+    label: "Rechnung",
+    dialogLabel: "Rechnung",
+    hidden: true,
+  }),
+  Object.freeze({
     key: "topsAll",
     label: "TOP-Liste",
     dialogLabel: "TOP-Liste",

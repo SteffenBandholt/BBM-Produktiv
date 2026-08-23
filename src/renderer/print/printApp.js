@@ -1,5 +1,10 @@
 import {
   appendProtocolTitleMarker,
+  buildInvoiceColGroup,
+  buildInvoiceFirstBlocks,
+  buildInvoiceRow,
+  buildInvoiceTableHead,
+  buildInvoiceTail,
   buildRestarbeitenColGroup,
   buildRestarbeitenRow,
   buildRestarbeitenTableHead,
@@ -67,6 +72,7 @@ function _docLabel(mode) {
   if (normalizedMode === "firms") return "Firmenliste";
   if (normalizedMode === "todo") return "ToDo-Liste";
   if (normalizedMode === "restarbeiten") return "Restarbeitenliste";
+  if (normalizedMode === "invoice") return "Rechnung";
   if (normalizedMode === "headerTest") return "Kopf-Test";
   return "Dokument";
 }
@@ -711,6 +717,7 @@ function _buildTopRowElement(row) {
 }
 
 function _buildGenericRowElement(row) {
+  if (String(row?.kind || "").startsWith("invoice")) return buildInvoiceRow(row);
   if (row?.kind === "restarbeitItem") return buildRestarbeitenRow(row);
 
   if (row?.kind === "todoGroup") {
@@ -917,6 +924,7 @@ function _buildPageHeaderForMeasure(projectLabel, docLabel) {
 }
 
 function _buildTableHeadForMeasure(type, topsLayout) {
+  if (type === "invoice") return buildInvoiceTableHead();
   if (type === "restarbeiten") {
     return buildRestarbeitenTableHead(globalThis.__bbmRestarbeitenLocationLabels || {});
   }
@@ -946,6 +954,7 @@ function _buildTableHeadForMeasure(type, topsLayout) {
 
 function _buildColGroup(type, topsLayout) {
   if (type === "restarbeiten") return buildRestarbeitenColGroup();
+  if (type === "invoice") return buildInvoiceColGroup();
   if (type !== "tops") return null;
   const colgroup = document.createElement("colgroup");
   const { number, text, meta } = topsLayout.pdf.columns;
@@ -1384,7 +1393,7 @@ function _buildParticipantsIntroPlan({ intro, ctxFirst, ctxNext, firstCap, nextC
   return { chunks, heights };
 }
 
-function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind = "legacy" }) {
+function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind = "legacy", beforeTable = null }) {
   const root = _buildMeasureRoot();
   root.dataset.orientation = String(data?.orientation || "portrait").toLowerCase() === "landscape"
     ? "landscape"
@@ -1398,7 +1407,9 @@ function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind 
   if (headerKind === "full") {
     const modeLabel = String(data?.printProfile?.documentLabel || "").trim() || docLabel || "Dokument";
     page.appendChild(renderV2GlobalHeader({ data }));
-    page.appendChild(renderV2FullHeader({ data, pageNo: 1, totalPages: 2, modeLabel }));
+    if (type !== "invoice") {
+      page.appendChild(renderV2FullHeader({ data, pageNo: 1, totalPages: 2, modeLabel }));
+    }
     page.appendChild(_el("div", "v2FullGapLineBody"));
   } else if (headerKind === "mini") {
     const modeLabel = String(data?.printProfile?.documentLabel || "").trim() || docLabel || "Dokument";
@@ -1407,6 +1418,8 @@ function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind 
     page.appendChild(_buildPageHeaderForMeasure(projectLabel, docLabel));
     page.appendChild(_el("div", "pageHeaderLine"));
   }
+
+  if (beforeTable) page.appendChild(beforeTable);
 
   const table = document.createElement("table");
   table.className =
@@ -1418,6 +1431,8 @@ function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind 
       ? "firmsCardsTable"
       : type === "restarbeiten"
       ? "restarbeitenTable"
+      : type === "invoice"
+      ? "invoicePdfTable"
       : "todoTable";
   const colgroup = _buildColGroup(type, topsLayout);
   if (colgroup) table.appendChild(colgroup);
@@ -1455,11 +1470,23 @@ function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind 
     return { height: rect.height, longLines, lineHeight };
   };
 
+  const measureBlock = (element) => {
+    page.appendChild(element);
+    const rect = element.getBoundingClientRect();
+    const elementStyle = getComputedStyle(element);
+    const height = rect.height
+      + (parseFloat(elementStyle.marginTop) || 0)
+      + (parseFloat(elementStyle.marginBottom) || 0);
+    element.remove();
+    return height;
+  };
+
   return {
     root,
     data,
     maxBodyHeight,
     measureRow,
+    measureBlock,
     cleanup: () => root.remove(),
   };
 }
@@ -1883,9 +1910,17 @@ function _fitRestarbeitenTextSegment({ ctx, row, cellIndex, text, maxHeight, fir
 }
 
 function _paginateGeneric({ rows, type, projectLabel, docLabel, data }) {
-  const useV2HeaderPaging = type === "firmsCards" || type === "todo" || type === "restarbeiten";
+  const isInvoice = type === "invoice";
+  const useV2HeaderPaging = type === "firmsCards" || type === "todo" || type === "restarbeiten" || isInvoice;
   const ctx = useV2HeaderPaging
-    ? _createMeasureContext({ type, projectLabel, docLabel, data, headerKind: "full" })
+    ? _createMeasureContext({
+        type,
+        projectLabel,
+        docLabel,
+        data,
+        headerKind: "full",
+        beforeTable: isInvoice ? buildInvoiceFirstBlocks(data?.invoice || {}) : null,
+      })
     : _createMeasureContext({ type, projectLabel, docLabel });
   const ctxNext = useV2HeaderPaging
     ? _createMeasureContext({ type, projectLabel, docLabel, data, headerKind: "mini" })
@@ -1893,6 +1928,12 @@ function _paginateGeneric({ rows, type, projectLabel, docLabel, data }) {
   const pages = [];
   let currentPage = { header: { projectLabel, docLabel }, table: { type, rows: [] } };
   let remaining = ctx.maxBodyHeight;
+  const invoiceTailHeight = isInvoice
+    ? Math.max(
+        ctx.measureBlock(buildInvoiceTail(data?.invoice || {})),
+        ctxNext?.measureBlock(buildInvoiceTail(data?.invoice || {})) || 0
+      )
+    : 0;
   const heightCache = new Map();
   let pageNo = 1;
 
@@ -1915,6 +1956,10 @@ function _paginateGeneric({ rows, type, projectLabel, docLabel, data }) {
   for (let i = 0; i < rows.length; i += 1) {
     const row = rows[i];
     const h = rowHeightAt(i);
+
+    if (isInvoice && i === rows.length - 1 && h + invoiceTailHeight > remaining && currentPage.table.rows.length) {
+      pushPage();
+    }
 
     if (type === "restarbeiten") {
       const pageCapacity = contextForPage().maxBodyHeight;
@@ -1984,7 +2029,15 @@ function _paginateGeneric({ rows, type, projectLabel, docLabel, data }) {
     remaining -= h;
   }
 
-  if (currentPage.table.rows.length) pages.push(currentPage);
+  if (isInvoice && invoiceTailHeight > remaining && (currentPage.table.rows.length || pageNo === 1)) {
+    pushPage();
+    currentPage.suppressTable = true;
+  }
+  if (isInvoice && invoiceTailHeight > remaining) {
+    throw new Error("PDF-V2-INVOICE-007: Rechnungssummen und Ausstellerfuß überschreiten die Seitennutzfläche.");
+  }
+  if (isInvoice) currentPage.invoiceLast = true;
+  if (currentPage.table.rows.length || isInvoice) pages.push(currentPage);
   if (!pages.length) {
     pages.push({ header: { projectLabel, docLabel }, table: { type, rows: [] } });
   }
@@ -1994,6 +2047,7 @@ function _paginateGeneric({ rows, type, projectLabel, docLabel, data }) {
     p.header.pageNo = idx + 1;
     p.header.totalPages = total;
   });
+  if (isInvoice) pages[0].invoiceFirst = true;
 
   ctx.cleanup();
   if (ctxNext) ctxNext.cleanup();
@@ -2087,6 +2141,85 @@ function _buildPages(data) {
     }
     return _paginateGeneric({ rows, type: "restarbeiten", projectLabel, docLabel, data });
   }
+  if (mode === "invoice") {
+    const source = data.invoice || {};
+    const money = (cents) => `${(Number(cents || 0) / 100).toLocaleString("de-DE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })} EUR`;
+    const date = (value) => {
+      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
+      return match ? `${match[3]}.${match[2]}.${match[1]}` : String(value || "");
+    };
+    const month = (value) => {
+      const match = /^(\d{4})-(\d{2})/.exec(String(value || ""));
+      if (!match) return String(value || "");
+      const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+      return `${monthNames[Number(match[2]) - 1] || match[2]} ${match[1]}`;
+    };
+    const servicePeriod = source.service_period_type === "MONTH"
+      ? month(source.service_period_start)
+      : source.service_period_type === "RANGE"
+        ? `${date(source.service_period_start)} bis ${date(source.service_period_end)}`
+        : date(source.service_date);
+    const documentTypeDisplay = ({
+      INVOICE: "Rechnung",
+      PARTIAL: source.installment_number ? `${source.installment_number}. Abschlagsrechnung` : "Abschlagsrechnung",
+      FINAL: "Schlussrechnung",
+      HOURLY: "Stundenlohnrechnung",
+    })[source.document_type] || "Rechnung";
+    const invoice = {
+      ...source,
+      document_type_display: documentTypeDisplay,
+      invoice_date_display: date(source.invoice_date),
+      due_date_display: date(source.due_date),
+      service_period_display: servicePeriod,
+      totals_display: {
+        net: money(source.totals?.net_cents),
+        gross: money(source.totals?.gross_cents),
+      },
+      vat_totals_display: (source.vat_totals || []).map((entry) => ({
+        rate_display: `${Number(entry.rate_percent || 0).toLocaleString("de-DE")} %`,
+        net: money(entry.net_cents),
+        vat: money(entry.vat_cents),
+        gross: money(entry.gross_cents),
+      })),
+    };
+    data.invoice = invoice;
+    const rows = (invoice.positions || []).map((position) => {
+      if (position.type === "note") {
+        return { kind: "invoiceNote", sourceId: position.id, shortText: position.short_text || "", longText: position.long_text || "" };
+      }
+      if (position.type === "heading") {
+        return {
+          kind: position.is_title ? "invoiceTitle" : "invoiceText",
+          sourceId: position.id,
+          number: position.is_title ? position.position_number || "" : "",
+          shortText: position.short_text || "",
+          longText: position.long_text || "",
+        };
+      }
+      return {
+        kind: "invoicePosition",
+        sourceId: position.id,
+        number: position.position_number || "",
+        description: position.short_text || "",
+        longText: position.long_text || "",
+        quantity: position.quantity || "",
+        unit: position.unit || "",
+        unitPrice: money(position.unit_price_cents),
+        totalPrice: position.is_nep ? "NEP" : money(position.total_cents),
+        isNep: position.is_nep === true,
+      };
+    });
+    return _paginateGeneric({
+      rows,
+      type: "invoice",
+      projectLabel: invoice.construction_project || invoice.service_reference || "Rechnung",
+      docLabel,
+      data,
+    });
+  }
 
   return _paginateTops(data);
 }
@@ -2095,8 +2228,10 @@ async function handleInit(payload) {
   try {
     const res = await window.bbmPrint.getData(payload);
     if (!res?.ok) {
-      setError(res?.error || "Daten konnten nicht geladen werden.");
-      window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: false });
+      const message = res?.error || "Daten konnten nicht geladen werden.";
+      console.error("[print-renderer]", message);
+      setError(message);
+      window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: false, error: message });
       return;
     }
 
@@ -2116,7 +2251,7 @@ async function handleInit(payload) {
         if (chRes?.ok) data.buildChannel = chRes.channel || "";
       } catch (_e) {}
     }
-    if (["protocol", "preview", "vorabzug", "restarbeiten"].includes(String(data.mode || "").trim().toLowerCase()) && document.fonts?.load) {
+    if (["protocol", "preview", "vorabzug", "restarbeiten", "invoice"].includes(String(data.mode || "").trim().toLowerCase()) && document.fonts?.load) {
       try {
         await Promise.all([
           document.fonts.load('400 11pt "Noto Sans"'),
@@ -2132,8 +2267,10 @@ async function handleInit(payload) {
 
     const normalizedMode = normalizePrintMode(data.mode || "protocol");
     if (!normalizedMode) {
-      setError(`Unbekannter Druckmodus: ${String(data?.mode || "").trim() || "-"}`);
-      window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: false });
+      const message = `Unbekannter Druckmodus: ${String(data?.mode || "").trim() || "-"}`;
+      console.error("[print-renderer]", message);
+      setError(message);
+      window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: false, error: message });
       return;
     }
     data.mode = normalizedMode;
@@ -2227,8 +2364,10 @@ async function handleInit(payload) {
 
     window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: true, previewMetadata: collectBbmPdfPreviewMetadata(root, data) });
   } catch (err) {
-    setError(err?.message || "Daten konnten nicht geladen werden.");
-    window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: false });
+    const message = err?.message || "Daten konnten nicht geladen werden.";
+    console.error("[print-renderer]", message, err?.stack || "");
+    setError(message);
+    window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: false, error: message });
   }
 }
 

@@ -738,6 +738,309 @@
   }
 }
 
+/* PDF-V2-INVOICE-002 bis -007: additive Rechnungsdarstellung im gemeinsamen Satz. */
+.invoicePdfFirstBlocks {
+  display: grid;
+  gap: 3.2mm;
+  margin-bottom: 4.5mm;
+  color: #17212b;
+  font-size: 9pt;
+}
+
+.invoicePdfLetterhead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 76mm;
+  align-items: start;
+  gap: 15mm;
+  min-height: 31mm;
+  padding-bottom: 4.5mm;
+  border-bottom: 0.2mm solid #cbd4df;
+}
+
+.invoicePdfRecipient {
+  display: grid;
+  align-content: start;
+  gap: 0.6mm;
+  max-width: 90mm;
+  line-height: 1.45;
+}
+
+.invoicePdfRecipientLabel {
+  margin-bottom: 1mm;
+  color: #657383;
+  font-size: 7.5pt;
+  font-weight: 500;
+}
+
+.invoicePdfMeta {
+  display: grid;
+  align-content: start;
+  justify-self: end;
+  width: 76mm;
+  gap: 0.6mm;
+}
+
+.invoicePdfIssuerAddress {
+  display: grid;
+  gap: 0.2mm;
+  width: fit-content;
+  min-width: 54mm;
+  margin: 0 0 2.2mm auto;
+  font-size: 8pt;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.invoicePdfMetaRow {
+  display: grid;
+  grid-template-columns: 27mm 2.5mm minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0;
+}
+
+.invoicePdfMetaLabel {
+  color: #26313c;
+  font-size: 7.5pt;
+  font-weight: 500;
+  text-align: right;
+}
+
+.invoicePdfMetaLabel::after {
+  content: ":";
+  grid-column: 2;
+  margin-left: 0.8mm;
+}
+
+.invoicePdfMetaValue {
+  grid-column: 3;
+  font-size: 8pt;
+}
+
+.invoicePdfTitleBlock {
+  display: flex;
+  align-items: baseline;
+  gap: 6mm;
+  margin-top: 0.5mm;
+}
+
+.invoicePdfTitle {
+  margin: 0;
+  font-size: 19pt;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.invoicePdfNumber {
+  font-size: 10pt;
+  font-weight: 600;
+}
+
+.invoicePdfContext {
+  display: grid;
+  gap: 0.8mm;
+  max-width: 150mm;
+}
+
+.invoicePdfContextLabel {
+  font-size: 8pt;
+  font-weight: 700;
+}
+
+.invoicePdfContextValue {
+  font-size: 9pt;
+  line-height: 1.4;
+}
+
+.invoicePdfIntro {
+  max-width: 150mm;
+  margin-top: 0.6mm;
+  font-size: 9pt;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.invoicePdfTable {
+  width: 186mm;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border-top: 0.2mm solid #cbd4df;
+  color: #17212b;
+  font-size: 8.5pt;
+}
+
+.invoicePdfTable thead {
+  display: table-header-group;
+}
+
+.invoicePdfTable tr {
+  break-inside: avoid;
+}
+
+.invoicePdfTable th {
+  position: relative;
+  z-index: 1;
+  padding: 1.8mm 1.2mm 1.5mm;
+  border: 0;
+  border-bottom: 0.2mm solid #cbd4df;
+  background: transparent;
+  color: #657383;
+  font-size: 7pt;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.invoicePdfTable td {
+  padding: 3.2mm 1.2mm 2.7mm;
+  border: 0;
+  border-bottom: 0.2mm solid #dce3eb;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.invoicePdfTable th.invoicePdfCol--quantity {
+  text-align: left;
+}
+
+.invoicePdfCol--quantity,
+.invoicePdfCol--unit-price,
+.invoicePdfCol--total-price {
+  text-align: right;
+}
+
+.invoicePdfCol--unit {
+  text-align: left;
+}
+
+.invoicePdfPositionRow .invoicePdfCol--quantity,
+.invoicePdfPositionRow .invoicePdfCol--unit,
+.invoicePdfPositionRow .invoicePdfCol--unit-price,
+.invoicePdfPositionRow .invoicePdfCol--total-price {
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+
+.invoicePdfPositionRow .invoicePdfCol--quantity .invoicePdfPositionValue,
+.invoicePdfPositionRow .invoicePdfCol--unit .invoicePdfPositionValue,
+.invoicePdfPositionRow .invoicePdfCol--unit-price .invoicePdfPositionValue,
+.invoicePdfPositionRow .invoicePdfCol--total-price .invoicePdfPositionValue {
+  display: block;
+  transform: translateY(4.5mm);
+}
+
+.invoicePdfPositionRow .invoicePdfCol--number {
+  color: #657383;
+  font-size: 8pt;
+  font-variant-numeric: tabular-nums;
+}
+
+.invoicePdfPositionRow .invoicePdfCol--description {
+  padding-bottom: 8.2mm;
+}
+
+.invoicePdfPositionShort,
+.invoicePdfTitleRow .invoicePdfTextShort {
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.invoicePdfPositionLong,
+.invoicePdfTextLong {
+  margin-top: 1.2mm;
+  color: #657383;
+  font-size: 8pt;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.invoicePdfSpecialCell {
+  padding: 3mm 1.2mm 2.5mm !important;
+}
+
+.invoicePdfSpecialNumber {
+  display: inline-block;
+  min-width: 16.8mm;
+  color: #657383;
+  font-size: 8pt;
+}
+
+.invoicePdfTitleRow .invoicePdfTextShort {
+  color: #1565c0;
+  font-size: 9pt;
+}
+
+.invoicePdfTitleRow .invoicePdfSpecialNumber {
+  color: #1565c0;
+  font-weight: 700;
+}
+
+.invoicePdfNoteRow .invoicePdfSpecialLabel {
+  margin-bottom: 1mm;
+  color: #26313c;
+  font-size: 8pt;
+  font-weight: 700;
+}
+
+.invoicePdfTail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 82mm;
+  gap: 2.5mm 8mm;
+  margin-top: 5mm;
+  break-inside: avoid;
+  color: #17212b;
+  font-size: 8.5pt;
+}
+
+.invoicePdfTotals {
+  grid-column: 2;
+  width: 82mm;
+}
+
+.invoicePdfTotalRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 4mm;
+  padding: 0.8mm 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.invoicePdfTotalRow.is-emphasized {
+  margin-top: 0.8mm;
+  padding-top: 1.5mm;
+  border-top: 0.2mm solid #657383;
+  font-size: 9.5pt;
+  font-weight: 700;
+}
+
+.invoicePdfPayment {
+  grid-column: 2;
+  color: #657383;
+  line-height: 1.5;
+}
+
+.invoicePdfFooter {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.5mm;
+  margin-top: 2mm;
+  padding-top: 2mm;
+  border-top: 0.2mm solid #cbd4df;
+  color: #657383;
+  font-size: 7.5pt;
+  line-height: 1.35;
+}
+
+.invoicePdfFooterBank {
+  margin-top: 0.5mm;
+}
+
+.invoicePdfFooterAddress,
+.invoicePdfFooterBank {
+  overflow-wrap: anywhere;
+}
+
 .printV2Root .topRow.isImportant .topNumber,
 .printV2Root .topRow.isImportant .shortText,
 .printV2Root .topRow.isImportant .longText,

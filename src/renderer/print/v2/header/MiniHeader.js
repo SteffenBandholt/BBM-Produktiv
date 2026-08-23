@@ -2,6 +2,17 @@ import { headerUtils } from "./headerUtils.js";
 
 export function renderV2MiniHeader({ data, pageNo, totalPages, modeLabel } = {}) {
   const header = headerUtils.el("div", "v2Header v2HeaderMini");
+  const invoice = String(data?.mode || "").trim().toLowerCase() === "invoice"
+    ? data?.invoice || {}
+    : null;
+  if (invoice) {
+    header.dataset.uiInspectorId = "pdf.bbm.invoice.header";
+    header.dataset.uiEditorKind = "header";
+    header.dataset.uiEditorLabel = "Rechnungskopf";
+    header.dataset.uiEditorParent = "pdf.bbm.invoice.page-template";
+    header.dataset.uiEditorEditable = "true";
+    header.dataset.uiEditorOps = "setVisibility";
+  }
   const settings = data?.settings || {};
   const titleText = headerUtils.resolveHeaderTitle({
     data,
@@ -12,7 +23,12 @@ export function renderV2MiniHeader({ data, pageNo, totalPages, modeLabel } = {})
   const brandingText = headerUtils.resolveBranding({ data });
 
   const topRow = headerUtils.el("div", "v2MiniTopRow");
-  const line1Project = headerUtils.el("div", "v2MiniProject", headerUtils.projectLabel(data?.project));
+  const invoiceNumber = String(invoice?.invoice_number || "").trim();
+  const line1Project = headerUtils.el(
+    "div",
+    "v2MiniProject",
+    invoice ? [invoice.document_type_display || "Rechnung", invoiceNumber].filter(Boolean).join(" ") : headerUtils.projectLabel(data?.project)
+  );
   const rightPage = headerUtils.el("div", "v2MiniRight");
   rightPage.append(
     headerUtils.el("span", "v2MiniPageLabel", "Seite "),
@@ -20,7 +36,11 @@ export function renderV2MiniHeader({ data, pageNo, totalPages, modeLabel } = {})
   );
   topRow.append(line1Project, rightPage);
 
-  const line2Protocol = headerUtils.el("div", "v2MiniProtocolTitle", titleText);
+  const line2Protocol = headerUtils.el(
+    "div",
+    "v2MiniProtocolTitle",
+    invoice ? invoice.service_reference || invoice.construction_project || titleText : titleText
+  );
   line2Protocol.setAttribute("data-v2", "miniText");
   if (brandingText) {
     line2Protocol.appendChild(

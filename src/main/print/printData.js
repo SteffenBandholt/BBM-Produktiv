@@ -12,14 +12,23 @@ const { getStatus } = require("../licensing/licenseService");
 const { buildLicensedToText } = require("../licensing/featureGuard"); 
 const { normalizeLicensedModules, normalizeLicensedFeatures } = require("../licensing/licenseFeatures"); 
 const { normalizePrintOrientation } = require("./printOrientation"); 
+const { InvoiceRepository } = require("../db/invoiceRepository");
 
 let _printModesModulePromise = null;
+let _rechnungPositionsModulePromise = null;
 
 async function _loadPrintModesModule() {
   if (!_printModesModulePromise) {
     _printModesModulePromise = import("../../shared/print/printModes.mjs");
   }
   return await _printModesModulePromise;
+}
+
+async function _loadRechnungPositionsModule() {
+  if (!_rechnungPositionsModulePromise) {
+    _rechnungPositionsModulePromise = import("../../shared/rechnung/rechnungPositions.mjs");
+  }
+  return await _rechnungPositionsModulePromise;
 }
 
 function _parseBool(v) {
@@ -50,6 +59,7 @@ function _docLabelForMode(mode) {
   if (m === "firms") return "Firmenliste";
   if (m === "todo") return "ToDo-Liste";
   if (m === "restarbeiten") return "Restarbeitenliste";
+  if (m === "invoice") return "Rechnung";
   if (m === "headerTest") return "Kopf-Test";
   return "Dokument";
 }
@@ -97,6 +107,23 @@ function _resolvePrintProfile(mode) {
       key: "list",
       parent: "base",
       family: "list",
+      documentLabel,
+      header: {
+        titleMode: "documentLabel",
+        showJourfix: false,
+      },
+      branding: {
+        enabled: false,
+        label: "",
+      },
+    };
+  }
+
+  if (m === "invoice") {
+    return {
+      key: "invoice",
+      parent: "base",
+      family: "invoice",
       documentLabel,
       header: {
         titleMode: "documentLabel",
@@ -932,6 +959,7 @@ function _loadPrintDocumentContent({
   restarbeitenRows,
   restarbeitenLocationLabels,
   showAmpelInList,
+  invoice,
 } = {}) {
   let participants = [];
   let tops = [];
@@ -989,6 +1017,49 @@ function _loadPrintDocumentContent({
         : Array.isArray(restarbeitenItems) && restarbeitenItems.length > 0
           ? restarbeitenItems[0]?.showAmpelInList !== false
           : true,
+    invoice: invoice || null,
+  };
+}
+
+async function _loadBookedInvoicePrintData({ db, invoiceId } = {}) {
+  const id = String(invoiceId || "").trim();
+  if (!id) throw new Error("Rechnungs-ID für den PDF-Satz fehlt.");
+  const repository = new InvoiceRepository({ dbProvider: () => db });
+  const invoice = repository.get(id);
+  if (!invoice) throw new Error("Rechnung wurde nicht gefunden.");
+  if (invoice.status !== "BOOKED" || !invoice.invoice_number) {
+    throw new Error("Nur gebuchte Rechnungen dürfen final gedruckt werden.");
+  }
+  if (!invoice.customer_snapshot || !invoice.issuer_snapshot) {
+    throw new Error("Gebuchte Rechnungs-Snapshots sind unvollständig.");
+  }
+
+  const {
+    calculateInvoiceTotalsCents,
+    calculatePositionTotalCents,
+    calculatePositionVatCents,
+  } = await _loadRechnungPositionsModule();
+  const positions = Array.isArray(invoice.positions)
+    ? invoice.positions.map((position) => ({ ...position }))
+    : [];
+  const vatGroups = new Map();
+  for (const position of positions) {
+    const netCents = calculatePositionTotalCents(position);
+    if (netCents == null) continue;
+    const ratePercent = Number(position.vat_rate_percent ?? 19);
+    const vatCents = calculatePositionVatCents(position) || 0;
+    const current = vatGroups.get(ratePercent) || { rate_percent: ratePercent, net_cents: 0, vat_cents: 0, gross_cents: 0 };
+    current.net_cents += netCents;
+    current.vat_cents += vatCents;
+    current.gross_cents += netCents + vatCents;
+    vatGroups.set(ratePercent, current);
+  }
+
+  return {
+    ...invoice,
+    positions,
+    totals: { ...calculateInvoiceTotalsCents(positions) },
+    vat_totals: [...vatGroups.values()].sort((left, right) => left.rate_percent - right.rate_percent),
   };
 }
 
@@ -1002,6 +1073,7 @@ async function getPrintData({
   restarbeitenRows,
   restarbeitenLocationLabels,
   showAmpelInList,
+  invoiceId,
 } = {}) {
   const { resolvePrintMode } = await _loadPrintModesModule();
   const normalizedMode = resolvePrintMode(mode, { fallback: "protocol" });
@@ -1010,6 +1082,9 @@ async function getPrintData({
   }
 
   const db = initDatabase();
+  const invoice = normalizedMode === "invoice"
+    ? await _loadBookedInvoicePrintData({ db, invoiceId })
+    : null;
   const runtimeContext = await _buildPrintRuntimeContext({
     db,
     mode: normalizedMode,
@@ -1033,6 +1108,7 @@ async function getPrintData({
     restarbeitenRows,
     restarbeitenLocationLabels,
     showAmpelInList,
+    invoice,
   });
  
   const status = getStatus({ fresh: false }); 

@@ -24,12 +24,27 @@ function parseRow(row, db = null) {
           `)
           .get(row.customer_firm_id, row.customer_project_id) || null
       : null;
+  const finalPdfReference = db
+    ? db.prepare(`
+        SELECT *
+        FROM commercial_document_files
+        WHERE commercial_document_type = 'INVOICE'
+          AND commercial_document_id = ?
+          AND file_role = 'FINAL'
+          AND file_type = 'PDF'
+          AND is_active = 1
+          AND is_final = 1
+        ORDER BY version DESC
+        LIMIT 1
+      `).get(row.id) || null
+    : null;
   return {
     ...row,
     customer_snapshot: row.customer_snapshot_json ? JSON.parse(row.customer_snapshot_json) : null,
     issuer_snapshot: row.issuer_snapshot_json ? JSON.parse(row.issuer_snapshot_json) : null,
     positions: row.positions_json ? JSON.parse(row.positions_json) : [],
     legacy_customer: legacyCustomer,
+    final_pdf_reference: finalPdfReference,
   };
 }
 
@@ -221,6 +236,7 @@ class InvoiceRepository {
           ${HEADER_COLUMNS.map((column) => `${column} = @${column}`).join(", ")},
           positions_json = @positions_json,
           status = 'BOOKED', invoice_number = @invoice_number, booked_at = @booked_at,
+          pdf_finalization_status = 'PENDING', pdf_finalization_error = NULL,
           customer_snapshot_json = @customer_snapshot_json, issuer_snapshot_json = @issuer_snapshot_json,
           updated_at = @updated_at
         WHERE id = @id AND status = 'DRAFT'
@@ -229,6 +245,120 @@ class InvoiceRepository {
       return parseRow(db.prepare("SELECT * FROM invoices WHERE id = ?").get(String(id)), db);
     });
     return transaction.immediate();
+  }
+
+  preparePdfFinalization(id) {
+    const db = this._db();
+    const invoiceId = String(id || "");
+    const result = db.prepare(`
+      UPDATE invoices
+      SET pdf_finalization_status = 'PENDING',
+          pdf_finalization_error = NULL,
+          updated_at = @updated_at
+      WHERE id = @id
+        AND status = 'BOOKED'
+        AND pdf_finalization_status IN ('NONE', 'PENDING', 'FAILED', 'LEGACY_MISSING')
+    `).run({ id: invoiceId, updated_at: this.clock() });
+    const invoice = this.get(invoiceId);
+    if (!invoice) throw new Error("Rechnung wurde nicht gefunden.");
+    if (invoice.status !== "BOOKED") {
+      throw new Error("Nur gebuchte Rechnungen können finalisiert werden.");
+    }
+    if (!result.changes && invoice.pdf_finalization_status !== "READY") {
+      throw new Error("PDF-Finalisierung konnte nicht vorbereitet werden.");
+    }
+    return invoice;
+  }
+
+  markPdfFinalizationFailed(id, error) {
+    const invoiceId = String(id || "");
+    this._db().prepare(`
+      UPDATE invoices
+      SET pdf_finalization_status = 'FAILED',
+          pdf_finalization_error = ?,
+          updated_at = ?
+      WHERE id = ?
+        AND status = 'BOOKED'
+        AND pdf_finalization_status != 'READY'
+    `).run(
+      String(error?.message || error || "PDF-Erzeugung fehlgeschlagen.").slice(0, 1000),
+      this.clock(),
+      invoiceId
+    );
+    return this.get(invoiceId);
+  }
+
+  completePdfFinalization(id, reference) {
+    const db = this._db();
+    const invoiceId = String(id || "");
+    const transaction = db.transaction(() => {
+      const invoice = db.prepare("SELECT * FROM invoices WHERE id = ?").get(invoiceId);
+      if (!invoice || invoice.status !== "BOOKED") {
+        throw new Error("Nur gebuchte Rechnungen können finalisiert werden.");
+      }
+      const existing = db.prepare(`
+        SELECT *
+        FROM commercial_document_files
+        WHERE commercial_document_type = 'INVOICE'
+          AND commercial_document_id = ?
+          AND file_role = 'FINAL'
+          AND file_type = 'PDF'
+          AND is_active = 1
+          AND is_final = 1
+      `).get(invoiceId);
+      if (existing) {
+        const sameReference =
+          existing.file_name === reference.file_name &&
+          existing.local_path === reference.local_path &&
+          existing.size_bytes === reference.size_bytes &&
+          existing.sha256 === reference.sha256;
+        if (!sameReference) {
+          throw new Error("Für die Rechnung existiert bereits eine andere finale PDF-Referenz.");
+        }
+      } else {
+        db.prepare(`
+          INSERT INTO commercial_document_files (
+            id,
+            commercial_document_type,
+            commercial_document_id,
+            file_role,
+            file_type,
+            file_name,
+            local_path,
+            version,
+            size_bytes,
+            sha256,
+            is_active,
+            is_final,
+            created_at
+          ) VALUES (
+            @id,
+            'INVOICE',
+            @commercial_document_id,
+            'FINAL',
+            'PDF',
+            @file_name,
+            @local_path,
+            1,
+            @size_bytes,
+            @sha256,
+            1,
+            1,
+            @created_at
+          )
+        `).run(reference);
+      }
+      db.prepare(`
+        UPDATE invoices
+        SET pdf_finalization_status = 'READY',
+            pdf_finalization_error = NULL,
+            updated_at = ?
+        WHERE id = ?
+          AND status = 'BOOKED'
+      `).run(this.clock(), invoiceId);
+    });
+    transaction.immediate();
+    return this.get(invoiceId);
   }
 }
 

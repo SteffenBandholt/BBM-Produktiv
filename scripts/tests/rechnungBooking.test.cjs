@@ -243,14 +243,14 @@ async function runRechnungBookingTests(run) {
     } finally { env.close(); }
   });
 
-  await run("Rechnung Step 2: IPC und Preload bieten nur den abgegrenzten Belegkopf-Vertrag", () => {
+  await run("Rechnung R2-I2: IPC und Preload ergänzen ausschließlich Finalisieren und Öffnen der Rechnungs-PDF", () => {
     const ipc = fs.readFileSync(path.join(process.cwd(), "src/main/ipc/rechnungIpc.js"), "utf8");
     const preload = fs.readFileSync(path.join(process.cwd(), "src/main/preload.js"), "utf8");
-    for (const channel of ["defaults", "list", "get", "createDraft", "updateDraft", "deleteDraft", "previewDraft", "bookDraft", "listCustomers", "listProjects"]) {
+    for (const channel of ["defaults", "list", "get", "createDraft", "updateDraft", "deleteDraft", "previewDraft", "bookDraft", "finalizePdf", "openPdf", "listCustomers", "listProjects"]) {
       assert.equal(ipc.includes(`rechnung:${channel}`), true, channel);
     }
-    for (const token of ["rechnungDefaults", "rechnungList", "rechnungGet", "rechnungCreateDraft", "rechnungUpdateDraft", "rechnungDeleteDraft", "rechnungPreviewDraft", "rechnungBookDraft", "rechnungListCustomers", "rechnungListProjects"]) assert.equal(preload.includes(token), true, token);
-    for (const forbidden of ["zugferd", "pdf"]) assert.equal(ipc.toLowerCase().includes(forbidden), false, forbidden);
+    for (const token of ["rechnungDefaults", "rechnungList", "rechnungGet", "rechnungCreateDraft", "rechnungUpdateDraft", "rechnungDeleteDraft", "rechnungPreviewDraft", "rechnungBookDraft", "rechnungFinalizePdf", "rechnungOpenPdf", "rechnungListCustomers", "rechnungListProjects"]) assert.equal(preload.includes(token), true, token);
+    assert.equal(ipc.toLowerCase().includes("zugferd"), false);
   });
 
   await run("Rechnung Step 1.4/2: echter Screen verbindet Belegkopf und Positionsarbeit", () => {

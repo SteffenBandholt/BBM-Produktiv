@@ -33,6 +33,7 @@ const {
 const { resolveBuildIdentity } = require("../buildIdentity");
 require("../ui-editor/bbmPdfAdapter.cjs");
 require("../ui-editor/restarbeitenPdfAdapter.cjs");
+require("../ui-editor/invoicePdfAdapter.cjs");
 const { createPdfEditorAdapterResolver } = require("../ui-editor/pdfAdapterRegistry.cjs");
 
 let _pdfEditorAdapterResolver = null;
@@ -380,6 +381,7 @@ function _enforceFeature(feature) {
 function _featureForPrintMode(mode) {
   const m = String(mode || "").trim().toLowerCase();
   if (m === "restarbeiten") return "restarbeiten";
+  if (m === "invoice") return "rechnung";
   return "protokoll";
 }
 
@@ -414,16 +416,18 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
   }
   const projectId = payload.projectId || null;
   const meetingId = payload.meetingId || null;
+  const invoiceId = payload.invoiceId || null;
   const orientation = _resolveRequestedOrientation(payload);
 
   console.log(
-    `[print:${jobId}] start mode=${mode} projectId=${projectId} meetingId=${meetingId} orientation=${orientation}`
+    `[print:${jobId}] start mode=${mode} projectId=${projectId} meetingId=${meetingId} invoiceId=${invoiceId} orientation=${orientation}`
   );
 
   const data = await getPrintData({
     mode,
     projectId,
     meetingId,
+    invoiceId,
     settingsOverride: payload.settingsOverride || null,
     orientation,
     todoResponsibleFilter: payload.todoResponsibleFilter || null,
@@ -506,7 +510,9 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
             0
           )}`
         );
-        if (msg?.ok === false) throw new Error("Print-Renderer hat die PDF-Erzeugung abgewiesen.");
+        if (msg?.ok === false) {
+          throw new Error(String(msg?.error || "Print-Renderer hat die PDF-Erzeugung abgewiesen."));
+        }
         const pdfBuffer = await win.webContents.printToPDF(options);
         fs.writeFileSync(outPath, pdfBuffer);
         console.log(`[print:${jobId}] PDF written -> ${outPath}`);
@@ -537,6 +543,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
         documentTypeId: payload.documentTypeId || null,
         projectId,
         meetingId,
+        invoiceId,
         restarbeitenRows: payload.restarbeitenRows || null,
         restarbeitenLocationLabels: payload.restarbeitenLocationLabels || null,
         settingsOverride: payload.settingsOverride || null,
@@ -577,6 +584,7 @@ function registerPrintIpc() {
         mode: p.mode,
         projectId: p.projectId,
         meetingId: p.meetingId,
+        invoiceId: p.invoiceId,
         settingsOverride: p.settingsOverride || null,
         orientation,
         todoResponsibleFilter: p.todoResponsibleFilter || null,
@@ -631,6 +639,7 @@ function registerPrintIpc() {
           documentTypeId: p.documentTypeId || null,
           projectId: p.projectId || null,
           meetingId: p.meetingId || null,
+          invoiceId: p.invoiceId || null,
           restarbeitenRows: p.restarbeitenRows || null,
           restarbeitenLocationLabels: p.restarbeitenLocationLabels || null,
           settingsOverride: p.settingsOverride || null,
@@ -753,4 +762,4 @@ function registerPrintIpc() {
   );
 }
 
-module.exports = { registerPrintIpc, generatePdfForUiEditor };
+module.exports = { registerPrintIpc, generatePdfForUiEditor, printToPdf };

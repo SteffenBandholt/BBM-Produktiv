@@ -85,6 +85,133 @@ export const RESTARBEITEN_PDF_COLUMNS = Object.freeze([
   Object.freeze({ key: "completionNote", labelLines: ["Notiz/Maßnahmen"], sourceIndexes: [12], contentKind: "text", widthMm: 23, minMm: 18, maxMm: 34 }),
 ]);
 
+export const INVOICE_PDF_COLUMNS = Object.freeze([
+  Object.freeze({ key: "number", label: "Pos.", widthMm: 18, minMm: 12, maxMm: 28 }),
+  Object.freeze({ key: "description", label: "Leistung", widthMm: 86, minMm: 50, maxMm: 120 }),
+  Object.freeze({ key: "quantity", label: "Menge", widthMm: 18, minMm: 12, maxMm: 28 }),
+  Object.freeze({ key: "unit", label: "Einheit", widthMm: 16, minMm: 10, maxMm: 24 }),
+  Object.freeze({ key: "unit-price", label: "EP", widthMm: 24, minMm: 18, maxMm: 34 }),
+  Object.freeze({ key: "total-price", label: "GP / NEP", widthMm: 24, minMm: 18, maxMm: 34 }),
+]);
+
+const INVOICE_SCOPE_ID = "pdf.bbm.invoice";
+
+function _markInvoiceEditorElement(element, {
+  id,
+  kind,
+  label,
+  parentId = "",
+  editable = false,
+  operations = [],
+} = {}) {
+  if (!element) return element;
+  element.dataset.uiInspectorId = id;
+  element.dataset.uiEditorKind = kind;
+  element.dataset.uiEditorLabel = label;
+  element.dataset.uiEditorParent = parentId;
+  element.dataset.uiEditorEditable = editable ? "true" : "false";
+  element.dataset.uiEditorOps = operations.join(",");
+  return element;
+}
+
+export function buildInvoiceTableHead() {
+  const thead = document.createElement("thead");
+  const row = document.createElement("tr");
+  row.className = "invoicePdfTableHeadRow";
+  const visibleLabelByColumn = {
+    number: "Pos. / Gegenstand",
+    description: "",
+    quantity: "Menge / Einheit",
+    unit: "",
+    "unit-price": "EP",
+    "total-price": "GP",
+  };
+  for (const column of INVOICE_PDF_COLUMNS) {
+    const cell = _el("th", `invoicePdfCol invoicePdfCol--${column.key}`, visibleLabelByColumn[column.key]);
+    cell.dataset.invoiceColumn = column.key;
+    _markInvoiceEditorElement(cell, {
+      id: `${INVOICE_SCOPE_ID}.positions.column.${column.key}`,
+      kind: "tableColumn",
+      label: column.label,
+      parentId: `${INVOICE_SCOPE_ID}.positions`,
+      editable: true,
+      operations: ["resizeWidth"],
+    });
+    row.appendChild(cell);
+  }
+  thead.appendChild(row);
+  return thead;
+}
+
+export function buildInvoiceColGroup() {
+  const colgroup = document.createElement("colgroup");
+  for (const column of INVOICE_PDF_COLUMNS) {
+    const col = document.createElement("col");
+    col.className = `invoicePdfCol invoicePdfCol--${column.key}`;
+    col.dataset.invoiceColumn = column.key;
+    col.dataset.minWidthMm = String(column.minMm);
+    col.dataset.maxWidthMm = String(column.maxMm);
+    col.style.width = `${column.widthMm}mm`;
+    colgroup.appendChild(col);
+  }
+  return colgroup;
+}
+
+function _invoiceSpecialRow(row, className, label = "") {
+  const tr = document.createElement("tr");
+  tr.className = className;
+  tr.dataset.invoiceSourceId = String(row.sourceId || "");
+  const cell = _el("td", "invoicePdfSpecialCell");
+  cell.colSpan = INVOICE_PDF_COLUMNS.length;
+  if (label) cell.appendChild(_el("div", "invoicePdfSpecialLabel", label));
+  const titleLine = _el("div", "invoicePdfTextShort");
+  if (row.number) titleLine.appendChild(_el("span", "invoicePdfSpecialNumber", row.number));
+  titleLine.appendChild(_el("span", "", row.shortText || ""));
+  cell.appendChild(titleLine);
+  if (row.longText) cell.appendChild(_el("div", "invoicePdfTextLong", row.longText));
+  tr.appendChild(cell);
+  return tr;
+}
+
+export function buildInvoiceRow(row = {}) {
+  if (row.kind === "invoiceTitle") {
+    return _invoiceSpecialRow(row, "invoicePdfTitleRow", "");
+  }
+  if (row.kind === "invoiceText") {
+    return _invoiceSpecialRow(row, "invoicePdfTextRow", "");
+  }
+  if (row.kind === "invoiceNote") {
+    return _invoiceSpecialRow(row, "invoicePdfNoteRow", "Hinweis");
+  }
+
+  const tr = document.createElement("tr");
+  tr.className = "invoicePdfPositionRow";
+  tr.dataset.invoiceSourceId = String(row.sourceId || "");
+  const description = _el("td", "invoicePdfCol invoicePdfCol--description");
+  description.dataset.invoiceColumn = "description";
+  description.appendChild(_el("div", "invoicePdfPositionShort", row.description || ""));
+  if (row.longText) description.appendChild(_el("div", "invoicePdfPositionLong", row.longText));
+  const values = [
+    ["number", row.number],
+    ["description", description],
+    ["quantity", row.quantity],
+    ["unit", row.unit],
+    ["unit-price", row.unitPrice],
+    ["total-price", row.totalPrice],
+  ];
+  for (const [key, value] of values) {
+    const cell = value && value.nodeType === 1
+      ? value
+      : _el("td", `invoicePdfCol invoicePdfCol--${key}`);
+    if (!(value && value.nodeType === 1)) {
+      cell.appendChild(_el("span", "invoicePdfPositionValue", value || ""));
+    }
+    cell.dataset.invoiceColumn = key;
+    tr.appendChild(cell);
+  }
+  return tr;
+}
+
 function _appendRestarbeitenStack(container, values, lineClasses = []) {
   values.forEach((value, index) => {
     const text = String(value ?? "").trim();
@@ -207,6 +334,7 @@ function _buildPageHeader({ projectLabel, docLabel, pageNo, totalPages }) {
 
 function _buildTableHead(type, topsLayout) {
   if (type === "firmsCards") return null;
+  if (type === "invoice") return buildInvoiceTableHead();
   const thead = document.createElement("thead");
   const tr = document.createElement("tr");
   tr.className = "tableHeadRow";
@@ -334,6 +462,7 @@ function _buildTopRow(row) {
 }
 
 function _buildGenericRow(row) {
+  if (String(row?.kind || "").startsWith("invoice")) return buildInvoiceRow(row);
   if (row?.kind === "todoGroup") {
     const tr = document.createElement("tr");
     tr.className = "firmGroupRow todoGroupRow";
@@ -450,6 +579,7 @@ function _buildGenericRow(row) {
 
 function _buildColGroup(type, topsLayout) {
   if (type === "restarbeiten") return buildRestarbeitenColGroup();
+  if (type === "invoice") return buildInvoiceColGroup();
   if (type !== "tops") return null;
   const colgroup = document.createElement("colgroup");
   const { number, text, meta } = topsLayout.pdf.columns;
@@ -522,6 +652,17 @@ function _buildTable(page, data) {
   else if (type === "firmsCards") table.className = "firmsCardsTable";
   else if (type === "todo") table.className = "todoTable";
   else if (type === "restarbeiten") table.className = "restarbeitenTable";
+  else if (type === "invoice") table.className = "invoicePdfTable";
+  if (type === "invoice") {
+    _markInvoiceEditorElement(table, {
+      id: `${INVOICE_SCOPE_ID}.positions`,
+      kind: "table",
+      label: "Bau-LV",
+      parentId: `${INVOICE_SCOPE_ID}.body`,
+      editable: true,
+      operations: ["resizeWidth", "resizeColumnBoundary"],
+    });
+  }
   _applyTopsTableLayout(table, topsLayout);
 
   const colgroup = _buildColGroup(type, topsLayout);
@@ -531,6 +672,14 @@ function _buildTable(page, data) {
   if (head) table.appendChild(head);
 
   const tbody = document.createElement("tbody");
+  if (type === "invoice") {
+    _markInvoiceEditorElement(tbody, {
+      id: `${INVOICE_SCOPE_ID}.positions.rows`,
+      kind: "repeatingArea",
+      label: "Bau-LV-Zeilen",
+      parentId: `${INVOICE_SCOPE_ID}.positions`,
+    });
+  }
   for (const row of page.table?.rows || []) {
     if (type === "tops") tbody.appendChild(_buildTopRow(row));
     else tbody.appendChild(_buildGenericRow(row));
@@ -546,14 +695,175 @@ function _buildTable(page, data) {
             ? "Keine offenen ToDos vorhanden."
             : type === "restarbeiten"
               ? "Keine Restpunkte für den Druck vorhanden."
+              : type === "invoice"
+                ? "Keine Rechnungspositionen vorhanden."
             : "Keine Einträge vorhanden.";
     const td = _el("td", "", msg);
-    td.colSpan = type === "todo" ? 5 : type === "firms" ? 3 : type === "restarbeiten" ? RESTARBEITEN_PDF_COLUMNS.length : 1;
+    td.colSpan = type === "todo" ? 5 : type === "firms" ? 3 : type === "restarbeiten" ? RESTARBEITEN_PDF_COLUMNS.length : type === "invoice" ? INVOICE_PDF_COLUMNS.length : 1;
     tr.appendChild(td);
     tbody.appendChild(tr);
   }
   table.appendChild(tbody);
   return table;
+}
+
+function _appendInvoiceAddress(container, snapshot = {}) {
+  const lines = [
+    snapshot.companyName,
+    snapshot.companyName2,
+    snapshot.street,
+    [snapshot.zip, snapshot.city].filter(Boolean).join(" "),
+  ].filter(Boolean);
+  for (const line of lines) container.appendChild(_el("div", "", line));
+}
+
+export function buildInvoiceFirstBlocks(invoice = {}) {
+  const wrapper = _el("div", "invoicePdfFirstBlocks");
+  const letterhead = _el("div", "invoicePdfLetterhead");
+  const recipient = _el("section", "invoicePdfRecipient");
+  _markInvoiceEditorElement(recipient, {
+    id: `${INVOICE_SCOPE_ID}.recipient`,
+    kind: "group",
+    label: "Rechnungsempfänger",
+    parentId: `${INVOICE_SCOPE_ID}.body`,
+    editable: true,
+    operations: ["setVisibility"],
+  });
+  recipient.appendChild(_el("div", "invoicePdfRecipientLabel", "Rechnungsempfänger"));
+  _appendInvoiceAddress(recipient, invoice.customer_snapshot || {});
+
+  const meta = _el("section", "invoicePdfMeta");
+  _markInvoiceEditorElement(meta, {
+    id: `${INVOICE_SCOPE_ID}.meta`,
+    kind: "group",
+    label: "Rechnungsdaten",
+    parentId: `${INVOICE_SCOPE_ID}.body`,
+    editable: true,
+    operations: ["setVisibility"],
+  });
+  const issuerAddress = _el("div", "invoicePdfIssuerAddress");
+  _appendInvoiceAddress(issuerAddress, invoice.issuer_snapshot || {});
+  meta.appendChild(issuerAddress);
+  for (const [label, value] of [
+    ["Rechnungsdatum", invoice.invoice_date_display],
+    ["Leistungszeitraum", invoice.service_period_display],
+  ]) {
+    if (!value) continue;
+    const row = _el("div", "invoicePdfMetaRow");
+    const labelElement = _el("span", "invoicePdfMetaLabel", label);
+    _markInvoiceEditorElement(labelElement, {
+      id: `${INVOICE_SCOPE_ID}.meta.label`,
+      kind: "label",
+      label: "Rechnungsdaten-Bezeichnung",
+      parentId: `${INVOICE_SCOPE_ID}.meta`,
+    });
+    const valueElement = _el("span", "invoicePdfMetaValue", value);
+    _markInvoiceEditorElement(valueElement, {
+      id: `${INVOICE_SCOPE_ID}.meta.value`,
+      kind: "value",
+      label: "Rechnungsdaten-Wert",
+      parentId: `${INVOICE_SCOPE_ID}.meta`,
+    });
+    row.append(labelElement, valueElement);
+    meta.appendChild(row);
+  }
+  letterhead.append(recipient, meta);
+  wrapper.appendChild(letterhead);
+
+  const titleBlock = _el("div", "invoicePdfTitleBlock");
+  titleBlock.append(
+    _el("h1", "invoicePdfTitle", invoice.document_type_display || "Rechnung"),
+    _el("div", "invoicePdfNumber", invoice.invoice_number || "")
+  );
+  wrapper.appendChild(titleBlock);
+
+  const contextValue = String(invoice.service_reference || invoice.construction_project || "").trim();
+  if (contextValue) {
+    const context = _el("div", "invoicePdfContext");
+    context.append(
+      _el("div", "invoicePdfContextLabel", "Bauvorhaben / Leistungsbezug"),
+      _el("div", "invoicePdfContextValue", contextValue)
+    );
+    wrapper.appendChild(context);
+  }
+
+  if (invoice.intro_text) {
+    const intro = _el("div", "invoicePdfIntro", invoice.intro_text);
+    _markInvoiceEditorElement(intro, {
+      id: `${INVOICE_SCOPE_ID}.intro`,
+      kind: "text",
+      label: "Einleitung",
+      parentId: `${INVOICE_SCOPE_ID}.body`,
+      editable: true,
+      operations: ["setVisibility"],
+    });
+    wrapper.appendChild(intro);
+  }
+  return wrapper;
+}
+
+export function buildInvoiceTail(invoice = {}) {
+  const wrapper = _el("div", "invoicePdfTail");
+  const totals = _el("section", "invoicePdfTotals");
+  _markInvoiceEditorElement(totals, {
+    id: `${INVOICE_SCOPE_ID}.totals`,
+    kind: "group",
+    label: "Rechnungssummen",
+    parentId: `${INVOICE_SCOPE_ID}.body`,
+    editable: true,
+    operations: ["setVisibility"],
+  });
+  const addTotal = (label, value, emphasized = false) => {
+    const row = _el("div", `invoicePdfTotalRow${emphasized ? " is-emphasized" : ""}`);
+    row.append(_el("span", "", label), _el("span", "", value || "0,00 EUR"));
+    totals.appendChild(row);
+  };
+  addTotal("Nettosumme", invoice.totals_display?.net);
+  for (const tax of invoice.vat_totals_display || []) {
+    addTotal(`${tax.rate_display} MwSt.`, tax.vat);
+  }
+  addTotal("Rechnungsbetrag", invoice.totals_display?.gross, true);
+  wrapper.appendChild(totals);
+
+  const payment = _el("div", "invoicePdfPayment", `Zahlbar bis ${invoice.due_date_display || "–"} ohne Abzug.`);
+  _markInvoiceEditorElement(payment, {
+    id: `${INVOICE_SCOPE_ID}.payment`,
+    kind: "text",
+    label: "Zahlungstext",
+    parentId: `${INVOICE_SCOPE_ID}.body`,
+    editable: true,
+    operations: ["setVisibility"],
+  });
+  wrapper.appendChild(payment);
+
+  const issuer = invoice.issuer_snapshot || {};
+  const footer = _el("div", "invoicePdfFooter");
+  _markInvoiceEditorElement(footer, {
+    id: `${INVOICE_SCOPE_ID}.footer`,
+    kind: "footer",
+    label: "Aussteller-Fuß",
+    parentId: `${INVOICE_SCOPE_ID}.body`,
+    editable: true,
+    operations: ["setVisibility"],
+  });
+  const issuerAddress = [
+    issuer.companyName,
+    issuer.companyName2,
+    issuer.street,
+    [issuer.zip, issuer.city].filter(Boolean).join(" "),
+  ].filter(Boolean);
+  if (issuerAddress.length) {
+    footer.appendChild(_el("div", "invoicePdfFooterAddress", issuerAddress.join(" · ")));
+  }
+  const legal = [
+    issuer.vatId ? `USt-IdNr. ${issuer.vatId}` : "",
+    issuer.taxNumber ? `Steuernr. ${issuer.taxNumber}` : "",
+    issuer.iban ? `IBAN ${issuer.iban}` : "",
+    issuer.bic ? `BIC ${issuer.bic}` : "",
+  ].filter(Boolean);
+  if (legal.length) footer.appendChild(_el("div", "invoicePdfFooterBank", legal.join(" · ")));
+  wrapper.appendChild(footer);
+  return wrapper;
 }
 
 function _buildTopsLegend() {
@@ -720,6 +1030,13 @@ export function renderPrint({ pages, data } = {}) {
   const runtimeData = { ...(data || {}), mode: normalizedMode };
   globalThis.__bbmRestarbeitenLocationLabels = runtimeData?.restarbeitenLocationLabels || null;
   const root = _el("div", "printRoot printV2Root");
+  if (normalizedMode === "invoice") {
+    _markInvoiceEditorElement(root, {
+      id: INVOICE_SCOPE_ID,
+      kind: "document",
+      label: "Rechnung",
+    });
+  }
   root.dataset.orientation = _normalizeOrientation(runtimeData?.orientation);
   root.dataset.tableLayout = _getTopLayout(runtimeData).tableKey || "protokoll_tops";
 
@@ -752,32 +1069,57 @@ export function renderPrint({ pages, data } = {}) {
 
   (pages || []).forEach((page, idx) => {
     const pageEl = _el("div", "page");
+    if (normalizedMode === "invoice") {
+      _markInvoiceEditorElement(pageEl, {
+        id: `${INVOICE_SCOPE_ID}.page-template`,
+        kind: "page",
+        label: "A4-Seite",
+        parentId: INVOICE_SCOPE_ID,
+      });
+    }
     const pageNo = Number(page?.header?.pageNo || 0);
     if (pageNo === 1) {
       pageEl.appendChild(_buildSpineNote(runtimeData));
     }
     if (pageNo === 1) {
       pageEl.appendChild(renderV2GlobalHeader({ data: runtimeData }));
-      pageEl.appendChild(renderV2FullHeader({ data: runtimeData, pageNo, totalPages, modeLabel }));
+      if (normalizedMode !== "invoice") {
+        pageEl.appendChild(renderV2FullHeader({ data: runtimeData, pageNo, totalPages, modeLabel }));
+      }
       pageEl.appendChild(_el("div", "v2FullGapLineBody"));
     } else {
       pageEl.appendChild(renderV2MiniHeader({ data: runtimeData, pageNo, totalPages, modeLabel }));
     }
     const pageBody = _el("div", "v2PageBody");
+    if (normalizedMode === "invoice") {
+      _markInvoiceEditorElement(pageBody, {
+        id: `${INVOICE_SCOPE_ID}.body`,
+        kind: "area",
+        label: "Rechnungsinhalt",
+        parentId: `${INVOICE_SCOPE_ID}.page-template`,
+      });
+      if (page?.invoiceFirst) {
+        pageBody.appendChild(buildInvoiceFirstBlocks(runtimeData.invoice || {}));
+      }
+    }
     const intro = _buildIntro(page);
     if (intro) pageBody.appendChild(intro);
     const preRemarks = _buildPreRemarks(page);
     if (preRemarks) pageBody.appendChild(preRemarks);
     const isTops = String(page?.table?.type || "") === "tops";
+    const isInvoice = String(page?.table?.type || "") === "invoice";
     const hasRows = (page?.table?.rows || []).length > 0;
     // Tops-Tabelle ohne Zeilen nicht rendern (sonst Tabellenkopf allein).
-    const renderTable = !(isTops && !hasRows);
+    const renderTable = !(isTops && !hasRows) && !(isInvoice && page?.suppressTable);
     if (renderTable) {
       pageBody.appendChild(_buildTable(page, runtimeData));
     }
     if (isTops && idx === tailPageIdx) {
       const tail = _buildTopsTail(page, runtimeData);
       if (tail) pageBody.appendChild(tail);
+    }
+    if (normalizedMode === "invoice" && page?.invoiceLast) {
+      pageBody.appendChild(buildInvoiceTail(runtimeData.invoice || {}));
     }
     pageEl.appendChild(pageBody);
     pageEl.appendChild(_el("div", "v2FooterReserveSpacer"));

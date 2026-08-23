@@ -15,7 +15,7 @@ function createDevelopmentLicenseStatus({ appVersion = "", displayLabel = "Entwi
       edition: "test",
       issuedAt: "2026-01-01T00:00:00.000Z",
       maxDevices: 1,
-      modules: Object.freeze(["protokoll", "restarbeiten"]),
+      modules: Object.freeze(["protokoll", "restarbeiten", "rechnung"]),
       features: Object.freeze(["diktat"]),
       binding: "build",
     }),

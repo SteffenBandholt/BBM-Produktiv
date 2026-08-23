@@ -106,6 +106,8 @@ contextBridge.exposeInMainWorld("bbmDb", {
   rechnungDeleteDraft: (id) => ipcRenderer.invoke("rechnung:deleteDraft", { id }),
   rechnungPreviewDraft: (id, header) => ipcRenderer.invoke("rechnung:previewDraft", { id, header }),
   rechnungBookDraft: (id, header) => ipcRenderer.invoke("rechnung:bookDraft", { id, header }),
+  rechnungFinalizePdf: (id) => ipcRenderer.invoke("rechnung:finalizePdf", { id }),
+  rechnungOpenPdf: (id) => ipcRenderer.invoke("rechnung:openPdf", { id }),
   rechnungListCustomers: () => ipcRenderer.invoke("rechnung:listCustomers"),
   rechnungListProjects: () => ipcRenderer.invoke("rechnung:listProjects"),
 
