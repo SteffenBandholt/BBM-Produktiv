@@ -93,31 +93,30 @@ async function runRechnungenDesignModuleTests(run) {
     assert.deepEqual(result.list.map((entry) => entry.ref), [global.ref]);
   });
 
-  await run("Rechnungs-Kunden 02: Liste mit Projekt enthält globale und lokale Kunden", async () => {
+  await run("Rechnungs-Kunden 02: Projektkontext ändert die zentrale Kundenliste nicht", async () => {
     const calls = [];
     const global = firmEntry({ id: "g1", label: "Global GmbH" });
-    const local = firmEntry({ kind: "project_firm", id: "l1", projectId: "p1", label: "Lokal GmbH" });
     const result = await customerModule.listInvoiceCustomers({
       api: {
         firmDirectoryListCustomers: async (payload) => {
           calls.push(payload);
-          return { ok: true, list: [global, local] };
+          return { ok: true, list: [global] };
         },
       },
       projectId: "p1",
     });
-    assert.deepEqual(calls, [{ projectId: "p1" }]);
-    assert.deepEqual(result.list.map((entry) => entry.key), ["global_firm:g1", "project_firm:l1"]);
+    assert.deepEqual(calls, [{}]);
+    assert.deepEqual(result.list.map((entry) => entry.key), ["global_firm:g1"]);
   });
 
-  await run("Rechnungs-Kunden 03: lokaler Kunde bleibt auf sein eigenes Projekt begrenzt", async () => {
+  await run("Rechnungs-Kunden 03: projektlokale Firma ist kein Rechnungskunde", async () => {
     const foreign = firmEntry({ kind: "project_firm", id: "l2", projectId: "p2", label: "Fremd" });
     const result = await customerModule.listInvoiceCustomers({
       api: { firmDirectoryListCustomers: async () => ({ ok: true, list: [foreign] }) },
       projectId: "p1",
     });
     assert.equal(result.ok, false);
-    assert.match(result.error, /außerhalb des Projektkontexts/);
+    assert.match(result.error, /ungültige Kundenreferenz/);
   });
 
   await run("Rechnungs-Kunden 04: globaler Kunde benötigt keine Projektzuordnung", async () => {
@@ -148,15 +147,14 @@ async function runRechnungenDesignModuleTests(run) {
     assert.equal(result.list[0].label, "Nur Kunde");
   });
 
-  await run("Rechnungs-Kunden 07: gleiche Namen global und lokal kollidieren nicht", async () => {
+  await run("Rechnungs-Kunden 07: Projektzuordnung dupliziert die zentrale Firma nicht", async () => {
     const global = firmEntry({ id: "same", label: "Gleicher Name" });
-    const local = firmEntry({ kind: "project_firm", id: "same", projectId: "p1", label: "Gleicher Name" });
     const result = await customerModule.listInvoiceCustomers({
-      api: { firmDirectoryListCustomers: async () => ({ ok: true, list: [global, local] }) },
+      api: { firmDirectoryListCustomers: async () => ({ ok: true, list: [global] }) },
       projectId: "p1",
     });
-    assert.deepEqual(result.list.map((entry) => entry.key), ["global_firm:same", "project_firm:same"]);
-    assert.deepEqual(result.list.map((entry) => entry.optionLabel), ["Gleicher Name · Global", "Gleicher Name · Dieses Projekt"]);
+    assert.deepEqual(result.list.map((entry) => entry.key), ["global_firm:same"]);
+    assert.deepEqual(result.list.map((entry) => entry.optionLabel), ["Gleicher Name · Zentrale Firma"]);
   });
 
   await run("Rechnungs-Kunden 08: Anlage ohne Projekt wird globaler Kunde", () => {
@@ -166,23 +164,23 @@ async function runRechnungenDesignModuleTests(run) {
     });
   });
 
-  await run("Rechnungs-Kunden 09: Anlage mit Projekt ist standardmäßig lokal", () => {
+  await run("Rechnungs-Kunden 09: Anlage mit Projekt bleibt eine zentrale Firma", () => {
     assert.deepEqual(defaultsForCreation({ origin: "invoice", projectId: "p1" }), {
-      kind: "project_firm",
-      uses: { projectParticipant: 0, customer: 1 },
-    });
-  });
-
-  await run("Rechnungs-Kunden 10: bewusste globale Anlage mit Projekt bleibt möglich", () => {
-    assert.deepEqual(defaultsForCreation({ origin: "invoice", projectId: "p1", kind: "global_firm" }), {
       kind: "global_firm",
       uses: { projectParticipant: 0, customer: 1 },
     });
   });
 
+  await run("Rechnungs-Kunden 10: projektlokale Anlage über Rechnung wird abgewiesen", () => {
+    assert.throws(
+      () => defaultsForCreation({ origin: "invoice", projectId: "p1", kind: "project_firm" }),
+      /global firms only/
+    );
+  });
+
   await run("Rechnungs-Kunden 11: neu geladener Kunde wird über die typisierte Referenz ausgewählt", () => {
-    const created = firmEntry({ kind: "project_firm", id: "l1", projectId: "p1", label: "Neu" });
-    const customer = customerModule.toInvoiceCustomer(created, { projectId: "p1" });
+    const created = firmEntry({ kind: "global_firm", id: "g1", label: "Neu" });
+    const customer = customerModule.toInvoiceCustomer(created);
     assert.equal(customerModule.resolveInvoiceCustomer([customer], created.ref), customer);
   });
 

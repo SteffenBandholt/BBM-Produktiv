@@ -17,6 +17,8 @@ function fixture({ settings = { "invoice.paymentTermDays": "8" } } = {}) {
   require(path.join(process.cwd(), "src/main/db/invoiceMigrations.js")).ensureInvoiceSchema(db);
   db.prepare("INSERT INTO projects (id, name) VALUES ('p1', 'Projekt Eins')").run();
   db.prepare("INSERT INTO firms (id, name, street, zip, city, country, use_customer) VALUES ('f1', 'Kunde Alt', 'Altweg 1', '12345', 'Altstadt', 'DE', 1)").run();
+  const firmUsagesRepo = require(path.join(process.cwd(), "src/main/db/firmUsagesRepo.js"));
+  firmUsagesRepo.setUsage({ firmId: "f1", usageCode: firmUsagesRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER, enabled: true, dbConn: db });
   db.prepare("INSERT INTO user_profile (id, name1, name2, street, zip, city, country, iban) VALUES (1, 'BBM Betrieb', 'Inhaber', 'Werkweg 2', '54321', 'Sitzstadt', 'DE', 'DE001')").run();
   const { InvoiceRepository } = require(path.join(process.cwd(), "src/main/db/invoiceRepository.js"));
   const { InvoiceService } = require(path.join(process.cwd(), "src/main/domain/rechnung/InvoiceService.js"));

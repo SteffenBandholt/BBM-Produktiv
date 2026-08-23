@@ -3,6 +3,7 @@
 const { initDatabase } = require("../../db/database");
 const firmsRepo = require("../../db/firmsRepo");
 const projectFirmsRepo = require("../../db/projectFirmsRepo");
+const firmUsagesRepo = require("../../db/firmUsagesRepo");
 const {
   FIRM_KINDS,
   defaultsForCreation,
@@ -29,7 +30,7 @@ function labelFor(row) {
   return String(row?.short || row?.name || "(ohne Name)").trim();
 }
 
-function toDirectoryEntry(row, kind) {
+function toDirectoryEntry(row, kind, usageCodes = null) {
   if (!row) return null;
   const projectId = kind === FIRM_KINDS.PROJECT ? String(row.project_id || "") || null : null;
   const label = labelFor(row);
@@ -41,8 +42,12 @@ function toDirectoryEntry(row, kind) {
     key: firmRefKey(ref),
     label,
     uses: Object.freeze({
-      projectParticipant: Number(row.use_project_participant) === 1 ? 1 : 0,
-      customer: Number(row.use_customer) === 1 ? 1 : 0,
+      projectParticipant: Array.isArray(usageCodes)
+        ? Number(usageCodes.includes(firmUsagesRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT))
+        : Number(row.use_project_participant) === 1 ? 1 : 0,
+      customer: Array.isArray(usageCodes)
+        ? Number(usageCodes.includes(firmUsagesRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER))
+        : Number(row.use_customer) === 1 ? 1 : 0,
     }),
     is_active: Number(row.is_active ?? 1) === 1 ? 1 : 0,
   });
@@ -58,11 +63,13 @@ class FirmDirectoryService {
     dbProvider = initDatabase,
     globalRepo = firmsRepo,
     projectRepo = projectFirmsRepo,
+    usageRepo = firmUsagesRepo,
     customerImpactProvider = null,
   } = {}) {
     this.dbProvider = dbProvider;
     this.globalRepo = globalRepo;
     this.projectRepo = projectRepo;
+    this.usageRepo = usageRepo;
     this.customerImpactProvider =
       typeof customerImpactProvider === "function" ? customerImpactProvider : null;
   }
@@ -80,7 +87,10 @@ class FirmDirectoryService {
         : db
             .prepare("SELECT * FROM project_firms WHERE id = ? AND project_id = ?")
             .get(ref.id, ref.projectId);
-    return toDirectoryEntry(row, ref.kind);
+    const usages = row && ref.kind === FIRM_KINDS.GLOBAL
+      ? this.usageRepo.listCodesByFirm(row.id, db)
+      : null;
+    return toDirectoryEntry(row, ref.kind, usages);
   }
 
   listAll({ kind, projectId, includeInactive = true } = {}) {
@@ -93,7 +103,11 @@ class FirmDirectoryService {
            ORDER BY COALESCE(role_code, 60), LOWER(COALESCE(short, name, ''))`
         )
         .all()
-        .map((row) => toDirectoryEntry(row, FIRM_KINDS.GLOBAL));
+        .map((row) => toDirectoryEntry(
+          row,
+          FIRM_KINDS.GLOBAL,
+          this.usageRepo.listCodesByFirm(row.id, db)
+        ));
     }
     const pid = String(projectId || "").trim();
     if (!pid) throw new Error("projectId required");
@@ -136,26 +150,13 @@ class FirmDirectoryService {
     return [...locals, ...globals].sort((a, b) => a.label.localeCompare(b.label, "de"));
   }
 
-  listCustomers({ projectId } = {}) {
-    const pid = String(projectId || "").trim();
+  listCustomers() {
     const db = this._db();
-    const globals = db
-      .prepare(
-        `SELECT * FROM firms
-         WHERE use_customer = 1 AND removed_at IS NULL AND COALESCE(is_trashed, 0) = 0`
-      )
-      .all()
-      .map((row) => toDirectoryEntry(row, FIRM_KINDS.GLOBAL));
-    const locals = pid
-      ? db
-          .prepare(
-            `SELECT * FROM project_firms
-             WHERE project_id = ? AND use_customer = 1 AND removed_at IS NULL`
-          )
-          .all(pid)
-          .map((row) => toDirectoryEntry(row, FIRM_KINDS.PROJECT))
-      : [];
-    return [...locals, ...globals].sort((a, b) => a.label.localeCompare(b.label, "de"));
+    const usageCode = this.usageRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER;
+    return this.usageRepo
+      .listFirmsByUsage(usageCode, db)
+      .map((row) => toDirectoryEntry(row, FIRM_KINDS.GLOBAL, this.usageRepo.listCodesByFirm(row.id, db)))
+      .sort((a, b) => a.label.localeCompare(b.label, "de"));
   }
 
   listPersons({ ref: refInput, projectId, forUse = null, participantOnly = false } = {}) {
@@ -203,10 +204,16 @@ class FirmDirectoryService {
       use_project_participant: resolvedUses.projectParticipant,
       use_customer: resolvedUses.customer,
     };
-    const row =
-      defaults.kind === FIRM_KINDS.GLOBAL
-        ? this.globalRepo.createFirm(payload)
-        : this.projectRepo.createProjectFirm({ ...payload, projectId: String(projectId).trim() });
+    const row = defaults.kind === FIRM_KINDS.GLOBAL
+      ? this.globalRepo.createFirm(payload)
+      : this.projectRepo.createProjectFirm({ ...payload, projectId: String(projectId).trim() });
+    if (defaults.kind === FIRM_KINDS.GLOBAL) {
+      const usageCodes = [];
+      if (resolvedUses.projectParticipant) usageCodes.push(this.usageRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT);
+      if (resolvedUses.customer) usageCodes.push(this.usageRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER);
+      this.usageRepo.replaceUsages({ firmId: row.id, usageCodes, dbConn: this._db() });
+      return this.get({ kind: FIRM_KINDS.GLOBAL, id: row.id });
+    }
     return toDirectoryEntry(row, defaults.kind);
   }
 
@@ -371,7 +378,20 @@ class FirmDirectoryService {
         error.impacts = assessment.impacts;
         throw error;
       }
-      const table = ref.kind === FIRM_KINDS.GLOBAL ? "firms" : "project_firms";
+      if (ref.kind === FIRM_KINDS.GLOBAL) {
+        const usageCodes = [];
+        if (assessment.next.projectParticipant) usageCodes.push(this.usageRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT);
+        if (assessment.next.customer) usageCodes.push(this.usageRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER);
+        const versionedCurrent = this.get(ref);
+        if (expectedUpdatedAt && versionedCurrent?.updated_at !== expectedUpdatedAt) {
+          const error = new Error("Firma wurde zwischenzeitlich geaendert.");
+          error.code = "FIRM_VERSION_CONFLICT";
+          throw error;
+        }
+        this.usageRepo.replaceUsages({ firmId: ref.id, usageCodes, dbConn: db });
+        return this.get(ref);
+      }
+      const table = "project_firms";
       const scopeSql = ref.kind === FIRM_KINDS.PROJECT ? " AND project_id = @project_id" : "";
       const versionSql = expectedUpdatedAt ? " AND updated_at = @expected_updated_at" : "";
       const now = new Date().toISOString();

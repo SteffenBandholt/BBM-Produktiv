@@ -122,10 +122,7 @@ export function openFirmEditor({
     scopeCaption.textContent = "Ablage";
     scopeCaption.classList.add("bbm-form-label");
     const scope = document.createElement("select");
-    for (const [value, label] of [
-      ["project_firm", "Projektlokaler Kunde"],
-      ["global_firm", "Globaler Kunde"],
-    ]) {
+    for (const [value, label] of [["global_firm", "Zentrale Firma"]]) {
       const entry = document.createElement("option");
       entry.value = value;
       entry.textContent = label;
@@ -133,8 +130,8 @@ export function openFirmEditor({
     }
     const defaultKind =
       firm?.kind ||
-      kind ||
-      (origin === "firms" || (origin === "invoice" && !projectId)
+      (origin === "invoice" ? "global_firm" : kind) ||
+      (origin === "firms"
         ? "global_firm"
         : "project_firm");
     scope.value = defaultKind;
@@ -151,7 +148,7 @@ export function openFirmEditor({
     });
     scopeInfo.textContent =
       fixedKind === "global_firm"
-        ? "Scope: Global"
+        ? origin === "invoice" ? "Ablage: Zentrale Firma" : "Scope: Global"
         : `Scope: Lokal${projectId ? ` · Projekt ${projectId}` : ""}`;
 
     const grid = setStyles(document.createElement("div"), {

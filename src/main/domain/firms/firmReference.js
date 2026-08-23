@@ -54,15 +54,16 @@ function defaultsForCreation({ origin, kind, projectId } = {}) {
   if (!resolvedKind) {
     if (normalizedOrigin === "firms") resolvedKind = FIRM_KINDS.GLOBAL;
     if (normalizedOrigin === "project_firms") resolvedKind = FIRM_KINDS.PROJECT;
-    if (normalizedOrigin === "invoice") {
-      resolvedKind = String(projectId || "").trim() ? FIRM_KINDS.PROJECT : FIRM_KINDS.GLOBAL;
-    }
+    if (normalizedOrigin === "invoice") resolvedKind = FIRM_KINDS.GLOBAL;
   }
   if (normalizedOrigin === "firms" && resolvedKind !== FIRM_KINDS.GLOBAL) {
     throw new Error("firms origin creates global firms only");
   }
   if (normalizedOrigin === "project_firms" && resolvedKind !== FIRM_KINDS.PROJECT) {
     throw new Error("project_firms origin creates project firms only");
+  }
+  if (normalizedOrigin === "invoice" && resolvedKind !== FIRM_KINDS.GLOBAL) {
+    throw new Error("invoice origin creates global firms only");
   }
   if (resolvedKind === FIRM_KINDS.PROJECT && !String(projectId || "").trim()) {
     throw new Error("projectId required for project firm creation");

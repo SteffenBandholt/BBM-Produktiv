@@ -4309,3 +4309,11 @@ Wichtig:
 - Reale DEV-Abnahme: Start ohne externe Lizenzdatei und ohne neue Lizenzabfrage; Protokoll, Restarbeiten und Pläne gleichzeitig sichtbar und jeweils separat geöffnet; keine `No handler registered`-Fehler.
 - Gezielte Navigationstests, UI-Editor-Vertragscheck, ESLint der geänderten Dateien und `git diff --check` sind grün. ESLint meldet ausschließlich bestehende Warnungen.
 - Die bereits dokumentierten globalen `npm test`-/`npm run lint`-Fehler bleiben paketfremd und wurden nicht verändert. Nächster offener Schritt: keiner für dieses Paket; Commit-SHA folgt im Abschlussbericht.
+
+## Rechnung R2-I1 - zentrale Firmen-/Kundenbasis
+
+- Status: fachlicher Integrationsblock umgesetzt. Neue Rechnungsentwürfe verwenden ausschließlich die zentrale Firmenidentität mit `firm_usages.invoice_customer`; ein optionaler Projektbezug der Rechnung bleibt davon getrennt.
+- Migration: Die additive Tabelle `firm_usages` wird idempotent angelegt und aus vorhandenen zentralen Verwendungsflags sowie aktiven Projektzuordnungen befüllt. Eindeutig über Name plus E-Mail oder vollständige Adresse auflösbare `project_firm`-Entwürfe werden auf die zentrale ID umgestellt; mehrdeutige Altverweise bleiben unverändert und gebuchte Rechnungen werden nicht migriert.
+- Kompatibilität: Die bisherigen `use_*`-Spalten bleiben synchronisierte Übergangsfelder für Protokoll/Restarbeiten. Projektlokale Firmen bleiben dort erhalten, werden aber nicht mehr als Rechnungskunden angeboten.
+- Prüfung: Gruppe `rechnungen-design` einschließlich R2-I1-Rollen-, DRAFT-, Migrations-, Buchungs- und Snapshotfällen ist grün; UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün. Die Firmen-/Projektfirmenfälle der Core-Gruppe sind grün. Der globale `npm test`-Lauf bleibt an bereits vorhandenen paketfremden Guardrails rot (unter anderem Protokoll-Testfixture/Quicklane, MainHeader, Editor-Inventarzähler und Lizenz-Dokumenthash).
+- Kein Commit, kein Push. Nächster fachlicher Schritt laut Bestandsprüfung: getrennte Rechnung-PDF-V2-Finalisierung; nicht Bestandteil von R2-I1.

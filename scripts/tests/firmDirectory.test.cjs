@@ -128,7 +128,7 @@ async function runFirmDirectoryTests(run) {
       const participants = directory.listProjectParticipants({ projectId: "p1" });
       const customers = directory.listCustomers({ projectId: "p1" });
       assert.deepEqual(participants.map((firm) => firm.name).sort(), ["G both", "G participant", "L both", "L participant"]);
-      assert.deepEqual(customers.map((firm) => firm.name).sort(), ["G both", "G customer", "L both", "L customer"]);
+      assert.deepEqual(customers.map((firm) => firm.name).sort(), ["G both", "G customer"]);
       assert.equal(directory.listProjectParticipants({ projectId: "p2" }).length, 0);
       assert.deepEqual(directory.listCustomers({ projectId: "p2" }).map((firm) => firm.name).sort(), ["G both", "G customer"]);
     }));
@@ -142,7 +142,7 @@ async function runFirmDirectoryTests(run) {
       const invoiceGlobal = directory.create({ origin: "invoice", data: { name: "Kunde global" } });
       assert.deepEqual([global.kind, global.uses], ["global_firm", { projectParticipant: 1, customer: 0 }]);
       assert.deepEqual([local.kind, local.project_id, local.uses], ["project_firm", "p1", { projectParticipant: 1, customer: 0 }]);
-      assert.deepEqual([invoiceLocal.kind, invoiceLocal.uses], ["project_firm", { projectParticipant: 0, customer: 1 }]);
+      assert.deepEqual([invoiceLocal.kind, invoiceLocal.uses], ["global_firm", { projectParticipant: 0, customer: 1 }]);
       assert.deepEqual([invoiceGlobal.kind, invoiceGlobal.uses], ["global_firm", { projectParticipant: 0, customer: 1 }]);
     }));
 
@@ -227,7 +227,7 @@ async function runFirmDirectoryTests(run) {
       db.prepare("INSERT INTO project_persons (id, project_firm_id, name) VALUES ('pl', ?, 'Local Person')").run(local.id);
       assert.equal(directory.listProjectParticipants({ projectId: "p1" }).length, 0);
       assert.equal(directory.listProjectParticipants({ projectId: "p1", includeInactive: true }).length, 2);
-      assert.equal(directory.listCustomers({ projectId: "p1" }).length, 2);
+      assert.equal(directory.listCustomers({ projectId: "p1" }).length, 1);
       assert.equal(directory.listPersons({ ref: global.ref, projectId: "p1", participantOnly: true }).length, 0);
       assert.equal(directory.listPersons({ ref: local.ref, participantOnly: true }).length, 0);
     }));
@@ -304,7 +304,7 @@ async function runFirmDirectoryTests(run) {
       directory.create({ origin: "invoice", data: { name: "Global" } });
       directory.create({ origin: "invoice", projectId: "p1", data: { name: "Lokal" } });
       directory.create({ origin: "firms", data: { name: "Nur Teilnehmer" } });
-      assert.deepEqual(directory.listCustomers({}).map((row) => row.name), ["Global"]);
+      assert.deepEqual(directory.listCustomers({}).map((row) => row.name).sort(), ["Global", "Lokal"]);
       assert.deepEqual(directory.listCustomers({ projectId: "p1" }).map((row) => row.name).sort(), ["Global", "Lokal"]);
     }));
 

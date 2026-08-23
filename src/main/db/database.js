@@ -5,6 +5,7 @@ const fs = require("fs");
 const { app } = require("electron");
 const path = require("path");
 const { ensureInvoiceSchema } = require("./invoiceMigrations");
+const { ensureFirmUsagesSchema } = require("./firmUsagesRepo");
 
 let db;
 
@@ -1878,6 +1879,7 @@ function ensureSchema(dbConn) {
   ensureProjectGlobalFirmsSchema(dbConn);
   ensureProjectFirmsAndPersonsSchema(dbConn);
   ensureFirmUsesSchema(dbConn);
+  ensureFirmUsagesSchema(dbConn);
 
   ensureProjectSettingsSchema(dbConn);
   ensureProjectCandidatesSchema(dbConn);
@@ -1966,6 +1968,7 @@ module.exports = {
   initDatabase,
   closeDatabase,
   ensureFirmUsesSchema,
+  ensureFirmUsagesSchema,
   getDbPaths,
   getDatabaseDiagnostics,
   isDbLikelyEmpty,

@@ -9,6 +9,7 @@ const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const { initDatabase } = require("../db/database");
 const { getFirmDirectoryService } = require("../domain/firms/FirmDirectoryService");
 const { FIRM_KINDS } = require("../domain/firms/firmReference");
+const firmUsagesRepo = require("../db/firmUsagesRepo");
 
 function _err(e) {
   return e?.message || String(e);
@@ -256,6 +257,11 @@ function registerProjectFirmsIpc() {
 
   ipcMain.handle("projectFirms:assignGlobalFirm", (_evt, data) => {
     try {
+      firmUsagesRepo.setUsage({
+        firmId: data?.firmId,
+        usageCode: firmUsagesRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT,
+        enabled: true,
+      });
       const result = projectFirmsRepo.assignGlobalFirmToProject({
         projectId: data?.projectId,
         firmId: data?.firmId,
