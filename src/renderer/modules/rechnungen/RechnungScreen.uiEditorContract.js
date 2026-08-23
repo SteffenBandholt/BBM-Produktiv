@@ -8,7 +8,7 @@ const label = (id, name, parentId, order, role = "content", componentKind = "lab
 const field = (id, name, parentId, order, fieldKind) => m83Element({ id, name, type: "field", role: "content", parentId, order, allowedOps: FIELD_LAYOUT, fieldKind });
 const action = (id, name, parentId, order, actionKind) => m83DomainButton({ id, name, parentId, order, actionKind });
 
-const elements = Object.freeze([
+const baseElements = Object.freeze([
   m83Element({ id: RECHNUNG_SCOPE_ID, name: "Rechnungen", type: "root", role: "scopeRoot", parentId: null, order: 0, allowedOps: ZONE_HEIGHT_LAYOUT, componentKind: "moduleScreen" }),
   area("rechnung.screen.content", "Inhaltsbereich Rechnungen", RECHNUNG_SCOPE_ID, 10, "contentArea"),
   area("rechnung.overview", "Rechnungsübersicht", "rechnung.screen.content", 20, "overview"),
@@ -43,7 +43,9 @@ const elements = Object.freeze([
   label("rechnung.editor.issuerCity", "Aussteller PLZ Ort", "rechnung.editor.issuerBlock", 56),
   group("rechnung.editor.invoiceMetaBlock", "Rechnungsdatenblock", "rechnung.editor.parties", 57, "invoiceMetaBlock"),
   label("rechnung.editor.invoiceDateDisplay", "Rechnungsdatum Anzeige", "rechnung.editor.invoiceMetaBlock", 58),
+  label("rechnung.editor.invoiceDateDisplay.label", "Rechnungsdatum Bezeichnung", "rechnung.editor.invoiceDateDisplay", 58, "fieldLabel", "fieldLabel"),
   label("rechnung.editor.servicePeriodDisplay", "Leistungszeitraum Anzeige", "rechnung.editor.invoiceMetaBlock", 59),
+  label("rechnung.editor.servicePeriodDisplay.label", "Leistungszeitraum Bezeichnung", "rechnung.editor.servicePeriodDisplay", 59, "fieldLabel", "fieldLabel"),
   group("rechnung.editor.servicePeriod", "Leistungszeitpunkt", "rechnung.editor.body", 60, "servicePeriod"),
   action("rechnung.editor.servicePeriodToggle", "Leistungszeitraum bearbeiten", "rechnung.editor.servicePeriod", 60, "toggleServicePeriodEditor"),
   field("rechnung.editor.servicePeriodType", "Art des Leistungszeitpunkts", "rechnung.editor.servicePeriod", 61, "select"),
@@ -56,8 +58,12 @@ const elements = Object.freeze([
   field("rechnung.editor.introText", "Optionaler Freitext", "rechnung.editor.parties", 72, "multilineText"),
   group("rechnung.editor.positions", "Bau-LV", "rechnung.editor.body", 72, "constructionLv"),
   label("rechnung.editor.positions.total", "Nettosumme", "rechnung.editor.payment", 83),
+  label("rechnung.editor.positions.total.label", "Summe Netto Bezeichnung", "rechnung.editor.payment", 83, "fieldLabel", "fieldLabel"),
+  label("rechnung.editor.invoiceVat.label", "Mehrwertsteuer Bezeichnung", "rechnung.editor.payment", 84, "fieldLabel", "fieldLabel"),
+  label("rechnung.editor.invoiceTotal.label", "Summe Brutto Bezeichnung", "rechnung.editor.payment", 85, "fieldLabel", "fieldLabel"),
   group("rechnung.editor.positions.list", "LV-Positionen", "rechnung.editor.positions", 74, "constructionLvList"),
   group("rechnung.editor.positionEditor", "Feste Positions-Editbox", "rechnung.editor", 75, "inlinePositionEditor"),
+  label("rechnung.editor.positionEditor.title.label", "Position bearbeiten Bezeichnung", "rechnung.editor.positionEditor", 75, "fieldLabel", "fieldLabel"),
   area("rechnung.editor.editArea", "Feste Editbox-Zone", "rechnung.editor", 76, "editArea"),
   area("rechnung.editor.editCanvas", "Editbox-Canvas", "rechnung.editor.editArea", 77, "editCanvas"),
   field("rechnung.editor.positionType", "Positionstyp", "rechnung.editor.positionEditor", 76, "select"),
@@ -82,6 +88,7 @@ const elements = Object.freeze([
   field("rechnung.editor.dueDate", "Fällig am", "rechnung.editor.payment", 82, "readOnlyDate"),
   m83Element({ id: "rechnung.editor.validation", name: "Validierung und Meldungen", type: "statusIndicator", role: "status", parentId: "rechnung.editor", order: 90, allowedOps: TEXT_LAYOUT, componentKind: "liveMessage" }),
   group("rechnung.editor.footer", "Hinweis Anwendungsaktionen", "rechnung.editor", 100, "actionRailNote"),
+  label("rechnung.editor.footer.label", "Anwendungsaktionen Hinweis", "rechnung.editor.footer", 101, "fieldLabel", "fieldLabel"),
   action("rechnung.editor.preview", "Proberechnung", "rechnung.editor.header", 102, "previewDraft"),
   action("rechnung.editor.book", "Rechnung buchen", "rechnung.editor.header", 103, "bookDraft"),
   action("rechnung.editor.delete", "Entwurf verwerfen", "rechnung.editor.header", 104, "deleteDraft"),
@@ -91,6 +98,21 @@ const elements = Object.freeze([
   area("rechnung.preview.body", "Vorschau Belegkopf", "rechnung.preview", 112, "previewBody"),
   action("rechnung.preview.close", "Vorschau schließen", "rechnung.preview", 113, "closePreview"),
 ]);
+
+const fieldLabelElements = Object.freeze(
+  baseElements
+    .filter((entry) => entry.type === "field")
+    .map((entry) => label(
+      `${entry.id}.label`,
+      `${entry.name} Bezeichnung`,
+      entry.parentId,
+      entry.order,
+      "fieldLabel",
+      "fieldLabel"
+    ))
+);
+
+const elements = Object.freeze([...baseElements, ...fieldLabelElements]);
 
 export const RECHNUNG_REQUIRED_SLOTS = Object.freeze(elements.map((entry) => entry.id));
 export const rechnungUiEditorContract = m83Component({ componentId: RECHNUNG_COMPONENT_ID, scopeId: RECHNUNG_SCOPE_ID, requiredSlots: RECHNUNG_REQUIRED_SLOTS, slots: elements.map((entry) => m83Slot(entry.id, entry)) });

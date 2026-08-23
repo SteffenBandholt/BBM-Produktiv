@@ -223,9 +223,129 @@ function applyAdditiveElementProfileMigration(profileRoot, registration, migrati
   return migratedCount;
 }
 
+function applyAdditiveFieldLabelProfileMigration(profileRoot, registration) {
+  const registryScope = (Array.isArray(registration?.registryScopes) ? registration.registryScopes : [])
+    .find((scope) => scope?.scopeId === "rechnung.screen" && scope?.status === "complete");
+  if (!registryScope || !Array.isArray(registryScope.elements)) return 0;
+
+  const currentFingerprint = createUiScopeFingerprint(registryScope);
+  const currentIds = registryScope.elements.map((entry) => entry.id);
+  const currentIdSet = new Set(currentIds);
+  let migratedCount = 0;
+
+  for (const profileId of ["standard", "compact"]) {
+    const filePath = path.join(profileRoot, `${profileId}.layout-profile.json`);
+    if (!fs.existsSync(filePath)) continue;
+
+    let document;
+    try {
+      document = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    } catch {
+      continue;
+    }
+
+    if (
+      document?.schemaVersion !== 2 ||
+      document?.applicationId !== APPLICATION_ID ||
+      document?.profileId !== profileId ||
+      !Array.isArray(document?.scopes)
+    ) continue;
+
+    const savedScope = document.scopes.find((scope) => scope?.scopeId === registryScope.scopeId);
+    const savedElements = savedScope?.layoutState?.elements;
+    if (!savedScope || !Array.isArray(savedElements)) continue;
+    if (savedScope.registryFingerprint === currentFingerprint) continue;
+
+    const savedIds = savedElements.map((entry) => entry?.elementId);
+    const savedIdSet = new Set(savedIds);
+
+    if (
+      savedIdSet.size !== savedIds.length ||
+      savedIds.some((elementId) => !currentIdSet.has(elementId))
+    ) continue;
+
+    const addedEntries = registryScope.elements.filter((entry) => !savedIdSet.has(entry.id));
+    if (!addedEntries.length) continue;
+
+    const labelsOnly = addedEntries.every(
+      (entry) => entry?.type === "label" && String(entry.id || "").endsWith(".label")
+    );
+
+    if (!labelsOnly) continue;
+
+    const statesById = new Map(savedElements.map((entry) => [entry.elementId, entry]));
+
+    for (const entry of addedEntries) {
+      const width =
+        Number(entry.capturedBaseline?.width) ||
+        Number(entry.baseline?.width) ||
+        Number(entry.baseline?.minWidth);
+
+      const height =
+        Number(entry.capturedBaseline?.height) ||
+        Number(entry.baseline?.height) ||
+        Number(entry.baseline?.minHeight);
+
+      const state = {
+        elementId: entry.id,
+        scopeId: registryScope.scopeId,
+        x: Number(entry.baseline?.x) || 0,
+        y: Number(entry.baseline?.y) || 0,
+        width,
+        height,
+        fontSize: Number(entry.baseline?.fontSize) || 12,
+        visible: entry.baseline?.visible !== false,
+      };
+
+      if (![state.width, state.height, state.fontSize].every(Number.isFinite)) {
+        return migratedCount;
+      }
+
+      statesById.set(entry.id, state);
+    }
+
+    savedScope.layoutState.elements = currentIds.map((elementId) => statesById.get(elementId));
+    savedScope.registryFingerprint = currentFingerprint;
+
+    const archiveDirectory = path.join(profileRoot, "archive", APPLICATION_ID);
+    const stamp = new Date().toISOString().replace(/[-:.]/g, "");
+    const archivePath = path.join(
+      archiveDirectory,
+      `${stamp}_rechnung-field-labels_${profileId}.layout-profile.json`
+    );
+    const temporaryPath = `${filePath}.migrate-${process.pid}-${Date.now()}`;
+
+    try {
+      fs.mkdirSync(archiveDirectory, { recursive: true });
+      fs.copyFileSync(filePath, archivePath, fs.constants.COPYFILE_EXCL);
+      fs.writeFileSync(
+        temporaryPath,
+        `${JSON.stringify(document, null, 2)}\n`,
+        { encoding: "utf8", flag: "wx" }
+      );
+      fs.renameSync(temporaryPath, filePath);
+      migratedCount += 1;
+    } catch (error) {
+      try {
+        fs.unlinkSync(temporaryPath);
+      } catch (cleanupError) {
+        if (cleanupError?.code !== "ENOENT") void cleanupError;
+      }
+      throw error;
+    }
+  }
+
+  return migratedCount;
+}
+
 function applyRegisteredProfileMigrations(profileRoot, registration) {
+  let migratedCount = applyAdditiveFieldLabelProfileMigration(profileRoot, registration);
   const migrations = Array.isArray(registration?.profileMigrations) ? registration.profileMigrations : [];
-  return migrations.reduce((count, migration) => count + applyAdditiveElementProfileMigration(profileRoot, registration, migration), 0);
+  migratedCount = migrations.reduce(
+    (count, migration) => count + applyAdditiveElementProfileMigration(profileRoot, registration, migration),
+    migratedCount
+  );
+  return migratedCount;
 }
 
 class ElectronUiEditorSessionController {

@@ -17,7 +17,15 @@ function bind(element, id) {
 }
 function button(label, id, handler, variant = "secondary") { const element = bind(node("button", `invoice-button invoice-button--${variant}`, label), id); element.type = "button"; element.onclick = handler; return element; }
 function control(tag, id, type = "") { const element = bind(node(tag, "invoice-control"), id); if (type) element.type = type; return element; }
-function field(labelText, input, className = "") { const wrapper = node("label", `invoice-field${className ? ` ${className}` : ""}`); wrapper.append(node("span", "invoice-field__label", labelText), input); return wrapper; }
+function field(labelText, input, className = "") {
+  const wrapper = node("label", `invoice-field${className ? ` ${className}` : ""}`);
+  const fieldId = String(input?.getAttribute?.("data-ui-inspector-id") || "").trim();
+  const labelElement = fieldId
+    ? bind(node("span", "invoice-field__label", labelText), `${fieldId}.label`)
+    : node("span", "invoice-field__label", labelText);
+  wrapper.append(labelElement, input);
+  return wrapper;
+}
 function address(value = {}) { const source = value || {}; return [source.companyName || source.name, source.companyName2 || source.name2, source.street, [source.zip, source.city].filter(Boolean).join(" "), source.country].filter(Boolean).join("\n"); }
 export function issuerInformation(value = {}) { const source = value || {}; const vatId = text(source.vatId || source.vat_id); const taxNumber = text(source.taxNumber || source.tax_number); const iban = text(source.iban); const bic = text(source.bic); const nameLines = [text(source.companyName || source.name), text(source.companyName2 || source.name2)].filter(Boolean); const addressLines = [text(source.street), [text(source.zip), text(source.city)].filter(Boolean).join(" ")].filter(Boolean); const register = text(source.commercialRegister || source.commercial_register); const registerNumber = text(source.registerNumber || source.register_number); const managingDirector = text(source.managingDirector || source.managing_director); return Object.freeze({ nameLines, addressLines, taxRow: vatId ? Object.freeze({ label: "USt-IdNr.", value: vatId }) : taxNumber ? Object.freeze({ label: "Steuernr.", value: taxNumber }) : null, bankRows: Object.freeze([...(iban ? [{ label: "IBAN", value: iban }] : []), ...(bic ? [{ label: "BIC", value: bic }] : [])]), footerLines: Object.freeze([[...nameLines, ...addressLines].join(" · "), [vatId && `USt-IdNr. ${vatId}`, taxNumber && `Steuernr. ${taxNumber}`, iban && `IBAN ${iban}`, bic && `BIC ${bic}`].filter(Boolean).join(" · "), [register, registerNumber && `Registernr. ${registerNumber}`, managingDirector && `Geschäftsführer ${managingDirector}`].filter(Boolean).join(" · ")].filter(Boolean)) }); }
 function customerKey(value = {}) { return `${value.kind || value.ref?.kind}:${value.id || value.ref?.id}`; }
@@ -165,7 +173,13 @@ export default class RechnungScreen {
     this.issuerCity = bind(node("div", "rechnung-sheet__issuer-address-lines__line"), "rechnung.editor.issuerCity");
     issuerNames.append(this.issuerName1, this.issuerName2); issuerAddressLines.append(this.issuerStreet, this.issuerCity); this.issuerBlock.append(issuerNames, issuerAddressLines);
     this.invoiceMetaBlock = bind(node("section", "rechnung-sheet__issuer-meta"), "rechnung.editor.invoiceMetaBlock");
-    const metaRow = (id, label) => { const row = bind(node("div", "rechnung-sheet__issuer-meta__row"), id); const value = node("span", "rechnung-sheet__issuer-meta-value"); row.append(node("span", "rechnung-sheet__issuer-meta-label", label), node("span", "rechnung-sheet__issuer-meta-colon", ":"), value); return { row, value }; };
+    const metaRow = (id, label) => {
+      const row = bind(node("div", "rechnung-sheet__issuer-meta__row"), id);
+      const labelElement = bind(node("span", "rechnung-sheet__issuer-meta-label", label), `${id}.label`);
+      const value = node("span", "rechnung-sheet__issuer-meta-value");
+      row.append(labelElement, node("span", "rechnung-sheet__issuer-meta-colon", ":"), value);
+      return { row, value };
+    };
     const invoiceDateDisplay = metaRow("rechnung.editor.invoiceDateDisplay", "Rechnungsdatum"); const servicePeriodDisplay = metaRow("rechnung.editor.servicePeriodDisplay", "Leistungszeitraum");
     this.invoiceDateDisplay = invoiceDateDisplay.row; this.invoiceDateDisplayValue = invoiceDateDisplay.value; this.servicePeriodDisplay = servicePeriodDisplay.row; this.servicePeriodDisplayValue = servicePeriodDisplay.value;
     this.invoiceMetaBlock.append(this.invoiceDateDisplay, this.servicePeriodDisplay);
@@ -225,7 +239,11 @@ export default class RechnungScreen {
     const positionShortField = field("Kurztext", this.positionShort, "invoice-field--wide"); const positionLongField = field("Langtext", this.positionLong, "invoice-field--wide");
     (positionShortField.firstElementChild || positionShortField.children?.[0])?.append(this.positionShortRemaining); (positionLongField.firstElementChild || positionLongField.children?.[0])?.append(this.positionLongRemaining);
     this._updatePositionTextCounters();
-    positionEditor.append(node("h3", "rechnung-sheet__position-title", "Position bearbeiten"), positionActions, this.positionTypeField, positionShortField, positionLongField, this.positionQuantityField, this.positionUnitField, this.positionPriceField, this.positionVatRateField, this.positionPriceGrossField, this.positionNepField);
+    const positionEditorTitle = bind(
+      node("h3", "rechnung-sheet__position-title", "Position bearbeiten"),
+      "rechnung.editor.positionEditor.title.label"
+    );
+    positionEditor.append(positionEditorTitle, positionActions, this.positionTypeField, positionShortField, positionLongField, this.positionQuantityField, this.positionUnitField, this.positionPriceField, this.positionVatRateField, this.positionPriceGrossField, this.positionNepField);
     positions.append(this.positionsList);
 
     const payment = bind(node("section", "rechnung-sheet__payment"), "rechnung.editor.payment");
@@ -235,14 +253,29 @@ export default class RechnungScreen {
     this.positionsTotal = bind(node("strong", "rechnung-sheet__amount", "0,00 EUR"), "rechnung.editor.positions.total");
     this.invoiceVat = node("strong", "rechnung-sheet__amount", "0,00 EUR");
     this.invoiceTotal = node("strong", "rechnung-sheet__grand-amount", "0,00 EUR");
-    this.invoiceVatLabel = node("span", "rechnung-sheet__total-label", "19 % MwSt.");
-    totals.append(node("span", "rechnung-sheet__total-label", "Summe Netto"), this.positionsTotal, this.invoiceVatLabel, this.invoiceVat, node("strong", "rechnung-sheet__grand-label", "Summe Brutto"), this.invoiceTotal);
+    this.invoiceVatLabel = bind(
+      node("span", "rechnung-sheet__total-label", "19 % MwSt."),
+      "rechnung.editor.invoiceVat.label"
+    );
+    const netTotalLabel = bind(
+      node("span", "rechnung-sheet__total-label", "Summe Netto"),
+      "rechnung.editor.positions.total.label"
+    );
+    const grossTotalLabel = bind(
+      node("strong", "rechnung-sheet__grand-label", "Summe Brutto"),
+      "rechnung.editor.invoiceTotal.label"
+    );
+    totals.append(netTotalLabel, this.positionsTotal, this.invoiceVatLabel, this.invoiceVat, grossTotalLabel, this.invoiceTotal);
     this.paymentText = node("p", "rechnung-sheet__payment-text");
     payment.append(totals, field("Zahlungsziel in Tagen", this.paymentTerm), field("Fällig am", this.dueDate), this.paymentText);
     this.issuerFooter = bind(node("footer", "rechnung-sheet__issuer-footer"), "rechnung.editor.issuerFooter");
     body.append(this.headContent, positions, payment, this.issuerFooter);
     this.message = bind(node("div", "rechnung-live-message"), "rechnung.editor.validation"); this.message.setAttribute("role", "status");
-    const footer = bind(node("footer", "rechnung-live-editor__footer rechnung-action-rail"), "rechnung.editor.footer"); footer.append(node("span", "rechnung-sheet__application-note", "Anwendungsaktionen – nicht Teil der Rechnung"));
+    const footer = bind(node("footer", "rechnung-live-editor__footer rechnung-action-rail"), "rechnung.editor.footer");
+    footer.append(bind(
+      node("span", "rechnung-sheet__application-note", "Anwendungsaktionen – nicht Teil der Rechnung"),
+      "rechnung.editor.footer.label"
+    ));
     sheetCanvas.append(body); sheetArea.append(sheetCanvas);
     const editArea = bind(node("section", "rechnung-screen__edit-area"), "rechnung.editor.editArea");
     const editCanvas = bind(node("div", "rechnung-screen__edit-canvas"), "rechnung.editor.editCanvas"); editCanvas.append(positionEditor); editArea.append(editCanvas);
