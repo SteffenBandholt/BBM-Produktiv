@@ -31,6 +31,23 @@ const {
   resolveProjectFolderName,
 } = require("./projectStoragePaths");
 const { resolveBuildIdentity } = require("../buildIdentity");
+require("../ui-editor/bbmPdfAdapter.cjs");
+require("../ui-editor/restarbeitenPdfAdapter.cjs");
+const { createPdfEditorAdapterResolver } = require("../ui-editor/pdfAdapterRegistry.cjs");
+
+let _pdfEditorAdapterResolver = null;
+
+function _getPdfEditorAdapterResolver() {
+  if (!_pdfEditorAdapterResolver) {
+    const uiEditorRoot = path.join(app.getPath("userData"), "ui-editor");
+    _pdfEditorAdapterResolver = createPdfEditorAdapterResolver({
+      profileBaseRoot: path.join(uiEditorRoot, "profiles"),
+      registrationRoot: uiEditorRoot,
+      regeneratePdf: (request) => generatePdfForUiEditor(request),
+    });
+  }
+  return _pdfEditorAdapterResolver;
+}
 
 let _printModesModulePromise = null;
 
@@ -87,11 +104,6 @@ function _resolveRequestedOrientation(payload = {}) {
 
 function _readLayoutCalibrationEnabled() {
   return false;
-}
-
-function _usesBbmProtocolPdfLayout(mode) {
-  const normalizedMode = String(mode || "").trim().toLowerCase();
-  return normalizedMode === "protocol" || normalizedMode === "preview";
 }
 
 function _normalizeLayoutCalibrationEnabled(value, fallback = false) {
@@ -522,6 +534,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
       win.webContents.send("print:init", {
         jobId,
         mode,
+        documentTypeId: payload.documentTypeId || null,
         projectId,
         meetingId,
         restarbeitenRows: payload.restarbeitenRows || null,
@@ -571,9 +584,9 @@ function registerPrintIpc() {
         restarbeitenLocationLabels: p.restarbeitenLocationLabels || null,
         showAmpelInList: typeof p.showAmpelInList === "boolean" ? p.showAmpelInList : null,
       });
-      if (_usesBbmProtocolPdfLayout(data.mode)) {
-        const { getSharedBbmPdfAdapter } = require("../ui-editor/bbmPdfAdapter.cjs");
-        const pdfAdapter = getSharedBbmPdfAdapter();
+      const pdfResolution = _getPdfEditorAdapterResolver().resolvePrintRegistration({ documentTypeId: p.documentTypeId, mode: data.mode });
+      if (pdfResolution) {
+        const pdfAdapter = pdfResolution.adapter;
         if (p.pdfEditorPreview === true) {
           data.pdfEditorLayoutState = pdfAdapter.getCurrentPdfLayoutState();
           data.pdfEditorRegistry = pdfAdapter.getPdfRegistry();
@@ -586,6 +599,7 @@ function registerPrintIpc() {
             }
           } catch (error) {
             console.warn("[BBM PDF] Gespeichertes Editorprofil wird beim Produktdruck ignoriert.", {
+              documentTypeId: pdfResolution.registration.documentTypeId,
               profilePath: pdfAdapter.getPdfProfilePath(),
               code: error?.code || "pdf_profile_read_failed",
               message: error?.message || String(error),
@@ -614,6 +628,7 @@ function registerPrintIpc() {
         win.webContents.send("print:init", {
           jobId,
           mode: p.mode || "topsAll",
+          documentTypeId: p.documentTypeId || null,
           projectId: p.projectId || null,
           meetingId: p.meetingId || null,
           restarbeitenRows: p.restarbeitenRows || null,

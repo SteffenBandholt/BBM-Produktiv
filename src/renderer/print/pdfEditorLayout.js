@@ -15,18 +15,17 @@ function registryEntries(data) {
   return Array.isArray(data?.pdfEditorRegistry?.elements) ? data.pdfEditorRegistry.elements : [];
 }
 
-function state(data, suffix) {
-  return stateMap(data).get(`pdf.bbm.protocol${suffix}`) || null;
-}
-
 function clone(value) {
   return value === null || value === undefined ? value : structuredClone(value);
 }
 
 export function prepareBbmPdfEditorLayout(data) {
   if (!data?.pdfEditorLayoutState || !data?.pdfEditorRegistry) return data;
-  const page = state(data, ".page-template");
-  if (page) {
+  const states = stateMap(data);
+  const entries = registryEntries(data);
+  const pageEntry = entries.find((entry) => entry.kind === "page" && entry.capabilities?.includes("setPageMargins"));
+  const page = pageEntry ? states.get(pageEntry.id) : null;
+  if (pageEntry && page) {
     data.v2Layout = {
       ...(data.v2Layout || {}),
       pagePadTopMm: Number(page.marginTop),
@@ -35,26 +34,28 @@ export function prepareBbmPdfEditorLayout(data) {
       pagePadLeftMm: Number(page.marginLeft),
     };
   }
-  const header = state(data, ".header");
-  if (header) data.v2Layout = { ...(data.v2Layout || {}), editorHeaderHeightMm: Number(header.height) };
-  const number = state(data, ".tops.column.number");
-  const text = state(data, ".tops.column.text");
-  const meta = state(data, ".tops.column.meta");
-  const resolved = data?.tableLayouts?.protokoll_tops;
-  if (resolved?.effectiveLayout && number && text && meta) {
+  const headerEntry = entries.find((entry) => entry.kind === "header" && entry.capabilities?.includes("resizeHeight"));
+  const header = headerEntry ? states.get(headerEntry.id) : null;
+  if (headerEntry && header) data.v2Layout = { ...(data.v2Layout || {}), editorHeaderHeightMm: Number(header.height) };
+  const bindings = entries.filter((entry) => entry.layoutBinding?.type === "tableLayoutColumnWidth");
+  for (const tableLayoutKey of [...new Set(bindings.map((entry) => entry.layoutBinding.tableLayoutKey))]) {
+    const resolved = data?.tableLayouts?.[tableLayoutKey];
+    if (!resolved?.effectiveLayout) continue;
     const effective = clone(resolved.effectiveLayout);
     effective.pdf = effective.pdf || {};
     effective.pdf.columns = effective.pdf.columns || {};
-    for (const [key, current] of [["number", number], ["text", text], ["meta", meta]]) {
-      effective.pdf.columns[key] = { ...(effective.pdf.columns[key] || {}), width: `${Number(current.width)}mm` };
+    for (const entry of bindings.filter((candidate) => candidate.layoutBinding.tableLayoutKey === tableLayoutKey)) {
+      const current = states.get(entry.id);
+      const columnKey = entry.layoutBinding.columnKey;
+      if (current && columnKey) effective.pdf.columns[columnKey] = { ...(effective.pdf.columns[columnKey] || {}), width: `${Number(current.width)}mm` };
     }
-    data.tableLayouts = { ...(data.tableLayouts || {}), protokoll_tops: { ...resolved, effectiveLayout: effective } };
+    data.tableLayouts = { ...(data.tableLayouts || {}), [tableLayoutKey]: { ...resolved, effectiveLayout: effective } };
   }
   return data;
 }
 
 function nodesFor(root, entry) {
-  if (entry.id === "pdf.bbm.protocol") return [root];
+  if (entry.kind === "document") return [root];
   try { return Array.from(root.querySelectorAll(entry.rendererKey)); }
   catch (_error) { return []; }
 }
@@ -65,7 +66,7 @@ function applyAttributes(node, entry) {
   node.setAttribute(ATTRIBUTE_NAMES.label, entry.name);
   node.setAttribute(ATTRIBUTE_NAMES.parent, entry.parentId || "");
   node.setAttribute(ATTRIBUTE_NAMES.editable, String(entry.editable === true));
-  node.setAttribute(ATTRIBUTE_NAMES.operations, (entry.capabilities || []).join(","));
+  node.setAttribute(ATTRIBUTE_NAMES.operations, (entry.allowedOps || entry.capabilities || []).join(","));
 }
 
 function changed(value, baseline) {
@@ -74,15 +75,26 @@ function changed(value, baseline) {
 
 function applyStyle(node, entry, current) {
   const baseline = entry.baseline || {};
-  if (current.visible === false) node.style.display = "none";
+  const hiddenColumn = entry.kind === "tableColumn" && Number(current.width) === 0;
+  const visibilityClass = entry.layoutBinding?.type === "visibilityClass"
+    ? String(entry.layoutBinding.className || "").trim()
+    : "";
+  if (visibilityClass) node.classList.toggle(visibilityClass, current.visible !== false);
+  else if (current.visible === false || hiddenColumn) node.style.display = "none";
+  else if (entry.kind === "tableColumn") node.style.display = "";
   if (entry.capabilities?.includes("move") && (changed(current.x, baseline.x) || changed(current.y, baseline.y))) {
     node.style.position = "relative";
     node.style.left = `${Number(current.x) - Number(baseline.x)}mm`;
     node.style.top = `${Number(current.y) - Number(baseline.y)}mm`;
   }
-  if ((entry.capabilities?.includes("resize") || entry.capabilities?.includes("resizeWidth")) && changed(current.width, baseline.width)) {
+  if (entry.kind === "tableColumn" &&
+      (entry.capabilities?.includes("resize") || entry.capabilities?.includes("resizeWidth")) &&
+      Number.isFinite(Number(current.width))) {
     node.style.width = `${Number(current.width)}mm`;
-    if (entry.kind === "tableColumn") node.style.minWidth = `${Number(current.width)}mm`;
+    node.style.minWidth = `${Number(current.width)}mm`;
+    node.style.maxWidth = `${Number(current.width)}mm`;
+  } else if ((entry.capabilities?.includes("resize") || entry.capabilities?.includes("resizeWidth")) && changed(current.width, baseline.width)) {
+    node.style.width = `${Number(current.width)}mm`;
     node.style.maxWidth = `${Number(current.width)}mm`;
   }
   if ((entry.capabilities?.includes("resize") || entry.capabilities?.includes("resizeHeight")) && changed(current.height, baseline.height)) {
@@ -111,8 +123,9 @@ function columnPart(node, entry) {
 export function applyBbmPdfEditorLayout(root, data) {
   if (!root || !data?.pdfEditorLayoutState || !data?.pdfEditorRegistry) return root;
   const states = stateMap(data);
-  const page = states.get("pdf.bbm.protocol.page-template");
-  if (page) {
+  const pageEntry = registryEntries(data).find((entry) => entry.kind === "page" && entry.capabilities?.includes("setPageMargins"));
+  const page = pageEntry ? states.get(pageEntry.id) : null;
+  if (pageEntry && page) {
     root.style.setProperty("--v2-pad-top", `${Number(page.marginTop)}mm`);
     root.style.setProperty("--v2-pad-right", `${Number(page.marginRight)}mm`);
     root.style.setProperty("--v2-pad-bottom", `${Number(page.marginBottom)}mm`);
@@ -161,7 +174,7 @@ export function collectBbmPdfPreviewMetadata(root, data) {
       if (!page) continue;
       const pageNumber = Math.max(1, pages.indexOf(page) + 1);
       const pageRect = page.getBoundingClientRect();
-      const rect = entry.id === "pdf.bbm.protocol" ? pageRect : node.getBoundingClientRect();
+      const rect = entry.kind === "document" ? pageRect : node.getBoundingClientRect();
       if (!(pageRect.width > 0 && pageRect.height > 0 && rect.width > 0 && rect.height > 0)) continue;
       const pageWidthMm = String(data?.orientation || "portrait") === "landscape" ? 297 : 210;
       const pageHeightMm = String(data?.orientation || "portrait") === "landscape" ? 210 : 297;

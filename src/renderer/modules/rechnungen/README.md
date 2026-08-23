@@ -1,5 +1,19 @@
 # Rechnungen · UI-Designreferenz
 
+## Verbindlicher Entwicklungsplan Rechnung 2.0
+
+Die weitere fachliche und technische Entwicklung dieses Moduls richtet sich verbindlich nach:
+
+`docs/RECHNUNG_2_0_ENTWICKLUNGSPLAN.md`
+
+Für UI-Architektur, Editorfähigkeit, Elementregistrierung und den Umgang mit Test-/Dummy-Oberflächen gilt ergänzend als verbindliche Anlage:
+
+`docs/RECHNUNG_2_0_UI_ARCHITEKTUR_UND_UI_LABOR.md`
+
+Die dort festgelegten Meilensteine, Abnahmegrenzen, Architekturgrundsätze und Erweiterungsschnittstellen sowie die UI-Regeln sind die verbindliche Leitlinie. Von ihnen darf nicht stillschweigend abgewichen werden. Eine Abweichung setzt zuerst eine dokumentierte Änderung des Entwicklungsplans bzw. der zugehörigen verbindlichen Anlage voraus.
+
+---
+
 Das Modul ist ein ausschließlich in DEV sichtbarer Design-Dummy. Es verwendet
 nur die statischen Beispieldaten aus `demoData.js`: keine Datenbank, keine
 Berechnung, keine Speicherung, keine Rechnungs-/ZUGFeRD-/GAEB- oder PDF-Logik.

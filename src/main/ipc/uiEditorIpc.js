@@ -136,19 +136,16 @@ function closeUiEditorSession() {
 }
 
 function registerUiEditorIpc(options = {}) {
+  require("../ui-editor/bbmPdfAdapter.cjs");
+  require("../ui-editor/restarbeitenPdfAdapter.cjs");
   const { ElectronUiEditorSessionController } = require("../ui-editor/electronUiEditorSession");
-  const { getSharedBbmPdfAdapter } = require("../ui-editor/bbmPdfAdapter.cjs");
+  const { createPdfEditorAdapterResolver } = require("../ui-editor/pdfAdapterRegistry.cjs");
   const { generatePdfForUiEditor } = require("./printIpc");
-  const pdfAdapter = getSharedBbmPdfAdapter();
-  pdfAdapter.configureProfileRoot(path.join(options.app.getPath("userData"), "ui-editor", "profiles", "module-protokoll"));
-  pdfAdapter.configureRegenerate(async ({ projectId, meetingId, activeDocumentId }) => generatePdfForUiEditor({
-    mode: "protocol",
-    projectId,
-    meetingId,
-    targetDir: "temp",
-    fileName: `BBM-UI-Editor-${activeDocumentId}.pdf`,
-    overwrite: true,
-  }));
+  const pdfAdapter = createPdfEditorAdapterResolver({
+    profileBaseRoot: path.join(options.app.getPath("userData"), "ui-editor", "profiles"),
+    registrationRoot: path.join(options.app.getPath("userData"), "ui-editor"),
+    regeneratePdf: (request) => generatePdfForUiEditor(request),
+  });
   const controller = new ElectronUiEditorSessionController({
     app: options.app,
     ipcMain: options.ipcMain || ipcMain,
