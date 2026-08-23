@@ -232,7 +232,13 @@ export default class RechnungScreen {
     this.positionCreateButton = button("+Position", "rechnung.editor.positionCreate", () => this._createPosition());
     this.positionMoveButton = button("Schieben", "rechnung.editor.positionMove", () => this._togglePositionMove());
     this.positionDeleteButton = button("Löschen", "rechnung.editor.positionDelete", () => this._deletePosition());
-    this.positionMoveRootButton = node("button", "invoice-button invoice-button--secondary rechnung-live-position-editor__move-root", "Auf Ebene 0 verschieben"); this.positionMoveRootButton.type = "button"; this.positionMoveRootButton.onclick = () => this._moveSelectedPositionToRoot(); this.positionMoveRootButton.hidden = true;
+    this.positionMoveRootButton = bind(
+      node("button", "invoice-button invoice-button--secondary rechnung-live-position-editor__move-root", "Auf Ebene 0 verschieben"),
+      "rechnung.editor.positionMoveRoot"
+    );
+    this.positionMoveRootButton.type = "button";
+    this.positionMoveRootButton.onclick = () => this._moveSelectedPositionToRoot();
+    this.positionMoveRootButton.hidden = true;
     positionActions.append(this.positionCreateTitleButton, this.positionCreateButton, node("span", "rechnung-live-position-editor__action-spacer"), this.positionMoveButton, this.positionDeleteButton, this.positionMoveRootButton);
     this.positionTypeField = field("Typ", this.positionType); this.positionQuantityField = field("Menge", this.positionQuantity); this.positionUnitField = field("Einheit", this.positionUnit); this.positionPriceField = field("Einzelpreis netto", this.positionPrice); this.positionPriceLabel = this.positionPriceField.firstElementChild || this.positionPriceField.children?.[0]; this.positionVatRateField = field("MwSt.", this.positionVatRate); this.positionPriceGrossField = field("Brutto", this.positionPriceGross); this.positionNepField = field("NEP", this.positionNep);
     this.positionShortRemaining = bind(node("span", "rechnung-live-position-editor__remaining"), "rechnung.editor.positionShortRemaining"); this.positionLongRemaining = bind(node("span", "rechnung-live-position-editor__remaining"), "rechnung.editor.positionLongRemaining");
@@ -251,8 +257,14 @@ export default class RechnungScreen {
     this.dueDate = control("input", "rechnung.editor.dueDate", "date"); this.dueDate.readOnly = true;
     const totals = node("div", "rechnung-sheet__totals");
     this.positionsTotal = bind(node("strong", "rechnung-sheet__amount", "0,00 EUR"), "rechnung.editor.positions.total");
-    this.invoiceVat = node("strong", "rechnung-sheet__amount", "0,00 EUR");
-    this.invoiceTotal = node("strong", "rechnung-sheet__grand-amount", "0,00 EUR");
+    this.invoiceVat = bind(
+      node("strong", "rechnung-sheet__amount", "0,00 EUR"),
+      "rechnung.editor.invoiceVat"
+    );
+    this.invoiceTotal = bind(
+      node("strong", "rechnung-sheet__grand-amount", "0,00 EUR"),
+      "rechnung.editor.invoiceTotal"
+    );
     this.invoiceVatLabel = bind(
       node("span", "rechnung-sheet__total-label", "19 % MwSt."),
       "rechnung.editor.invoiceVat.label"
@@ -266,7 +278,10 @@ export default class RechnungScreen {
       "rechnung.editor.invoiceTotal.label"
     );
     totals.append(netTotalLabel, this.positionsTotal, this.invoiceVatLabel, this.invoiceVat, grossTotalLabel, this.invoiceTotal);
-    this.paymentText = node("p", "rechnung-sheet__payment-text");
+    this.paymentText = bind(
+      node("p", "rechnung-sheet__payment-text"),
+      "rechnung.editor.paymentText"
+    );
     payment.append(totals, field("Zahlungsziel in Tagen", this.paymentTerm), field("Fällig am", this.dueDate), this.paymentText);
     this.issuerFooter = bind(node("footer", "rechnung-sheet__issuer-footer"), "rechnung.editor.issuerFooter");
     body.append(this.headContent, positions, payment, this.issuerFooter);

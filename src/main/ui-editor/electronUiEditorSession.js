@@ -267,11 +267,19 @@ function applyAdditiveFieldLabelProfileMigration(profileRoot, registration) {
     const addedEntries = registryScope.elements.filter((entry) => !savedIdSet.has(entry.id));
     if (!addedEntries.length) continue;
 
-    const labelsOnly = addedEntries.every(
-      (entry) => entry?.type === "label" && String(entry.id || "").endsWith(".label")
+    const safeAdditionalIds = new Set([
+      "rechnung.editor.invoiceVat",
+      "rechnung.editor.invoiceTotal",
+      "rechnung.editor.paymentText",
+      "rechnung.editor.positionMoveRoot",
+    ]);
+
+    const safeAdditionsOnly = addedEntries.every((entry) =>
+      (entry?.type === "label" && String(entry.id || "").endsWith(".label")) ||
+      safeAdditionalIds.has(String(entry?.id || ""))
     );
 
-    if (!labelsOnly) continue;
+    if (!safeAdditionsOnly) continue;
 
     const statesById = new Map(savedElements.map((entry) => [entry.elementId, entry]));
 
