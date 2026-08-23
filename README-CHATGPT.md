@@ -14,6 +14,12 @@ Sie gilt zusammen mit `AGENTS.md` und `ZUERST_LESEN_Codex.md` für neue Chats, F
 
 Bei UI-/PDF-/Editor-Aufgaben gelten zusätzlich die entsprechenden Pflichtregeln aus `AGENTS.md`.
 
+Bei jeder PDF-V2-Arbeit ist zusätzlich zwingend vor der Implementierung zu lesen:
+
+`docs/PDF_V2_VERBINDLICHE_MODULGRUNDLAGE.md`
+
+Diese Regel ist verbindlich. PDF V2 wurde ausdrücklich als gemeinsame Modulgrundlage entwickelt. Ein Fachmodul darf unterhalb des gemeinsamen V2-Mainheaders und seiner Trennlinie kein unabhängig neues PDF-Design erfinden, wenn bereits ein verbindlicher UI-/Layoutvertrag existiert. Für Rechnungen gilt ausdrücklich: **Die Rechnungs-UI ist die visuelle Referenz; der Nutzer sieht in der UI, was später gedruckt wird.**
+
 ## Verbindliche Git-Kurzregel
 
 **`main` ist die gemeinsame Basis. Ein Branch = ein fachliches Ziel. Vor neuer Arbeit synchronisieren. Nach der Arbeit testen, committen, pushen und temporäre Branches aufräumen. Fremdthemen und veraltete Branchstände dürfen nicht ungeprüft in ein Arbeitspaket geraten.**
