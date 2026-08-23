@@ -6,7 +6,11 @@ Die weitere fachliche und technische Entwicklung dieses Moduls richtet sich verb
 
 `docs/RECHNUNG_2_0_ENTWICKLUNGSPLAN.md`
 
-Die dort festgelegten Meilensteine, Abnahmegrenzen, Architekturgrundsätze und Erweiterungsschnittstellen sind die verbindliche Leitlinie. Von ihnen darf nicht stillschweigend abgewichen werden. Eine Abweichung setzt zuerst eine dokumentierte Änderung des Entwicklungsplans voraus.
+Für UI-Architektur, Editorfähigkeit, Elementregistrierung und den Umgang mit Test-/Dummy-Oberflächen gilt ergänzend als verbindliche Anlage:
+
+`docs/RECHNUNG_2_0_UI_ARCHITEKTUR_UND_UI_LABOR.md`
+
+Die dort festgelegten Meilensteine, Abnahmegrenzen, Architekturgrundsätze und Erweiterungsschnittstellen sowie die UI-Regeln sind die verbindliche Leitlinie. Von ihnen darf nicht stillschweigend abgewichen werden. Eine Abweichung setzt zuerst eine dokumentierte Änderung des Entwicklungsplans bzw. der zugehörigen verbindlichen Anlage voraus.
 
 ---
 
