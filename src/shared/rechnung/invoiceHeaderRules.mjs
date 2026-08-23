@@ -73,7 +73,7 @@ export function normalizeInvoiceHeader(input = {}, { requireBookingFields = fals
   if (documentType !== "PARTIAL" && installmentNumber !== null) throw new Error("Eine Abschlagsnummer ist nur für Abschlagsrechnungen zulässig.");
   const servicePeriod = normalizeServicePeriod(input);
   if (requireBookingFields) {
-    if (!customerFirmId || !["global_firm", "project_firm"].includes(customerRefKind)) throw new Error("Bitte einen Rechnungskunden wählen.");
+    if (!customerFirmId || customerRefKind !== "global_firm") throw new Error("Bitte einen zentralen Rechnungskunden wählen.");
     if (!serviceReference) throw new Error("Bitte Bauvorhaben / Leistungsbezug eingeben.");
     if (sourceType === "FROM_ORDER") {
       if (!text(input.source_order_id) || !text(input.source_order_number) || !isIsoDate(input.source_order_date)) throw new Error("Der Auftragsbezug ist unvollständig.");
@@ -87,7 +87,7 @@ export function normalizeInvoiceHeader(input = {}, { requireBookingFields = fals
     ...servicePeriod,
     customer_ref_kind: customerRefKind || null,
     customer_firm_id: customerFirmId || null,
-    customer_project_id: text(input.customer_project_id) || null,
+    customer_project_id: customerRefKind === "project_firm" ? text(input.customer_project_id) || null : null,
     project_id: projectId,
     source_order_id: text(input.source_order_id) || null,
     source_order_number: text(input.source_order_number) || null,

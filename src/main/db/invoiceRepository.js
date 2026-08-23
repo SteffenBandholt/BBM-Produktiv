@@ -12,13 +12,24 @@ const HEADER_COLUMNS = Object.freeze([
   "payment_term_days", "due_date",
 ]);
 
-function parseRow(row) {
+function parseRow(row, db = null) {
   if (!row) return null;
+  const legacyCustomer =
+    db && row.status === "DRAFT" && row.customer_ref_kind === "project_firm"
+      ? db
+          .prepare(`
+            SELECT id, project_id, name, name2, street, zip, city, phone, email
+            FROM project_firms
+            WHERE id = ? AND project_id = ?
+          `)
+          .get(row.customer_firm_id, row.customer_project_id) || null
+      : null;
   return {
     ...row,
     customer_snapshot: row.customer_snapshot_json ? JSON.parse(row.customer_snapshot_json) : null,
     issuer_snapshot: row.issuer_snapshot_json ? JSON.parse(row.issuer_snapshot_json) : null,
     positions: row.positions_json ? JSON.parse(row.positions_json) : [],
+    legacy_customer: legacyCustomer,
   };
 }
 
@@ -39,18 +50,58 @@ class InvoiceRepository {
   _db() { return this.dbProvider(); }
 
   list() {
-    return this._db().prepare("SELECT * FROM invoices ORDER BY updated_at DESC, created_at DESC").all().map(parseRow);
+    const db = this._db();
+    return db
+      .prepare("SELECT * FROM invoices ORDER BY updated_at DESC, created_at DESC")
+      .all()
+      .map((row) => parseRow(row, db));
   }
 
   get(id) {
-    return parseRow(this._db().prepare("SELECT * FROM invoices WHERE id = ?").get(String(id || "")));
+    const db = this._db();
+    return parseRow(
+      db.prepare("SELECT * FROM invoices WHERE id = ?").get(String(id || "")),
+      db
+    );
+  }
+
+  _assertDraftCustomer(db, header, current = null) {
+    if (!header.customer_firm_id && !header.customer_ref_kind) return;
+    if (header.customer_ref_kind === "global_firm" && header.customer_firm_id) {
+      const available = db
+        .prepare(`
+          SELECT 1
+          FROM firms f
+          INNER JOIN firm_usages fu
+            ON fu.firm_id = f.id AND fu.usage_code = 'invoice_customer'
+          WHERE f.id = ?
+            AND f.removed_at IS NULL
+            AND COALESCE(f.is_trashed, 0) = 0
+        `)
+        .get(header.customer_firm_id);
+      if (available) return;
+      throw new Error("Der gewählte Rechnungskunde ist nicht mehr verfügbar.");
+    }
+
+    const preservesLegacyRef =
+      current?.status === "DRAFT" &&
+      current.customer_ref_kind === "project_firm" &&
+      header.customer_ref_kind === "project_firm" &&
+      current.customer_firm_id === header.customer_firm_id &&
+      current.customer_project_id === header.customer_project_id;
+    if (preservesLegacyRef) return;
+    throw new Error(
+      "Rechnungskunden müssen zentrale Firmen mit der Verwendung Rechnungskunde sein."
+    );
   }
 
   createDraft(header) {
+    const db = this._db();
+    this._assertDraftCustomer(db, header);
     const id = randomUUID();
     const now = this.clock();
     const params = { id, status: "DRAFT", ...headerParams(header), positions_json: JSON.stringify(header.positions || []), created_at: now, updated_at: now };
-    this._db().prepare(`
+    db.prepare(`
       INSERT INTO invoices (
         id, status, ${HEADER_COLUMNS.join(", ")}, positions_json, created_at, updated_at
       ) VALUES (
@@ -61,9 +112,12 @@ class InvoiceRepository {
   }
 
   updateDraft(id, header) {
+    const db = this._db();
+    const currentRow = db.prepare("SELECT * FROM invoices WHERE id = ?").get(String(id || ""));
+    this._assertDraftCustomer(db, header, currentRow);
     const now = this.clock();
     const params = { id: String(id || ""), ...headerParams(header), positions_json: JSON.stringify(header.positions || []), updated_at: now };
-    const result = this._db().prepare(`
+    const result = db.prepare(`
       UPDATE invoices SET
         ${HEADER_COLUMNS.map((column) => `${column} = @${column}`).join(", ")},
         positions_json = @positions_json,
@@ -90,12 +144,23 @@ class InvoiceRepository {
 
   _customerSnapshot(db, header) {
     const kind = header.customer_ref_kind;
-    const row = kind === "global_firm"
-      ? db.prepare("SELECT * FROM firms WHERE id = ? AND use_customer = 1 AND removed_at IS NULL AND COALESCE(is_trashed, 0) = 0").get(header.customer_firm_id)
-      : db.prepare("SELECT * FROM project_firms WHERE id = ? AND project_id = ? AND use_customer = 1 AND removed_at IS NULL AND COALESCE(is_active, 1) = 1").get(header.customer_firm_id, header.customer_project_id);
+    if (kind !== "global_firm") {
+      throw new Error("Rechnungskunden müssen zentrale Firmen sein.");
+    }
+    const row = db
+      .prepare(`
+        SELECT f.*
+        FROM firms f
+        INNER JOIN firm_usages fu
+          ON fu.firm_id = f.id AND fu.usage_code = 'invoice_customer'
+        WHERE f.id = ?
+          AND f.removed_at IS NULL
+          AND COALESCE(f.is_trashed, 0) = 0
+      `)
+      .get(header.customer_firm_id);
     if (!row) throw new Error("Der gewählte Rechnungskunde ist nicht mehr verfügbar.");
     return {
-      source: { kind, id: row.id, projectId: kind === "project_firm" ? row.project_id : null },
+      source: { kind, id: row.id, projectId: null },
       companyName: row.name || null,
       companyName2: row.name2 || null,
       street: row.street || null,
@@ -161,7 +226,7 @@ class InvoiceRepository {
         WHERE id = @id AND status = 'DRAFT'
       `).run(params);
       if (result.changes !== 1) throw new Error("Die Rechnung konnte nicht atomar gebucht werden.");
-      return parseRow(db.prepare("SELECT * FROM invoices WHERE id = ?").get(String(id)));
+      return parseRow(db.prepare("SELECT * FROM invoices WHERE id = ?").get(String(id)), db);
     });
     return transaction.immediate();
   }

@@ -1,5 +1,7 @@
 "use strict";
 
+const firmUsagesRepo = require("./firmUsagesRepo");
+
 const CURRENT_INVOICE_COLUMN_DEFINITIONS = Object.freeze([
   ["status", "TEXT NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'BOOKED', 'CANCELLED'))"],
   ["source_type", "TEXT NOT NULL DEFAULT 'FREE' CHECK (source_type IN ('FREE', 'FROM_ORDER'))"],
@@ -220,8 +222,128 @@ function ensureInvoiceIndexes(db) {
   }
 }
 
+function normalizedIdentity(value) {
+  return String(value || "")
+    .trim()
+    .toLocaleLowerCase("de-DE")
+    .replace(/\s+/g, " ");
+}
+
+function isUnambiguousIdentityMatch(localFirm, globalFirm) {
+  const localName = normalizedIdentity(localFirm?.name);
+  if (!localName || localName !== normalizedIdentity(globalFirm?.name)) return false;
+
+  const localEmail = normalizedIdentity(localFirm.email);
+  if (localEmail && localEmail === normalizedIdentity(globalFirm.email)) return true;
+
+  return ["street", "zip", "city"].every((field) => {
+    const localValue = normalizedIdentity(localFirm[field]);
+    return localValue && localValue === normalizedIdentity(globalFirm[field]);
+  });
+}
+
+function resolveCentralFirmForLegacyDraft(db, draft) {
+  const localFirm = db
+    .prepare(`
+      SELECT *
+      FROM project_firms
+      WHERE id = ? AND project_id = ? AND removed_at IS NULL
+    `)
+    .get(draft.customer_firm_id, draft.customer_project_id);
+  if (!localFirm) return null;
+
+  const candidates = db
+    .prepare(`
+      SELECT *
+      FROM firms
+      WHERE removed_at IS NULL AND COALESCE(is_trashed, 0) = 0
+    `)
+    .all()
+    .filter((firm) => isUnambiguousIdentityMatch(localFirm, firm));
+  return candidates.length === 1 ? candidates[0] : null;
+}
+
+function migrateDraftCustomerRefs(db) {
+  const firmsExist = db
+    .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'firms'")
+    .get();
+  if (!firmsExist) {
+    return { globalRolesAdded: 0, projectRefsMigrated: 0, unresolvedProjectRefs: 0 };
+  }
+
+  firmUsagesRepo.ensureFirmUsagesSchema(db);
+  let globalRolesAdded = 0;
+  let projectRefsMigrated = 0;
+  let unresolvedProjectRefs = 0;
+  const drafts = db
+    .prepare(`
+      SELECT id, customer_ref_kind, customer_firm_id, customer_project_id
+      FROM invoices
+      WHERE status = 'DRAFT' AND customer_firm_id IS NOT NULL
+    `)
+    .all();
+
+  for (const draft of drafts) {
+    if (draft.customer_ref_kind === "global_firm") {
+      const firm = db
+        .prepare(`
+          SELECT id
+          FROM firms
+          WHERE id = ? AND removed_at IS NULL AND COALESCE(is_trashed, 0) = 0
+        `)
+        .get(draft.customer_firm_id);
+      if (!firm) continue;
+      const existed = firmUsagesRepo.hasUsage({
+        firmId: firm.id,
+        usageCode: firmUsagesRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER,
+        dbConn: db,
+      });
+      firmUsagesRepo.setUsage({
+        firmId: firm.id,
+        usageCode: firmUsagesRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER,
+        enabled: true,
+        dbConn: db,
+      });
+      if (!existed) globalRolesAdded += 1;
+      if (draft.customer_project_id) {
+        db.prepare(`
+          UPDATE invoices
+          SET customer_project_id = NULL
+          WHERE id = ? AND status = 'DRAFT'
+        `).run(draft.id);
+      }
+      continue;
+    }
+
+    if (draft.customer_ref_kind !== "project_firm") continue;
+    const centralFirm = resolveCentralFirmForLegacyDraft(db, draft);
+    if (!centralFirm) {
+      unresolvedProjectRefs += 1;
+      continue;
+    }
+
+    firmUsagesRepo.setUsage({
+      firmId: centralFirm.id,
+      usageCode: firmUsagesRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER,
+      enabled: true,
+      dbConn: db,
+    });
+    db.prepare(`
+      UPDATE invoices
+      SET customer_ref_kind = 'global_firm',
+          customer_firm_id = ?,
+          customer_project_id = NULL
+      WHERE id = ? AND status = 'DRAFT' AND customer_ref_kind = 'project_firm'
+    `).run(centralFirm.id, draft.id);
+    projectRefsMigrated += 1;
+  }
+
+  return { globalRolesAdded, projectRefsMigrated, unresolvedProjectRefs };
+}
+
 function ensureInvoiceSchema(db) {
   if (!db) throw new Error("db required");
+  let customerMigration = null;
   const migrate = () => {
     db.exec(CREATE_INVOICES_SQL);
     const originalColumns = invoiceColumns(db);
@@ -240,9 +362,11 @@ function ensureInvoiceSchema(db) {
         updated_at TEXT NOT NULL
       )
     `);
+    customerMigration = migrateDraftCustomerRefs(db);
   };
   if (db.inTransaction) migrate();
   else db.transaction(migrate)();
+  return { customerMigration };
 }
 
-module.exports = { ensureInvoiceSchema };
+module.exports = { ensureInvoiceSchema, migrateDraftCustomerRefs };
