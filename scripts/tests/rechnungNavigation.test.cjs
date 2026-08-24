@@ -286,8 +286,19 @@ async function runRechnungNavigationTests(run) {
     await fallbackScreen._loadTextLimits();
     assert.deepEqual(fallbackScreen.textLimits, { shortText: 100, longText: 500 });
     assert.deepEqual([fallbackScreen.positionShortRemaining.textContent, fallbackScreen.positionLongRemaining.textContent], ["100", "500"]);
+  });
+
+  await run("Rechnung Editbox: Wrapper folgen dem Inhalt und reservieren keinen vertikalen Leerraum", () => {
     const css = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/styles/rechnungenDesign.css"), "utf8");
-    assert.match(css, /\.rechnung-screen__edit-area\s*\{[^}]*max-height:\s*230px;/);
+    assert.match(css, /\.rechnung-screen__sheet-area \{ flex: 0 1 auto; min-height: 0; overflow-y: auto;/);
+    assert.match(css, /\.rechnung-screen__sheet-canvas \{ min-height: 0; display: flex; flex-direction: column; \}/);
+    assert.match(css, /\.rechnung-live-editor__body\.rechnung-sheet \{ flex: 0 0 auto; min-height: 0;/);
+    assert.match(css, /\.rechnung-screen__edit-area \{ flex: 0 0 auto; overflow: visible;[^}]*padding: 4px 10px; \}/);
+    assert.match(css, /\.rechnung-screen__edit-canvas \{ overflow: visible; \}/);
+    assert.match(css, /\.rechnung-live-position-editor \{ padding: 6px 0 4px; box-shadow: none; \}/);
+    assert.match(css, /\.rechnung-live-editor__body\.rechnung-sheet \{ padding: 26px 42px 10px; \}/);
+    assert.doesNotMatch(css, /\.rechnung-screen__edit-(?:area|canvas)\s*\{[^}]*max-height:/);
+    assert.doesNotMatch(css, /\.rechnung-(?:screen__sheet-canvas|live-editor__body\.rechnung-sheet)\s*\{[^}]*min-height:\s*100%/);
   });
 
   await run("Rechnung Proberechnung: DRAFT-Kennung ist stabil, unterscheidbar und keine Rechnungsnummer", () => {
@@ -403,7 +414,7 @@ async function runRechnungNavigationTests(run) {
     assert.match(css, /\.rechnung-lv-position \{[^}]*background: transparent; \}/);
     assert.doesNotMatch(css, /\.rechnung-lv-position \{[^}]*background:\s*#(?:fff|f8fafc)/);
     assert.equal(css.includes("is-tone-"), false);
-    for (const token of ["Rechnungsblatt: endloser, zusammenhaengender Papierbereich", ".rechnung-screen__sheet-area { padding: 0; background: #fff; }", ".rechnung-screen__sheet-canvas { min-height: 100%; background: #fff; }", "border-radius: 0; background: transparent; box-shadow: none;"]) assert.equal(css.includes(token), true, token);
+    for (const token of ["Rechnungsblatt: endloser, zusammenhaengender Papierbereich", ".rechnung-screen__sheet-area { padding: 0; background: #fff; }", ".rechnung-screen__sheet-canvas { min-height: 0; background: #fff; }", "border-radius: 0; background: transparent; box-shadow: none;"]) assert.equal(css.includes(token), true, token);
   });
 }
 

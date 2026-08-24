@@ -4,6 +4,30 @@ Stand: 24.08.2026
 Scope: `rechnung.screen`
 Komponente: `bbm.rechnung.screen`
 
+## Kompakte Positions-Editbox – 24.08.2026
+
+Art der Ausgabe: ausschließlich UI, kein PDF. Die vorhandenen Ziele
+`rechnung.editor.sheetArea`, `rechnung.editor.sheetCanvas`,
+`rechnung.editor.editArea`, `rechnung.editor.editCanvas` und
+`rechnung.editor.positionEditor` behalten Typ, Parent, Reihenfolge,
+Editorfähigkeit und erlaubte Operationen unverändert. Es entstehen keine
+neuen Bereiche, Komponenten oder Editorziele.
+
+Die Scrollzone des Rechnungsblatts verwendet ihre natürliche Inhaltshöhe und
+schrumpft nur bei tatsächlichem Platzmangel. Canvas und Body reservieren keine
+Mindesthöhe von 100 Prozent mehr. EditArea, EditCanvas und Positions-Editbox
+besitzen keine festen oder maximalen Höhen und keine eigene Scrollreserve;
+ihre Höhe folgt dem sichtbaren Inhalt. Der normale untere Abstand besteht nur
+noch aus 4 px Innenabstand der Editbox und 4 px der vorhandenen EditArea.
+Der Rechnungsinhalt endet mit 10 px statt der bisherigen 30 px unteren
+Papierreserve vor der EditArea.
+
+Fachaktionen, Autosave, Speichern, Anlegen, Löschen, Schieben, IPC und
+Datenzugriffe bleiben nicht editorfähig und unverändert. Der technische
+Nachweis erfolgt über `rechnungNavigation.test.cjs`, den bestehenden
+UI-Editor-Vertragscheck und eine reale Chromium-Geometriemessung bei ein- und
+ausgeklapptem Rechnungskopf.
+
 ## Invoice-PDF in der V2-Shell – 24.08.2026
 
 ### Korrekturstand Satzbild und Seitenfooter – 24.08.2026

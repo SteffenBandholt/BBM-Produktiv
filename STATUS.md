@@ -1,5 +1,15 @@
 # STATUS.md â€” BBM-Produktiv
 
+## 2026-08-24 - Rechnungs-Editbox und vertikaler Arbeitsfluss kompaktiert
+
+- Status: `[P]`; die sichtbare Rechnungs-Editbox und ihre bestehenden Wrapper folgen jetzt ihrer natuerlichen Inhaltshoehe. Die fachlichen Abnahmekriterien sind gezielt gruen; der Status bleibt nur wegen des bereits vorhandenen roten Rechnung-Navigationsvertrags vorlaeufig.
+- `sheetArea` streckt den Rechnungsinhalt nicht mehr mit `flex: 1`, und `sheetCanvas` sowie Rechnungs-Body reservieren keine `min-height: 100%` mehr. Bei Platzmangel schrumpft weiterhin nur die vorhandene SheetArea und uebernimmt das Scrollen.
+- `editArea` und `editCanvas` besitzen keine `max-height`-/Scrollreserve mehr. Der innere Editbox-Abstand endet 4 px nach der letzten Zeile, die bestehende EditArea legt weitere 4 px normalen Abstand an. Die untere Papierreserve vor der Editbox wurde von 30 auf 10 px reduziert.
+- Reale Chromium-Messung mit eingeklapptem Kopf: leerer Abstand Rechnungsinhalt zu EditArea 257,43 px -> 10 px; EditArea 210,40 px -> 198,39 px; innere Resthoehe unter der letzten Editboxzeile 8 px -> 4 px. Bei ausgeklapptem Kopf scrollt die SheetArea; Editbox und EditCanvas bleiben ungekuerzt. Auch 760 x 600 px zeigte keine abgeschnittenen Editboxinhalte.
+- Bedienpruefung: Kurztext wurde geaendert und NEP aktiviert; Positionsanzeige, Counter und Checkbox reagierten unveraendert. Keine DOM-, Fachlogik-, Navigation-, Registry- oder PDF-Aenderung.
+- Pruefung: neuer CSS-Guardrail `Rechnung Editbox: Wrapper folgen dem Inhalt ...` gruen; restliche Rechnungstests einschliesslich UI-/PDF-Vertrag gruen. Die Rechnungsgesamtgruppe bleibt ausschliesslich am bekannten Navigationsvertrag `RechnungEditorScreen` statt erwarteter `RechnungScreen` rot. UI-Editor-Vertragscheck und `git diff --check` gruen.
+- Kein Commit, kein Push. Naechster sinnvoller Schritt: fachliche Sichtfreigabe im normalen Rechnungsfenster oder separater Auftrag fuer den vorbestehenden Navigationsvertrag.
+
 ## 2026-08-24 - Rechnungs-PDF V2: Satzbild und echter Seitenfooter korrigiert
 
 - Status: `[P]`; die fachlichen Abnahmekriterien A bis H sind im Rechnungs-PDF umgesetzt und gezielt gruen nachgewiesen. Der Status bleibt nur deshalb vorlaeufig, weil der breite M85-/Gesamtlauf weiterhin dieselben bereits auf dem Ausgangsstand vorhandenen, paketfremden roten Guardrails meldet.
