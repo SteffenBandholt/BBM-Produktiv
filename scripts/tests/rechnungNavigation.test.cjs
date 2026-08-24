@@ -288,15 +288,19 @@ async function runRechnungNavigationTests(run) {
     assert.deepEqual([fallbackScreen.positionShortRemaining.textContent, fallbackScreen.positionLongRemaining.textContent], ["100", "500"]);
   });
 
-  await run("Rechnung Editbox: Wrapper folgen dem Inhalt und reservieren keinen vertikalen Leerraum", () => {
+  await run("Rechnung UI: vertikale Rahmen- und Grenzabstaende sind null", () => {
     const css = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/styles/rechnungenDesign.css"), "utf8");
+    assert.match(css, /\.bbm-rechnung-live \{ display: flex; flex-direction: column; gap: 0;[^}]*padding-block: 0;/);
     assert.match(css, /\.rechnung-screen__sheet-area \{ flex: 0 1 auto; min-height: 0; overflow-y: auto;/);
     assert.match(css, /\.rechnung-screen__sheet-canvas \{ min-height: 0; display: flex; flex-direction: column; \}/);
     assert.match(css, /\.rechnung-live-editor__body\.rechnung-sheet \{ flex: 0 0 auto; min-height: 0;/);
-    assert.match(css, /\.rechnung-screen__edit-area \{ flex: 0 0 auto; overflow: visible;[^}]*padding: 4px 10px; \}/);
+    assert.match(css, /\.rechnung-screen__edit-area \{ flex: 0 0 auto; overflow: visible; border-top: 0;[^}]*padding: 0 10px; \}/);
     assert.match(css, /\.rechnung-screen__edit-canvas \{ overflow: visible; \}/);
-    assert.match(css, /\.rechnung-live-position-editor \{ padding: 6px 0 4px; box-shadow: none; \}/);
-    assert.match(css, /\.rechnung-live-editor__body\.rechnung-sheet \{ padding: 26px 42px 10px; \}/);
+    assert.match(css, /\.rechnung-live-position-editor \{ padding: 0; border: 0; box-shadow: none; \}/);
+    assert.match(css, /\.rechnung-live-editor__body\.rechnung-sheet \{ padding: 0 42px; \}/);
+    assert.match(css, /\.rechnung-sheet__head-content\[hidden\] \+ \.rechnung-sheet__positions \{ margin-top: 0; padding-top: 0; border-top: 0; \}/);
+    assert.match(css, /\.rechnung-live-message \{ flex: 0 0 auto; min-height: 0;/);
+    assert.match(css, /\.rechnung-live-message:empty \{ display: none; padding-block: 0; \}/);
     assert.doesNotMatch(css, /\.rechnung-screen__edit-(?:area|canvas)\s*\{[^}]*max-height:/);
     assert.doesNotMatch(css, /\.rechnung-(?:screen__sheet-canvas|live-editor__body\.rechnung-sheet)\s*\{[^}]*min-height:\s*100%/);
   });

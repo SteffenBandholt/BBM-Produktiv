@@ -4,7 +4,7 @@ Stand: 24.08.2026
 Scope: `rechnung.screen`
 Komponente: `bbm.rechnung.screen`
 
-## Kompakte Positions-Editbox – 24.08.2026
+## Vertikale Rahmen- und Grenzabstände auf null – 24.08.2026
 
 Art der Ausgabe: ausschließlich UI, kein PDF. Die vorhandenen Ziele
 `rechnung.editor.sheetArea`, `rechnung.editor.sheetCanvas`,
@@ -15,12 +15,18 @@ neuen Bereiche, Komponenten oder Editorziele.
 
 Die Scrollzone des Rechnungsblatts verwendet ihre natürliche Inhaltshöhe und
 schrumpft nur bei tatsächlichem Platzmangel. Canvas und Body reservieren keine
-Mindesthöhe von 100 Prozent mehr. EditArea, EditCanvas und Positions-Editbox
-besitzen keine festen oder maximalen Höhen und keine eigene Scrollreserve;
-ihre Höhe folgt dem sichtbaren Inhalt. Der normale untere Abstand besteht nur
-noch aus 4 px Innenabstand der Editbox und 4 px der vorhandenen EditArea.
-Der Rechnungsinhalt endet mit 10 px statt der bisherigen 30 px unteren
-Papierreserve vor der EditArea.
+Mindesthöhe von 100 Prozent. Der Rechnungs-Root besitzt vertikal weder Padding
+noch Gap. Bei eingeklapptem Kopf beginnen Positionsbereich und erste echte
+Rechnungsinhalte ohne obere Margin-, Padding- oder Rahmenreserve. Body,
+EditArea, EditCanvas und Positions-Editbox besitzen an ihren gemeinsamen
+vertikalen Grenzen 0 px Abstand. Die leere Statuszeile wird nicht gerendert;
+eine tatsächliche Statusmeldung bleibt weiterhin sichtbar.
+
+Die technischen `height: 100%`- und `min-height: 0`-Angaben des Viewports
+bleiben ausschließlich für die vorhandene Flex-Begrenzung und Scrollfähigkeit
+erhalten. Sie erzeugen keine obere oder untere Leerraumreserve. Interne
+Abstände zwischen echten Rechnungsbestandteilen sowie zwischen Eingabefeldern
+bleiben unverändert.
 
 Fachaktionen, Autosave, Speichern, Anlegen, Löschen, Schieben, IPC und
 Datenzugriffe bleiben nicht editorfähig und unverändert. Der technische

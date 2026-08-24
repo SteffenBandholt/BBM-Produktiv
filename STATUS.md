@@ -1,13 +1,13 @@
 # STATUS.md â€” BBM-Produktiv
 
-## 2026-08-24 - Rechnungs-Editbox und vertikaler Arbeitsfluss kompaktiert
+## 2026-08-24 - Rechnungs-UI ohne vertikale Rahmenreserven
 
-- Status: `[P]`; die sichtbare Rechnungs-Editbox und ihre bestehenden Wrapper folgen jetzt ihrer natuerlichen Inhaltshoehe. Die fachlichen Abnahmekriterien sind gezielt gruen; der Status bleibt nur wegen des bereits vorhandenen roten Rechnung-Navigationsvertrags vorlaeufig.
-- `sheetArea` streckt den Rechnungsinhalt nicht mehr mit `flex: 1`, und `sheetCanvas` sowie Rechnungs-Body reservieren keine `min-height: 100%` mehr. Bei Platzmangel schrumpft weiterhin nur die vorhandene SheetArea und uebernimmt das Scrollen.
-- `editArea` und `editCanvas` besitzen keine `max-height`-/Scrollreserve mehr. Der innere Editbox-Abstand endet 4 px nach der letzten Zeile, die bestehende EditArea legt weitere 4 px normalen Abstand an. Die untere Papierreserve vor der Editbox wurde von 30 auf 10 px reduziert.
-- Reale Chromium-Messung mit eingeklapptem Kopf: leerer Abstand Rechnungsinhalt zu EditArea 257,43 px -> 10 px; EditArea 210,40 px -> 198,39 px; innere Resthoehe unter der letzten Editboxzeile 8 px -> 4 px. Bei ausgeklapptem Kopf scrollt die SheetArea; Editbox und EditCanvas bleiben ungekuerzt. Auch 760 x 600 px zeigte keine abgeschnittenen Editboxinhalte.
-- Bedienpruefung: Kurztext wurde geaendert und NEP aktiviert; Positionsanzeige, Counter und Checkbox reagierten unveraendert. Keine DOM-, Fachlogik-, Navigation-, Registry- oder PDF-Aenderung.
-- Pruefung: neuer CSS-Guardrail `Rechnung Editbox: Wrapper folgen dem Inhalt ...` gruen; restliche Rechnungstests einschliesslich UI-/PDF-Vertrag gruen. Die Rechnungsgesamtgruppe bleibt ausschliesslich am bekannten Navigationsvertrag `RechnungEditorScreen` statt erwarteter `RechnungScreen` rot. UI-Editor-Vertragscheck und `git diff --check` gruen.
+- Status: `[P]`; die sichtbare Rechnungs-UI besitzt an den beauftragten oberen und unteren Außen- sowie Bereichsgrenzen 0 px Abstand. Die fachlichen Abnahmekriterien sind gezielt gruen; der Status bleibt nur wegen des bereits vorhandenen roten Rechnung-Navigationsvertrags vorlaeufig.
+- Der Rechnungs-Root hat vertikal `padding: 0` und `gap: 0`. Bei eingeklapptem Kopf beginnen Positionsbereich und erste echte Rechnungsinhalte ohne obere Margin-, Padding- oder Rahmenreserve. Body, EditArea und Positions-Editbox schließen ohne Zwischenband aneinander an; die leere Statuszeile wird nicht mehr layoutwirksam.
+- Reale Chromium-Messung 1280 x 800 px, jeweils Ausgangsstand -> Korrektur: Root oben 13,99 -> 0 px; SheetArea bis Positionsbereich 37,99 -> 0 px; Rechnungs-Body bis erster Editbox-Inhalt 11,19 -> 0 px; letzte Editboxzeile bis Editboxende 3,99 -> 0 px; leere Statusreserve 20,00 -> 0 px. Header bis SheetArea sowie letzter Rechnungsinhalt bis Body-/EditArea-Grenze liegen ebenfalls bei 0 px.
+- Bei 760 x 600 px und ausgeklapptem Kopf scrollt ausschließlich die SheetArea (272 px sichtbar bei 709 px Inhalt). Die Editbox bleibt vollständig sichtbar und endet 0 px nach ihrer letzten Zeile. Kurztextänderung und NEP-Umschaltung wurden korrekt in die Positionsanzeige übernommen.
+- Keine DOM-, Fachlogik-, Navigation-, Registry-, globale Layout- oder PDF-Aenderung. Die technische Viewporthöhe und `min-height: 0` bleiben ausschließlich für die vorhandene Scrollbegrenzung erhalten und reservieren keinen Rand.
+- Pruefung: CSS-Guardrail `Rechnung UI: vertikale Rahmen- und Grenzabstaende sind null`, Rechnungstestgruppe, UI-Editor-Vertragscheck und `git diff --check`. Die Rechnungsgesamtgruppe bleibt ausschließlich am bekannten Navigationsvertrag `RechnungEditorScreen` statt erwarteter `RechnungScreen` rot.
 - Kein Commit, kein Push. Naechster sinnvoller Schritt: fachliche Sichtfreigabe im normalen Rechnungsfenster oder separater Auftrag fuer den vorbestehenden Navigationsvertrag.
 
 ## 2026-08-24 - Rechnungs-PDF V2: Satzbild und echter Seitenfooter korrigiert
