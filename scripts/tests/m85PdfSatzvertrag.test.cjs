@@ -309,7 +309,7 @@ async function runM85PdfSatzvertragTests(run) {
     }
   });
 
-  await run("PDF-V2-INVOICE-002 bis -007: FullHeader-Slot, MiniHeader, Body und Vorabzug sind golden verriegelt", () => {
+  await run("PDF-V2-INVOICE-002 bis -010: Kopf, Bau-LV, Abschluss und Seitenfooter sind golden verriegelt", () => {
     const byId = resultMap(rendered);
     const finalInvoice = byId.get("i48-invoice-final")?.snapshot;
     const previewInvoice = byId.get("i49-invoice-preview")?.snapshot;
@@ -323,12 +323,27 @@ async function runM85PdfSatzvertragTests(run) {
       assert.equal(snapshot.invoice.editorParents["pdf.bbm.invoice.meta"], "pdf.bbm.invoice.header");
       assert.equal(snapshot.invoice.editorParents["pdf.bbm.invoice.context"], "pdf.bbm.invoice.header");
       assert.equal(snapshot.invoice.editorParents["pdf.bbm.invoice.intro"], "pdf.bbm.invoice.body");
+      assert.equal(snapshot.invoice.editorParents["pdf.bbm.invoice.footer"], "pdf.bbm.invoice.page-template");
       assert.equal(snapshot.invoice.editorParents["pdf.bbm.invoice.mini-header"], "pdf.bbm.invoice.page-template");
       assert.equal(snapshot.pages[0].invoiceIntroPresent, true);
       assert.equal(snapshot.pages.some((page) => page.invoiceNepPresent), true);
       assert.equal(snapshot.pages.some((page) => page.invoiceNotePresent), true);
       assert.equal(snapshot.pages.at(-1).invoiceTotalsPresent, true);
       assert.equal(snapshot.pages.every((page) => page.remainingHeightMm >= -1), true);
+      assert.equal(snapshot.pages.every((page) => page.invoiceTableHeaderLabels.join("|") === "Pos|Gegenstand|Menge|Einheit|EP|GP"), true);
+      assert.equal(snapshot.pages.every((page) => page.invoicePositionSeparatorsPresent === false), true);
+      assert.equal(snapshot.pages.every((page) => page.invoiceTableWithinBody === true), true);
+      assert.equal(snapshot.pages.every((page) => Math.abs(page.invoiceTableWidthMm - 186) <= 0.1), true);
+      assert.equal(snapshot.pages.every((page) => Math.abs(page.invoiceQuantityStartMm - 81) <= 0.1), true);
+      assert.equal(snapshot.pages.every((page) => Math.abs(page.invoiceGpRightMm - 198) <= 0.1), true);
+      assert.equal(snapshot.pages[0].invoiceMetaRightDeltaMm, 0);
+      assert.equal(snapshot.pages.every((page) => page.invoiceFooterPresent === true), true);
+      assert.equal(snapshot.pages.every((page) => page.invoiceFooterInBody === false), true);
+      assert.equal(snapshot.pages.every((page) => page.invoiceFooterWithinReserve === true), true);
+      assert.equal(snapshot.pages.every((page) => page.blockOrder.slice(-2).join("|") === "invoiceFooter|footerReserve"), true);
+      assert.equal(snapshot.pages.every((page) => /IBAN DE02120300000000202051/.test(page.invoiceFooterText)), true);
+      assert.equal(snapshot.pages.every((page) => page.invoiceLegacyFullDraftBadgePresent === false), true);
+      assert.equal(snapshot.pages.at(-1).invoiceGpTotalsRightDeltaMm, 0);
     }
     assert.match(finalInvoice.pages[0].invoiceFullHeaderText, /Rechnung/);
     assert.match(finalInvoice.pages[0].invoiceFullHeaderText, /Rechnungsnummer: 0815\/2026/);
@@ -340,8 +355,10 @@ async function runM85PdfSatzvertragTests(run) {
     }
     assert.match(previewInvoice.pages[0].invoiceFullHeaderText, /Kennung: PR-8F3A2C/);
     assert.equal(previewInvoice.pages.every((page) => page.invoiceDraftNoticeText === "Vorabzug - nicht freigegeben"), true);
+    assert.equal(previewInvoice.pages[0].invoiceDraftNoticeInMeta, true);
     for (const page of previewInvoice.pages.slice(1)) {
       assert.equal(page.invoiceMiniSecondaryText, "Kennung: PR-8F3A2C vom 31.08.2026");
+      assert.equal(page.invoiceDraftNoticeInMeta, false);
     }
   });
 

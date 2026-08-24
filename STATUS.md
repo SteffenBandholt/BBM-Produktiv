@@ -1,5 +1,15 @@
 # STATUS.md â€” BBM-Produktiv
 
+## 2026-08-24 - Rechnungs-PDF V2: Satzbild und echter Seitenfooter korrigiert
+
+- Status: `[P]`; die fachlichen Abnahmekriterien A bis H sind im Rechnungs-PDF umgesetzt und gezielt gruen nachgewiesen. Der Status bleibt nur deshalb vorlaeufig, weil der breite M85-/Gesamtlauf weiterhin dieselben bereits auf dem Ausgangsstand vorhandenen, paketfremden roten Guardrails meldet.
+- Der rechte Aussteller-/Datumsblock endet an der Satzspiegelkante. Der Vorabzugshinweis sitzt auf Seite 1 rechts in diesem Rechnungsblock statt mittig ueber der blauen Linie; auf Folgeseiten bleibt der vorhandene MiniHeader-Hinweis erhalten.
+- Das Bau-LV verwendet die sechs sichtbaren Koepfe `Pos`, `Gegenstand`, `Menge`, `Einheit`, `EP`, `GP` und die 186-mm-Baseline 14/67/20/21/32/32 mm. Menge beginnt bei 81 mm, die GP-Rechtskante liegt bei 198 mm und ist mit der Summenblockkante deckungsgleich. Positions-Trennlinien entfallen.
+- Aussteller-, Adress-, Steuer- und Bankdaten werden auf jeder Rechnungsseite als Seitenfooter innerhalb der vorhandenen 12-mm-Footerreserve gerendert und sind nicht mehr Teil des Rechnungs-Body. GlobalHeader, Protokoll-Renderer, Protokoll-Goldens, PDF-Engine und Paginierungsfunktion blieben unveraendert.
+- Nachweise: Rechnungstest 10/10 gruen; Invoice-Vertrag `PDF-V2-INVOICE-002` bis `-010` gruen; i48/i49 weiterhin je 5 Seiten und mit aktualisierten strukturellen Goldens; Sichtpruefung Seite 1 und 5 gruen; UI-Editor-Vertrags-Selbsttest und Dateicheck gruen; `git diff --check` gruen.
+- Bekannter Altbestand im erneut ausgefuehrten M85-Lauf: `r19-empty`-Hash, Restarbeiten-Spaltenzahl 9 statt 13, Registry-Soll 37 statt 35 und `PDF-V2-ARCH-003`. Die Rechnungsgesamtgruppe bleibt am bereits dokumentierten Navigationsvertrag (`RechnungEditorScreen` statt erwarteter `RechnungScreen`) rot. Der versehentlich breite Gesamtlauf zeigte weitere paketfremde Branch-Fehler; sie wurden gemaess Paketgrenze nicht veraendert.
+- Kein Commit, kein Push. Naechster sauberer Schritt: fachliche Freigabe der erzeugten Rechnungs-PDF oder ein separater Auftrag zur Bereinigung der roten Branch-Baseline.
+
 ## 2026-08-24 - Rechnung an die gemeinsame PDF-V2-Shell angebunden
 
 - Status: `[A]`; der produktive `invoice`-Datenweg verwendet auf Seite 1 den gemeinsamen GlobalHeader und FullHeader-Slot, auf Folgeseiten den gemeinsamen MiniHeader sowie unveraendert die zentrale V2-Paginierung und Footerreserve. Die fachlichen Kopf-, Body- und MiniHeader-Inhalte liegen im Rechnungsmodul.

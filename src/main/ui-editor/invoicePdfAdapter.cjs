@@ -15,7 +15,7 @@ const MODULE_ID = "rechnungen";
 const DISPLAY_NAME = "Rechnung";
 const SCOPE_ID = "pdf.bbm.invoice";
 const PROFILE_STORAGE_KEY = "module-rechnungen";
-const DESCRIPTOR_VERSION = 2;
+const DESCRIPTOR_VERSION = 3;
 const PDF_V2_INVOICE_CONTRACT_IDS = Object.freeze({
   immutableSnapshot: "PDF-V2-INVOICE-001",
   firstPageBlocks: "PDF-V2-INVOICE-002",
@@ -26,6 +26,7 @@ const PDF_V2_INVOICE_CONTRACT_IDS = Object.freeze({
   tailReservation: "PDF-V2-INVOICE-007",
   fixedStorage: "PDF-V2-INVOICE-008",
   oneRenderer: "PDF-V2-INVOICE-009",
+  pageFooter: "PDF-V2-INVOICE-010",
 });
 const DOMAIN_LOCKS = Object.freeze([
   "changeText",
@@ -93,12 +94,12 @@ const HEADER_BOUNDS = bounds(0, 210, 0, 75, 5, 210, 2, 75);
 const BODY_BOUNDS = bounds(0, 210, 50, 285, 5, 210, 2, 235);
 
 const COLUMN_DEFINITIONS = Object.freeze([
-  ["number", "Pos.", "structureColumn", 18, 12, 28],
-  ["description", "Leistung", "contentColumn", 86, 50, 120],
-  ["quantity", "Menge", "contentColumn", 18, 12, 28],
-  ["unit", "Einheit", "metaColumn", 16, 10, 24],
-  ["unit-price", "EP", "contentColumn", 24, 18, 34],
-  ["total-price", "GP / NEP", "contentColumn", 24, 18, 34],
+  ["number", "Pos", "structureColumn", 14, 12, 28],
+  ["description", "Gegenstand", "contentColumn", 67, 50, 120],
+  ["quantity", "Menge", "contentColumn", 20, 12, 28],
+  ["unit", "Einheit", "metaColumn", 21, 10, 24],
+  ["unit-price", "EP", "contentColumn", 32, 18, 34],
+  ["total-price", "GP / NEP", "contentColumn", 32, 18, 34],
 ]);
 
 let columnX = 12;
@@ -143,7 +144,7 @@ const ELEMENTS = Object.freeze([
   ...columnElements,
   element({ id: `${SCOPE_ID}.totals`, name: "Rechnungssummen", parentId: `${SCOPE_ID}.body`, kind: "group", role: "content", order: 200, capabilities: ["setVisibility"], baseline: box(108, 232, 90, 28), layoutBounds: BODY_BOUNDS, refKey: "invoice.totals", rendererKey: ".invoicePdfTotals" }),
   element({ id: `${SCOPE_ID}.payment`, name: "Zahlungstext", parentId: `${SCOPE_ID}.body`, kind: "text", role: "content", order: 210, capabilities: ["setVisibility"], baseline: box(12, 262, 186, 9), layoutBounds: BODY_BOUNDS, refKey: "invoice.payment", rendererKey: ".invoicePdfPayment" }),
-  element({ id: `${SCOPE_ID}.footer`, name: "Aussteller-Fuß", parentId: `${SCOPE_ID}.body`, kind: "footer", role: "content", pageArea: "body", order: 220, capabilities: ["setVisibility"], baseline: box(12, 272, 186, 13), layoutBounds: BODY_BOUNDS, refKey: "invoice.footer", rendererKey: ".invoicePdfFooter" }),
+  element({ id: `${SCOPE_ID}.footer`, name: "Aussteller-Fuß", parentId: `${SCOPE_ID}.page-template`, kind: "footer", role: "content", pageArea: "footer", order: 220, capabilities: ["setVisibility"], baseline: box(12, 285, 186, 12), layoutBounds: bounds(0, 210, 285, 297, 5, 210, 2, 12), refKey: "invoice.footer", rendererKey: ".invoicePdfFooter" }),
   element({ id: `${SCOPE_ID}.mini-header`, name: "Rechnungs-MiniHeader", parentId: `${SCOPE_ID}.page-template`, kind: "header", role: "layout", pageArea: "header", order: 230, capabilities: ["setVisibility"], baseline: box(12, 5, 186, 14), layoutBounds: HEADER_BOUNDS, refKey: "invoice.miniHeader", rendererKey: ".v2HeaderMini[data-ui-inspector-id='pdf.bbm.invoice.mini-header']" }),
 ]);
 

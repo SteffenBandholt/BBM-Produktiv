@@ -179,6 +179,22 @@ export function buildPdfSatzvertragSnapshot({ fixtureId, pages, data, root } = {
       const pageBodyRect = pageBody?.getBoundingClientRect?.() || {};
       const restarbeitenTable = element?.querySelector?.(".restarbeitenTable") || null;
       const restarbeitenTableRect = restarbeitenTable?.getBoundingClientRect?.() || {};
+      const invoiceTable = element?.querySelector?.(".invoicePdfTable") || null;
+      const invoiceTableRect = invoiceTable?.getBoundingClientRect?.() || {};
+      const invoiceQuantityHead = invoiceTable?.querySelector?.("thead [data-invoice-column='quantity']") || null;
+      const invoiceQuantityHeadRect = invoiceQuantityHead?.getBoundingClientRect?.() || {};
+      const invoiceGpHead = invoiceTable?.querySelector?.("thead [data-invoice-column='total-price']") || null;
+      const invoiceGpHeadRect = invoiceGpHead?.getBoundingClientRect?.() || {};
+      const invoiceTotals = element?.querySelector?.(".invoicePdfTotals") || null;
+      const invoiceTotalsRect = invoiceTotals?.getBoundingClientRect?.() || {};
+      const invoiceMeta = element?.querySelector?.(".invoicePdfMeta") || null;
+      const invoiceMetaRect = invoiceMeta?.getBoundingClientRect?.() || {};
+      const invoiceHeaderContent = element?.querySelector?.(".invoicePdfFullHeaderContent") || null;
+      const invoiceHeaderContentRect = invoiceHeaderContent?.getBoundingClientRect?.() || {};
+      const footerReserve = element?.querySelector?.(".v2FooterReserveSpacer") || null;
+      const footerReserveRect = footerReserve?.getBoundingClientRect?.() || {};
+      const invoiceFooter = footerReserve?.querySelector?.(":scope > .invoicePdfFooter") || null;
+      const invoiceFooterRect = invoiceFooter?.getBoundingClientRect?.() || {};
       const pageCounterWithinPage = Number(pageCounterRect.width) > 0
         && Number(pageCounterRect.height) > 0
         && Number(pageCounterRect.left) >= Number(pageRect.left)
@@ -208,6 +224,7 @@ export function buildPdfSatzvertragSnapshot({ fixtureId, pages, data, root } = {
       if ((!isTops || rows.length) && !(isInvoice && page?.suppressTable)) blocks.push("table");
       if (page?.topsTail) blocks.push("closing");
       if (isInvoice && page?.invoiceLast) blocks.push("invoiceTail");
+      if (isInvoice && invoiceFooter) blocks.push("invoiceFooter");
       blocks.push("footerReserve");
       return {
         pageNumber: pageIndex + 1,
@@ -237,11 +254,42 @@ export function buildPdfSatzvertragSnapshot({ fixtureId, pages, data, root } = {
           invoiceFullHeaderText: String(element?.querySelector?.(".invoicePdfFullHeaderContent")?.textContent || "").replace(/\s+/g, " ").trim() || null,
           invoiceMiniPrimaryText: String(element?.querySelector?.(".v2MiniProject")?.textContent || "").replace(/\s+/g, " ").trim() || null,
           invoiceMiniSecondaryText: String(element?.querySelector?.(".v2MiniProtocolTitle")?.childNodes?.[0]?.textContent || "").replace(/\s+/g, " ").trim() || null,
-          invoiceDraftNoticeText: String(element?.querySelector?.(".v2FullDraftBadge,.v2MiniDraftNotice")?.textContent || "").replace(/\s+/g, " ").trim() || null,
+          invoiceDraftNoticeText: String(element?.querySelector?.(".invoicePdfDraftNotice,.v2MiniDraftNotice")?.textContent || "").replace(/\s+/g, " ").trim() || null,
+          invoiceDraftNoticeInMeta: Boolean(element?.querySelector?.(".invoicePdfMeta > .invoicePdfDraftNotice")),
+          invoiceLegacyFullDraftBadgePresent: Boolean(element?.querySelector?.(".v2FullDraftBadge")),
           invoiceIntroPresent: Boolean(element?.querySelector?.(".invoicePdfIntro")),
           invoiceNepPresent: Array.from(element?.querySelectorAll?.(".invoicePdfCol--total-price") || []).some((node) => String(node.textContent || "").trim() === "NEP"),
           invoiceNotePresent: Boolean(element?.querySelector?.(".invoicePdfNoteRow .invoicePdfSpecialLabel")),
           invoiceTotalsPresent: Boolean(element?.querySelector?.(".invoicePdfTotals")),
+          invoiceTableHeaderLabels: Array.from(invoiceTable?.querySelectorAll?.("thead th") || []).map((node) => String(node.textContent || "").trim()),
+          invoicePositionSeparatorsPresent: Array.from(invoiceTable?.querySelectorAll?.("tbody tr.invoicePdfPositionRow td") || []).some((node) => {
+            const style = globalThis.getComputedStyle?.(node);
+            return Number.parseFloat(String(style?.borderBottomWidth || "0")) > 0
+              && !["none", "hidden"].includes(String(style?.borderBottomStyle || "none"));
+          }),
+          invoiceTableWithinBody: Number(invoiceTableRect.width || 0) > 0
+            && Number(invoiceTableRect.left || 0) >= Number(pageBodyRect.left || 0) - 0.5
+            && Number(invoiceTableRect.right || 0) <= Number(pageBodyRect.right || 0) + 0.5,
+          invoiceTableWidthMm: pxToMm(Number(invoiceTableRect.width || 0), pageRect, orientation, "x"),
+          invoiceQuantityStartMm: pxToMm(Number(invoiceQuantityHeadRect.left || 0) - Number(pageBodyRect.left || 0), pageRect, orientation, "x"),
+          invoiceGpRightMm: pxToMm(Number(invoiceGpHeadRect.right || 0) - Number(pageRect.left || 0), pageRect, orientation, "x"),
+          invoiceTotalsRightMm: invoiceTotals
+            ? pxToMm(Number(invoiceTotalsRect.right || 0) - Number(pageRect.left || 0), pageRect, orientation, "x")
+            : null,
+          invoiceGpTotalsRightDeltaMm: invoiceTotals
+            ? pxToMm(Number(invoiceTotalsRect.right || 0) - Number(invoiceGpHeadRect.right || 0), pageRect, orientation, "x")
+            : null,
+          invoiceMetaRightDeltaMm: invoiceMeta
+            ? pxToMm(Number(invoiceHeaderContentRect.right || 0) - Number(invoiceMetaRect.right || 0), pageRect, orientation, "x")
+            : null,
+          invoiceFooterPresent: Boolean(invoiceFooter),
+          invoiceFooterInBody: Boolean(pageBody?.querySelector?.(".invoicePdfFooter")),
+          invoiceFooterWithinReserve: Number(invoiceFooterRect.width || 0) > 0
+            && Number(invoiceFooterRect.left || 0) >= Number(footerReserveRect.left || 0) - 0.5
+            && Number(invoiceFooterRect.right || 0) <= Number(footerReserveRect.right || 0) + 0.5
+            && Number(invoiceFooterRect.top || 0) >= Number(footerReserveRect.top || 0) - 0.5
+            && Number(invoiceFooterRect.bottom || 0) <= Number(footerReserveRect.bottom || 0) + 0.5,
+          invoiceFooterText: String(invoiceFooter?.textContent || "").replace(/\s+/g, " ").trim() || null,
         } : {}),
         tableType: String(page?.table?.type || ""),
         tableHeaderPresent: Boolean(element?.querySelector?.("table thead")),

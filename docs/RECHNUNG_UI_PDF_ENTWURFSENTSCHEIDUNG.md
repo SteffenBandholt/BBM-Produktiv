@@ -6,6 +6,30 @@ Komponente: `bbm.rechnung.screen`
 
 ## Invoice-PDF in der V2-Shell – 24.08.2026
 
+### Korrekturstand Satzbild und Seitenfooter – 24.08.2026
+
+Der bestehende PDF-Scope und der gemeinsame V2-Pfad bleiben erhalten. Der
+rechte Aussteller-/Datumsblock endet am rechten Satzspiegel. Der rote
+Proberechnungshinweis bleibt wegen des bestehenden Previewvertrags erhalten,
+sitzt auf Seite 1 jedoch innerhalb dieses fachlichen rechten Kopfblocks und
+nicht mehr als mittiger oder liniennaher FullHeader-Marker.
+
+Das bestehende Bau-LV bleibt die bestätigte Inhaltstabelle. Seine sechs
+sichtbaren Spalten lauten in echter Reihenfolge `Pos`, `Gegenstand`, `Menge`,
+`Einheit`, `EP`, `GP`; die PDF-Baselines lauten 14/67/20/21/32/32 mm und
+summieren sich weiterhin auf 186 mm. Menge/Einheit beginnt damit auf der
+UI-Referenzachse weiter links. Leistungspositionen besitzen keine horizontalen
+Zwischenlinien. GP und Summenblock enden deckungsgleich an der rechten
+Satzspiegelkante.
+
+Der bestehende Footer `pdf.bbm.invoice.footer` bleibt editorfähig nur für
+`setVisibility`, ist aber nun Kind von `pdf.bbm.invoice.page-template` und hat
+`pageArea: footer`. Er wird auf jeder Rechnungsseite innerhalb der vorhandenen
+12-mm-Footerreserve ausgegeben. Seitenzuweisung, Wiederholung und
+Footerreserve bleiben nicht editorfähig. Die technische Prüfung erfolgt über
+i48/i49, `rechnungPdf.test.cjs`, `m85PdfSatzvertrag.test.cjs` und den
+UI-Editor-Vertragscheck.
+
 Art der Ausgabe: PDF. Die bestehende Rechnungs-UI wird nicht verändert. Der
 V2-Satz besitzt GlobalHeader, FullHeader-/Body-/MiniHeader-Slots,
 Paginierung, Satzspiegel und Fußreserve. Das Rechnungsmodul liefert nur die
@@ -36,15 +60,15 @@ abgebildet: `id` = `data-ui-inspector-id`, `kind` =
 | `.intro` | `text` | Einleitung | `.body` | `true` | `setVisibility` |
 | `.positions` | `table` | Bau-LV | `.body` | `true` | `resizeWidth,resizeColumnBoundary` |
 | `.positions.rows` | `repeatingArea` | Bau-LV-Zeilen | `.positions` | `false` | – |
-| `.positions.column.number` | `tableColumn` | Pos. | `.positions` | `true` | `resizeWidth` |
-| `.positions.column.description` | `tableColumn` | Leistung | `.positions` | `true` | `resizeWidth` |
+| `.positions.column.number` | `tableColumn` | Pos | `.positions` | `true` | `resizeWidth` |
+| `.positions.column.description` | `tableColumn` | Gegenstand | `.positions` | `true` | `resizeWidth` |
 | `.positions.column.quantity` | `tableColumn` | Menge | `.positions` | `true` | `resizeWidth` |
 | `.positions.column.unit` | `tableColumn` | Einheit | `.positions` | `true` | `resizeWidth` |
 | `.positions.column.unit-price` | `tableColumn` | EP | `.positions` | `true` | `resizeWidth` |
 | `.positions.column.total-price` | `tableColumn` | GP / NEP | `.positions` | `true` | `resizeWidth` |
 | `.totals` | `group` | Rechnungssummen | `.body` | `true` | `setVisibility` |
 | `.payment` | `text` | Zahlungstext | `.body` | `true` | `setVisibility` |
-| `.footer` | `footer` | Aussteller-Fuß | `.body` | `true` | `setVisibility` |
+| `.footer` | `footer` | Aussteller-Fuß | `.page-template` | `true` | `setVisibility` |
 | `.mini-header` | `header` | Rechnungs-MiniHeader | `.page-template` | `true` | `setVisibility` |
 
 Alle abgekürzten IDs beginnen mit `pdf.bbm.invoice`. Jedes Nicht-Root-Ziel hat

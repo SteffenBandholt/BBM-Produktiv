@@ -3,12 +3,12 @@ import { draftPreviewIdentifier } from "../../../../shared/rechnung/invoiceHeade
 export const INVOICE_SCOPE_ID = "pdf.bbm.invoice";
 
 export const INVOICE_PDF_COLUMNS = Object.freeze([
-  Object.freeze({ key: "number", label: "Pos.", widthMm: 18, minMm: 12, maxMm: 28 }),
-  Object.freeze({ key: "description", label: "Leistung", widthMm: 86, minMm: 50, maxMm: 120 }),
-  Object.freeze({ key: "quantity", label: "Menge", widthMm: 18, minMm: 12, maxMm: 28 }),
-  Object.freeze({ key: "unit", label: "Einheit", widthMm: 16, minMm: 10, maxMm: 24 }),
-  Object.freeze({ key: "unit-price", label: "EP", widthMm: 24, minMm: 18, maxMm: 34 }),
-  Object.freeze({ key: "total-price", label: "GP / NEP", widthMm: 24, minMm: 18, maxMm: 34 }),
+  Object.freeze({ key: "number", label: "Pos", widthMm: 14, minMm: 12, maxMm: 28 }),
+  Object.freeze({ key: "description", label: "Gegenstand", widthMm: 67, minMm: 50, maxMm: 120 }),
+  Object.freeze({ key: "quantity", label: "Menge", widthMm: 20, minMm: 12, maxMm: 28 }),
+  Object.freeze({ key: "unit", label: "Einheit", widthMm: 21, minMm: 10, maxMm: 24 }),
+  Object.freeze({ key: "unit-price", label: "EP", widthMm: 32, minMm: 18, maxMm: 34 }),
+  Object.freeze({ key: "total-price", label: "GP / NEP", widthMm: 32, minMm: 18, maxMm: 34 }),
 ]);
 
 function element(tag, className, text) {
@@ -85,6 +85,9 @@ export function buildInvoiceFullHeaderContent(invoice = {}) {
   });
   const issuerAddress = element("div", "invoicePdfIssuerAddress");
   appendAddress(issuerAddress, invoice.issuer_snapshot || {});
+  if (invoice.preview === true) {
+    meta.appendChild(element("div", "invoicePdfDraftNotice", "Vorabzug - nicht freigegeben"));
+  }
   meta.appendChild(issuerAddress);
   for (const [label, value] of [
     ["Rechnungsdatum", invoice.invoice_date_display],
@@ -183,16 +186,9 @@ export function buildInvoiceTableHead() {
   const thead = document.createElement("thead");
   const row = document.createElement("tr");
   row.className = "invoicePdfTableHeadRow";
-  const visibleLabelByColumn = {
-    number: "Pos. / Gegenstand",
-    description: "",
-    quantity: "Menge / Einheit",
-    unit: "",
-    "unit-price": "EP",
-    "total-price": "GP",
-  };
   for (const column of INVOICE_PDF_COLUMNS) {
-    const cell = element("th", `invoicePdfCol invoicePdfCol--${column.key}`, visibleLabelByColumn[column.key]);
+    const visibleLabel = column.key === "total-price" ? "GP" : column.label;
+    const cell = element("th", `invoicePdfCol invoicePdfCol--${column.key}`, visibleLabel);
     cell.dataset.invoiceColumn = column.key;
     markInvoiceEditorElement(cell, {
       id: `${INVOICE_SCOPE_ID}.positions.column.${column.key}`,
@@ -302,13 +298,17 @@ export function buildInvoiceTail(invoice = {}) {
   });
   wrapper.appendChild(payment);
 
+  return wrapper;
+}
+
+export function buildInvoicePageFooter(invoice = {}) {
   const issuer = invoice.issuer_snapshot || {};
   const footer = element("div", "invoicePdfFooter");
   markInvoiceEditorElement(footer, {
     id: `${INVOICE_SCOPE_ID}.footer`,
     kind: "footer",
     label: "Aussteller-Fuß",
-    parentId: `${INVOICE_SCOPE_ID}.body`,
+    parentId: `${INVOICE_SCOPE_ID}.page-template`,
     editable: true,
     operations: ["setVisibility"],
   });
@@ -326,6 +326,5 @@ export function buildInvoiceTail(invoice = {}) {
     issuer.bic ? `BIC ${issuer.bic}` : "",
   ].filter(Boolean);
   if (legal.length) footer.appendChild(element("div", "invoicePdfFooterBank", legal.join(" · ")));
-  wrapper.appendChild(footer);
-  return wrapper;
+  return footer;
 }

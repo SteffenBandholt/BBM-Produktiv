@@ -18,6 +18,7 @@ import {
   buildInvoiceColGroup,
   buildInvoiceFullHeaderContent,
   buildInvoiceMiniHeaderContent,
+  buildInvoicePageFooter,
   buildInvoiceRow,
   buildInvoiceTableHead,
   buildInvoiceTail,
@@ -816,7 +817,6 @@ export function renderPrint({ pages, data } = {}) {
             totalPages,
             modeLabel,
             content: buildInvoiceFullHeaderContent(runtimeData.invoice || {}),
-            draftNotice: runtimeData.invoice?.preview === true ? "Vorabzug - nicht freigegeben" : "",
           })
         : renderV2FullHeader({ data: runtimeData, pageNo, totalPages, modeLabel }));
       pageEl.appendChild(_el("div", "v2FullGapLineBody"));
@@ -862,7 +862,12 @@ export function renderPrint({ pages, data } = {}) {
       pageBody.appendChild(buildInvoiceTail(runtimeData.invoice || {}));
     }
     pageEl.appendChild(pageBody);
-    pageEl.appendChild(_el("div", "v2FooterReserveSpacer"));
+    const footerReserve = _el("div", "v2FooterReserveSpacer");
+    if (normalizedMode === "invoice") {
+      footerReserve.classList.add("v2InvoiceFooterReserve");
+      footerReserve.appendChild(buildInvoicePageFooter(runtimeData.invoice || {}));
+    }
+    pageEl.appendChild(footerReserve);
     root.appendChild(pageEl);
   });
   return root;

@@ -51,8 +51,8 @@ const GOLDEN_SNAPSHOT_SHA256 = Object.freeze({
   "r45-footer-boundary": "bd299e9c05d7530075b90f670697c14184b64ab236558292d80383508bf7e93b",
   "r46-landscape-contract": "6f4fa1db3ff1c0d0ae11227127d0fc629475da633c6d9eb4fdacaf5775e59c5d",
   "r47-mixed-long-fields": "09c58ae64219c9df76f54fd889c7136989bf9b91ea69b0857967882024d5eead",
-  "i48-invoice-final": "3bfe6bbbef3d1a76826d076a5c4e3a866c1f7e300e41e61b41512e3ee0d494f2",
-  "i49-invoice-preview": "84f31e0c91bc1f274a62e462d2177ef906caa3711554c63fec7da33170716eaf",
+  "i48-invoice-final": "5d4311c8709a4517555c86f778c4aa53f20978a9b57036d8ecb3cb3535456105",
+  "i49-invoice-preview": "1bc39b9af24272b06ab0d2f325bce80e2d1b88b23288c4f7a05db09df1882381",
 });
 
 const GOLDEN_PAGE_COUNTS = Object.freeze({

@@ -1418,7 +1418,6 @@ function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind 
           totalPages: 2,
           modeLabel,
           content: buildInvoiceFullHeaderContent(data?.invoice || {}),
-          draftNotice: data?.invoice?.preview === true ? "Vorabzug - nicht freigegeben" : "",
         })
       : renderV2FullHeader({ data, pageNo: 1, totalPages: 2, modeLabel }));
     page.appendChild(_el("div", "v2FullGapLineBody"));
@@ -2053,7 +2052,7 @@ function _paginateGeneric({ rows, type, projectLabel, docLabel, data }) {
     currentPage.suppressTable = true;
   }
   if (isInvoice && invoiceTailHeight > remaining) {
-    throw new Error("PDF-V2-INVOICE-007: Rechnungssummen und Ausstellerfuß überschreiten die Seitennutzfläche.");
+    throw new Error("PDF-V2-INVOICE-007: Rechnungssummen und Zahlungstext überschreiten die Seitennutzfläche.");
   }
   if (isInvoice) currentPage.invoiceLast = true;
   if (currentPage.table.rows.length || isInvoice) pages.push(currentPage);

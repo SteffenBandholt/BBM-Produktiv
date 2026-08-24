@@ -772,6 +772,9 @@
   grid-template-columns: minmax(0, 1fr) 76mm;
   align-items: start;
   gap: 15mm;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   min-height: 31mm;
   padding-bottom: 4.5mm;
   border-bottom: 0.2mm solid #cbd4df;
@@ -797,7 +800,19 @@
   align-content: start;
   justify-self: end;
   width: 76mm;
+  min-width: 0;
+  margin-left: auto;
   gap: 0.6mm;
+}
+
+.invoicePdfDraftNotice {
+  justify-self: end;
+  margin-bottom: 1.4mm;
+  color: #b91c1c;
+  font-size: 7.5pt;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .invoicePdfIssuerAddress {
@@ -805,6 +820,7 @@
   gap: 0.2mm;
   width: fit-content;
   min-width: 54mm;
+  justify-self: end;
   margin: 0 0 2.2mm auto;
   font-size: 8pt;
   font-weight: 500;
@@ -815,6 +831,7 @@
   display: grid;
   grid-template-columns: 27mm 2.5mm minmax(0, 1fr);
   align-items: baseline;
+  width: 100%;
   gap: 0;
 }
 
@@ -884,7 +901,10 @@
 }
 
 .invoicePdfTable {
-  width: 186mm;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
   border-collapse: collapse;
   table-layout: fixed;
   border-top: 0.2mm solid #cbd4df;
@@ -922,6 +942,10 @@
   border-bottom: 0.2mm solid #dce3eb;
   vertical-align: top;
   overflow-wrap: anywhere;
+}
+
+.invoicePdfTable .invoicePdfPositionRow td {
+  border-bottom: 0;
 }
 
 .invoicePdfTable th.invoicePdfCol--quantity {
@@ -1045,15 +1069,17 @@
 }
 
 .invoicePdfFooter {
-  grid-column: 1 / -1;
   display: grid;
+  align-content: start;
   gap: 0.5mm;
-  margin-top: 2mm;
-  padding-top: 2mm;
-  border-top: 0.2mm solid #cbd4df;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding-top: 1.4mm;
+  overflow: hidden;
   color: #657383;
-  font-size: 7.5pt;
-  line-height: 1.35;
+  font-size: 7pt;
+  line-height: 1.25;
 }
 
 .invoicePdfFooterBank {

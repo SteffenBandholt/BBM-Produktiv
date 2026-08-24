@@ -2,7 +2,7 @@
 
 Stand: 2026-08-24
 Inventarbasis: `rechnung-integration` / `2d9dcc113af89a3b1005e9b8d9ba41416108dbff`
-Vertragsversion: `m85.2-v4-invoice`
+Vertragsversion: `m85.2-v5-invoice`
 
 ## Zweck und Geltungsgrenze
 
@@ -69,7 +69,7 @@ keinen zweiten Renderer und keine zweite Paginierung.
 | `src/renderer/print/index.html` | produktiv, Einstieg | Lädt `print.css`, Header-Test-CSS, `v2.css` und `printApp.js`. |
 | `src/renderer/print/printApp.js` | produktiv, Paginierungsquelle | Zeilenbau, reale Messung, Teilnehmer-/Vorbemerkungsplanung, TOP- und generische Paginierung, Abschlussverschiebung. |
 | `src/renderer/print/layout/PrintShell.js` | produktiv, Renderingquelle | Endgültiges Seiten-DOM, Voll-/Mini-Kopf, Tabellenkopf je Seitentabelle, Teilnehmer, Vorbemerkung, Abschluss und Fußreserve. |
-| `src/renderer/modules/rechnungen/print/InvoicePrintContent.js` | produktiv, Invoice-Fachrenderer | Liefert ausschließlich Rechnungsempfänger/-metadaten/-kontext für den FullHeader-Slot, Fachtexte für den MiniHeader-Slot sowie Einleitung, Bau-LV und Abschluss für den Body. Definiert weder Seite noch Satzspiegel. |
+| `src/renderer/modules/rechnungen/print/InvoicePrintContent.js` | produktiv, Invoice-Fachrenderer | Liefert Rechnungsempfänger/-metadaten/-kontext für den FullHeader-Slot, Fachtexte für den MiniHeader-Slot, Einleitung/Bau-LV/Abschluss für den Body sowie die Aussteller-/Bank-/Steuerzeilen für den vorhandenen Seitenfooter-Slot. Definiert weder Seite, Satzspiegel noch Footerreserve. |
 | `src/renderer/print/print.css` | produktiv, Design-/Messquelle | A4-Seitenbox, Tabellen-, TOP-, Restarbeiten- und Textgeometrie. Beeinflusst Messung und Umbruch. |
 | `src/renderer/print/v2/v2.css` | produktiv, Design-/Messquelle | V2-Kopf, Teilnehmer, Vorbemerkung, Abschluss, Fußreserve und Farbtreue. |
 | `src/renderer/print/v2/v2LayoutConfig.js` | produktiv, zentrale Baseline | Kopf- und Abstandsbaselines; keine Engine. |
@@ -164,14 +164,15 @@ M85.2 führt dafür weder Registryeinträge noch einen Profilwert ein.
 | Vertrags-ID | Regel | Nachweis | Status |
 |---|---|---|---|
 | `PDF-V2-INVOICE-001` | Eine gebuchte Rechnung wird ausschließlich aus ihren unveränderlichen Kunden-/Aussteller-Snapshots und gespeicherten Positionen gedruckt. Eine Proberechnung verwendet `InvoiceService.previewDraft()`, bleibt DRAFT und erhält nur flüchtige Druck-Snapshots. | `InvoiceService`, `InvoiceRepository`, `printData`, `rechnungPdf.test.cjs` | fest |
-| `PDF-V2-INVOICE-002` | Seite 1 besteht aus unverändertem V2-GlobalHeader, dem V2-FullHeader-Container mit fachlichem Invoice-Slot, V2-Trennlinie und Body. Der Invoice-Slot enthält Empfänger, Ausstelleradresse, Dokumentart, Nummer bzw. Preview-Kennung, Datum, Leistungszeitraum und Bauvorhaben/Leistungsbezug; Protokollkennlinie und Protokolltitel fehlen. | `FullHeader.js`, `InvoicePrintContent.js`, i48/i49 | fest |
-| `PDF-V2-INVOICE-003` | Jede Invoice-Seitentabelle verwendet denselben sechs Tracks umfassenden Bau-LV-Kopf. Kopf und Spalten werden aus denselben Buildern in Mess- und End-DOM erzeugt. | `InvoicePrintContent.js`, `_createMeasureContext`, i48/i49 | fest |
+| `PDF-V2-INVOICE-002` | Seite 1 besteht aus unverändertem V2-GlobalHeader, dem V2-FullHeader-Container mit fachlichem Invoice-Slot, V2-Trennlinie und Body. Der Invoice-Slot enthält Empfänger, den am rechten Satzspiegel verankerten Aussteller-/Datumsblock, Dokumentart, Nummer bzw. Preview-Kennung, Leistungszeitraum und Bauvorhaben/Leistungsbezug; Protokollkennlinie und Protokolltitel fehlen. Bei einer Proberechnung sitzt der rote Hinweis innerhalb dieses rechten Rechnungsblocks und nicht als mittiger/liniennaher V2-FullHeader-Marker. | `FullHeader.js`, `InvoicePrintContent.js`, i48/i49 | fest |
+| `PDF-V2-INVOICE-003` | Jede Invoice-Seitentabelle verwendet dieselben sechs Tracks und die getrennten sichtbaren Köpfe `Pos`, `Gegenstand`, `Menge`, `Einheit`, `EP`, `GP`. Die Baselinebreiten 14/67/20/21/32/32 mm summieren sich auf 186 mm; die Tabelle bleibt vollständig innerhalb der 12-mm-Seitenränder. Kopf und Spalten werden aus denselben Buildern in Mess- und End-DOM erzeugt. Leistungspositionen besitzen keine waagerechten Zwischenlinien. | `InvoicePrintContent.js`, `_createMeasureContext`, i48/i49 | fest |
 | `PDF-V2-INVOICE-004` | Überschrift, Text, Hinweis und Leistungsposition bleiben getrennte Zeilenarten. Text besitzt kein sichtbares Präfix `Text`; Hinweis trägt sichtbar `Hinweis`. | `buildInvoiceRow`, i48/i49, `rechnungPdf.test.cjs` | fest |
 | `PDF-V2-INVOICE-005` | Eine NEP-Position zeigt Menge, Einheit und EP, statt GP den Text `NEP` und beeinflusst die Rechnungssummen nicht. | Positionsnormalisierung, `buildInvoiceRow`, i48/i49 | fest |
-| `PDF-V2-INVOICE-006` | Der Body-Abschluss enthält Nettosumme, jede vorhandene MwSt.-Gruppe, Rechnungsbetrag, Zahlungstext sowie Aussteller-/Bank-/Steuerangaben. | `buildInvoiceTail`, i48/i49 | fest |
-| `PDF-V2-INVOICE-007` | Der vollständige Abschluss wird real gemessen und gegebenenfalls auf eine Folgeseite verschoben. FullHeader, Body-Einleitung, Zeilen, MiniHeader und Fußreserve werden über die gemeinsame V2-DOM-Messung berücksichtigt; es gibt keine manuelle Invoice-Seitenschätzung. | `_createMeasureContext`, `_paginateGeneric`, i48/i49 | fest |
+| `PDF-V2-INVOICE-006` | Der Body-Abschluss enthält Nettosumme, jede vorhandene MwSt.-Gruppe, Rechnungsbetrag und Zahlungstext. Seine rechte Kante ist deckungsgleich mit der rechten Kante der GP-Spalte. Aussteller-/Bank-/Steuerangaben gehören nicht zum Body-Abschluss. | `buildInvoiceTail`, i48/i49 | fest |
+| `PDF-V2-INVOICE-007` | Der vollständige Body-Abschluss wird real gemessen und gegebenenfalls auf eine Folgeseite verschoben. FullHeader, Body-Einleitung, Zeilen, MiniHeader und Fußreserve werden über die gemeinsame V2-DOM-Messung berücksichtigt; es gibt keine manuelle Invoice-Seitenschätzung. | `_createMeasureContext`, `_paginateGeneric`, i48/i49 | fest |
 | `PDF-V2-INVOICE-008` | Finale Ablage, Dateigröße, SHA-256 und aktive Finalreferenz bleiben Eigentum des vorhandenen `InvoicePdfFinalizer`; die Preview schreibt ausschließlich eine temporäre Datei und keine Finalreferenz. | `InvoicePdfFinalizer`, `RechnungScreen._showPreview`, `rechnungPdf.test.cjs` | fest |
 | `PDF-V2-INVOICE-009` | Finale Rechnung und Proberechnung verwenden denselben Modus `invoice`, denselben `PrintShell`, dieselbe `_paginateGeneric`-Funktion und denselben einzigen `webContents.printToPDF`-Aufruf. Nur `data.invoice.preview === true` aktiviert den roten Invoice-Marker. | Architekturguards, i48/i49 | fest |
+| `PDF-V2-INVOICE-010` | Jede Rechnungsseite rendert die vorhandenen Aussteller-/Adress- sowie Steuer-/Bankangaben als echten Seitenfooter innerhalb der bestehenden 12-mm-Footerreserve. Der Footer ist registriertes Kind der A4-Seite, kein Kind des Rechnungs-Body, verändert die Body-Paginierung nicht und bleibt vollständig innerhalb der horizontalen Seitenränder und der Footerreserve. | `buildInvoicePageFooter`, `PrintShell.renderPrint`, i48/i49 | fest |
 
 ## C. Editorfähige Designwerte
 
@@ -258,7 +259,10 @@ Status/Ampel, lange Verortung, sichtbare Filterreihenfolge, Löschfilter,
 Kopfwiederholung, Fußreserve, Querformat und gemischte Datensätze ab. Zwei
 Invoice-Fälle i48/i49 verriegeln finale Rechnung und Proberechnung über fünf
 Seiten mit FullHeader-Slot, MiniHeader, Vorabzug, Bau-LV, NEP, Hinweis,
-Mehrfach-MwSt., Abschluss und Fußreserve. Der Harness erfasst
+Mehrfach-MwSt., Abschluss und echtem Seitenfooter innerhalb der Fußreserve.
+Zusätzlich werden die sechs getrennten Tabellenköpfe, die 186-mm-Tabellenbreite,
+die Menge-Startachse, die gemeinsame GP-/Summen-Rechtskante, fehlende
+Positions-Trennlinien, die rechte Kopfkante und die Footergrenzen erfasst. Der Harness erfasst
 je Seite:
 
 - Seitennummer, Seitentyp und Kopfart;

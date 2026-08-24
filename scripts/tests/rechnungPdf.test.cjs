@@ -306,12 +306,18 @@ async function runRechnungPdfTests(run) {
     );
     const registry = invoiceAdapter.REGISTRY;
     const ids = new Set(registry.elements.map((element) => element.id));
-    assert.equal(invoiceAdapter.DESCRIPTOR_VERSION, 2);
+    assert.equal(invoiceAdapter.DESCRIPTOR_VERSION, 3);
     for (const id of ["pdf.bbm.invoice.header", "pdf.bbm.invoice.context", "pdf.bbm.invoice.body", "pdf.bbm.invoice.mini-header"]) assert.equal(ids.has(id), true, id);
     assert.equal(registry.elements.find((element) => element.id === "pdf.bbm.invoice.recipient")?.parentId, "pdf.bbm.invoice.header");
     assert.equal(registry.elements.find((element) => element.id === "pdf.bbm.invoice.meta")?.parentId, "pdf.bbm.invoice.header");
     assert.equal(registry.elements.find((element) => element.id === "pdf.bbm.invoice.intro")?.parentId, "pdf.bbm.invoice.body");
+    assert.equal(registry.elements.find((element) => element.id === "pdf.bbm.invoice.footer")?.parentId, "pdf.bbm.invoice.page-template");
+    assert.equal(registry.elements.find((element) => element.id === "pdf.bbm.invoice.footer")?.pageArea, "footer");
     assert.equal(registry.elements.filter((element) => element.kind === "tableColumn").length, 6);
+    assert.deepEqual(
+      registry.elements.filter((element) => element.kind === "tableColumn").map((element) => [element.name, element.baseline.width]),
+      [["Pos", 14], ["Gegenstand", 67], ["Menge", 20], ["Einheit", 21], ["EP", 32], ["GP / NEP", 32]]
+    );
     for (const element of registry.elements) {
       if (element.parentId) assert.equal(ids.has(element.parentId), true, `${element.id}:parent`);
       for (const forbidden of ["changeText", "modifyDomainData", "createRecord", "deleteRecord", "saveDomainData", "setPageBreakRule"]) {
@@ -539,13 +545,19 @@ async function runRechnungPdfTests(run) {
     const invoiceContent = read("src/renderer/modules/rechnungen/print/InvoicePrintContent.js");
     const data = read("src/main/print/printData.js");
     const css = read("src/renderer/print/v2/v2.css");
-    for (const token of ["INVOICE_PDF_COLUMNS", 'specialRow(row, "invoicePdfNoteRow", "Hinweis")', 'row.kind === "invoiceText"', 'row.kind === "invoiceNote"', "buildInvoiceTableHead", "buildInvoiceTail", "invoicePdfLetterhead", "buildInvoiceFullHeaderContent", "buildInvoiceMiniHeaderContent", "buildInvoiceBodyIntro"]) {
+    for (const token of ["INVOICE_PDF_COLUMNS", 'specialRow(row, "invoicePdfNoteRow", "Hinweis")', 'row.kind === "invoiceText"', 'row.kind === "invoiceNote"', "buildInvoiceTableHead", "buildInvoiceTail", "buildInvoicePageFooter", "invoicePdfLetterhead", "buildInvoiceFullHeaderContent", "buildInvoiceMiniHeaderContent", "buildInvoiceBodyIntro"]) {
       assert.equal(`${invoiceContent}\n${shell}\n${app}`.includes(token), true, token);
     }
     for (const token of ['position.is_nep ? "NEP"', "vat_totals_display", "invoiceFirst", "invoiceLast"]) assert.equal(app.includes(token), true, token);
-    for (const token of [".invoicePdfPositionRow .invoicePdfCol--description", "translateY(4.5mm)", ".invoicePdfFooterAddress"]) {
+    for (const token of [".invoicePdfPositionRow .invoicePdfCol--description", "translateY(4.5mm)", ".invoicePdfTable .invoicePdfPositionRow td", ".invoicePdfFooterAddress"]) {
       assert.equal(css.includes(token), true, token);
     }
+    assert.match(invoiceContent, /key: "number", label: "Pos", widthMm: 14/);
+    assert.match(invoiceContent, /key: "description", label: "Gegenstand", widthMm: 67/);
+    assert.match(invoiceContent, /key: "quantity", label: "Menge", widthMm: 20/);
+    assert.match(invoiceContent, /key: "unit", label: "Einheit", widthMm: 21/);
+    assert.match(invoiceContent, /parentId: `\$\{INVOICE_SCOPE_ID\}\.page-template`/);
+    assert.doesNotMatch(invoiceContent, /Pos\. \/ Gegenstand|Menge \/ Einheit/);
     assert.match(data, /invoicePreview === true/);
     assert.match(data, /InvoiceService\(\{ repository \}\)\.previewDraft\(id\)/);
     assert.match(data, /customer_snapshot/);
