@@ -1,5 +1,15 @@
 # STATUS.md â€” BBM-Produktiv
 
+## 2026-08-24 - Rechnungs-Nachkomma-Pfeile, Listenmenge und MwSt.-Anzeige korrigiert
+
+- Status: `[A]`; die Pfeile der beiden vorhandenen Dezimalstellen-SVGs verwenden jetzt das etablierte Blau `#3a6fb0` und mit `0.9` eine feinere Strichstärke statt `1.35`. Dezimalzeichen, Repo-Dateien, echte Buttonflächen, Handler, Grenzsperren und der Bereich 0 bis 4 bleiben erhalten.
+- Der LV-Renderer verwendet für Mengen nun direkt denselben `formatQuantityForInput` wie das sichtbare Mengenfeld. Der reale Mauslauf zeigte in Feld und Positionsliste synchron `12,3456`/`12,3456 m`, `12,346`/`12,346 m`, `12,35`/`12,35 m`, `12,3`/`12,3 m`, `12`/`12 m` und vollständig zurück.
+- Die doppelte MwSt.-Beschriftung der Positions-Editbox ist entfernt. Sichtbar bleibt ausschließlich der aktuelle Satz, im Prüffall `19 %`. Der bestehende registrierte Labelknoten bleibt vertragstreu im DOM, ist aber mit `display:none` tatsächlich unsichtbar und besitzt 0 px Höhe.
+- Layoutnachweis: Rechnungs-CSS und Fünf-Spalten-Grid blieben unverändert (`SHA-256 49E11B5EA5E3A9C83DBBF9ED91D85D0A7EECF1F60E8A4BC08FBFCC13034BC809`). Nur die ausdrücklich zu entfernende MwSt.-Labelreserve entfällt; dadurch sinken letzte Gridzeile und natürliche Editboxhöhe um 4 px. Alle anderen Zeilen, Spalten und Positionen sind identisch, ohne Clipping oder Überlagerung.
+- Reale Electron-Sichtprüfung bei 1600 × 900 px grün. Screenshot: `C:\Users\Steffen\Pictures\Screenshots\BBM-Rechnung-Nachkomma-Liste-MwSt-Korrektur.png`.
+- Prüfung: fokussierte Mengen-/Gesamtbetragstests grün; echter M83-Rechnungsmount mit 131 Refs, synchroner Feld-/Listenfolge und MwSt.-Labelvertrag grün; `rechnungUiEditorUnbounded`, UI-Editor-Vertrags-Selbsttest und SVG-XML-Prüfung grün; fokussierter ESLint 0 Fehler und 5 bestehende Warnungen; `git diff --check` grün.
+- Keine PDF-, Druck-, Navigations-, Registry-, HostAdapter-, Persistenz-, Protokoll- oder neue Fachlogikänderung. Kein Commit, kein Push. Nächster sinnvoller Schritt: fachliche Sichtfreigabe im normalen Rechnungsfenster.
+
 ## 2026-08-24 - Rechnungs-Stepper mit SVG-Icons und deutsche Editbox-Geldanzeige
 
 - Status: `[A]`; die vorhandenen echten Stepper-Buttons verwenden statt Minus/Plus die neuen Repository-Assets `decimal-decrease.svg` und `decimal-increase.svg`. Beide behalten dieselben Handler, den Bereich 0 bis 4 und die Grenzsperren; `title` und `aria-label` benennen die jeweilige Funktion vollständig.

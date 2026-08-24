@@ -3,5 +3,5 @@
     <text x="1" y="5.3">.0</text>
     <text x="8" y="15">.00</text>
   </g>
-  <path d="M2 8h13m0 0-3-2.5M15 8l-3 2.5" fill="none" stroke="#334155" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M2 8h13m0 0-3-2.5M15 8l-3 2.5" fill="none" stroke="#3a6fb0" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

@@ -206,13 +206,15 @@ async function runRechnungNavigationTests(run) {
       const svg = fs.readFileSync(iconPath, "utf8");
       assert.match(svg, /<svg[^>]*width="18"[^>]*height="16"/);
       assert.match(svg, />\.0(?:0)?</);
-      assert.match(svg, /<path[^>]*stroke=/);
+      assert.match(svg, /<path[^>]*stroke="#3a6fb0"[^>]*stroke-width="0\.9"/);
     }
     const source = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/screens/RechnungScreen.js"), "utf8");
     assert.match(source, /new URL\("\.\.\/assets\/icons\/decimal-decrease\.svg", import\.meta\.url\)\.href/);
     assert.match(source, /new URL\("\.\.\/assets\/icons\/decimal-increase\.svg", import\.meta\.url\)\.href/);
     assert.match(source, /setAttribute\("title", "Nachkommastellen verringern"\)/);
     assert.match(source, /setAttribute\("title", "Nachkommastellen erhöhen"\)/);
+    assert.match(source, /formatQuantityForInput\(entry\.quantity, this\.quantityDecimalPlaces\)/);
+    assert.doesNotMatch(source, /this\.positionVatRate\.textContent = `MwSt\./);
 
     assert.deepEqual(rechnungScreen.QUANTITY_DECIMAL_PLACES, [0, 1, 2, 3, 4]);
     assert.equal(rechnungScreen.isQuantityInputAllowed("2,3456", 4), true);

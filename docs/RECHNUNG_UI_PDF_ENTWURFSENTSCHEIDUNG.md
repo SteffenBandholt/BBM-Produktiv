@@ -4,6 +4,40 @@ Stand: 24.08.2026
 Scope: `rechnung.screen`
 Komponente: `bbm.rechnung.screen`
 
+## Editbox: Nachkomma-Pfeile, Listenmenge und MwSt.-Minimum – 24.08.2026
+
+Art der Ausgabe: ausschließlich UI, kein PDF. Editorfähig: ja, unverändert
+über die bestehenden Ziele. Die Buttons
+`rechnung.editor.positionQuantityDecimals.decrease` und
+`rechnung.editor.positionQuantityDecimals.increase`, der Wert
+`rechnung.editor.positionQuantityDecimals.value`, das Mengenfeld
+`rechnung.editor.positionQuantity`, die Positionsliste
+`rechnung.editor.positions.list` sowie `rechnung.editor.positionVatRate` und
+dessen Label behalten IDs, Kinds, Parents, Editierbarkeit und erlaubte
+Operationen. Es entstehen keine neuen Editorziele und keine neue
+Editorarchitektur.
+
+In den beiden vorhandenen SVG-Ressourcen verwendet ausschließlich der
+horizontale Pfeil die vorhandene BBM-Blaunuance `#3a6fb0` und eine reduzierte
+Strichstärke von `0.9`; Dezimaldarstellung, Dateipfade, Buttonflächen und
+Handler bleiben unverändert. Die Positionsliste formatiert die vorhandene
+Menge direkt mit demselben `formatQuantityForInput`, das bereits das Mengenfeld
+steuert. Es gibt keine zweite Listenformatlogik und keine neue Fachberechnung.
+
+An der MwSt.-Stelle der Positions-Editbox bleibt nur der aktuelle Steuersatz,
+zum Beispiel `19 %`, sichtbar. Der redundante registrierte Labelknoten bleibt
+für den bestehenden UI-Editor-Vertrag im DOM, ist aber ausdrücklich
+`display:none` und reserviert dadurch weder Text- noch Leerraum. Summenbox,
+MwSt.-Berechnung und dynamische MwSt.-Beschriftung außerhalb dieser
+Editboxstelle bleiben unverändert.
+
+Nicht editorfähig und unverändert bleiben Stepper-Ausführung, Mengen- und
+Rechnungsfachdaten, Speichern, Anlegen, Löschen, Upload, Import, Autosave,
+IPC-/Datenaktionen, PDF, Druck und Navigation. Der Nachweis erfolgt über
+Asset-, Formatter- und Mounttests, den UI-Editor-Vertrag sowie einen realen
+Electron-Mauslauf 4–0–4 mit paralleler Feld-/Listenablesung, MwSt.- und
+Geometrieprüfung.
+
 ## Editbox: Dezimalstellen-Icons und deutsche Geldanzeige – 24.08.2026
 
 Art der Ausgabe: ausschließlich UI, kein PDF. Editorfähig: ja, unverändert
