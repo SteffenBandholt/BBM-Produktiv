@@ -39,7 +39,7 @@ const TRANSIENT_MARKER_SHADOWS = new Set([
 
 function finite(value, fallback = 0) { return Number.isFinite(Number(value)) ? Number(value) : fallback; }
 function positive(value, fallback) { const number = finite(value, fallback); return number > 0 ? number : fallback; }
-function clamp(value, minimum, maximum) { return Math.min(maximum, Math.max(minimum, value)); }
+function nonNegative(value, fallback = 0) { const number = finite(value, fallback); return number >= 0 ? number : fallback; }
 function px(value) { return `${Math.round(Number(value) * 1000) / 1000}px`; }
 function isElementRef(value) { return Boolean(value) && typeof value.setAttribute === "function"; }
 function rectOf(element) { return typeof element.getBoundingClientRect === "function" ? element.getBoundingClientRect() : { left: 0, top: 0, width: finite(parseFloat(element.style?.width)), height: finite(parseFloat(element.style?.height)) }; }
@@ -63,6 +63,12 @@ function setLayoutProperty(style, name, value) {
     style[name] = value;
     if (name.includes("-")) style[name.replace(/-([a-z])/g, (_match, letter) => letter.toUpperCase())] = value;
   }
+}
+function clearLayoutProperty(style, name) {
+  if (!style) return;
+  if (typeof style.removeProperty === "function") style.removeProperty(name);
+  else delete style[name];
+  if (name.includes("-")) delete style[name.replace(/-([a-z])/g, (_match, letter) => letter.toUpperCase())];
 }
 function getCustomProperty(style, name) { return typeof style?.getPropertyValue === "function" ? style.getPropertyValue(name) : style?.[name]; }
 function applyAttributes(target, id) {
@@ -150,8 +156,8 @@ function readGeneric(element, id, entry = getM80RegistryEntry(id)) {
     // DOM-Messwerte koennen bei bewusst kompakten, aber sichtbaren Zielen
     // unter der vertraglichen Persistenzuntergrenze liegen. Das gespeicherte
     // Layout muss trotzdem stets wieder durch denselben Vertrag lesbar sein.
-    width: bounded(entry, "width", positive(rect.width, positive(parseFloat(style.width), 1)), 1),
-    height: bounded(entry, "height", positive(rect.height, positive(parseFloat(style.height), 1)), 1),
+    width: bounded(entry, "width", nonNegative(rect.width, nonNegative(parseFloat(style.width), 0)), 0),
+    height: bounded(entry, "height", nonNegative(rect.height, nonNegative(parseFloat(style.height), 0)), 0),
     textOffsetX: finite(element.dataset.uiEditorTextX, finite(parseFloat(style.paddingLeft))),
     textOffsetY: finite(element.dataset.uiEditorTextY, finite(parseFloat(style.paddingTop))),
     fontSize: positive(parseFloat(style.fontSize), 12),
@@ -163,7 +169,25 @@ function readGeneric(element, id, entry = getM80RegistryEntry(id)) {
 function bounded(entry, field, value, fallback) {
   const baseline = entry?.baseline || {};
   const capitalized = field[0].toUpperCase() + field.slice(1);
-  return clamp(positive(value, fallback), positive(baseline[`min${capitalized}`], 1), positive(baseline[`max${capitalized}`], Number.MAX_SAFE_INTEGER));
+  const minimum = baseline[`min${capitalized}`];
+  const maximum = baseline[`max${capitalized}`];
+  let result = nonNegative(value, fallback);
+  if (typeof minimum === "number" && Number.isFinite(minimum)) result = Math.max(minimum, result);
+  if (typeof maximum === "number" && Number.isFinite(maximum)) result = Math.min(maximum, result);
+  return result;
+}
+
+function applyOptionalDimensionBounds(style, entry, dimension) {
+  const baseline = entry?.baseline || {};
+  const capitalized = dimension[0].toUpperCase() + dimension.slice(1);
+  const minimum = baseline[`min${capitalized}`];
+  const maximum = baseline[`max${capitalized}`];
+  const cssMinimum = `min-${dimension}`;
+  const cssMaximum = `max-${dimension}`;
+  if (typeof minimum === "number" && Number.isFinite(minimum)) setLayoutProperty(style, cssMinimum, px(minimum));
+  else clearLayoutProperty(style, cssMinimum);
+  if (typeof maximum === "number" && Number.isFinite(maximum)) setLayoutProperty(style, cssMaximum, px(maximum));
+  else clearLayoutProperty(style, cssMaximum);
 }
 
 function applyGeneric(element, state, entry, requestedOperation = null) {
@@ -182,9 +206,8 @@ function applyGeneric(element, state, entry, requestedOperation = null) {
     const horizontalChrome = style.boxSizing === "border-box" || !Number.isFinite(currentContentWidth)
       ? 0
       : Math.max(0, currentBounds.width - currentContentWidth);
-    const contentWidth = style.boxSizing === "border-box" ? desiredWidth : Math.max(1, desiredWidth - horizontalChrome);
-    setLayoutProperty(element.style, "min-width", px(positive(entry.baseline?.minWidth, 1)));
-    setLayoutProperty(element.style, "max-width", px(positive(entry.baseline?.maxWidth, Number.MAX_SAFE_INTEGER)));
+    const contentWidth = style.boxSizing === "border-box" ? desiredWidth : Math.max(0, desiredWidth - horizontalChrome);
+    applyOptionalDimensionBounds(element.style, entry, "width");
     setLayoutProperty(element.style, "width", px(contentWidth));
     if (style.display === "inline") setLayoutProperty(element.style, "display", "inline-block");
     const parentStyle = element.parentElement ? styleOf(element.parentElement) : {};
@@ -201,10 +224,9 @@ function applyGeneric(element, state, entry, requestedOperation = null) {
       ? 0
       : Math.max(0, currentBounds.height - currentContentHeight);
     const verticalChrome = measuredVerticalChrome <= 128 ? measuredVerticalChrome : 0;
-    setLayoutProperty(element.style, "min-height", px(positive(entry.baseline?.minHeight, 1)));
-    setLayoutProperty(element.style, "max-height", px(positive(entry.baseline?.maxHeight, Number.MAX_SAFE_INTEGER)));
+    applyOptionalDimensionBounds(element.style, entry, "height");
     const desiredHeight = bounded(entry, "height", state.height, 1);
-    const contentHeight = style.boxSizing === "border-box" ? desiredHeight : Math.max(1, desiredHeight - verticalChrome);
+    const contentHeight = style.boxSizing === "border-box" ? desiredHeight : Math.max(0, desiredHeight - verticalChrome);
     setLayoutProperty(element.style, "height", px(contentHeight));
     if (style.display === "inline") setLayoutProperty(element.style, "display", "inline-block");
     const parentStyle = element.parentElement ? styleOf(element.parentElement) : {};
@@ -335,8 +357,8 @@ export function registerM80MultiRef(id, elements, fallbackElement, options = {})
     elementId: id,
     x: finite(entry.baseline?.x),
     y: finite(entry.baseline?.y),
-    width: positive(entry.baseline?.width, positive(entry.baseline?.minWidth, 1)),
-    height: positive(entry.baseline?.height, positive(entry.baseline?.minHeight, 1)),
+    width: nonNegative(entry.baseline?.width, nonNegative(entry.baseline?.minWidth, 0)),
+    height: nonNegative(entry.baseline?.height, nonNegative(entry.baseline?.minHeight, 0)),
     textOffsetX: finite(entry.baseline?.textOffsetX),
     textOffsetY: finite(entry.baseline?.textOffsetY),
     fontSize: positive(entry.baseline?.fontSize, 12),

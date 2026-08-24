@@ -12,7 +12,7 @@ const RUNNER = path.join(__dirname, "m86-24VisibleEditorAcceptanceRunner.cjs");
 const EPSILON = 0.2;
 
 function runVisibleModule(moduleId, profileRoot, temporaryRoot, requestedAction = null) {
-  const actionName = requestedAction || (moduleId === "restarbeiten" ? "RestarbeitenSave" : "ProtokollSave");
+  const actionName = requestedAction || (moduleId === "rechnung" ? "RechnungSave" : moduleId === "restarbeiten" ? "RestarbeitenSave" : "ProtokollSave");
   const resultFile = path.join(temporaryRoot, `${moduleId}-${actionName}.json`);
   const host = path.join(temporaryRoot, `host-${moduleId}-${actionName}`);
   fs.mkdirSync(host);
@@ -55,12 +55,15 @@ function assertVisibleSave(moduleId, report, restartReport) {
     previous = current;
   }
 
+  const symmetryBaseWidth = run.invoiceRange ? width(report, run.invoiceRange.afterGrow) : minusWidths.at(-1);
   const plusWidth = width(report, run.symmetry.afterPlus);
   const symmetryMinusWidth = width(report, run.symmetry.afterMinus);
-  assert.ok(plusWidth > minusWidths.at(-1) + EPSILON, `${moduleId}: Plus muss die sichtbare Breite erhoehen.`);
-  assert.ok(symmetryMinusWidth < plusWidth - EPSILON, `${moduleId}: Minus nach Plus muss wieder verkleinern.`);
-  assert.ok(Math.abs(symmetryMinusWidth - minusWidths.at(-1)) <= EPSILON,
-    `${moduleId}: Plus und Minus sind nicht symmetrisch (${minusWidths.at(-1)} / ${symmetryMinusWidth}).`);
+  assert.ok(plusWidth > symmetryBaseWidth + EPSILON, `${moduleId}: Plus muss die sichtbare Breite erhoehen.`);
+  if (moduleId !== "rechnung") {
+    assert.ok(symmetryMinusWidth < plusWidth - EPSILON, `${moduleId}: Minus nach Plus muss wieder verkleinern.`);
+    assert.ok(Math.abs(symmetryMinusWidth - symmetryBaseWidth) <= EPSILON,
+      `${moduleId}: Plus und Minus sind nicht symmetrisch (${symmetryBaseWidth} / ${symmetryMinusWidth}).`);
+  }
 
   if (moduleId === "protokoll") {
     assert.equal(run.beforeMinus.target.targets.length, 2, "Fertig bis muss als Multi-Ref gemessen werden.");
@@ -71,8 +74,20 @@ function assertVisibleSave(moduleId, report, restartReport) {
     }
   }
 
-  assert.equal(run.closeAndSave.saveDialog.dialogFound, true, `${moduleId}: Der echte Ungespeichert-Dialog wurde nicht gefunden.`);
-  assert.match(run.closeAndSave.saveDialog.saveClicked, /^Speichern und fortfahren/);
+  if (moduleId === "rechnung") {
+    const compactWidth = width(report, run.invoiceRange.afterShrink);
+    const expandedWidth = width(report, run.invoiceRange.afterGrow);
+    assert.ok(compactWidth < 468, `rechnung: Kurztext blieb trotz 120 weiterer Minus-Klicks bei ${compactWidth} px.`);
+    assert.ok(expandedWidth > initialWidth, `rechnung: Kurztext ueberschritt den Ausgangswert nicht (${initialWidth} -> ${expandedWidth}).`);
+    assert.equal(run.invoiceRange.shrinkClick.clickCount, 120);
+    assert.equal(run.invoiceRange.growClick.clickCount, 140);
+    assert.equal(run.closeAndSave.visibleSave.clicked, "Speichern", "rechnung: Der sichtbare Speichern-Button wurde nicht ausgeloest.");
+    assert.ok(run.closeAndSave.savedEditorState.status.some((value) => value.startsWith("Gespeichert") || value.startsWith("Zuletzt")),
+      "rechnung: Der sichtbare Editor hat den Save nicht bestaetigt.");
+  } else {
+    assert.equal(run.closeAndSave.saveDialog.dialogFound, true, `${moduleId}: Der echte Ungespeichert-Dialog wurde nicht gefunden.`);
+    assert.match(run.closeAndSave.saveDialog.saveClicked, /^Speichern und fortfahren/);
+  }
   assert.equal(run.editorRunningAfterClose, false, `${moduleId}: Das Editorfenster blieb nach bestaetigtem Save offen.`);
 
   const savedWidth = width(report, run.beforeClose);
@@ -106,14 +121,27 @@ async function runM8624VisibleEditorAcceptanceTests(run) {
     const profileRoot = path.join(temporaryRoot, "profiles");
     let completed = false;
     try {
+      const onlyModule = String(process.env.BBM_M8624_ONLY_MODULE || "").trim();
+      if (onlyModule) {
+        const report = runVisibleModule(onlyModule, profileRoot, temporaryRoot);
+        const restart = runVisibleModule(onlyModule, profileRoot, temporaryRoot, "RestoreOnly");
+        assertVisibleSave(onlyModule, report, restart);
+        completed = true;
+        return;
+      }
       const protokoll = runVisibleModule("protokoll", profileRoot, temporaryRoot);
       const restarbeiten = runVisibleModule("restarbeiten", profileRoot, temporaryRoot);
+      const rechnung = runVisibleModule("rechnung", profileRoot, temporaryRoot);
       const protokollRestart = runVisibleModule("protokoll", profileRoot, temporaryRoot, "RestoreOnly");
       const restarbeitenRestart = runVisibleModule("restarbeiten", profileRoot, temporaryRoot, "RestoreOnly");
+      const rechnungRestart = runVisibleModule("rechnung", profileRoot, temporaryRoot, "RestoreOnly");
       assertVisibleSave("protokoll", protokoll, protokollRestart);
       assertVisibleSave("restarbeiten", restarbeiten, restarbeitenRestart);
+      assertVisibleSave("rechnung", rechnung, rechnungRestart);
       assert.notEqual(protokoll.automation.profileFile, restarbeiten.automation.profileFile,
         "Protokoll und Restarbeiten muessen getrennte Profile verwenden.");
+      assert.notEqual(rechnung.automation.profileFile, restarbeiten.automation.profileFile,
+        "Rechnung und Restarbeiten muessen getrennte Profile verwenden.");
       completed = true;
     } finally {
       if (completed) fs.rmSync(temporaryRoot, { recursive: true, force: true });

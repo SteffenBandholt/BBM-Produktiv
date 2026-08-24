@@ -1,5 +1,6 @@
 import TopsScreen from "../../src/renderer/modules/protokoll/screens/TopsScreen.js";
 import RestarbeitenScreen from "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js";
+import RechnungScreen from "../../src/renderer/modules/rechnungen/screens/RechnungScreen.js";
 import { bindDevelopmentUiEditorOpenButtonRef } from "../../src/renderer/app/coreShellNavigation.js";
 import { installBbmM80EditorBridge, uninstallBbmM80EditorBridge } from "../../src/renderer/ui-editor/m80Bridge.js";
 import { createM80RegistrationDescriptor, handleM80EditorRequest, refreshM80StartupLayoutAfterRegistryMount } from "../../src/renderer/ui-editor/m80HostAdapter.js";
@@ -25,7 +26,8 @@ async function waitForStyle(selector) {
 async function waitForModule(moduleId) {
   for (let attempt = 0; attempt < 100; attempt += 1) {
     const registration = createM80RegistrationDescriptor();
-    if (registration.activeScopes.length === 3 && registration.activeScopes.every((scopeId) => scopeId.startsWith(`${moduleId}.`))) return registration;
+    const expectedScopeCount = moduleId === "rechnung" ? 1 : 3;
+    if (registration.activeScopes.length === expectedScopeCount && registration.activeScopes.every((scopeId) => scopeId.startsWith(`${moduleId}.`))) return registration;
     await tick();
   }
   throw new Error(`${moduleId}: Registry wurde nicht vollstaendig gemountet.`);
@@ -107,12 +109,46 @@ async function mountRestarbeiten() {
   return waitForModule("restarbeiten");
 }
 
+async function mountRechnung() {
+  resetM80PilotWorkingStatesForDiagnostic();
+  document.documentElement.style.height = "100%";
+  document.body.replaceChildren();
+  document.body.style.cssText = "margin:0;height:100%;font-size:14px";
+  const screen = new RechnungScreen();
+  screen._load = async () => {};
+  document.body.appendChild(screen.render());
+  screen.customers = [{ kind: "firm", id: "m86-24-customer", label: "M86.24 Kunde", name: "M86.24 Kunde", street: "Testweg 1", zip: "22880", city: "Wedel" }];
+  screen.projects = [{ id: "m86-24-project", name: "Projekt M86.24" }];
+  screen._open({
+    id: "m86-24-invoice",
+    status: "DRAFT",
+    source_type: "FREE",
+    document_type: "INVOICE",
+    invoice_number: "ENTWURF-M86.24",
+    invoice_date: "2026-08-24",
+    service_period_type: "SINGLE_DATE",
+    service_date: "2026-08-24",
+    service_reference: "Sichtbare UI-Editor-Abnahme",
+    intro_text: "Pruefung des unbegrenzten Rechnungslayouts",
+    customer_ref_kind: "firm",
+    customer_firm_id: "m86-24-customer",
+    project_id: "m86-24-project",
+    payment_term_days: 8,
+    due_date: "2026-09-01",
+    positions: [{ id: "m86-24-position", type: "service", short_text: "Kurztext sichtbar", long_text: "Langtext sichtbar", quantity: "1", unit: "Stk.", unit_price_cents: 10000, vat_rate_percent: 19, is_nep: false }],
+  });
+  screen._selectPosition(screen.positions[0]);
+  await waitForStyle('link[data-bbm-rechnungen-design-styles="true"]');
+  await tick();
+  return waitForModule("rechnung");
+}
+
 export async function startVisibleAcceptance(moduleId = "protokoll") {
   uninstallBbmM80EditorBridge();
   installBbmM80EditorBridge();
-  const registration = moduleId === "restarbeiten" ? await mountRestarbeiten() : await mountProtokoll();
+  const registration = moduleId === "rechnung" ? await mountRechnung() : moduleId === "restarbeiten" ? await mountRestarbeiten() : await mountProtokoll();
   activeModuleId = moduleId;
-  activeTargetId = moduleId === "restarbeiten" ? "restarbeiten.edit.short.label" : "protokoll.list.row.due";
+  activeTargetId = moduleId === "rechnung" ? "rechnung.editor.positionShort" : moduleId === "restarbeiten" ? "restarbeiten.edit.short.label" : "protokoll.list.row.due";
   const opened = await window.uiEditor.open(registration);
   return { opened, moduleId, targetId: activeTargetId, target: measureTarget(activeTargetId) };
 }
@@ -140,8 +176,8 @@ export function currentLayoutPayload() {
 
 export async function remountForRestart(moduleId) {
   activeModuleId = moduleId;
-  activeTargetId = moduleId === "restarbeiten" ? "restarbeiten.edit.short.label" : "protokoll.list.row.due";
-  const registration = await (moduleId === "restarbeiten" ? mountRestarbeiten() : mountProtokoll());
+  activeTargetId = moduleId === "rechnung" ? "rechnung.editor.positionShort" : moduleId === "restarbeiten" ? "restarbeiten.edit.short.label" : "protokoll.list.row.due";
+  const registration = await (moduleId === "rechnung" ? mountRechnung() : moduleId === "restarbeiten" ? mountRestarbeiten() : mountProtokoll());
   const rawStartup = await window.uiEditor.loadStartupLayout(registration);
   const restore = await refreshM80StartupLayoutAfterRegistryMount();
   await new Promise((resolve) => setTimeout(resolve, 250));

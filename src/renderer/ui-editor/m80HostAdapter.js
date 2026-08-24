@@ -87,10 +87,44 @@ function hasForbidden(value) {
 function failure(request, errorCode, message, previousState = null, rollbackSucceeded = true, geometryRisk = null, textResize = null) {
   return { success: false, changeId: String(request?.changeId || ""), elementId: String(request?.elementId || ""), operation: String(request?.operation || ""), errorCode, message, previousState, newState: previousState, rollbackSucceeded, geometryRisk, textResize };
 }
-function number(value, field, { positive = false, nonNegative = false } = {}) {
+function number(value, field, { nonNegative = false } = {}) {
   const result = Number(value);
-  if (!Number.isFinite(result) || (positive && result <= 0) || (nonNegative && result < 0)) throw Object.assign(new Error(`Ungültiger Layoutwert: ${field}`), { code: "electron_editor_message_invalid" });
+  if (!Number.isFinite(result) || (nonNegative && result < 0)) throw Object.assign(new Error(`Ungültiger Layoutwert: ${field}`), { code: "electron_editor_message_invalid" });
   return result;
+}
+
+function finiteDeclaredBound(source, key) {
+  const value = source?.[key];
+  return Object.hasOwn(source || {}, key) && typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function positionBounds(entry, axis) {
+  const baseline = entry?.baseline || {};
+  const capitalized = axis[0].toUpperCase() + axis.slice(1);
+  const minimumKey = `min${capitalized}`;
+  const maximumKey = `max${capitalized}`;
+  let minimum = finiteDeclaredBound(baseline, minimumKey);
+  let maximum = finiteDeclaredBound(baseline, maximumKey);
+  const geometry = entry?.geometry || {};
+  const legacyOffset = finiteDeclaredBound(geometry, "maximumStoredOffset") ?? finiteDeclaredBound(geometry, "maximumOffset");
+  if (!Object.hasOwn(baseline, minimumKey) && legacyOffset !== null) minimum = -Math.abs(legacyOffset);
+  if (!Object.hasOwn(baseline, maximumKey) && legacyOffset !== null) maximum = Math.abs(legacyOffset);
+  return { minimum, maximum };
+}
+
+function dimensionBounds(entry, dimension) {
+  const baseline = entry?.baseline || {};
+  const capitalized = dimension[0].toUpperCase() + dimension.slice(1);
+  return {
+    minimum: finiteDeclaredBound(baseline, `min${capitalized}`),
+    maximum: finiteDeclaredBound(baseline, `max${capitalized}`),
+  };
+}
+
+function requireWithinDeclaredBounds(value, bounds, field) {
+  if (bounds.minimum !== null && value < bounds.minimum) throw Object.assign(new Error(`${field} unterschreitet die deklarierte Mindestgrenze.`), { code: "electron_editor_message_invalid" });
+  if (bounds.maximum !== null && value > bounds.maximum) throw Object.assign(new Error(`${field} überschreitet die deklarierte Höchstgrenze.`), { code: "electron_editor_message_invalid" });
+  return value;
 }
 
 function desiredState(previous, entry, operation, payload, textResizeIntent = null) {
@@ -98,23 +132,19 @@ function desiredState(previous, entry, operation, payload, textResizeIntent = nu
   if (!payload || typeof payload !== "object" || Array.isArray(payload) || hasForbidden(payload)) throw Object.assign(new Error("Layout-Payload ist ungültig."), { code: "electron_editor_message_invalid" });
   if (operation === "move") {
     const keys = Object.keys(payload); if (!keys.length || keys.some((key) => !["x", "y"].includes(key))) throw new Error("move-Payload ist ungültig.");
-    if (Object.hasOwn(payload, "x")) next.x = number(payload.x, "x");
-    if (Object.hasOwn(payload, "y")) next.y = number(payload.y, "y");
-    const maximumStoredOffset = Number(entry?.geometry?.maximumStoredOffset);
-    if (Number.isFinite(maximumStoredOffset) && [next.x, next.y].some((value) => Math.abs(value) > maximumStoredOffset)) {
-      throw Object.assign(new Error(`Verschiebung muss innerhalb von ±${maximumStoredOffset} DIP bleiben.`), { code: "electron_editor_message_invalid" });
-    }
+    if (Object.hasOwn(payload, "x")) next.x = requireWithinDeclaredBounds(number(payload.x, "x"), positionBounds(entry, "x"), "x");
+    if (Object.hasOwn(payload, "y")) next.y = requireWithinDeclaredBounds(number(payload.y, "y"), positionBounds(entry, "y"), "y");
   } else if (operation === "resize") {
     const keys = Object.keys(payload); if (!keys.length || keys.some((key) => !["width", "height"].includes(key))) throw new Error("resize-Payload ist ungültig.");
-    if (Object.hasOwn(payload, "width")) next.width = number(payload.width, "width", { positive: true });
-    if (Object.hasOwn(payload, "height")) next.height = number(payload.height, "height", { positive: true });
+    if (Object.hasOwn(payload, "width")) next.width = requireWithinDeclaredBounds(number(payload.width, "width", { nonNegative: true }), dimensionBounds(entry, "width"), "width");
+    if (Object.hasOwn(payload, "height")) next.height = requireWithinDeclaredBounds(number(payload.height, "height", { nonNegative: true }), dimensionBounds(entry, "height"), "height");
   } else if (operation === "resizeWidth") {
     if (Object.keys(payload).length !== 1 || !Object.hasOwn(payload, "width")) throw new Error("resizeWidth-Payload ist ungültig.");
-    next.width = number(payload.width, "width", { positive: true });
+    next.width = requireWithinDeclaredBounds(number(payload.width, "width", { nonNegative: true }), dimensionBounds(entry, "width"), "width");
     if (previous.table?.columnId) next.table = { ...previous.table, widthMode: "fixed" };
   } else if (operation === "resizeHeight") {
     if (Object.keys(payload).length !== 1 || !Object.hasOwn(payload, "height")) throw new Error("resizeHeight-Payload ist ungültig.");
-    next.height = number(payload.height, "height", { positive: true });
+    next.height = requireWithinDeclaredBounds(number(payload.height, "height", { nonNegative: true }), dimensionBounds(entry, "height"), "height");
   } else if (operation === "textMove") {
     if (Object.keys(payload).length !== 1 || !payload.text || typeof payload.text !== "object") throw new Error("textMove-Payload ist ungültig.");
     const keys = Object.keys(payload.text); if (!keys.length || keys.some((key) => !["offsetX", "offsetY"].includes(key))) throw new Error("textMove-Payload ist ungültig.");
@@ -203,7 +233,7 @@ function inspectGeometryEffect(entry, operation, beforeGeometry, afterGeometry) 
       throw Object.assign(new Error(`Größe von '${candidate.name}' darf durch diese Operation nicht verändert werden.`), { code: "electron_unexpected_layout_effect" });
   }
   const target = afterGeometry.get(entry.id);
-  if (!target || !Number.isFinite(target.left) || !Number.isFinite(target.top) || target.width <= 0 || target.height <= 0)
+  if (!target || !Number.isFinite(target.left) || !Number.isFinite(target.top) || target.width < 0 || target.height < 0)
     throw Object.assign(new Error("Zielgeometrie ist ungültig."), { code: "electron_invalid_geometry" });
   return { ...affected, unexpected };
 }
@@ -227,9 +257,18 @@ function finitePositiveBounds(bounds) {
   return bounds && [bounds.left, bounds.top, bounds.width, bounds.height].every((value) => Number.isFinite(Number(value))) &&
     Number(bounds.width) > 0 && Number(bounds.height) > 0;
 }
-function requirePositiveTargetGeometry(entry, geometry) {
+function finiteNonNegativeBounds(bounds) {
+  return bounds && [bounds.left, bounds.top, bounds.width, bounds.height].every((value) => Number.isFinite(Number(value))) &&
+    Number(bounds.width) >= 0 && Number(bounds.height) >= 0;
+}
+function requireFiniteTargetGeometry(entry, geometry) {
   const bounds = geometry.get(entry.id);
-  if (!finitePositiveBounds(bounds)) {
+  const widthBounds = dimensionBounds(entry, "width");
+  const heightBounds = dimensionBounds(entry, "height");
+  const acceptsZeroGeometry = widthBounds.minimum === null && widthBounds.maximum === null &&
+    heightBounds.minimum === null && heightBounds.maximum === null;
+  const valid = acceptsZeroGeometry ? finiteNonNegativeBounds(bounds) : finitePositiveBounds(bounds);
+  if (!valid) {
     throw Object.assign(new Error(`Zielgeometrie von '${entry.name}' fehlt oder ist ungueltig.`), {
       code: "electron_invalid_geometry",
     });
@@ -424,7 +463,7 @@ function submitChange(changeRequest, scopeId) {
       !isLayoutEffective(ref.element);
     if (!logicalConditionalStartup) {
       requireMountedTarget(entry);
-      if (!validatedHiddenStartup) requirePositiveTargetGeometry(entry, beforeGeometry);
+      if (!validatedHiddenStartup) requireFiniteTargetGeometry(entry, beforeGeometry);
     }
     if (ref?.element?.dataset?.uiEditorFailNextApply === "true") {
       delete ref.element.dataset.uiEditorFailNextApply;
@@ -481,7 +520,9 @@ function submitChange(changeRequest, scopeId) {
       const groupEntry = ancestor(entry, (candidate) => ["group", "fieldGroup"].includes(candidate.type));
       if (!groupEntry?.allowedOps?.includes("resizeWidth")) throw Object.assign(new Error("Die Breite dieser Gruppe kann nicht direkt verändert werden."), { code: "electron_operation_not_allowed" });
       groupRestore = { id: groupEntry.id, state: snapshotM80State(groupEntry.id) };
-      affectedStates.push(applyM80State(groupEntry.id, { ...groupRestore.state, width: Math.max(groupEntry.baseline.minWidth || 1, groupRestore.state.width - Number(confirmation.risk.technicalDetails?.freedWidth || 0)) }));
+      const requestedWidth = groupRestore.state.width - Number(confirmation.risk.technicalDetails?.freedWidth || 0);
+      const minimumWidth = finiteDeclaredBound(groupEntry.baseline || {}, "minWidth");
+      affectedStates.push(applyM80State(groupEntry.id, { ...groupRestore.state, width: minimumWidth === null ? Math.max(0, requestedWidth) : Math.max(minimumWidth, requestedWidth) }));
     }
     const afterGeometry = snapshotM80Geometry();
     if (confirmation?.action === RISK_ACTIONS.PRESERVE_SPACE) {
@@ -504,7 +545,8 @@ function submitChange(changeRequest, scopeId) {
     const usesValidatedTableGeometry = request.operation === "resetTable" ||
       (["fitTableToViewport", "resizeColumnsProportionally"].includes(request.operation) && request.payload?.table?.previewAccepted === true);
     const unvalidatedStartupRequest = request.source === "target-app-start" && !validatedStartupRequests.has(request);
-    const risk = (interactive || unvalidatedStartupRequest) && !usesValidatedTableGeometry
+    const canEvaluateGeometryRisk = finitePositiveBounds(beforeGeometry.get(entry.id)) && finitePositiveBounds(afterGeometry.get(entry.id));
+    const risk = (interactive || unvalidatedStartupRequest) && !usesValidatedTableGeometry && canEvaluateGeometryRisk
       ? geometryRiskFor(entry, request, beforeGeometry, afterGeometry, affected)
       : null;
     if (risk?.hasRisks && !confirmation) {

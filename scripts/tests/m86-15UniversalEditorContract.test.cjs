@@ -7,6 +7,7 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 const ROOT = path.resolve(__dirname, "../..");
 const UNIVERSAL_OPS = Object.freeze(["move", "resizeWidth", "resizeHeight", "setVisibility"]);
 const TEXT_TYPES = new Set(["button", "field", "label", "tableDataCell", "tableHeaderCell"]);
+const GEOMETRY_BOUND_KEYS = Object.freeze(["minX", "maxX", "minY", "maxY", "minWidth", "maxWidth", "minHeight", "maxHeight"]);
 
 class FakeElement {
   constructor(tagName = "DIV", { width = 100, height = 24, stylesheetMinHeight = 0 } = {}) {
@@ -128,8 +129,14 @@ async function runM8615UniversalEditorContractTests(run) {
       }
       if (entry.parentId) assert.ok(byId.has(entry.parentId), `${entry.id}: parent ${entry.parentId}`);
       assert.ok(entry.refKey, `${entry.id}: direct refKey`);
-      assert.ok(Number(entry.baseline?.minWidth) > 0 && Number(entry.baseline?.maxWidth) >= Number(entry.baseline?.minWidth), `${entry.id}: width bounds`);
-      assert.ok(Number(entry.baseline?.minHeight) > 0 && Number(entry.baseline?.maxHeight) >= Number(entry.baseline?.minHeight), `${entry.id}: height bounds`);
+      if (entry.scopeId === "rechnung.screen") {
+        GEOMETRY_BOUND_KEYS.forEach((key) => assert.equal(Object.hasOwn(entry.baseline || {}, key), false, `${entry.id}: no ${key}`));
+        assert.equal(Object.hasOwn(entry.geometry || {}, "maximumStoredOffset"), false, `${entry.id}: no maximumStoredOffset`);
+        assert.equal(Object.hasOwn(entry.geometry || {}, "maximumOffset"), false, `${entry.id}: no maximumOffset`);
+      } else {
+        assert.ok(Number(entry.baseline?.minWidth) > 0 && Number(entry.baseline?.maxWidth) >= Number(entry.baseline?.minWidth), `${entry.id}: width bounds`);
+        assert.ok(Number(entry.baseline?.minHeight) > 0 && Number(entry.baseline?.maxHeight) >= Number(entry.baseline?.minHeight), `${entry.id}: height bounds`);
+      }
     }
     for (const id of [
       "restarbeiten.quicklane", "restarbeiten.quicklane.group.navigation", "restarbeiten.quicklane.pin",
@@ -206,6 +213,13 @@ async function runM8615UniversalEditorContractTests(run) {
           state = refs.applyM80State(entry.id, { ...state, fontSize: Math.min(maxFontSize, minFontSize + 1) }, "textResize");
         }
         refs.applyM80State(entry.id, { ...state, visible: true }, "setVisibility");
+        if (entry.scopeId === "rechnung.screen") {
+          const target = firstTargets.get(entry.id)[0];
+          assert.equal(target.style.minWidth || "", "", `${entry.id}: no inline minWidth`);
+          assert.equal(target.style.maxWidth || "", "", `${entry.id}: no inline maxWidth`);
+          assert.equal(target.style.minHeight || "", "", `${entry.id}: no inline minHeight`);
+          assert.equal(target.style.maxHeight || "", "", `${entry.id}: no inline maxHeight`);
+        }
       }
 
       refs.beginM80PilotRender();
@@ -242,6 +256,21 @@ async function runM8615UniversalEditorContractTests(run) {
         const high = refs.applyM80State(id, { ...flat, height: 140 }, "resizeHeight");
         assert.equal(high.height, 140, `${id}: higher`);
         assert.ok(Number.parseFloat(textarea.style.minHeight) <= 28, `${id}: usable technical minimum`);
+      }
+    });
+
+    await run("M86.15 Rechnung 07: Rechnungs-Textareas unterschreiten 24 und ueberschreiten 720 ohne Ersatzgrenze", () => {
+      for (const id of ["rechnung.editor.introText", "rechnung.editor.positionLong"]) {
+        refs.resetM80PilotWorkingStatesForDiagnostic(); refs.beginM80PilotRender();
+        const textarea = new FakeElement("TEXTAREA", { width: 500, height: 72 });
+        refs.registerM80Ref(id, textarea); refs.completeM80PilotRender();
+        const initial = refs.snapshotM80State(id);
+        const flat = refs.applyM80State(id, { ...initial, height: 10 }, "resizeHeight");
+        assert.equal(flat.height, 10, `${id}: below previous minimum`);
+        const high = refs.applyM80State(id, { ...flat, height: 800 }, "resizeHeight");
+        assert.equal(high.height, 800, `${id}: above previous maximum`);
+        assert.equal(textarea.style.minHeight || "", "", `${id}: no inline minimum`);
+        assert.equal(textarea.style.maxHeight || "", "", `${id}: no inline maximum`);
       }
     });
   } finally {

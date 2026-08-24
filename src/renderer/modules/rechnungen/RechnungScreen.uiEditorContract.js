@@ -2,26 +2,27 @@ import { FIELD_LAYOUT, GROUP_LAYOUT, TEXT_LAYOUT, ZONE_HEIGHT_LAYOUT, m83Compone
 
 export const RECHNUNG_SCOPE_ID = "rechnung.screen";
 export const RECHNUNG_COMPONENT_ID = "bbm.rechnung.screen";
-const area = (id, name, parentId, order, componentKind) => m83Element({ id, name, type: "area", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind });
-const group = (id, name, parentId, order, componentKind) => m83Element({ id, name, type: "group", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind });
-const label = (id, name, parentId, order, role = "content", componentKind = "label") => m83Element({ id, name, type: "label", role, parentId, order, allowedOps: TEXT_LAYOUT, componentKind });
-const field = (id, name, parentId, order, fieldKind) => m83Element({ id, name, type: "field", role: "content", parentId, order, allowedOps: FIELD_LAYOUT, fieldKind });
-const action = (id, name, parentId, order, actionKind) => m83DomainButton({ id, name, parentId, order, actionKind });
+const invoiceElement = (values) => m83Element({ ...values, unboundedGeometry: true });
+const area = (id, name, parentId, order, componentKind) => invoiceElement({ id, name, type: "area", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind });
+const group = (id, name, parentId, order, componentKind) => invoiceElement({ id, name, type: "group", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind });
+const label = (id, name, parentId, order, role = "content", componentKind = "label") => invoiceElement({ id, name, type: "label", role, parentId, order, allowedOps: TEXT_LAYOUT, componentKind });
+const field = (id, name, parentId, order, fieldKind) => invoiceElement({ id, name, type: "field", role: "content", parentId, order, allowedOps: FIELD_LAYOUT, fieldKind });
+const action = (id, name, parentId, order, actionKind) => m83DomainButton({ id, name, parentId, order, actionKind, unboundedGeometry: true });
 
 const baseElements = Object.freeze([
-  m83Element({ id: RECHNUNG_SCOPE_ID, name: "Rechnungen", type: "root", role: "scopeRoot", parentId: null, order: 0, allowedOps: ZONE_HEIGHT_LAYOUT, componentKind: "moduleScreen" }),
+  invoiceElement({ id: RECHNUNG_SCOPE_ID, name: "Rechnungen", type: "root", role: "scopeRoot", parentId: null, order: 0, allowedOps: ZONE_HEIGHT_LAYOUT, componentKind: "moduleScreen" }),
   area("rechnung.screen.content", "Inhaltsbereich Rechnungen", RECHNUNG_SCOPE_ID, 10, "contentArea"),
   area("rechnung.overview", "Rechnungsübersicht", "rechnung.screen.content", 20, "overview"),
   group("rechnung.overview.header", "Kopf Rechnungsübersicht", "rechnung.overview", 21, "header"),
   label("rechnung.overview.title", "Rechnungen", "rechnung.overview.header", 22),
   label("rechnung.overview.subtitle", "Rechnungsgrunddaten und Belegköpfe", "rechnung.overview.header", 23),
   action("rechnung.overview.new", "Freie Rechnung", "rechnung.overview.header", 24, "createDraft"),
-  m83Element({ id: "rechnung.overview.list", name: "Rechnungsbelege", type: "group", role: "content", parentId: "rechnung.overview", order: 25, allowedOps: GROUP_LAYOUT, componentKind: "cardList" }),
-  m83Element({ id: "rechnung.editor", name: "Rechnungsblatt", type: "area", role: "layout", parentId: "rechnung.screen.content", order: 30, allowedOps: GROUP_LAYOUT, componentKind: "invoiceSheet" }),
+  invoiceElement({ id: "rechnung.overview.list", name: "Rechnungsbelege", type: "group", role: "content", parentId: "rechnung.overview", order: 25, allowedOps: GROUP_LAYOUT, componentKind: "cardList" }),
+  invoiceElement({ id: "rechnung.editor", name: "Rechnungsblatt", type: "area", role: "layout", parentId: "rechnung.screen.content", order: 30, allowedOps: GROUP_LAYOUT, componentKind: "invoiceSheet" }),
   group("rechnung.editor.header", "Anwendungsaktionen", "rechnung.editor", 31, "actionRail"),
   area("rechnung.editor.headerCanvas", "Steuerungsbar-Canvas", "rechnung.editor", 32, "headerCanvas"),
   label("rechnung.editor.title", "Belegbezeichnung", "rechnung.editor.body", 32),
-  m83Element({ id: "rechnung.editor.status", name: "Rechnungsstatus", type: "statusIndicator", role: "status", parentId: "rechnung.editor.header", order: 33, allowedOps: GROUP_LAYOUT, componentKind: "statusBadge" }),
+  invoiceElement({ id: "rechnung.editor.status", name: "Rechnungsstatus", type: "statusIndicator", role: "status", parentId: "rechnung.editor.header", order: 33, allowedOps: GROUP_LAYOUT, componentKind: "statusBadge" }),
   action("rechnung.editor.headToggle", "Kopf ein- oder ausblenden", "rechnung.editor.header", 34, "toggleInvoiceHead"),
   area("rechnung.editor.body", "Rechnungsblattinhalt", "rechnung.editor", 40, "invoiceSheetBody"),
   area("rechnung.editor.sheetArea", "Scrollbereich Rechnungsblatt", "rechnung.editor", 41, "sheetArea"),
@@ -84,20 +85,20 @@ const baseElements = Object.freeze([
   action("rechnung.editor.positionDelete", "Position loeschen", "rechnung.editor.positionActions", 87, "deletePosition"),
   action("rechnung.editor.positionMoveRoot", "Auf Ebene 0 verschieben", "rechnung.editor.positionActions", 88, "movePositionToRoot"),
   group("rechnung.editor.payment", "Summen und Zahlungstext", "rechnung.editor.body", 80, "invoiceTotals"),
-  m83Element({ id: "rechnung.editor.issuerFooter", name: "Aussteller-Fußdaten", type: "group", role: "content", parentId: "rechnung.editor.body", order: 81, allowedOps: GROUP_LAYOUT, componentKind: "issuerFooter" }),
+  invoiceElement({ id: "rechnung.editor.issuerFooter", name: "Aussteller-Fußdaten", type: "group", role: "content", parentId: "rechnung.editor.body", order: 81, allowedOps: GROUP_LAYOUT, componentKind: "issuerFooter" }),
   field("rechnung.editor.paymentTermDays", "Zahlungsziel Kalendertage", "rechnung.editor.payment", 81, "integer"),
   field("rechnung.editor.dueDate", "Fällig am", "rechnung.editor.payment", 82, "readOnlyDate"),
   label("rechnung.editor.invoiceVat", "Mehrwertsteuerbetrag", "rechnung.editor.payment", 84, "content", "amount"),
   label("rechnung.editor.invoiceTotal", "Bruttosumme", "rechnung.editor.payment", 85, "content", "amount"),
   label("rechnung.editor.paymentText", "Zahlungshinweis", "rechnung.editor.payment", 86, "content", "paymentText"),
-  m83Element({ id: "rechnung.editor.validation", name: "Validierung und Meldungen", type: "statusIndicator", role: "status", parentId: "rechnung.editor", order: 90, allowedOps: TEXT_LAYOUT, componentKind: "liveMessage" }),
+  invoiceElement({ id: "rechnung.editor.validation", name: "Validierung und Meldungen", type: "statusIndicator", role: "status", parentId: "rechnung.editor", order: 90, allowedOps: TEXT_LAYOUT, componentKind: "liveMessage" }),
   group("rechnung.editor.footer", "Hinweis Anwendungsaktionen", "rechnung.editor", 100, "actionRailNote"),
   label("rechnung.editor.footer.label", "Anwendungsaktionen Hinweis", "rechnung.editor.footer", 101, "fieldLabel", "fieldLabel"),
   action("rechnung.editor.preview", "Proberechnung", "rechnung.editor.header", 102, "previewDraft"),
   action("rechnung.editor.book", "Rechnung buchen", "rechnung.editor.header", 103, "bookDraft"),
   action("rechnung.editor.delete", "Entwurf verwerfen", "rechnung.editor.header", 104, "deleteDraft"),
   action("rechnung.editor.close", "Schließen", "rechnung.editor.header", 105, "close"),
-  m83Element({ id: "rechnung.preview", name: "Proberechnung", type: "area", role: "layout", parentId: "rechnung.screen.content", order: 110, allowedOps: GROUP_LAYOUT, componentKind: "previewDialog" }),
+  invoiceElement({ id: "rechnung.preview", name: "Proberechnung", type: "area", role: "layout", parentId: "rechnung.screen.content", order: 110, allowedOps: GROUP_LAYOUT, componentKind: "previewDialog" }),
   label("rechnung.preview.title", "Proberechnung / Entwurf", "rechnung.preview", 111),
   area("rechnung.preview.body", "Vorschau Belegkopf", "rechnung.preview", 112, "previewBody"),
   action("rechnung.preview.close", "Vorschau schließen", "rechnung.preview", 113, "closePreview"),

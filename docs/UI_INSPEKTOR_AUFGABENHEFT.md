@@ -83,6 +83,7 @@ Aktueller Stand:
 - [x] M86.12 Tatsaechlichen Dreispaltenfehler im normalen Source-Start messen und reparieren
 - [x] M86.13 Einheitlichen zweizeiligen MainHeader und unteren Entwicklungsmarker herstellen
 - [x] M86.25 Protokoll-Listenbeschriftung, Langtextgröße und Ampel-textResize korrigieren
+- [x] M86.26 Alle 117 registrierten Rechnungsziele ohne künstliche Geometriegrenzen verschieben, skalieren und wiederherstellen
 
 ## Statusupdate M86.25
 
@@ -979,3 +980,13 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
 - Guardrail: `scripts/tests/uiEditorAcceptanceIsolation.test.cjs` prüft die explizite Freigabe und den unveränderten generischen Rechnung-/Editorpfad. Der bestehende Rechnungskomponenten-Guardrail bestätigt weiterhin 61 gemountete Einzel-Refs.
 - Nicht geändert: Rechnungskomponentenvertrag, Registry, Fingerprint, HostAdapter, Rechnungsfachlogik, Fachdaten, PDF, ZUGFeRD und Lizenzierung.
 - Offen: sichtbarer nativer Manager-Handshake mit `rechnung.screen`, Registry-/Fingerprint-Akzeptanz und Auswahl eines einzelnen Rechnungselements ohne Fachaktion.
+
+## M86.26 - Alle 117 Rechnungsziele entgrenzen
+
+- Status: `[A]`; `rechnung.screen` enthält 117 vollständig gemountete und einzeln inventarisierte Ziele. Jedes Ziel erlaubt `move`, `resizeWidth` und `resizeHeight`; alle acht künstlichen x/y-/Breiten-/Höhengrenzen sowie der bisherige ±2400-Offset fehlen im Rechnungsscope.
+- Der bestehende Komponentenvertrag markiert Rechnungsziele als geometrisch ungebunden. Der gemeinsame M80-Host und die Ref-Anwendung werten ausschließlich ausdrücklich deklarierte Grenzen aus; es wurde kein Rechnungs-Sonderadapter, keine zweite Registry und keine zweite Persistenz gebaut.
+- Der produktive Rechnungs-CSS besitzt keine positiven Min-/Max-Grenzen mehr, die Editor-Resize blockieren. Technisches `min-width: 0`/`min-height: 0` hebt nur intrinsische Flex-/Grid-Mindestgrößen auf und erlaubt die gemeinsame Nullgrößensemantik.
+- Persistenznachweis: vollständiges 117er Profil über denselben Modulprofilpfad gespeichert, mit dem gemeinsamen UI-Editor-Kit geladen und nach Neuaufbau des echten `RechnungScreen` exakt wiederhergestellt; vorhandene Profile bleiben fingerprint-kompatibel.
+- Praktische Abnahme: nativer WPF-Editor verkleinert `rechnung.editor.positionShort` sichtbar von 571,513 auf 447,820 px und vergrößert es auf 587,293 px; sichtbarer Save, Close, Remount und separater Electron-Neustart behalten die Geometrie. Automatisiert sind zusätzlich x/y ±2501, 0-px-Größe und Textareas 10/800 px nachgewiesen.
+- Guardrails: `scripts/tests/rechnungUiEditorUnbounded.test.cjs`, M86.15, M86.14, M86.24 sowie die nach Seiteneffektkorrektur erneut grünen Protokollprüfungen M86.9/M86.10. Vollständiges Inventar und Prüfbefunde: `docs/RECHNUNG_UI_EDITOR_ENTGRENZUNG_117.md`.
+- Nicht geändert: PDF/Druck, Rechnungsfachlogik, Navigation, DOM-Struktur, Datenbank, Lizenzierung und produktive Benutzerprofile. Commit, Push, PR und Merge: keiner.

@@ -39,57 +39,59 @@ export function resolveM83AllowedOperations(values = {}) {
   return Object.freeze([...new Set([...required, ...(values.allowedOps || [])])]);
 }
 
-export function defaultM83Baseline(values = {}) {
+export function defaultM83Baseline(values = {}, { unboundedGeometry = false } = {}) {
   return Object.freeze({
     x: 0, y: 0, width: null, height: null, textOffsetX: 0, textOffsetY: 0,
-    fontSize: 12, visible: true, spacing: {}, minWidth: 8, maxWidth: 2400, minHeight: 8, maxHeight: 1600,
+    fontSize: 12, visible: true, spacing: {},
+    ...(unboundedGeometry ? {} : { minWidth: 8, maxWidth: 2400, minHeight: 8, maxHeight: 1600 }),
     ...values,
   });
 }
 
 export function m83Element(values) {
-  const hasVisibleText = hasM83VisibleText(values);
-  const allowedOps = resolveM83AllowedOperations(values);
+  const { unboundedGeometry = false, ...elementValues } = values;
+  const hasVisibleText = hasM83VisibleText(elementValues);
+  const allowedOps = resolveM83AllowedOperations(elementValues);
   const requiredOperations = new Set([
-    ...(values.visible === false ? [] : UNIVERSAL_LAYOUT),
-    ...(values.visible === false || !hasVisibleText ? [] : ["textResize"]),
+    ...(elementValues.visible === false ? [] : UNIVERSAL_LAYOUT),
+    ...(elementValues.visible === false || !hasVisibleText ? [] : ["textResize"]),
   ]);
-  const lockedOps = Object.freeze([...(values.lockedOps || [])]);
+  const lockedOps = Object.freeze([...(elementValues.lockedOps || [])]);
   const invalidLocks = lockedOps.filter((operation) => requiredOperations.has(operation));
   if (invalidLocks.length) throw new TypeError(`Universelle Layoutoperation darf nicht gesperrt werden: ${invalidLocks.join(", ")}`);
-  const selectionKind = values.selectionKind || ({
+  const selectionKind = elementValues.selectionKind || ({
     root: "layoutZone", area: "layoutZone", group: "group", fieldGroup: "group",
-    label: values.role === "status" ? "statusText" : "label", field: "field", button: "button",
+    label: elementValues.role === "status" ? "statusText" : "label", field: "field", button: "button",
     componentPart: "icon", statusIndicator: "icon", table: "table", tableHeader: "tableHeader",
     tableBody: "tableBody", tableRow: "tableRow", tableColumn: "column", tableHeaderCell: "tableHeaderCell",
     tableDataCell: "tableDataCell", tableFooter: "tableFooter", tableViewport: "tableViewport",
     horizontalScrollArea: "horizontalScrollArea",
-  }[values.type] || "element");
+  }[elementValues.type] || "element");
   return Object.freeze({
     visible: true,
-    ...values,
-    editable: values.visible !== false,
+    ...elementValues,
+    editable: elementValues.visible !== false,
     hasVisibleText,
     stableIdSource: "declaration",
-    semanticKey: values.semanticKey || values.id,
-    registrationStatus: values.registrationStatus || (values.visible === false ? "editorContainer" : "editorEnabled"),
-    refKey: values.refKey || values.id,
+    semanticKey: elementValues.semanticKey || elementValues.id,
+    registrationStatus: elementValues.registrationStatus || (elementValues.visible === false ? "editorContainer" : "editorEnabled"),
+    refKey: elementValues.refKey || elementValues.id,
     baseline: defaultM83Baseline({
-      ...(values.componentKind === "textarea" || values.fieldKind === "multilineText"
+      ...(!unboundedGeometry && (elementValues.componentKind === "textarea" || elementValues.fieldKind === "multilineText")
         ? { minHeight: 24, maxHeight: 720 }
         : {}),
-      ...(values.baseline || {}),
-    }),
+      ...(elementValues.baseline || {}),
+    }, { unboundedGeometry }),
     selectionKind,
-    selectionLevels: Object.freeze([...(values.selectionLevels || [selectionKind])]),
-    spacingTargets: Object.freeze([...(values.spacingTargets || [])]),
+    selectionLevels: Object.freeze([...(elementValues.selectionLevels || [selectionKind])]),
+    spacingTargets: Object.freeze([...(elementValues.spacingTargets || [])]),
     operationEffects: Object.freeze({
       ...Object.fromEntries(allowedOps.map((operation) => [operation,
         selectionKind === "group" ? "groupWithChildren" : selectionKind === "layoutZone" ? "layoutZone" : "elementOnly"])),
-      ...(values.operationEffects || {}),
+      ...(elementValues.operationEffects || {}),
     }),
-    operationAffectedIds: Object.freeze({ ...(values.operationAffectedIds || {}) }),
-    geometry: Object.freeze({ maximumStoredOffset: 2400, ...(values.geometry || {}) }),
+    operationAffectedIds: Object.freeze({ ...(elementValues.operationAffectedIds || {}) }),
+    geometry: Object.freeze({ ...(unboundedGeometry ? {} : { maximumStoredOffset: 2400 }), ...(elementValues.geometry || {}) }),
     allowedOps,
     lockedOps,
   });

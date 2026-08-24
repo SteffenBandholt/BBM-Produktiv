@@ -1,5 +1,15 @@
 # STATUS.md â€” BBM-Produktiv
 
+## 2026-08-24 - Alle 117 Rechnungsziele ohne künstliche Geometriegrenzen
+
+- Status: `[A]`; der produktive Scope `rechnung.screen` enthält 117 vollständig gemountete Ziele. Alle erlauben `move`, `resizeWidth` und `resizeHeight`; keiner deklariert `minX`, `maxX`, `minY`, `maxY`, `minWidth`, `maxWidth`, `minHeight`, `maxHeight` oder einen maximalen Bewegungs-Offset.
+- Der generische M80-Host und die Ref-Anwendung folgen dem aktualisierten gemeinsamen UI-Editor-Kit: Nur ausdrücklich deklarierte endliche Grenzen werden angewendet. Fehlende Grenzen erzeugen weder ±2400 noch Ersatz-Min-/Max-Werte oder Sentinelwerte. Es existiert kein `rechnung.*`-Sonderweg.
+- Die Textarea-Sonderhöhe 24–720 px ist für `rechnung.editor.introText` und `rechnung.editor.positionLong` entfernt. Positive CSS-Min-/Max-Grenzen der produktiven Rechnungs-UI sind entfernt; `min-width: 0` und `min-height: 0` bleiben ausschließlich als intrinsische Flex-/Grid-Freigabe auf der technisch zulässigen Nullgrenze.
+- Vollständiger automatisierter Nachweis: alle 117 Ziele in vier Bewegungsrichtungen sowie Breite/Höhe, x/y ±2501 px, 0-px-Größen, Textareas 10/800 px und exaktes Save-/Load-/Remount-Restore. Bestehende Rechnungsprofile bleiben über den unveränderten Scope-Fingerprint kompatibel.
+- Sichtbarer Nachweis: Kurztext 571,513 -> 447,820 -> 587,293 px über den nativen WPF-Editor; sichtbarer Save, Close, Remount und separater Electron-Prozessneustart mit erhaltener Geometrie und ohne Editor-Marker.
+- Guardrails: neuer `rechnungUiEditorUnbounded`-Test, erweiterter M86.15-Vertrag und M86.24-Sichttest; M86.9/M86.10-Protokollregression, M86.14-Restore, UI-Editor-Vertragscheck, fokussierter ESLint und `git diff --check` grün. Der Volltest und globale Lintlauf bleiben ausschließlich an separat dokumentierten roten Branch-Baselines außerhalb dieses Pakets rot.
+- Vollständiges 117er-Inventar: `docs/RECHNUNG_UI_EDITOR_ENTGRENZUNG_117.md`. Keine PDF-, Fachlogik-, Navigations-, Datenbank- oder Lizenzänderung. Kein Commit, kein Push.
+
 ## 2026-08-24 - Rechnungs-UI ohne vertikale Rahmenreserven
 
 - Status: `[P]`; die sichtbare Rechnungs-UI besitzt an den beauftragten oberen und unteren Außen- sowie Bereichsgrenzen 0 px Abstand. Die fachlichen Abnahmekriterien sind gezielt gruen; der Status bleibt nur wegen des bereits vorhandenen roten Rechnung-Navigationsvertrags vorlaeufig.

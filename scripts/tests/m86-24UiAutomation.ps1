@@ -1,6 +1,7 @@
 param(
     [Parameter(Mandatory = $true)][int]$ProcessId,
-    [ValidateSet("Dump", "SelectTarget", "ReadSelection", "ClickWidthMinus", "ClickWidthPlus", "BeginClose", "ClickSaveDialog", "RestarbeitenSave")][string]$Action = "Dump"
+    [ValidateSet("Dump", "SelectTarget", "ReadSelection", "ClickWidthMinus", "ClickWidthPlus", "ClickSave", "BeginClose", "ClickSaveDialog", "RestarbeitenSave")][string]$Action = "Dump",
+    [ValidateRange(1, 300)][int]$Count = 1
 )
 
 Add-Type -AssemblyName UIAutomationClient
@@ -180,9 +181,12 @@ if ($Action -eq "ClickWidthMinus") {
     if ($minusButtons.Count -lt 2) { throw "Breiten-/Hoehen-Minus ist fuer das ausgewaehlte Ziel nicht sichtbar (gefunden: $($minusButtons.Count))." }
     $widthMinus = $minusButtons | Sort-Object { $_.Current.BoundingRectangle.X } | Select-Object -First 1
     Activate-Window $window
-    Click-Control $widthMinus
+    for ($index = 0; $index -lt $Count; $index += 1) {
+        Click-Control $widthMinus
+        if ($Count -gt 1) { Start-Sleep -Milliseconds 75 }
+    }
     Start-Sleep -Milliseconds 400
-    [ordered]@{ action = $Action; clicked = $widthMinus.Current.Name; characterCode = [int][char]$widthMinus.Current.Name[0]; buttonCount = $minusButtons.Count } | ConvertTo-Json -Depth 3 -Compress
+    [ordered]@{ action = $Action; clicked = $widthMinus.Current.Name; clickCount = $Count; characterCode = [int][char]$widthMinus.Current.Name[0]; buttonCount = $minusButtons.Count } | ConvertTo-Json -Depth 3 -Compress
     exit 0
 }
 
@@ -200,9 +204,12 @@ if ($Action -eq "ClickWidthPlus") {
     if ($plusButtons.Count -lt 2) { throw "Breiten-/Hoehen-Plus ist fuer das ausgewaehlte Ziel nicht sichtbar (gefunden: $($plusButtons.Count))." }
     $widthPlus = $plusButtons | Sort-Object { $_.Current.BoundingRectangle.X } | Select-Object -First 1
     Activate-Window $window
-    Click-Control $widthPlus
+    for ($index = 0; $index -lt $Count; $index += 1) {
+        Click-Control $widthPlus
+        if ($Count -gt 1) { Start-Sleep -Milliseconds 75 }
+    }
     Start-Sleep -Milliseconds 400
-    [ordered]@{ action = $Action; clicked = $widthPlus.Current.Name; characterCode = [int][char]$widthPlus.Current.Name[0]; buttonCount = $plusButtons.Count } | ConvertTo-Json -Depth 3 -Compress
+    [ordered]@{ action = $Action; clicked = $widthPlus.Current.Name; clickCount = $Count; characterCode = [int][char]$widthPlus.Current.Name[0]; buttonCount = $plusButtons.Count } | ConvertTo-Json -Depth 3 -Compress
     exit 0
 }
 
@@ -222,6 +229,24 @@ if ($Action -eq "ReadSelection") {
             $text.Current.Name.StartsWith("Zuletzt", [System.StringComparison]::Ordinal)) { $status += $text.Current.Name }
     }
     [ordered]@{ action = $Action; matching = $matching; status = $status } | ConvertTo-Json -Depth 3 -Compress
+    exit 0
+}
+
+if ($Action -eq "ClickSave") {
+    $buttonCondition = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+        [System.Windows.Automation.ControlType]::Button
+    )
+    $buttons = $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, $buttonCondition)
+    $saveButton = $null
+    foreach ($button in $buttons) {
+        if ($button.Current.Name -eq "Speichern" -and $button.Current.IsEnabled -and -not $button.Current.IsOffscreen) { $saveButton = $button; break }
+    }
+    if ($null -eq $saveButton) { throw "Der sichtbare Speichern-Button ist nicht verfuegbar." }
+    Activate-Window $window
+    Click-Control $saveButton
+    Start-Sleep -Milliseconds 1000
+    [ordered]@{ action = $Action; clicked = $saveButton.Current.Name; enabled = $saveButton.Current.IsEnabled } | ConvertTo-Json -Depth 3 -Compress
     exit 0
 }
 

@@ -21,8 +21,8 @@ console.info = (...values) => {
   originalConsoleInfo(...values);
 };
 
-function startPowerShell(processId, requestedAction = action) {
-  const child = spawn("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path.join(__dirname, "m86-24UiAutomation.ps1"), "-ProcessId", String(processId), "-Action", requestedAction], { cwd: root, windowsHide: true });
+function startPowerShell(processId, requestedAction = action, count = 1) {
+  const child = spawn("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path.join(__dirname, "m86-24UiAutomation.ps1"), "-ProcessId", String(processId), "-Action", requestedAction, "-Count", String(count)], { cwd: root, windowsHide: true });
   const completed = new Promise((resolve, reject) => {
     let stdout = "";
     let stderr = "";
@@ -34,7 +34,7 @@ function startPowerShell(processId, requestedAction = action) {
   return { child, completed };
 }
 
-function runPowerShell(processId, requestedAction = action) { return startPowerShell(processId, requestedAction).completed; }
+function runPowerShell(processId, requestedAction = action, count = 1) { return startPowerShell(processId, requestedAction, count).completed; }
 
 app.commandLine.appendSwitch("disable-gpu");
 app.commandLine.appendSwitch("disable-background-timer-throttling");
@@ -61,11 +61,13 @@ app.whenReady().then(async () => {
     ]);
     if (!started?.opened?.ok || !controller.child?.pid) throw new Error(started?.opened?.message || "Sichtbarer UI-Editor wurde nicht gestartet.");
     let automation;
-    if (["ProtokollSave", "RestarbeitenSave"].includes(action)) {
+    if (["ProtokollSave", "RestarbeitenSave", "RechnungSave"].includes(action)) {
       fs.writeFileSync(resultPath, JSON.stringify({ ok: false, stage: "before-selection", started }, null, 2), "utf8");
       const selection = await runPowerShell(controller.child.pid, "SelectTarget");
       fs.writeFileSync(resultPath, JSON.stringify({ ok: false, stage: "selection-active", started, selection }, null, 2), "utf8");
-      const targetConfig = moduleId === "restarbeiten"
+      const targetConfig = moduleId === "rechnung"
+        ? { scopeId: "rechnung.screen", elementId: "rechnung.editor.positionShort", displayName: "Kurztext", parentId: "rechnung.editor.positionEditor" }
+        : moduleId === "restarbeiten"
         ? { scopeId: "restarbeiten.edit.root", elementId: "restarbeiten.edit.short.label", displayName: "Kurztext · Feldbezeichnung", parentId: "restarbeiten.edit.short.group" }
         : { scopeId: "protokoll.list.root", elementId: "protokoll.list.row.due", displayName: "Fertig bis · Listeneinträge", parentId: "protokoll.list.column.meta.cells" };
       const targetBounds = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState().target.targets[0].bounds", true);
@@ -78,7 +80,7 @@ app.whenReady().then(async () => {
       await new Promise((resolve) => setTimeout(resolve, 750));
       const selectedTarget = { id: targetConfig.elementId, selected: "protocol-event", forwarded: selectionEvent?.ok === true };
       const editorSelection = await runPowerShell(controller.child.pid, "ReadSelection");
-      const expectedSelectionPrefix = moduleId === "restarbeiten" ? "Kurztext" : "Fertig bis";
+      const expectedSelectionPrefix = ["restarbeiten", "rechnung"].includes(moduleId) ? "Kurztext" : "Fertig bis";
       if (!editorSelection.matching?.some((value) => value.startsWith(expectedSelectionPrefix))) throw new Error(`Sichtbare Editor-Auswahl wurde nicht synchronisiert: ${JSON.stringify(editorSelection)}`);
       fs.writeFileSync(resultPath, JSON.stringify({ ok: false, stage: "target-clicked", started, selection, point, selectedTarget }, null, 2), "utf8");
       const beforeMinus = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
@@ -88,34 +90,51 @@ app.whenReady().then(async () => {
         const measured = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
         minusSteps.push({ click, measured });
       }
+      let invoiceRange = null;
+      if (moduleId === "rechnung") {
+        const shrinkClick = await runPowerShell(controller.child.pid, "ClickWidthMinus", 120);
+        const afterShrink = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
+        const growClick = await runPowerShell(controller.child.pid, "ClickWidthPlus", 140);
+        const afterGrow = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
+        invoiceRange = { shrinkClick, afterShrink, growClick, afterGrow };
+      }
       const plusClick = await runPowerShell(controller.child.pid, "ClickWidthPlus");
       const afterPlus = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
-      const symmetryMinusClick = await runPowerShell(controller.child.pid, "ClickWidthMinus");
-      const afterSymmetryMinus = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
+      const symmetryMinusClick = moduleId === "rechnung" ? null : await runPowerShell(controller.child.pid, "ClickWidthMinus");
+      const afterSymmetryMinus = moduleId === "rechnung" ? afterPlus : await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
       const symmetry = { plusClick, afterPlus, minusClick: symmetryMinusClick, afterMinus: afterSymmetryMinus };
       const beforeClose = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
       const afterMinusEditorState = await runPowerShell(controller.child.pid, "ReadSelection");
-      fs.writeFileSync(resultPath, JSON.stringify({ ok: false, stage: "before-visible-close", started, selection, point, selectedTarget, editorSelection, beforeMinus, minusSteps, symmetry, beforeClose, afterMinusEditorState }, null, 2), "utf8");
-      const beginClose = startPowerShell(controller.child.pid, "BeginClose");
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const saveDialog = await runPowerShell(controller.child.pid, "ClickSaveDialog");
-      if (!saveDialog.dialogFound) {
-        beginClose.child.kill();
-        throw new Error(`Sichtbarer Close-Dialog fehlt nach Aenderung: ${JSON.stringify({ afterMinusEditorState, saveDialog })}`);
+      fs.writeFileSync(resultPath, JSON.stringify({ ok: false, stage: "before-visible-close", started, selection, point, selectedTarget, editorSelection, beforeMinus, minusSteps, invoiceRange, symmetry, beforeClose, afterMinusEditorState }, null, 2), "utf8");
+      const profileFile = path.join(profileRoot, `module-${moduleId}`, "standard.layout-profile.json");
+      let closeAndSave;
+      if (moduleId === "rechnung") {
+        const visibleSave = await runPowerShell(controller.child.pid, "ClickSave");
+        for (let attempt = 0; attempt < 100 && !fs.existsSync(profileFile); attempt += 1) await new Promise((resolve) => setTimeout(resolve, 100));
+        const savedEditorState = await runPowerShell(controller.child.pid, "ReadSelection");
+        const closeInvocation = await runPowerShell(controller.child.pid, "BeginClose");
+        closeAndSave = { visibleSave, savedEditorState, closeInvocation };
+      } else {
+        const beginClose = startPowerShell(controller.child.pid, "BeginClose");
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const saveDialog = await runPowerShell(controller.child.pid, "ClickSaveDialog");
+        if (!saveDialog.dialogFound) {
+          beginClose.child.kill();
+          throw new Error(`Sichtbarer Close-Dialog fehlt nach Aenderung: ${JSON.stringify({ afterMinusEditorState, saveDialog })}`);
+        }
+        const closeInvocation = await Promise.race([
+          beginClose.completed,
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Close-Aufruf endete nach dem Dialog-Save nicht.")), 15_000)),
+        ]);
+        closeAndSave = { closeInvocation, saveDialog };
       }
-      const closeInvocation = await Promise.race([
-        beginClose.completed,
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Close-Aufruf endete nach dem Dialog-Save nicht.")), 15_000)),
-      ]);
-      const closeAndSave = { closeInvocation, saveDialog };
       for (let attempt = 0; attempt < 100 && controller.status().running; attempt += 1) await new Promise((resolve) => setTimeout(resolve, 100));
       const afterClose = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
       const afterCloseLayout = await window.webContents.executeJavaScript("window.__m8624.currentLayoutPayload()", true);
       const afterCloseEditorState = controller.status().running ? await runPowerShell(controller.child.pid, "ReadSelection") : null;
-      const profileFile = path.join(profileRoot, `module-${moduleId}`, "standard.layout-profile.json");
       const persisted = fs.existsSync(profileFile) ? JSON.parse(fs.readFileSync(profileFile, "utf8")) : null;
       const afterRestart = await window.webContents.executeJavaScript(`window.__m8624.remountForRestart(${JSON.stringify(moduleId)})`, true);
-      automation = { selection, point, selectedTarget, editorSelection, beforeMinus, minusSteps, symmetry, beforeClose, closeAndSave, editorRunningAfterClose: controller.status().running, afterClose, afterCloseLayout, afterCloseEditorState, profileFile, persisted, afterRestart };
+      automation = { selection, point, selectedTarget, editorSelection, beforeMinus, minusSteps, invoiceRange, symmetry, beforeClose, closeAndSave, editorRunningAfterClose: controller.status().running, afterClose, afterCloseLayout, afterCloseEditorState, profileFile, persisted, afterRestart };
     } else automation = await runPowerShell(controller.child.pid);
     const renderer = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
     fs.writeFileSync(resultPath, JSON.stringify({ ok: true, started, automation, renderer, editorTrace }, null, 2), "utf8");
