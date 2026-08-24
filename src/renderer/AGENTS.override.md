@@ -1,5 +1,13 @@
 # AGENTS.override.md (src/renderer)
 
+## Verbindliche Nutzeranweisungen
+- Direkte, eindeutige Nutzeranweisungen sind wörtlich umzusetzen.
+- Keine Abschwächung, Umdeutung oder eigenmächtige Optimierung klarer Vorgaben.
+- `keine` bedeutet 0 bzw. vollständig entfernt; `alle` bedeutet alle; `nur` bedeutet ausschließlich; `nicht` bedeutet nicht umsetzen bzw. nicht beibehalten.
+- Konkrete Maße, Werte und Positionen sind exakt einzuhalten, soweit technisch möglich.
+- Bei Widerspruch oder technischer Unmöglichkeit nachfragen bzw. STOPP melden; nicht stillschweigend eine abgeschwächte Variante bauen.
+- Maßgebliche Konkretisierung: `NUTZERANWEISUNGEN_WOERTLICH.md` im Repository-Root.
+
 ## Renderer/Views: extra strikt
 - Keine neuen UI-Patterns erfinden. Wenn etwas fehlt: bestehende Patterns erweitern, nicht neu bauen.
 - Layout: keine "random px" inline; wenn möglich bestehende Klassen/Styles nutzen.
