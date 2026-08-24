@@ -439,9 +439,9 @@ Dabei gilt:
 
 - Der eigenstaendige Renderer-Modulordner `src/renderer/modules/rechnungen` enthaelt weiterhin die historische statische `RechnungenDesignScreen`-Referenz und daneben den echten `RechnungScreen` fuer Rechnungsgrunddaten und Belegkopf.
 - Der DEV-Einstieg ueber `Einstellungen -> Entwicklung` oeffnet den echten Arbeitsscreen; eine produktive Modulnavigation oder Lizenzfreigabe wurde dadurch nicht eingefuehrt.
-- Der echte Screen ist als `rechnung.screen` mit 61 expliziten, komponentennahen Einzelzielen einschliesslich Positionsarbeit in der UI-Editor-Registry registriert. Fachaktionen bleiben gesperrt; die vollstaendige Entscheidung steht in `docs/RECHNUNG_UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
+- Der echte Screen ist als `rechnung.screen` mit 131 expliziten, komponentennahen Einzelzielen einschliesslich Positionsarbeit in der UI-Editor-Registry registriert. Fachaktionen bleiben gesperrt; die vollstaendige Entscheidung steht in `docs/RECHNUNG_UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
 - Die Rechnungsuebersicht ist eine Karten-/Listengruppe und keine Inhaltstabelle. Es gibt weiterhin keinen Tabellenlayout-Registry-Eintrag fuer Rechnung.
-- Positionen, Summen, PDF-Fachausgabe, ZUGFeRD/E-Rechnung und GAEB bleiben ausserhalb dieses Reparaturstands.
+- Positions- und Summen-UI sind Bestandteil des registrierten Screens; PDF-Fachausgabe, ZUGFeRD/E-Rechnung und GAEB bleiben davon getrennte Pakete.
 - Komponentenvertrag, Mounted-Refs, nativer Typvertrag und Registry-Fingerprint muessen gemeinsam gruen sein, bevor `rechnung.screen` als `complete` gilt.
 
 ### Rechnungen - produktive PDF-V2-Shell-Anbindung (2026-08-24)
@@ -451,6 +451,13 @@ Dabei gilt:
 - Finale Rechnungen und DRAFT-Proberechnungen verwenden denselben V2-Renderer. Die Proberechnung wird ausschliesslich durch `data.invoice.preview === true` erkannt und erhaelt den roten Vorabzug-Marker.
 - Der PDF-Editor-Scope `pdf.bbm.invoice` fuehrt FullHeader, Body und MiniHeader als explizite Parent-Struktur; Fachaktionen, Nummernvergabe, Previewstatus, IPC und Datenbankzugriffe bleiben gesperrt.
 - Zwei Invoice-Golden-Fixtures ergaenzen den bestehenden Satzvertrag. Die vorhandenen Protokoll-Goldens wurden nicht neu geschrieben und bleiben unveraendert.
+
+### Rechnungen - UI-Editor-Scope 131 konsistent synchronisiert (2026-08-24)
+
+- Komponentenvertrag, M80-Registry und realer RechnungScreen-Mount enthalten exakt 131 eindeutige Ziele ohne fehlende oder verwaiste IDs.
+- `ui-editor-target.json` folgt mit `elementCount: 131`, Registry-Version 26 und dem aus der produktiven Registry berechneten Fingerprint.
+- Ein Scope-fuer-Scope-Guard vergleicht die Target-Zahlen mit den echten Registry-Elementen und weist den simulierten Altstand 117/131 als `target_manifest_element_count_mismatch` ab.
+- Der native Editorvertrag erhaelt nur ganzzahlige `order`-Metadaten. Der reale isolierte Electron-Acceptance-Lauf oeffnet den UI-Editor aus dem RechnungScreen erfolgreich; Scope-Schutz, PDF, Fachlogik, Layout und Navigation bleiben unveraendert.
 
 ### Zentraler Popup-/Formularstandard (viertes Migrationspaket umgesetzt, Freigabe offen)
 

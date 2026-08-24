@@ -55,7 +55,7 @@ async function runM8275LayoutPersistenceMetaElementsTests(run) {
   global.window = { getComputedStyle: computedStyle, dispatchEvent() {}, uiEditor: {} };
 
   try {
-  await run("M82.7.5 BBM 01: Registryversion kennzeichnet den erweiterten Vertrag", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 24));
+  await run("M82.7.5 BBM 01: Registryversion kennzeichnet den erweiterten Vertrag", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 26));
     await run("M82.7.5 BBM 02: Listenscope enthaelt den vollstaendigen Komponentenvertrag", () => assert.equal(scope.elements.length, 32));
     await run("M82.7.5 BBM 03: alle bestaetigten stabilen IDs sind exakt registriert", () => [...headerIds, ...rowIds].forEach((id) => assert.ok(byId.has(id), id)));
     await run("M82.7.5 BBM 04: Header-Kinder besitzen den existierenden Meta-Header als Parent", () => headerIds.forEach((id) => assert.equal(byId.get(id).parentId, "restarbeiten.list.table.meta.header")));

@@ -8,6 +8,40 @@ const { createRegistryFingerprint } = require("ui-editor-kit");
 
 const ROOT = path.resolve(__dirname, "../..");
 
+function compareManifestScopeCounts(manifest, registryScopes) {
+  const registryById = new Map(registryScopes.map((scope) => [scope.scopeId, scope]));
+  const manifestScopes = Array.isArray(manifest?.scopes) ? manifest.scopes : [];
+  const manifestById = new Map();
+  const errors = [];
+
+  for (const scope of manifestScopes) {
+    if (manifestById.has(scope.scopeId)) {
+      errors.push({ code: "target_manifest_scope_duplicate", scopeId: scope.scopeId });
+      continue;
+    }
+    manifestById.set(scope.scopeId, scope);
+  }
+
+  for (const scopeId of manifest.activeScopes || []) {
+    const registryScope = registryById.get(scopeId);
+    const manifestScope = manifestById.get(scopeId);
+    if (!registryScope || !manifestScope) {
+      errors.push({ code: "target_manifest_scope_missing", scopeId });
+      continue;
+    }
+    if (manifestScope.elementCount !== registryScope.elements.length) {
+      errors.push({
+        code: "target_manifest_element_count_mismatch",
+        scopeId,
+        manifestElementCount: manifestScope.elementCount,
+        registryElementCount: registryScope.elements.length,
+      });
+    }
+  }
+
+  return errors;
+}
+
 async function runM82AppStarterPackageTests(run) {
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, "ui-editor-target.json"), "utf8"));
   const ownership = JSON.parse(fs.readFileSync(path.join(ROOT, ".ui-editor-kit", "starter-installation.json"), "utf8"));
@@ -39,6 +73,28 @@ async function runM82AppStarterPackageTests(run) {
     assert.equal(manifest.registryVersion, registry.BBM_M80_REGISTRY_VERSION);
     assert.equal(manifest.registryFingerprint, createRegistryFingerprint(registry.listM80RegistryScopes()));
     assert.deepEqual(manifest.activeScopes, registry.BBM_M80_ACTIVE_SCOPES);
+  });
+
+  await run("M82 BBM: Target-Manifest leitet alle aktiven Scope-Zahlen exakt aus Komponentenvertrag und Registry ab", async () => {
+    const registry = await importEsmFromFile(path.join(ROOT, "src/renderer/ui-editor/m80Registry.js"));
+    const registryScopes = registry.listM80RegistryScopes();
+    const invoiceContract = registry.getM83ComponentContract("bbm.rechnung.screen");
+    const invoiceScope = registryScopes.find((scope) => scope.scopeId === "rechnung.screen");
+    const invoiceTarget = manifest.scopes.find((scope) => scope.scopeId === "rechnung.screen");
+
+    assert.equal(invoiceContract.slots.length, 131);
+    assert.equal(invoiceScope.elements.length, invoiceContract.slots.length);
+    assert.equal(invoiceTarget.elementCount, invoiceScope.elements.length);
+    assert.deepEqual(compareManifestScopeCounts(manifest, registryScopes), []);
+
+    const staleManifest = structuredClone(manifest);
+    staleManifest.scopes.find((scope) => scope.scopeId === "rechnung.screen").elementCount = 117;
+    assert.deepEqual(compareManifestScopeCounts(staleManifest, registryScopes), [{
+      code: "target_manifest_element_count_mismatch",
+      scopeId: "rechnung.screen",
+      manifestElementCount: 117,
+      registryElementCount: 131,
+    }]);
   });
 
   await run("M82 BBM: drei Restarbeiten-Scopes sind vollstaendig und andere Bereiche bleiben blockiert", () => {

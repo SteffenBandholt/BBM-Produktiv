@@ -24,7 +24,7 @@ async function runM821BbmFeintuningTests(run) {
   const editbox = read("src/renderer/modules/restarbeiten/RestarbeitenEditbox.js");
   const css = read("src/renderer/modules/restarbeiten/styles/restarbeiten.css");
 
-  await run("M82.1 BBM 01: Registryversion bleibt konsistent", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 24));
+  await run("M82.1 BBM 01: Registryversion bleibt konsistent", () => assert.equal(registry.BBM_M80_REGISTRY_VERSION, 26));
   await run("M82.1 BBM 02: Manifestversion folgt der Registry", () => assert.equal(manifest.registryVersion, registry.BBM_M80_REGISTRY_VERSION));
   await run("M82.1 BBM 03: Manifestfingerprint ist aktuell", () => assert.equal(manifest.registryFingerprint, createRegistryFingerprint(scopes)));
   await run("M82.1/M82.6 BBM 04: Restarbeiten, Protokoll und Rechnung besitzen sieben aktive Scopes", () => assert.deepEqual(registry.BBM_M80_ACTIVE_SCOPES, ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root", "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root", "rechnung.screen"]));

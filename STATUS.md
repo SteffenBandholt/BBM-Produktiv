@@ -4466,6 +4466,15 @@ Wichtig:
 - Produktions-PDF, Druckweg und Navigation blieben unverändert. Kein Commit,
   kein Push. Nächster Schritt: fachliche Nutzerabnahme der Rechnungs-Editbox.
 
+## Rechnung - UI-Editor-Scope 131 konsistent registriert
+
+- Status: Vertrag, Registry, Runtime-Refs und Target-Manifest stehen jeweils exakt auf 131; es gibt keine doppelten, fehlenden oder verwaisten Rechnungs-IDs.
+- `ui-editor-target.json` verwendet Registry-Version 26 und den aus der produktiven Registry berechneten Fingerprint `sha256:4a8727e40e87bb794d8a3558b92f7ecb9339de7f37259ec6270b19dab9bbdab7`.
+- Ursache der bisherigen Testluecke: Der Starterpaket-Test verglich Version, Gesamtfingerprint und aktive Scopes, leitete die einzelnen `elementCount`-Werte aber nicht aus den Registry-Scopes ab. Der neue Guard vergleicht alle aktiven Scopes und weist den simulierten Altstand 117/131 gezielt als `target_manifest_element_count_mismatch` ab.
+- Reale Reparaturrunde: Nach dem Manifestabgleich zeigte der native Editor einen weiteren Vertragsfehler, weil die neuen Rechnungselemente Dezimalwerte im ganzzahligen Feld `order` verwendeten. Diese Metadaten sind nun ganzzahlig; ein Komponenten-Guard sichert das ab.
+- Realnachweis: zwei Starts mit dem isolierten produktiven Rechnungs-Acceptance-Pfad endeten mit Exit 0. Der zweite Lauf mountete den echten RechnungScreen, tauschte `getRegistry` und `getLayoutState` aus und zeigte den normalen nativen Editor mit 69 Automation-Controls, aktivem `Ziel in App auswaehlen`, Scope `Rechnungen` und regulaerem `Schliessen`.
+- PDF-Renderer, Druckweg, Rechnungsfachlogik, sichtbares Layout und Navigation blieben unveraendert. Der Schutz-Hash von `docs/licensing.md` ist als paketfremder Baselinefehler weiterhin rot; Commit und Push: keiner.
+
 ## Core-Stabilisierung - Main-/IPC-Modulvertrag und Projektmodul-Navigation
 
 - Status: Der vorbereitete Main-/IPC-Modulvertrag ist produktiv angeschlossen. Protokoll- und Restarbeiten-IPCs werden anhand der aktiven Lizenzmodule registriert; Core-/Shared-IPCs bleiben direkt registriert. Rechnung besitzt weiterhin keinen Fach-IPC-Registrar.
