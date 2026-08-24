@@ -204,6 +204,7 @@ async function runRechnungNavigationTests(run) {
     assert.equal(rechnungScreen.isQuantityInputAllowed("2,3", 0), false);
     assert.equal(rechnungScreen.formatQuantityForInput("2.5000", 4), "2,5");
     assert.equal(rechnungScreen.formatQuantityForInput("2.55", 1), "2,5");
+    assert.deepEqual([0, 1, 2, 3, 4].map((places) => rechnungScreen.formatQuantityForInput("12,3456", places)), ["12", "12,3", "12,35", "12,346", "12,3456"]);
 
     const screen = new rechnung.RechnungScreen();
     const control = (value = "") => ({ value, checked: false, disabled: false, hidden: false, textContent: "", setAttribute() {} });
@@ -212,9 +213,16 @@ async function runRechnungNavigationTests(run) {
     screen.positions = [{ id: "service", type: "service", is_title: false, parent_id: null, short_text: "Leistung", long_text: "", quantity: "2.3456", unit: "m", unit_price_cents: 10000, vat_rate_percent: 19 }]; screen.selectedPositionId = "service";
     screen.positionType = control("service"); screen.positionShort = control("Leistung"); screen.positionLong = control(); screen.positionQuantity = control("2,3456"); screen.positionUnit = control("m"); screen.positionPrice = control("100.00"); screen.positionPriceGross = control(); screen.positionNep = control();
     screen.positionTypeField = fieldNode(); screen.positionQuantityBlock = fieldNode(); screen.positionUnitField = fieldNode(); screen.positionPriceField = fieldNode(); screen.positionVatRateField = fieldNode(); screen.positionPriceGrossField = fieldNode(); screen.positionNepField = fieldNode(); screen.positionPriceLabel = { textContent: "" }; screen.positionsList = { classList: { toggle() {} } }; screen._renderPositions = () => {};
-    screen.positionQuantityDecimalsValue = { textContent: "" }; screen.positionQuantityDecimalsDecrease = { disabled: false }; screen.positionQuantityDecimalsIncrease = { disabled: false }; screen._lastValidQuantityInput = "2,3456";
+    screen.positionQuantityDecimalsValue = { textContent: "" }; screen.positionQuantityDecimalsDecrease = { disabled: false }; screen.positionQuantityDecimalsIncrease = { disabled: false }; screen._lastValidQuantityInput = "2,3456"; screen._quantityInputSourceValue = "12,3456"; screen.positionQuantity.value = "12,3456";
 
-    for (const places of [0, 1, 2, 3, 4]) { screen._setQuantityDecimalPlaces(places); assert.equal(screen.quantityDecimalPlaces, places); assert.equal(screen.positionQuantityDecimalsValue.textContent, String(places)); }
+    for (const [places, visibleQuantity] of [[3, "12,346"], [2, "12,35"], [1, "12,3"], [0, "12"], [1, "12,3"], [2, "12,35"], [3, "12,346"], [4, "12,3456"]]) {
+      screen._setQuantityDecimalPlaces(places);
+      assert.equal(screen.quantityDecimalPlaces, places);
+      assert.equal(screen.positionQuantityDecimalsValue.textContent, String(places));
+      assert.equal(screen.positionQuantity.value, visibleQuantity);
+      assert.equal(screen.positionQuantityDecimalsDecrease.disabled, places === 0);
+      assert.equal(screen.positionQuantityDecimalsIncrease.disabled, places === 4);
+    }
     screen.positionQuantity.value = "2,3456"; screen._lastValidQuantityInput = "2,3456"; screen._handlePositionQuantityInput();
     assert.equal(screen.positions[0].quantity, "2.3456");
     screen.positionQuantity.value = "2,34567"; screen._handlePositionQuantityInput();
@@ -223,10 +231,17 @@ async function runRechnungNavigationTests(run) {
     screen._setQuantityDecimalPlaces(2);
     assert.equal(screen.positionQuantity.value, "2,35");
     assert.equal(screen.positions[0].quantity, "2.35");
+    screen.positionQuantity.value = "7.25"; screen._handlePositionQuantityInput(); screen._commitPositionQuantityInput();
+    assert.equal(screen.positionQuantity.value, "7,25");
+    assert.equal(screen.positions[0].quantity, "7.25");
 
     const css = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/styles/rechnungenDesign.css"), "utf8");
     assert.match(css, /\.rechnung-live-position-editor__quantity \{ text-align: right !important;/);
     assert.match(css, /\.rechnung-live-position-editor__decimal-stepper \{ display: grid;/);
+    assert.match(css, /\.rechnung-live-position-editor \{ grid-template-columns: minmax\(0, \.65fr\) minmax\(0, 2fr\) repeat\(3, minmax\(0, 1fr\)\); gap: 5px 8px; \}/);
+    assert.doesNotMatch(css, /minmax\(148px, \.8fr\)/);
+    assert.match(css, /\.rechnung-live-position-editor__nep-field \{ align-self: start; \}/);
+    assert.match(css, /\.rechnung-live-position-editor__totals \{ grid-column: 4 \/ span 2; grid-row: 5;/);
     const elements = new Map(rechnungContract.rechnungUiEditorContract.slots.map((slot) => [slot.slotId, slot.element]));
     assert.equal(elements.get("rechnung.editor.positionQuantity").parentId, "rechnung.editor.positionQuantityBlock");
     assert.equal(elements.get("rechnung.editor.positionQuantityDecimals.decrease").lockedOps.includes("executeTargetAction"), true);

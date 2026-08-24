@@ -1,5 +1,15 @@
 # STATUS.md â€” BBM-Produktiv
 
+## 2026-08-24 - Rechnungs-Stepper bedienbar und Editbox-Geometrie zurückgesetzt
+
+- Status: `[A]`; die vorhandenen Minus-/Plus-Ziele sind als echte sichtbare Sekundärbuttons bedienbar. Minus sperrt bei 0, Plus bei 4; beide bleiben innerhalb ihrer vorhandenen Stepper-Zeile direkt per Maus erreichbar.
+- Die Mengenanzeige verwendet für Stepper-Wechsel einen rein transienten, nicht persistierten Ausgangswert. Dadurch liefert `12,3456` in beiden Richtungen exakt `12`, `12,3`, `12,35`, `12,346` und `12,3456`, ohne den zuvor aufgetretenen kumulativen Rundungsfehler.
+- Manuelle Eingabe akzeptiert Punkt und Komma bis zur aktuell eingestellten Grenze. Blur formatiert den sichtbaren Wert mit deutschem Komma; zu viele Nachkommastellen werden unmittelbar auf den letzten gültigen Eingabestand zurückgesetzt. Menge bleibt rechtsbündig.
+- Die mit `d9d0e2f3` eingeführte sechste Editbox-Spalte und die neuen Mindestbreiten sind entfernt. Das exakte vorherige Fünf-Spalten-Grid `minmax(0, .65fr) minmax(0, 2fr) repeat(3, minmax(0, 1fr))` ist wieder aktiv. Der Gesamtbetragskasten bleibt in den vorhandenen Spalten 4/5; das NEP-Feld behält daneben seine kompakte Ausgangshöhe.
+- Sichtbarer Electron-Nachweis: reale Mausklicks 4 → 0 → 4, je Schalter rund 20 × 18 px, solide Buttonfläche, `pointer-events: auto`, korrekte Hit-Targets, fünf reale Grid-Spalten, Punkt-/Kommaeingabe, Blur-Formatierung und Ablehnung einer dritten Nachkommastelle bei Einstellung 2. Stepper, Mengenfeld, NEP und Gesamtbetrag waren ohne Überlagerung sichtbar.
+- Prüfung: gezielter Rechnungsmengentest, M83-Rechnungsmount mit 131 Refs und echten Button-Handlern, `rechnungUiEditorUnbounded`, UI-Editor-Vertrags-Selbsttest, fokussierter ESLint (0 Fehler, 5 bestehende Warnungen) und `git diff --check` grün. `npm test` bleibt an zahlreichen bereits auf dem Ausgangsbranch dokumentierten, paketfremden Baselines rot; die neue Mengenprüfung und der Rechnungsmount sind darin grün.
+- Keine PDF-, Navigations-, Registry-, Persistenz- oder Datenbankänderung. Kein Commit, kein Push. Nächster sinnvoller Schritt: fachliche Nutzerabnahme im normalen Rechnungsfenster.
+
 ## 2026-08-24 - Alle 117 Rechnungsziele ohne künstliche Geometriegrenzen
 
 - Status: `[A]`; der produktive Scope `rechnung.screen` enthält 117 vollständig gemountete Ziele. Alle erlauben `move`, `resizeWidth` und `resizeHeight`; keiner deklariert `minX`, `maxX`, `minY`, `maxY`, `minWidth`, `maxWidth`, `minHeight`, `maxHeight` oder einen maximalen Bewegungs-Offset.

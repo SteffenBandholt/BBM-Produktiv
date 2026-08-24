@@ -92,7 +92,8 @@ async function runM830ComponentContractTests(run) {
   ];
   try {
     refs.resetM80PilotWorkingStatesForDiagnostic();
-    const invoiceRoot = new rechnungScreenModule.default().render();
+    const invoiceScreen = new rechnungScreenModule.default();
+    const invoiceRoot = invoiceScreen.render();
     body.appendChild(invoiceRoot);
     await Promise.resolve();
     await run("M83.0 Rechnung 01: echter Rechnungsscreen mountet alle 131 Einzel-Refs mit vollstaendigem DOM-Vertrag", () => {
@@ -120,6 +121,18 @@ async function runM830ComponentContractTests(run) {
         assert.equal(element.getAttribute("data-ui-editor-editable"), String(entry.editable), `${id}: editable`);
         assert.equal(element.getAttribute("data-ui-editor-ops"), entry.allowedOps.join(","), `${id}: ops`);
       }
+      const decrease = refs.getM80Ref("rechnung.editor.positionQuantityDecimals.decrease").element;
+      const increase = refs.getM80Ref("rechnung.editor.positionQuantityDecimals.increase").element;
+      assert.equal(decrease.classList.contains("invoice-button--secondary"), true);
+      assert.equal(increase.classList.contains("invoice-button--secondary"), true);
+      assert.equal(typeof decrease.onclick, "function");
+      assert.equal(typeof increase.onclick, "function");
+      invoiceScreen.positionQuantity.value = "12,3456";
+      invoiceScreen._quantityInputSourceValue = "12,3456";
+      for (const expected of ["12,346", "12,35", "12,3", "12"]) { decrease.onclick(); assert.equal(invoiceScreen.positionQuantity.value, expected); }
+      assert.equal(decrease.disabled, true);
+      for (const expected of ["12,3", "12,35", "12,346", "12,3456"]) { increase.onclick(); assert.equal(invoiceScreen.positionQuantity.value, expected); }
+      assert.equal(increase.disabled, true);
     });
 
     refs.resetM80PilotWorkingStatesForDiagnostic(); refs.beginM80PilotRender();
