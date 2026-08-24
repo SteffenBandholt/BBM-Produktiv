@@ -1,8 +1,8 @@
 # PDF-Satzvertrag V2
 
-Stand: 2026-08-17
-Inventarbasis: `main` / `54a8b432f961403202cd81341f6ddd25a06c5de2`
-Vertragsversion: `m85.2-v3`
+Stand: 2026-08-24
+Inventarbasis: `rechnung-integration` / `2d9dcc113af89a3b1005e9b8d9ba41416108dbff`
+Vertragsversion: `m85.2-v4-invoice`
 
 ## Zweck und Geltungsgrenze
 
@@ -18,6 +18,13 @@ vorhandenen produktiven Weg
 `_paginateGeneric` → `PrintShell.renderPrint` → `webContents.printToPDF` →
 interne BBM-PDF-Vorschau. Die frühere HTML-Ausgabevorschau bleibt als
 historische Alternative im Repository, ist aber nicht mehr der Produktweg.
+
+Rechnungen verwenden denselben technischen Weg:
+`RechnungScreen` → `rechnung:previewDraft` bzw. Buchungs-/Finalisierungsweg →
+`print:toPdfAndPreviewInternal` bzw. `printToPdf` → `getPrintData(mode=invoice)` →
+`printApp._paginateGeneric` → `PrintShell.renderPrint` →
+`webContents.printToPDF`. Die Rechnung bleibt dabei `data.invoice`; es gibt
+keinen zweiten Renderer und keine zweite Paginierung.
 
 ## Ebenen und Eigentum
 
@@ -62,6 +69,7 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 | `src/renderer/print/index.html` | produktiv, Einstieg | Lädt `print.css`, Header-Test-CSS, `v2.css` und `printApp.js`. |
 | `src/renderer/print/printApp.js` | produktiv, Paginierungsquelle | Zeilenbau, reale Messung, Teilnehmer-/Vorbemerkungsplanung, TOP- und generische Paginierung, Abschlussverschiebung. |
 | `src/renderer/print/layout/PrintShell.js` | produktiv, Renderingquelle | Endgültiges Seiten-DOM, Voll-/Mini-Kopf, Tabellenkopf je Seitentabelle, Teilnehmer, Vorbemerkung, Abschluss und Fußreserve. |
+| `src/renderer/modules/rechnungen/print/InvoicePrintContent.js` | produktiv, Invoice-Fachrenderer | Liefert ausschließlich Rechnungsempfänger/-metadaten/-kontext für den FullHeader-Slot, Fachtexte für den MiniHeader-Slot sowie Einleitung, Bau-LV und Abschluss für den Body. Definiert weder Seite noch Satzspiegel. |
 | `src/renderer/print/print.css` | produktiv, Design-/Messquelle | A4-Seitenbox, Tabellen-, TOP-, Restarbeiten- und Textgeometrie. Beeinflusst Messung und Umbruch. |
 | `src/renderer/print/v2/v2.css` | produktiv, Design-/Messquelle | V2-Kopf, Teilnehmer, Vorbemerkung, Abschluss, Fußreserve und Farbtreue. |
 | `src/renderer/print/v2/v2LayoutConfig.js` | produktiv, zentrale Baseline | Kopf- und Abstandsbaselines; keine Engine. |
@@ -73,6 +81,7 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 | `src/shared/ampel/pdfAmpelRule.js` | produktiv, Fachdarstellung | Ermittelt Ampelfarbe aus bereits gelieferten Fachwerten; der Editor ändert diese Werte nicht. |
 | `src/renderer/print/pdfEditorLayout.js` | produktiv, Designadapter | Überführt 35 Registryzustände in V2-Variablen/DOM-Styles und liest Vorschaugrenzen zurück. Keine Seitenzuweisung. |
 | `src/main/ui-editor/bbmPdfAdapter.cjs` | produktiv, Registry-/Adapterquelle | Explizite 35 Elemente, Baselines, Nutzflächen-/Bereichsgrenzen, atomare Tabellenoperationen, Rollback und Neuerzeugung. Keine Paginierung. |
+| `src/main/ui-editor/invoicePdfAdapter.cjs` | produktiv, Invoice-Registry | Expliziter Scope `pdf.bbm.invoice` mit FullHeader-, Body-, MiniHeader- und Bau-LV-Zielen. Satzträger und Fachaktionen bleiben gesperrt. |
 | `src/main/ipc/uiEditorIpc.js` | produktiv, Adapter | Bindet `generatePdfForUiEditor` an denselben `printToPDF`-Pfad. Kein zweiter Store/Renderer. |
 | `src/renderer/print/headerTest/**` | nur Diagnose/Test | Separater sichtbarer Kopf-Testmodus; nicht im normalen Ausgabedialog, nicht Quelle für Protokoll-/Restarbeiten-PDF. |
 | `print:openHtmlPreview` | produktive Alternative | Zeigt denselben Print-Renderer sichtbar, erzeugt aber noch keine Datei. |
@@ -89,9 +98,9 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 | Vertrags-ID | Regel | Dokumentarten | Codequelle | Test/Fixture | Status | Editorstatus |
 |---|---|---|---|---|---|---|
 | `PDF-V2-SATZ-001` | Chromium erzeugt A4. Orientierung ist explizit Hochformat oder Querformat; Standard ist Hochformat. Chromium-Ränder sind 0, der Inhalt nutzt V2-Padding. | alle kanonischen Modi | `printOrientation.js`, `printApp._applyPageOrientationStyle`, CSS `@page` | `printOrientation.test.cjs`, M85-Snapshots | fest | Papierformat gesperrt; Inhaltsränder explizit editierbar |
-| `PDF-V2-SATZ-002` | Seite 1 rendert in dieser Reihenfolge GlobalHeader, FullHeader, Abstand und Body. | Protokoll, Restarbeiten, Listen | `PrintShell.renderPrint` | alle 47 Snapshots | fest | Kopfart/-reihenfolge gesperrt; einzelne Designziele teils editierbar |
+| `PDF-V2-SATZ-002` | Seite 1 rendert in dieser Reihenfolge GlobalHeader, FullHeader, Abstand und Body. Dokumentartspezifischer Inhalt wird nur in die Slots eingesetzt. | Protokoll, Restarbeiten, Listen, Rechnung | `PrintShell.renderPrint` | alle 49 Snapshots | fest | Kopfart/-reihenfolge gesperrt; einzelne Designziele teils editierbar |
 | `PDF-V2-SATZ-003` | Seiten ab Nummer 2 rendern nur MiniHeader vor dem Body. | alle mehrseitigen Modi | `PrintShell.renderPrint` | mehrseitige Snapshots | fest | Kopfart/-reihenfolge gesperrt |
-| `PDF-V2-SATZ-004` | Jedes Seitenmodell erhält `pageNo`/`totalPages`. FullHeader auf Seite 1 und MiniHeader auf Folgeseiten rendern sichtbar `Seite n / gesamt`; der Zähler muss vollständig innerhalb der A4-Seitenbox liegen. | Protokoll, Restarbeiten, Preview/Vorabzug | Pager, `FullHeader.js`, `MiniHeader.js` | alle Snapshots, p03, r21, DOM-Grenzprüfung | fest | Zählerwerte/Fachtext gesperrt |
+| `PDF-V2-SATZ-004` | Jedes Seitenmodell erhält `pageNo`/`totalPages`. Protokoll/Restarbeiten zeigen den Zähler auch im FullHeader; der Invoice-MiniHeader zeigt ihn ab Seite 2 als `Seite n / gesamt`. Der Zähler muss vollständig innerhalb der A4-Seitenbox liegen. | Protokoll, Restarbeiten, Preview/Vorabzug, Rechnung | Pager, `FullHeader.js`, `MiniHeader.js` | alle Snapshots, p03, r21, i48/i49, DOM-Grenzprüfung | fest | Zählerwerte/Fachtext gesperrt |
 | `PDF-V2-SATZ-005` | Standardmäßig werden 12 mm Fußreserve von der gemessenen Kapazität abgezogen und als absoluter Spacer gerendert. | alle | `_createMeasureContext`, `v2.css`, `PrintShell` | alle Snapshots | fest | Reserve nicht registriert/gesperrt |
 | `PDF-V2-SATZ-006` | Jede gerenderte Seitentabelle baut einen eigenen Tabellenkopf. Eine leere TOP-Tabelle wird vollständig unterdrückt; leere Restarbeiten zeigen Kopf plus Leerhinweis. | Protokoll, Restarbeiten | `PrintShell._buildTable`, `renderPrint` | p01, r19 und alle Seiten mit Datensätzen | fest | Seitenwiederholung gesperrt; einzelne TOP-Kopfdesignwerte derzeit editierbar |
 | `PDF-V2-SATZ-007` | Passt eine vollständige TOP-Zeile in den verbleibenden Raum, wird sie nicht geteilt. Passt sie knapp nicht und ist die Seite belegt, beginnt sie auf der Folgeseite oder wird nur nach den Splitregeln geteilt. | Protokoll/TOP | `_paginateTops` | p04, p05, p07 | fest | Seitenzuweisung/Teilung gesperrt |
@@ -149,6 +158,20 @@ historische Alternative im Repository, ist aber nicht mehr der Produktweg.
 Alle Baselines summieren sich auf 273 mm. Eine spätere Editorfreigabe müsste
 die Summe weiterhin exakt innerhalb des verfügbaren Querformat-Inhalts halten;
 M85.2 führt dafür weder Registryeinträge noch einen Profilwert ein.
+
+## B3. Dokumentartspezifische Regeln: Rechnung
+
+| Vertrags-ID | Regel | Nachweis | Status |
+|---|---|---|---|
+| `PDF-V2-INVOICE-001` | Eine gebuchte Rechnung wird ausschließlich aus ihren unveränderlichen Kunden-/Aussteller-Snapshots und gespeicherten Positionen gedruckt. Eine Proberechnung verwendet `InvoiceService.previewDraft()`, bleibt DRAFT und erhält nur flüchtige Druck-Snapshots. | `InvoiceService`, `InvoiceRepository`, `printData`, `rechnungPdf.test.cjs` | fest |
+| `PDF-V2-INVOICE-002` | Seite 1 besteht aus unverändertem V2-GlobalHeader, dem V2-FullHeader-Container mit fachlichem Invoice-Slot, V2-Trennlinie und Body. Der Invoice-Slot enthält Empfänger, Ausstelleradresse, Dokumentart, Nummer bzw. Preview-Kennung, Datum, Leistungszeitraum und Bauvorhaben/Leistungsbezug; Protokollkennlinie und Protokolltitel fehlen. | `FullHeader.js`, `InvoicePrintContent.js`, i48/i49 | fest |
+| `PDF-V2-INVOICE-003` | Jede Invoice-Seitentabelle verwendet denselben sechs Tracks umfassenden Bau-LV-Kopf. Kopf und Spalten werden aus denselben Buildern in Mess- und End-DOM erzeugt. | `InvoicePrintContent.js`, `_createMeasureContext`, i48/i49 | fest |
+| `PDF-V2-INVOICE-004` | Überschrift, Text, Hinweis und Leistungsposition bleiben getrennte Zeilenarten. Text besitzt kein sichtbares Präfix `Text`; Hinweis trägt sichtbar `Hinweis`. | `buildInvoiceRow`, i48/i49, `rechnungPdf.test.cjs` | fest |
+| `PDF-V2-INVOICE-005` | Eine NEP-Position zeigt Menge, Einheit und EP, statt GP den Text `NEP` und beeinflusst die Rechnungssummen nicht. | Positionsnormalisierung, `buildInvoiceRow`, i48/i49 | fest |
+| `PDF-V2-INVOICE-006` | Der Body-Abschluss enthält Nettosumme, jede vorhandene MwSt.-Gruppe, Rechnungsbetrag, Zahlungstext sowie Aussteller-/Bank-/Steuerangaben. | `buildInvoiceTail`, i48/i49 | fest |
+| `PDF-V2-INVOICE-007` | Der vollständige Abschluss wird real gemessen und gegebenenfalls auf eine Folgeseite verschoben. FullHeader, Body-Einleitung, Zeilen, MiniHeader und Fußreserve werden über die gemeinsame V2-DOM-Messung berücksichtigt; es gibt keine manuelle Invoice-Seitenschätzung. | `_createMeasureContext`, `_paginateGeneric`, i48/i49 | fest |
+| `PDF-V2-INVOICE-008` | Finale Ablage, Dateigröße, SHA-256 und aktive Finalreferenz bleiben Eigentum des vorhandenen `InvoicePdfFinalizer`; die Preview schreibt ausschließlich eine temporäre Datei und keine Finalreferenz. | `InvoicePdfFinalizer`, `RechnungScreen._showPreview`, `rechnungPdf.test.cjs` | fest |
+| `PDF-V2-INVOICE-009` | Finale Rechnung und Proberechnung verwenden denselben Modus `invoice`, denselben `PrintShell`, dieselbe `_paginateGeneric`-Funktion und denselben einzigen `webContents.printToPDF`-Aufruf. Nur `data.invoice.preview === true` aktiviert den roten Invoice-Marker. | Architekturguards, i48/i49 | fest |
 
 ## C. Editorfähige Designwerte
 
@@ -225,14 +248,17 @@ Für jedes Element sind außerdem `setPageBreakRule`, Seitenzuweisung, manuelle 
 
 ## Strukturelle Golden-Fixtures
 
-Die 47 neutralen Fälle liegen in `scripts/pdf-v2/m85Fixtures.cjs`. Der isolierte
+Die 49 neutralen Fälle liegen in `scripts/pdf-v2/m85Fixtures.cjs`. Der isolierte
 Electron-Harness verwendet ausschließlich diese Objekte, eigenes temporäres
 `userData`/`sessionData` und die echten Renderer-CSS-Dateien. Die 25
 Protokollfälle behalten einschließlich p01–p34 ihre M85.1-Goldenwerte; 22
 Restarbeiten-Fälle decken Leerzustand, Grenzfälle, Mehrseitenlisten, alle drei
 teilbaren Textfelder, einen Datensatz über mehrere Seiten, alle 13 Spalten,
 Status/Ampel, lange Verortung, sichtbare Filterreihenfolge, Löschfilter,
-Kopfwiederholung, Fußreserve, Querformat und gemischte Datensätze ab. Er erfasst
+Kopfwiederholung, Fußreserve, Querformat und gemischte Datensätze ab. Zwei
+Invoice-Fälle i48/i49 verriegeln finale Rechnung und Proberechnung über fünf
+Seiten mit FullHeader-Slot, MiniHeader, Vorabzug, Bau-LV, NEP, Hinweis,
+Mehrfach-MwSt., Abschluss und Fußreserve. Der Harness erfasst
 je Seite:
 
 - Seitennummer, Seitentyp und Kopfart;

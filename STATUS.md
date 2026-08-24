@@ -1,5 +1,13 @@
 # STATUS.md â€” BBM-Produktiv
 
+## 2026-08-24 - Rechnung an die gemeinsame PDF-V2-Shell angebunden
+
+- Status: `[A]`; der produktive `invoice`-Datenweg verwendet auf Seite 1 den gemeinsamen GlobalHeader und FullHeader-Slot, auf Folgeseiten den gemeinsamen MiniHeader sowie unveraendert die zentrale V2-Paginierung und Footerreserve. Die fachlichen Kopf-, Body- und MiniHeader-Inhalte liegen im Rechnungsmodul.
+- DRAFT-Proberechnungen verwenden `InvoiceService.previewDraft()` und denselben Renderer. Nur `data.invoice.preview === true` erzeugt den roten Marker `Vorabzug - nicht freigegeben`; BOOKED-Rechnungen bleiben markerfrei.
+- Zwei reale fuenfseitige Electron-PDFs (final und Vorabzug) sichern FullHeader, MiniHeader, Seitenzaehler, LV-Positionen, Text, Hinweis, NEP, Mehrfach-MwSt., Summen und Umlautdarstellung. Die neuen Invoice-Goldens sind gruen; alle bestehenden Protokoll-Goldens bleiben unveraendert gruen.
+- Bekannte rote Baseline-Befunde wurden auf dem unveraenderten Ausgangs-HEAD `2d9dcc11` reproduziert: vier Restarbeiten/Profil-Befunde in M85, ein Navigations-Vertragsfehler sowie bestehende Restarbeiten-/Protokoll-Gruppenfehler. Sie wurden in diesem Paket nicht repariert.
+- Kein Commit, kein Push und kein Merge nach `main`.
+
 ## 2026-08-21 - Rechnung: rechter Kopf feingranular für UI-Editor registriert
 
 - Status: `[A]`; der aktive Rechnungsscreen besitzt acht neue echte Kopf-Refs: `issuerBlock` mit Name 1, Name 2, Straße und PLZ/Ort sowie `invoiceMetaBlock` mit Rechnungsdatum und Leistungszeitraum. Die Einzelzeilen sind direkte gemountete DOM-Ziele mit textuellen Layoutoperationen.

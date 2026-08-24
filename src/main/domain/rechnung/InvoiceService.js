@@ -67,7 +67,8 @@ class InvoiceService {
     const current = this.repository.get(id);
     if (!current) throw new Error("Rechnung wurde nicht gefunden.");
     if (current.status !== "DRAFT") return current;
-    return { ...current, ...rules.normalizeInvoiceHeader({ ...current, ...(input || {}) }), construction_project: String(input?.construction_project ?? current.construction_project ?? "").trim(), intro_text: normalizeIntroText(input?.intro_text ?? current.intro_text), positions: positions.normalizeInvoicePositions(input?.positions ?? current.positions ?? []), invoice_number: null, status: "DRAFT", preview: true };
+    const preview = { ...current, ...rules.normalizeInvoiceHeader({ ...current, ...(input || {}) }), construction_project: String(input?.construction_project ?? current.construction_project ?? "").trim(), intro_text: normalizeIntroText(input?.intro_text ?? current.intro_text), positions: positions.normalizeInvoicePositions(input?.positions ?? current.positions ?? []), invoice_number: null, status: "DRAFT", preview: true, preview_identifier: rules.draftPreviewIdentifier(current.id) };
+    return { ...preview, ...this.repository.buildPreviewSnapshots(preview) };
   }
 
   async bookDraft(id, input = {}) {

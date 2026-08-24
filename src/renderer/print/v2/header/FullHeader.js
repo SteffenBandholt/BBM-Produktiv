@@ -1,7 +1,20 @@
 import { headerUtils } from "./headerUtils.js";
 
-export function renderV2FullHeader({ data, pageNo, totalPages, modeLabel } = {}) {
+export function renderV2FullHeader({ data, pageNo, totalPages, modeLabel, content = null, draftNotice = "" } = {}) {
   const header = headerUtils.el("div", "v2Header v2HeaderFull");
+  if (content) {
+    header.classList.add("v2HeaderFullSlot");
+    const textBlock = headerUtils.el("div", "v2FullTextBlock v2FullSlotContent");
+    textBlock.appendChild(content);
+    if (String(draftNotice || "").trim()) {
+      header.classList.add("v2HeaderFullHasDraftNotice");
+      header.appendChild(headerUtils.el("div", "v2DraftBadge v2FullDraftBadge", String(draftNotice).trim()));
+    }
+    const divider = headerUtils.el("div", "v2Divider v2FullDivider");
+    divider.setAttribute("data-v2", "line2");
+    header.append(textBlock, headerUtils.el("div", "v2FullGapProjectLine"), divider);
+    return header;
+  }
   const settings = data?.settings || {};
   const meeting = data?.meeting || {};
   const useUserData = headerUtils.parseBool(settings["pdf.footerUseUserData"], false);

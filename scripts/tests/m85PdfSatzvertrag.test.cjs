@@ -128,12 +128,12 @@ function editorBoundsOnPage(result, elementId, pageNumber, part) {
 async function runM85PdfSatzvertragTests(run) {
   let rendered = null;
 
-  await run("M85 Satzvertrag: 47 neutrale Fixtures sind vollständig und eindeutig", () => {
-    assert.equal(FIXTURES.length, 47);
-    assert.deepEqual(FIXTURES.map((fixture) => fixture.number), Array.from({ length: 47 }, (_value, index) => index + 1));
-    assert.equal(new Set(FIXTURES.map((fixture) => fixture.id)).size, 47);
-    assert.equal(Object.keys(GOLDEN_SNAPSHOT_SHA256).length, 47);
-    assert.equal(Object.keys(GOLDEN_PAGE_COUNTS).length, 47);
+  await run("M85 Satzvertrag: 49 neutrale Fixtures sind vollständig und eindeutig", () => {
+    assert.equal(FIXTURES.length, 49);
+    assert.deepEqual(FIXTURES.map((fixture) => fixture.number), Array.from({ length: 49 }, (_value, index) => index + 1));
+    assert.equal(new Set(FIXTURES.map((fixture) => fixture.id)).size, 49);
+    assert.equal(Object.keys(GOLDEN_SNAPSHOT_SHA256).length, 49);
+    assert.equal(Object.keys(GOLDEN_PAGE_COUNTS).length, 49);
     assert.equal(JSON.stringify(FIXTURES).includes("baubesprechungs-manager"), false);
     const protocolManifestEntries = Object.entries(GOLDEN_SNAPSHOT_SHA256).filter(([id]) => id.startsWith("p"));
     assert.equal(protocolManifestEntries.length, 25);
@@ -143,7 +143,7 @@ async function runM85PdfSatzvertragTests(run) {
   await run("M85 Satzvertrag: alle strukturellen Golden-Snapshots sind reproduzierbar", () => {
     rendered = runGoldenHarness();
     const byId = resultMap(rendered);
-    assert.equal(byId.size, 47);
+    assert.equal(byId.size, 49);
     for (const fixture of FIXTURES) {
       const actual = byId.get(fixture.id);
       assert.ok(actual, `Snapshot fehlt: ${fixture.id}`);
@@ -162,7 +162,9 @@ async function runM85PdfSatzvertragTests(run) {
         assert.equal(page.globalHeaderPresent, index === 0, `${CONTRACT.first}:${id}:${index + 1}:global`);
         assert.equal(page.fullHeaderPresent, index === 0, `${CONTRACT.first}:${id}:${index + 1}:full`);
         assert.equal(page.miniHeaderPresent, index > 0, `${CONTRACT.following}:${id}:${index + 1}:mini`);
-        const expectedPageCounter = `Seite ${index + 1} / ${snapshot.pageCount}`;
+        const expectedPageCounter = result.kind === "invoice" && index === 0
+          ? null
+          : `Seite ${index + 1} / ${snapshot.pageCount}`;
         assert.equal(page.visiblePageCounterText, expectedPageCounter, `${CONTRACT.counter}:${id}:${index + 1}:visible`);
         if (result.kind === "protocol" || result.kind === "restarbeiten") {
           assert.equal(page.pageCounterWithinPage, true, `${CONTRACT.counter}:${id}:${index + 1}:bounds`);
@@ -189,9 +191,11 @@ async function runM85PdfSatzvertragTests(run) {
       const snapshot = byId.get(fixture.id).snapshot;
       const expectedOrder = fixture.kind === "protocol"
         ? fixture.data.tops.map((row) => `top:${String(row.topNumberText)}`)
-        : fixture.data.restarbeitenItems
-            .filter((row) => !String(row.deleted_at || "").trim())
-            .map((row) => `restarbeit:${String(row.id || row.running_number)}`);
+        : fixture.kind === "restarbeiten"
+          ? fixture.data.restarbeitenItems
+              .filter((row) => !String(row.deleted_at || "").trim())
+              .map((row) => `restarbeit:${String(row.id || row.running_number)}`)
+          : fixture.data.invoice.positions.map((row) => `invoice:${String(row.id)}`);
       assert.deepEqual(compactRecordOrder(snapshot), expectedOrder, `${CONTRACT.recordFit}:${fixture.id}:Reihenfolge`);
       for (const page of snapshot.pages) {
         if (page.records.length) assert.equal(page.tableHeaderPresent, true, `${CONTRACT.tableHead}:${fixture.id}:${page.pageNumber}`);
@@ -302,6 +306,42 @@ async function runM85PdfSatzvertragTests(run) {
       assert.equal(segments[0], "start", `${id}:Fortsetzungsstart`);
       assert.equal(segments.at(-1), "end", `${id}:Fortsetzungsende`);
       assert.equal(segments.some((segment) => segment === "continuation") || segments.length === 2, true, `${id}:Fortsetzung`);
+    }
+  });
+
+  await run("PDF-V2-INVOICE-002 bis -007: FullHeader-Slot, MiniHeader, Body und Vorabzug sind golden verriegelt", () => {
+    const byId = resultMap(rendered);
+    const finalInvoice = byId.get("i48-invoice-final")?.snapshot;
+    const previewInvoice = byId.get("i49-invoice-preview")?.snapshot;
+    assert.ok(finalInvoice?.pageCount > 1, "Finale Invoice-Fixture muss Folgeseiten besitzen");
+    assert.equal(previewInvoice?.pageCount, finalInvoice.pageCount);
+    for (const snapshot of [finalInvoice, previewInvoice]) {
+      assert.equal(snapshot.invoice.fullHeaderWithinV2Shell, true);
+      assert.equal(snapshot.invoice.protocolGuidePresent, false);
+      assert.equal(snapshot.invoice.editorParents["pdf.bbm.invoice.header"], "pdf.bbm.invoice.page-template");
+      assert.equal(snapshot.invoice.editorParents["pdf.bbm.invoice.recipient"], "pdf.bbm.invoice.header");
+      assert.equal(snapshot.invoice.editorParents["pdf.bbm.invoice.meta"], "pdf.bbm.invoice.header");
+      assert.equal(snapshot.invoice.editorParents["pdf.bbm.invoice.context"], "pdf.bbm.invoice.header");
+      assert.equal(snapshot.invoice.editorParents["pdf.bbm.invoice.intro"], "pdf.bbm.invoice.body");
+      assert.equal(snapshot.invoice.editorParents["pdf.bbm.invoice.mini-header"], "pdf.bbm.invoice.page-template");
+      assert.equal(snapshot.pages[0].invoiceIntroPresent, true);
+      assert.equal(snapshot.pages.some((page) => page.invoiceNepPresent), true);
+      assert.equal(snapshot.pages.some((page) => page.invoiceNotePresent), true);
+      assert.equal(snapshot.pages.at(-1).invoiceTotalsPresent, true);
+      assert.equal(snapshot.pages.every((page) => page.remainingHeightMm >= -1), true);
+    }
+    assert.match(finalInvoice.pages[0].invoiceFullHeaderText, /Rechnung/);
+    assert.match(finalInvoice.pages[0].invoiceFullHeaderText, /Rechnungsnummer: 0815\/2026/);
+    assert.equal(finalInvoice.pages.every((page) => page.invoiceDraftNoticeText === null), true);
+    for (const page of finalInvoice.pages.slice(1)) {
+      assert.equal(page.invoiceMiniPrimaryText, "Neubau Prüfzentrum München");
+      assert.equal(page.invoiceMiniSecondaryText, "Rechnungsnummer: 0815/2026 vom 31.08.2026");
+      assert.equal(page.visiblePageCounterText, `Seite ${page.pageNumber} / ${finalInvoice.pageCount}`);
+    }
+    assert.match(previewInvoice.pages[0].invoiceFullHeaderText, /Kennung: PR-8F3A2C/);
+    assert.equal(previewInvoice.pages.every((page) => page.invoiceDraftNoticeText === "Vorabzug - nicht freigegeben"), true);
+    for (const page of previewInvoice.pages.slice(1)) {
+      assert.equal(page.invoiceMiniSecondaryText, "Kennung: PR-8F3A2C vom 31.08.2026");
     }
   });
 

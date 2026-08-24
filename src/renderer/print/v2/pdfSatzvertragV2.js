@@ -67,6 +67,7 @@ function pageMetrics(pageElement, orientation) {
 function recordKey(row, index) {
   if (row?.kind === "top") return `top:${String(row.numText || index + 1)}`;
   if (row?.kind === "restarbeitItem") return `restarbeit:${String(row?.sourceId || row?.cells?.[0] || index + 1)}`;
+  if (String(row?.kind || "").startsWith("invoice")) return `invoice:${String(row?.sourceId || index + 1)}`;
   if (row?.kind) return `${row.kind}:${index + 1}`;
   return `row:${index + 1}`;
 }
@@ -140,6 +141,7 @@ export function buildPdfSatzvertragSnapshot({ fixtureId, pages, data, root } = {
   const occurrenceTotals = collectRecordOccurrences(normalizedPages);
   const seen = new Map();
   const isRestarbeiten = String(data?.mode || "").trim().toLowerCase() === "restarbeiten";
+  const isInvoice = String(data?.mode || "").trim().toLowerCase() === "invoice";
   const restarbeitenSourceOrder = isRestarbeiten
     ? (data?.restarbeitenItems || [])
         .filter((row) => !String(row?.deleted_at || "").trim())
@@ -155,6 +157,17 @@ export function buildPdfSatzvertragSnapshot({ fixtureId, pages, data, root } = {
     ...(isRestarbeiten ? {
       restarbeitenSourceOrder,
       restarbeitenEmpty: restarbeitenSourceOrder.length === 0,
+    } : {}),
+    ...(isInvoice ? {
+      invoice: {
+        preview: data?.invoice?.preview === true,
+        fullHeaderWithinV2Shell: Boolean(root?.querySelector?.(".v2HeaderFull > .v2FullSlotContent > .invoicePdfFullHeaderContent")),
+        protocolGuidePresent: Boolean(root?.querySelector?.(".v2HeaderFull .v2FullLeftWrap")),
+        editorParents: Object.fromEntries(Array.from(root?.querySelectorAll?.("[data-ui-inspector-id^='pdf.bbm.invoice']") || [])
+          .map((node) => [String(node.dataset.uiInspectorId || ""), String(node.dataset.uiEditorParent || "")])
+          .filter(([id]) => id)
+          .sort(([left], [right]) => left.localeCompare(right))),
+      },
     } : {}),
     pages: normalizedPages.map((page, pageIndex) => {
       const element = pageElements[pageIndex] || null;
@@ -191,8 +204,10 @@ export function buildPdfSatzvertragSnapshot({ fixtureId, pages, data, root } = {
       if (page?.intro) blocks.push("participants");
       if (page?.preRemarks) blocks.push("preRemarks");
       const isTops = String(page?.table?.type || "") === "tops";
-      if (!isTops || rows.length) blocks.push("table");
+      if (isInvoice && page?.invoiceFirst && element?.querySelector?.(".invoicePdfIntro")) blocks.push("invoiceIntro");
+      if ((!isTops || rows.length) && !(isInvoice && page?.suppressTable)) blocks.push("table");
       if (page?.topsTail) blocks.push("closing");
+      if (isInvoice && page?.invoiceLast) blocks.push("invoiceTail");
       blocks.push("footerReserve");
       return {
         pageNumber: pageIndex + 1,
@@ -217,6 +232,16 @@ export function buildPdfSatzvertragSnapshot({ fixtureId, pages, data, root } = {
             .map((column) => String(column?.dataset?.restarbeitenColumn || "")),
           emptyStatePresent: Boolean(restarbeitenTable?.querySelector?.("tbody td[colspan='13']")),
           continuationCount: rows.filter((row) => ["continuation", "end"].includes(String(row?.segment || ""))).length,
+        } : {}),
+        ...(isInvoice ? {
+          invoiceFullHeaderText: String(element?.querySelector?.(".invoicePdfFullHeaderContent")?.textContent || "").replace(/\s+/g, " ").trim() || null,
+          invoiceMiniPrimaryText: String(element?.querySelector?.(".v2MiniProject")?.textContent || "").replace(/\s+/g, " ").trim() || null,
+          invoiceMiniSecondaryText: String(element?.querySelector?.(".v2MiniProtocolTitle")?.childNodes?.[0]?.textContent || "").replace(/\s+/g, " ").trim() || null,
+          invoiceDraftNoticeText: String(element?.querySelector?.(".v2FullDraftBadge,.v2MiniDraftNotice")?.textContent || "").replace(/\s+/g, " ").trim() || null,
+          invoiceIntroPresent: Boolean(element?.querySelector?.(".invoicePdfIntro")),
+          invoiceNepPresent: Array.from(element?.querySelectorAll?.(".invoicePdfCol--total-price") || []).some((node) => String(node.textContent || "").trim() === "NEP"),
+          invoiceNotePresent: Boolean(element?.querySelector?.(".invoicePdfNoteRow .invoicePdfSpecialLabel")),
+          invoiceTotalsPresent: Boolean(element?.querySelector?.(".invoicePdfTotals")),
         } : {}),
         tableType: String(page?.table?.type || ""),
         tableHeaderPresent: Boolean(element?.querySelector?.("table thead")),

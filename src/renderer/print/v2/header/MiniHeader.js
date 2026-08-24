@@ -1,17 +1,35 @@
 import { headerUtils } from "./headerUtils.js";
 
-export function renderV2MiniHeader({ data, pageNo, totalPages, modeLabel } = {}) {
+export function renderV2MiniHeader({ data, pageNo, totalPages, modeLabel, content = null } = {}) {
   const header = headerUtils.el("div", "v2Header v2HeaderMini");
-  const invoice = String(data?.mode || "").trim().toLowerCase() === "invoice"
-    ? data?.invoice || {}
-    : null;
-  if (invoice) {
-    header.dataset.uiInspectorId = "pdf.bbm.invoice.header";
-    header.dataset.uiEditorKind = "header";
-    header.dataset.uiEditorLabel = "Rechnungskopf";
-    header.dataset.uiEditorParent = "pdf.bbm.invoice.page-template";
-    header.dataset.uiEditorEditable = "true";
-    header.dataset.uiEditorOps = "setVisibility";
+  if (content) {
+    const editor = content.editor || {};
+    if (editor.id) {
+      header.dataset.uiInspectorId = editor.id;
+      header.dataset.uiEditorKind = editor.kind || "header";
+      header.dataset.uiEditorLabel = editor.label || "MiniHeader";
+      header.dataset.uiEditorParent = editor.parentId || "";
+      header.dataset.uiEditorEditable = editor.editable ? "true" : "false";
+      header.dataset.uiEditorOps = Array.from(editor.operations || []).join(",");
+    }
+    const topRow = headerUtils.el("div", "v2MiniTopRow");
+    const left = headerUtils.el("div", "v2MiniProject", String(content.primaryText || ""));
+    const rightPage = headerUtils.el("div", "v2MiniRight");
+    rightPage.append(
+      headerUtils.el("span", "v2MiniPageLabel", "Seite "),
+      headerUtils.el("span", "v2MiniPageValue", pageNo + " / " + totalPages)
+    );
+    topRow.append(left, rightPage);
+    const secondLine = headerUtils.el("div", "v2MiniProtocolTitle", String(content.secondaryText || ""));
+    secondLine.setAttribute("data-v2", "miniText");
+    if (String(content.draftNotice || "").trim()) {
+      secondLine.appendChild(headerUtils.el("span", "v2MiniDraftNotice", String(content.draftNotice).trim()));
+    }
+    const divider = headerUtils.el("div", "v2Divider v2MiniDivider");
+    divider.setAttribute("data-v2", "miniLine");
+    header.append(topRow, secondLine);
+    header.append(headerUtils.el("div", "v2MiniGapTextLine"), divider, headerUtils.el("div", "v2MiniGapLineBody"));
+    return header;
   }
   const settings = data?.settings || {};
   const titleText = headerUtils.resolveHeaderTitle({
@@ -23,11 +41,10 @@ export function renderV2MiniHeader({ data, pageNo, totalPages, modeLabel } = {})
   const brandingText = headerUtils.resolveBranding({ data });
 
   const topRow = headerUtils.el("div", "v2MiniTopRow");
-  const invoiceNumber = String(invoice?.invoice_number || "").trim();
   const line1Project = headerUtils.el(
     "div",
     "v2MiniProject",
-    invoice ? [invoice.document_type_display || "Rechnung", invoiceNumber].filter(Boolean).join(" ") : headerUtils.projectLabel(data?.project)
+    headerUtils.projectLabel(data?.project)
   );
   const rightPage = headerUtils.el("div", "v2MiniRight");
   rightPage.append(
@@ -39,7 +56,7 @@ export function renderV2MiniHeader({ data, pageNo, totalPages, modeLabel } = {})
   const line2Protocol = headerUtils.el(
     "div",
     "v2MiniProtocolTitle",
-    invoice ? invoice.service_reference || invoice.construction_project || titleText : titleText
+    titleText
   );
   line2Protocol.setAttribute("data-v2", "miniText");
   if (brandingText) {

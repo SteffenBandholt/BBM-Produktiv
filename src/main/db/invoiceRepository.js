@@ -209,6 +209,14 @@ class InvoiceRepository {
     };
   }
 
+  buildPreviewSnapshots(header) {
+    const db = this._db();
+    return {
+      customer_snapshot: this._customerSnapshot(db, header),
+      issuer_snapshot: this._issuerSnapshot(db),
+    };
+  }
+
   bookDraft(id, header) {
     const db = this._db();
     const transaction = db.transaction(() => {

@@ -1,8 +1,61 @@
 # Rechnungsscreen – UI-/PDF-Entwurfsentscheidung
 
-Stand: 18.08.2026
+Stand: 24.08.2026
 Scope: `rechnung.screen`
 Komponente: `bbm.rechnung.screen`
+
+## Invoice-PDF in der V2-Shell – 24.08.2026
+
+Art der Ausgabe: PDF. Die bestehende Rechnungs-UI wird nicht verändert. Der
+V2-Satz besitzt GlobalHeader, FullHeader-/Body-/MiniHeader-Slots,
+Paginierung, Satzspiegel und Fußreserve. Das Rechnungsmodul liefert nur die
+fachlichen Slot-Inhalte aus `data.invoice`.
+
+Editorfähig: ja, ausschließlich für die explizit registrierten
+Invoice-PDF-Layoutziele unter `pdf.bbm.invoice`. GlobalHeader, Kopfart,
+Seitenzählung, Seitenränder, Fußreserve, Paginierung und Datensatzteilung sind
+keine Invoice-Editorziele.
+
+Die sechs Attribute jedes gerenderten Ziels sind in dieser Tabelle direkt
+abgebildet: `id` = `data-ui-inspector-id`, `kind` =
+`data-ui-editor-kind`, `label` = `data-ui-editor-label`, `parent` =
+`data-ui-editor-parent`, `editable` = `data-ui-editor-editable`, `ops` =
+`data-ui-editor-ops`.
+
+| id | kind | label | parent | editable | ops |
+|---|---|---|---|---|---|
+| `pdf.bbm.invoice` | `document` | Rechnung | – | `false` | – |
+| `.page-template` | `page` | A4-Seite | `pdf.bbm.invoice` | `false` | – |
+| `.header` | `header` | Rechnungs-FullHeader | `.page-template` | `true` | `setVisibility` |
+| `.recipient` | `group` | Rechnungsempfänger | `.header` | `true` | `setVisibility` |
+| `.meta` | `group` | Rechnungsdaten | `.header` | `true` | `setVisibility` |
+| `.meta.label` | `label` | Rechnungsdaten-Bezeichnung | `.meta` | `false` | – |
+| `.meta.value` | `value` | Rechnungsdaten-Wert | `.meta` | `false` | – |
+| `.context` | `group` | Bauvorhaben / Leistungsbezug | `.header` | `true` | `setVisibility` |
+| `.body` | `area` | Rechnungsinhalt | `.page-template` | `false` | – |
+| `.intro` | `text` | Einleitung | `.body` | `true` | `setVisibility` |
+| `.positions` | `table` | Bau-LV | `.body` | `true` | `resizeWidth,resizeColumnBoundary` |
+| `.positions.rows` | `repeatingArea` | Bau-LV-Zeilen | `.positions` | `false` | – |
+| `.positions.column.number` | `tableColumn` | Pos. | `.positions` | `true` | `resizeWidth` |
+| `.positions.column.description` | `tableColumn` | Leistung | `.positions` | `true` | `resizeWidth` |
+| `.positions.column.quantity` | `tableColumn` | Menge | `.positions` | `true` | `resizeWidth` |
+| `.positions.column.unit` | `tableColumn` | Einheit | `.positions` | `true` | `resizeWidth` |
+| `.positions.column.unit-price` | `tableColumn` | EP | `.positions` | `true` | `resizeWidth` |
+| `.positions.column.total-price` | `tableColumn` | GP / NEP | `.positions` | `true` | `resizeWidth` |
+| `.totals` | `group` | Rechnungssummen | `.body` | `true` | `setVisibility` |
+| `.payment` | `text` | Zahlungstext | `.body` | `true` | `setVisibility` |
+| `.footer` | `footer` | Aussteller-Fuß | `.body` | `true` | `setVisibility` |
+| `.mini-header` | `header` | Rechnungs-MiniHeader | `.page-template` | `true` | `setVisibility` |
+
+Alle abgekürzten IDs beginnen mit `pdf.bbm.invoice`. Jedes Nicht-Root-Ziel hat
+einen registrierten Parent. Bedingte Inhalte wie Kontext, Intro, MiniHeader und
+Abschluss werden nur gerendert, wenn der jeweilige Fach-/Seitenzustand vorliegt.
+
+Nicht editorfähig sind Speichern, Buchen, Löschen, Berechnen,
+Rechnungsnummernvergabe, Previewstatus, IPC, Datenbankzugriffe, Upload, Import,
+Export und Autosave. Der technische Vertragsnachweis erfolgt über
+`invoicePdfAdapter.cjs`, `rechnungPdf.test.cjs`, die Invoice-Fixtures i48/i49
+und `scripts/ui-editor-contract-check.cjs`.
 
 ## Rechter Rechnungskopf – feine UI-Editor-Refs 21.08.2026
 

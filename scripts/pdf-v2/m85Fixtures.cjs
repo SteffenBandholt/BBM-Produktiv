@@ -124,6 +124,71 @@ function restarbeitenFixture(id, title, configure) {
   return Object.freeze({ id, number: Number(id.slice(1, 3)), title, kind: "restarbeiten", data });
 }
 
+function invoiceFixture(id, title, { preview = false } = {}) {
+  const data = baseData("invoice");
+  data.printProfile = { key: "invoice", documentLabel: "Rechnung" };
+  data.invoice = {
+    id: preview ? "invoice-preview-8f3a2c" : "invoice-final-0815",
+    status: preview ? "DRAFT" : "BOOKED",
+    preview,
+    preview_identifier: preview ? "PR-8F3A2C" : null,
+    document_type: "INVOICE",
+    invoice_number: preview ? null : "0815/2026",
+    invoice_date: "2026-08-31",
+    due_date: "2026-09-08",
+    service_period_type: "RANGE",
+    service_period_start: "2026-08-01",
+    service_period_end: "2026-08-31",
+    construction_project: "Neubau Prüfzentrum München",
+    service_reference: "Rohbauarbeiten gemäß LV 01",
+    intro_text: "Für die ausgeführten Leistungen berechnen wir:",
+    customer_snapshot: {
+      companyName: "Musterkunde Bau GmbH",
+      companyName2: "Rechnungsempfang",
+      street: "Kundenstraße 7",
+      zip: "10117",
+      city: "Berlin",
+    },
+    issuer_snapshot: {
+      companyName: "BBM Musterbau GmbH",
+      companyName2: "Bau und Projektmanagement",
+      street: "Ausstellerallee 12",
+      zip: "10115",
+      city: "Berlin",
+      vatId: "DE123456789",
+      taxNumber: "12/345/67890",
+      iban: "DE02120300000000202051",
+      bic: "BYLADEM1001",
+    },
+    positions: [
+      { id: "invoice-title", type: "heading", is_title: true, position_number: "1", short_text: "Rohbauleistungen", long_text: "" },
+      ...Array.from({ length: 34 }, (_value, index) => ({
+        id: `invoice-position-${index + 1}`,
+        type: "service",
+        parent_id: "invoice-title",
+        position_number: `1.${String(index + 1).padStart(2, "0")}`,
+        short_text: `Leistungsposition ${String(index + 1).padStart(2, "0")}`,
+        long_text: `Ausführliche Beschreibung der Bauleistung ${index + 1} mit Lieferung, Montage und Nebenarbeiten.`,
+        quantity: String((index % 5) + 1),
+        unit: index % 2 ? "m²" : "St",
+        unit_price_cents: 1250 + index * 25,
+        total_cents: ((index % 5) + 1) * (1250 + index * 25),
+        vat_rate_percent: index % 7 === 0 ? 7 : 19,
+        is_nep: false,
+      })),
+      { id: "invoice-text", type: "heading", is_title: false, short_text: "Zusätzliche Vertragsinformation", long_text: "Diese Textposition erscheint ohne Präfix." },
+      { id: "invoice-note", type: "note", short_text: "Prüfhinweis", long_text: "Die Schlussprüfung erfolgt anhand des gemeinsamen Aufmaßes." },
+      { id: "invoice-nep", type: "service", parent_id: "invoice-title", position_number: "1.35", short_text: "Bedarfsposition", long_text: "Nur nach Freigabe ausführen.", quantity: "2", unit: "Tag", unit_price_cents: 25000, total_cents: null, vat_rate_percent: 19, is_nep: true },
+    ],
+    totals: { net_cents: 152340, vat_cents: 27321, gross_cents: 179661 },
+    vat_totals: [
+      { rate_percent: 7, net_cents: 12340, vat_cents: 864, gross_cents: 13204 },
+      { rate_percent: 19, net_cents: 140000, vat_cents: 26600, gross_cents: 166600 },
+    ],
+  };
+  return Object.freeze({ id, number: Number(id.slice(1, 3)), title, kind: "invoice", data });
+}
+
 function addTopSeries(data, count, options = {}) {
   for (let index = 1; index <= count; index += 1) {
     data.tops.push(top(index, {
@@ -348,6 +413,8 @@ const FIXTURES = Object.freeze([
       note: words(80, "notiz"),
     }));
   }),
+  invoiceFixture("i48-invoice-final", "Finale Rechnung im V2-Satz"),
+  invoiceFixture("i49-invoice-preview", "Proberechnung im V2-Satz", { preview: true }),
 ]);
 
 function getM85Fixtures(ids = []) {

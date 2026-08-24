@@ -13,6 +13,7 @@ const { buildLicensedToText } = require("../licensing/featureGuard");
 const { normalizeLicensedModules, normalizeLicensedFeatures } = require("../licensing/licenseFeatures"); 
 const { normalizePrintOrientation } = require("./printOrientation"); 
 const { InvoiceRepository } = require("../db/invoiceRepository");
+const { InvoiceService } = require("../domain/rechnung/InvoiceService");
 
 let _printModesModulePromise = null;
 let _rechnungPositionsModulePromise = null;
@@ -1021,13 +1022,18 @@ function _loadPrintDocumentContent({
   };
 }
 
-async function _loadBookedInvoicePrintData({ db, invoiceId } = {}) {
+async function _loadInvoicePrintData({ db, invoiceId, invoicePreview = false } = {}) {
   const id = String(invoiceId || "").trim();
   if (!id) throw new Error("Rechnungs-ID für den PDF-Satz fehlt.");
   const repository = new InvoiceRepository({ dbProvider: () => db });
-  const invoice = repository.get(id);
+  const invoice = invoicePreview === true
+    ? await new InvoiceService({ repository }).previewDraft(id)
+    : repository.get(id);
   if (!invoice) throw new Error("Rechnung wurde nicht gefunden.");
-  if (invoice.status !== "BOOKED" || !invoice.invoice_number) {
+  if (invoicePreview === true && (invoice.status !== "DRAFT" || invoice.preview !== true)) {
+    throw new Error("Nur Rechnungsentwürfe dürfen als Proberechnung gedruckt werden.");
+  }
+  if (invoicePreview !== true && (invoice.status !== "BOOKED" || !invoice.invoice_number)) {
     throw new Error("Nur gebuchte Rechnungen dürfen final gedruckt werden.");
   }
   if (!invoice.customer_snapshot || !invoice.issuer_snapshot) {
@@ -1074,6 +1080,7 @@ async function getPrintData({
   restarbeitenLocationLabels,
   showAmpelInList,
   invoiceId,
+  invoicePreview,
 } = {}) {
   const { resolvePrintMode } = await _loadPrintModesModule();
   const normalizedMode = resolvePrintMode(mode, { fallback: "protocol" });
@@ -1083,7 +1090,7 @@ async function getPrintData({
 
   const db = initDatabase();
   const invoice = normalizedMode === "invoice"
-    ? await _loadBookedInvoicePrintData({ db, invoiceId })
+    ? await _loadInvoicePrintData({ db, invoiceId, invoicePreview: invoicePreview === true })
     : null;
   const runtimeContext = await _buildPrintRuntimeContext({
     db,

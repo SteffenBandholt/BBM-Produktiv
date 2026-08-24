@@ -444,6 +444,14 @@ Dabei gilt:
 - Positionen, Summen, PDF-Fachausgabe, ZUGFeRD/E-Rechnung und GAEB bleiben ausserhalb dieses Reparaturstands.
 - Komponentenvertrag, Mounted-Refs, nativer Typvertrag und Registry-Fingerprint muessen gemeinsam gruen sein, bevor `rechnung.screen` als `complete` gilt.
 
+### Rechnungen - produktive PDF-V2-Shell-Anbindung (2026-08-24)
+
+- Der bestehende produktive Datenweg `RechnungScreen -> InvoiceService/InvoiceRepository -> printData -> mode invoice -> PrintShell` bleibt fuehrend; es gibt keinen zweiten Renderer und keinen zweiten `printToPDF`-Pfad.
+- Die gemeinsame V2-Shell besitzt weiterhin GlobalHeader, FullHeader-/Body-/MiniHeader-Slots, Paginierung, Satzspiegel und Footerreserve. Rechnungsfachinhalt liegt unter `src/renderer/modules/rechnungen/print/InvoicePrintContent.js`.
+- Finale Rechnungen und DRAFT-Proberechnungen verwenden denselben V2-Renderer. Die Proberechnung wird ausschliesslich durch `data.invoice.preview === true` erkannt und erhaelt den roten Vorabzug-Marker.
+- Der PDF-Editor-Scope `pdf.bbm.invoice` fuehrt FullHeader, Body und MiniHeader als explizite Parent-Struktur; Fachaktionen, Nummernvergabe, Previewstatus, IPC und Datenbankzugriffe bleiben gesperrt.
+- Zwei Invoice-Golden-Fixtures ergaenzen den bestehenden Satzvertrag. Die vorhandenen Protokoll-Goldens wurden nicht neu geschrieben und bleiben unveraendert.
+
 ### Zentraler Popup-/Formularstandard (viertes Migrationspaket umgesetzt, Freigabe offen)
 
 - Die freigegebenen Rechnungen-Werte sind zentral unter `src/renderer/ui/styles/popupFormStandard.css` definiert und in `docs/BBM_POPUP_FORMULARSTANDARD.md` dokumentiert.

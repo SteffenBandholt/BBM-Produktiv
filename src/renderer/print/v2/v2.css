@@ -140,6 +140,27 @@
   flex-direction: column;
 }
 
+.printV2Root .v2HeaderFull.v2HeaderFullSlot {
+  height: auto;
+  min-height: var(--v2-full-height, 40mm);
+}
+
+.printV2Root .v2HeaderFullSlot .v2FullSlotContent {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.printV2Root .v2HeaderFullSlot.v2HeaderFullHasDraftNotice .v2FullSlotContent {
+  padding-bottom: 6mm;
+}
+
+.printV2Root .v2HeaderFullSlot .v2FullDraftBadge {
+  right: 0;
+  left: auto;
+  transform: none;
+  font-size: 11pt;
+}
+
 .printV2Root .v2FullGapProjectLine {
   height: var(--v2-full-gap-project-line, 3mm);
 }
@@ -739,10 +760,9 @@
 }
 
 /* PDF-V2-INVOICE-002 bis -007: additive Rechnungsdarstellung im gemeinsamen Satz. */
-.invoicePdfFirstBlocks {
+.invoicePdfFullHeaderContent {
   display: grid;
   gap: 3.2mm;
-  margin-bottom: 4.5mm;
   color: #17212b;
   font-size: 9pt;
 }
@@ -857,6 +877,10 @@
   font-size: 9pt;
   line-height: 1.5;
   white-space: pre-wrap;
+}
+
+.printV2Root .v2PageBody > .invoicePdfIntro {
+  margin: 0 0 4.5mm;
 }
 
 .invoicePdfTable {

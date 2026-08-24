@@ -295,22 +295,27 @@ async function runRechnungNavigationTests(run) {
     assert.equal(rechnungScreen.draftPreviewIdentifier("draft-8f3a2c"), rechnungScreen.draftPreviewIdentifier("draft-8f3a2c"));
     assert.notEqual(rechnungScreen.draftPreviewIdentifier("draft-8f3a2c"), rechnungScreen.draftPreviewIdentifier("draft-1b2c3d"));
     const source = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/screens/RechnungScreen.js"), "utf8");
-    for (const text of ["Kennung: ${draftPreviewIdentifier(invoice.id)}", "Diese Kennung ist keine Rechnungsnummer.", "Rechnungs-Nr.: wird erst bei Buchung vergeben"]) assert.equal(source.includes(text), true, text);
+    for (const text of ["invoice.preview_identifier || draftPreviewIdentifier(invoice.id)", "Diese Kennung ist keine Rechnungsnummer.", "Rechnungs-Nr.: wird erst bei Buchung vergeben"]) assert.equal(source.includes(text), true, text);
     assert.equal(source.includes("vorgemerkte Rechnungsnummer"), false);
   });
 
   await run("Rechnung Proberechnung: DRAFT zeigt Kennung und nur den Buchungshinweis zur Rechnungsnummer", async () => {
     const previousWindow = global.window;
-    global.window = { bbmDb: { rechnungPreviewDraft: async () => ({ ok: true, data: { id: "draft-8f3a2c", status: "DRAFT", invoice_number: null, document_type: "INVOICE", service_reference: "Fensterarbeiten", invoice_date: "2026-08-19", due_date: "2026-08-27" } }) } };
+    let printPayload = null;
+    global.window = {
+      bbmDb: { rechnungPreviewDraft: async () => ({ ok: true, data: { id: "draft-8f3a2c", status: "DRAFT", preview: true, preview_identifier: "PR-8F3A2C", invoice_number: null, document_type: "INVOICE", service_reference: "Fensterarbeiten", invoice_date: "2026-08-19", due_date: "2026-08-27" } }) },
+      bbmPrint: { printPdfAndPreviewInternal: async (payload) => { printPayload = payload; return { ok: true, filePath: "preview.pdf" }; } },
+    };
     try {
       const screen = new rechnung.RechnungScreen();
-      screen.current = { id: "draft-8f3a2c", status: "DRAFT" }; screen.draftSaveChain = Promise.resolve(true); screen.previewBody = { textContent: "" }; screen.preview = { hidden: true }; screen._payload = () => ({}); screen._error = (message) => { throw new Error(message); };
+      screen.current = { id: "draft-8f3a2c", status: "DRAFT" }; screen.draftSaveChain = Promise.resolve(true); screen.previewBody = { textContent: "" }; screen.preview = { hidden: true }; screen.message = { textContent: "" }; screen._payload = () => ({}); screen._error = (message) => { throw new Error(message); };
       await screen._showPreview();
       assert.match(screen.previewBody.textContent, /^PROBERECHNUNG · ENTWURF/m);
       assert.match(screen.previewBody.textContent, /Kennung: PR-8F3A2C/);
       assert.match(screen.previewBody.textContent, /Diese Kennung ist keine Rechnungsnummer\./);
       assert.match(screen.previewBody.textContent, /Rechnungs-Nr\.: wird erst bei Buchung vergeben/);
       assert.equal(screen.preview.hidden, false);
+      assert.deepEqual([printPayload.mode, printPayload.documentTypeId, printPayload.invoiceId, printPayload.invoicePreview, printPayload.targetDir], ["invoice", "invoice", "draft-8f3a2c", true, "temp"]);
     } finally {
       global.window = previousWindow;
     }

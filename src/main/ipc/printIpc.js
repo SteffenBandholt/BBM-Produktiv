@@ -417,6 +417,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
   const projectId = payload.projectId || null;
   const meetingId = payload.meetingId || null;
   const invoiceId = payload.invoiceId || null;
+  const invoicePreview = payload.invoicePreview === true;
   const orientation = _resolveRequestedOrientation(payload);
 
   console.log(
@@ -428,6 +429,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
     projectId,
     meetingId,
     invoiceId,
+    invoicePreview,
     settingsOverride: payload.settingsOverride || null,
     orientation,
     todoResponsibleFilter: payload.todoResponsibleFilter || null,
@@ -544,6 +546,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
         projectId,
         meetingId,
         invoiceId,
+        invoicePreview,
         restarbeitenRows: payload.restarbeitenRows || null,
         restarbeitenLocationLabels: payload.restarbeitenLocationLabels || null,
         settingsOverride: payload.settingsOverride || null,
@@ -585,6 +588,7 @@ function registerPrintIpc() {
         projectId: p.projectId,
         meetingId: p.meetingId,
         invoiceId: p.invoiceId,
+        invoicePreview: p.invoicePreview === true,
         settingsOverride: p.settingsOverride || null,
         orientation,
         todoResponsibleFilter: p.todoResponsibleFilter || null,
@@ -640,6 +644,7 @@ function registerPrintIpc() {
           projectId: p.projectId || null,
           meetingId: p.meetingId || null,
           invoiceId: p.invoiceId || null,
+          invoicePreview: p.invoicePreview === true,
           restarbeitenRows: p.restarbeitenRows || null,
           restarbeitenLocationLabels: p.restarbeitenLocationLabels || null,
           settingsOverride: p.settingsOverride || null,

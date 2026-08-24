@@ -103,6 +103,11 @@ export function formatDocumentType(input = {}) {
   return ({ INVOICE: "Rechnung", FINAL: "Schlussrechnung", HOURLY: "Stundenlohnrechnung" })[input.document_type] || "Rechnung";
 }
 
+export function draftPreviewIdentifier(draftId) {
+  const compact = String(draftId || "").replace(/[^a-z0-9]/gi, "").toUpperCase();
+  return `PR-${(compact || "ENTWURF").slice(-6)}`;
+}
+
 export function formatInvoiceNumber(sequenceKey, value) {
   return `${sequenceKey}-${String(value).padStart(4, "0")}`;
 }

@@ -306,6 +306,11 @@ async function runRechnungPdfTests(run) {
     );
     const registry = invoiceAdapter.REGISTRY;
     const ids = new Set(registry.elements.map((element) => element.id));
+    assert.equal(invoiceAdapter.DESCRIPTOR_VERSION, 2);
+    for (const id of ["pdf.bbm.invoice.header", "pdf.bbm.invoice.context", "pdf.bbm.invoice.body", "pdf.bbm.invoice.mini-header"]) assert.equal(ids.has(id), true, id);
+    assert.equal(registry.elements.find((element) => element.id === "pdf.bbm.invoice.recipient")?.parentId, "pdf.bbm.invoice.header");
+    assert.equal(registry.elements.find((element) => element.id === "pdf.bbm.invoice.meta")?.parentId, "pdf.bbm.invoice.header");
+    assert.equal(registry.elements.find((element) => element.id === "pdf.bbm.invoice.intro")?.parentId, "pdf.bbm.invoice.body");
     assert.equal(registry.elements.filter((element) => element.kind === "tableColumn").length, 6);
     for (const element of registry.elements) {
       if (element.parentId) assert.equal(ids.has(element.parentId), true, `${element.id}:parent`);
@@ -392,6 +397,26 @@ async function runRechnungPdfTests(run) {
       assert.equal(restored.issuer_snapshot.companyName, "Snapshot Aussteller");
       assert.equal(restored.issuer_snapshot.iban, "DE001");
       assert.deepEqual(restored.positions, booked.positions);
+    } finally {
+      env.close();
+    }
+  });
+
+  await run("Rechnung Proberechnung: InvoiceService liefert DRAFT-Kennung und flüchtige Druck-Snapshots ohne Buchung", async () => {
+    const env = fixture();
+    try {
+      const draft = await env.service.createDraft(invoiceInput());
+      const preview = await env.service.previewDraft(draft.id);
+      assert.equal(preview.status, "DRAFT");
+      assert.equal(preview.preview, true);
+      assert.equal(preview.invoice_number, null);
+      assert.match(preview.preview_identifier, /^PR-[A-Z0-9]{6}$/);
+      assert.equal(preview.customer_snapshot.companyName, "Snapshot Kunde");
+      assert.equal(preview.issuer_snapshot.companyName, "Snapshot Aussteller");
+      assert.equal(env.service.get(draft.id).customer_snapshot, null);
+      assert.equal(env.service.get(draft.id).issuer_snapshot, null);
+      assert.equal(env.db.prepare("SELECT COUNT(*) AS count FROM invoice_number_sequences").get().count, 0);
+      assert.equal(env.db.prepare("SELECT COUNT(*) AS count FROM commercial_document_files").get().count, 0);
     } finally {
       env.close();
     }
@@ -511,32 +536,45 @@ async function runRechnungPdfTests(run) {
   await run("R2-I2 Satzvertrag: Bau-LV, Text, Hinweis, NEP, Mehrfach-MwSt. und Pagination sind explizit", () => {
     const shell = read("src/renderer/print/layout/PrintShell.js");
     const app = read("src/renderer/print/printApp.js");
+    const invoiceContent = read("src/renderer/modules/rechnungen/print/InvoicePrintContent.js");
     const data = read("src/main/print/printData.js");
     const css = read("src/renderer/print/v2/v2.css");
-    for (const token of ["INVOICE_PDF_COLUMNS", '"invoicePdfNoteRow", "Hinweis"', 'row.kind === "invoiceText"', 'row.kind === "invoiceNote"', 'position.is_nep ? "NEP"', "vat_totals_display", "invoiceFirst", "invoiceLast", "buildInvoiceTableHead", "buildInvoiceTail", "invoicePdfLetterhead", 'normalizedMode !== "invoice"']) {
-      assert.equal(`${shell}\n${app}`.includes(token), true, token);
+    for (const token of ["INVOICE_PDF_COLUMNS", 'specialRow(row, "invoicePdfNoteRow", "Hinweis")', 'row.kind === "invoiceText"', 'row.kind === "invoiceNote"', "buildInvoiceTableHead", "buildInvoiceTail", "invoicePdfLetterhead", "buildInvoiceFullHeaderContent", "buildInvoiceMiniHeaderContent", "buildInvoiceBodyIntro"]) {
+      assert.equal(`${invoiceContent}\n${shell}\n${app}`.includes(token), true, token);
     }
+    for (const token of ['position.is_nep ? "NEP"', "vat_totals_display", "invoiceFirst", "invoiceLast"]) assert.equal(app.includes(token), true, token);
     for (const token of [".invoicePdfPositionRow .invoicePdfCol--description", "translateY(4.5mm)", ".invoicePdfFooterAddress"]) {
       assert.equal(css.includes(token), true, token);
     }
-    assert.match(data, /status !== "BOOKED"/);
+    assert.match(data, /invoicePreview === true/);
+    assert.match(data, /InvoiceService\(\{ repository \}\)\.previewDraft\(id\)/);
     assert.match(data, /customer_snapshot/);
     assert.match(data, /issuer_snapshot/);
     assert.match(data, /vatGroups/);
-    assert.doesNotMatch(shell, />Text</);
+    assert.doesNotMatch(invoiceContent, />Text</);
+    assert.doesNotMatch(shell, /function buildInvoice(?:FullHeaderContent|MiniHeaderContent|BodyIntro|TableHead|Row|Tail)/);
   });
 
   await run("R2-I2 Architektur und UI-Vertrag: ein Renderer, ein printToPDF-Pfad und unveränderter Rechnungs-UI-Vertrag", () => {
     const printIpc = read("src/main/ipc/printIpc.js");
+    const printData = read("src/main/print/printData.js");
     const printApp = read("src/renderer/print/printApp.js");
     const shell = read("src/renderer/print/layout/PrintShell.js");
+    const globalHeader = read("src/renderer/print/v2/header/GlobalHeader.js");
+    const invoiceContent = read("src/renderer/modules/rechnungen/print/InvoicePrintContent.js");
     const preload = read("src/main/preload.js");
     const screen = read("src/renderer/modules/rechnungen/screens/RechnungScreen.js");
     assert.equal((printIpc.match(/webContents\.printToPDF\(/g) || []).length, 1);
     assert.equal((printApp.match(/function _paginateGeneric\(/g) || []).length, 1);
     assert.equal((shell.match(/export function renderPrint\(/g) || []).length, 1);
+    assert.match(shell, /renderV2GlobalHeader\(\{ data: runtimeData \}\)/);
+    for (const key of ["print.logo1.enabled", "print.logo2.enabled", "print.logo3.enabled", "print.logo1.pngDataUrl", "print.logo2.pngDataUrl", "print.logo3.pngDataUrl"]) {
+      assert.equal(printData.includes(key), true, key);
+    }
+    assert.match(globalHeader, /const logos = Array\.isArray\(data\?\.logos\)/);
+    assert.doesNotMatch(invoiceContent, /print\.logo|pngDataUrl|renderV2GlobalHeader/);
     for (const token of ["rechnungFinalizePdf", "rechnungOpenPdf"]) assert.equal(preload.includes(token), true, token);
-    for (const token of ["PDF öffnen", "PDF erneut erzeugen", "rechnungFinalizePdf", "rechnungOpenPdf"]) assert.equal(screen.includes(token), true, token);
+    for (const token of ["PDF öffnen", "PDF erneut erzeugen", "rechnungFinalizePdf", "rechnungOpenPdf", "printPdfAndPreviewInternal", "invoicePreview: true"]) assert.equal(screen.includes(token), true, token);
     const contractHash = crypto.createHash("sha256").update(read("src/renderer/modules/rechnungen/RechnungScreen.uiEditorContract.js")).digest("hex");
     assert.equal(contractHash, "68e3576a6eebc32d40276845e5b22efe465f9d3e594d6052a18e52bfcb144922");
   });

@@ -1,15 +1,19 @@
 import {
   appendProtocolTitleMarker,
-  buildInvoiceColGroup,
-  buildInvoiceFirstBlocks,
-  buildInvoiceRow,
-  buildInvoiceTableHead,
-  buildInvoiceTail,
   buildRestarbeitenColGroup,
   buildRestarbeitenRow,
   buildRestarbeitenTableHead,
   renderPrint,
 } from "./layout/PrintShell.js";
+import {
+  buildInvoiceBodyIntro,
+  buildInvoiceColGroup,
+  buildInvoiceFullHeaderContent,
+  buildInvoiceMiniHeaderContent,
+  buildInvoiceRow,
+  buildInvoiceTableHead,
+  buildInvoiceTail,
+} from "../modules/rechnungen/print/InvoicePrintContent.js";
 import { computeAmpelColorForTop, computeAmpelMapForTops } from "../../shared/ampel/pdfAmpelRule.js";
 import { renderHeaderTestPages } from "./headerTest/HeaderTestPages.js";
 import { renderV2GlobalHeader } from "./v2/header/GlobalHeader.js";
@@ -1393,7 +1397,7 @@ function _buildParticipantsIntroPlan({ intro, ctxFirst, ctxNext, firstCap, nextC
   return { chunks, heights };
 }
 
-function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind = "legacy", beforeTable = null }) {
+function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind = "legacy", bodyBeforeTable = null }) {
   const root = _buildMeasureRoot();
   root.dataset.orientation = String(data?.orientation || "portrait").toLowerCase() === "landscape"
     ? "landscape"
@@ -1407,19 +1411,34 @@ function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind 
   if (headerKind === "full") {
     const modeLabel = String(data?.printProfile?.documentLabel || "").trim() || docLabel || "Dokument";
     page.appendChild(renderV2GlobalHeader({ data }));
-    if (type !== "invoice") {
-      page.appendChild(renderV2FullHeader({ data, pageNo: 1, totalPages: 2, modeLabel }));
-    }
+    page.appendChild(type === "invoice"
+      ? renderV2FullHeader({
+          data,
+          pageNo: 1,
+          totalPages: 2,
+          modeLabel,
+          content: buildInvoiceFullHeaderContent(data?.invoice || {}),
+          draftNotice: data?.invoice?.preview === true ? "Vorabzug - nicht freigegeben" : "",
+        })
+      : renderV2FullHeader({ data, pageNo: 1, totalPages: 2, modeLabel }));
     page.appendChild(_el("div", "v2FullGapLineBody"));
   } else if (headerKind === "mini") {
     const modeLabel = String(data?.printProfile?.documentLabel || "").trim() || docLabel || "Dokument";
-    page.appendChild(renderV2MiniHeader({ data, pageNo: 2, totalPages: 2, modeLabel }));
+    page.appendChild(renderV2MiniHeader({
+      data,
+      pageNo: 2,
+      totalPages: 2,
+      modeLabel,
+      content: type === "invoice" ? buildInvoiceMiniHeaderContent(data?.invoice || {}) : null,
+    }));
   } else {
     page.appendChild(_buildPageHeaderForMeasure(projectLabel, docLabel));
     page.appendChild(_el("div", "pageHeaderLine"));
   }
 
-  if (beforeTable) page.appendChild(beforeTable);
+  const contentRoot = type === "invoice" ? _el("div", "v2PageBody") : page;
+  if (contentRoot !== page) page.appendChild(contentRoot);
+  if (bodyBeforeTable) contentRoot.appendChild(bodyBeforeTable);
 
   const table = document.createElement("table");
   table.className =
@@ -1441,7 +1460,7 @@ function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind 
 
   const tbody = document.createElement("tbody");
   table.appendChild(tbody);
-  page.appendChild(table);
+  contentRoot.appendChild(table);
   applyBbmPdfEditorLayout(root, data);
   const pageRect = page.getBoundingClientRect();
   const style = getComputedStyle(page);
@@ -1919,7 +1938,7 @@ function _paginateGeneric({ rows, type, projectLabel, docLabel, data }) {
         docLabel,
         data,
         headerKind: "full",
-        beforeTable: isInvoice ? buildInvoiceFirstBlocks(data?.invoice || {}) : null,
+        bodyBeforeTable: isInvoice ? buildInvoiceBodyIntro(data?.invoice || {}) : null,
       })
     : _createMeasureContext({ type, projectLabel, docLabel });
   const ctxNext = useV2HeaderPaging
