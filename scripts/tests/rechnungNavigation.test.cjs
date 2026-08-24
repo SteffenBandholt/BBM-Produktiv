@@ -213,19 +213,23 @@ async function runRechnungNavigationTests(run) {
     assert.match(source, /new URL\("\.\.\/assets\/icons\/decimal-increase\.svg", import\.meta\.url\)\.href/);
     assert.match(source, /setAttribute\("title", "Nachkommastellen verringern"\)/);
     assert.match(source, /setAttribute\("title", "Nachkommastellen erhöhen"\)/);
-    assert.match(source, /formatQuantityForInput\(entry\.quantity, this\.quantityDecimalPlaces\)/);
+    assert.match(source, /formatQuantityForDisplay\(entry\.quantity, this\.quantityDecimalPlaces\)/);
+    assert.match(source, /formatEuroCents\(entry\.unit_price_cents\)/);
     assert.doesNotMatch(source, /this\.positionVatRate\.textContent = `MwSt\./);
 
     assert.deepEqual(rechnungScreen.QUANTITY_DECIMAL_PLACES, [0, 1, 2, 3, 4]);
+    assert.equal(rechnungScreen.DEFAULT_QUANTITY_DECIMAL_PLACES, 2);
     assert.equal(rechnungScreen.isQuantityInputAllowed("2,3456", 4), true);
     assert.equal(rechnungScreen.isQuantityInputAllowed("2.3456", 4), true);
     assert.equal(rechnungScreen.isQuantityInputAllowed("2,34567", 4), false);
     assert.equal(rechnungScreen.isQuantityInputAllowed("2,3", 0), false);
-    assert.equal(rechnungScreen.formatQuantityForInput("2.5000", 4), "2,5");
+    assert.equal(rechnungScreen.formatQuantityForInput("2.5000", 4), "2,5000");
     assert.equal(rechnungScreen.formatQuantityForInput("2.55", 1), "2,5");
     assert.deepEqual([0, 1, 2, 3, 4].map((places) => rechnungScreen.formatQuantityForInput("12,3456", places)), ["12", "12,3", "12,35", "12,346", "12,3456"]);
+    assert.equal(rechnungScreen.formatQuantityForDisplay("1234.5", 2), "1.234,50");
 
     const screen = new rechnung.RechnungScreen();
+    assert.equal(screen.quantityDecimalPlaces, 2);
     const control = (value = "") => ({ value, checked: false, disabled: false, hidden: false, textContent: "", setAttribute() {} });
     const fieldNode = () => ({ hidden: false });
     screen.current = { status: "DRAFT" }; screen.source = { value: "FREE" }; screen.message = { textContent: "", dataset: {} };

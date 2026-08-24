@@ -4,6 +4,59 @@ Stand: 24.08.2026
 Scope: `rechnung.screen`
 Komponente: `bbm.rechnung.screen`
 
+## Editbox: Standard 2, dynamischer Titel und deutsche LV-Zahlen – 24.08.2026
+
+Art der Ausgabe: ausschließlich UI, kein PDF. Editorfähig: ja, ausschließlich
+über die bereits registrierten Rechnungselemente. Es entstehen keine neuen
+Editorziele, Parents, Operationen oder fachlichen Editoraktionen.
+
+Die betroffenen bestehenden Ziele bleiben wie folgt klassifiziert:
+
+- `rechnung.editor.positionEditor.title.label`: `kind=label`, Parent
+  `rechnung.editor.positionEditor`, `editable=true`, Operationen
+  `move,resizeWidth,resizeHeight,setVisibility,textResize`.
+- `rechnung.editor.positionQuantityDecimals.label` und
+  `rechnung.editor.positionQuantityDecimals.value`: `kind=label`, Parent
+  `rechnung.editor.positionQuantityDecimals`, `editable=true`, dieselben
+  Text-Layoutoperationen.
+- `rechnung.editor.positionQuantityDecimals.decrease` und
+  `rechnung.editor.positionQuantityDecimals.increase`: `kind=button`, Parent
+  `rechnung.editor.positionQuantityDecimals`, `editable=true`, dieselben
+  Text-Layoutoperationen; `executeTargetAction`, `modifyDomainData`,
+  `createRecord` und `deleteRecord` bleiben gesperrt.
+- `rechnung.editor.positionQuantity`: `kind=field`, Parent
+  `rechnung.editor.positionQuantityBlock`, `editable=true`, dieselben
+  Text-Layoutoperationen.
+- `rechnung.editor.positions.list`: `kind=group`, Parent
+  `rechnung.editor.positions`, `editable=true`, Operationen
+  `move,resizeWidth,resizeHeight,setVisibility`.
+- `rechnung.editor.positionVatRate`: `kind=field`, Parent
+  `rechnung.editor.positionEditor`, `editable=true`, dieselben
+  Text-Layoutoperationen. Das Ziel bleibt aus Vertragsgründen im DOM, ist in
+  der Positions-Editbox aber vollständig unsichtbar und layoutneutral.
+
+Der transiente Nachkommastellenwert startet beim Leeren sowie beim Aktivieren
+einer Position bei 2 und bleibt auf 0 bis 4 begrenzt. Feld und LV-Liste nutzen
+denselben Mengenformatter; das editierbare Feld bleibt ungruppiert, die
+sichtbare LV-Menge erhält deutsche Tausenderpunkte. EP und GP verwenden in der
+LV-Liste die bereits für Eurobeträge vorhandene deutsche Formatierung. Der
+Titel verwendet ausschließlich die normalisierte fachliche
+`position_number`; ohne aktive beziehungsweise ohne vorhandene Kennung bleibt
+`Position bearbeiten` erhalten.
+
+Das sichtbare Wort `Nachkommastellen`, der Positions-MwSt.-Wert und dessen
+leeres Feldlabel bleiben als bestehende Vertragsknoten erhalten, sind jedoch
+jeweils `display:none` und 0 px hoch. Die fachlich verlangte MwSt.-Zeile des
+separaten Gesamtbetragskastens bleibt unverändert. Fachaktionen, Speichern,
+Anlegen, Löschen, Upload, Import, Autosave, IPC-/Datenaktionen, PDF, Druck und
+Navigation sind keine Editorziele und wurden nicht geändert.
+
+Der Nachweis erfolgt über die fokussierten Rechnungsformatierungs- und
+Eingabetests, den real gemounteten M83-Rechnungsscreen, den
+UI-Editor-Vertragscheck sowie einen realen Chromium-Mauslauf 2–0–4–2 mit
+Feld-/Listenablesung, Punkt-/Kommaeingabe, Titel-, Sichtbarkeits- und
+Geometrieprüfung.
+
 ## Editbox: Nachkomma-Pfeile, Listenmenge und MwSt.-Minimum – 24.08.2026
 
 Art der Ausgabe: ausschließlich UI, kein PDF. Editorfähig: ja, unverändert

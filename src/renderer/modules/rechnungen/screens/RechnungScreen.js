@@ -44,9 +44,10 @@ function formatDate(value) { const [year, month, day] = String(value || "").spli
 function formatMonth(value) { const [year, month] = String(value || "").split("-"); const names = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]; return year && names[Number(month) - 1] ? `${names[Number(month) - 1]} ${year}` : ""; }
 function text(value) { return String(value || "").trim(); }
 export const QUANTITY_DECIMAL_PLACES = Object.freeze([0, 1, 2, 3, 4]);
+export const DEFAULT_QUANTITY_DECIMAL_PLACES = 2;
 export function normalizeQuantityDecimalPlaces(value) {
   const parsed = Number(value);
-  return Number.isInteger(parsed) && QUANTITY_DECIMAL_PLACES.includes(parsed) ? parsed : QUANTITY_DECIMAL_PLACES.at(-1);
+  return Number.isInteger(parsed) && QUANTITY_DECIMAL_PLACES.includes(parsed) ? parsed : DEFAULT_QUANTITY_DECIMAL_PLACES;
 }
 export function isQuantityInputAllowed(value, decimalPlaces) {
   const places = normalizeQuantityDecimalPlaces(decimalPlaces);
@@ -59,19 +60,22 @@ function isCompleteQuantityInput(value, decimalPlaces) {
   const input = String(value ?? "");
   return places === 0 ? /^\d+$/.test(input) : new RegExp(`^\\d+(?:[,.]\\d{1,${places}})?$`).test(input);
 }
-export function formatQuantityForInput(value, decimalPlaces) {
+function formatQuantity(value, decimalPlaces, useGrouping) {
   const places = normalizeQuantityDecimalPlaces(decimalPlaces);
   const parsed = Number(String(value ?? "").trim().replace(",", "."));
-  if (!Number.isFinite(parsed) || parsed < 0) return "0";
-  let formatted = parsed.toFixed(places);
-  if (formatted.includes(".")) formatted = formatted.replace(/0+$/, "").replace(/\.$/, "");
-  return formatted.replace(".", ",");
+  return new Intl.NumberFormat("de-DE", {
+    useGrouping,
+    minimumFractionDigits: places,
+    maximumFractionDigits: places,
+  }).format(Number.isFinite(parsed) && parsed >= 0 ? parsed : 0);
 }
+export function formatQuantityForInput(value, decimalPlaces) { return formatQuantity(value, decimalPlaces, false); }
+export function formatQuantityForDisplay(value, decimalPlaces) { return formatQuantity(value, decimalPlaces, true); }
 export function selectContentOnFocus(element) { element.addEventListener("focus", () => element.select?.()); }
 export { draftPreviewIdentifier };
 
 export default class RechnungScreen {
-  constructor({ textLimitSettingsService = null } = {}) { this.invoices = []; this.customers = []; this.projects = []; this.positions = []; this.selectedPositionId = null; this.positionCreateParentId = null; this.positionSequence = 0; this.positionIsTitle = false; this.isPositionMoveMode = false; this.quantityDecimalPlaces = 4; this._lastValidQuantityInput = "1"; this._quantityInputSourceValue = "1"; this.current = null; this.root = null; this.draftSaveChain = Promise.resolve(true); this.textLimitSettingsService = textLimitSettingsService || new TextLimitSettingsService(); this.textLimits = { ...DEFAULT_TEXT_LIMITS }; this._textLimitUnsubscribe = null; }
+  constructor({ textLimitSettingsService = null } = {}) { this.invoices = []; this.customers = []; this.projects = []; this.positions = []; this.selectedPositionId = null; this.positionCreateParentId = null; this.positionSequence = 0; this.positionIsTitle = false; this.isPositionMoveMode = false; this.quantityDecimalPlaces = DEFAULT_QUANTITY_DECIMAL_PLACES; this._lastValidQuantityInput = "1"; this._quantityInputSourceValue = "1"; this.current = null; this.root = null; this.draftSaveChain = Promise.resolve(true); this.textLimitSettingsService = textLimitSettingsService || new TextLimitSettingsService(); this.textLimits = { ...DEFAULT_TEXT_LIMITS }; this._textLimitUnsubscribe = null; }
 
   render() {
     ensureRechnungenDesignStyles();
@@ -273,10 +277,12 @@ export default class RechnungScreen {
     this.positionMoveRootButton.onclick = () => this._moveSelectedPositionToRoot();
     this.positionMoveRootButton.hidden = true;
     positionActions.append(this.positionCreateTitleButton, this.positionCreateButton, node("span", "rechnung-live-position-editor__action-spacer"), this.positionMoveButton, this.positionDeleteButton, this.positionMoveRootButton);
-    this.positionTypeField = field("Typ", this.positionType); this.positionQuantityField = field("Menge", this.positionQuantity); this.positionUnitField = field("Einheit", this.positionUnit); this.positionPriceField = field("Einzelpreis netto", this.positionPrice); this.positionPriceLabel = this.positionPriceField.firstElementChild || this.positionPriceField.children?.[0]; this.positionVatRateField = field("", this.positionVatRate, "rechnung-live-position-editor__vat-field"); this.positionVatRateLabel = this.positionVatRateField.firstElementChild || this.positionVatRateField.children?.[0]; this.positionVatRateLabel.hidden = true; this.positionVatRateLabel.style.display = "none"; this.positionPriceGrossField = field("Brutto", this.positionPriceGross, "rechnung-live-position-editor__gross-field"); this.positionNepField = field("NEP", this.positionNep, "rechnung-live-position-editor__nep-field");
+    this.positionTypeField = field("Typ", this.positionType); this.positionQuantityField = field("Menge", this.positionQuantity); this.positionUnitField = field("Einheit", this.positionUnit); this.positionPriceField = field("Einzelpreis netto", this.positionPrice); this.positionPriceLabel = this.positionPriceField.firstElementChild || this.positionPriceField.children?.[0]; this.positionVatRateField = field("", this.positionVatRate, "rechnung-live-position-editor__vat-field"); this.positionVatRateLabel = this.positionVatRateField.firstElementChild || this.positionVatRateField.children?.[0]; this.positionVatRateLabel.hidden = true; this.positionVatRateLabel.style.display = "none"; this.positionVatRate.hidden = true; this.positionVatRate.style.display = "none"; this.positionVatRateField.hidden = true; this.positionVatRateField.style.display = "none"; this.positionPriceGrossField = field("Brutto", this.positionPriceGross, "rechnung-live-position-editor__gross-field"); this.positionNepField = field("NEP", this.positionNep, "rechnung-live-position-editor__nep-field");
     this.positionQuantityBlock = bind(node("div", "rechnung-live-position-editor__quantity-block"), "rechnung.editor.positionQuantityBlock");
     this.positionQuantityDecimals = bind(node("div", "rechnung-live-position-editor__decimal-stepper"), "rechnung.editor.positionQuantityDecimals");
-    const quantityDecimalsLabel = bind(node("span", "rechnung-live-position-editor__decimal-label", "Nachkommastellen"), "rechnung.editor.positionQuantityDecimals.label");
+    this.positionQuantityDecimalsLabel = bind(node("span", "rechnung-live-position-editor__decimal-label", "Nachkommastellen"), "rechnung.editor.positionQuantityDecimals.label");
+    this.positionQuantityDecimalsLabel.hidden = true;
+    this.positionQuantityDecimalsLabel.style.display = "none";
     this.positionQuantityDecimalsDecrease = button("", "rechnung.editor.positionQuantityDecimals.decrease", () => this._setQuantityDecimalPlaces(this.quantityDecimalPlaces - 1));
     this.positionQuantityDecimalsDecrease.setAttribute("aria-label", "Nachkommastellen verringern");
     this.positionQuantityDecimalsDecrease.setAttribute("title", "Nachkommastellen verringern");
@@ -287,13 +293,13 @@ export default class RechnungScreen {
     this.positionQuantityDecimalsIncrease.setAttribute("aria-label", "Nachkommastellen erhöhen");
     this.positionQuantityDecimalsIncrease.setAttribute("title", "Nachkommastellen erhöhen");
     this.positionQuantityDecimalsIncrease.append(decimalIcon(DECIMAL_INCREASE_ICON_URL));
-    this.positionQuantityDecimals.append(quantityDecimalsLabel, this.positionQuantityDecimalsDecrease, this.positionQuantityDecimalsValue, this.positionQuantityDecimalsIncrease);
+    this.positionQuantityDecimals.append(this.positionQuantityDecimalsLabel, this.positionQuantityDecimalsDecrease, this.positionQuantityDecimalsValue, this.positionQuantityDecimalsIncrease);
     this.positionQuantityBlock.append(this.positionQuantityDecimals, this.positionQuantityField);
     this.positionShortRemaining = bind(node("span", "rechnung-live-position-editor__remaining"), "rechnung.editor.positionShortRemaining"); this.positionLongRemaining = bind(node("span", "rechnung-live-position-editor__remaining"), "rechnung.editor.positionLongRemaining");
     const positionShortField = field("Kurztext", this.positionShort, "invoice-field--wide"); const positionLongField = field("Langtext", this.positionLong, "invoice-field--wide");
     (positionShortField.firstElementChild || positionShortField.children?.[0])?.append(this.positionShortRemaining); (positionLongField.firstElementChild || positionLongField.children?.[0])?.append(this.positionLongRemaining);
     this._updatePositionTextCounters();
-    const positionEditorTitle = bind(
+    this.positionEditorTitle = bind(
       node("h3", "rechnung-sheet__position-title", "Position bearbeiten"),
       "rechnung.editor.positionEditor.title.label"
     );
@@ -306,7 +312,7 @@ export default class RechnungScreen {
     const editboxGrossLabel = bind(node("span", "rechnung-live-position-editor__totals-label rechnung-live-position-editor__totals-label--gross", "Brutto"), "rechnung.editor.editboxTotals.grossLabel");
     this.editboxGrossTotal = bind(node("strong", "rechnung-live-position-editor__totals-value rechnung-live-position-editor__totals-value--gross", "0,00 €"), "rechnung.editor.editboxTotals.grossValue");
     editboxTotals.append(editboxTotalsTitle, editboxNetLabel, this.editboxNetTotal, this.editboxVatLabel, this.editboxVatTotal, editboxGrossLabel, this.editboxGrossTotal);
-    positionEditor.append(positionEditorTitle, positionActions, this.positionTypeField, positionShortField, positionLongField, this.positionQuantityBlock, this.positionUnitField, this.positionPriceField, this.positionVatRateField, this.positionPriceGrossField, this.positionNepField, editboxTotals);
+    positionEditor.append(this.positionEditorTitle, positionActions, this.positionTypeField, positionShortField, positionLongField, this.positionQuantityBlock, this.positionUnitField, this.positionPriceField, this.positionVatRateField, this.positionPriceGrossField, this.positionNepField, editboxTotals);
     this._syncQuantityDecimalStepperState();
     positions.append(this.positionsList);
 
@@ -492,8 +498,8 @@ export default class RechnungScreen {
     return ordered;
   }
   _positionDepth(entry) { let depth = 0; let current = entry; const seen = new Set(); while (current?.parent_id && !seen.has(current.parent_id)) { seen.add(current.parent_id); current = this.positions.find((item) => item.id === current.parent_id) || null; depth += 1; } return depth; }
-  _clearPositionEditor() { this.selectedPositionId = null; this.positionIsTitle = false; this.positionType.value = POSITION_TYPES.SERVICE; this.positionShort.value = ""; this.positionLong.value = ""; this._quantityInputSourceValue = "1"; this.positionQuantity.value = formatQuantityForInput(this._quantityInputSourceValue, this.quantityDecimalPlaces); this._lastValidQuantityInput = this.positionQuantity.value; this.positionUnit.value = ""; this.positionPrice.value = ""; this.positionVatRate.textContent = "19 %"; this.positionPriceGross.checked = false; this.positionNep.checked = false; this._updatePositionTextCounters(); this._syncPositionEditorFields(); this._syncPositionActions(); this._syncQuantityDecimalStepperState(); }
-  _selectPosition(entry, { setCreateContext = true } = {}) { this.selectedPositionId = entry.id; this.positionIsTitle = Boolean(entry.is_title); this.positionType.value = entry.type; this.positionShort.value = entry.short_text || ""; this.positionLong.value = entry.long_text || ""; this._quantityInputSourceValue = String(entry.quantity ?? "1"); this.positionQuantity.value = formatQuantityForInput(this._quantityInputSourceValue, this.quantityDecimalPlaces); this._lastValidQuantityInput = this.positionQuantity.value; this.positionUnit.value = entry.unit || ""; this.positionPriceGross.checked = entry.price_input_mode === PRICE_INPUT_MODES.GROSS; this.positionPrice.value = entry.unit_price_cents == null ? "" : price(this.positionPriceGross.checked ? calculatePositionGrossUnitPriceCents(entry) : entry.unit_price_cents); this.positionVatRate.textContent = `${entry.vat_rate_percent == null ? 19 : entry.vat_rate_percent} %`; this.positionNep.checked = Boolean(entry.is_nep); if (setCreateContext) this._setPositionCreateParentId(entry.id); this._updatePositionTextCounters(); this._syncPositionEditorFields(); this._syncPositionActions(); this._syncQuantityDecimalStepperState(); }
+  _clearPositionEditor() { this.selectedPositionId = null; this.positionIsTitle = false; this.quantityDecimalPlaces = DEFAULT_QUANTITY_DECIMAL_PLACES; if (this.positionEditorTitle) this.positionEditorTitle.textContent = "Position bearbeiten"; this.positionType.value = POSITION_TYPES.SERVICE; this.positionShort.value = ""; this.positionLong.value = ""; this._quantityInputSourceValue = "1"; this.positionQuantity.value = formatQuantityForInput(this._quantityInputSourceValue, this.quantityDecimalPlaces); this._lastValidQuantityInput = this.positionQuantity.value; this.positionUnit.value = ""; this.positionPrice.value = ""; this.positionVatRate.textContent = "19 %"; this.positionPriceGross.checked = false; this.positionNep.checked = false; this._updatePositionTextCounters(); this._syncPositionEditorFields(); this._syncPositionActions(); this._syncQuantityDecimalStepperState(); }
+  _selectPosition(entry, { setCreateContext = true } = {}) { this.selectedPositionId = entry.id; this.positionIsTitle = Boolean(entry.is_title); this.quantityDecimalPlaces = DEFAULT_QUANTITY_DECIMAL_PLACES; const positionNumber = String(entry.position_number || "").trim(); if (this.positionEditorTitle) this.positionEditorTitle.textContent = positionNumber ? `Position ${positionNumber} bearbeiten` : "Position bearbeiten"; this.positionType.value = entry.type; this.positionShort.value = entry.short_text || ""; this.positionLong.value = entry.long_text || ""; this._quantityInputSourceValue = String(entry.quantity ?? "1"); this.positionQuantity.value = formatQuantityForInput(this._quantityInputSourceValue, this.quantityDecimalPlaces); this._lastValidQuantityInput = this.positionQuantity.value; this.positionUnit.value = entry.unit || ""; this.positionPriceGross.checked = entry.price_input_mode === PRICE_INPUT_MODES.GROSS; this.positionPrice.value = entry.unit_price_cents == null ? "" : price(this.positionPriceGross.checked ? calculatePositionGrossUnitPriceCents(entry) : entry.unit_price_cents); this.positionVatRate.textContent = `${entry.vat_rate_percent == null ? 19 : entry.vat_rate_percent} %`; this.positionNep.checked = Boolean(entry.is_nep); if (setCreateContext) this._setPositionCreateParentId(entry.id); this._updatePositionTextCounters(); this._syncPositionEditorFields(); this._syncPositionActions(); this._syncQuantityDecimalStepperState(); }
   _updatePositionTextCounters() { const shortEvaluation = evaluateShortText(this.positionShort?.value, { limit: this.textLimits.shortText }); const longEvaluation = evaluateLongText(this.positionLong?.value, { limit: this.textLimits.longText }); if (this.positionShortRemaining) { this.positionShortRemaining.textContent = String(shortEvaluation.remaining); this.positionShortRemaining.dataset.level = shortEvaluation.level; } if (this.positionLongRemaining) { this.positionLongRemaining.textContent = String(longEvaluation.remaining); this.positionLongRemaining.dataset.level = longEvaluation.level; } }
   _applyTextLimits(limits = {}) { this.textLimits = { shortText: Number(limits.shortText) || DEFAULT_TEXT_LIMITS.shortText, longText: Number(limits.longText) || DEFAULT_TEXT_LIMITS.longText }; if (this.positionShort) this.positionShort.maxLength = this.textLimits.shortText; if (this.positionLong) this.positionLong.maxLength = this.textLimits.longText; this._updatePositionTextCounters(); }
   async _loadTextLimits() { const limits = await this.textLimitSettingsService.load(); this._applyTextLimits(limits); return limits; }
@@ -502,7 +508,7 @@ export default class RechnungScreen {
   _syncQuantityDecimalStepperState() { const places = normalizeQuantityDecimalPlaces(this.quantityDecimalPlaces); this.quantityDecimalPlaces = places; if (this.positionQuantityDecimalsValue) this.positionQuantityDecimalsValue.textContent = String(places); if (this.positionQuantity) { this.positionQuantity.inputMode = "decimal"; this.positionQuantity.setAttribute?.("aria-label", `Menge mit bis zu ${places} Nachkommastellen`); this.positionQuantity.setAttribute?.("pattern", places === 0 ? "[0-9]+" : `[0-9]+([,.][0-9]{0,${places}})?`); } const booked = this.current?.status === "BOOKED"; if (this.positionQuantityDecimalsDecrease) this.positionQuantityDecimalsDecrease.disabled = booked || places === 0; if (this.positionQuantityDecimalsIncrease) this.positionQuantityDecimalsIncrease.disabled = booked || places === 4; }
   _handlePositionQuantityInput() { const value = this.positionQuantity?.value ?? ""; if (!isQuantityInputAllowed(value, this.quantityDecimalPlaces)) { this.positionQuantity.value = this._lastValidQuantityInput; return; } this._lastValidQuantityInput = value; if (isCompleteQuantityInput(value, this.quantityDecimalPlaces)) { this._quantityInputSourceValue = value; this._syncSelectedPositionFromEditor(); } }
   _commitPositionQuantityInput() { if (!this.positionQuantity) return; this.positionQuantity.value = formatQuantityForInput(this.positionQuantity.value || "0", this.quantityDecimalPlaces); this._lastValidQuantityInput = this.positionQuantity.value; this._quantityInputSourceValue = this.positionQuantity.value; this._syncSelectedPositionFromEditor(); }
-  _syncPositionEditorFields() { const isTitle = this.positionIsTitle; const isService = !isTitle && this.positionType.value === POSITION_TYPES.SERVICE; if (this.positionType) this.positionType.disabled = isTitle; [this.positionTypeField, this.positionQuantityBlock || this.positionQuantityField, this.positionUnitField].filter(Boolean).forEach((fieldNode) => { fieldNode.hidden = isTitle; }); [this.positionPriceField, this.positionVatRateField, this.positionPriceGrossField, this.positionNepField].filter(Boolean).forEach((fieldNode) => { fieldNode.hidden = !isService; }); if (this.positionPriceLabel) this.positionPriceLabel.textContent = `Einzelpreis ${this.positionPriceGross.checked ? "brutto" : "netto"}`; }
+  _syncPositionEditorFields() { const isTitle = this.positionIsTitle; const isService = !isTitle && this.positionType.value === POSITION_TYPES.SERVICE; if (this.positionType) this.positionType.disabled = isTitle; [this.positionTypeField, this.positionQuantityBlock || this.positionQuantityField, this.positionUnitField].filter(Boolean).forEach((fieldNode) => { fieldNode.hidden = isTitle; }); [this.positionPriceField, this.positionPriceGrossField, this.positionNepField].filter(Boolean).forEach((fieldNode) => { fieldNode.hidden = !isService; }); if (this.positionVatRateField) this.positionVatRateField.hidden = true; if (this.positionPriceLabel) this.positionPriceLabel.textContent = `Einzelpreis ${this.positionPriceGross.checked ? "brutto" : "netto"}`; }
   _togglePositionPriceInputMode() { const existing = this._getSelectedPosition(); if (!existing || existing.type !== POSITION_TYPES.SERVICE || !this._isFreeDraft()) return; this.positionPrice.value = price(this.positionPriceGross.checked ? calculatePositionGrossUnitPriceCents(existing) : existing.unit_price_cents); this._syncSelectedPositionFromEditor(); }
   _syncPositionActions() { const isFreeDraft = this._isFreeDraft(); const selected = this._getSelectedPosition(); if (this.positionCreateTitleButton) this.positionCreateTitleButton.disabled = !isFreeDraft; if (this.positionCreateButton) this.positionCreateButton.disabled = !isFreeDraft; if (this.positionMoveButton) { this.positionMoveButton.disabled = !isFreeDraft || !selected || Boolean(selected.is_title); this.positionMoveButton.textContent = this.isPositionMoveMode ? "Schieben beenden" : "Schieben"; } if (this.positionMoveRootButton) this.positionMoveRootButton.hidden = !this.isPositionMoveMode; if (this.positionsList) this.positionsList.classList.toggle("is-move-mode", this.isPositionMoveMode); }
   _createTitle() { if (!this._isFreeDraft()) return this._error("Titel sind nur in freien Entwuerfen verfuegbar."); this._createPositionEntry({ type: POSITION_TYPES.HEADING, is_title: true, parent_id: null }); }
@@ -538,9 +544,9 @@ export default class RechnungScreen {
       select.append(node("span", "rechnung-lv-position__number", entry.type === POSITION_TYPES.NOTE ? "Hinweis" : entry.type === POSITION_TYPES.HEADING && !entry.is_title ? "Text" : entry.position_number || ""), node("strong", "rechnung-lv-position__short", entry.short_text)); row.append(select);
       if (entry.long_text) row.append(node("p", "rechnung-lv-position__long", entry.long_text));
       if (entry.type === POSITION_TYPES.SERVICE) {
-        const quantity = entry.quantity === null || entry.quantity === undefined || entry.quantity === "" ? "" : formatQuantityForInput(entry.quantity, this.quantityDecimalPlaces);
+        const quantity = entry.quantity === null || entry.quantity === undefined || entry.quantity === "" ? "" : formatQuantityForDisplay(entry.quantity, this.quantityDecimalPlaces);
         const pricing = node("div", "rechnung-lv-position__pricing");
-        pricing.append(node("span", "", [quantity, entry.unit].filter(Boolean).join(" ") || "0"), node("span", "", money(entry.unit_price_cents)), node("strong", "", entry.is_nep ? "NEP" : money(amount)));
+        pricing.append(node("span", "", [quantity, entry.unit].filter(Boolean).join(" ") || "0"), node("span", "", formatEuroCents(entry.unit_price_cents)), node("strong", "", entry.is_nep ? "NEP" : formatEuroCents(amount)));
         row.append(pricing);
       }
       this.positionsList.append(row);

@@ -1,5 +1,15 @@
 # STATUS.md â€” BBM-Produktiv
 
+## 2026-08-24 - Rechnungs-Editbox: Standard 2, Titel und deutsche LV-Zahlen
+
+- Status: `[A]`; der transiente Nachkommastellenwert startet beim Öffnen beziehungsweise Aktivieren jeder Position bei 2. Beide vorhandenen Pfeilbuttons bleiben mit den Grenzen 0 und 4 verbunden; Mengenfeld und LV-Liste werden nach jedem Klick aus demselben Mengenformatter aktualisiert.
+- Das Mengenfeld zeigt genau die gewählte Zahl an Nachkommastellen ohne Tausenderpunkt und bleibt rechtsbündig/editierbar. Die LV-Menge nutzt dieselbe Rundung mit deutscher Gruppierung. EP und GP verwenden dort `formatEuroCents`, beispielsweise `1.234,50 m`, `10.825,00 €` und `2.056,75 €`.
+- Der Editboxtitel entsteht aus der normalisierten fachlichen `position_number`, im Prüffall `Position 01 bearbeiten`; ohne aktive oder ohne gekennzeichnete Position bleibt der neutrale Titel erhalten.
+- Der separate Positions-MwSt.-Knoten, sein Feldwrapper und sein Label sind vollständig unsichtbar/layoutneutral (`display:none`, 0 px Höhe). Auch das registrierte Label `Nachkommastellen` ist unsichtbar und 0 px hoch. Die fachlich geforderte MwSt.-Zeile des Gesamtbetragskastens bleibt erhalten.
+- Reale Chromium-Prüfung bei 1600 × 900 px: Position `01` per Maus aktiviert; Stepper 2 → 1 → 0 → 1 → 2 → 3 → 4 → 3 → 2; Feld und Liste synchron; Punkt- und Kommaeingabe akzeptiert; dritte Nachkommastelle bei Einstellung 2 abgewiesen; Editbox 183,14 px hoch, vollständig sichtbar und ohne Clipping. Screenshot: `output/playwright/rechnung-nachkommastellen-titel-zahlenformat.png`.
+- Prüfung: `rechnungNavigation` grün; realer M83-Rechnungsmount mit 131 Refs und allen neuen Assertions grün. Der anschließende breite M83-Lauf stoppt ausschließlich am unveränderten, bereits im sauberen Ausgangsstand abweichenden Licensing-Schutzhash. UI-Editor-Selbsttest und Dateicheck grün; fokussierter ESLint 0 Fehler/5 bestehende Warnungen; `git diff --check` grün. Rechnungs-CSS unverändert (`SHA-256 49E11B5EA5E3A9C83DBBF9ED91D85D0A7EECF1F60E8A4BC08FBFCC13034BC809`).
+- Keine CSS-, PDF-, Druck-, Navigations-, Registry-, HostAdapter-, Persistenz-, Protokoll- oder neue Fachlogikänderung. Kein Commit, kein Push. Nächster sinnvoller Schritt: fachliche Sichtfreigabe im normalen Rechnungsfenster.
+
 ## 2026-08-24 - Rechnungs-Nachkomma-Pfeile, Listenmenge und MwSt.-Anzeige korrigiert
 
 - Status: `[A]`; die Pfeile der beiden vorhandenen Dezimalstellen-SVGs verwenden jetzt das etablierte Blau `#3a6fb0` und mit `0.9` eine feinere Strichstärke statt `1.35`. Dezimalzeichen, Repo-Dateien, echte Buttonflächen, Handler, Grenzsperren und der Bereich 0 bis 4 bleiben erhalten.

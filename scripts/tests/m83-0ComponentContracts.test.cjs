@@ -143,7 +143,7 @@ async function runM830ComponentContractTests(run) {
       assert.equal(increase.children[0].getAttribute("aria-hidden"), "true");
       assert.equal(typeof decrease.onclick, "function");
       assert.equal(typeof increase.onclick, "function");
-      const position = { id: "decimal", type: "service", is_title: false, parent_id: null, short_text: "Dezimalmenge", long_text: "", quantity: "12.3456", unit: "m", unit_price_cents: 10000, vat_rate_percent: 19, price_input_mode: "NET", is_nep: false };
+      const position = { id: "decimal", position_number: "01", type: "service", is_title: false, parent_id: null, short_text: "Dezimalmenge", long_text: "", quantity: "1234.5678", unit: "m", unit_price_cents: 1082500, vat_rate_percent: 19, price_input_mode: "NET", is_nep: false };
       invoiceScreen.current = { id: "decimal-test", status: "DRAFT" };
       invoiceScreen.source.value = "FREE";
       invoiceScreen.positions = [position];
@@ -154,14 +154,37 @@ async function runM830ComponentContractTests(run) {
         const pricing = row.children.find((element) => element.classList.contains("rechnung-lv-position__pricing"));
         return pricing.children[0].textContent;
       };
+      const listPrice = (index) => {
+        const row = invoiceScreen.positionsList.children.find((element) => element.classList.contains("rechnung-lv-position"));
+        const pricing = row.children.find((element) => element.classList.contains("rechnung-lv-position__pricing"));
+        return pricing.children[index].textContent;
+      };
       assert.equal(invoiceScreen.positionVatRate.textContent, "19 %");
+      assert.equal(invoiceScreen.positionVatRate.hidden, true);
+      assert.equal(invoiceScreen.positionVatRate.style.display, "none");
+      assert.equal(invoiceScreen.positionVatRateField.hidden, true);
+      assert.equal(invoiceScreen.positionVatRateField.style.display, "none");
       assert.equal(refs.getM80Ref("rechnung.editor.positionVatRate.label").element.hidden, true);
       assert.equal(refs.getM80Ref("rechnung.editor.positionVatRate.label").element.style.display, "none");
-      assert.equal(listQuantity(), "12,3456 m");
-      for (const [fieldValue, listValue] of [["12,346", "12,346 m"], ["12,35", "12,35 m"], ["12,3", "12,3 m"], ["12", "12 m"]]) { decrease.onclick(); assert.equal(invoiceScreen.positionQuantity.value, fieldValue); assert.equal(listQuantity(), listValue); }
+      const decimalLabel = refs.getM80Ref("rechnung.editor.positionQuantityDecimals.label").element;
+      assert.equal(decimalLabel.hidden, true);
+      assert.equal(decimalLabel.style.display, "none");
+      assert.equal(refs.getM80Ref("rechnung.editor.positionEditor.title.label").element.textContent, "Position 01 bearbeiten");
+      assert.equal(invoiceScreen.positionQuantityDecimalsValue.textContent, "2");
+      assert.equal(invoiceScreen.positionQuantity.value, "1234,57");
+      assert.equal(listQuantity(), "1.234,57 m");
+      assert.equal(listPrice(1), "10.825,00 €");
+      assert.match(listPrice(2), /^\d{1,3}(?:\.\d{3})*,\d{2} €$/);
+      for (const [fieldValue, listValue] of [["1234,6", "1.234,6 m"], ["1235", "1.235 m"]]) { decrease.onclick(); assert.equal(invoiceScreen.positionQuantity.value, fieldValue); assert.equal(listQuantity(), listValue); }
       assert.equal(decrease.disabled, true);
-      for (const [fieldValue, listValue] of [["12,3", "12,3 m"], ["12,35", "12,35 m"], ["12,346", "12,346 m"], ["12,3456", "12,3456 m"]]) { increase.onclick(); assert.equal(invoiceScreen.positionQuantity.value, fieldValue); assert.equal(listQuantity(), listValue); }
+      for (const [fieldValue, listValue] of [["1234,6", "1.234,6 m"], ["1234,57", "1.234,57 m"], ["1234,568", "1.234,568 m"], ["1234,5678", "1.234,5678 m"]]) { increase.onclick(); assert.equal(invoiceScreen.positionQuantity.value, fieldValue); assert.equal(listQuantity(), listValue); }
       assert.equal(increase.disabled, true);
+      decrease.onclick(); decrease.onclick();
+      assert.equal(invoiceScreen.positionQuantityDecimalsValue.textContent, "2");
+      assert.equal(invoiceScreen.positionQuantity.value, "1234,57");
+      invoiceScreen._clearPositionEditor();
+      assert.equal(refs.getM80Ref("rechnung.editor.positionEditor.title.label").element.textContent, "Position bearbeiten");
+      assert.equal(invoiceScreen.positionQuantityDecimalsValue.textContent, "2");
     });
 
     refs.resetM80PilotWorkingStatesForDiagnostic(); refs.beginM80PilotRender();
