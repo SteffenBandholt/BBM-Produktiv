@@ -588,7 +588,7 @@ async function runRechnungPdfTests(run) {
     for (const token of ["rechnungFinalizePdf", "rechnungOpenPdf"]) assert.equal(preload.includes(token), true, token);
     for (const token of ["PDF öffnen", "PDF erneut erzeugen", "rechnungFinalizePdf", "rechnungOpenPdf", "printPdfAndPreviewInternal", "invoicePreview: true"]) assert.equal(screen.includes(token), true, token);
     const contractHash = crypto.createHash("sha256").update(read("src/renderer/modules/rechnungen/RechnungScreen.uiEditorContract.js")).digest("hex");
-    assert.equal(contractHash, "68e3576a6eebc32d40276845e5b22efe465f9d3e594d6052a18e52bfcb144922");
+    assert.equal(contractHash, "39f86a60d73b0a532129d11c91c514de0ffe4e7e60b700465fdc6f47f6db6f7f");
   });
 }
 

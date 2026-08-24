@@ -4,6 +4,57 @@ Stand: 24.08.2026
 Scope: `rechnung.screen`
 Komponente: `bbm.rechnung.screen`
 
+## Editbox: Dezimalmenge und Gesamtbetrag – 24.08.2026
+
+Art der Ausgabe: ausschließlich UI, kein PDF. Editorfähig: ja, für die
+sichtbaren Layoutbestandteile der Mengenbedienung und der kompakten
+Gesamtbetragsübersicht. Die vorhandene Positions-Editbox bleibt die
+übergeordnete Komponente; es entsteht keine neue Editorarchitektur.
+
+Die sechs Attribute jedes sichtbaren Ziels sind in der Tabelle direkt
+abgebildet: `id` = `data-ui-inspector-id`, `kind` =
+`data-ui-editor-kind`, `label` = `data-ui-editor-label`, `parent` =
+`data-ui-editor-parent`, `editable` = `data-ui-editor-editable`, `ops` =
+`data-ui-editor-ops`.
+
+| id | kind | label | parent | editable | ops |
+|---|---|---|---|---|---|
+| `rechnung.editor.positionQuantityBlock` | `group` | Menge mit Nachkommastellen | `rechnung.editor.positionEditor` | `true` | `move,resizeWidth,resizeHeight,setVisibility` |
+| `rechnung.editor.positionQuantityDecimals` | `group` | Nachkommastellen-Zähler | `rechnung.editor.positionQuantityBlock` | `true` | `move,resizeWidth,resizeHeight,setVisibility` |
+| `rechnung.editor.positionQuantityDecimals.label` | `label` | Nachkommastellen Bezeichnung | `rechnung.editor.positionQuantityDecimals` | `true` | `move,resizeWidth,resizeHeight,setVisibility,textResize` |
+| `rechnung.editor.positionQuantityDecimals.decrease` | `button` | Nachkommastellen verringern | `rechnung.editor.positionQuantityDecimals` | `true` | `move,resizeWidth,resizeHeight,setVisibility,textResize` |
+| `rechnung.editor.positionQuantityDecimals.value` | `label` | Nachkommastellen Wert | `rechnung.editor.positionQuantityDecimals` | `true` | `move,resizeWidth,resizeHeight,setVisibility,textResize` |
+| `rechnung.editor.positionQuantityDecimals.increase` | `button` | Nachkommastellen erhöhen | `rechnung.editor.positionQuantityDecimals` | `true` | `move,resizeWidth,resizeHeight,setVisibility,textResize` |
+| `rechnung.editor.positionQuantity` | `field` | Menge | `rechnung.editor.positionQuantityBlock` | `true` | `move,resizeWidth,resizeHeight,setVisibility,textResize` |
+| `rechnung.editor.editboxTotals` | `group` | Gesamtbetrag in der Editbox | `rechnung.editor.positionEditor` | `true` | `move,resizeWidth,resizeHeight,setVisibility` |
+| `rechnung.editor.editboxTotals.title` | `label` | Gesamtbetrag Überschrift | `rechnung.editor.editboxTotals` | `true` | `move,resizeWidth,resizeHeight,setVisibility,textResize` |
+| `rechnung.editor.editboxTotals.netLabel` | `label` | Netto Bezeichnung | `rechnung.editor.editboxTotals` | `true` | `move,resizeWidth,resizeHeight,setVisibility,textResize` |
+| `rechnung.editor.editboxTotals.netValue` | `label` | Netto Betrag | `rechnung.editor.editboxTotals` | `true` | `move,resizeWidth,resizeHeight,setVisibility,textResize` |
+| `rechnung.editor.editboxTotals.vatLabel` | `label` | Mehrwertsteuer Bezeichnung | `rechnung.editor.editboxTotals` | `true` | `move,resizeWidth,resizeHeight,setVisibility,textResize` |
+| `rechnung.editor.editboxTotals.vatValue` | `label` | Mehrwertsteuer Betrag | `rechnung.editor.editboxTotals` | `true` | `move,resizeWidth,resizeHeight,setVisibility,textResize` |
+| `rechnung.editor.editboxTotals.grossLabel` | `label` | Brutto Bezeichnung | `rechnung.editor.editboxTotals` | `true` | `move,resizeWidth,resizeHeight,setVisibility,textResize` |
+| `rechnung.editor.editboxTotals.grossValue` | `label` | Brutto Betrag | `rechnung.editor.editboxTotals` | `true` | `move,resizeWidth,resizeHeight,setVisibility,textResize` |
+
+Jedes Nicht-Root-Ziel besitzt damit einen registrierten, selbst existierenden
+Parent. Die beiden Stepper-Buttons sind nur als sichtbare Layoutziele
+editorfähig; ihre fachliche Ausführung sowie `executeTargetAction`,
+`modifyDomainData`, `createRecord` und `deleteRecord` bleiben gesperrt.
+
+Die Menge ist ein rechtsbündiges Dezimalfeld. Der Stepper stellt ausschließlich
+die Ganzzahlen 0 bis 4 bereit und begrenzt damit die zulässigen
+Nachkommastellen. Die Gesamtbetragsübersicht verwendet unverändert
+`calculateInvoiceTotalsCents` für alle aktuellen Rechnungspositionen. Der
+MwSt.-Text zeigt bei einem einheitlichen Satz den tatsächlichen Satz und bei
+gemischten Sätzen neutral `MwSt.`; Netto, MwSt. und Brutto werden nur für die
+UI zusätzlich mit dem Eurozeichen formatiert.
+
+Nicht editorfähig und unverändert bleiben Berechnung, Autosave, fachliches
+Speichern, Anlegen, Löschen, Schieben, Buchen, Upload, Import, IPC,
+Datenbankzugriffe, PDF und Druck. Der technische Nachweis erfolgt über
+`rechnungNavigation.test.cjs`, `rechnungUiEditorUnbounded.test.cjs`, den
+M83-Komponenten-Mount, `scripts/ui-editor-contract-check.cjs` und einen realen
+Electron-Bedien- und Geometrieablauf.
+
 ## Vertikale Rahmen- und Grenzabstände auf null – 24.08.2026
 
 Art der Ausgabe: ausschließlich UI, kein PDF. Die vorhandenen Ziele

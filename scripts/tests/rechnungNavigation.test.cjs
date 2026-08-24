@@ -196,6 +196,75 @@ async function runRechnungNavigationTests(run) {
     for (const fieldName of ["positionShort", "positionLong", "positionQuantity", "positionUnit", "positionPrice"]) assert.ok(source.lastIndexOf(`this.${fieldName} = control`, listenerBinding) >= 0, `${fieldName} wird vor dem Fokuslistener erzeugt`);
   });
 
+  await run("Rechnung Editbox: Menge bleibt dezimalfaehig, rechtsbuendig und wird durch den 0-bis-4-Stepper begrenzt", () => {
+    assert.deepEqual(rechnungScreen.QUANTITY_DECIMAL_PLACES, [0, 1, 2, 3, 4]);
+    assert.equal(rechnungScreen.isQuantityInputAllowed("2,3456", 4), true);
+    assert.equal(rechnungScreen.isQuantityInputAllowed("2.3456", 4), true);
+    assert.equal(rechnungScreen.isQuantityInputAllowed("2,34567", 4), false);
+    assert.equal(rechnungScreen.isQuantityInputAllowed("2,3", 0), false);
+    assert.equal(rechnungScreen.formatQuantityForInput("2.5000", 4), "2,5");
+    assert.equal(rechnungScreen.formatQuantityForInput("2.55", 1), "2,5");
+
+    const screen = new rechnung.RechnungScreen();
+    const control = (value = "") => ({ value, checked: false, disabled: false, hidden: false, textContent: "", setAttribute() {} });
+    const fieldNode = () => ({ hidden: false });
+    screen.current = { status: "DRAFT" }; screen.source = { value: "FREE" }; screen.message = { textContent: "", dataset: {} };
+    screen.positions = [{ id: "service", type: "service", is_title: false, parent_id: null, short_text: "Leistung", long_text: "", quantity: "2.3456", unit: "m", unit_price_cents: 10000, vat_rate_percent: 19 }]; screen.selectedPositionId = "service";
+    screen.positionType = control("service"); screen.positionShort = control("Leistung"); screen.positionLong = control(); screen.positionQuantity = control("2,3456"); screen.positionUnit = control("m"); screen.positionPrice = control("100.00"); screen.positionPriceGross = control(); screen.positionNep = control();
+    screen.positionTypeField = fieldNode(); screen.positionQuantityBlock = fieldNode(); screen.positionUnitField = fieldNode(); screen.positionPriceField = fieldNode(); screen.positionVatRateField = fieldNode(); screen.positionPriceGrossField = fieldNode(); screen.positionNepField = fieldNode(); screen.positionPriceLabel = { textContent: "" }; screen.positionsList = { classList: { toggle() {} } }; screen._renderPositions = () => {};
+    screen.positionQuantityDecimalsValue = { textContent: "" }; screen.positionQuantityDecimalsDecrease = { disabled: false }; screen.positionQuantityDecimalsIncrease = { disabled: false }; screen._lastValidQuantityInput = "2,3456";
+
+    for (const places of [0, 1, 2, 3, 4]) { screen._setQuantityDecimalPlaces(places); assert.equal(screen.quantityDecimalPlaces, places); assert.equal(screen.positionQuantityDecimalsValue.textContent, String(places)); }
+    screen.positionQuantity.value = "2,3456"; screen._lastValidQuantityInput = "2,3456"; screen._handlePositionQuantityInput();
+    assert.equal(screen.positions[0].quantity, "2.3456");
+    screen.positionQuantity.value = "2,34567"; screen._handlePositionQuantityInput();
+    assert.equal(screen.positionQuantity.value, "2,3456");
+    assert.equal(screen.positions[0].quantity, "2.3456");
+    screen._setQuantityDecimalPlaces(2);
+    assert.equal(screen.positionQuantity.value, "2,35");
+    assert.equal(screen.positions[0].quantity, "2.35");
+
+    const css = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/styles/rechnungenDesign.css"), "utf8");
+    assert.match(css, /\.rechnung-live-position-editor__quantity \{ text-align: right !important;/);
+    assert.match(css, /\.rechnung-live-position-editor__decimal-stepper \{ display: grid;/);
+    const elements = new Map(rechnungContract.rechnungUiEditorContract.slots.map((slot) => [slot.slotId, slot.element]));
+    assert.equal(elements.get("rechnung.editor.positionQuantity").parentId, "rechnung.editor.positionQuantityBlock");
+    assert.equal(elements.get("rechnung.editor.positionQuantityDecimals.decrease").lockedOps.includes("executeTargetAction"), true);
+    assert.equal(elements.get("rechnung.editor.positionQuantityDecimals.increase").lockedOps.includes("modifyDomainData"), true);
+  });
+
+  await run("Rechnung Editbox: Gesamtbetrag nutzt die vorhandenen Rechnungssummen dynamisch und formatiert Euro", () => {
+    const previousDocument = global.document;
+    global.document = { createElement: (tagName) => ({ tagName: String(tagName).toUpperCase(), className: "", children: [], textContent: "", append(...children) { this.children.push(...children); }, replaceChildren(...children) { this.children = [...children]; } }) };
+    try {
+      const screen = new rechnung.RechnungScreen();
+      screen.positions = [
+        { id: "a", type: "service", is_title: false, parent_id: null, short_text: "A", long_text: "", quantity: "2", unit: "St", unit_price_cents: 10000, vat_rate_percent: 19, price_input_mode: "NET", is_nep: false },
+      ];
+      screen.positionsList = { replaceChildren() {}, append() {} };
+      screen.positionsTotal = { textContent: "" }; screen.invoiceVatLabel = { textContent: "" }; screen.invoiceVat = { textContent: "" }; screen.invoiceTotal = { textContent: "" };
+      screen.editboxNetTotal = { textContent: "" }; screen.editboxVatLabel = { textContent: "" }; screen.editboxVatTotal = { textContent: "" }; screen.editboxGrossTotal = { textContent: "" };
+      screen._renderLvPositions();
+      assert.deepEqual([screen.editboxNetTotal.textContent, screen.editboxVatLabel.textContent, screen.editboxVatTotal.textContent, screen.editboxGrossTotal.textContent], ["200,00 €", "19 % MwSt.", "38,00 €", "238,00 €"]);
+
+      screen.positions[0].vat_rate_percent = 7;
+      screen._renderLvPositions();
+      assert.deepEqual([screen.editboxNetTotal.textContent, screen.editboxVatLabel.textContent, screen.editboxVatTotal.textContent, screen.editboxGrossTotal.textContent], ["200,00 €", "7 % MwSt.", "14,00 €", "214,00 €"]);
+
+      screen.positions[0].vat_rate_percent = 19;
+      screen.positions.push({ id: "b", type: "service", is_title: false, parent_id: null, short_text: "B", long_text: "", quantity: "1", unit: "St", unit_price_cents: 10000, vat_rate_percent: 7, price_input_mode: "NET", is_nep: false });
+      screen._renderLvPositions();
+      assert.equal(screen.editboxVatLabel.textContent, "MwSt.");
+      assert.deepEqual([screen.editboxNetTotal.textContent, screen.editboxVatTotal.textContent, screen.editboxGrossTotal.textContent], ["300,00 €", "45,00 €", "345,00 €"]);
+    } finally { global.document = previousDocument; }
+
+    const source = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/screens/RechnungScreen.js"), "utf8");
+    const css = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/styles/rechnungenDesign.css"), "utf8");
+    for (const token of ["Gesamtbetrag", "Netto", "Brutto", "moneyEuro(totals.net_cents)", "moneyEuro(totals.vat_cents)", "moneyEuro(totals.gross_cents)"]) assert.equal(source.includes(token), true, token);
+    assert.match(css, /\.rechnung-live-position-editor__totals \{[^}]*border: 1px solid/);
+    assert.match(css, /\.rechnung-live-position-editor__totals-value \{[^}]*text-align: right;/);
+  });
+
   await run("Rechnung Preisbedienung: Brutto-Haken rechnet den sichtbaren EP wirtschaftlich gleich um", () => {
     const screen = new rechnung.RechnungScreen();
     const control = (value = "") => ({ value, checked: false, disabled: false, hidden: false, textContent: "" });

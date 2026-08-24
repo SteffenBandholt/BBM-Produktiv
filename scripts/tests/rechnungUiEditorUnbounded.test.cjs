@@ -132,7 +132,7 @@ async function main() {
   const RechnungScreen = (await importEsmFromFile(path.join(ROOT, "src/renderer/modules/rechnungen/screens/RechnungScreen.js"))).default;
   const scope = registry.listM80RegistryScopes().find((entry) => entry.scopeId === SCOPE_ID);
   assert.ok(scope);
-  assert.equal(scope.elements.length, 117);
+  assert.equal(scope.elements.length, 131);
 
   for (const entry of scope.elements) {
     REQUIRED_OPS.forEach((operation) => assert.ok(entry.allowedOps.includes(operation), `${entry.id}: ${operation}`));
@@ -223,7 +223,7 @@ async function main() {
     assert.equal(loaded.ok, true, JSON.stringify(loaded));
     assert.equal(loaded.found, true);
     const loadedScope = loaded.scopes.find((entry) => entry.scopeId === SCOPE_ID);
-    assert.equal(loadedScope.elements.length, 117);
+    assert.equal(loadedScope.elements.length, 131);
 
     refs.resetM80PilotWorkingStatesForDiagnostic();
     body.replaceChildren(new RechnungScreen().render());
@@ -252,7 +252,7 @@ async function main() {
     global.CustomEvent = previous.CustomEvent;
   }
 
-  console.log("TESTS OK: 117 Rechnungselemente in vier Richtungen und von 0 bis ueber Altmax, Host ±2501, Textareas 10/800, exakter Neustart-Restore");
+  console.log("TESTS OK: 131 Rechnungselemente in vier Richtungen und von 0 bis ueber Altmax, Host ±2501, Textareas 10/800, exakter Neustart-Restore");
 }
 
 main().catch((error) => { console.error(error?.stack || error); process.exitCode = 1; });

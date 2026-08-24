@@ -15,7 +15,7 @@ Kundenverwaltung.
 
 ## UI-Editor-Status
 
-Der echte `RechnungScreen` ist als Scope `rechnung.screen` mit 117 expliziten
+Der echte `RechnungScreen` ist als Scope `rechnung.screen` mit 131 expliziten
 Einzelzielen komponentennah registriert. Der Scope darf nur dann als `complete`
 veröffentlicht werden, wenn Komponentenvertrag, gemountete Runtime-Refs, nativer
 Typvertrag und Registry-Fingerprint gemeinsam grün sind.
@@ -50,6 +50,13 @@ beide Preisbedienelemente aus. Nur die editierbaren Eingabefelder markieren
 vorhandenen Inhalt beim Fokuswechsel. DRAFT-Proberechnungen
 verwenden eine stabile, nicht-offizielle `PR-…`-Kennung aus der DRAFT-ID; die
 Rechnungsnummer entsteht weiterhin ausschließlich bei der Buchung.
+
+`Menge` ist innerhalb der Editbox rechtsbündig und nimmt Dezimalwerte mit Punkt
+oder Komma an. Der unmittelbar darüber liegende Stepper begrenzt die zulässigen
+Nachkommastellen auf 0 bis 4. Die kompakte Übersicht `Gesamtbetrag` verwendet
+dieselben aktuellen Rechnungssummen wie der bestehende Summenbereich und zeigt
+Netto, den tatsächlichen MwSt.-Satz beziehungsweise `MwSt.` bei gemischten
+Sätzen sowie Brutto mit Eurozeichen.
 
 Kurztext und Langtext übernehmen die allgemeinen zentralen Textgrenzen aus
 `tops.titleMax` und `tops.longMax` einschließlich ihrer Fallbacks 100/500.

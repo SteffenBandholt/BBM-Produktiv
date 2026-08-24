@@ -69,7 +69,7 @@ async function runM830ComponentContractTests(run) {
     assert.doesNotMatch(source, /data-bbm-restarbeiten-record-id|app\.db|item\.id|databaseId|recordId/); assert.ok(contractIds.every((id) => !/(?:^|\.)\d{4,}(?:\.|$)|[0-9a-f]{8}-[0-9a-f-]{27,}/i.test(id)));
   });
   await run("M83.0 BBM 05: Restarbeiten, Protokoll und Rechnung sind vollstaendig gebuendelt", () => {
-    assert.deepEqual(Object.fromEntries(contracts.map((component) => [component.componentId, component.slots.length])), { "bbm.restarbeiten.filterbar": 31, "bbm.restarbeiten.quicklane": 12, "bbm.restarbeiten.list": 32, "bbm.restarbeiten.editbox": 53, "bbm.restarbeiten.mainHeaderLauncher": 1, "bbm.protokoll.screen": 9, "bbm.protokoll.quicklane": 24, "bbm.protokoll.mainHeaderLauncher": 1, "bbm.protokoll.list.shell": 6, "bbm.protokoll.list.columns": 26, "bbm.protokoll.editbox": 38, "bbm.rechnung.screen": 117 });
+    assert.deepEqual(Object.fromEntries(contracts.map((component) => [component.componentId, component.slots.length])), { "bbm.restarbeiten.filterbar": 31, "bbm.restarbeiten.quicklane": 12, "bbm.restarbeiten.list": 32, "bbm.restarbeiten.editbox": 53, "bbm.restarbeiten.mainHeaderLauncher": 1, "bbm.protokoll.screen": 9, "bbm.protokoll.quicklane": 24, "bbm.protokoll.mainHeaderLauncher": 1, "bbm.protokoll.list.shell": 6, "bbm.protokoll.list.columns": 26, "bbm.protokoll.editbox": 38, "bbm.rechnung.screen": 131 });
   });
 
   const previous = { document: global.document, window: global.window, Element: global.Element, CustomEvent: global.CustomEvent };
@@ -95,15 +95,15 @@ async function runM830ComponentContractTests(run) {
     const invoiceRoot = new rechnungScreenModule.default().render();
     body.appendChild(invoiceRoot);
     await Promise.resolve();
-    await run("M83.0 Rechnung 01: echter Rechnungsscreen mountet alle 117 Einzel-Refs mit vollstaendigem DOM-Vertrag", () => {
+    await run("M83.0 Rechnung 01: echter Rechnungsscreen mountet alle 131 Einzel-Refs mit vollstaendigem DOM-Vertrag", () => {
       const component = contracts.find((entry) => entry.componentId === "bbm.rechnung.screen");
       const scope = scopes.find((entry) => entry.scopeId === "rechnung.screen");
       const expectedIds = scope.elements.map((entry) => entry.id);
       const rendered = collectEditorElements(invoiceRoot);
       const renderedIds = rendered.map((element) => element.getAttribute("data-ui-inspector-id"));
-      assert.equal(expectedIds.length, 117);
-      assert.equal(component.slots.length, 117);
-      assert.equal(new Set(renderedIds).size, 117);
+      assert.equal(expectedIds.length, 131);
+      assert.equal(component.slots.length, 131);
+      assert.equal(new Set(renderedIds).size, 131);
       assert.deepEqual([...renderedIds].sort(), [...expectedIds].sort());
       assert.equal(refs.validateM83ComponentReferences([component.componentId]).ok, true);
       const byId = new Map(scope.elements.map((entry) => [entry.id, entry]));

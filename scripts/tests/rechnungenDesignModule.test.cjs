@@ -272,7 +272,7 @@ async function runRechnungenDesignModuleTests(run) {
     assert.equal(liveScreen.includes("m80EditorAttributes"), true);
     assert.equal(contract.includes('RECHNUNG_SCOPE_ID = "rechnung.screen"'), true);
     assert.equal(registry.includes("rechnungUiEditorContract"), true);
-    assert.equal(documentation.includes("81 expliziten"), true);
+    assert.equal(documentation.includes("131 expliziten"), true);
     assert.equal(documentation.includes("editorEnabled: nein"), false);
   });
 

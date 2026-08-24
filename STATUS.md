@@ -4395,6 +4395,27 @@ Wichtig:
   Schutz-Hash von `docs/licensing.md` rot. `npm start` hat Electron technisch
   gestartet; die sichtbare Fachabnahme steht noch aus. Kein Commit, kein Push.
 
+## Rechnung - Editbox: Dezimalmenge und Gesamtbetrag
+
+- Status: technisch umgesetzt und im realen Electron-Renderer sichtbar und
+  bedienbar geprüft. `Menge` ist rechtsbündig, akzeptiert Punkt oder Komma und
+  wird durch einen kompakten Stepper auf 0 bis 4 Nachkommastellen begrenzt.
+- Die Editbox zeigt zusätzlich `Gesamtbetrag` mit Netto, dynamischer
+  MwSt.-Beschriftung und Brutto. Die Werte stammen unverändert aus
+  `calculateInvoiceTotalsCents` und werden in dieser UI mit `€` formatiert.
+- Der Rechnungskomponentenvertrag umfasst nun 131 explizite Ziele. Der reale
+  Mount, der Vertrags-Selbsttest, der unbegrenzte Registry-Test, die
+  Positions-/Summen-Tests, gezieltes ESLint und `git diff --check` sind für das
+  Paket grün. Der vollständige Rechnungsgruppenlauf bleibt an vier bereits vor
+  diesem Paket vorhandenen Altassertionen zu Screen-Alias und CSS-Textmustern
+  rot; die neuen Editbox-Tests und der aktualisierte UI-Vertragshash sind grün.
+- Sichtprüfung: reale Klickfolge `4→3→2→1→0→1→2→3→4`, Eingabe
+  `2,3456` angenommen, fünfte Dezimalstelle verworfen, Summen sofort
+  aktualisiert, kein horizontaler Editbox-Überlauf und keine abgeschnittene
+  Nachkommastellen-/MwSt.-Beschriftung.
+- Produktions-PDF, Druckweg und Navigation blieben unverändert. Kein Commit,
+  kein Push. Nächster Schritt: fachliche Nutzerabnahme der Rechnungs-Editbox.
+
 ## Core-Stabilisierung - Main-/IPC-Modulvertrag und Projektmodul-Navigation
 
 - Status: Der vorbereitete Main-/IPC-Modulvertrag ist produktiv angeschlossen. Protokoll- und Restarbeiten-IPCs werden anhand der aktiven Lizenzmodule registriert; Core-/Shared-IPCs bleiben direkt registriert. Rechnung besitzt weiterhin keinen Fach-IPC-Registrar.
