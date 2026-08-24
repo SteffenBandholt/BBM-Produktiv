@@ -4,6 +4,70 @@ Stand: 24.08.2026
 Scope: `rechnung.screen`
 Komponente: `bbm.rechnung.screen`
 
+## Editbox: Dezimalstellen-Icons und deutsche Geldanzeige – 24.08.2026
+
+Art der Ausgabe: ausschließlich UI, kein PDF. Editorfähig: ja, unverändert
+über die bereits registrierten Ziele. Die Buttons
+`rechnung.editor.positionQuantityDecimals.decrease` und
+`rechnung.editor.positionQuantityDecimals.increase` behalten `kind=button`,
+ihren Parent `rechnung.editor.positionQuantityDecimals`, `editable=true` und
+die vorhandenen Operationen
+`move,resizeWidth,resizeHeight,setVisibility,textResize`. Ihre fachliche
+Ausführung bleibt für den Editor gesperrt. Die beiden SVG-Dateien sind reine
+Darstellungsressourcen und keine Editorziele.
+
+Die vorhandenen Werte-Labels `rechnung.editor.editboxTotals.netValue`,
+`rechnung.editor.editboxTotals.vatValue` und
+`rechnung.editor.editboxTotals.grossValue` behalten `kind=label`, den Parent
+`rechnung.editor.editboxTotals`, `editable=true` und ihre bestehenden
+Layoutoperationen. Nur ihre sichtbare Darstellung verwendet eine deutsche
+Zahlenformatierung mit Tausenderpunkt, Dezimalkomma, zwei Nachkommastellen und
+Eurozeichen. Die Datenquelle bleibt `calculateInvoiceTotalsCents`.
+
+Alle sechs `data-ui-*`-Attribute, Parentbeziehungen, Registrierungen und
+Operationsmengen bleiben unverändert. Nicht editorfähig bleiben die
+Stepper-Handler, Rechnungsberechnung, Speichern, Anlegen, Löschen, Upload,
+Import, Autosave, IPC- und Datenaktionen. Das produktive Fünf-Spalten-Grid,
+Feld- und Buttonmaße, Abstände, Positionen und die Gesamthöhe werden nicht
+geändert.
+
+Der technische Nachweis erfolgt über Asset-/Referenz-/ARIA-Checks, den
+M83-Rechnungsmount mit vollständiger Mausfolge 4–0–4, die vorhandenen Mengen-
+und UI-Editor-Vertragstests, einen Geldformatierungstest oberhalb 999,99 Euro,
+`git diff --check` sowie eine reale Electron-Sicht-, Bedien- und
+Geometrieprüfung mit Screenshot.
+
+## Editbox: Protokoll-artige vertikale Dichte – 24.08.2026
+
+Art der Ausgabe: ausschließlich UI, kein PDF. Editorfähig: ja, unverändert für
+die bereits registrierten sichtbaren Layoutziele der Positions-Editbox. Es
+entsteht kein neues Element, kein neuer Parent und keine neue Operation.
+
+Betroffen sind ausschließlich die vorhandenen Ziele
+`rechnung.editor.positionEditor`, dessen Titel und Aktionsgruppe, die bereits
+registrierten Felder für Typ, Kurztext, Langtext, Menge/Nachkommastellen,
+Einheit, Einzelpreis, MwSt., Brutto und NEP sowie
+`rechnung.editor.editboxTotals` mit seinen bestehenden Kindzielen. Alle sechs
+`data-ui-*`-Attribute, Parentbeziehungen und Operationsmengen bleiben
+unverändert. Die Fachausführung der Buttons sowie Speichern, Anlegen, Löschen,
+Autosave, IPC und Datenzugriffe bleiben keine Editoroperationen.
+
+Die produktive Ausgangsdarstellung verwendet weiterhin das vorhandene
+Fünf-Spalten-Raster. Titel und Aktionsgruppe teilen sich eine Kopfzeile. Der
+Gesamtbetragskasten belegt rechts die beiden vorhandenen Preiszeilen; MwSt.,
+Brutto und NEP liegen kompakt in der unteren Preiszeile. Die SheetArea füllt
+nur freien Restplatz, sodass die natürlich hohe Editbox am unteren Fensterrand
+endet. Es werden keine festen Gesamtmaße, keine neuen `min-*`-/`max-*`-Werte,
+keine Bewegungs-/Resizegrenzen, keine Spacer und kein Restore/Reset bestehender
+Nutzerprofile eingeführt.
+
+Der technische Nachweis erfolgt über die fokussierten Rechnung-Editbox- und
+Abstandschecks, den M83-Komponentenvertrag, `rechnungUiEditorUnbounded`, den
+UI-Editor-Vertragscheck sowie eine reale Electron-Maus-/Eingabe-, Geometrie-
+und Screenshotprüfung bei 1600 × 973 px und 1200 × 900 px. Die
+Protokoll-Editbox wird dabei ausschließlich lesend als visuelle Referenz
+geladen; Protokoll-Code und -Darstellung bleiben unverändert.
+
 ## Editbox: Dezimalmenge und Gesamtbetrag – 24.08.2026
 
 Art der Ausgabe: ausschließlich UI, kein PDF. Editorfähig: ja, für die

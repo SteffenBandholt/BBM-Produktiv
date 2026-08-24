@@ -1,5 +1,25 @@
 # STATUS.md â€” BBM-Produktiv
 
+## 2026-08-24 - Rechnungs-Stepper mit SVG-Icons und deutsche Editbox-Geldanzeige
+
+- Status: `[A]`; die vorhandenen echten Stepper-Buttons verwenden statt Minus/Plus die neuen Repository-Assets `decimal-decrease.svg` und `decimal-increase.svg`. Beide behalten dieselben Handler, den Bereich 0 bis 4 und die Grenzsperren; `title` und `aria-label` benennen die jeweilige Funktion vollständig.
+- Der Gesamtbetragskasten formatiert die unverändert von `calculateInvoiceTotalsCents` gelieferten Centwerte über `Intl.NumberFormat("de-DE")`. Der geprüfte 19-Prozent-Fall zeigt `10.825,00 €`, `2.056,75 €` und `12.881,75 €`; kleine und negative Beträge sind ebenfalls mit zwei Nachkommastellen abgedeckt.
+- Reale Electron-Mausprüfung: 4 → 3 → 2 → 1 → 0 → 1 → 2 → 3 → 4 mit den unmittelbar sichtbaren Mengen `12,3456`, `12,346`, `12,35`, `12,3`, `12` und zurück. Beide SVGs wurden vollständig aus ihren Repo-Dateien geladen; die Buttons messen unverändert 20 × 18 px, Menge bleibt rechtsbündig und kein Editboxelement ist abgeschnitten.
+- Layoutnachweis: Der Rechnungs-CSS blieb bytegenau unverändert (`SHA-256 49E11B5EA5E3A9C83DBBF9ED91D85D0A7EECF1F60E8A4BC08FBFCC13034BC809`). Im selben realen DOM sind Editboxhöhe, fünf Grid-Spalten und sämtliche Grid-Zeilen mit dem vorherigen Zeicheninhalt und mit den SVGs exakt gleich.
+- Screenshot: `C:\Users\Steffen\Pictures\Screenshots\BBM-Rechnung-Dezimalicons-Geldformatierung.png`.
+- Prüfung: zwei fokussierte Mengen-/Gesamtbetragstests grün; echter M83-Rechnungsmount mit 131 Refs grün; `rechnungUiEditorUnbounded` und UI-Editor-Vertrags-Selbsttest grün; beide SVGs XML-valide; fokussierter ESLint 0 Fehler und 5 bestehende Warnungen; `git diff --check` grün. Die breiteren Suites behalten ausschließlich die bereits dokumentierten fremden Baselinefehler (drei Rechnungs-Vertragsbaselines und ein Licensing-Dateihash).
+- Keine Mengenfachlogik-, CSS-, PDF-, Druck-, Navigations-, Registry-, HostAdapter-, Persistenz- oder Protokolländerung. Kein Commit, kein Push. Nächster sinnvoller Schritt: fachliche Sichtfreigabe im normalen Rechnungsfenster.
+
+## 2026-08-24 - Rechnungs-Editbox auf Protokoll-artige Dichte gebracht
+
+- Status: `[A]`; die produktive Rechnungs-Editbox ist bei identischem 1600-x-973-Viewport von 255,59 px auf 177,39 px Gesamthöhe gesunken. Die Protokoll-Referenz misst 153,98 px für ihren Feldkörper beziehungsweise rund 196 px einschließlich ihrer separaten Kopf-/Aktionszeile.
+- `Position bearbeiten` und die vorhandenen Positionsaktionen teilen sich nun eine Kopfzeile. Typ, Kurztext und Langtext bleiben in ihrer gemeinsamen Textzeile; Menge/Nachkommastellen, Einheit und Einzelpreis bilden die erste Preiszeile. MwSt., Brutto und NEP liegen kompakt darunter. Der vorhandene Gesamtbetragskasten nutzt rechts dieselben beiden Preiszeilen und erzeugt keine eigene fünfte Layoutzeile mehr.
+- Die SheetArea füllt ausschließlich den verfügbaren Restplatz. Dadurch endet die natürlich hohe Editbox direkt am unteren Fensterrand, ohne feste Gesamt-, Mindest- oder Höchstmaße, Spacer oder leere untere Editboxfläche. Bei 1200 x 900 px bleibt sie mit 197,39 px vollständig sichtbar.
+- Reale Electron-Prüfung: Stepper per Maus 4 → 0 → 4 mit unmittelbar sichtbaren Mengen `12,3456`, `12,346`, `12,35`, `12,3`, `12` und zurück; manuelle Punkteingabe `7.25` erscheint nach Blur als `7,25`. Direkte Geometrieprüfung meldet keine Überlagerung und kein abgeschnittenes Label/Button/Output; Gesamtbetrag und alle vier Positionsaktionen sind sichtbar.
+- Vorher-/Nachher-Aufnahmen: `C:\Users\Steffen\Pictures\Screenshots\BBM-Rechnung-Editbox-before.png` und `C:\Users\Steffen\Pictures\Screenshots\BBM-Rechnung-Editbox-after.png`. Die Protokollmaske wurde nur lesend als Referenz geladen und nicht geändert.
+- Prüfung: vier fokussierte Rechnung-Editbox-/Abstandschecks grün; Editor-Core-Gruppe grün; `rechnungUiEditorUnbounded` grün mit 131 frei beweg-/skalierbaren Zielen und exaktem Save-/Load-/Neustart-Restore; UI-Editor-Vertrags-Selbsttest grün; fokussierter ESLint 0 Fehler und 5 bestehende Warnungen. Die breite Rechnungstestgruppe behält drei bereits im Ausgangsstand vorhandene, paketfremde Fehler. Der zusätzliche sichtbare WPF-Editor-Automationslauf stoppt vor jeder Layoutänderung, weil sein erwarteter Button `Ziel in App` im lokalen Managerfenster fehlt; der Persistenzvertrag selbst ist durch den exakten 131-Ziele-Restore grün abgedeckt.
+- Keine Protokoll-, PDF-, Navigations-, Registry-, HostAdapter-, Profil-, Datenbank- oder Fachlogikänderung. Kein Commit, kein Push.
+
 ## 2026-08-24 - Rechnungs-Stepper bedienbar und Editbox-Geometrie zurückgesetzt
 
 - Status: `[A]`; die vorhandenen Minus-/Plus-Ziele sind als echte sichtbare Sekundärbuttons bedienbar. Minus sperrt bei 0, Plus bei 4; beide bleiben innerhalb ihrer vorhandenen Stepper-Zeile direkt per Maus erreichbar.

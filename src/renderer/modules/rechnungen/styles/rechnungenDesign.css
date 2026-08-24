@@ -470,7 +470,7 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-screen__header-canvas { flex: 0 0 auto; }
 .rechnung-live-editor__header { min-height: 0; padding: 4px 10px; gap: 6px; font-size: 11px; }
 .rechnung-live-editor__header .invoice-button { padding: 3px 7px; font-size: 11px; }
-.rechnung-screen__sheet-area { flex: 0 1 auto; min-height: 0; overflow: auto; padding: 12px 22px 14px; background: #f6f8fc; }
+.rechnung-screen__sheet-area { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 12px 22px 14px; background: #f6f8fc; }
 .rechnung-screen__sheet-canvas { min-height: 0; display: flex; flex-direction: column; }
 .rechnung-live-editor__body.rechnung-sheet { flex: 0 0 auto; min-height: 0; padding: 18px 22px 22px; border: 1px solid var(--invoice-color-border); border-radius: 8px; box-shadow: 0 10px 24px rgba(31, 41, 55, .06); overflow: visible; }
 .rechnung-sheet__positions { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--invoice-color-border); }
@@ -500,6 +500,7 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-sheet__payment > .invoice-field { display: none; }
 .rechnung-sheet__payment { grid-template-columns: 1fr; gap: 8px; }
 .rechnung-live-position-editor { grid-template-columns: minmax(0, .65fr) minmax(0, 2fr) repeat(3, minmax(0, 1fr)); gap: 5px 8px; }
+.rechnung-live-position-editor > .rechnung-sheet__position-title { grid-column: 1; grid-row: 1; align-self: center; }
 .rechnung-live-position-editor .invoice-field { gap: 2px; }
 .rechnung-live-position-editor .invoice-field__label { display: flex; align-items: baseline; gap: 4px; font-size: 9px; }
 .rechnung-live-position-editor__quantity-block { display: grid; align-content: start; gap: 2px; min-width: 0; }
@@ -516,16 +517,23 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-live-position-editor .invoice-control[type="checkbox"]:checked { border-color: var(--invoice-color-primary); background: var(--invoice-color-primary); }
 .rechnung-live-position-editor .invoice-control[type="checkbox"]:checked::after { content: ""; display: block; width: 4px; height: 7px; margin: 1px 0 0 4px; border: solid #fff; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
 .rechnung-live-position-editor .invoice-field--wide { grid-column: span 2; }
-.rechnung-live-position-editor__nep-field { align-self: start; }
-.rechnung-live-position-editor__actions { gap: 5px; }
+.rechnung-live-position-editor__vat-field { grid-column: 1; grid-row: 4; }
+.rechnung-live-position-editor__gross-field { grid-column: 2; grid-row: 4; }
+.rechnung-live-position-editor__nep-field { grid-column: 3; grid-row: 4; align-self: start; }
+.rechnung-live-position-editor__actions { grid-column: 2 / -1; grid-row: 1; gap: 5px; }
 .rechnung-live-position-editor__actions .invoice-button { padding: 2px 7px; font-size: 10px; }
-.rechnung-live-position-editor__totals { grid-column: 4 / span 2; grid-row: 5; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-self: stretch; align-content: start; gap: 3px 10px; min-width: 0; padding: 7px 8px; border: 1px solid var(--invoice-color-border); border-radius: 6px; background: #fff; font-size: 10px; }
+.rechnung-live-position-editor__totals { grid-column: 4 / span 2; grid-row: 3 / span 2; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-self: stretch; align-content: start; gap: 3px 10px; min-width: 0; padding: 7px 8px; border: 1px solid var(--invoice-color-border); border-radius: 6px; background: #fff; font-size: 10px; }
 .rechnung-live-position-editor__totals-title { grid-column: 1 / -1; margin: 0 0 2px; color: var(--invoice-color-text); font-size: 10.5px; font-weight: 700; }
 .rechnung-live-position-editor__totals-label { min-width: 0; color: var(--invoice-color-muted); white-space: nowrap; }
 .rechnung-live-position-editor__totals-value { min-width: 66px; color: var(--invoice-color-text); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .rechnung-live-position-editor__totals-label--gross, .rechnung-live-position-editor__totals-value--gross { margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--invoice-color-border); color: var(--invoice-color-text); }
 @media (max-width: 780px) {
   .rechnung-sheet__head, .rechnung-sheet__facts, .rechnung-sheet__service, .rechnung-sheet__context, .rechnung-sheet__payment, .rechnung-sheet__position-editor { grid-template-columns: 1fr; }
+  .rechnung-live-position-editor > .rechnung-sheet__position-title,
+  .rechnung-live-position-editor__actions,
+  .rechnung-live-position-editor__vat-field,
+  .rechnung-live-position-editor__gross-field,
+  .rechnung-live-position-editor__nep-field { grid-column: 1; grid-row: auto; }
   .rechnung-live-position-editor__totals { grid-column: 1; grid-row: auto; }
   .rechnung-sheet__title-block, .rechnung-sheet__number { justify-self: start; text-align: left; }
   .rechnung-lv-position__pricing { grid-template-columns: 1fr; gap: 3px; }
@@ -630,7 +638,7 @@ select.invoice-control { padding-right: 28px; }
 }
 
 /* LV-Hierarchie: Titel bleiben ruhig, Kinder werden nur dezent eingerueckt. */
-.rechnung-live-position-editor__actions { grid-column: 1 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+.rechnung-live-position-editor__actions { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
 .rechnung-live-position-editor__action-spacer { flex: 1 1 0; }
 .rechnung-live-position-editor__move-root { margin-left: auto; }
 .rechnung-lv-position.is-title { padding-top: 16px; }

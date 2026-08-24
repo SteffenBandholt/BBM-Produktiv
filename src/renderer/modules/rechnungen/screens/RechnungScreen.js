@@ -6,6 +6,13 @@ import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from
 import { ensureRechnungenDesignStyles } from "../styles.js";
 import { RECHNUNG_COMPONENT_ID, RECHNUNG_SCOPE_ID } from "../RechnungScreen.uiEditorContract.js";
 
+const DECIMAL_DECREASE_ICON_URL = new URL("../assets/icons/decimal-decrease.svg", import.meta.url).href;
+const DECIMAL_INCREASE_ICON_URL = new URL("../assets/icons/decimal-increase.svg", import.meta.url).href;
+const GERMAN_EURO_AMOUNT_FORMATTER = new Intl.NumberFormat("de-DE", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 const api = () => globalThis.window?.bbmDb || {};
 const node = (tag, className = "", content = "") => { const element = document.createElement(tag); if (className) element.className = className; if (content) element.textContent = content; return element; };
 const option = (value, label) => Object.assign(document.createElement("option"), { value, textContent: label });
@@ -16,6 +23,7 @@ function bind(element, id) {
   return element;
 }
 function button(label, id, handler, variant = "secondary") { const element = bind(node("button", `invoice-button invoice-button--${variant}`, label), id); element.type = "button"; element.onclick = handler; return element; }
+function decimalIcon(src) { const element = node("img"); element.src = src; element.style.display = "block"; element.style.pointerEvents = "none"; element.setAttribute("alt", ""); element.setAttribute("aria-hidden", "true"); element.setAttribute("draggable", "false"); return element; }
 function control(tag, id, type = "") { const element = bind(node(tag, "invoice-control"), id); if (type) element.type = type; return element; }
 function field(labelText, input, className = "") {
   const wrapper = node("label", `invoice-field${className ? ` ${className}` : ""}`);
@@ -30,7 +38,7 @@ function address(value = {}) { const source = value || {}; return [source.compan
 export function issuerInformation(value = {}) { const source = value || {}; const vatId = text(source.vatId || source.vat_id); const taxNumber = text(source.taxNumber || source.tax_number); const iban = text(source.iban); const bic = text(source.bic); const nameLines = [text(source.companyName || source.name), text(source.companyName2 || source.name2)].filter(Boolean); const addressLines = [text(source.street), [text(source.zip), text(source.city)].filter(Boolean).join(" ")].filter(Boolean); const register = text(source.commercialRegister || source.commercial_register); const registerNumber = text(source.registerNumber || source.register_number); const managingDirector = text(source.managingDirector || source.managing_director); return Object.freeze({ nameLines, addressLines, taxRow: vatId ? Object.freeze({ label: "USt-IdNr.", value: vatId }) : taxNumber ? Object.freeze({ label: "Steuernr.", value: taxNumber }) : null, bankRows: Object.freeze([...(iban ? [{ label: "IBAN", value: iban }] : []), ...(bic ? [{ label: "BIC", value: bic }] : [])]), footerLines: Object.freeze([[...nameLines, ...addressLines].join(" · "), [vatId && `USt-IdNr. ${vatId}`, taxNumber && `Steuernr. ${taxNumber}`, iban && `IBAN ${iban}`, bic && `BIC ${bic}`].filter(Boolean).join(" · "), [register, registerNumber && `Registernr. ${registerNumber}`, managingDirector && `Geschäftsführer ${managingDirector}`].filter(Boolean).join(" · ")].filter(Boolean)) }); }
 function customerKey(value = {}) { return `${value.kind || value.ref?.kind}:${value.id || value.ref?.id}`; }
 function money(cents) { return `${(Number(cents || 0) / 100).toFixed(2).replace(".", ",")} EUR`; }
-function moneyEuro(cents) { return `${(Number(cents || 0) / 100).toFixed(2).replace(".", ",")} €`; }
+export function formatEuroCents(cents) { return `${GERMAN_EURO_AMOUNT_FORMATTER.format(Number(cents || 0) / 100)} €`; }
 function price(cents) { return (Number(cents || 0) / 100).toFixed(2); }
 function formatDate(value) { const [year, month, day] = String(value || "").split("-"); return year && month && day ? `${day}.${month}.${year}` : ""; }
 function formatMonth(value) { const [year, month] = String(value || "").split("-"); const names = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]; return year && names[Number(month) - 1] ? `${names[Number(month) - 1]} ${year}` : ""; }
@@ -265,16 +273,20 @@ export default class RechnungScreen {
     this.positionMoveRootButton.onclick = () => this._moveSelectedPositionToRoot();
     this.positionMoveRootButton.hidden = true;
     positionActions.append(this.positionCreateTitleButton, this.positionCreateButton, node("span", "rechnung-live-position-editor__action-spacer"), this.positionMoveButton, this.positionDeleteButton, this.positionMoveRootButton);
-    this.positionTypeField = field("Typ", this.positionType); this.positionQuantityField = field("Menge", this.positionQuantity); this.positionUnitField = field("Einheit", this.positionUnit); this.positionPriceField = field("Einzelpreis netto", this.positionPrice); this.positionPriceLabel = this.positionPriceField.firstElementChild || this.positionPriceField.children?.[0]; this.positionVatRateField = field("MwSt.", this.positionVatRate); this.positionPriceGrossField = field("Brutto", this.positionPriceGross); this.positionNepField = field("NEP", this.positionNep, "rechnung-live-position-editor__nep-field");
+    this.positionTypeField = field("Typ", this.positionType); this.positionQuantityField = field("Menge", this.positionQuantity); this.positionUnitField = field("Einheit", this.positionUnit); this.positionPriceField = field("Einzelpreis netto", this.positionPrice); this.positionPriceLabel = this.positionPriceField.firstElementChild || this.positionPriceField.children?.[0]; this.positionVatRateField = field("MwSt.", this.positionVatRate, "rechnung-live-position-editor__vat-field"); this.positionPriceGrossField = field("Brutto", this.positionPriceGross, "rechnung-live-position-editor__gross-field"); this.positionNepField = field("NEP", this.positionNep, "rechnung-live-position-editor__nep-field");
     this.positionQuantityBlock = bind(node("div", "rechnung-live-position-editor__quantity-block"), "rechnung.editor.positionQuantityBlock");
     this.positionQuantityDecimals = bind(node("div", "rechnung-live-position-editor__decimal-stepper"), "rechnung.editor.positionQuantityDecimals");
     const quantityDecimalsLabel = bind(node("span", "rechnung-live-position-editor__decimal-label", "Nachkommastellen"), "rechnung.editor.positionQuantityDecimals.label");
-    this.positionQuantityDecimalsDecrease = button("−", "rechnung.editor.positionQuantityDecimals.decrease", () => this._setQuantityDecimalPlaces(this.quantityDecimalPlaces - 1));
+    this.positionQuantityDecimalsDecrease = button("", "rechnung.editor.positionQuantityDecimals.decrease", () => this._setQuantityDecimalPlaces(this.quantityDecimalPlaces - 1));
     this.positionQuantityDecimalsDecrease.setAttribute("aria-label", "Nachkommastellen verringern");
+    this.positionQuantityDecimalsDecrease.setAttribute("title", "Nachkommastellen verringern");
+    this.positionQuantityDecimalsDecrease.append(decimalIcon(DECIMAL_DECREASE_ICON_URL));
     this.positionQuantityDecimalsValue = bind(node("output", "rechnung-live-position-editor__decimal-value", String(this.quantityDecimalPlaces)), "rechnung.editor.positionQuantityDecimals.value");
     this.positionQuantityDecimalsValue.setAttribute("aria-live", "polite");
-    this.positionQuantityDecimalsIncrease = button("+", "rechnung.editor.positionQuantityDecimals.increase", () => this._setQuantityDecimalPlaces(this.quantityDecimalPlaces + 1));
+    this.positionQuantityDecimalsIncrease = button("", "rechnung.editor.positionQuantityDecimals.increase", () => this._setQuantityDecimalPlaces(this.quantityDecimalPlaces + 1));
     this.positionQuantityDecimalsIncrease.setAttribute("aria-label", "Nachkommastellen erhöhen");
+    this.positionQuantityDecimalsIncrease.setAttribute("title", "Nachkommastellen erhöhen");
+    this.positionQuantityDecimalsIncrease.append(decimalIcon(DECIMAL_INCREASE_ICON_URL));
     this.positionQuantityDecimals.append(quantityDecimalsLabel, this.positionQuantityDecimalsDecrease, this.positionQuantityDecimalsValue, this.positionQuantityDecimalsIncrease);
     this.positionQuantityBlock.append(this.positionQuantityDecimals, this.positionQuantityField);
     this.positionShortRemaining = bind(node("span", "rechnung-live-position-editor__remaining"), "rechnung.editor.positionShortRemaining"); this.positionLongRemaining = bind(node("span", "rechnung-live-position-editor__remaining"), "rechnung.editor.positionLongRemaining");
@@ -528,7 +540,7 @@ export default class RechnungScreen {
       if (entry.type === POSITION_TYPES.SERVICE) { const pricing = node("div", "rechnung-lv-position__pricing"); pricing.append(node("span", "", [entry.quantity, entry.unit].filter(Boolean).join(" ") || "0"), node("span", "", money(entry.unit_price_cents)), node("strong", "", entry.is_nep ? "NEP" : money(amount))); row.append(pricing); }
       this.positionsList.append(row);
     });
-    const totals = calculateInvoiceTotalsCents(orderedPositions); const vatRates = [...new Set(orderedPositions.filter((entry) => calculatePositionTotalCents(entry) != null).map((entry) => entry.vat_rate_percent))]; const vatLabel = vatRates.length === 1 ? `${vatRates[0]} % MwSt.` : "MwSt."; this.positionsTotal.textContent = money(totals.net_cents); this.invoiceVatLabel.textContent = vatLabel; this.invoiceVat.textContent = money(totals.vat_cents); this.invoiceTotal.textContent = money(totals.gross_cents); if (this.editboxNetTotal) this.editboxNetTotal.textContent = moneyEuro(totals.net_cents); if (this.editboxVatLabel) this.editboxVatLabel.textContent = vatLabel; if (this.editboxVatTotal) this.editboxVatTotal.textContent = moneyEuro(totals.vat_cents); if (this.editboxGrossTotal) this.editboxGrossTotal.textContent = moneyEuro(totals.gross_cents);
+    const totals = calculateInvoiceTotalsCents(orderedPositions); const vatRates = [...new Set(orderedPositions.filter((entry) => calculatePositionTotalCents(entry) != null).map((entry) => entry.vat_rate_percent))]; const vatLabel = vatRates.length === 1 ? `${vatRates[0]} % MwSt.` : "MwSt."; this.positionsTotal.textContent = money(totals.net_cents); this.invoiceVatLabel.textContent = vatLabel; this.invoiceVat.textContent = money(totals.vat_cents); this.invoiceTotal.textContent = money(totals.gross_cents); if (this.editboxNetTotal) this.editboxNetTotal.textContent = formatEuroCents(totals.net_cents); if (this.editboxVatLabel) this.editboxVatLabel.textContent = vatLabel; if (this.editboxVatTotal) this.editboxVatTotal.textContent = formatEuroCents(totals.vat_cents); if (this.editboxGrossTotal) this.editboxGrossTotal.textContent = formatEuroCents(totals.gross_cents);
   }
 
   _syncDerived() {

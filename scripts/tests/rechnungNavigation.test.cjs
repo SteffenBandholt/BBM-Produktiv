@@ -197,6 +197,23 @@ async function runRechnungNavigationTests(run) {
   });
 
   await run("Rechnung Editbox: Menge bleibt dezimalfaehig, rechtsbuendig und wird durch den 0-bis-4-Stepper begrenzt", () => {
+    const iconPaths = [
+      path.join(root, "src/renderer/modules/rechnungen/assets/icons/decimal-decrease.svg"),
+      path.join(root, "src/renderer/modules/rechnungen/assets/icons/decimal-increase.svg"),
+    ];
+    for (const iconPath of iconPaths) {
+      assert.equal(fs.existsSync(iconPath), true, iconPath);
+      const svg = fs.readFileSync(iconPath, "utf8");
+      assert.match(svg, /<svg[^>]*width="18"[^>]*height="16"/);
+      assert.match(svg, />\.0(?:0)?</);
+      assert.match(svg, /<path[^>]*stroke=/);
+    }
+    const source = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/screens/RechnungScreen.js"), "utf8");
+    assert.match(source, /new URL\("\.\.\/assets\/icons\/decimal-decrease\.svg", import\.meta\.url\)\.href/);
+    assert.match(source, /new URL\("\.\.\/assets\/icons\/decimal-increase\.svg", import\.meta\.url\)\.href/);
+    assert.match(source, /setAttribute\("title", "Nachkommastellen verringern"\)/);
+    assert.match(source, /setAttribute\("title", "Nachkommastellen erhöhen"\)/);
+
     assert.deepEqual(rechnungScreen.QUANTITY_DECIMAL_PLACES, [0, 1, 2, 3, 4]);
     assert.equal(rechnungScreen.isQuantityInputAllowed("2,3456", 4), true);
     assert.equal(rechnungScreen.isQuantityInputAllowed("2.3456", 4), true);
@@ -239,9 +256,11 @@ async function runRechnungNavigationTests(run) {
     assert.match(css, /\.rechnung-live-position-editor__quantity \{ text-align: right !important;/);
     assert.match(css, /\.rechnung-live-position-editor__decimal-stepper \{ display: grid;/);
     assert.match(css, /\.rechnung-live-position-editor \{ grid-template-columns: minmax\(0, \.65fr\) minmax\(0, 2fr\) repeat\(3, minmax\(0, 1fr\)\); gap: 5px 8px; \}/);
+    assert.match(css, /\.rechnung-live-position-editor > \.rechnung-sheet__position-title \{ grid-column: 1; grid-row: 1; align-self: center; \}/);
+    assert.match(css, /\.rechnung-live-position-editor__actions \{ grid-column: 2 \/ -1; grid-row: 1;/);
     assert.doesNotMatch(css, /minmax\(148px, \.8fr\)/);
-    assert.match(css, /\.rechnung-live-position-editor__nep-field \{ align-self: start; \}/);
-    assert.match(css, /\.rechnung-live-position-editor__totals \{ grid-column: 4 \/ span 2; grid-row: 5;/);
+    assert.match(css, /\.rechnung-live-position-editor__nep-field \{ grid-column: 3; grid-row: 4; align-self: start; \}/);
+    assert.match(css, /\.rechnung-live-position-editor__totals \{ grid-column: 4 \/ span 2; grid-row: 3 \/ span 2;/);
     const elements = new Map(rechnungContract.rechnungUiEditorContract.slots.map((slot) => [slot.slotId, slot.element]));
     assert.equal(elements.get("rechnung.editor.positionQuantity").parentId, "rechnung.editor.positionQuantityBlock");
     assert.equal(elements.get("rechnung.editor.positionQuantityDecimals.decrease").lockedOps.includes("executeTargetAction"), true);
@@ -249,33 +268,37 @@ async function runRechnungNavigationTests(run) {
   });
 
   await run("Rechnung Editbox: Gesamtbetrag nutzt die vorhandenen Rechnungssummen dynamisch und formatiert Euro", () => {
+    assert.deepEqual(
+      [1082500, 205675, 1288175, 33456, -1082500].map(rechnungScreen.formatEuroCents),
+      ["10.825,00 €", "2.056,75 €", "12.881,75 €", "334,56 €", "-10.825,00 €"]
+    );
     const previousDocument = global.document;
     global.document = { createElement: (tagName) => ({ tagName: String(tagName).toUpperCase(), className: "", children: [], textContent: "", append(...children) { this.children.push(...children); }, replaceChildren(...children) { this.children = [...children]; } }) };
     try {
       const screen = new rechnung.RechnungScreen();
       screen.positions = [
-        { id: "a", type: "service", is_title: false, parent_id: null, short_text: "A", long_text: "", quantity: "2", unit: "St", unit_price_cents: 10000, vat_rate_percent: 19, price_input_mode: "NET", is_nep: false },
+        { id: "a", type: "service", is_title: false, parent_id: null, short_text: "A", long_text: "", quantity: "1", unit: "St", unit_price_cents: 1082500, vat_rate_percent: 19, price_input_mode: "NET", is_nep: false },
       ];
       screen.positionsList = { replaceChildren() {}, append() {} };
       screen.positionsTotal = { textContent: "" }; screen.invoiceVatLabel = { textContent: "" }; screen.invoiceVat = { textContent: "" }; screen.invoiceTotal = { textContent: "" };
       screen.editboxNetTotal = { textContent: "" }; screen.editboxVatLabel = { textContent: "" }; screen.editboxVatTotal = { textContent: "" }; screen.editboxGrossTotal = { textContent: "" };
       screen._renderLvPositions();
-      assert.deepEqual([screen.editboxNetTotal.textContent, screen.editboxVatLabel.textContent, screen.editboxVatTotal.textContent, screen.editboxGrossTotal.textContent], ["200,00 €", "19 % MwSt.", "38,00 €", "238,00 €"]);
+      assert.deepEqual([screen.editboxNetTotal.textContent, screen.editboxVatLabel.textContent, screen.editboxVatTotal.textContent, screen.editboxGrossTotal.textContent], ["10.825,00 €", "19 % MwSt.", "2.056,75 €", "12.881,75 €"]);
 
       screen.positions[0].vat_rate_percent = 7;
       screen._renderLvPositions();
-      assert.deepEqual([screen.editboxNetTotal.textContent, screen.editboxVatLabel.textContent, screen.editboxVatTotal.textContent, screen.editboxGrossTotal.textContent], ["200,00 €", "7 % MwSt.", "14,00 €", "214,00 €"]);
+      assert.deepEqual([screen.editboxNetTotal.textContent, screen.editboxVatLabel.textContent, screen.editboxVatTotal.textContent, screen.editboxGrossTotal.textContent], ["10.825,00 €", "7 % MwSt.", "757,75 €", "11.582,75 €"]);
 
       screen.positions[0].vat_rate_percent = 19;
       screen.positions.push({ id: "b", type: "service", is_title: false, parent_id: null, short_text: "B", long_text: "", quantity: "1", unit: "St", unit_price_cents: 10000, vat_rate_percent: 7, price_input_mode: "NET", is_nep: false });
       screen._renderLvPositions();
       assert.equal(screen.editboxVatLabel.textContent, "MwSt.");
-      assert.deepEqual([screen.editboxNetTotal.textContent, screen.editboxVatTotal.textContent, screen.editboxGrossTotal.textContent], ["300,00 €", "45,00 €", "345,00 €"]);
+      assert.deepEqual([screen.editboxNetTotal.textContent, screen.editboxVatTotal.textContent, screen.editboxGrossTotal.textContent], ["10.925,00 €", "2.063,75 €", "12.988,75 €"]);
     } finally { global.document = previousDocument; }
 
     const source = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/screens/RechnungScreen.js"), "utf8");
     const css = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/styles/rechnungenDesign.css"), "utf8");
-    for (const token of ["Gesamtbetrag", "Netto", "Brutto", "moneyEuro(totals.net_cents)", "moneyEuro(totals.vat_cents)", "moneyEuro(totals.gross_cents)"]) assert.equal(source.includes(token), true, token);
+    for (const token of ["Gesamtbetrag", "Netto", "Brutto", "formatEuroCents(totals.net_cents)", "formatEuroCents(totals.vat_cents)", "formatEuroCents(totals.gross_cents)", "new Intl.NumberFormat(\"de-DE\""]) assert.equal(source.includes(token), true, token);
     assert.match(css, /\.rechnung-live-position-editor__totals \{[^}]*border: 1px solid/);
     assert.match(css, /\.rechnung-live-position-editor__totals-value \{[^}]*text-align: right;/);
   });
@@ -375,7 +398,7 @@ async function runRechnungNavigationTests(run) {
   await run("Rechnung UI: vertikale Rahmen- und Grenzabstaende sind null", () => {
     const css = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/styles/rechnungenDesign.css"), "utf8");
     assert.match(css, /\.bbm-rechnung-live \{ display: flex; flex-direction: column; gap: 0;[^}]*padding-block: 0;/);
-    assert.match(css, /\.rechnung-screen__sheet-area \{ flex: 0 1 auto; min-height: 0; overflow-y: auto;/);
+    assert.match(css, /\.rechnung-screen__sheet-area \{ flex: 1 1 auto; min-height: 0; overflow: auto;/);
     assert.match(css, /\.rechnung-screen__sheet-canvas \{ min-height: 0; display: flex; flex-direction: column; \}/);
     assert.match(css, /\.rechnung-live-editor__body\.rechnung-sheet \{ flex: 0 0 auto; min-height: 0;/);
     assert.match(css, /\.rechnung-screen__edit-area \{ flex: 0 0 auto; overflow: visible; border-top: 0;[^}]*padding: 0 10px; \}/);
