@@ -137,6 +137,7 @@
 select.invoice-control { padding-right: 28px; }
 
 .invoice-button {
+  height: var(--invoice-button-height);
   padding: 5px 11px;
   border: 1px solid transparent;
   border-radius: var(--invoice-radius-control);

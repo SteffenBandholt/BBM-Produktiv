@@ -344,4 +344,10 @@ async function main() {
   console.log("TESTS OK: 131 Rechnungselemente, 16 Buttons ohne CSS-/Registry-/Inline-Grenzen, Host +/-2501, Textareas 10/800, exakter Neustart-Restore");
 }
 
-main().catch((error) => { console.error(error?.stack || error); process.exitCode = 1; });
+async function runRechnungUiEditorUnboundedTests(run) {
+  await run("Rechnungs-UI-Editor: Registry, Adapter, Inline-Geometrie und Neustart bleiben grenzenlos", main);
+}
+
+module.exports = { runRechnungUiEditorUnboundedTests };
+
+if (require.main === module) main().catch((error) => { console.error(error?.stack || error); process.exitCode = 1; });

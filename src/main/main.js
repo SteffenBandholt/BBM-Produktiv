@@ -12,6 +12,8 @@ const { configureUiEditorAcceptanceProfile } = require("./startup/uiEditorAccept
 const uiEditorAcceptanceProfile = configureUiEditorAcceptanceProfile({ electronApp: app });
 const UI_EDITOR_ACCEPTANCE_MODULE_SWITCH = "--bbm-ui-editor-acceptance-module=";
 const UI_EDITOR_ACCEPTANCE_MODULES = new Set(["restarbeiten", "protokoll", "rechnung"]);
+const RECHNUNG_BUTTON_ACCEPTANCE_SWITCH = "--bbm-rechnung-button-geometry-acceptance=";
+const RECHNUNG_BUTTON_ACCEPTANCE_ACTIONS = new Set(["Run", "RestoreOnly"]);
 
 function getUiEditorAcceptanceModule(argv = process.argv) {
   if (!uiEditorAcceptanceProfile.enabled) return null;
@@ -21,6 +23,12 @@ function getUiEditorAcceptanceModule(argv = process.argv) {
 }
 
 const uiEditorAcceptanceModule = getUiEditorAcceptanceModule();
+const rechnungButtonAcceptanceAction = (() => {
+  if (!uiEditorAcceptanceProfile.enabled || uiEditorAcceptanceModule !== "rechnung" || app.isPackaged) return null;
+  const argument = process.argv.find((value) => String(value || "").startsWith(RECHNUNG_BUTTON_ACCEPTANCE_SWITCH));
+  const action = String(argument || "").slice(RECHNUNG_BUTTON_ACCEPTANCE_SWITCH.length);
+  return RECHNUNG_BUTTON_ACCEPTANCE_ACTIONS.has(action) ? action : null;
+})();
 if (uiEditorAcceptanceProfile.enabled) {
   console.log("[ui-editor-acceptance] userData", uiEditorAcceptanceProfile.userDataPath);
   console.log("[ui-editor-acceptance] sessionData", uiEditorAcceptanceProfile.sessionDataPath);
@@ -917,6 +925,19 @@ app.whenReady().then(async () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.once("did-finish-load", () => {
       void drainQueuedLicenseImports();
+      if (rechnungButtonAcceptanceAction) {
+        const { runRechnungButtonProductAcceptance } = require("../../scripts/tests/rechnungButtonProductAcceptanceRunner.cjs");
+        void runRechnungButtonProductAcceptance({
+          mainWindow,
+          controller: uiEditorSessionController,
+          acceptanceRoot: uiEditorAcceptanceProfile.rootPath,
+          action: rechnungButtonAcceptanceAction,
+        }).then(() => app.quit()).catch((error) => {
+          console.error("[ui-editor] Rechnung button product acceptance failed", error?.stack || error?.message || error);
+          process.exitCode = 1;
+          app.quit();
+        });
+      }
       if (process.argv.includes("--open-ui-editor") || app.commandLine.hasSwitch("open-ui-editor")) {
         const openExistingEditor = "import('./app/coreShellNavigation.js').then((module) => module.openNativeUiEditor({}))";
         mainWindow.webContents.executeJavaScript(openExistingEditor).catch((error) => {

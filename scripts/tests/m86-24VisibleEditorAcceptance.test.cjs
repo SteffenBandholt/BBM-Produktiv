@@ -10,6 +10,7 @@ const electronBinary = require("electron");
 const ROOT = path.resolve(__dirname, "../..");
 const RUNNER = path.join(__dirname, "m86-24VisibleEditorAcceptanceRunner.cjs");
 const EPSILON = 0.2;
+const BUTTON_EPSILON = 0.55;
 const BUTTON_BOUND_KEYS = Object.freeze(["minWidth", "maxWidth", "minHeight", "maxHeight"]);
 
 function runVisibleModule(moduleId, profileRoot, temporaryRoot, requestedAction = null) {
@@ -109,29 +110,40 @@ function assertVisibleSave(moduleId, report, restartReport) {
       const smallHeight = measuredDimension(button.afterShrink, "height");
       const grownWidth = measuredDimension(button.afterGrow, "width");
       const grownHeight = measuredDimension(button.afterGrow, "height");
+      const widthOnlyGrownWidth = measuredDimension(button.afterWidthGrow, "width");
+      const widthOnlyGrownHeight = measuredDimension(button.afterWidthGrow, "height");
+      const finalWidthOnlyWidth = measuredDimension(button.afterWidthShrinkFinal, "width");
+      const finalWidthOnlyHeight = measuredDimension(button.afterWidthShrinkFinal, "height");
       const finalWidth = measuredDimension(button.final, "width");
       const finalHeight = measuredDimension(button.final, "height");
       assert.ok(narrowWidth < initialWidth - EPSILON, `${id}: sichtbares Breiten-Minus wirkte nicht.`);
       assert.ok(smallHeight < initialHeight - EPSILON, `${id}: sichtbares Hoehen-Minus wirkte nicht.`);
-      assert.ok(Math.abs(smallWidth - narrowWidth) <= EPSILON, `${id}: Hoehenoperation veraenderte die Breite.`);
+      assert.ok(Math.abs(smallWidth - narrowWidth) <= BUTTON_EPSILON, `${id}: Hoehenoperation veraenderte die Breite.`);
+      assert.ok(Math.abs(narrowWidth - 6) <= BUTTON_EPSILON, `${id}: angeforderte Breite 6 px ergab ${narrowWidth} px.`);
+      assert.ok(Math.abs(smallHeight - 6) <= BUTTON_EPSILON, `${id}: angeforderte Hoehe 6 px ergab ${smallHeight} px.`);
+      assert.ok(Math.abs(widthOnlyGrownHeight - smallHeight) <= BUTTON_EPSILON, `${id}: reine Breitenvergroesserung veraenderte die Hoehe.`);
+      assert.ok(widthOnlyGrownWidth > smallWidth + 100, `${id}: deutliche Breitenvergroesserung wirkte nicht.`);
       assert.ok(grownWidth > smallWidth + EPSILON, `${id}: sichtbares Breiten-Plus wirkte nicht.`);
       assert.ok(grownHeight > smallHeight + EPSILON, `${id}: sichtbares Hoehen-Plus wirkte nicht.`);
-      assert.ok(Math.abs(finalWidth - smallWidth) <= EPSILON, `${id}: Breiten-Plus/Minus ist nicht symmetrisch.`);
-      assert.ok(Math.abs(finalHeight - smallHeight) <= EPSILON, `${id}: Hoehen-Plus/Minus ist nicht symmetrisch.`);
+      assert.ok(grownHeight > smallHeight + 60, `${id}: deutliche Hoehenvergroesserung wirkte nicht.`);
+      assert.ok(Math.abs(finalWidthOnlyWidth - smallWidth) <= BUTTON_EPSILON, `${id}: grosse Breite wurde nicht wieder auf 6 px verkleinert.`);
+      assert.ok(Math.abs(finalWidthOnlyHeight - grownHeight) <= BUTTON_EPSILON, `${id}: reine Breitenverkleinerung veraenderte die grosse Hoehe.`);
+      assert.ok(Math.abs(finalWidth - smallWidth) <= BUTTON_EPSILON, `${id}: Breiten-Plus/Minus ist nicht symmetrisch.`);
+      assert.ok(Math.abs(finalHeight - smallHeight) <= BUTTON_EPSILON, `${id}: Hoehen-Plus/Minus ist nicht symmetrisch.`);
       const inline = button.final.target.targets[0].inline;
       BUTTON_BOUND_KEYS.forEach((key) => assert.equal(inline[key] || "", "", `${id}: unzulaessiger Inline-Wert ${key}`));
       const saved = persistedElement(report, id);
       assert.ok(saved, `${id}: fehlt im gespeicherten Profil.`);
-      assert.ok(Math.abs(saved.width - finalWidth) <= EPSILON, `${id}: kleine Breite wurde nicht exakt gespeichert.`);
-      assert.ok(Math.abs(saved.height - finalHeight) <= EPSILON, `${id}: kleine Hoehe wurde nicht exakt gespeichert.`);
+      assert.ok(Math.abs(saved.width - finalWidth) <= BUTTON_EPSILON, `${id}: kleine Breite wurde nicht exakt gespeichert.`);
+      assert.ok(Math.abs(saved.height - finalHeight) <= BUTTON_EPSILON, `${id}: kleine Hoehe wurde nicht exakt gespeichert.`);
       BUTTON_BOUND_KEYS.forEach((key) => assert.equal(Object.hasOwn(saved, key), false, `${id}: unzulaessiger Profilwert ${key}`));
       for (const [label, targets] of [
         ["nach Editor-Close", run.afterCloseButtonTargets],
         ["nach App-Remount", run.afterRestart.buttonTargets],
         ["nach Electron-Neustart", restartReport.restarted.buttonTargets],
       ]) {
-        assert.ok(Math.abs(measuredDimension(targets[id], "width") - finalWidth) <= EPSILON, `${id}: Breite ${label} nicht erhalten.`);
-        assert.ok(Math.abs(measuredDimension(targets[id], "height") - finalHeight) <= EPSILON, `${id}: Hoehe ${label} nicht erhalten.`);
+        assert.ok(Math.abs(measuredDimension(targets[id], "width") - finalWidth) <= BUTTON_EPSILON, `${id}: Breite ${label} nicht erhalten.`);
+        assert.ok(Math.abs(measuredDimension(targets[id], "height") - finalHeight) <= BUTTON_EPSILON, `${id}: Hoehe ${label} nicht erhalten.`);
       }
     }
     const decimalButton = run.invoiceButtons.find((button) => button.targetConfig.elementId === "rechnung.editor.positionQuantityDecimals.increase");

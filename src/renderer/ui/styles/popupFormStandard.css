@@ -177,8 +177,11 @@
   opacity: 1;
 }
 
-.bbm-popup-standard :where(button) {
+.bbm-popup-standard :where(button:not(.invoice-button)) {
   min-height: var(--bbm-popup-button-height) !important;
+}
+
+.bbm-popup-standard :where(button) {
   border-radius: var(--bbm-popup-control-radius) !important;
 }
 

@@ -48,19 +48,56 @@ async function selectVisibleEditorTarget(window, processId, targetConfig) {
   return { selectionActivation, selectionProbe, editorSelection, initial: await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true) };
 }
 
+async function measureVisibleState(window) {
+  return await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
+}
+
+async function shrinkVisibleDimensionToSix(window, processId, dimension) {
+  const minusAction = dimension === "width" ? "ClickWidthMinus" : "ClickHeightMinus";
+  const plusAction = dimension === "width" ? "ClickWidthPlus" : "ClickHeightPlus";
+  const before = await measureVisibleState(window);
+  const beforeValue = before.target.targets[0].bounds[dimension];
+  await runPowerShell(processId, "SelectStep10");
+  const tenStepCount = Math.max(0, Math.floor((beforeValue - 16) / 10));
+  const tenStep = tenStepCount > 0 ? await runPowerShell(processId, minusAction, tenStepCount) : null;
+  await runPowerShell(processId, "SelectStep1");
+  const beforeCalibration = await measureVisibleState(window);
+  const calibrationValue = beforeCalibration.target.targets[0].bounds[dimension];
+  let first = null;
+  let remaining = null;
+  let remainingCount = 0;
+  let measuredStep = 1;
+  if (calibrationValue > 6.2) {
+    first = await runPowerShell(processId, minusAction);
+    const afterFirst = await measureVisibleState(window);
+    const afterFirstValue = afterFirst.target.targets[0].bounds[dimension];
+    measuredStep = Math.max(0.1, calibrationValue - afterFirstValue);
+    remainingCount = Math.max(0, Math.round((afterFirstValue - 6) / measuredStep));
+    remaining = remainingCount > 0 ? await runPowerShell(processId, minusAction, remainingCount) : null;
+  } else if (calibrationValue < 5.8) {
+    first = await runPowerShell(processId, plusAction);
+  }
+  return { dimension, requested: 6, before, tenStepCount, tenStep, beforeCalibration, first, measuredStep, remainingCount, remaining, after: await measureVisibleState(window) };
+}
+
 async function exerciseVisibleInvoiceButton(window, processId, targetConfig) {
   const selected = await selectVisibleEditorTarget(window, processId, targetConfig);
-  const widthMinus = await runPowerShell(processId, "ClickWidthMinus", 3);
-  const afterWidthMinus = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
-  const heightMinus = await runPowerShell(processId, "ClickHeightMinus", 3);
-  const afterShrink = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
-  const widthPlus = await runPowerShell(processId, "ClickWidthPlus");
-  const heightPlus = await runPowerShell(processId, "ClickHeightPlus");
-  const afterGrow = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
-  const widthMinusFinal = await runPowerShell(processId, "ClickWidthMinus");
-  const heightMinusFinal = await runPowerShell(processId, "ClickHeightMinus");
-  const final = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
-  return { targetConfig, selected, widthMinus, afterWidthMinus, heightMinus, afterShrink, widthPlus, heightPlus, afterGrow, widthMinusFinal, heightMinusFinal, final };
+  const widthMinus = await shrinkVisibleDimensionToSix(window, processId, "width");
+  const afterWidthMinus = await measureVisibleState(window);
+  const heightMinus = await shrinkVisibleDimensionToSix(window, processId, "height");
+  const afterShrink = await measureVisibleState(window);
+  const widthGrowCount = 12;
+  const heightGrowCount = 8;
+  await runPowerShell(processId, "SelectStep10");
+  const widthPlus = await runPowerShell(processId, "ClickWidthPlus", widthGrowCount);
+  const afterWidthGrow = await measureVisibleState(window);
+  const heightPlus = await runPowerShell(processId, "ClickHeightPlus", heightGrowCount);
+  const afterGrow = await measureVisibleState(window);
+  const widthMinusFinal = await shrinkVisibleDimensionToSix(window, processId, "width");
+  const afterWidthShrinkFinal = await measureVisibleState(window);
+  const heightMinusFinal = await shrinkVisibleDimensionToSix(window, processId, "height");
+  const final = await measureVisibleState(window);
+  return { targetConfig, requested: { smallWidth: 6, smallHeight: 6, widthGrowCount, heightGrowCount }, selected, widthMinus, afterWidthMinus, heightMinus, afterShrink, widthPlus, afterWidthGrow, heightPlus, afterGrow, widthMinusFinal, afterWidthShrinkFinal, heightMinusFinal, final };
 }
 
 app.commandLine.appendSwitch("disable-gpu");
@@ -88,7 +125,10 @@ app.whenReady().then(async () => {
     ]);
     if (!started?.opened?.ok || !controller.child?.pid) throw new Error(started?.opened?.message || "Sichtbarer UI-Editor wurde nicht gestartet.");
     let automation;
-    if (["ProtokollSave", "RestarbeitenSave", "RechnungSave"].includes(action)) {
+    if (action === "RechnungDomLayoutAudit") {
+      if (moduleId !== "rechnung") throw new Error("Der Rechnungs-DOM-Layoutaudit ist nur fuer das Rechnungsmodul zulaessig.");
+      automation = await window.webContents.executeJavaScript("window.__m8624.runRechnungEffectiveGeometryDomGuard()", true);
+    } else if (["ProtokollSave", "RestarbeitenSave", "RechnungSave"].includes(action)) {
       fs.writeFileSync(resultPath, JSON.stringify({ ok: false, stage: "before-selection", started }, null, 2), "utf8");
       const selection = await runPowerShell(controller.child.pid, "SelectTarget");
       fs.writeFileSync(resultPath, JSON.stringify({ ok: false, stage: "selection-active", started, selection }, null, 2), "utf8");

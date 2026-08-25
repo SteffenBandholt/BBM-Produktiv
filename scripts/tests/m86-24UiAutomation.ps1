@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)][int]$ProcessId,
-    [ValidateSet("Dump", "SelectTarget", "ReadSelection", "ClickWidthMinus", "ClickWidthPlus", "ClickHeightMinus", "ClickHeightPlus", "ClickSave", "BeginClose", "ClickSaveDialog", "RestarbeitenSave")][string]$Action = "Dump",
+    [ValidateSet("Dump", "SelectTarget", "ReadSelection", "SelectStep1", "SelectStep10", "ClickWidthMinus", "ClickWidthPlus", "ClickHeightMinus", "ClickHeightPlus", "ClickSave", "BeginClose", "ClickSaveDialog", "RestarbeitenSave")][string]$Action = "Dump",
     [ValidateRange(1, 300)][int]$Count = 1
 )
 
@@ -213,6 +213,17 @@ if ($Action -eq "ClickWidthPlus") {
     exit 0
 }
 
+if ($Action -in @("SelectStep1", "SelectStep10")) {
+    $stepName = if ($Action -eq "SelectStep10") { "10" } else { "1" }
+    $stepButton = Find-Control $stepName ([System.Windows.Automation.ControlType]::Button)
+    if ($null -eq $stepButton -or $stepButton.Current.IsOffscreen) { throw "Schrittweite $stepName ist nicht sichtbar." }
+    Activate-Window $window
+    Click-Control $stepButton
+    Start-Sleep -Milliseconds 250
+    [ordered]@{ action = $Action; clicked = $stepButton.Current.Name; enabled = $stepButton.Current.IsEnabled } | ConvertTo-Json -Depth 3 -Compress
+    exit 0
+}
+
 if ($Action -eq "ClickHeightMinus") {
     $typeCondition = New-Object System.Windows.Automation.PropertyCondition(
         [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
@@ -272,8 +283,12 @@ if ($Action -eq "ReadSelection") {
             $text.Current.Name.StartsWith("Kurztext", [System.StringComparison]::Ordinal) -or
             $text.Current.Name.StartsWith("Nachkommastellen verringern", [System.StringComparison]::Ordinal) -or
             $text.Current.Name.StartsWith("Nachkommastellen erh", [System.StringComparison]::Ordinal) -or
+            $text.Current.Name.StartsWith("+Titel", [System.StringComparison]::Ordinal) -or
             $text.Current.Name.StartsWith("+Position", [System.StringComparison]::Ordinal) -or
-            $text.Current.Name.StartsWith("Proberechnung", [System.StringComparison]::Ordinal)) { $matching += $text.Current.Name }
+            $text.Current.Name.StartsWith("Schieben", [System.StringComparison]::Ordinal) -or
+            $text.Current.Name.EndsWith("schen", [System.StringComparison]::Ordinal) -or
+            $text.Current.Name.StartsWith("Proberechnung", [System.StringComparison]::Ordinal) -or
+            $text.Current.Name.StartsWith("Kopf", [System.StringComparison]::Ordinal)) { $matching += $text.Current.Name }
         if ($text.Current.Name.StartsWith("Ungespeichert", [System.StringComparison]::Ordinal) -or
             $text.Current.Name.StartsWith("Gespeichert", [System.StringComparison]::Ordinal) -or
             $text.Current.Name.StartsWith("Zuletzt", [System.StringComparison]::Ordinal)) { $status += $text.Current.Name }

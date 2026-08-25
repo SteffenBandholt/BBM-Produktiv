@@ -2,6 +2,89 @@
 
 Stand: 24.08.2026, Branch `rechnung-integration`, noch nicht committed oder gepusht.
 
+## Korrektur 25.08.2026 - effektive Buttongeometrie im Produktpfad
+
+Der Abschluss nach Commit `6a9dfd0f` war durch die praktische Nutzerprüfung
+widerlegt. Der damalige M86.24-Harness mountete einen eigenen RechnungScreen in
+eine leere Testseite und lud weder die globale CoreShell-Styleinjektion noch
+`popupFormStandard.css`. Zudem prüfte er nur drei Minusschritte und
+`< 20`/`< 18`, nicht die angeforderten `6 x 6 px`. Im normalen produktiven
+RechnungScreen wirkte dagegen
+`.bbm-popup-standard :where(button) { min-height: 30px !important; }`; die
+sichtbare Höhe blieb deshalb trotz gespeichertem Editorwert bei 30 px.
+
+Gefundene weitere Layoutwirkungen waren der globale CoreShell-Buttonstandard,
+die festen Dezimal-Gridtracks `20px 22px 20px`, Grid-Stretch, die
+Flex-/Intrinsic-Breite aus Text, Padding, Rahmen und `white-space: nowrap`, die
+explizite Iconbreite sowie die `width: 100%`-Vorschauaktion. Die festen
+Gridtracks bleiben als unveränderter Standardaufbau erhalten, legen eine
+explizit editierte Buttongröße aber nicht mehr fest: Gridbuttons erhalten bei
+Breiten-/Höhenbearbeitung `justify-self: start` beziehungsweise
+`align-self: start`; Flexbuttons verwenden weiterhin den exakten Flex-Basis-
+und Align-Self-Weg. Die globale und die Popup-Mindesthöhe gelten nicht mehr
+für `.invoice-button`. Die normale Standardhöhe bleibt ohne Editoroperation
+über `height: var(--invoice-button-height)` unverändert. Inlinegröße,
+Chrome-Einpassung und `overflow: hidden` haben nach einer Editoroperation
+Vorrang vor Text, Padding, Rahmen und Intrinsic-Sizing.
+
+Der neue echte Chromium-DOM-Guard prüft alle 16 registrierten Buttons jeweils
+mit nur Breite, nur Höhe, beiden Dimensionen, `0 x 0 px`, sehr klein, deutlich
+größer und Rückkehr zum Standard. `0 x 0 px` wurde bei allen 16 Buttons und dem
+Referenzelement real als `0 x 0 px` gemessen. Messung der weiteren kombinierten
+Phasen:
+
+| ID | klein Soll | klein Ist | groß Soll | groß Ist |
+|---|---:|---:|---:|---:|
+| `rechnung.overview.new` | 6x6 | 5.996x5.996 | 196x90 | 195.996x90.000 |
+| `rechnung.editor.headToggle` | 6x6 | 5.996x5.996 | 188x90 | 187.998x90.000 |
+| `rechnung.editor.customerPicker` | 6x6 | 5.996x5.996 | 264x90 | 263.994x90.000 |
+| `rechnung.editor.servicePeriodToggle` | 6x6 | 5.996x5.996 | 456x90 | 455.996x90.000 |
+| `rechnung.editor.positionQuantityDecimals.decrease` | 6x6 | 5.996x5.996 | 160x90 | 160.000x90.000 |
+| `rechnung.editor.positionQuantityDecimals.increase` | 6x6 | 5.996x5.996 | 160x90 | 160.000x90.000 |
+| `rechnung.editor.positionCreateTitle` | 6x6 | 5.996x5.996 | 160x90 | 160.000x90.000 |
+| `rechnung.editor.positionCreate` | 6x6 | 5.996x5.996 | 160x90 | 160.000x90.000 |
+| `rechnung.editor.positionMove` | 6x6 | 5.996x5.996 | 160x90 | 160.000x90.000 |
+| `rechnung.editor.positionDelete` | 6x6 | 5.996x5.996 | 160x90 | 160.000x90.000 |
+| `rechnung.editor.positionMoveRoot` | 6x6 | 5.996x5.996 | 217x90 | 216.992x90.000 |
+| `rechnung.editor.preview` | 6x6 | 5.996x5.996 | 180x90 | 180.000x90.000 |
+| `rechnung.editor.book` | 6x6 | 5.996x5.996 | 194x90 | 193.994x90.000 |
+| `rechnung.editor.delete` | 6x6 | 5.996x5.996 | 199x90 | 198.994x90.000 |
+| `rechnung.editor.close` | 6x6 | 5.996x5.996 | 160x90 | 160.000x90.000 |
+| `rechnung.preview.close` | 6x6 | 5.996x5.996 | 1137x90 | 1136.992x90.000 |
+
+Das bereits entgrenzte Nicht-Button-Referenzziel
+`rechnung.editor.headerCanvas` lieferte für dieselben Operationen
+`5.996 x 5.996 px` und `1193.994 x 90.000 px`. Button und Referenz folgen
+damit derselben Vertragssemantik.
+
+Die Realabnahme nutzte den normalen Router, den produktiven RechnungScreen,
+dieselbe CoreShell-/Popup-/Rechnungs-Stylekette und den nativen WPF-UI-Editor.
+Die native Ein-Pixel-Bedienung liegt wegen Windows-DPI-/Chromium-Rundung bis
+zu 0.5 px um den angeforderten Wert. Alle Angaben sind reale
+`getBoundingClientRect()`-Außenmaße:
+
+| Ziel | vorher | nach Soll 6x6 | deutlich groß | gespeichert / Reopen | Electron-Neustart |
+|---|---:|---:|---:|---:|---:|
+| Nachkommastellen + | 21.992x30.000 | 5.902x5.921 | 125.893x85.912 | 5.780x5.799 | 5.771x5.799 |
+| +Titel | 42.951x30.000 | 5.846x5.921 | 125.846x85.912 | 5.733x5.799 | 5.724x5.799 |
+| +Position | 61.447x30.000 | 6.353x5.921 | 126.344x85.912 | 6.288x5.799 | 6.288x5.799 |
+| Schieben | 60.103x30.000 | 6.015x5.921 | 126.006x85.912 | 5.949x5.799 | 5.940x5.799 |
+| Löschen | 56.175x30.000 | 6.118x5.921 | 126.100x85.912 | 6.043x5.799 | 6.034x5.799 |
+| Proberechnung | 99.568x30.000 | 6.494x5.921 | 116.485x85.912 | 6.429x5.799 | 6.429x5.799 |
+| Kopfbutton | 107.284x30.000 | 6.222x5.921 | 126.222x85.912 | 6.165x5.799 | 6.156x5.799 |
+
+Die Berichte liegen unter
+`output/playwright/rechnung-buttons-product-acceptance/`. Der verpflichtende
+Guard `scripts/tests/rechnungButtonEffectiveGeometry.test.cjs` scheitert nicht
+nur an CSS-Strings, sondern vergleicht für alle 16 Ziele Sollgröße und reale
+Chromium-BoundingBox. `scripts/tests/rechnungButtonProductAcceptance.test.cjs`
+deckt den normalen Produktpfad, sichtbares Speichern, Rechnung-Reopen und einen
+zweiten Electron-Prozess ab. Der korrigierte M86.24-Harness lädt nun ebenfalls
+die vorher fehlende CoreShell-/Popup-Stylekette und fordert etwa `6 x 6 px`.
+
+Der nachfolgende Nachtrag vom selben Tag dokumentiert den damaligen Stand und
+ist hinsichtlich seines alten Sichtnachweises durch diese Korrektur ersetzt.
+
 ## Nachtrag 25.08.2026 - alle 16 registrierten Rechnungsbuttons vollständig entgrenzt
 
 Das nachfolgende 117er-Inventar bleibt der historische Nachweis des damaligen

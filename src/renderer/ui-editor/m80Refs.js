@@ -263,6 +263,8 @@ function applyGeneric(element, state, entry, requestedOperation = null) {
     if (String(parentStyle?.display || "").includes("flex")) {
       if (String(parentStyle?.flexDirection || "row").startsWith("column")) setLayoutProperty(element.style, "align-self", "flex-start");
       else setLayoutProperty(element.style, "flex", `0 0 ${px(contentWidth)}`);
+    } else if (entry?.type === "button" && entry.fitChromeToOuterSize === true && String(parentStyle?.display || "").includes("grid")) {
+      setLayoutProperty(element.style, "justify-self", "start");
     }
   }
   if ((operations.has("resize") || operations.has("resizeHeight")) && applies("resize", "resizeHeight")) {
@@ -283,6 +285,8 @@ function applyGeneric(element, state, entry, requestedOperation = null) {
     if (String(parentStyle?.display || "").includes("flex")) {
       if (String(parentStyle?.flexDirection || "row").startsWith("column")) setLayoutProperty(element.style, "flex", `0 0 ${px(contentHeight)}`);
       else setLayoutProperty(element.style, "align-self", "flex-start");
+    } else if (entry?.type === "button" && entry.fitChromeToOuterSize === true && String(parentStyle?.display || "").includes("grid")) {
+      setLayoutProperty(element.style, "align-self", "start");
     }
   }
   if (operations.has("textMove") && applies("textMove") && state.textOffsetX !== null && state.textOffsetX !== undefined) {

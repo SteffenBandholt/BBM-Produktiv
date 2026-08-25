@@ -64,10 +64,16 @@ nicht betroffen.
 - `scripts/tests/rechnungUiEditorUnbounded.test.cjs` sichert CSS,
   Komponentenvertrag, HostAdapter, Inline-Anwendung und Persistenz aller 16
   Buttons gegen jede erneute Min-/Max-Größe ab.
-- `scripts/tests/m86-24VisibleEditorAcceptance.test.cjs` prüft im isolierten
-  echten Rechnungspfad Nachkommastellen-Button, `+Position` und
-  `Proberechnung`, sichtbares Speichern sowie exakten Restore nach Remount und
-  getrenntem Electron-Neustart.
+- `scripts/tests/rechnungButtonEffectiveGeometry.test.cjs` setzt alle 16
+  Buttons in echtem Chromium auf `6 x 6 px` und deutlich größere Werte und
+  vergleicht Sollwerte mit `getBoundingClientRect()`; damit werden auch
+  Grid-, Flex-, Intrinsic- oder Parentgrenzen erkannt.
+- `scripts/tests/rechnungButtonProductAcceptance.test.cjs` prüft im normalen
+  Router/RechnungScreen mit nativer Editorbedienung sieben Buttonklassen,
+  sichtbares Speichern, Rechnung-Reopen und einen zweiten Electron-Prozess.
+- `scripts/tests/m86-24VisibleEditorAcceptance.test.cjs` lädt nun dieselbe
+  CoreShell-/Popup-Stylekette und fordert statt der alten Schwelle
+  `< 20`/`< 18` eine reale BoundingBox von etwa `6 x 6 px`.
 - `scripts/ui-editor-contract-check.cjs --self-test` und der gezielte
   Dateivertragscheck sichern den allgemeinen UI-Editor-Vertrag.
 

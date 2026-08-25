@@ -150,10 +150,12 @@ export function injectCoreShellBaseStyles() {
       color: var(--bbm-button-text);
       font-size: var(--bbm-button-font-size);
       font-weight: var(--bbm-button-font-weight);
-      min-height: var(--bbm-button-height);
       line-height: var(--bbm-button-line-height);
       cursor: pointer;
       transition: background 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+    }
+    button:not(.invoice-button) {
+      min-height: var(--bbm-button-height);
     }
     button:hover:not(:disabled) {
       background: var(--bbm-button-bg-hover);
@@ -172,8 +174,10 @@ export function injectCoreShellBaseStyles() {
     }
     button[data-size="sm"] {
       padding: var(--bbm-button-padding-y-sm) var(--bbm-button-padding-x-sm);
-      min-height: var(--bbm-button-height-sm);
       font-size: var(--bbm-button-font-size-sm);
+    }
+    button:not(.invoice-button)[data-size="sm"] {
+      min-height: var(--bbm-button-height-sm);
     }
     button:not([data-variant]),
     button[data-variant="secondary"] {

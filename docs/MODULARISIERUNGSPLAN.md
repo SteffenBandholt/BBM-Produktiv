@@ -501,7 +501,7 @@ Dabei gilt:
 
 ### Rechnung - vollständige Button-Entgrenzung (abgeschlossen, 25.08.2026)
 
-- Im aktuellen Rechnungsscope mit 131 Zielen sind exakt 16 registrierte Buttons in Breite und Höhe vollständig entgrenzt. Rechnungs-CSS, Komponentenvertrag, Adapter, Inline-Anwendung und gespeicherte Profile enthalten für sie keine Min-/Max-Größen.
-- Die Ref-Anwendung bewahrt auch unterhalb des normalen Text-, Padding- und Rahmenbedarfs die gewählte äußere Größe; Inhalt darf dabei geclippt werden. Erwartbarer Reflow vorhandener Geschwister wird im bestehenden Komponentenvertrag explizit beschrieben, ohne Parentstruktur oder IDs zu ändern.
-- Der statische und laufzeitnahe Guard prüft alle 16 Buttons. Die reale native Abnahme verkleinert und vergrößert Nachkommastellen-, Positions- und normalen Rechnungsbutton, speichert und bestätigt die exakte kleine Geometrie nach Close/Remount und getrenntem Electron-Neustart.
+- Korrigierter Abschluss nach widerlegter Nutzerabnahme zu `6a9dfd0f`: Der alte Harness ließ globale CoreShell-/Popup-Styles aus und übersah dadurch eine produktiv wirksame `30px !important`-Mindesthöhe. Diese Differenz ist beseitigt und im Testaufbau abgesichert.
+- Im aktuellen Rechnungsscope mit 131 Zielen sind exakt 16 registrierte Buttons effektiv in Breite und Höhe entgrenzt. Globale Mindesthöhen nehmen `.invoice-button` aus; Grid- und Flex-Refs geben einer expliziten Editorbreite/-höhe Vorrang. Standardtracks und Standardhöhe bleiben ohne Editoroperation optisch unverändert.
+- Der reale Chromium-Guard prüft alle 16 Buttons bei `6 x 6 px` und deutlich größeren Sollwerten gegen die BoundingBox sowie einen Nicht-Button als Vertragsreferenz. Die Produktabnahme prüft sieben Buttonklassen im normalen Router/RechnungScreen mit sichtbarem Save, Rechnung-Reopen und vollständig neuem Electron-Prozess.
 - Fachfunktion, PDF/Druck, Navigation, Handler, Registry-IDs und Parentstruktur blieben unverändert. Kein Commit, kein Push; für dieses Paket ist kein weiterer Implementierungsschritt offen.
