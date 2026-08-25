@@ -3,14 +3,19 @@ import RestarbeitenScreen from "../../src/renderer/modules/restarbeiten/screens/
 import RechnungScreen from "../../src/renderer/modules/rechnungen/screens/RechnungScreen.js";
 import { bindDevelopmentUiEditorOpenButtonRef } from "../../src/renderer/app/coreShellNavigation.js";
 import { installBbmM80EditorBridge, uninstallBbmM80EditorBridge } from "../../src/renderer/ui-editor/m80Bridge.js";
-import { createM80RegistrationDescriptor, handleM80EditorRequest, refreshM80StartupLayoutAfterRegistryMount } from "../../src/renderer/ui-editor/m80HostAdapter.js";
-import { getM80Ref, resetM80PilotWorkingStatesForDiagnostic } from "../../src/renderer/ui-editor/m80Refs.js";
+import { createM80RegistrationDescriptor, getM80InteractionStatus, handleM80EditorEvent, handleM80EditorRequest, refreshM80StartupLayoutAfterRegistryMount } from "../../src/renderer/ui-editor/m80HostAdapter.js";
+import { getM80IdsFromTarget, getM80Ref, resetM80PilotWorkingStatesForDiagnostic } from "../../src/renderer/ui-editor/m80Refs.js";
 import { getM80RegistryEntry } from "../../src/renderer/ui-editor/m80Registry.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 const number = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 let activeModuleId = "protokoll";
 let activeTargetId = "protokoll.list.row.due";
+const RECHNUNG_BUTTON_TARGET_IDS = Object.freeze([
+  "rechnung.editor.positionQuantityDecimals.increase",
+  "rechnung.editor.positionCreate",
+  "rechnung.editor.preview",
+]);
 
 async function waitForStyle(selector) {
   const link = document.querySelector(selector);
@@ -53,8 +58,8 @@ function measureTarget(elementId) {
         bounds: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
         parentBounds: parentBounds ? { x: parentBounds.x, y: parentBounds.y, width: parentBounds.width, height: parentBounds.height } : null,
         text: target.textContent,
-        inline: { width: target.style.width, minWidth: target.style.minWidth, maxWidth: target.style.maxWidth, flex: target.style.flex, display: target.style.display },
-        computed: { width: style.width, minWidth: style.minWidth, maxWidth: style.maxWidth, flex: style.flex, display: style.display, overflow: style.overflow, whiteSpace: style.whiteSpace },
+        inline: { width: target.style.width, height: target.style.height, minWidth: target.style.minWidth, maxWidth: target.style.maxWidth, minHeight: target.style.minHeight, maxHeight: target.style.maxHeight, flex: target.style.flex, display: target.style.display },
+        computed: { width: style.width, height: style.height, minWidth: style.minWidth, maxWidth: style.maxWidth, minHeight: style.minHeight, maxHeight: style.maxHeight, flex: style.flex, display: style.display, overflow: style.overflow, whiteSpace: style.whiteSpace },
         parent: parentStyle ? { display: parentStyle.display, width: parentStyle.width, minWidth: parentStyle.minWidth, flex: parentStyle.flex } : null,
       };
     }),
@@ -170,6 +175,36 @@ export function currentVisibleAcceptanceState() {
   };
 }
 
+export function setVisibleAcceptanceTarget(elementId) {
+  if (!getM80Ref(elementId)) throw new Error(`Sichtbares Abnahmeziel fehlt: ${elementId}`);
+  activeTargetId = elementId;
+  return currentVisibleAcceptanceState();
+}
+
+export async function selectVisibleAcceptanceTargetInApp(elementId) {
+  const state = setVisibleAcceptanceTarget(elementId);
+  const interaction = () => {
+    const status = getM80InteractionStatus();
+    return { selectionMode: status.selectionMode, selectedId: status.selectedId, hoverElementIds: status.hoverElementIds, hoverIndex: status.hoverIndex };
+  };
+  handleM80EditorEvent({ action: "beginTargetSelection" });
+  const target = targetElements(elementId)[0];
+  const ids = getM80IdsFromTarget(target);
+  const before = interaction();
+  const bounds = target.getBoundingClientRect();
+  const eventInit = { bubbles: true, cancelable: true, clientX: bounds.x + bounds.width / 2, clientY: bounds.y + bounds.height / 2 };
+  target.dispatchEvent(new MouseEvent("mousemove", eventInit));
+  await tick();
+  const afterHover = interaction();
+  target.dispatchEvent(new MouseEvent("click", eventInit));
+  await tick();
+  return { state, ids, before, afterHover, afterClick: interaction() };
+}
+
+export function measureVisibleAcceptanceTargets(elementIds = RECHNUNG_BUTTON_TARGET_IDS) {
+  return Object.fromEntries(elementIds.map((elementId) => [elementId, measureTarget(elementId)]));
+}
+
 export function currentLayoutPayload() {
   return handleM80EditorRequest({ action: "getLayoutState" }).scopeStates;
 }
@@ -181,5 +216,10 @@ export async function remountForRestart(moduleId) {
   const rawStartup = await window.uiEditor.loadStartupLayout(registration);
   const restore = await refreshM80StartupLayoutAfterRegistryMount();
   await new Promise((resolve) => setTimeout(resolve, 250));
-  return { rawStartup, restore, renderer: currentVisibleAcceptanceState() };
+  return {
+    rawStartup,
+    restore,
+    renderer: currentVisibleAcceptanceState(),
+    buttonTargets: moduleId === "rechnung" ? measureVisibleAcceptanceTargets() : null,
+  };
 }

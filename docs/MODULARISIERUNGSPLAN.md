@@ -498,3 +498,10 @@ Dabei gilt:
 - Der bestehende Settings-Change-Kanal aktualisiert geoeffnete Editboxen. Ueberlanger gespeicherter Bestand bleibt vollstaendig erhalten.
 - Der Nachweis in Container 6 umfasst gezielte Modul-/Diktat-/Restzeichen-Tests, den UI-Editor-Vertragscheck und einen isolierten praktischen Electron-Lauf beider Module.
 - Das Paket aendert keine aktive Modularisierungsachse und zieht keinen weiteren Folgeschritt vor.
+
+### Rechnung - vollständige Button-Entgrenzung (abgeschlossen, 25.08.2026)
+
+- Im aktuellen Rechnungsscope mit 131 Zielen sind exakt 16 registrierte Buttons in Breite und Höhe vollständig entgrenzt. Rechnungs-CSS, Komponentenvertrag, Adapter, Inline-Anwendung und gespeicherte Profile enthalten für sie keine Min-/Max-Größen.
+- Die Ref-Anwendung bewahrt auch unterhalb des normalen Text-, Padding- und Rahmenbedarfs die gewählte äußere Größe; Inhalt darf dabei geclippt werden. Erwartbarer Reflow vorhandener Geschwister wird im bestehenden Komponentenvertrag explizit beschrieben, ohne Parentstruktur oder IDs zu ändern.
+- Der statische und laufzeitnahe Guard prüft alle 16 Buttons. Die reale native Abnahme verkleinert und vergrößert Nachkommastellen-, Positions- und normalen Rechnungsbutton, speichert und bestätigt die exakte kleine Geometrie nach Close/Remount und getrenntem Electron-Neustart.
+- Fachfunktion, PDF/Druck, Navigation, Handler, Registry-IDs und Parentstruktur blieben unverändert. Kein Commit, kein Push; für dieses Paket ist kein weiterer Implementierungsschritt offen.

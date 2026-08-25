@@ -4482,3 +4482,11 @@ Wichtig:
 - Reale DEV-Abnahme: Start ohne externe Lizenzdatei und ohne neue Lizenzabfrage; Protokoll, Restarbeiten und Pläne gleichzeitig sichtbar und jeweils separat geöffnet; keine `No handler registered`-Fehler.
 - Gezielte Navigationstests, UI-Editor-Vertragscheck, ESLint der geänderten Dateien und `git diff --check` sind grün. ESLint meldet ausschließlich bestehende Warnungen.
 - Die bereits dokumentierten globalen `npm test`-/`npm run lint`-Fehler bleiben paketfremd und wurden nicht verändert. Nächster offener Schritt: keiner für dieses Paket; Commit-SHA folgt im Abschlussbericht.
+
+## Rechnung - alle registrierten Buttons vollständig entgrenzt
+
+- Status: umgesetzt und im realen nativen UI-Editor abgenommen. Der aktuelle Rechnungsscope umfasst 131 Ziele, darunter exakt 16 registrierte Buttons ohne CSS-, Registry-, Adapter-, Inline- oder Persistenzgrenzen für Mindest- oder Maximalbreite/-höhe.
+- Nachkommastellen-Button, `+Position` und `Proberechnung` wurden sichtbar in Breite und Höhe verkleinert, vergrößert und erneut verkleinert. Der Nachkommastellen-Button blieb deutlich unter 20 px Breite und 18 px Höhe. Speichern, Close/Remount und ein zweiter Electron-Prozess erhielten die kleinen Werte exakt.
+- Padding, Rahmen und Text setzen die äußere Buttongröße nicht zurück: Die Button-Chrome wird innerhalb der gewählten Größe eingepasst, Inhalt darf clippen. Erwartbarer Reflow bereits vorhandener Geschwister ist im Komponentenvertrag deklariert; echte Überlagerungs- und Flächenprüfungen bleiben aktiv.
+- Gezielter Rechnungs-Guardrail, sichtbarer Rechnung-Acceptance-Lauf, Universalvertrag, globaler Restore, Protokoll-Buttonverträge, Vertrags-Selbsttest, gezieltes ESLint und `git diff --check` sind grün. Die breite Gesamtsuite bleibt an paketfremden, bereits vorhandenen Baselinefehlern rot; der vollständige sichtbare Dreimodullauf scheitert außerhalb dieses Pakets am Protokoll-Neustartprofil, während der isolierte Rechnungslauf grün ist.
+- Fachfunktion, PDF/Druck, Navigation, Button-Handler, Registry-IDs und Parentstruktur blieben unverändert. Kein Commit, kein Push. Nächster offener Schritt für dieses Paket: keiner.

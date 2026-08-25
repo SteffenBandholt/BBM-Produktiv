@@ -141,6 +141,7 @@ select.invoice-control { padding-right: 28px; }
   border: 1px solid transparent;
   border-radius: var(--invoice-radius-control);
   font: 700 12px/1.2 var(--bbm-font-ui, Inter, "Segoe UI", sans-serif);
+  overflow: hidden;
   white-space: nowrap;
   cursor: pointer;
   transition: border-color 0.14s ease, background 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
@@ -483,7 +484,7 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-sheet__head-content { gap: 14px; }
 .rechnung-sheet__head { gap: 18px; padding-bottom: 12px; border-bottom-width: 1px; }
 .rechnung-sheet__recipient { min-height: 0; padding-top: 0; }
-.rechnung-sheet__recipient .invoice-button--quiet { justify-self: start; min-height: 0; padding: 0; border: 0; background: transparent; color: var(--invoice-color-text); font: inherit; font-weight: 700; }
+.rechnung-sheet__recipient .invoice-button--quiet { justify-self: start; padding: 0; border: 0; background: transparent; color: var(--invoice-color-text); font: inherit; font-weight: 700; }
 .rechnung-sheet__recipient .invoice-button--quiet:hover { color: var(--invoice-color-primary); text-decoration: underline; }
 .rechnung-sheet__recipient-address { min-height: 0; padding: 4px 0; border: 0; background: transparent; }
 .rechnung-sheet__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 14px; }
@@ -506,7 +507,7 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-live-position-editor__quantity-block { display: grid; align-content: start; gap: 2px; min-width: 0; }
 .rechnung-live-position-editor__decimal-stepper { display: grid; grid-template-columns: minmax(0, 1fr) 20px 22px 20px; align-items: center; gap: 2px; min-width: 0; }
 .rechnung-live-position-editor__decimal-label { min-width: 0; overflow: hidden; color: var(--invoice-color-muted); font-size: 9px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
-.rechnung-live-position-editor__decimal-stepper .invoice-button { min-width: 20px; min-height: 18px; padding: 0; font-size: 11px; line-height: 16px; }
+.rechnung-live-position-editor__decimal-stepper .invoice-button { padding: 0; font-size: 11px; line-height: 16px; }
 .rechnung-live-position-editor__decimal-value { color: var(--invoice-color-text); font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: center; }
 .rechnung-live-position-editor__quantity { text-align: right !important; font-variant-numeric: tabular-nums; }
 .rechnung-live-position-editor__remaining { margin-left: auto; color: var(--invoice-color-muted); font-variant-numeric: tabular-nums; }

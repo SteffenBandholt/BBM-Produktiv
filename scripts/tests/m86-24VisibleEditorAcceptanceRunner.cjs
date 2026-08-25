@@ -36,6 +36,33 @@ function startPowerShell(processId, requestedAction = action, count = 1) {
 
 function runPowerShell(processId, requestedAction = action, count = 1) { return startPowerShell(processId, requestedAction, count).completed; }
 
+async function selectVisibleEditorTarget(window, processId, targetConfig) {
+  const selectionActivation = await runPowerShell(processId, "SelectTarget");
+  const selectionProbe = await window.webContents.executeJavaScript(`window.__m8624.selectVisibleAcceptanceTargetInApp(${JSON.stringify(targetConfig.elementId)})`, true);
+  await new Promise((resolve) => setTimeout(resolve, 750));
+  const editorSelection = await runPowerShell(processId, "ReadSelection");
+  const selectionPrefix = targetConfig.elementId.includes("positionQuantityDecimals") ? "Nachkommastellen" : targetConfig.displayName;
+  if (!editorSelection.matching?.some((value) => value.startsWith(selectionPrefix))) {
+    throw new Error(`Sichtbare Button-Auswahl wurde nicht synchronisiert: ${JSON.stringify({ targetConfig, selectionProbe, editorSelection })}`);
+  }
+  return { selectionActivation, selectionProbe, editorSelection, initial: await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true) };
+}
+
+async function exerciseVisibleInvoiceButton(window, processId, targetConfig) {
+  const selected = await selectVisibleEditorTarget(window, processId, targetConfig);
+  const widthMinus = await runPowerShell(processId, "ClickWidthMinus", 3);
+  const afterWidthMinus = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
+  const heightMinus = await runPowerShell(processId, "ClickHeightMinus", 3);
+  const afterShrink = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
+  const widthPlus = await runPowerShell(processId, "ClickWidthPlus");
+  const heightPlus = await runPowerShell(processId, "ClickHeightPlus");
+  const afterGrow = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
+  const widthMinusFinal = await runPowerShell(processId, "ClickWidthMinus");
+  const heightMinusFinal = await runPowerShell(processId, "ClickHeightMinus");
+  const final = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
+  return { targetConfig, selected, widthMinus, afterWidthMinus, heightMinus, afterShrink, widthPlus, heightPlus, afterGrow, widthMinusFinal, heightMinusFinal, final };
+}
+
 app.commandLine.appendSwitch("disable-gpu");
 app.commandLine.appendSwitch("disable-background-timer-throttling");
 app.whenReady().then(async () => {
@@ -103,9 +130,20 @@ app.whenReady().then(async () => {
       const symmetryMinusClick = moduleId === "rechnung" ? null : await runPowerShell(controller.child.pid, "ClickWidthMinus");
       const afterSymmetryMinus = moduleId === "rechnung" ? afterPlus : await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
       const symmetry = { plusClick, afterPlus, minusClick: symmetryMinusClick, afterMinus: afterSymmetryMinus };
+      let invoiceButtons = null;
+      if (moduleId === "rechnung") {
+        const targets = [
+          { scopeId: "rechnung.screen", elementId: "rechnung.editor.positionQuantityDecimals.increase", displayName: "Nachkommastellen erhöhen", parentId: "rechnung.editor.positionQuantityDecimals" },
+          { scopeId: "rechnung.screen", elementId: "rechnung.editor.positionCreate", displayName: "+Position", parentId: "rechnung.editor.positionActions" },
+          { scopeId: "rechnung.screen", elementId: "rechnung.editor.preview", displayName: "Proberechnung", parentId: "rechnung.editor.header" },
+        ];
+        invoiceButtons = [];
+        for (const buttonTarget of targets) invoiceButtons.push(await exerciseVisibleInvoiceButton(window, controller.child.pid, buttonTarget));
+        await window.webContents.executeJavaScript(`window.__m8624.setVisibleAcceptanceTarget(${JSON.stringify(targetConfig.elementId)})`, true);
+      }
       const beforeClose = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
       const afterMinusEditorState = await runPowerShell(controller.child.pid, "ReadSelection");
-      fs.writeFileSync(resultPath, JSON.stringify({ ok: false, stage: "before-visible-close", started, selection, point, selectedTarget, editorSelection, beforeMinus, minusSteps, invoiceRange, symmetry, beforeClose, afterMinusEditorState }, null, 2), "utf8");
+      fs.writeFileSync(resultPath, JSON.stringify({ ok: false, stage: "before-visible-close", started, selection, point, selectedTarget, editorSelection, beforeMinus, minusSteps, invoiceRange, symmetry, invoiceButtons, beforeClose, afterMinusEditorState }, null, 2), "utf8");
       const profileFile = path.join(profileRoot, `module-${moduleId}`, "standard.layout-profile.json");
       let closeAndSave;
       if (moduleId === "rechnung") {
@@ -130,11 +168,14 @@ app.whenReady().then(async () => {
       }
       for (let attempt = 0; attempt < 100 && controller.status().running; attempt += 1) await new Promise((resolve) => setTimeout(resolve, 100));
       const afterClose = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
+      const afterCloseButtonTargets = moduleId === "rechnung"
+        ? await window.webContents.executeJavaScript("window.__m8624.measureVisibleAcceptanceTargets()", true)
+        : null;
       const afterCloseLayout = await window.webContents.executeJavaScript("window.__m8624.currentLayoutPayload()", true);
       const afterCloseEditorState = controller.status().running ? await runPowerShell(controller.child.pid, "ReadSelection") : null;
       const persisted = fs.existsSync(profileFile) ? JSON.parse(fs.readFileSync(profileFile, "utf8")) : null;
       const afterRestart = await window.webContents.executeJavaScript(`window.__m8624.remountForRestart(${JSON.stringify(moduleId)})`, true);
-      automation = { selection, point, selectedTarget, editorSelection, beforeMinus, minusSteps, invoiceRange, symmetry, beforeClose, closeAndSave, editorRunningAfterClose: controller.status().running, afterClose, afterCloseLayout, afterCloseEditorState, profileFile, persisted, afterRestart };
+      automation = { selection, point, selectedTarget, editorSelection, beforeMinus, minusSteps, invoiceRange, symmetry, invoiceButtons, beforeClose, closeAndSave, editorRunningAfterClose: controller.status().running, afterClose, afterCloseButtonTargets, afterCloseLayout, afterCloseEditorState, profileFile, persisted, afterRestart };
     } else automation = await runPowerShell(controller.child.pid);
     const renderer = await window.webContents.executeJavaScript("window.__m8624.currentVisibleAcceptanceState()", true);
     fs.writeFileSync(resultPath, JSON.stringify({ ok: true, started, automation, renderer, editorTrace }, null, 2), "utf8");

@@ -84,6 +84,7 @@ Aktueller Stand:
 - [x] M86.13 Einheitlichen zweizeiligen MainHeader und unteren Entwicklungsmarker herstellen
 - [x] M86.25 Protokoll-Listenbeschriftung, Langtextgröße und Ampel-textResize korrigieren
 - [x] M86.26 Alle 117 registrierten Rechnungsziele ohne künstliche Geometriegrenzen verschieben, skalieren und wiederherstellen
+- [x] M86.27 Alle 16 registrierten Rechnungsbuttons vollständig von Größenlimits entgrenzen und persistent prüfen
 
 ## Statusupdate M86.25
 
@@ -990,3 +991,12 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
 - Praktische Abnahme: nativer WPF-Editor verkleinert `rechnung.editor.positionShort` sichtbar von 571,513 auf 447,820 px und vergrößert es auf 587,293 px; sichtbarer Save, Close, Remount und separater Electron-Neustart behalten die Geometrie. Automatisiert sind zusätzlich x/y ±2501, 0-px-Größe und Textareas 10/800 px nachgewiesen.
 - Guardrails: `scripts/tests/rechnungUiEditorUnbounded.test.cjs`, M86.15, M86.14, M86.24 sowie die nach Seiteneffektkorrektur erneut grünen Protokollprüfungen M86.9/M86.10. Vollständiges Inventar und Prüfbefunde: `docs/RECHNUNG_UI_EDITOR_ENTGRENZUNG_117.md`.
 - Nicht geändert: PDF/Druck, Rechnungsfachlogik, Navigation, DOM-Struktur, Datenbank, Lizenzierung und produktive Benutzerprofile. Commit, Push, PR und Merge: keiner.
+
+## M86.27 - Alle registrierten Rechnungsbuttons vollständig entgrenzen
+
+- Status: `[A]`; der aktuelle Rechnungsscope umfasst 131 Ziele, darunter exakt 16 registrierte Buttons. Für keinen dieser Buttons bestehen `min-width`, `max-width`, `min-height` oder `max-height` in Rechnungs-CSS, Komponentenvertrag, HostAdapter, Inline-Styles oder gespeichertem Profil.
+- Die gemeinsame Ref-Anwendung hält die gewählte äußere Buttongröße auch unterhalb des Text-, Padding- und Rahmenbedarfs exakt ein. Padding und Rahmen werden dafür innerhalb der angeforderten Größe proportional eingepasst; überstehender Inhalt wird geclippt. Die Buttongröße wird nicht zurückgesetzt.
+- Der bestehende Komponentenvertrag deklariert nur den erwartbaren Reflow der bereits vorhandenen Geschwister im jeweiligen Parent. Der HostAdapter akzeptiert diesen deklarierten Button-Reflow, prüft aber weiterhin echte Überlagerungen, Flächenverletzungen und nicht deklarierte Änderungen.
+- Reale native Abnahme: Nachkommastellen-Button, `+Position` und `Proberechnung` wurden über die sichtbaren Breiten- und Höhensteuerungen jeweils verkleinert, vergrößert und erneut verkleinert. Der Nachkommastellen-Button blieb dabei deutlich unter 20 px Breite und 18 px Höhe. Sichtbares Speichern, Close/Remount und ein zweiter Electron-Prozess stellten kleine Breite und Höhe exakt wieder her.
+- Guardrails: `scripts/tests/rechnungUiEditorUnbounded.test.cjs` prüft sämtliche `.invoice-button`-Selektoren, alle 16 Registryeinträge, Adapteranwendung, Inline-Styles und Persistenz. `scripts/tests/m86-24VisibleEditorAcceptance.test.cjs` prüft den echten Bedien- und Neustartpfad für die drei repräsentativen Buttons.
+- Nicht geändert: Fachfunktionen, PDF/Druck, Navigation, Button-Handler, Registry-IDs und Parentstruktur. Commit, Push, PR und Merge: keiner.

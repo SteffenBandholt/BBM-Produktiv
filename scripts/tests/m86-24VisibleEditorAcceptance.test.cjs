@@ -10,6 +10,7 @@ const electronBinary = require("electron");
 const ROOT = path.resolve(__dirname, "../..");
 const RUNNER = path.join(__dirname, "m86-24VisibleEditorAcceptanceRunner.cjs");
 const EPSILON = 0.2;
+const BUTTON_BOUND_KEYS = Object.freeze(["minWidth", "maxWidth", "minHeight", "maxHeight"]);
 
 function runVisibleModule(moduleId, profileRoot, temporaryRoot, requestedAction = null) {
   const actionName = requestedAction || (moduleId === "rechnung" ? "RechnungSave" : moduleId === "restarbeiten" ? "RestarbeitenSave" : "ProtokollSave");
@@ -43,6 +44,20 @@ function width(report, location) {
   const target = location.target;
   assert.ok(target?.targets?.length > 0, "Das sichtbare Ziel wurde nicht gemessen.");
   return target.targets[0].bounds.width;
+}
+
+function measuredDimension(measurement, dimension) {
+  const target = measurement?.target || measurement;
+  assert.ok(target?.targets?.length > 0, `Das sichtbare Buttonziel wurde nicht fuer ${dimension} gemessen.`);
+  return target.targets[0].bounds[dimension];
+}
+
+function persistedElement(report, elementId) {
+  for (const scope of report.automation.persisted?.scopes || []) {
+    const element = scope.layoutState?.elements?.find((candidate) => candidate.elementId === elementId);
+    if (element) return element;
+  }
+  return null;
 }
 
 function assertVisibleSave(moduleId, report, restartReport) {
@@ -84,6 +99,44 @@ function assertVisibleSave(moduleId, report, restartReport) {
     assert.equal(run.closeAndSave.visibleSave.clicked, "Speichern", "rechnung: Der sichtbare Speichern-Button wurde nicht ausgeloest.");
     assert.ok(run.closeAndSave.savedEditorState.status.some((value) => value.startsWith("Gespeichert") || value.startsWith("Zuletzt")),
       "rechnung: Der sichtbare Editor hat den Save nicht bestaetigt.");
+    assert.equal(run.invoiceButtons.length, 3, "rechnung: Drei repraesentative Buttons muessen sichtbar geprueft werden.");
+    for (const button of run.invoiceButtons) {
+      const id = button.targetConfig.elementId;
+      const initialWidth = measuredDimension(button.selected.initial, "width");
+      const initialHeight = measuredDimension(button.selected.initial, "height");
+      const narrowWidth = measuredDimension(button.afterWidthMinus, "width");
+      const smallWidth = measuredDimension(button.afterShrink, "width");
+      const smallHeight = measuredDimension(button.afterShrink, "height");
+      const grownWidth = measuredDimension(button.afterGrow, "width");
+      const grownHeight = measuredDimension(button.afterGrow, "height");
+      const finalWidth = measuredDimension(button.final, "width");
+      const finalHeight = measuredDimension(button.final, "height");
+      assert.ok(narrowWidth < initialWidth - EPSILON, `${id}: sichtbares Breiten-Minus wirkte nicht.`);
+      assert.ok(smallHeight < initialHeight - EPSILON, `${id}: sichtbares Hoehen-Minus wirkte nicht.`);
+      assert.ok(Math.abs(smallWidth - narrowWidth) <= EPSILON, `${id}: Hoehenoperation veraenderte die Breite.`);
+      assert.ok(grownWidth > smallWidth + EPSILON, `${id}: sichtbares Breiten-Plus wirkte nicht.`);
+      assert.ok(grownHeight > smallHeight + EPSILON, `${id}: sichtbares Hoehen-Plus wirkte nicht.`);
+      assert.ok(Math.abs(finalWidth - smallWidth) <= EPSILON, `${id}: Breiten-Plus/Minus ist nicht symmetrisch.`);
+      assert.ok(Math.abs(finalHeight - smallHeight) <= EPSILON, `${id}: Hoehen-Plus/Minus ist nicht symmetrisch.`);
+      const inline = button.final.target.targets[0].inline;
+      BUTTON_BOUND_KEYS.forEach((key) => assert.equal(inline[key] || "", "", `${id}: unzulaessiger Inline-Wert ${key}`));
+      const saved = persistedElement(report, id);
+      assert.ok(saved, `${id}: fehlt im gespeicherten Profil.`);
+      assert.ok(Math.abs(saved.width - finalWidth) <= EPSILON, `${id}: kleine Breite wurde nicht exakt gespeichert.`);
+      assert.ok(Math.abs(saved.height - finalHeight) <= EPSILON, `${id}: kleine Hoehe wurde nicht exakt gespeichert.`);
+      BUTTON_BOUND_KEYS.forEach((key) => assert.equal(Object.hasOwn(saved, key), false, `${id}: unzulaessiger Profilwert ${key}`));
+      for (const [label, targets] of [
+        ["nach Editor-Close", run.afterCloseButtonTargets],
+        ["nach App-Remount", run.afterRestart.buttonTargets],
+        ["nach Electron-Neustart", restartReport.restarted.buttonTargets],
+      ]) {
+        assert.ok(Math.abs(measuredDimension(targets[id], "width") - finalWidth) <= EPSILON, `${id}: Breite ${label} nicht erhalten.`);
+        assert.ok(Math.abs(measuredDimension(targets[id], "height") - finalHeight) <= EPSILON, `${id}: Hoehe ${label} nicht erhalten.`);
+      }
+    }
+    const decimalButton = run.invoiceButtons.find((button) => button.targetConfig.elementId === "rechnung.editor.positionQuantityDecimals.increase");
+    assert.ok(measuredDimension(decimalButton.final, "width") < 20, "rechnung: Nachkommastellen-Button blieb bei mindestens 20 px Breite.");
+    assert.ok(measuredDimension(decimalButton.final, "height") < 18, "rechnung: Nachkommastellen-Button blieb bei mindestens 18 px Hoehe.");
   } else {
     assert.equal(run.closeAndSave.saveDialog.dialogFound, true, `${moduleId}: Der echte Ungespeichert-Dialog wurde nicht gefunden.`);
     assert.match(run.closeAndSave.saveDialog.saveClicked, /^Speichern und fortfahren/);

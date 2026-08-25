@@ -15,6 +15,7 @@ import {
 
 const refs = new Map();
 const elementIds = new WeakMap();
+const buttonChromeBaselines = new WeakMap();
 const workingStates = new Map();
 const persistentWorkingStateIds = new Set();
 const persistentWorkingStateOperations = new Map();
@@ -190,6 +191,53 @@ function applyOptionalDimensionBounds(style, entry, dimension) {
   else clearLayoutProperty(style, cssMaximum);
 }
 
+function readButtonChromeBaseline(element) {
+  const existing = buttonChromeBaselines.get(element);
+  if (existing) return existing;
+  const style = styleOf(element);
+  const baseline = Object.freeze({
+    borderLeftWidth: nonNegative(parseFloat(style.borderLeftWidth)),
+    borderRightWidth: nonNegative(parseFloat(style.borderRightWidth)),
+    borderTopWidth: nonNegative(parseFloat(style.borderTopWidth)),
+    borderBottomWidth: nonNegative(parseFloat(style.borderBottomWidth)),
+    paddingLeft: nonNegative(parseFloat(style.paddingLeft)),
+    paddingRight: nonNegative(parseFloat(style.paddingRight)),
+    paddingTop: nonNegative(parseFloat(style.paddingTop)),
+    paddingBottom: nonNegative(parseFloat(style.paddingBottom)),
+  });
+  buttonChromeBaselines.set(element, baseline);
+  return baseline;
+}
+
+function fitButtonChromePair(style, baseline, startProperty, endProperty, availableSize) {
+  const start = baseline[startProperty];
+  const end = baseline[endProperty];
+  const total = start + end;
+  if (availableSize >= total) {
+    clearLayoutProperty(style, startProperty.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`));
+    clearLayoutProperty(style, endProperty.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`));
+    return availableSize - total;
+  }
+  const factor = total > 0 ? availableSize / total : 0;
+  setLayoutProperty(style, startProperty.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`), px(start * factor));
+  setLayoutProperty(style, endProperty.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`), px(end * factor));
+  return 0;
+}
+
+function fitButtonChromeWithinSize(element, entry, dimension, desiredSize) {
+  if (entry?.type !== "button" || entry.fitChromeToOuterSize !== true) return;
+  const baseline = readButtonChromeBaseline(element);
+  let available = Math.max(0, desiredSize);
+  if (dimension === "width") {
+    available = fitButtonChromePair(element.style, baseline, "borderLeftWidth", "borderRightWidth", available);
+    fitButtonChromePair(element.style, baseline, "paddingLeft", "paddingRight", available);
+  } else {
+    available = fitButtonChromePair(element.style, baseline, "borderTopWidth", "borderBottomWidth", available);
+    fitButtonChromePair(element.style, baseline, "paddingTop", "paddingBottom", available);
+  }
+  setLayoutProperty(element.style, "overflow", "hidden");
+}
+
 function applyGeneric(element, state, entry, requestedOperation = null) {
   const operations = new Set(entry.allowedOps);
   const applies = (...candidates) => requestedOperation === null || candidates.includes(requestedOperation);
@@ -200,6 +248,7 @@ function applyGeneric(element, state, entry, requestedOperation = null) {
   }
   if ((operations.has("resize") || operations.has("resizeWidth")) && applies("resize", "resizeWidth")) {
     const desiredWidth = bounded(entry, "width", state.width, 1);
+    fitButtonChromeWithinSize(element, entry, "width", desiredWidth);
     const style = styleOf(element);
     const currentBounds = rectOf(element);
     const currentContentWidth = Number.parseFloat(style.width);
@@ -217,6 +266,8 @@ function applyGeneric(element, state, entry, requestedOperation = null) {
     }
   }
   if ((operations.has("resize") || operations.has("resizeHeight")) && applies("resize", "resizeHeight")) {
+    const desiredHeight = bounded(entry, "height", state.height, 1);
+    fitButtonChromeWithinSize(element, entry, "height", desiredHeight);
     const style = styleOf(element);
     const currentBounds = rectOf(element);
     const currentContentHeight = Number.parseFloat(style.height);
@@ -225,7 +276,6 @@ function applyGeneric(element, state, entry, requestedOperation = null) {
       : Math.max(0, currentBounds.height - currentContentHeight);
     const verticalChrome = measuredVerticalChrome <= 128 ? measuredVerticalChrome : 0;
     applyOptionalDimensionBounds(element.style, entry, "height");
-    const desiredHeight = bounded(entry, "height", state.height, 1);
     const contentHeight = style.boxSizing === "border-box" ? desiredHeight : Math.max(0, desiredHeight - verticalChrome);
     setLayoutProperty(element.style, "height", px(contentHeight));
     if (style.display === "inline") setLayoutProperty(element.style, "display", "inline-block");

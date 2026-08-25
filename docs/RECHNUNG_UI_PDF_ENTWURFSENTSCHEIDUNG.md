@@ -4,6 +4,77 @@ Stand: 24.08.2026
 Scope: `rechnung.screen`
 Komponente: `bbm.rechnung.screen`
 
+## Nachtrag: vollständige Entgrenzung der registrierten Rechnungsbuttons - 25.08.2026
+
+### A. Art der Ausgabe
+
+- UI
+- keine PDF-Änderung
+
+### B. Editorfähigkeit
+
+- editorfähig: ja
+- Betroffen sind ausschließlich 16 bereits registrierte Rechnungsbuttons. Es entstehen keine neuen UI-Elemente.
+
+### C. Editorfähige Elemente
+
+Für alle folgenden Elemente gelten unverändert `data-ui-editor-kind=button`,
+`data-ui-editor-editable=true` sowie die erlaubten Layoutoperationen
+`move,resizeWidth,resizeHeight,setVisibility,textResize`. Die ID in der ersten
+Spalte ist zugleich `data-ui-inspector-id`:
+
+| `data-ui-inspector-id` | `data-ui-editor-label` | `data-ui-editor-parent` |
+|---|---|---|
+| `rechnung.overview.new` | `Freie Rechnung` | `rechnung.overview.header` |
+| `rechnung.editor.headToggle` | `Kopf ein- oder ausblenden` | `rechnung.editor.header` |
+| `rechnung.editor.customerPicker` | `Rechnungsempfaenger auswaehlen` | `rechnung.editor.parties` |
+| `rechnung.editor.servicePeriodToggle` | `Leistungszeitraum bearbeiten` | `rechnung.editor.servicePeriod` |
+| `rechnung.editor.positionQuantityDecimals.decrease` | `Nachkommastellen verringern` | `rechnung.editor.positionQuantityDecimals` |
+| `rechnung.editor.positionQuantityDecimals.increase` | `Nachkommastellen erhöhen` | `rechnung.editor.positionQuantityDecimals` |
+| `rechnung.editor.positionCreateTitle` | `+Titel` | `rechnung.editor.positionActions` |
+| `rechnung.editor.positionCreate` | `+Position` | `rechnung.editor.positionActions` |
+| `rechnung.editor.positionMove` | `Schieben` | `rechnung.editor.positionActions` |
+| `rechnung.editor.positionDelete` | `Position loeschen` | `rechnung.editor.positionActions` |
+| `rechnung.editor.positionMoveRoot` | `Auf Ebene 0 verschieben` | `rechnung.editor.positionActions` |
+| `rechnung.editor.preview` | `Proberechnung` | `rechnung.editor.header` |
+| `rechnung.editor.book` | `Rechnung buchen` | `rechnung.editor.header` |
+| `rechnung.editor.delete` | `Entwurf verwerfen` | `rechnung.editor.header` |
+| `rechnung.editor.close` | `Schließen` | `rechnung.editor.header` |
+| `rechnung.preview.close` | `Vorschau schließen` | `rechnung.preview` |
+
+Labels, IDs und Parents bleiben unverändert. Der Komponentenvertrag ergänzt
+nur den erwartbaren Reflow bereits vorhandener Geschwister im jeweiligen
+Parent.
+
+### D. Nicht editorfähige Elemente und verbotene Editor-Ziele
+
+Fachaktionen, fachliches Speichern, Anlegen, Löschen, Upload, Import, Export,
+Autosave, fachliche IPC-/Daten-/Datenbankaktionen und die fachliche Ausführung
+der Buttons bleiben gesperrt. Die Änderung betrifft ausschließlich sichtbare
+Layoutgeometrie.
+
+### E. Parent-/Strukturregel
+
+Alle 16 Buttons behalten ihren bestehenden, selbst registrierten Parent. Es
+wurde kein Parent ergänzt, entfernt oder geändert. Tabellen und Spalten sind
+nicht betroffen.
+
+### F. Prüfung
+
+- `scripts/tests/rechnungUiEditorUnbounded.test.cjs` sichert CSS,
+  Komponentenvertrag, HostAdapter, Inline-Anwendung und Persistenz aller 16
+  Buttons gegen jede erneute Min-/Max-Größe ab.
+- `scripts/tests/m86-24VisibleEditorAcceptance.test.cjs` prüft im isolierten
+  echten Rechnungspfad Nachkommastellen-Button, `+Position` und
+  `Proberechnung`, sichtbares Speichern sowie exakten Restore nach Remount und
+  getrenntem Electron-Neustart.
+- `scripts/ui-editor-contract-check.cjs --self-test` und der gezielte
+  Dateivertragscheck sichern den allgemeinen UI-Editor-Vertrag.
+
+Die nachfolgenden älteren Abschnitte bleiben als historische
+Entwurfsentscheidungen erhalten; ihre damaligen Scope-Zahlen ersetzen nicht
+den aktuellen Stand von 131 Zielen und 16 Buttons.
+
 ## Editbox: Standard 2, dynamischer Titel und deutsche LV-Zahlen – 24.08.2026
 
 Art der Ausgabe: ausschließlich UI, kein PDF. Editorfähig: ja, ausschließlich

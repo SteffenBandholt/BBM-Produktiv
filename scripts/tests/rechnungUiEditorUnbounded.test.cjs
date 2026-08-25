@@ -11,6 +11,26 @@ const ROOT = path.resolve(__dirname, "../..");
 const SCOPE_ID = "rechnung.screen";
 const BOUND_KEYS = Object.freeze(["minX", "maxX", "minY", "maxY", "minWidth", "maxWidth", "minHeight", "maxHeight"]);
 const REQUIRED_OPS = Object.freeze(["move", "resizeWidth", "resizeHeight"]);
+const BUTTON_ACCEPTANCE_SIZES = Object.freeze({
+  "rechnung.editor.positionQuantityDecimals.decrease": Object.freeze({ width: 7, height: 6 }),
+  "rechnung.editor.positionCreate": Object.freeze({ width: 31, height: 7 }),
+  "rechnung.editor.preview": Object.freeze({ width: 29, height: 8 }),
+});
+
+function assertRegisteredButtonCssHasNoDimensionBounds(stylesheet, buttonClassNames) {
+  const css = stylesheet.replace(/\/\*[\s\S]*?\*\//g, "");
+  const dimensionBound = /(?:^|;)\s*(?:min-width|min-height|max-width|max-height)\s*:/i;
+  for (const match of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selectors = match[1].split(",").map((selector) => selector.trim());
+    const targetsRegisteredButton = selectors.some((selector) => (
+      [...buttonClassNames].some((className) => selector.includes(`.${className}`))
+      || /(?:^|[\s>+~])button(?:$|[.#:[\s>+~])/i.test(selector)
+    ));
+    if (targetsRegisteredButton) {
+      assert.doesNotMatch(match[2], dimensionBound, `Grenze in Rechnungsbutton-Regel: ${selectors.join(", ")}`);
+    }
+  }
+}
 
 function numericStyle(style, key, fallback) {
   const value = Number.parseFloat(style[key]);
@@ -59,8 +79,17 @@ class FakeElement {
   contains(candidate) { return candidate === this || this.children.some((child) => child.contains?.(candidate)); }
   remove() { if (this.parentElement) this.parentElement.children = this.parentElement.children.filter((child) => child !== this); this.isConnected = false; }
   getBoundingClientRect() {
-    const width = numericStyle(this.style, "width", this._rect.width);
-    const height = numericStyle(this.style, "height", this._rect.height);
+    const isInvoiceButton = this.className.split(/\s+/).includes("invoice-button");
+    const horizontalChrome = numericStyle(this.style, "borderLeftWidth", isInvoiceButton ? 1 : 0)
+      + numericStyle(this.style, "borderRightWidth", isInvoiceButton ? 1 : 0)
+      + numericStyle(this.style, "paddingLeft", isInvoiceButton ? 11 : 0)
+      + numericStyle(this.style, "paddingRight", isInvoiceButton ? 11 : 0);
+    const verticalChrome = numericStyle(this.style, "borderTopWidth", isInvoiceButton ? 1 : 0)
+      + numericStyle(this.style, "borderBottomWidth", isInvoiceButton ? 1 : 0)
+      + numericStyle(this.style, "paddingTop", isInvoiceButton ? 5 : 0)
+      + numericStyle(this.style, "paddingBottom", isInvoiceButton ? 5 : 0);
+    const width = Math.max(numericStyle(this.style, "width", this._rect.width), horizontalChrome);
+    const height = Math.max(numericStyle(this.style, "height", this._rect.height), verticalChrome);
     const [translateX = 0, translateY = 0] = String(this.style.translate || "0 0").split(/\s+/).map((value) => Number.parseFloat(value) || 0);
     const left = this._rect.left + translateX;
     const top = this._rect.top + translateY;
@@ -70,12 +99,19 @@ class FakeElement {
 
 function computedStyle(element) {
   const rect = element.getBoundingClientRect();
+  const isInvoiceButton = element.className.split(/\s+/).includes("invoice-button");
   return {
     ...element.style,
     width: `${rect.width}px`,
     height: `${rect.height}px`,
-    paddingLeft: element.style.paddingLeft || "0px",
-    paddingTop: element.style.paddingTop || "0px",
+    paddingLeft: element.style.paddingLeft || (isInvoiceButton ? "11px" : "0px"),
+    paddingRight: element.style.paddingRight || (isInvoiceButton ? "11px" : "0px"),
+    paddingTop: element.style.paddingTop || (isInvoiceButton ? "5px" : "0px"),
+    paddingBottom: element.style.paddingBottom || (isInvoiceButton ? "5px" : "0px"),
+    borderLeftWidth: element.style.borderLeftWidth || (isInvoiceButton ? "1px" : "0px"),
+    borderRightWidth: element.style.borderRightWidth || (isInvoiceButton ? "1px" : "0px"),
+    borderTopWidth: element.style.borderTopWidth || (isInvoiceButton ? "1px" : "0px"),
+    borderBottomWidth: element.style.borderBottomWidth || (isInvoiceButton ? "1px" : "0px"),
     fontSize: element.style.fontSize || "12px",
     boxSizing: "border-box",
     display: element.style.display || "block",
@@ -133,12 +169,23 @@ async function main() {
   const scope = registry.listM80RegistryScopes().find((entry) => entry.scopeId === SCOPE_ID);
   assert.ok(scope);
   assert.equal(scope.elements.length, 131);
+  const buttonEntries = scope.elements.filter((entry) => entry.type === "button");
+  assert.equal(buttonEntries.length, 16);
 
   for (const entry of scope.elements) {
     REQUIRED_OPS.forEach((operation) => assert.ok(entry.allowedOps.includes(operation), `${entry.id}: ${operation}`));
     BOUND_KEYS.forEach((key) => assert.equal(Object.hasOwn(entry.baseline || {}, key), false, `${entry.id}: ${key}`));
     assert.equal(Object.hasOwn(entry.geometry || {}, "maximumStoredOffset"), false, `${entry.id}: maximumStoredOffset`);
     assert.equal(Object.hasOwn(entry.geometry || {}, "maximumOffset"), false, `${entry.id}: maximumOffset`);
+  }
+  for (const entry of buttonEntries) {
+    REQUIRED_OPS.forEach((operation) => assert.ok(entry.allowedOps.includes(operation), `${entry.id}: Button ${operation}`));
+    assert.equal(entry.fitChromeToOuterSize, true, `${entry.id}: exakte aeussere Buttongroesse`);
+    BOUND_KEYS.forEach((key) => assert.equal(Object.hasOwn(entry.baseline || {}, key), false, `${entry.id}: Button ${key}`));
+    assert.equal(entry.operationEffects.resizeWidth, "parentReflowRequired", `${entry.id}: Breiten-Reflowvertrag`);
+    assert.equal(entry.operationEffects.resizeHeight, "parentReflowRequired", `${entry.id}: Hoehen-Reflowvertrag`);
+    assert.ok(Array.isArray(entry.operationAffectedIds.resizeWidth), `${entry.id}: Breiten-Reflowziele`);
+    assert.ok(Array.isArray(entry.operationAffectedIds.resizeHeight), `${entry.id}: Hoehen-Reflowziele`);
   }
 
   const stylesheet = fs.readFileSync(path.join(ROOT, "src/renderer/modules/rechnungen/styles/rechnungenDesign.css"), "utf8");
@@ -178,6 +225,11 @@ async function main() {
     body.appendChild(new RechnungScreen().render());
     await flushAsyncWork();
     assert.equal(refs.validateM83ComponentReferences(["bbm.rechnung.screen"]).ok, true);
+    const buttonClassNames = new Set(buttonEntries.flatMap((entry) => (
+      String(refs.getM80Ref(entry.id).element.className || "").split(/\s+/).filter(Boolean)
+    )));
+    assert.ok(buttonClassNames.has("invoice-button"));
+    assertRegisteredButtonCssHasNoDimensionBounds(stylesheet, buttonClassNames);
 
     scope.elements.forEach((entry, index) => {
       const current = refs.snapshotM80State(entry.id);
@@ -204,7 +256,25 @@ async function main() {
       assert.equal(element.style.maxWidth || "", "", `${entry.id}: inline maxWidth`);
       assert.equal(element.style.minHeight || "", "", `${entry.id}: inline minHeight`);
       assert.equal(element.style.maxHeight || "", "", `${entry.id}: inline maxHeight`);
+      if (entry.type === "button") assert.ok(element.classList.contains("invoice-button"), `${entry.id}: invoice-button-Klasse`);
     });
+
+    for (const [elementId, small] of Object.entries(BUTTON_ACCEPTANCE_SIZES)) {
+      let buttonState = submit(host, elementId, "resizeWidth", { width: small.width }, `${elementId}-small-width`);
+      buttonState = submit(host, elementId, "resizeHeight", { height: small.height }, `${elementId}-small-height`);
+      assert.equal(buttonState.width, small.width, `${elementId}: kleine Breite`);
+      assert.equal(buttonState.height, small.height, `${elementId}: kleine Hoehe`);
+      const element = refs.getM80Ref(elementId).element;
+      assert.equal(element.getBoundingClientRect().width, small.width, `${elementId}: echte kleine Breite`);
+      assert.equal(element.getBoundingClientRect().height, small.height, `${elementId}: echte kleine Hoehe`);
+      buttonState = submit(host, elementId, "resizeWidth", { width: small.width + 40 }, `${elementId}-grow-width`);
+      buttonState = submit(host, elementId, "resizeHeight", { height: small.height + 30 }, `${elementId}-grow-height`);
+      assert.equal(element.getBoundingClientRect().width, small.width + 40, `${elementId}: vergroesserte Breite`);
+      assert.equal(element.getBoundingClientRect().height, small.height + 30, `${elementId}: vergroesserte Hoehe`);
+      buttonState = submit(host, elementId, "resizeWidth", { width: small.width }, `${elementId}-persist-width`);
+      buttonState = submit(host, elementId, "resizeHeight", { height: small.height }, `${elementId}-persist-height`);
+      BOUND_KEYS.forEach((key) => assert.equal(Object.hasOwn(buttonState, key), false, `${elementId}: Zustand ${key}`));
+    }
 
     let state = submit(host, "rechnung.editor.positionShort", "move", { x: -2501, y: 2501 }, "rechnung-move-negative");
     assert.equal(state.x, -2501); assert.equal(state.y, 2501);
@@ -218,6 +288,13 @@ async function main() {
     assert.equal(state.height, 800);
 
     const savedDocument = profileDocument(scope, refs);
+    const savedElements = new Map(savedDocument.scopes[0].layoutState.elements.map((element) => [element.elementId, element]));
+    for (const [elementId, expected] of Object.entries(BUTTON_ACCEPTANCE_SIZES)) {
+      const savedButton = savedElements.get(elementId);
+      assert.equal(savedButton.width, expected.width, `${elementId}: gespeicherte Breite`);
+      assert.equal(savedButton.height, expected.height, `${elementId}: gespeicherte Hoehe`);
+      BOUND_KEYS.forEach((key) => assert.equal(Object.hasOwn(savedButton, key), false, `${elementId}: Profil ${key}`));
+    }
     fs.writeFileSync(path.join(profileRoot, "standard.layout-profile.json"), JSON.stringify(savedDocument), "utf8");
     const loaded = loadTargetStartupLayout({ profileRoot, applicationId: "bbm-produktiv", activeScopes: [SCOPE_ID], registryScopes: [scope] });
     assert.equal(loaded.ok, true, JSON.stringify(loaded));
@@ -243,6 +320,18 @@ async function main() {
     assert.deepEqual({ x: restoredShort.x, y: restoredShort.y, width: restoredShort.width }, { x: 2501, y: -2501, width: 0 });
     assert.equal(refs.snapshotM80State("rechnung.editor.introText").height, 10);
     assert.equal(refs.snapshotM80State("rechnung.editor.positionLong").height, 800);
+    for (const [elementId, expected] of Object.entries(BUTTON_ACCEPTANCE_SIZES)) {
+      const restoredButton = refs.snapshotM80State(elementId);
+      assert.equal(restoredButton.width, expected.width, `${elementId}: Neustart-Breite`);
+      assert.equal(restoredButton.height, expected.height, `${elementId}: Neustart-Hoehe`);
+      const element = refs.getM80Ref(elementId).element;
+      assert.equal(element.getBoundingClientRect().width, expected.width, `${elementId}: echte Neustart-Breite`);
+      assert.equal(element.getBoundingClientRect().height, expected.height, `${elementId}: echte Neustart-Hoehe`);
+      assert.equal(element.style.minWidth || "", "", `${elementId}: Neustart inline minWidth`);
+      assert.equal(element.style.maxWidth || "", "", `${elementId}: Neustart inline maxWidth`);
+      assert.equal(element.style.minHeight || "", "", `${elementId}: Neustart inline minHeight`);
+      assert.equal(element.style.maxHeight || "", "", `${elementId}: Neustart inline maxHeight`);
+    }
   } finally {
     refs.resetM80PilotWorkingStatesForDiagnostic();
     fs.rmSync(profileRoot, { recursive: true, force: true });
@@ -252,7 +341,7 @@ async function main() {
     global.CustomEvent = previous.CustomEvent;
   }
 
-  console.log("TESTS OK: 131 Rechnungselemente in vier Richtungen und von 0 bis ueber Altmax, Host ±2501, Textareas 10/800, exakter Neustart-Restore");
+  console.log("TESTS OK: 131 Rechnungselemente, 16 Buttons ohne CSS-/Registry-/Inline-Grenzen, Host +/-2501, Textareas 10/800, exakter Neustart-Restore");
 }
 
 main().catch((error) => { console.error(error?.stack || error); process.exitCode = 1; });

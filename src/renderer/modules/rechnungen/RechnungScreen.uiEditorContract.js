@@ -7,7 +7,29 @@ const area = (id, name, parentId, order, componentKind) => invoiceElement({ id, 
 const group = (id, name, parentId, order, componentKind) => invoiceElement({ id, name, type: "group", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind });
 const label = (id, name, parentId, order, role = "content", componentKind = "label") => invoiceElement({ id, name, type: "label", role, parentId, order, allowedOps: TEXT_LAYOUT, componentKind });
 const field = (id, name, parentId, order, fieldKind) => invoiceElement({ id, name, type: "field", role: "content", parentId, order, allowedOps: FIELD_LAYOUT, fieldKind });
-const action = (id, name, parentId, order, actionKind) => m83DomainButton({ id, name, parentId, order, actionKind, unboundedGeometry: true });
+const buttonReflowIdsByParent = Object.freeze({
+  "rechnung.overview.header": Object.freeze(["rechnung.overview.title", "rechnung.overview.subtitle", "rechnung.overview.new"]),
+  "rechnung.editor.header": Object.freeze(["rechnung.editor.status", "rechnung.editor.headToggle", "rechnung.editor.preview", "rechnung.editor.book", "rechnung.editor.delete", "rechnung.editor.close"]),
+  "rechnung.editor.parties": Object.freeze(["rechnung.editor.customerPicker", "rechnung.editor.customerAddress", "rechnung.editor.issuerBlock", "rechnung.editor.invoiceMetaBlock", "rechnung.editor.introText"]),
+  "rechnung.editor.servicePeriod": Object.freeze(["rechnung.editor.servicePeriodToggle", "rechnung.editor.servicePeriodType", "rechnung.editor.serviceDate", "rechnung.editor.serviceMonth", "rechnung.editor.serviceStart", "rechnung.editor.serviceEnd"]),
+  "rechnung.editor.positionQuantityDecimals": Object.freeze(["rechnung.editor.positionQuantityDecimals.label", "rechnung.editor.positionQuantityDecimals.decrease", "rechnung.editor.positionQuantityDecimals.value", "rechnung.editor.positionQuantityDecimals.increase"]),
+  "rechnung.editor.positionActions": Object.freeze(["rechnung.editor.positionCreateTitle", "rechnung.editor.positionCreate", "rechnung.editor.positionMove", "rechnung.editor.positionDelete", "rechnung.editor.positionMoveRoot"]),
+  "rechnung.preview": Object.freeze(["rechnung.preview.title", "rechnung.preview.body", "rechnung.preview.close"]),
+});
+const action = (id, name, parentId, order, actionKind) => {
+  const reflowIds = buttonReflowIdsByParent[parentId] || Object.freeze([]);
+  return m83DomainButton({
+    id,
+    name,
+    parentId,
+    order,
+    actionKind,
+    unboundedGeometry: true,
+    fitChromeToOuterSize: true,
+    operationEffects: { resizeWidth: "parentReflowRequired", resizeHeight: "parentReflowRequired" },
+    operationAffectedIds: { resizeWidth: reflowIds, resizeHeight: reflowIds },
+  });
+};
 
 const baseElements = Object.freeze([
   invoiceElement({ id: RECHNUNG_SCOPE_ID, name: "Rechnungen", type: "root", role: "scopeRoot", parentId: null, order: 0, allowedOps: ZONE_HEIGHT_LAYOUT, componentKind: "moduleScreen" }),

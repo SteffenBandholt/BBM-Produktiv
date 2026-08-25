@@ -2,6 +2,50 @@
 
 Stand: 24.08.2026, Branch `rechnung-integration`, noch nicht committed oder gepusht.
 
+## Nachtrag 25.08.2026 - alle 16 registrierten Rechnungsbuttons vollständig entgrenzt
+
+Das nachfolgende 117er-Inventar bleibt der historische Nachweis des damaligen
+Scopes. Der aktuelle Rechnungskomponentenvertrag umfasst 131 Ziele. Darin sind
+exakt diese 16 Buttons registriert:
+
+- `rechnung.overview.new`
+- `rechnung.editor.headToggle`
+- `rechnung.editor.customerPicker`
+- `rechnung.editor.servicePeriodToggle`
+- `rechnung.editor.positionQuantityDecimals.decrease`
+- `rechnung.editor.positionQuantityDecimals.increase`
+- `rechnung.editor.positionCreateTitle`
+- `rechnung.editor.positionCreate`
+- `rechnung.editor.positionMove`
+- `rechnung.editor.positionDelete`
+- `rechnung.editor.positionMoveRoot`
+- `rechnung.editor.preview`
+- `rechnung.editor.book`
+- `rechnung.editor.delete`
+- `rechnung.editor.close`
+- `rechnung.preview.close`
+
+Für alle 16 fehlen `min-width`, `max-width`, `min-height` und `max-height` in
+sämtlichen `.invoice-button`-CSS-Regeln, Registry/Komponentenvertrag,
+HostAdapter, Inline-Styles und gespeicherten Profilwerten. Auch Text, Padding
+und Rahmen erzeugen keine faktische Untergrenze: Die äußere, vom Editor
+gewählte Größe bleibt exakt erhalten; Padding und Rahmen werden erforderlichenfalls
+innerhalb der Zielgröße eingepasst und Inhalt darf clippen.
+
+Der Komponentenvertrag deklariert den erwartbaren Reflow bereits vorhandener
+Geschwister desselben Parents. Dieser erwartete Reflow löst keinen Rollback
+aus; echte Überlagerungen, Flächenverletzungen und unerwartete Änderungen
+bleiben weiterhin geschützt. IDs, Parents, Fachaktionen und Handler wurden
+nicht geändert.
+
+Der Guardrail `scripts/tests/rechnungUiEditorUnbounded.test.cjs` prüft alle
+`.invoice-button`-Selektoren, exakt 16 Registrybuttons, Adapteranwendung,
+Inline-Zustand sowie Save/Restart-Restore. Die sichtbare native Abnahme prüft
+Nachkommastellen-Button, `+Position` und `Proberechnung` mit Minus/Plus in
+beiden Dimensionen; der Nachkommastellen-Button bleibt unter 20 x 18 px. Nach
+sichtbarem Speichern, Close/Remount und einem zweiten Electron-Prozess werden
+kleine Breite und Höhe exakt wiederhergestellt.
+
 ## Ergebnis nach Prüfebene
 
 - Registry/Komponentenvertrag: Der Scope `rechnung.screen` enthält 117 vollständig gemountete Ziele. Bei allen fehlen `minX`, `maxX`, `minY`, `maxY`, `minWidth`, `maxWidth`, `minHeight` und `maxHeight`; alle erlauben `move`, `resizeWidth` und `resizeHeight`.

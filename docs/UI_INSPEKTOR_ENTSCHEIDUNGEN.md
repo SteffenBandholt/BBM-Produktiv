@@ -177,3 +177,9 @@
 **Beschluss:** Alle Ausgaben der vorhandenen Protokoll-PDF-Familie verwenden denselben BBM-PDF-Layoutzustand. Die Editor-Vorschau verwendet den aktuellen Arbeitszustand; normaler Vorabzug und Produktdruck verwenden den gespeicherten Zustand desselben Profils. Nach erfolgreichem Speichern muessen diese Zustaende geometrisch identisch sein.
 
 **Begruendung:** Der normale Vorabzug wird technisch mit `mode=preview` erzeugt, nutzt aber denselben Protokoll-Print-DOM, dieselben Seitenraender und dieselben Tabellen. Ein Rueckfall dieses Modus auf die Registry-Baseline widerspricht der sichtbaren Editorfreigabe. Die gemeinsame Modusklassifikation schliesst diese Luecke ohne neue Profilquelle, Rendererarchitektur oder Druckstrecke.
+
+## Entscheidung 034
+
+**Beschluss:** Jeder registrierte Rechnungsbutton übernimmt die vom UI-Editor gewählte äußere Breite und Höhe exakt und ohne `min-width`, `max-width`, `min-height` oder `max-height`. Reichen Breite oder Höhe nicht für den normalen Text-, Padding- und Rahmenbedarf, werden Padding und Rahmen innerhalb der angeforderten Größe proportional eingepasst und der Inhalt über die bestehende Overflow-Darstellung geclippt. Die gewählte Buttongröße wird weder angehoben noch zurückgesetzt. Der Komponentenvertrag darf ausschließlich den erwartbaren Reflow bereits registrierter Geschwister desselben Parents deklarieren; dieser Reflow ist keine eigenständige Geometrieverletzung. Echte Überlagerungen, Flächenverletzungen und nicht deklarierte Änderungen bleiben gesperrt.
+
+**Begruendung:** Browser-Intrinsics aus Text, Padding und Rahmen können selbst ohne CSS-Minimum eine faktische Mindestgröße erzeugen. Die gemeinsame, typbasierte Anwendung auf registrierte Buttons beseitigt diese Restgrenze, ohne Registry-IDs, Parentstruktur, Fachaktionen oder Handler zu verändern. Die explizite Reflow-Deklaration verhindert zugleich, dass erwartbares Flex-/Grid-Nachrücken eine zulässige Buttonverkleinerung zurückrollt.

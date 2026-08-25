@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)][int]$ProcessId,
-    [ValidateSet("Dump", "SelectTarget", "ReadSelection", "ClickWidthMinus", "ClickWidthPlus", "ClickSave", "BeginClose", "ClickSaveDialog", "RestarbeitenSave")][string]$Action = "Dump",
+    [ValidateSet("Dump", "SelectTarget", "ReadSelection", "ClickWidthMinus", "ClickWidthPlus", "ClickHeightMinus", "ClickHeightPlus", "ClickSave", "BeginClose", "ClickSaveDialog", "RestarbeitenSave")][string]$Action = "Dump",
     [ValidateRange(1, 300)][int]$Count = 1
 )
 
@@ -213,6 +213,52 @@ if ($Action -eq "ClickWidthPlus") {
     exit 0
 }
 
+if ($Action -eq "ClickHeightMinus") {
+    $typeCondition = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+        [System.Windows.Automation.ControlType]::Button
+    )
+    $buttons = $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, $typeCondition)
+    $minusButtons = @()
+    foreach ($button in $buttons) {
+        $name = $button.Current.Name
+        if ($name.Length -eq 1 -and ([int][char]$name[0]) -in @(45, 8722)) { $minusButtons += $button }
+    }
+    if ($minusButtons.Count -lt 2) { throw "Hoehen-Minus ist fuer das ausgewaehlte Ziel nicht sichtbar (gefunden: $($minusButtons.Count))." }
+    $heightMinus = $minusButtons | Sort-Object { $_.Current.BoundingRectangle.X } | Select-Object -Last 1
+    Activate-Window $window
+    for ($index = 0; $index -lt $Count; $index += 1) {
+        Click-Control $heightMinus
+        if ($Count -gt 1) { Start-Sleep -Milliseconds 75 }
+    }
+    Start-Sleep -Milliseconds 400
+    [ordered]@{ action = $Action; clicked = $heightMinus.Current.Name; clickCount = $Count; characterCode = [int][char]$heightMinus.Current.Name[0]; buttonCount = $minusButtons.Count } | ConvertTo-Json -Depth 3 -Compress
+    exit 0
+}
+
+if ($Action -eq "ClickHeightPlus") {
+    $typeCondition = New-Object System.Windows.Automation.PropertyCondition(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+        [System.Windows.Automation.ControlType]::Button
+    )
+    $buttons = $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, $typeCondition)
+    $plusButtons = @()
+    foreach ($button in $buttons) {
+        $name = $button.Current.Name
+        if ($name.Length -eq 1 -and ([int][char]$name[0]) -eq 43) { $plusButtons += $button }
+    }
+    if ($plusButtons.Count -lt 2) { throw "Hoehen-Plus ist fuer das ausgewaehlte Ziel nicht sichtbar (gefunden: $($plusButtons.Count))." }
+    $heightPlus = $plusButtons | Sort-Object { $_.Current.BoundingRectangle.X } | Select-Object -Last 1
+    Activate-Window $window
+    for ($index = 0; $index -lt $Count; $index += 1) {
+        Click-Control $heightPlus
+        if ($Count -gt 1) { Start-Sleep -Milliseconds 75 }
+    }
+    Start-Sleep -Milliseconds 400
+    [ordered]@{ action = $Action; clicked = $heightPlus.Current.Name; clickCount = $Count; characterCode = [int][char]$heightPlus.Current.Name[0]; buttonCount = $plusButtons.Count } | ConvertTo-Json -Depth 3 -Compress
+    exit 0
+}
+
 if ($Action -eq "ReadSelection") {
     $textCondition = New-Object System.Windows.Automation.PropertyCondition(
         [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
@@ -223,7 +269,11 @@ if ($Action -eq "ReadSelection") {
     $status = @()
     foreach ($text in $texts) {
         if ($text.Current.Name.StartsWith("Fertig bis", [System.StringComparison]::Ordinal) -or
-            $text.Current.Name.StartsWith("Kurztext", [System.StringComparison]::Ordinal)) { $matching += $text.Current.Name }
+            $text.Current.Name.StartsWith("Kurztext", [System.StringComparison]::Ordinal) -or
+            $text.Current.Name.StartsWith("Nachkommastellen verringern", [System.StringComparison]::Ordinal) -or
+            $text.Current.Name.StartsWith("Nachkommastellen erh", [System.StringComparison]::Ordinal) -or
+            $text.Current.Name.StartsWith("+Position", [System.StringComparison]::Ordinal) -or
+            $text.Current.Name.StartsWith("Proberechnung", [System.StringComparison]::Ordinal)) { $matching += $text.Current.Name }
         if ($text.Current.Name.StartsWith("Ungespeichert", [System.StringComparison]::Ordinal) -or
             $text.Current.Name.StartsWith("Gespeichert", [System.StringComparison]::Ordinal) -or
             $text.Current.Name.StartsWith("Zuletzt", [System.StringComparison]::Ordinal)) { $status += $text.Current.Name }

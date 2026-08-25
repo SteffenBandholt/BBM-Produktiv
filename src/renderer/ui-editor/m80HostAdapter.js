@@ -351,6 +351,14 @@ function geometryRiskFor(entry, request, beforeGeometry, afterGeometry, effect) 
   const groupEntry = ancestor(entry, (candidate) => ["group", "fieldGroup"].includes(candidate.type));
   let rootEntry = entry;
   while (rootEntry?.parentId) rootEntry = getM80RegistryEntry(rootEntry.parentId);
+  const declaredNeighbors = collectM80GeometryNeighbors(entry, beforeGeometry, afterGeometry, effect.unexpected);
+  const acceptsDeclaredButtonReflow = entry.type === "button"
+    && entry.fitChromeToOuterSize === true
+    && effect.effect === "parentReflowRequired"
+    && effect.unexpected.length === 0;
+  const affectedNeighbors = acceptsDeclaredButtonReflow
+    ? declaredNeighbors.map((candidate) => ({ ...candidate, geometryChanged: false }))
+    : declaredNeighbors;
   return evaluateGeometryRisk({
     editMode: request.editMode === EDIT_MODES.FREE ? EDIT_MODES.FREE : EDIT_MODES.GUIDED,
     operationId: String(request.changeId || ""),
@@ -366,7 +374,7 @@ function geometryRiskFor(entry, request, beforeGeometry, afterGeometry, effect) 
     group: entryWithBounds(groupEntry, afterGeometry),
     parent: entryWithBounds(parentEntry, afterGeometry),
     editableArea: entryWithBounds(rootEntry, afterGeometry),
-    affectedNeighbors: collectM80GeometryNeighbors(entry, beforeGeometry, afterGeometry, effect.unexpected),
+    affectedNeighbors,
     operation: request.operation,
     groupWidthEditable: groupEntry?.allowedOps?.includes("resizeWidth") === true,
   });
