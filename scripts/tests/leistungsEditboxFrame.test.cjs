@@ -13,6 +13,7 @@ function read(relPath) {
 function main() {
   const frame = read("src/renderer/core/leistungseditbox/LeistungsEditboxFrame.js");
   const preview = read("src/renderer/core/leistungseditbox/LeistungsEditboxPreview.js");
+  const previewScreen = read("src/renderer/core/leistungseditbox/LeistungsEditboxPreviewScreen.js");
   const styles = read("src/renderer/core/leistungseditbox/leistungseditbox.css");
   const demo = read("src/renderer/uiEditor/demo/BbmUiEditorDemoScreen.js");
 
@@ -20,6 +21,12 @@ function main() {
   assert.match(frame, /data-ui-editor-editable", "true"/);
   assert.match(frame, /inspect,move,resizeWidth,resizeHeight/);
   assert.match(frame, /ensureLeistungsEditboxStyles\(doc\)/);
+  assert.match(frame, /this\.headerHost/);
+  assert.match(frame, /this\.contentHost/);
+  assert.match(frame, /getHeaderHost\(\)/);
+  assert.match(frame, /getContentHost\(\)/);
+  assert.match(frame, /replaceHeader\(\.\.\.nodes\)/);
+  assert.match(frame, /replaceContent\(\.\.\.nodes\)/);
 
   for (const forbidden of ["rechnung", "angebot", "kalkulation", "protokoll", "restarbeiten", "mwst", "menge", "preis", "status", "flags"]) {
     assert.equal(frame.toLowerCase().includes(forbidden), false, `fachlicher Begriff im neutralen Frame: ${forbidden}`);
@@ -28,6 +35,8 @@ function main() {
   assert.doesNotMatch(styles, /\bmin-(?:width|height)\s*:/i);
   assert.doesNotMatch(styles, /\bmax-(?:width|height)\s*:/i);
   assert.doesNotMatch(styles, /\bclamp\s*\(/i);
+  assert.match(styles, /bbm-leistungseditbox-frame__header/);
+  assert.match(styles, /bbm-leistungseditbox-frame__content/);
 
   assert.match(preview, /PREVIEW_FRAME_ID = "leistungseditbox\.preview\.frame"/);
   assert.match(preview, /width: "520px"/);
@@ -35,10 +44,14 @@ function main() {
   assert.match(preview, /position: "absolute"/);
   assert.match(preview, /measure\(\)/);
 
+  assert.match(previewScreen, /LeistungsEditbox · Baustein B/);
+  assert.match(previewScreen, /frame\.replaceHeader\(header\)/);
+  assert.match(previewScreen, /frame\.replaceContent\(content\)/);
+
   assert.match(demo, /createLeistungsEditboxPreview/);
   assert.match(demo, /leistungsEditboxPreview\.root/);
 
-  console.log("TESTS OK: LeistungsEditbox Baustein A ist fachneutral, editorfaehig und ohne Groessenbegrenzungen in der UI-Editor-Demo eingebunden.");
+  console.log("TESTS OK: LeistungsEditbox Baustein B besitzt fachneutralen Kopf- und Inhaltsbereich; der äußere Rahmen bleibt editorfähig und unbeschränkt.");
 }
 
 main();
