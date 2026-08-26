@@ -2,6 +2,7 @@ import RechnungenDesignScreen from "./screens/RechnungenDesignScreen.js";
 import RechnungScreen from "./screens/RechnungScreen.js";
 import { RECHNUNG_WORK_SCREEN_ID } from "./screens/index.js";
 import { RECHNUNG_SCOPE_ID } from "./RechnungScreen.uiEditorContract.js";
+import { RechnungLeistungsEditboxBinding } from "./RechnungLeistungsEditboxBinding.js";
 
 export const RECHNUNG_MODULE_ID = "rechnung";
 export const RECHNUNG_MODULE_LABEL = "Rechnungen";
@@ -11,6 +12,38 @@ class RechnungEditorScreen extends RechnungScreen {
   constructor(args = {}) {
     super(args);
     this.uiEditorScopeId = RECHNUNG_SCOPE_ID;
+    this.leistungsEditboxBinding = null;
+  }
+
+  render() {
+    const root = super.render();
+    this._installLeistungsEditboxBinding();
+    return root;
+  }
+
+  _installLeistungsEditboxBinding() {
+    if (!this.sheetArea || this.leistungsEditboxBinding) return;
+    this.leistungsEditboxBinding = new RechnungLeistungsEditboxBinding({
+      documentRef: globalThis.document,
+      onAddTitle: () => this._createTitle(),
+      onAddPosition: () => this._createPosition(),
+      onMove: () => this._togglePositionMove(),
+      onDelete: () => this._deletePosition(),
+    });
+    this.sheetArea.append(this.leistungsEditboxBinding.getElement());
+  }
+
+  _clearPositionSelection() {
+    super._clearPositionSelection();
+    this.leistungsEditboxBinding?.hide();
+  }
+
+  _handlePositionRowClick(entry) {
+    super._handlePositionRowClick(entry);
+    if (this.isPositionMoveMode) return;
+    this.leistungsEditboxBinding?.showPosition(entry, {
+      quantityDecimalPlaces: this.quantityDecimalPlaces,
+    });
   }
 }
 
