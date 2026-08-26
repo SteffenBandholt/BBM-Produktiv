@@ -33,6 +33,8 @@ function main() {
   assert.match(field, /singleline/);
   assert.match(field, /multiline/);
   assert.match(field, /select/);
+  assert.match(field, /toggle/);
+  assert.match(field, /control\.checked/);
   assert.match(header, /this\.leftHost/);
   assert.match(header, /this\.centerHost/);
   assert.match(header, /this\.rightHost/);
@@ -49,32 +51,40 @@ function main() {
   }
 
   assert.match(adapter, /class LeistungspositionEditboxAdapter/);
-  for (const label of ["Kurztext", "Langtext", "Typ", "Menge", "Einheit", "Einzelpreis"]) {
+  for (const label of ["Kurztext", "Langtext", "Typ", "Menge", "Einheit", "Einzelpreis", "Brutto", "NEP"]) {
     assert.match(adapter, new RegExp(`label: "${label}"`));
   }
+  assert.match(adapter, /showGross = false/);
+  assert.match(adapter, /showNep = false/);
+  assert.match(adapter, /kind: "toggle"/);
   assert.match(adapter, /getValues\(\)/);
   assert.match(adapter, /shortText:/);
   assert.match(adapter, /longText:/);
   assert.match(adapter, /quantity:/);
   assert.match(adapter, /unitPrice:/);
+  assert.match(adapter, /gross:/);
+  assert.match(adapter, /nep:/);
 
   assert.doesNotMatch(styles, /\bmin-(?:width|height)\s*:/i);
   assert.doesNotMatch(styles, /\bmax-(?:width|height)\s*:/i);
   assert.doesNotMatch(styles, /\bclamp\s*\(/i);
+  assert.match(styles, /bbm-leistungseditbox-field--toggle/);
 
   assert.match(preview, /PREVIEW_FRAME_ID = "leistungseditbox\.preview\.frame"/);
   assert.match(preview, /position: "absolute"/);
   assert.match(preview, /measure\(\)/);
 
-  assert.match(previewScreen, /LeistungsEditbox · Baustein F/);
+  assert.match(previewScreen, /LeistungsEditbox · Baustein G/);
   assert.match(previewScreen, /new LeistungspositionEditboxAdapter/);
+  assert.match(previewScreen, /showGross: true/);
+  assert.match(previewScreen, /showNep: true/);
   assert.match(previewScreen, /Leistungsposition bearbeiten/);
   assert.match(previewScreen, /frame\.replaceContent\(adapter\.getElement\(\)\)/);
 
   assert.match(demo, /createLeistungsEditboxPreview/);
   assert.match(demo, /leistungsEditboxPreview\.root/);
 
-  console.log("TESTS OK: LeistungsEditbox Baustein F nutzt einen getrennten Leistungspositions-Adapter mit Kurztext, Langtext, Typ, Menge, Einheit und Einzelpreis; der neutrale Core bleibt fachfrei.");
+  console.log("TESTS OK: LeistungsEditbox Baustein G ergänzt optionale Brutto- und NEP-Merkmale über neutrale Toggle-Felder; der neutrale Core bleibt fachfrei.");
 }
 
 main();
