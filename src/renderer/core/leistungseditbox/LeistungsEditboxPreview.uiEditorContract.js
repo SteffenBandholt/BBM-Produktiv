@@ -18,7 +18,7 @@ const elements = Object.freeze([
   m83Element({
     id: LEISTUNGSEDITBOX_PREVIEW_FRAME_ID,
     name: "LeistungsEditbox",
-    type: "frame",
+    type: "area",
     role: "layout",
     parentId: LEISTUNGSEDITBOX_PREVIEW_SCOPE_ID,
     order: 10,
