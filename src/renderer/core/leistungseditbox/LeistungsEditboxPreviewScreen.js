@@ -57,8 +57,8 @@ export class LeistungsEditboxPreviewScreen {
     const toolbar = doc.createElement("div");
     toolbar.style.cssText = "display:flex;align-items:center;gap:12px;min-height:36px;padding:0 2px;";
     toolbar.append(
-      createText(doc, "strong", "LeistungsEditbox · Baustein H"),
-      createText(doc, "span", "Positionsarten und feste Alternativzuordnung")
+      createText(doc, "strong", "LeistungsEditbox · Baustein I"),
+      createText(doc, "span", "Mengenformat direkt als 0,00 steuerbar")
     );
 
     const editorButtonHost = doc.createElement("div");
@@ -108,6 +108,7 @@ export class LeistungsEditboxPreviewScreen {
         longText: "Alternative Ausführung zur fest vorgegebenen Position 21. Die Hauptnummer bleibt unverändert erhalten.",
         type: "alternative",
         quantity: "12,00",
+        quantityDecimalPlaces: 2,
         unit: "m²",
         unitPrice: "18,50",
         gross: false,
