@@ -1,3 +1,5 @@
+import { ensureLeistungsEditboxStyles } from "./styles.js";
+
 const LEISTUNGSEDITBOX_FRAME_CLASS = "bbm-leistungseditbox-frame";
 
 function setEditorAttributes(node, {
@@ -17,6 +19,8 @@ export class LeistungsEditboxFrame {
   constructor({ documentRef, id, label, parentId } = {}) {
     const doc = documentRef || globalThis.document;
     if (!doc?.createElement) throw new Error("LeistungsEditboxFrame benötigt ein Document.");
+
+    ensureLeistungsEditboxStyles(doc);
 
     this.root = doc.createElement("section");
     this.root.className = LEISTUNGSEDITBOX_FRAME_CLASS;
