@@ -6,13 +6,14 @@ import { protokollQuicklaneUiEditorContract, protokollScreenUiEditorContract } f
 import { protokollListColumnsUiEditorContract, protokollListUiEditorContract } from "../modules/protokoll/TopsList.uiEditorContract.js";
 import { protokollEditUiEditorContract } from "../modules/protokoll/TopsWorkbench.uiEditorContract.js";
 import { rechnungUiEditorContract } from "../modules/rechnungen/RechnungScreen.uiEditorContract.js";
+import { leistungsEditboxPreviewUiEditorContract } from "../core/leistungseditbox/LeistungsEditboxPreview.uiEditorContract.js";
 import {
   protokollMainHeaderLauncherUiEditorContract,
   restarbeitenMainHeaderLauncherUiEditorContract,
 } from "../ui/MainHeader.uiEditorContract.js";
 import { aggregateBbmM83Components } from "./m83ComponentContract.js";
 
-export const BBM_M80_REGISTRY_VERSION = 28;
+export const BBM_M80_REGISTRY_VERSION = 29;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
@@ -28,6 +29,7 @@ export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
   protokollListColumnsUiEditorContract,
   protokollEditUiEditorContract,
   rechnungUiEditorContract,
+  leistungsEditboxPreviewUiEditorContract,
 ]);
 
 const aggregate = aggregateBbmM83Components(BBM_M83_COMPONENT_CONTRACTS);
@@ -53,12 +55,14 @@ export const BBM_M80_ACTIVE_SCOPES = Object.freeze([
   "restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root",
   "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root",
   "rechnung.screen",
+  "leistungseditbox.preview",
 ]);
 
 export const BBM_M80_ACTIVE_SCOPE_GROUPS = Object.freeze([
   Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]),
   Object.freeze(["protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root"]),
   Object.freeze(["rechnung.screen"]),
+  Object.freeze(["leistungseditbox.preview"]),
 ]);
 
 export const BBM_M80_REGISTRY_SCOPES = Object.freeze([
