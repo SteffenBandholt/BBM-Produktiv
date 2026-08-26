@@ -127,7 +127,6 @@ textarea.bbm-leistungseditbox-field__control {
   display: grid;
   gap: 10px;
   width: 100%;
-  min-width: 0;
   align-items: start;
 }
 
@@ -135,6 +134,5 @@ textarea.bbm-leistungseditbox-field__control {
   display: grid;
   gap: 10px;
   width: 100%;
-  min-width: 0;
   align-content: start;
 }
