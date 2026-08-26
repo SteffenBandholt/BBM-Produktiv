@@ -173,7 +173,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     version: "",
   });
 
+  // CoreShell startet intern asynchron den Home-Screen. Fuer diesen isolierten
+  // Entwicklungsbranch warten wir genau diesen ersten Startlauf ab, bevor die
+  // LeistungsEditbox-Preview angezeigt wird. So kann Home die Preview nicht
+  // nachtraeglich wieder ueberschreiben.
+  let initialHomePromise = null;
+  const originalShowHome = router.showHome.bind(router);
+  router.showHome = (...args) => {
+    const promise = Promise.resolve(originalShowHome(...args));
+    if (!initialHomePromise) initialHomePromise = promise;
+    return promise;
+  };
+
   coreShell.start();
+  if (initialHomePromise) await initialHomePromise;
 
   // Nur auf dem Entwicklungsbranch `leistungseditbox`: der Baustein soll nach
   // `npm start` ohne Umweg direkt sichtbar und mit dem normalen UI-Editor
