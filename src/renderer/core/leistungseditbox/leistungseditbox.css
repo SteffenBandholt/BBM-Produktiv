@@ -86,14 +86,12 @@ textarea.bbm-leistungseditbox-field__control {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 8px;
-  min-width: 0;
 }
 
 .bbm-leistungseditbox-header__group {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-width: 0;
 }
 
 .bbm-leistungseditbox-header__group--left {
