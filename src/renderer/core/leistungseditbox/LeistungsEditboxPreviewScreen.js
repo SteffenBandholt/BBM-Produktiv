@@ -2,9 +2,8 @@ import { installDevelopmentUiEditorOpenButton } from "../../app/coreShellNavigat
 import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
 import { m80EditorAttributes } from "../../ui-editor/m80Registry.js";
 import { LeistungspositionEditboxAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxAdapter.js";
-import { LeistungsEditboxAction } from "./LeistungsEditboxAction.js";
+import { LeistungspositionEditboxHeaderAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxHeaderAdapter.js";
 import { LeistungsEditboxFrame } from "./LeistungsEditboxFrame.js";
-import { LeistungsEditboxHeader } from "./LeistungsEditboxHeader.js";
 import {
   LEISTUNGSEDITBOX_PREVIEW_COMPONENT_ID,
   LEISTUNGSEDITBOX_PREVIEW_FRAME_ID,
@@ -37,6 +36,7 @@ export class LeistungsEditboxPreviewScreen {
     this.overlay = null;
     this.frame = null;
     this.adapter = null;
+    this.headerAdapter = null;
   }
 
   render() {
@@ -57,9 +57,13 @@ export class LeistungsEditboxPreviewScreen {
     const toolbar = doc.createElement("div");
     toolbar.style.cssText = "display:flex;align-items:center;gap:12px;min-height:36px;padding:0 2px;";
     toolbar.append(
-      createText(doc, "strong", "LeistungsEditbox · Baustein M"),
-      createText(doc, "span", "Langtext pro Position ein- und ausblendbar")
+      createText(doc, "strong", "LeistungsEditbox · Baustein N"),
+      createText(doc, "span", "Fachliche Kopfaktionen als wiederverwendbare Callbacks")
     );
+
+    const actionStatus = createText(doc, "span", "Noch keine Kopfaktion ausgelöst");
+    actionStatus.style.cssText = "font-size:12px;color:#64748b;";
+    toolbar.appendChild(actionStatus);
 
     const editorButtonHost = doc.createElement("div");
     editorButtonHost.style.marginLeft = "auto";
@@ -86,15 +90,16 @@ export class LeistungsEditboxPreviewScreen {
     frameRoot.style.boxShadow = "0 8px 20px rgba(34,48,68,.16)";
     frameRoot.style.background = "#fff";
 
-    const leftAction = new LeistungsEditboxAction({ documentRef: doc, label: "Aktion links" });
-    const centerAction = new LeistungsEditboxAction({ documentRef: doc, label: "Aktion mitte" });
-    const rightAction = new LeistungsEditboxAction({ documentRef: doc, label: "Aktion rechts" });
-    const header = new LeistungsEditboxHeader({
+    const markAction = (label) => {
+      actionStatus.textContent = `Kopfaktion: ${label}`;
+    };
+    const headerAdapter = new LeistungspositionEditboxHeaderAdapter({
       documentRef: doc,
       title: "Leistungsposition bearbeiten",
-      left: [leftAction.getElement()],
-      center: [centerAction.getElement()],
-      right: [rightAction.getElement()],
+      onAddTitle: () => markAction("+ Titel"),
+      onAddPosition: () => markAction("+ Position"),
+      onMove: () => markAction("Schieben"),
+      onDelete: () => markAction("Löschen"),
     });
 
     const adapter = new LeistungspositionEditboxAdapter({
@@ -106,7 +111,6 @@ export class LeistungsEditboxPreviewScreen {
         basePositionNumber: "21",
         shortText: "Untergrund vorbereiten",
         longText: "Flächen reinigen, lose Bestandteile entfernen und für die weitere Bearbeitung vorbereiten.",
-        showLongText: false,
         type: "standard",
         quantity: "12,00",
         quantityDecimalPlaces: 2,
@@ -118,7 +122,7 @@ export class LeistungsEditboxPreviewScreen {
     });
     adapter.getElement().style.cssText += "height:100%;padding:12px;";
 
-    frame.replaceHeader(header.getElement());
+    frame.replaceHeader(headerAdapter.getElement());
     frame.replaceContent(adapter.getElement());
 
     surface.appendChild(frameRoot);
@@ -129,6 +133,7 @@ export class LeistungsEditboxPreviewScreen {
     this.overlay = root;
     this.frame = frame;
     this.adapter = adapter;
+    this.headerAdapter = headerAdapter;
 
     completeM80PilotRender();
     void installDevelopmentUiEditorOpenButton({
