@@ -95,21 +95,20 @@ function main() {
   assert.match(preview, /position: "absolute"/);
   assert.match(preview, /measure\(\)/);
 
-  assert.match(previewScreen, /LeistungsEditbox · Baustein O/);
-  assert.match(previewScreen, /Eine Editbox kann nacheinander unterschiedliche Positionen laden/);
-  assert.match(previewScreen, /const PREVIEW_POSITIONS/);
-  assert.match(previewScreen, /label: "Pos\. 21"/);
-  assert.match(previewScreen, /label: "Pos\. 21a"/);
-  assert.match(previewScreen, /label: "Hinweis"/);
-  assert.match(previewScreen, /adapter\.setValues\(position\.values\)/);
-  assert.match(previewScreen, /Geladen:/);
+  assert.match(previewScreen, /LeistungsEditbox · Stand nach Baustein O/);
+  assert.match(previewScreen, /Normale Beispielposition; Positionswechsel bleibt intern verfügbar/);
+  assert.doesNotMatch(previewScreen, /const PREVIEW_POSITIONS/);
+  assert.doesNotMatch(previewScreen, /Testposition laden:/);
+  assert.doesNotMatch(previewScreen, /adapter\.setValues\(position\.values\)/);
   assert.match(previewScreen, /new LeistungspositionEditboxHeaderAdapter/);
   assert.match(previewScreen, /showPositionAmount: true/);
+  assert.match(previewScreen, /basePositionNumber: "21"/);
+  assert.match(previewScreen, /type: "standard"/);
 
   assert.match(demo, /createLeistungsEditboxPreview/);
   assert.match(demo, /leistungsEditboxPreview\.root/);
 
-  console.log("TESTS OK: Baustein O kann dieselbe LeistungsEditbox mit setValues auf unterschiedliche Positionen umschalten; Nummer, Typ, Texte, Mengenformat, Preis, Brutto und NEP werden gemeinsam neu geladen.");
+  console.log("TESTS OK: Die künstlichen Positionswechsel-Schalter sind aus der Preview entfernt; setValues bleibt intern für die spätere echte Positionsauswahl verfügbar.");
 }
 
 main();
