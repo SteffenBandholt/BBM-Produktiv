@@ -89,6 +89,12 @@ export class LeistungspositionEditboxAdapter {
         kind: "multiline",
         value: values.longText ?? "",
       }),
+      showLongText: new LeistungsEditboxField({
+        documentRef: doc,
+        label: "Langtext anzeigen",
+        kind: "toggle",
+        value: values.showLongText !== false,
+      }),
       type: new LeistungsEditboxField({
         documentRef: doc,
         label: "Typ",
@@ -183,7 +189,7 @@ export class LeistungspositionEditboxAdapter {
 
     this.numberRow = new LeistungsEditboxRow({
       documentRef: doc,
-      columns: ["minmax(90px, .35fr)", "minmax(150px, .65fr)", "minmax(0, 2fr)"],
+      columns: ["minmax(0, .35fr)", "minmax(0, .65fr)", "minmax(0, 2fr)"],
       children: [
         this.fields.positionNumber.getElement(),
         this.fields.type.getElement(),
@@ -193,7 +199,11 @@ export class LeistungspositionEditboxAdapter {
 
     this.primaryRow = new LeistungsEditboxRow({
       documentRef: doc,
-      children: [this.fields.shortText.getElement()],
+      columns: ["minmax(0, 1fr)", "auto"],
+      children: [
+        this.fields.shortText.getElement(),
+        this.fields.showLongText.getElement(),
+      ],
     });
 
     const detailChildren = [
@@ -206,9 +216,9 @@ export class LeistungspositionEditboxAdapter {
     ];
     const detailColumns = [
       "minmax(0, 1fr)",
-      "minmax(110px, .45fr)",
-      "minmax(140px, .65fr)",
-      ...(this.fields.positionAmount ? ["minmax(140px, .65fr)"] : []),
+      "minmax(0, .45fr)",
+      "minmax(0, .65fr)",
+      ...(this.fields.positionAmount ? ["minmax(0, .65fr)"] : []),
       ...(this.fields.gross ? ["auto"] : []),
       ...(this.fields.nep ? ["auto"] : []),
     ];
@@ -235,7 +245,9 @@ export class LeistungspositionEditboxAdapter {
     });
 
     this.fields.type.getControl().addEventListener("change", () => this.updateTypePresentation());
+    this.fields.showLongText.getControl().addEventListener("change", () => this.updateLongTextPresentation());
     this.updateTypePresentation();
+    this.updateLongTextPresentation();
     this.updatePositionAmount();
   }
 
@@ -258,6 +270,10 @@ export class LeistungspositionEditboxAdapter {
     this.fields.positionAmount.setValue(
       formatPositionAmount(this.fields.quantity.getValue(), this.fields.unitPrice.getValue())
     );
+  }
+
+  updateLongTextPresentation() {
+    this.textRow.getElement().hidden = !this.fields.showLongText.getValue();
   }
 
   updateTypePresentation() {
@@ -297,6 +313,7 @@ export class LeistungspositionEditboxAdapter {
       basePositionNumber: this.basePositionNumber,
       shortText: this.fields.shortText.getValue(),
       longText: this.fields.longText.getValue(),
+      showLongText: this.fields.showLongText.getValue(),
       type,
       alternativeOf: type === "alternative" ? this.basePositionNumber : "",
       alternativeSuffix: type === "alternative" ? this.alternativeSuffix : "",
