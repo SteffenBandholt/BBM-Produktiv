@@ -7,7 +7,19 @@ import {
 const DEFAULT_TYPE_OPTIONS = Object.freeze([
   { value: "standard", label: "Standard" },
   { value: "alternative", label: "Alternative" },
+  { value: "hint", label: "Hinweis" },
+  { value: "text", label: "Text" },
 ]);
+
+function normalizeAlternativeSuffix(value) {
+  const suffix = String(value ?? "a").trim().toLowerCase();
+  return /^[a-z]$/.test(suffix) ? suffix : "a";
+}
+
+function alternativeDisplayNumber(basePositionNumber, suffix) {
+  const base = String(basePositionNumber ?? "").trim();
+  return base ? `${base}${normalizeAlternativeSuffix(suffix)}` : normalizeAlternativeSuffix(suffix);
+}
 
 export class LeistungspositionEditboxAdapter {
   constructor({
@@ -20,7 +32,16 @@ export class LeistungspositionEditboxAdapter {
     const doc = documentRef || globalThis.document;
     if (!doc?.createElement) throw new Error("LeistungspositionEditboxAdapter benötigt ein Document.");
 
+    this.basePositionNumber = String(values.basePositionNumber ?? values.positionNumber ?? "").trim();
+    this.alternativeSuffix = normalizeAlternativeSuffix(values.alternativeSuffix ?? "a");
+
     const fields = {
+      positionNumber: new LeistungsEditboxField({
+        documentRef: doc,
+        label: "Pos.-Nr.",
+        kind: "singleline",
+        value: this.basePositionNumber,
+      }),
       shortText: new LeistungsEditboxField({
         documentRef: doc,
         label: "Kurztext",
@@ -39,6 +60,12 @@ export class LeistungspositionEditboxAdapter {
         kind: "select",
         value: values.type ?? typeOptions[0]?.value ?? "",
         options: typeOptions,
+      }),
+      alternativeReference: new LeistungsEditboxField({
+        documentRef: doc,
+        label: "Zuordnung",
+        kind: "singleline",
+        value: "",
       }),
       quantity: new LeistungsEditboxField({
         documentRef: doc,
@@ -60,6 +87,9 @@ export class LeistungspositionEditboxAdapter {
       }),
     };
 
+    fields.positionNumber.getControl().readOnly = true;
+    fields.alternativeReference.getControl().readOnly = true;
+
     if (showGross) {
       fields.gross = new LeistungsEditboxField({
         documentRef: doc,
@@ -78,13 +108,19 @@ export class LeistungspositionEditboxAdapter {
     }
     this.fields = Object.freeze(fields);
 
+    this.numberRow = new LeistungsEditboxRow({
+      documentRef: doc,
+      columns: ["minmax(90px, .35fr)", "minmax(150px, .65fr)", "minmax(0, 2fr)"],
+      children: [
+        this.fields.positionNumber.getElement(),
+        this.fields.type.getElement(),
+        this.fields.alternativeReference.getElement(),
+      ],
+    });
+
     this.primaryRow = new LeistungsEditboxRow({
       documentRef: doc,
-      columns: ["minmax(0, 2fr)", "minmax(150px, .7fr)"],
-      children: [
-        this.fields.shortText.getElement(),
-        this.fields.type.getElement(),
-      ],
+      children: [this.fields.shortText.getElement()],
     });
 
     const detailChildren = [
@@ -116,11 +152,31 @@ export class LeistungspositionEditboxAdapter {
     this.root = new LeistungsEditboxGroup({
       documentRef: doc,
       children: [
+        this.numberRow.getElement(),
         this.primaryRow.getElement(),
         this.detailRow.getElement(),
         this.textRow.getElement(),
       ],
     });
+
+    this.fields.type.getControl().addEventListener("change", () => this.updateTypePresentation());
+    this.updateTypePresentation();
+  }
+
+  updateTypePresentation() {
+    const type = this.fields.type.getValue();
+    const isAlternative = type === "alternative";
+    const displayNumber = isAlternative
+      ? alternativeDisplayNumber(this.basePositionNumber, this.alternativeSuffix)
+      : this.basePositionNumber;
+
+    this.fields.positionNumber.setValue(displayNumber);
+    this.fields.alternativeReference.setValue(
+      isAlternative && this.basePositionNumber
+        ? `Alternativposition zu Pos. ${this.basePositionNumber}`
+        : ""
+    );
+    this.fields.alternativeReference.getElement().hidden = !isAlternative;
   }
 
   getElement() {
@@ -132,10 +188,15 @@ export class LeistungspositionEditboxAdapter {
   }
 
   getValues() {
+    const type = this.fields.type.getValue();
     return Object.freeze({
+      positionNumber: this.fields.positionNumber.getValue(),
+      basePositionNumber: this.basePositionNumber,
       shortText: this.fields.shortText.getValue(),
       longText: this.fields.longText.getValue(),
-      type: this.fields.type.getValue(),
+      type,
+      alternativeOf: type === "alternative" ? this.basePositionNumber : "",
+      alternativeSuffix: type === "alternative" ? this.alternativeSuffix : "",
       quantity: this.fields.quantity.getValue(),
       unit: this.fields.unit.getValue(),
       unitPrice: this.fields.unitPrice.getValue(),
@@ -145,4 +206,7 @@ export class LeistungspositionEditboxAdapter {
   }
 }
 
-export { DEFAULT_TYPE_OPTIONS as LEISTUNGSPOSITION_DEFAULT_TYPE_OPTIONS };
+export {
+  DEFAULT_TYPE_OPTIONS as LEISTUNGSPOSITION_DEFAULT_TYPE_OPTIONS,
+  alternativeDisplayNumber as leistungspositionAlternativeDisplayNumber,
+};
