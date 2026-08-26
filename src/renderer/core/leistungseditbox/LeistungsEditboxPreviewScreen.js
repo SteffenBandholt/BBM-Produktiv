@@ -29,55 +29,6 @@ function createText(doc, tag, text) {
   return element;
 }
 
-const PREVIEW_POSITIONS = Object.freeze([
-  {
-    label: "Pos. 21",
-    values: {
-      basePositionNumber: "21",
-      shortText: "Untergrund vorbereiten",
-      longText: "Flächen reinigen, lose Bestandteile entfernen und für die weitere Bearbeitung vorbereiten.",
-      type: "standard",
-      quantity: "12,00",
-      quantityDecimalPlaces: 2,
-      unit: "m²",
-      unitPrice: "18,50",
-      gross: false,
-      nep: false,
-    },
-  },
-  {
-    label: "Pos. 21a",
-    values: {
-      basePositionNumber: "21",
-      alternativeSuffix: "a",
-      shortText: "Alternative Untergrundvorbereitung",
-      longText: "Alternative Ausführung zur fest vorgegebenen Position 21.",
-      type: "alternative",
-      quantity: "8,500",
-      quantityDecimalPlaces: 3,
-      unit: "m²",
-      unitPrice: "22,75",
-      gross: false,
-      nep: true,
-    },
-  },
-  {
-    label: "Hinweis",
-    values: {
-      basePositionNumber: "22",
-      shortText: "Hinweis zur Ausführung",
-      longText: "Dieser Eintrag ist ein Hinweis ohne Mengen- und Preiszeile.",
-      type: "hint",
-      quantity: "",
-      quantityDecimalPlaces: 2,
-      unit: "",
-      unitPrice: "",
-      gross: false,
-      nep: false,
-    },
-  },
-]);
-
 export class LeistungsEditboxPreviewScreen {
   constructor({ documentRef = globalThis.document } = {}) {
     this.documentRef = documentRef;
@@ -101,13 +52,13 @@ export class LeistungsEditboxPreviewScreen {
     const root = register(doc.createElement("section"), LEISTUNGSEDITBOX_PREVIEW_SCOPE_ID);
     root.setAttribute("data-leistungseditbox-preview-overlay", "true");
     root.className = "bbm-leistungseditbox-preview";
-    root.style.cssText = "position:fixed;inset:0;z-index:2147480000;display:grid;grid-template-rows:auto auto 1fr;gap:10px;padding:18px;box-sizing:border-box;overflow:auto;background:#eef2f7;color:#172033;font-family:system-ui,sans-serif;";
+    root.style.cssText = "position:fixed;inset:0;z-index:2147480000;display:grid;grid-template-rows:auto 1fr;gap:10px;padding:18px;box-sizing:border-box;overflow:auto;background:#eef2f7;color:#172033;font-family:system-ui,sans-serif;";
 
     const toolbar = doc.createElement("div");
     toolbar.style.cssText = "display:flex;align-items:center;gap:12px;min-height:36px;padding:0 2px;";
     toolbar.append(
-      createText(doc, "strong", "LeistungsEditbox · Baustein O"),
-      createText(doc, "span", "Eine Editbox kann nacheinander unterschiedliche Positionen laden")
+      createText(doc, "strong", "LeistungsEditbox · Stand nach Baustein O"),
+      createText(doc, "span", "Normale Beispielposition; Positionswechsel bleibt intern verfügbar")
     );
 
     const actionStatus = createText(doc, "span", "Noch keine Kopfaktion ausgelöst");
@@ -117,10 +68,6 @@ export class LeistungsEditboxPreviewScreen {
     const editorButtonHost = doc.createElement("div");
     editorButtonHost.style.marginLeft = "auto";
     toolbar.appendChild(editorButtonHost);
-
-    const positionSwitch = doc.createElement("div");
-    positionSwitch.style.cssText = "display:flex;align-items:center;gap:8px;padding:0 2px;";
-    positionSwitch.appendChild(createText(doc, "span", "Testposition laden:"));
 
     const surface = doc.createElement("div");
     surface.className = "bbm-leistungseditbox-preview__surface";
@@ -160,27 +107,26 @@ export class LeistungsEditboxPreviewScreen {
       showGross: true,
       showNep: true,
       showPositionAmount: true,
-      values: PREVIEW_POSITIONS[0].values,
+      values: {
+        basePositionNumber: "21",
+        shortText: "Untergrund vorbereiten",
+        longText: "Flächen reinigen, lose Bestandteile entfernen und für die weitere Bearbeitung vorbereiten.",
+        type: "standard",
+        quantity: "12,00",
+        quantityDecimalPlaces: 2,
+        unit: "m²",
+        unitPrice: "18,50",
+        gross: false,
+        nep: false,
+      },
     });
     adapter.getElement().style.cssText += "height:100%;padding:12px;";
-
-    for (const position of PREVIEW_POSITIONS) {
-      const button = doc.createElement("button");
-      button.type = "button";
-      button.textContent = position.label;
-      button.style.cssText = "padding:4px 9px;border:1px solid #c5cfdb;border-radius:4px;background:#fff;color:#25364c;cursor:pointer;";
-      button.addEventListener("click", () => {
-        adapter.setValues(position.values);
-        actionStatus.textContent = `Geladen: ${position.label}`;
-      });
-      positionSwitch.appendChild(button);
-    }
 
     frame.replaceHeader(headerAdapter.getElement());
     frame.replaceContent(adapter.getElement());
 
     surface.appendChild(frameRoot);
-    root.append(toolbar, positionSwitch, surface);
+    root.append(toolbar, surface);
     doc.body.appendChild(root);
 
     this.root = placeholder;
