@@ -9,6 +9,9 @@
 .bbm-leistungseditbox-header__actions,
 .bbm-leistungseditbox-header__group,
 .bbm-leistungseditbox-action,
+.bbm-leistungseditbox-decimal,
+.bbm-leistungseditbox-decimal__step,
+.bbm-leistungseditbox-decimal__pattern,
 .bbm-leistungseditbox-row,
 .bbm-leistungseditbox-group {
   box-sizing: border-box;
@@ -135,6 +138,48 @@ textarea.bbm-leistungseditbox-field__control {
 .bbm-leistungseditbox-action:disabled {
   cursor: default;
   opacity: .55;
+}
+
+.bbm-leistungseditbox-decimal {
+  display: inline-grid;
+  grid-template-columns: 22px auto 22px;
+  align-items: center;
+  width: max-content;
+  overflow: hidden;
+  border: 1px solid #c5cfdb;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #344255;
+  box-shadow: 0 1px 2px rgba(34, 48, 68, .06);
+}
+
+.bbm-leistungseditbox-decimal__step {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font: 600 15px/1 system-ui, sans-serif;
+  padding: 3px 0 4px;
+  cursor: pointer;
+}
+
+.bbm-leistungseditbox-decimal__step:hover:not(:disabled) {
+  background: rgba(77, 100, 128, .08);
+  color: #25364c;
+}
+
+.bbm-leistungseditbox-decimal__step:disabled {
+  opacity: .25;
+  cursor: default;
+}
+
+.bbm-leistungseditbox-decimal__pattern {
+  padding: 2px 5px 3px;
+  font: 600 11px/1.1 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: -.15px;
+  color: #40516a;
+  user-select: none;
+  white-space: nowrap;
 }
 
 .bbm-leistungseditbox-row {
