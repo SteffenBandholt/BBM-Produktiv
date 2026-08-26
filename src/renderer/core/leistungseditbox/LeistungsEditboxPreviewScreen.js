@@ -5,6 +5,7 @@ import { LeistungsEditboxAction } from "./LeistungsEditboxAction.js";
 import { LeistungsEditboxField } from "./LeistungsEditboxField.js";
 import { LeistungsEditboxFrame } from "./LeistungsEditboxFrame.js";
 import { LeistungsEditboxHeader } from "./LeistungsEditboxHeader.js";
+import { LeistungsEditboxGroup, LeistungsEditboxRow } from "./LeistungsEditboxLayout.js";
 import {
   LEISTUNGSEDITBOX_PREVIEW_COMPONENT_ID,
   LEISTUNGSEDITBOX_PREVIEW_FRAME_ID,
@@ -56,8 +57,8 @@ export class LeistungsEditboxPreviewScreen {
     const toolbar = doc.createElement("div");
     toolbar.style.cssText = "display:flex;align-items:center;gap:12px;min-height:36px;padding:0 2px;";
     toolbar.append(
-      createText(doc, "strong", "LeistungsEditbox · Baustein D"),
-      createText(doc, "span", "Neutraler Kopf mit drei Aktionsgruppen")
+      createText(doc, "strong", "LeistungsEditbox · Baustein E"),
+      createText(doc, "span", "Neutrale Layoutzeilen und Feldgruppen")
     );
 
     const editorButtonHost = doc.createElement("div");
@@ -79,7 +80,7 @@ export class LeistungsEditboxPreviewScreen {
     frameRoot.style.left = "36px";
     frameRoot.style.top = "42px";
     frameRoot.style.width = "780px";
-    frameRoot.style.height = "320px";
+    frameRoot.style.height = "340px";
     frameRoot.style.margin = "0";
     frameRoot.style.border = "2px solid #4d6480";
     frameRoot.style.boxShadow = "0 8px 20px rgba(34,48,68,.16)";
@@ -95,9 +96,6 @@ export class LeistungsEditboxPreviewScreen {
       center: [centerAction.getElement()],
       right: [rightAction.getElement()],
     });
-
-    const content = doc.createElement("div");
-    content.style.cssText = "display:grid;grid-template-columns:minmax(0,1.4fr) minmax(140px,.6fr);grid-template-rows:auto 1fr;gap:10px;width:100%;height:100%;padding:12px;box-sizing:border-box;overflow:visible;";
 
     const single = new LeistungsEditboxField({
       documentRef: doc,
@@ -122,14 +120,28 @@ export class LeistungsEditboxPreviewScreen {
       kind: "multiline",
       value: "Mehrzeilige neutrale Testeingabe",
     });
-    multiline.getElement().style.gridColumn = "1 / -1";
-    multiline.getElement().style.minHeight = "0";
-    multiline.getControl().style.minHeight = "0";
 
-    content.append(single.getElement(), select.getElement(), multiline.getElement());
+    const firstRow = new LeistungsEditboxRow({
+      documentRef: doc,
+      columns: ["minmax(0, 1.4fr)", "minmax(0, .6fr)"],
+      children: [single.getElement(), select.getElement()],
+    });
+    const secondRow = new LeistungsEditboxRow({
+      documentRef: doc,
+      columns: ["minmax(0, 1fr)"],
+      children: [multiline.getElement()],
+    });
+    secondRow.getElement().style.flex = "1 1 auto";
+    multiline.getElement().style.height = "100%";
+
+    const content = new LeistungsEditboxGroup({
+      documentRef: doc,
+      children: [firstRow.getElement(), secondRow.getElement()],
+    });
+    content.getElement().style.cssText += "height:100%;padding:12px;";
 
     frame.replaceHeader(header.getElement());
-    frame.replaceContent(content);
+    frame.replaceContent(content.getElement());
 
     surface.appendChild(frameRoot);
     root.append(toolbar, surface);
