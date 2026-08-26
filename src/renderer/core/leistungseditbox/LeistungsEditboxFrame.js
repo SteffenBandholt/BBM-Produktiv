@@ -26,17 +26,29 @@ export class LeistungsEditboxFrame {
     this.root.className = LEISTUNGSEDITBOX_FRAME_CLASS;
     setEditorAttributes(this.root, { id, label, parentId });
 
+    this.headerHost = doc.createElement("div");
+    this.headerHost.className = `${LEISTUNGSEDITBOX_FRAME_CLASS}__header`;
+
     this.contentHost = doc.createElement("div");
     this.contentHost.className = `${LEISTUNGSEDITBOX_FRAME_CLASS}__content`;
-    this.root.appendChild(this.contentHost);
+
+    this.root.append(this.headerHost, this.contentHost);
   }
 
   getElement() {
     return this.root;
   }
 
+  getHeaderHost() {
+    return this.headerHost;
+  }
+
   getContentHost() {
     return this.contentHost;
+  }
+
+  replaceHeader(...nodes) {
+    this.headerHost.replaceChildren(...nodes.filter(Boolean));
   }
 
   replaceContent(...nodes) {
