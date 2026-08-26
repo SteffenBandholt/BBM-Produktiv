@@ -1,4 +1,5 @@
 import {
+  LeistungsEditboxDecimalControl,
   LeistungsEditboxField,
   LeistungsEditboxGroup,
   LeistungsEditboxRow,
@@ -19,6 +20,26 @@ function normalizeAlternativeSuffix(value) {
 function alternativeDisplayNumber(basePositionNumber, suffix) {
   const base = String(basePositionNumber ?? "").trim();
   return base ? `${base}${normalizeAlternativeSuffix(suffix)}` : normalizeAlternativeSuffix(suffix);
+}
+
+function parseLocalizedNumber(value) {
+  const text = String(value ?? "").trim().replace(/\s+/g, "");
+  if (!text) return null;
+  const normalized = text.includes(",")
+    ? text.replace(/\./g, "").replace(",", ".")
+    : text;
+  const numeric = Number(normalized);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function formatLocalizedNumber(value, decimalPlaces) {
+  const numeric = parseLocalizedNumber(value);
+  if (numeric === null) return String(value ?? "");
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: decimalPlaces,
+    maximumFractionDigits: decimalPlaces,
+    useGrouping: true,
+  }).format(numeric);
 }
 
 export class LeistungspositionEditboxAdapter {
@@ -108,6 +129,22 @@ export class LeistungspositionEditboxAdapter {
     }
     this.fields = Object.freeze(fields);
 
+    this.quantityDecimalControl = new LeistungsEditboxDecimalControl({
+      documentRef: doc,
+      value: values.quantityDecimalPlaces ?? 2,
+      minPlaces: 0,
+      maxPlaces: 4,
+      ariaLabel: "Nachkommastellen der Menge",
+      onChange: () => this.formatQuantity(),
+    });
+    this.fields.quantity.labelElement.style.display = "flex";
+    this.fields.quantity.labelElement.style.alignItems = "center";
+    this.fields.quantity.labelElement.style.justifyContent = "space-between";
+    this.fields.quantity.labelElement.style.gap = "8px";
+    this.fields.quantity.labelElement.appendChild(this.quantityDecimalControl.getElement());
+    this.fields.quantity.getControl().addEventListener("blur", () => this.formatQuantity());
+    this.formatQuantity();
+
     this.numberRow = new LeistungsEditboxRow({
       documentRef: doc,
       columns: ["minmax(90px, .35fr)", "minmax(150px, .65fr)", "minmax(0, 2fr)"],
@@ -163,6 +200,14 @@ export class LeistungspositionEditboxAdapter {
     this.updateTypePresentation();
   }
 
+  formatQuantity() {
+    const current = this.fields.quantity.getValue();
+    if (String(current ?? "").trim() === "") return;
+    this.fields.quantity.setValue(
+      formatLocalizedNumber(current, this.quantityDecimalControl.getValue())
+    );
+  }
+
   updateTypePresentation() {
     const type = this.fields.type.getValue();
     const isAlternative = type === "alternative";
@@ -187,6 +232,10 @@ export class LeistungspositionEditboxAdapter {
     return this.fields[name] || null;
   }
 
+  getQuantityDecimalControl() {
+    return this.quantityDecimalControl;
+  }
+
   getValues() {
     const type = this.fields.type.getValue();
     return Object.freeze({
@@ -198,6 +247,7 @@ export class LeistungspositionEditboxAdapter {
       alternativeOf: type === "alternative" ? this.basePositionNumber : "",
       alternativeSuffix: type === "alternative" ? this.alternativeSuffix : "",
       quantity: this.fields.quantity.getValue(),
+      quantityDecimalPlaces: this.quantityDecimalControl.getValue(),
       unit: this.fields.unit.getValue(),
       unitPrice: this.fields.unitPrice.getValue(),
       ...(this.fields.gross ? { gross: this.fields.gross.getValue() } : {}),
@@ -209,4 +259,5 @@ export class LeistungspositionEditboxAdapter {
 export {
   DEFAULT_TYPE_OPTIONS as LEISTUNGSPOSITION_DEFAULT_TYPE_OPTIONS,
   alternativeDisplayNumber as leistungspositionAlternativeDisplayNumber,
+  formatLocalizedNumber as leistungspositionFormatLocalizedNumber,
 };
