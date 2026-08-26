@@ -41,7 +41,7 @@ class RechnungEditorScreen extends RechnungScreen {
   _handlePositionRowClick(entry) {
     super._handlePositionRowClick(entry);
     if (this.isPositionMoveMode) return;
-    this.leistungsEditboxBinding?.showPosition(entry, {
+    this.leistungsEditboxBinding?.showPosition(this._getSelectedPosition(), {
       quantityDecimalPlaces: this.quantityDecimalPlaces,
     });
   }
