@@ -14,11 +14,13 @@ export class LeistungspositionEditboxAdapter {
     documentRef,
     values = {},
     typeOptions = DEFAULT_TYPE_OPTIONS,
+    showGross = false,
+    showNep = false,
   } = {}) {
     const doc = documentRef || globalThis.document;
     if (!doc?.createElement) throw new Error("LeistungspositionEditboxAdapter benötigt ein Document.");
 
-    this.fields = Object.freeze({
+    const fields = {
       shortText: new LeistungsEditboxField({
         documentRef: doc,
         label: "Kurztext",
@@ -56,7 +58,25 @@ export class LeistungspositionEditboxAdapter {
         kind: "singleline",
         value: values.unitPrice ?? "",
       }),
-    });
+    };
+
+    if (showGross) {
+      fields.gross = new LeistungsEditboxField({
+        documentRef: doc,
+        label: "Brutto",
+        kind: "toggle",
+        value: values.gross === true,
+      });
+    }
+    if (showNep) {
+      fields.nep = new LeistungsEditboxField({
+        documentRef: doc,
+        label: "NEP",
+        kind: "toggle",
+        value: values.nep === true,
+      });
+    }
+    this.fields = Object.freeze(fields);
 
     this.primaryRow = new LeistungsEditboxRow({
       documentRef: doc,
@@ -67,14 +87,25 @@ export class LeistungspositionEditboxAdapter {
       ],
     });
 
+    const detailChildren = [
+      this.fields.quantity.getElement(),
+      this.fields.unit.getElement(),
+      this.fields.unitPrice.getElement(),
+      ...(this.fields.gross ? [this.fields.gross.getElement()] : []),
+      ...(this.fields.nep ? [this.fields.nep.getElement()] : []),
+    ];
+    const detailColumns = [
+      "minmax(0, 1fr)",
+      "minmax(110px, .45fr)",
+      "minmax(140px, .65fr)",
+      ...(this.fields.gross ? ["auto"] : []),
+      ...(this.fields.nep ? ["auto"] : []),
+    ];
+
     this.detailRow = new LeistungsEditboxRow({
       documentRef: doc,
-      columns: ["minmax(0, 1fr)", "minmax(110px, .45fr)", "minmax(140px, .65fr)"],
-      children: [
-        this.fields.quantity.getElement(),
-        this.fields.unit.getElement(),
-        this.fields.unitPrice.getElement(),
-      ],
+      columns: detailColumns,
+      children: detailChildren,
     });
 
     this.textRow = new LeistungsEditboxRow({
@@ -108,6 +139,8 @@ export class LeistungspositionEditboxAdapter {
       quantity: this.fields.quantity.getValue(),
       unit: this.fields.unit.getValue(),
       unitPrice: this.fields.unitPrice.getValue(),
+      ...(this.fields.gross ? { gross: this.fields.gross.getValue() } : {}),
+      ...(this.fields.nep ? { nep: this.fields.nep.getValue() } : {}),
     });
   }
 }
