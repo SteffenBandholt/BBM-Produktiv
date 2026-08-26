@@ -370,12 +370,6 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-live-reference { display: grid; padding: 12px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-card); background: var(--invoice-color-surface-subtle); }
 .rechnung-live-positions { display: grid; gap: 10px; }
 .rechnung-live-positions__list { display: grid; gap: 5px; }
-.rechnung-live-position { display: grid; grid-template-columns: minmax(0, .35fr) minmax(0, 1fr) minmax(0, .7fr); gap: 8px; align-items: center; width: 100%; padding: 8px 10px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-control); background: var(--invoice-color-surface); color: var(--invoice-color-text); text-align: left; cursor: pointer; }
-.rechnung-live-position:hover, .rechnung-live-position.is-selected { border-color: var(--invoice-color-focus); background: #f1f6fc; }
-.rechnung-live-position__number, .rechnung-live-position__amount { color: var(--invoice-color-muted); font-variant-numeric: tabular-nums; }
-.rechnung-live-position__amount { text-align: right; }
-.rechnung-live-position-editor { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding-top: 10px; border-top: 1px solid var(--invoice-color-border); }
-.rechnung-live-position-editor__actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
 .rechnung-live-payment { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--invoice-group-gap); }
 .rechnung-live-message { padding: 1px 4px; color: var(--invoice-color-success); font-size: 12px; }
 .rechnung-live-message[data-tone="error"] { color: var(--invoice-color-danger); }
@@ -437,8 +431,6 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-lv-position__long p { margin: 5px 0 0; white-space: pre-line; }
 .rechnung-lv-position__pricing { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .7fr) minmax(0, .7fr); gap: 12px; margin-left: 52px; font-size: 12px; font-variant-numeric: tabular-nums; }
 .rechnung-lv-position__pricing span:nth-child(2), .rechnung-lv-position__pricing strong { text-align: right; }
-.rechnung-sheet__position-editor { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 4px; padding: 16px; border: 1px solid var(--invoice-color-border); background: #f8fafc; }
-.rechnung-sheet__position-editor .rechnung-sheet__position-title { grid-column: 1 / -1; }
 .rechnung-sheet__payment { grid-template-columns: minmax(0, .5fr) minmax(0, .5fr) minmax(0, 1fr); align-items: end; padding-top: 8px; }
 .rechnung-sheet__totals { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 24px; min-width: 0; padding: 14px 0 14px 24px; border-left: 1px solid var(--invoice-color-border); font-size: 12px; }
 .rechnung-sheet__amount, .rechnung-sheet__grand-amount { text-align: right; font-variant-numeric: tabular-nums; }
@@ -447,8 +439,8 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-sheet__payment-text { grid-column: 1 / -1; margin: 0; color: var(--invoice-color-muted); font-size: 12px; line-height: 1.5; }
 .rechnung-sheet__application-note { color: var(--invoice-color-muted); font-size: 11px; }
 
-/* Rechnungsshell wie Protokoll/Restarbeiten: feste Bar und Editbox, nur Blattinhalt scrollt. */
-.rechnung-live-editor { display: flex; flex-direction: column; gap: 0; min-height: 0; overflow: hidden; padding: 0; }
+/* Rechnungsshell mit fester Aktionsbar; nur der Blattinhalt scrollt. */
+.rechnung-live-editor { position: relative; display: flex; flex-direction: column; gap: 0; min-height: 0; overflow: hidden; padding: 0; }
 .rechnung-live-editor__header { flex: 0 0 auto; width: 100%; max-width: none; border-bottom: 0; border-radius: 0; background: var(--invoice-color-surface); }
 .rechnung-live-editor__body.rechnung-sheet { flex: 1 1 0; width: 100%; min-height: 0; margin: 0; padding: 34px; overflow: auto; box-shadow: none; }
 .rechnung-sheet__head-content { display: grid; gap: 24px; }
@@ -459,8 +451,7 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-sheet__issuer-facts { align-self: end; color: var(--invoice-color-muted); font-size: 11px; line-height: 1.45; white-space: pre-line; }
 .rechnung-sheet__intro { grid-column: 1 / -1; }
 .rechnung-sheet__intro textarea { resize: vertical; }
-.rechnung-live-position-editor { flex: 0 0 auto; margin: 0; padding: 12px max(18px, calc((100% - 980px) / 2)); overflow: visible; border: 0; border-top: 1px solid var(--invoice-color-border); border-radius: 0; background: #f8fafc; box-shadow: 0 -5px 16px rgba(15, 23, 42, .06); }
-.rechnung-live-message { flex: 0 0 auto; min-height: 0; margin: 0; padding: 4px 12px; background: var(--invoice-color-surface); }
+.rechnung-live-message { position: absolute; right: 6px; bottom: 4px; z-index: 2; min-height: 0; margin: 0; padding: 4px 12px; background: rgba(255, 255, 255, .94); }
 .rechnung-live-message:empty { display: none; padding-block: 0; }
 .rechnung-live-editor__footer { display: none; }
 
@@ -468,17 +459,15 @@ select.invoice-control { padding-right: 28px; }
 .bbm-rechnung-live { display: flex; flex-direction: column; gap: 0; height: 100%; min-height: 0; padding-block: 0; overflow: hidden; }
 .rechnung-live-content { flex: 1 1 0; min-height: 0; overflow: hidden; }
 .rechnung-live-editor { width: 100%; }
-.rechnung-screen__header-canvas, .rechnung-screen__sheet-canvas, .rechnung-screen__edit-canvas { width: 100%; min-width: 0; box-sizing: border-box; margin: 0 auto; }
+.rechnung-screen__header-canvas, .rechnung-screen__sheet-canvas { width: 100%; box-sizing: border-box; margin: 0 auto; }
 .rechnung-screen__header-canvas { flex: 0 0 auto; }
+.rechnung-screen__sheet-canvas { width: min(100%, 980px); }
 .rechnung-live-editor__header { min-height: 0; padding: 4px 10px; gap: 6px; font-size: 11px; }
 .rechnung-live-editor__header .invoice-button { padding: 3px 7px; font-size: 11px; }
-.rechnung-screen__sheet-area { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 12px 22px 14px; background: #f6f8fc; }
+.rechnung-screen__sheet-area { flex: 1 1 0; min-height: 0; overflow: auto; padding: 12px 22px 14px; background: #f6f8fc; }
 .rechnung-screen__sheet-canvas { min-height: 0; display: flex; flex-direction: column; }
 .rechnung-live-editor__body.rechnung-sheet { flex: 0 0 auto; min-height: 0; padding: 18px 22px 22px; border: 1px solid var(--invoice-color-border); border-radius: 8px; box-shadow: 0 10px 24px rgba(31, 41, 55, .06); overflow: visible; }
 .rechnung-sheet__positions { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--invoice-color-border); }
-.rechnung-screen__edit-area { flex: 0 0 auto; overflow: visible; border-top: 0; background: #f6f8fc; padding: 0 10px; }
-.rechnung-screen__edit-canvas { overflow: visible; }
-.rechnung-live-position-editor { padding: 0; border: 0; box-shadow: none; }
 
 /* Kopf bleibt Rechnungsinhalt: Werte sind ruhig, Felder erst bei Fokus sichtbar. */
 .rechnung-sheet { gap: 18px; }
@@ -501,42 +490,8 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-sheet__intro textarea:focus { padding-inline: 4px; border-color: var(--invoice-color-focus); background: #fff; }
 .rechnung-sheet__payment > .invoice-field { display: none; }
 .rechnung-sheet__payment { grid-template-columns: 1fr; gap: 8px; }
-.rechnung-live-position-editor { grid-template-columns: minmax(0, .65fr) minmax(0, 2fr) repeat(3, minmax(0, 1fr)); gap: 5px 8px; }
-.rechnung-live-position-editor > .rechnung-sheet__position-title { grid-column: 1; grid-row: 1; align-self: center; }
-.rechnung-live-position-editor .invoice-field { gap: 2px; }
-.rechnung-live-position-editor .invoice-field__label { display: flex; align-items: baseline; gap: 4px; font-size: 9px; }
-.rechnung-live-position-editor__quantity-block { display: grid; align-content: start; gap: 2px; min-width: 0; }
-.rechnung-live-position-editor__decimal-stepper { display: grid; grid-template-columns: minmax(0, 1fr) 20px 22px 20px; align-items: center; gap: 2px; min-width: 0; }
-.rechnung-live-position-editor__decimal-label { min-width: 0; overflow: hidden; color: var(--invoice-color-muted); font-size: 9px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
-.rechnung-live-position-editor__decimal-stepper .invoice-button { padding: 0; font-size: 11px; line-height: 16px; }
-.rechnung-live-position-editor__decimal-value { color: var(--invoice-color-text); font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: center; }
-.rechnung-live-position-editor__quantity { text-align: right !important; font-variant-numeric: tabular-nums; }
-.rechnung-live-position-editor__remaining { margin-left: auto; color: var(--invoice-color-muted); font-variant-numeric: tabular-nums; }
-.rechnung-live-position-editor__remaining[data-level="warning"] { color: #a16207; }
-.rechnung-live-position-editor__remaining[data-level="limit"] { color: var(--invoice-color-danger); }
-.rechnung-live-position-editor .invoice-control { padding: 2px 5px; }
-.rechnung-live-position-editor .invoice-control[type="checkbox"] { appearance: none; width: 14px; height: 14px; padding: 0; margin: 3px 0 0; border: 1px solid #9aa8ba; border-radius: 3px; background: #fff; box-shadow: none; }
-.rechnung-live-position-editor .invoice-control[type="checkbox"]:checked { border-color: var(--invoice-color-primary); background: var(--invoice-color-primary); }
-.rechnung-live-position-editor .invoice-control[type="checkbox"]:checked::after { content: ""; display: block; width: 4px; height: 7px; margin: 1px 0 0 4px; border: solid #fff; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
-.rechnung-live-position-editor .invoice-field--wide { grid-column: span 2; }
-.rechnung-live-position-editor__vat-field { grid-column: 1; grid-row: 4; }
-.rechnung-live-position-editor__gross-field { grid-column: 2; grid-row: 4; }
-.rechnung-live-position-editor__nep-field { grid-column: 3; grid-row: 4; align-self: start; }
-.rechnung-live-position-editor__actions { grid-column: 2 / -1; grid-row: 1; gap: 5px; }
-.rechnung-live-position-editor__actions .invoice-button { padding: 2px 7px; font-size: 10px; }
-.rechnung-live-position-editor__totals { grid-column: 4 / span 2; grid-row: 3 / span 2; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-self: stretch; align-content: start; gap: 3px 10px; min-width: 0; padding: 7px 8px; border: 1px solid var(--invoice-color-border); border-radius: 6px; background: #fff; font-size: 10px; }
-.rechnung-live-position-editor__totals-title { grid-column: 1 / -1; margin: 0 0 2px; color: var(--invoice-color-text); font-size: 10.5px; font-weight: 700; }
-.rechnung-live-position-editor__totals-label { min-width: 0; color: var(--invoice-color-muted); white-space: nowrap; }
-.rechnung-live-position-editor__totals-value { min-width: 66px; color: var(--invoice-color-text); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
-.rechnung-live-position-editor__totals-label--gross, .rechnung-live-position-editor__totals-value--gross { margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--invoice-color-border); color: var(--invoice-color-text); }
 @media (max-width: 780px) {
-  .rechnung-sheet__head, .rechnung-sheet__facts, .rechnung-sheet__service, .rechnung-sheet__context, .rechnung-sheet__payment, .rechnung-sheet__position-editor { grid-template-columns: 1fr; }
-  .rechnung-live-position-editor > .rechnung-sheet__position-title,
-  .rechnung-live-position-editor__actions,
-  .rechnung-live-position-editor__vat-field,
-  .rechnung-live-position-editor__gross-field,
-  .rechnung-live-position-editor__nep-field { grid-column: 1; grid-row: auto; }
-  .rechnung-live-position-editor__totals { grid-column: 1; grid-row: auto; }
+  .rechnung-sheet__head, .rechnung-sheet__facts, .rechnung-sheet__service, .rechnung-sheet__context, .rechnung-sheet__payment { grid-template-columns: 1fr; }
   .rechnung-sheet__title-block, .rechnung-sheet__number { justify-self: start; text-align: left; }
   .rechnung-lv-position__pricing { grid-template-columns: 1fr; gap: 3px; }
   .rechnung-lv-position__pricing span:nth-child(2), .rechnung-lv-position__pricing strong { text-align: left; }
@@ -640,9 +595,6 @@ select.invoice-control { padding-right: 28px; }
 }
 
 /* LV-Hierarchie: Titel bleiben ruhig, Kinder werden nur dezent eingerueckt. */
-.rechnung-live-position-editor__actions { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
-.rechnung-live-position-editor__action-spacer { flex: 1 1 0; }
-.rechnung-live-position-editor__move-root { margin-left: auto; }
 .rechnung-lv-position.is-title { padding-top: 16px; }
 .rechnung-lv-position.is-title .rechnung-lv-position__short { font-weight: 700; }
 .rechnung-lv-position.is-depth-1 .rechnung-lv-position__select,
@@ -736,6 +688,6 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-sheet__issuer-address { margin-top: 0; }
 
 /* Rechnungsblatt: endloser, zusammenhaengender Papierbereich; die Editbox bleibt ausserhalb. */
-.rechnung-screen__sheet-area { padding: 0; background: #fff; }
+.rechnung-screen__sheet-area { padding: 0; background: #fff; scrollbar-gutter: stable both-edges; }
 .rechnung-screen__sheet-canvas { min-height: 0; background: #fff; }
 .rechnung-live-editor__body.rechnung-sheet { flex: 0 0 auto; min-height: 0; box-sizing: border-box; border: 0; border-radius: 0; background: transparent; box-shadow: none; }

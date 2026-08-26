@@ -271,7 +271,6 @@ function applyAdditiveFieldLabelProfileMigration(profileRoot, registration) {
       "rechnung.editor.invoiceVat",
       "rechnung.editor.invoiceTotal",
       "rechnung.editor.paymentText",
-      "rechnung.editor.positionMoveRoot",
     ]);
 
     const safeAdditionsOnly = addedEntries.every((entry) =>

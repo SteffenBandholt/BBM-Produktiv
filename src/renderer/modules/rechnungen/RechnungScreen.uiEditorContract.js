@@ -3,7 +3,7 @@ import { FIELD_LAYOUT, GROUP_LAYOUT, TEXT_LAYOUT, ZONE_HEIGHT_LAYOUT, m83Compone
 export const RECHNUNG_SCOPE_ID = "rechnung.screen";
 export const RECHNUNG_COMPONENT_ID = "bbm.rechnung.screen";
 const invoiceElement = (values) => m83Element({ ...values, unboundedGeometry: true });
-const area = (id, name, parentId, order, componentKind) => invoiceElement({ id, name, type: "area", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind });
+const area = (id, name, parentId, order, componentKind, options = {}) => invoiceElement({ id, name, type: "area", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind, ...options });
 const group = (id, name, parentId, order, componentKind) => invoiceElement({ id, name, type: "group", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind });
 const label = (id, name, parentId, order, role = "content", componentKind = "label") => invoiceElement({ id, name, type: "label", role, parentId, order, allowedOps: TEXT_LAYOUT, componentKind });
 const field = (id, name, parentId, order, fieldKind) => invoiceElement({ id, name, type: "field", role: "content", parentId, order, allowedOps: FIELD_LAYOUT, fieldKind });
@@ -12,12 +12,10 @@ const buttonReflowIdsByParent = Object.freeze({
   "rechnung.editor.header": Object.freeze(["rechnung.editor.status", "rechnung.editor.headToggle", "rechnung.editor.preview", "rechnung.editor.book", "rechnung.editor.delete", "rechnung.editor.close"]),
   "rechnung.editor.parties": Object.freeze(["rechnung.editor.customerPicker", "rechnung.editor.customerAddress", "rechnung.editor.issuerBlock", "rechnung.editor.invoiceMetaBlock", "rechnung.editor.introText"]),
   "rechnung.editor.servicePeriod": Object.freeze(["rechnung.editor.servicePeriodToggle", "rechnung.editor.servicePeriodType", "rechnung.editor.serviceDate", "rechnung.editor.serviceMonth", "rechnung.editor.serviceStart", "rechnung.editor.serviceEnd"]),
-  "rechnung.editor.positionQuantityDecimals": Object.freeze(["rechnung.editor.positionQuantityDecimals.label", "rechnung.editor.positionQuantityDecimals.decrease", "rechnung.editor.positionQuantityDecimals.value", "rechnung.editor.positionQuantityDecimals.increase"]),
-  "rechnung.editor.positionActions": Object.freeze(["rechnung.editor.positionCreateTitle", "rechnung.editor.positionCreate", "rechnung.editor.positionMove", "rechnung.editor.positionDelete", "rechnung.editor.positionMoveRoot"]),
   "rechnung.preview": Object.freeze(["rechnung.preview.title", "rechnung.preview.body", "rechnung.preview.close"]),
 });
 const action = (id, name, parentId, order, actionKind) => {
-  const reflowIds = buttonReflowIdsByParent[parentId] || Object.freeze([]);
+  const reflowIds = Object.freeze([parentId, ...(buttonReflowIdsByParent[parentId] || [])]);
   return m83DomainButton({
     id,
     name,
@@ -85,41 +83,6 @@ const baseElements = Object.freeze([
   label("rechnung.editor.invoiceVat.label", "Mehrwertsteuer Bezeichnung", "rechnung.editor.payment", 84, "fieldLabel", "fieldLabel"),
   label("rechnung.editor.invoiceTotal.label", "Summe Brutto Bezeichnung", "rechnung.editor.payment", 85, "fieldLabel", "fieldLabel"),
   group("rechnung.editor.positions.list", "LV-Positionen", "rechnung.editor.positions", 74, "constructionLvList"),
-  group("rechnung.editor.positionEditor", "Feste Positions-Editbox", "rechnung.editor", 75, "inlinePositionEditor"),
-  label("rechnung.editor.positionEditor.title.label", "Position bearbeiten Bezeichnung", "rechnung.editor.positionEditor", 75, "fieldLabel", "fieldLabel"),
-  area("rechnung.editor.editArea", "Feste Editbox-Zone", "rechnung.editor", 76, "editArea"),
-  area("rechnung.editor.editCanvas", "Editbox-Canvas", "rechnung.editor.editArea", 77, "editCanvas"),
-  field("rechnung.editor.positionType", "Positionstyp", "rechnung.editor.positionEditor", 76, "select"),
-  field("rechnung.editor.positionShort", "Kurztext", "rechnung.editor.positionEditor", 77, "singleLineText"),
-  label("rechnung.editor.positionShortRemaining", "Restzeichen Kurztext", "rechnung.editor.positionEditor", 77, "status", "counter"),
-  field("rechnung.editor.positionLong", "Langtext", "rechnung.editor.positionEditor", 78, "multilineText"),
-  label("rechnung.editor.positionLongRemaining", "Restzeichen Langtext", "rechnung.editor.positionEditor", 78, "status", "counter"),
-  group("rechnung.editor.positionQuantityBlock", "Menge mit Nachkommastellen", "rechnung.editor.positionEditor", 79, "quantityInput"),
-  group("rechnung.editor.positionQuantityDecimals", "Nachkommastellen-Zähler", "rechnung.editor.positionQuantityBlock", 79, "decimalStepper"),
-  label("rechnung.editor.positionQuantityDecimals.label", "Nachkommastellen Bezeichnung", "rechnung.editor.positionQuantityDecimals", 79, "fieldLabel", "fieldLabel"),
-  action("rechnung.editor.positionQuantityDecimals.decrease", "Nachkommastellen verringern", "rechnung.editor.positionQuantityDecimals", 79, "decreaseQuantityDecimalPlaces"),
-  label("rechnung.editor.positionQuantityDecimals.value", "Nachkommastellen Wert", "rechnung.editor.positionQuantityDecimals", 79, "status", "counter"),
-  action("rechnung.editor.positionQuantityDecimals.increase", "Nachkommastellen erhöhen", "rechnung.editor.positionQuantityDecimals", 79, "increaseQuantityDecimalPlaces"),
-  field("rechnung.editor.positionQuantity", "Menge", "rechnung.editor.positionQuantityBlock", 79, "decimal"),
-  field("rechnung.editor.positionUnit", "Einheit", "rechnung.editor.positionEditor", 80, "singleLineText"),
-  field("rechnung.editor.positionPrice", "Einzelpreis", "rechnung.editor.positionEditor", 81, "currency"),
-  field("rechnung.editor.positionVatRate", "MwSt.-Satz", "rechnung.editor.positionEditor", 82, "readOnlyText"),
-  field("rechnung.editor.positionPriceGross", "Brutto", "rechnung.editor.positionEditor", 82, "checkbox"),
-  field("rechnung.editor.positionNep", "NEP", "rechnung.editor.positionEditor", 82, "checkbox"),
-  group("rechnung.editor.positionActions", "Positionsaktionen", "rechnung.editor.positionEditor", 83, "actionGroup"),
-  action("rechnung.editor.positionCreateTitle", "+Titel", "rechnung.editor.positionActions", 84, "createPositionTitle"),
-  action("rechnung.editor.positionCreate", "+Position", "rechnung.editor.positionActions", 85, "createPosition"),
-  action("rechnung.editor.positionMove", "Schieben", "rechnung.editor.positionActions", 86, "movePosition"),
-  action("rechnung.editor.positionDelete", "Position loeschen", "rechnung.editor.positionActions", 87, "deletePosition"),
-  action("rechnung.editor.positionMoveRoot", "Auf Ebene 0 verschieben", "rechnung.editor.positionActions", 88, "movePositionToRoot"),
-  group("rechnung.editor.editboxTotals", "Gesamtbetrag in der Editbox", "rechnung.editor.positionEditor", 89, "compactInvoiceTotals"),
-  label("rechnung.editor.editboxTotals.title", "Gesamtbetrag Überschrift", "rechnung.editor.editboxTotals", 89),
-  label("rechnung.editor.editboxTotals.netLabel", "Netto Bezeichnung", "rechnung.editor.editboxTotals", 89, "fieldLabel", "fieldLabel"),
-  label("rechnung.editor.editboxTotals.netValue", "Netto Betrag", "rechnung.editor.editboxTotals", 89, "content", "amount"),
-  label("rechnung.editor.editboxTotals.vatLabel", "Mehrwertsteuer Bezeichnung", "rechnung.editor.editboxTotals", 89, "fieldLabel", "fieldLabel"),
-  label("rechnung.editor.editboxTotals.vatValue", "Mehrwertsteuer Betrag", "rechnung.editor.editboxTotals", 89, "content", "amount"),
-  label("rechnung.editor.editboxTotals.grossLabel", "Brutto Bezeichnung", "rechnung.editor.editboxTotals", 89, "fieldLabel", "fieldLabel"),
-  label("rechnung.editor.editboxTotals.grossValue", "Brutto Betrag", "rechnung.editor.editboxTotals", 89, "content", "amount"),
   group("rechnung.editor.payment", "Summen und Zahlungstext", "rechnung.editor.body", 80, "invoiceTotals"),
   invoiceElement({ id: "rechnung.editor.issuerFooter", name: "Aussteller-Fußdaten", type: "group", role: "content", parentId: "rechnung.editor.body", order: 81, allowedOps: GROUP_LAYOUT, componentKind: "issuerFooter" }),
   field("rechnung.editor.paymentTermDays", "Zahlungsziel Kalendertage", "rechnung.editor.payment", 81, "integer"),
