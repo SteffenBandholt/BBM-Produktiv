@@ -84,7 +84,10 @@ function main() {
   assert.doesNotMatch(styles, /\bclamp\s*\(/i);
   assert.match(styles, /bbm-leistungseditbox-field--toggle/);
   assert.match(styles, /bbm-leistungseditbox-decimal/);
-  assert.match(styles, /border-radius: 999px/);
+  assert.match(styles, /bbm-leistungseditbox-decimal__step:focus-visible/);
+  assert.match(styles, /background: transparent/);
+  assert.doesNotMatch(styles, /\.bbm-leistungseditbox-decimal\s*\{[^}]*border:/s);
+  assert.doesNotMatch(styles, /\.bbm-leistungseditbox-decimal\s*\{[^}]*box-shadow:/s);
 
   assert.match(preview, /PREVIEW_FRAME_ID = "leistungseditbox\.preview\.frame"/);
   assert.match(preview, /position: "absolute"/);
@@ -101,7 +104,7 @@ function main() {
   assert.match(demo, /createLeistungsEditboxPreview/);
   assert.match(demo, /leistungsEditboxPreview\.root/);
 
-  console.log("TESTS OK: LeistungsEditbox Baustein I zeigt die Mengenpräzision als kompaktes Formatbild 0/0,0/0,00/0,000/0,0000 und formatiert die Menge unmittelbar passend dazu.");
+  console.log("TESTS OK: Mengenpräzision bleibt 0/0,0/0,00/0,000/0,0000, ist aber ohne äußere Buttonumrandung und nur über dezente Hover-/Focus-Flächen bedienbar.");
 }
 
 main();
