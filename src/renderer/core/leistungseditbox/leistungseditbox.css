@@ -64,6 +64,22 @@ textarea.bbm-leistungseditbox-field__control {
   height: 100%;
 }
 
+.bbm-leistungseditbox-field--toggle {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  align-self: end;
+  padding-bottom: 7px;
+}
+
+.bbm-leistungseditbox-field--toggle .bbm-leistungseditbox-field__control {
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 .bbm-leistungseditbox-header {
   display: grid;
   grid-template-columns: auto 1fr;
