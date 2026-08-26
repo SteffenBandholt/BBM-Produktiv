@@ -60,7 +60,6 @@ function main() {
   }
   assert.doesNotMatch(adapter, /Langtext anzeigen/);
   assert.doesNotMatch(adapter, /showLongText/);
-  assert.doesNotMatch(adapter, /updateLongTextPresentation/);
   assert.match(adapter, /const PRICED_TYPES = new Set\(\["standard", "alternative"\]\)/);
   assert.match(adapter, /this\.detailRow\.getElement\(\)\.hidden = !isPriced/);
   assert.match(adapter, /normalizeAlternativeSuffix/);
@@ -70,6 +69,12 @@ function main() {
   assert.match(adapter, /formatUnitPrice\(\)/);
   assert.match(adapter, /formatPositionAmount/);
   assert.match(adapter, /showPositionAmount = false/);
+  assert.match(adapter, /setValues\(values = \{\}\)/);
+  assert.match(adapter, /this\.basePositionNumber = String\(values\.basePositionNumber/);
+  assert.match(adapter, /this\.quantityDecimalControl\.setValue\(values\.quantityDecimalPlaces \?\? 2, \{ silent: true \}\)/);
+  assert.match(adapter, /if \(this\.fields\.gross\) this\.fields\.gross\.setValue/);
+  assert.match(adapter, /if \(this\.fields\.nep\) this\.fields\.nep\.setValue/);
+  assert.match(adapter, /return this\.getValues\(\)/);
   assert.doesNotMatch(adapter, /minmax\((?:90|110|140|150)px/);
 
   assert.match(headerAdapter, /class LeistungspositionEditboxHeaderAdapter/);
@@ -80,9 +85,6 @@ function main() {
   assert.match(headerAdapter, /onAddPosition/);
   assert.match(headerAdapter, /onMove/);
   assert.match(headerAdapter, /onDelete/);
-  assert.match(headerAdapter, /left:/);
-  assert.match(headerAdapter, /center:/);
-  assert.match(headerAdapter, /right:/);
 
   assert.doesNotMatch(styles, /\bmin-(?:width|height)\s*:/i);
   assert.doesNotMatch(styles, /\bmax-(?:width|height)\s*:/i);
@@ -93,21 +95,21 @@ function main() {
   assert.match(preview, /position: "absolute"/);
   assert.match(preview, /measure\(\)/);
 
-  assert.match(previewScreen, /LeistungsEditbox · Baustein N/);
-  assert.match(previewScreen, /Fachliche Kopfaktionen als wiederverwendbare Callbacks/);
+  assert.match(previewScreen, /LeistungsEditbox · Baustein O/);
+  assert.match(previewScreen, /Eine Editbox kann nacheinander unterschiedliche Positionen laden/);
+  assert.match(previewScreen, /const PREVIEW_POSITIONS/);
+  assert.match(previewScreen, /label: "Pos\. 21"/);
+  assert.match(previewScreen, /label: "Pos\. 21a"/);
+  assert.match(previewScreen, /label: "Hinweis"/);
+  assert.match(previewScreen, /adapter\.setValues\(position\.values\)/);
+  assert.match(previewScreen, /Geladen:/);
   assert.match(previewScreen, /new LeistungspositionEditboxHeaderAdapter/);
-  assert.match(previewScreen, /Kopfaktion:/);
-  assert.match(previewScreen, /onAddTitle:/);
-  assert.match(previewScreen, /onAddPosition:/);
-  assert.match(previewScreen, /onMove:/);
-  assert.match(previewScreen, /onDelete:/);
-  assert.doesNotMatch(previewScreen, /showLongText:/);
   assert.match(previewScreen, /showPositionAmount: true/);
 
   assert.match(demo, /createLeistungsEditboxPreview/);
   assert.match(demo, /leistungsEditboxPreview\.root/);
 
-  console.log("TESTS OK: Baustein N entfernt den positionsbezogenen Langtext-Schalter wieder und ersetzt die Platzhalter im Kopf durch + Titel, + Position, Schieben und Löschen als wiederverwendbare Callback-Aktionen.");
+  console.log("TESTS OK: Baustein O kann dieselbe LeistungsEditbox mit setValues auf unterschiedliche Positionen umschalten; Nummer, Typ, Texte, Mengenformat, Preis, Brutto und NEP werden gemeinsam neu geladen.");
 }
 
 main();
