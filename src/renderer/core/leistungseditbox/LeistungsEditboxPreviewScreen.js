@@ -57,8 +57,8 @@ export class LeistungsEditboxPreviewScreen {
     const toolbar = doc.createElement("div");
     toolbar.style.cssText = "display:flex;align-items:center;gap:12px;min-height:36px;padding:0 2px;";
     toolbar.append(
-      createText(doc, "strong", "LeistungsEditbox · Baustein F"),
-      createText(doc, "span", "Erster echter Verbraucher: Leistungsposition")
+      createText(doc, "strong", "LeistungsEditbox · Baustein G"),
+      createText(doc, "span", "Optionale Positionsmerkmale Brutto und NEP")
     );
 
     const editorButtonHost = doc.createElement("div");
@@ -79,7 +79,7 @@ export class LeistungsEditboxPreviewScreen {
     frameRoot.style.position = "absolute";
     frameRoot.style.left = "36px";
     frameRoot.style.top = "42px";
-    frameRoot.style.width = "860px";
+    frameRoot.style.width = "940px";
     frameRoot.style.height = "390px";
     frameRoot.style.margin = "0";
     frameRoot.style.border = "2px solid #4d6480";
@@ -99,6 +99,8 @@ export class LeistungsEditboxPreviewScreen {
 
     const adapter = new LeistungspositionEditboxAdapter({
       documentRef: doc,
+      showGross: true,
+      showNep: true,
       values: {
         shortText: "Untergrund vorbereiten",
         longText: "Flächen reinigen, lose Bestandteile entfernen und für die weitere Bearbeitung vorbereiten.",
@@ -106,6 +108,8 @@ export class LeistungsEditboxPreviewScreen {
         quantity: "12,00",
         unit: "m²",
         unitPrice: "18,50",
+        gross: false,
+        nep: true,
       },
     });
     adapter.getElement().style.cssText += "height:100%;padding:12px;";
