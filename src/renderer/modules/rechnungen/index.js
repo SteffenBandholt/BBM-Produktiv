@@ -8,6 +8,20 @@ export const RECHNUNG_MODULE_ID = "rechnung";
 export const RECHNUNG_MODULE_LABEL = "Rechnungen";
 export const RECHNUNG_NAV_ENTRY_KEY = "rechnungen";
 
+function parseLocalizedNumber(value) {
+  const source = String(value ?? "").trim().replace(/\s+/g, "");
+  if (!source) return 0;
+  const normalized = source.includes(",")
+    ? source.replace(/\./g, "").replace(",", ".")
+    : source;
+  const numeric = Number(normalized);
+  return Number.isFinite(numeric) && numeric >= 0 ? numeric : 0;
+}
+
+function localizedMoneyToCents(value) {
+  return Math.round(parseLocalizedNumber(value) * 100);
+}
+
 class RechnungEditorScreen extends RechnungScreen {
   constructor(args = {}) {
     super(args);
@@ -29,8 +43,53 @@ class RechnungEditorScreen extends RechnungScreen {
       onAddPosition: () => this._createPosition(),
       onMove: () => this._togglePositionMove(),
       onDelete: () => this._deletePosition(),
+      onChange: (positionId, values) => this._applyLeistungsEditboxChange(positionId, values),
     });
     this.editor.append(this.leistungsEditboxBinding.getElement());
+  }
+
+  _applyLeistungsEditboxChange(positionId, values = {}) {
+    if (this.current?.status !== "DRAFT") return;
+    const index = this.positions.findIndex((entry) => entry.id === positionId);
+    if (index < 0) return;
+
+    const current = this.positions[index];
+    const shortText = String(values.shortText ?? "");
+    const next = {
+      ...current,
+      short_text: shortText,
+      long_text: String(values.longText ?? ""),
+    };
+
+    if (current.type === "service") {
+      const inputCents = localizedMoneyToCents(values.unitPrice);
+      const gross = values.gross === true;
+      next.quantity = String(parseLocalizedNumber(values.quantity));
+      next.unit = String(values.unit ?? "").trim();
+      next.is_nep = values.nep === true;
+      next.price_input_mode = gross ? "GROSS" : "NET";
+      next.price_input_cents = gross ? inputCents : null;
+      if (!gross) next.unit_price_cents = inputCents;
+    }
+
+    this.positions[index] = next;
+    this.quantityDecimalPlaces = Number.isInteger(Number(values.quantityDecimalPlaces))
+      ? Number(values.quantityDecimalPlaces)
+      : this.quantityDecimalPlaces;
+
+    // Während der Eingabe darf der Kurztext vorübergehend leer sein. Die
+    // fachliche Normalisierung läuft wieder, sobald ein speicherbarer Kurztext da ist.
+    if (shortText.trim()) {
+      try {
+        this._normalizePositions();
+      } catch (_error) {
+        // Der aktuelle Eingabestand bleibt in der Editbox; kein stilles Verwerfen.
+      }
+    }
+
+    this._renderPositions();
+    this._syncDerived();
+    if (shortText.trim()) void this._queueDraftSave();
   }
 
   _clearPositionSelection() {
