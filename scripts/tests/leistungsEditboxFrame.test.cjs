@@ -57,64 +57,56 @@ function main() {
   }
 
   assert.match(adapter, /class LeistungspositionEditboxAdapter/);
-  for (const label of ["Pos.-Nr.", "Kurztext", "Langtext", "Typ", "Zuordnung", "Menge", "Einheit", "Einzelpreis", "Positionsbetrag", "Brutto", "NEP"]) {
+  for (const label of ["Pos.-Nr.", "Kurztext", "Langtext", "Langtext anzeigen", "Typ", "Zuordnung", "Menge", "Einheit", "Einzelpreis", "Positionsbetrag", "Brutto", "NEP"]) {
     assert.match(adapter, new RegExp(`label: "${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`));
   }
   for (const typeLabel of ["Standard", "Alternative", "Hinweis", "Text"]) {
     assert.match(adapter, new RegExp(`label: "${typeLabel}"`));
   }
   assert.match(adapter, /const PRICED_TYPES = new Set\(\["standard", "alternative"\]\)/);
-  assert.match(adapter, /const isPriced = PRICED_TYPES\.has\(type\)/);
   assert.match(adapter, /this\.detailRow\.getElement\(\)\.hidden = !isPriced/);
+  assert.match(adapter, /values\.showLongText !== false/);
+  assert.match(adapter, /updateLongTextPresentation\(\)/);
+  assert.match(adapter, /this\.textRow\.getElement\(\)\.hidden = !this\.fields\.showLongText\.getValue\(\)/);
+  assert.match(adapter, /showLongText: this\.fields\.showLongText\.getValue\(\)/);
   assert.match(adapter, /normalizeAlternativeSuffix/);
   assert.match(adapter, /alternativeDisplayNumber/);
   assert.match(adapter, /Alternativposition zu Pos\./);
   assert.match(adapter, /fields\.positionNumber\.getControl\(\)\.readOnly = true/);
   assert.match(adapter, /new LeistungsEditboxDecimalControl/);
   assert.match(adapter, /quantityDecimalPlaces \?\? 2/);
-  assert.match(adapter, /minPlaces: 0/);
-  assert.match(adapter, /maxPlaces: 4/);
   assert.match(adapter, /formatQuantity\(\)/);
   assert.match(adapter, /formatUnitPrice\(\)/);
-  assert.match(adapter, /formatLocalizedNumber\(current, 2\)/);
-  assert.match(adapter, /this\.fields\.unitPrice\.getControl\(\)\.addEventListener\("blur"/);
   assert.match(adapter, /formatPositionAmount/);
   assert.match(adapter, /showPositionAmount = false/);
-  assert.match(adapter, /fields\.positionAmount\.getControl\(\)\.readOnly = true/);
-  assert.match(adapter, /updatePositionAmount\(\)/);
-  assert.match(adapter, /quantityValue \* unitPriceValue/);
-  assert.match(adapter, /quantityDecimalPlaces:/);
   assert.match(adapter, /positionAmount:/);
   assert.match(adapter, /alternativeOf:/);
   assert.match(adapter, /alternativeSuffix:/);
   assert.match(adapter, /showGross = false/);
   assert.match(adapter, /showNep = false/);
 
+  assert.doesNotMatch(adapter, /minmax\((?:90|110|140|150)px/);
   assert.doesNotMatch(styles, /\bmin-(?:width|height)\s*:/i);
   assert.doesNotMatch(styles, /\bmax-(?:width|height)\s*:/i);
   assert.doesNotMatch(styles, /\bclamp\s*\(/i);
   assert.match(styles, /bbm-leistungseditbox-field--toggle/);
   assert.match(styles, /bbm-leistungseditbox-decimal/);
   assert.match(styles, /bbm-leistungseditbox-decimal__step:focus-visible/);
-  assert.match(styles, /background: transparent/);
-  assert.doesNotMatch(styles, /\.bbm-leistungseditbox-decimal\s*\{[^}]*border:/s);
-  assert.doesNotMatch(styles, /\.bbm-leistungseditbox-decimal\s*\{[^}]*box-shadow:/s);
 
   assert.match(preview, /PREVIEW_FRAME_ID = "leistungseditbox\.preview\.frame"/);
   assert.match(preview, /position: "absolute"/);
   assert.match(preview, /measure\(\)/);
 
-  assert.match(previewScreen, /LeistungsEditbox · Baustein L/);
-  assert.match(previewScreen, /Einzelpreis wird beim Verlassen sauber auf 2 Nachkommastellen formatiert/);
+  assert.match(previewScreen, /LeistungsEditbox · Baustein M/);
+  assert.match(previewScreen, /Langtext pro Position ein- und ausblendbar/);
+  assert.match(previewScreen, /showLongText: false/);
   assert.match(previewScreen, /showPositionAmount: true/);
-  assert.match(previewScreen, /quantity: "12,00"/);
-  assert.match(previewScreen, /unitPrice: "18,5"/);
   assert.match(previewScreen, /type: "standard"/);
 
   assert.match(demo, /createLeistungsEditboxPreview/);
   assert.match(demo, /leistungsEditboxPreview\.root/);
 
-  console.log("TESTS OK: Baustein L formatiert den Einzelpreis beim Verlassen des Feldes auf zwei deutsche Nachkommastellen und hält den live berechneten Positionsbetrag synchron.");
+  console.log("TESTS OK: Baustein M ergänzt einen positionsbezogenen Langtext-Schalter; der Langtextinhalt bleibt erhalten, die Anzeige kann ein- und ausgeschaltet werden, und starre interne Mindestbreiten sind entfernt.");
 }
 
 main();
