@@ -67,6 +67,7 @@ export class LeistungspositionEditboxAdapter {
     const doc = documentRef || globalThis.document;
     if (!doc?.createElement) throw new Error("LeistungspositionEditboxAdapter benötigt ein Document.");
 
+    this.defaultType = String(typeOptions[0]?.value ?? "");
     this.basePositionNumber = String(values.basePositionNumber ?? values.positionNumber ?? "").trim();
     this.alternativeSuffix = normalizeAlternativeSuffix(values.alternativeSuffix ?? "a");
 
@@ -93,7 +94,7 @@ export class LeistungspositionEditboxAdapter {
         documentRef: doc,
         label: "Typ",
         kind: "select",
-        value: values.type ?? typeOptions[0]?.value ?? "",
+        value: values.type ?? this.defaultType,
         options: typeOptions,
       }),
       alternativeReference: new LeistungsEditboxField({
@@ -288,6 +289,27 @@ export class LeistungspositionEditboxAdapter {
 
   getQuantityDecimalControl() {
     return this.quantityDecimalControl;
+  }
+
+  setValues(values = {}) {
+    this.basePositionNumber = String(values.basePositionNumber ?? values.positionNumber ?? "").trim();
+    this.alternativeSuffix = normalizeAlternativeSuffix(values.alternativeSuffix ?? "a");
+
+    this.fields.shortText.setValue(values.shortText ?? "");
+    this.fields.longText.setValue(values.longText ?? "");
+    this.fields.type.setValue(values.type ?? this.defaultType);
+    this.fields.quantity.setValue(values.quantity ?? "");
+    this.quantityDecimalControl.setValue(values.quantityDecimalPlaces ?? 2, { silent: true });
+    this.fields.unit.setValue(values.unit ?? "");
+    this.fields.unitPrice.setValue(values.unitPrice ?? "");
+    if (this.fields.gross) this.fields.gross.setValue(values.gross === true);
+    if (this.fields.nep) this.fields.nep.setValue(values.nep === true);
+
+    this.formatQuantity();
+    this.formatUnitPrice();
+    this.updateTypePresentation();
+    this.updatePositionAmount();
+    return this.getValues();
   }
 
   getValues() {
