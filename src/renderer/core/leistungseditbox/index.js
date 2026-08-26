@@ -3,6 +3,11 @@ export { LeistungsEditboxField, LEISTUNGSEDITBOX_FIELD_CLASS } from "./Leistungs
 export { LeistungsEditboxHeader, LEISTUNGSEDITBOX_HEADER_CLASS } from "./LeistungsEditboxHeader.js";
 export { LeistungsEditboxAction, LEISTUNGSEDITBOX_ACTION_CLASS } from "./LeistungsEditboxAction.js";
 export {
+  LeistungsEditboxDecimalControl,
+  LEISTUNGSEDITBOX_DECIMAL_CLASS,
+  leistungsEditboxDecimalPattern,
+} from "./LeistungsEditboxDecimalControl.js";
+export {
   LeistungsEditboxRow,
   LeistungsEditboxGroup,
   LEISTUNGSEDITBOX_ROW_CLASS,
