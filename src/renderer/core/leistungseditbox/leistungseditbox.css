@@ -8,7 +8,9 @@
 .bbm-leistungseditbox-header__title,
 .bbm-leistungseditbox-header__actions,
 .bbm-leistungseditbox-header__group,
-.bbm-leistungseditbox-action {
+.bbm-leistungseditbox-action,
+.bbm-leistungseditbox-row,
+.bbm-leistungseditbox-group {
   box-sizing: border-box;
 }
 
@@ -119,4 +121,20 @@ textarea.bbm-leistungseditbox-field__control {
 .bbm-leistungseditbox-action:disabled {
   cursor: default;
   opacity: .55;
+}
+
+.bbm-leistungseditbox-row {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  align-items: start;
+}
+
+.bbm-leistungseditbox-group {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  align-content: start;
 }
