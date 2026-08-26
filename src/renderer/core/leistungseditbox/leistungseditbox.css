@@ -1,0 +1,19 @@
+.bbm-leistungseditbox-frame,
+.bbm-leistungseditbox-frame__content {
+  box-sizing: border-box;
+}
+
+.bbm-leistungseditbox-frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  border: 1px solid #b9c3d1;
+  background: #ffffff;
+}
+
+.bbm-leistungseditbox-frame__content {
+  width: 100%;
+  height: 100%;
+}
