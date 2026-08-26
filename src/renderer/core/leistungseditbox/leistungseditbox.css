@@ -1,11 +1,13 @@
 .bbm-leistungseditbox-frame,
+.bbm-leistungseditbox-frame__header,
 .bbm-leistungseditbox-frame__content {
   box-sizing: border-box;
 }
 
 .bbm-leistungseditbox-frame {
   position: relative;
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
   overflow: visible;
@@ -13,7 +15,14 @@
   background: #ffffff;
 }
 
-.bbm-leistungseditbox-frame__content {
+.bbm-leistungseditbox-frame__header {
+  flex: 0 0 auto;
   width: 100%;
-  height: 100%;
+}
+
+.bbm-leistungseditbox-frame__content {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 0;
+  overflow: visible;
 }
