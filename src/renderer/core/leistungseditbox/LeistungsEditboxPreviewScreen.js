@@ -57,8 +57,8 @@ export class LeistungsEditboxPreviewScreen {
     const toolbar = doc.createElement("div");
     toolbar.style.cssText = "display:flex;align-items:center;gap:12px;min-height:36px;padding:0 2px;";
     toolbar.append(
-      createText(doc, "strong", "LeistungsEditbox · Baustein G"),
-      createText(doc, "span", "Optionale Positionsmerkmale Brutto und NEP")
+      createText(doc, "strong", "LeistungsEditbox · Baustein H"),
+      createText(doc, "span", "Positionsarten und feste Alternativzuordnung")
     );
 
     const editorButtonHost = doc.createElement("div");
@@ -67,7 +67,7 @@ export class LeistungsEditboxPreviewScreen {
 
     const surface = doc.createElement("div");
     surface.className = "bbm-leistungseditbox-preview__surface";
-    surface.style.cssText = "position:relative;min-height:520px;overflow:visible;border:1px dashed #9ba9bb;background:#fff;";
+    surface.style.cssText = "position:relative;min-height:560px;overflow:visible;border:1px dashed #9ba9bb;background:#fff;";
 
     const frame = new LeistungsEditboxFrame({
       documentRef: doc,
@@ -80,7 +80,7 @@ export class LeistungsEditboxPreviewScreen {
     frameRoot.style.left = "36px";
     frameRoot.style.top = "42px";
     frameRoot.style.width = "940px";
-    frameRoot.style.height = "390px";
+    frameRoot.style.height = "430px";
     frameRoot.style.margin = "0";
     frameRoot.style.border = "2px solid #4d6480";
     frameRoot.style.boxShadow = "0 8px 20px rgba(34,48,68,.16)";
@@ -102,9 +102,11 @@ export class LeistungsEditboxPreviewScreen {
       showGross: true,
       showNep: true,
       values: {
-        shortText: "Untergrund vorbereiten",
-        longText: "Flächen reinigen, lose Bestandteile entfernen und für die weitere Bearbeitung vorbereiten.",
-        type: "standard",
+        basePositionNumber: "21",
+        alternativeSuffix: "a",
+        shortText: "Untergrund vorbereiten – Alternative",
+        longText: "Alternative Ausführung zur fest vorgegebenen Position 21. Die Hauptnummer bleibt unverändert erhalten.",
+        type: "alternative",
         quantity: "12,00",
         unit: "m²",
         unitPrice: "18,50",
