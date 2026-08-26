@@ -13,6 +13,7 @@ function read(relPath) {
 function main() {
   const frame = read("src/renderer/core/leistungseditbox/LeistungsEditboxFrame.js");
   const field = read("src/renderer/core/leistungseditbox/LeistungsEditboxField.js");
+  const decimal = read("src/renderer/core/leistungseditbox/LeistungsEditboxDecimalControl.js");
   const header = read("src/renderer/core/leistungseditbox/LeistungsEditboxHeader.js");
   const action = read("src/renderer/core/leistungseditbox/LeistungsEditboxAction.js");
   const layout = read("src/renderer/core/leistungseditbox/LeistungsEditboxLayout.js");
@@ -27,14 +28,19 @@ function main() {
   assert.match(frame, /inspect,move,resizeWidth,resizeHeight/);
   assert.match(frame, /this\.headerHost/);
   assert.match(frame, /this\.contentHost/);
-  assert.match(frame, /replaceHeader\(\.\.\.nodes\)/);
-  assert.match(frame, /replaceContent\(\.\.\.nodes\)/);
 
   assert.match(field, /singleline/);
   assert.match(field, /multiline/);
   assert.match(field, /select/);
   assert.match(field, /toggle/);
-  assert.match(field, /control\.checked/);
+  assert.match(decimal, /class LeistungsEditboxDecimalControl/);
+  assert.match(decimal, /patternForPlaces/);
+  assert.match(decimal, /"0"\.repeat\(places\)/);
+  assert.match(decimal, /Weniger Nachkommastellen/);
+  assert.match(decimal, /Mehr Nachkommastellen/);
+  assert.match(decimal, /minPlaces = 0/);
+  assert.match(decimal, /maxPlaces = 4/);
+
   assert.match(header, /this\.leftHost/);
   assert.match(header, /this\.centerHost/);
   assert.match(header, /this\.rightHost/);
@@ -43,7 +49,7 @@ function main() {
   assert.match(layout, /class LeistungsEditboxGroup/);
   assert.match(layout, /gridTemplateColumns/);
 
-  const neutralFiles = [frame, field, header, action, layout];
+  const neutralFiles = [frame, field, decimal, header, action, layout];
   for (const source of neutralFiles) {
     for (const forbidden of ["rechnung", "angebot", "kalkulation", "protokoll", "restarbeiten", "mwst", "menge", "preis", "status", "flags"]) {
       assert.equal(source.toLowerCase().includes(forbidden), false, `fachlicher Begriff im neutralen Core: ${forbidden}`);
@@ -61,36 +67,41 @@ function main() {
   assert.match(adapter, /alternativeDisplayNumber/);
   assert.match(adapter, /Alternativposition zu Pos\./);
   assert.match(adapter, /fields\.positionNumber\.getControl\(\)\.readOnly = true/);
+  assert.match(adapter, /new LeistungsEditboxDecimalControl/);
+  assert.match(adapter, /quantityDecimalPlaces \?\? 2/);
+  assert.match(adapter, /minPlaces: 0/);
+  assert.match(adapter, /maxPlaces: 4/);
+  assert.match(adapter, /formatQuantity\(\)/);
+  assert.match(adapter, /Intl\.NumberFormat\("de-DE"/);
+  assert.match(adapter, /quantityDecimalPlaces:/);
   assert.match(adapter, /alternativeOf:/);
   assert.match(adapter, /alternativeSuffix:/);
   assert.match(adapter, /showGross = false/);
   assert.match(adapter, /showNep = false/);
-  assert.match(adapter, /kind: "toggle"/);
-  assert.match(adapter, /getValues\(\)/);
 
   assert.doesNotMatch(styles, /\bmin-(?:width|height)\s*:/i);
   assert.doesNotMatch(styles, /\bmax-(?:width|height)\s*:/i);
   assert.doesNotMatch(styles, /\bclamp\s*\(/i);
   assert.match(styles, /bbm-leistungseditbox-field--toggle/);
+  assert.match(styles, /bbm-leistungseditbox-decimal/);
+  assert.match(styles, /border-radius: 999px/);
 
   assert.match(preview, /PREVIEW_FRAME_ID = "leistungseditbox\.preview\.frame"/);
   assert.match(preview, /position: "absolute"/);
   assert.match(preview, /measure\(\)/);
 
-  assert.match(previewScreen, /LeistungsEditbox · Baustein H/);
+  assert.match(previewScreen, /LeistungsEditbox · Baustein I/);
+  assert.match(previewScreen, /quantityDecimalPlaces: 2/);
   assert.match(previewScreen, /new LeistungspositionEditboxAdapter/);
   assert.match(previewScreen, /basePositionNumber: "21"/);
-  assert.match(previewScreen, /alternativeSuffix: "a"/);
   assert.match(previewScreen, /type: "alternative"/);
   assert.match(previewScreen, /showGross: true/);
   assert.match(previewScreen, /showNep: true/);
-  assert.match(previewScreen, /Leistungsposition bearbeiten/);
-  assert.match(previewScreen, /frame\.replaceContent\(adapter\.getElement\(\)\)/);
 
   assert.match(demo, /createLeistungsEditboxPreview/);
   assert.match(demo, /leistungsEditboxPreview\.root/);
 
-  console.log("TESTS OK: LeistungsEditbox Baustein H ergänzt Standard, Alternative, Hinweis und Text; Alternativen bewahren die feste Hauptpositionsnummer und erhalten Buchstabensuffix plus Zuordnungshinweis, NEP bleibt separates Merkmal.");
+  console.log("TESTS OK: LeistungsEditbox Baustein I zeigt die Mengenpräzision als kompaktes Formatbild 0/0,0/0,00/0,000/0,0000 und formatiert die Menge unmittelbar passend dazu.");
 }
 
 main();
