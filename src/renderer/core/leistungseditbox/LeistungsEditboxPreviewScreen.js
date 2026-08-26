@@ -57,8 +57,8 @@ export class LeistungsEditboxPreviewScreen {
     const toolbar = doc.createElement("div");
     toolbar.style.cssText = "display:flex;align-items:center;gap:12px;min-height:36px;padding:0 2px;";
     toolbar.append(
-      createText(doc, "strong", "LeistungsEditbox · Baustein I"),
-      createText(doc, "span", "Mengenformat direkt als 0,00 steuerbar")
+      createText(doc, "strong", "LeistungsEditbox · Baustein J"),
+      createText(doc, "span", "Hinweis/Text ohne Mengen- und Preiszeile")
     );
 
     const editorButtonHost = doc.createElement("div");
@@ -104,9 +104,9 @@ export class LeistungsEditboxPreviewScreen {
       values: {
         basePositionNumber: "21",
         alternativeSuffix: "a",
-        shortText: "Untergrund vorbereiten – Alternative",
-        longText: "Alternative Ausführung zur fest vorgegebenen Position 21. Die Hauptnummer bleibt unverändert erhalten.",
-        type: "alternative",
+        shortText: "Hinweis zur Ausführung",
+        longText: "Diese Position dient nur als Hinweis. Menge, Einheit, Einzelpreis, Brutto und NEP sind deshalb in dieser Ansicht ausgeblendet.",
+        type: "hint",
         quantity: "12,00",
         quantityDecimalPlaces: 2,
         unit: "m²",
