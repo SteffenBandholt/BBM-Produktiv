@@ -1,10 +1,11 @@
 .rechnung-leistungseditbox-host {
-  position: sticky;
+  position: absolute;
   z-index: 20;
+  left: 50%;
   bottom: 0;
-  width: 100%;
+  width: min(calc(100% - 44px), 980px);
   height: 320px;
-  margin-top: 12px;
+  transform: translateX(-50%);
   background: var(--invoice-color-surface, #fff);
   box-shadow: 0 -8px 20px rgba(15, 23, 42, .12);
 }
