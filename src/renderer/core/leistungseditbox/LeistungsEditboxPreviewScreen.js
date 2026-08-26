@@ -2,6 +2,7 @@ import { installDevelopmentUiEditorOpenButton } from "../../app/coreShellNavigat
 import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
 import { m80EditorAttributes } from "../../ui-editor/m80Registry.js";
 import { LeistungsEditboxFrame } from "./LeistungsEditboxFrame.js";
+import { LeistungsEditboxField } from "./LeistungsEditboxField.js";
 import {
   LEISTUNGSEDITBOX_PREVIEW_COMPONENT_ID,
   LEISTUNGSEDITBOX_PREVIEW_FRAME_ID,
@@ -53,8 +54,8 @@ export class LeistungsEditboxPreviewScreen {
     const toolbar = doc.createElement("div");
     toolbar.style.cssText = "display:flex;align-items:center;gap:12px;min-height:36px;padding:0 2px;";
     toolbar.append(
-      createText(doc, "strong", "LeistungsEditbox · Baustein B"),
-      createText(doc, "span", "Neutraler Kopfbereich + neutraler Inhaltsbereich")
+      createText(doc, "strong", "LeistungsEditbox · Baustein C"),
+      createText(doc, "span", "Neutrale Feldbausteine – noch ohne Fachlogik")
     );
 
     const editorButtonHost = doc.createElement("div");
@@ -75,8 +76,8 @@ export class LeistungsEditboxPreviewScreen {
     frameRoot.style.position = "absolute";
     frameRoot.style.left = "36px";
     frameRoot.style.top = "42px";
-    frameRoot.style.width = "640px";
-    frameRoot.style.height = "220px";
+    frameRoot.style.width = "720px";
+    frameRoot.style.height = "300px";
     frameRoot.style.margin = "0";
     frameRoot.style.border = "2px solid #4d6480";
     frameRoot.style.boxShadow = "0 8px 20px rgba(34,48,68,.16)";
@@ -87,8 +88,36 @@ export class LeistungsEditboxPreviewScreen {
     header.style.cssText = "display:flex;align-items:center;height:34px;padding:0 10px;border-bottom:1px solid #c5cfdb;background:#f3f6fa;font:700 13px/1.2 system-ui,sans-serif;";
 
     const content = doc.createElement("div");
-    content.textContent = "Neutraler Inhaltsbereich";
-    content.style.cssText = "display:grid;place-items:center;width:100%;height:100%;font:600 14px/1.3 system-ui,sans-serif;color:#536172;";
+    content.style.cssText = "display:grid;grid-template-columns:minmax(0,1.4fr) minmax(140px,.6fr);grid-template-rows:auto 1fr;gap:10px;width:100%;height:100%;padding:12px;box-sizing:border-box;overflow:visible;";
+
+    const single = new LeistungsEditboxField({
+      documentRef: doc,
+      label: "Einzeiliges Feld",
+      kind: "singleline",
+      value: "Testwert",
+    });
+    const select = new LeistungsEditboxField({
+      documentRef: doc,
+      label: "Auswahlfeld",
+      kind: "select",
+      value: "B",
+      options: [
+        { value: "A", label: "Option A" },
+        { value: "B", label: "Option B" },
+        { value: "C", label: "Option C" },
+      ],
+    });
+    const multiline = new LeistungsEditboxField({
+      documentRef: doc,
+      label: "Mehrzeiliges Feld",
+      kind: "multiline",
+      value: "Mehrzeilige neutrale Testeingabe",
+    });
+    multiline.getElement().style.gridColumn = "1 / -1";
+    multiline.getElement().style.minHeight = "0";
+    multiline.getControl().style.minHeight = "0";
+
+    content.append(single.getElement(), select.getElement(), multiline.getElement());
 
     frame.replaceHeader(header);
     frame.replaceContent(content);
