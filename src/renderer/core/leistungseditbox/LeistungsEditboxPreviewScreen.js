@@ -57,8 +57,8 @@ export class LeistungsEditboxPreviewScreen {
     const toolbar = doc.createElement("div");
     toolbar.style.cssText = "display:flex;align-items:center;gap:12px;min-height:36px;padding:0 2px;";
     toolbar.append(
-      createText(doc, "strong", "LeistungsEditbox · Baustein L"),
-      createText(doc, "span", "Einzelpreis wird beim Verlassen sauber auf 2 Nachkommastellen formatiert")
+      createText(doc, "strong", "LeistungsEditbox · Baustein M"),
+      createText(doc, "span", "Langtext pro Position ein- und ausblendbar")
     );
 
     const editorButtonHost = doc.createElement("div");
@@ -106,11 +106,12 @@ export class LeistungsEditboxPreviewScreen {
         basePositionNumber: "21",
         shortText: "Untergrund vorbereiten",
         longText: "Flächen reinigen, lose Bestandteile entfernen und für die weitere Bearbeitung vorbereiten.",
+        showLongText: false,
         type: "standard",
         quantity: "12,00",
         quantityDecimalPlaces: 2,
         unit: "m²",
-        unitPrice: "18,5",
+        unitPrice: "18,50",
         gross: false,
         nep: false,
       },
