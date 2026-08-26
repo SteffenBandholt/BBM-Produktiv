@@ -66,11 +66,14 @@ export class RechnungLeistungsEditboxBinding {
     onAddPosition = null,
     onMove = null,
     onDelete = null,
+    onChange = null,
   } = {}) {
     const doc = documentRef;
     if (!doc?.createElement) throw new Error("RechnungLeistungsEditboxBinding benötigt ein Document.");
     ensureStyles(doc);
 
+    this.activePositionId = null;
+    this.onChange = typeof onChange === "function" ? onChange : null;
     this.host = doc.createElement("section");
     this.host.className = "rechnung-leistungseditbox-host";
     this.host.hidden = true;
@@ -103,6 +106,10 @@ export class RechnungLeistungsEditboxBinding {
       showGross: true,
       showNep: true,
       showPositionAmount: true,
+      onChange: (values) => {
+        if (!this.activePositionId || !this.onChange) return;
+        this.onChange(this.activePositionId, values);
+      },
     });
 
     this.frame.replaceHeader(this.header.getElement());
@@ -119,6 +126,7 @@ export class RechnungLeistungsEditboxBinding {
       this.hide();
       return null;
     }
+    this.activePositionId = position.id || null;
     const values = rechnungPositionToLeistungsEditboxValues(position, options);
     this.adapter.setValues(values);
     this.host.hidden = false;
@@ -126,6 +134,7 @@ export class RechnungLeistungsEditboxBinding {
   }
 
   hide() {
+    this.activePositionId = null;
     this.host.hidden = true;
   }
 }
