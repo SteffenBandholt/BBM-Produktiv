@@ -51,19 +51,22 @@ function main() {
   }
 
   assert.match(adapter, /class LeistungspositionEditboxAdapter/);
-  for (const label of ["Kurztext", "Langtext", "Typ", "Menge", "Einheit", "Einzelpreis", "Brutto", "NEP"]) {
-    assert.match(adapter, new RegExp(`label: "${label}"`));
+  for (const label of ["Pos.-Nr.", "Kurztext", "Langtext", "Typ", "Zuordnung", "Menge", "Einheit", "Einzelpreis", "Brutto", "NEP"]) {
+    assert.match(adapter, new RegExp(`label: "${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`));
   }
+  for (const typeLabel of ["Standard", "Alternative", "Hinweis", "Text"]) {
+    assert.match(adapter, new RegExp(`label: "${typeLabel}"`));
+  }
+  assert.match(adapter, /normalizeAlternativeSuffix/);
+  assert.match(adapter, /alternativeDisplayNumber/);
+  assert.match(adapter, /Alternativposition zu Pos\./);
+  assert.match(adapter, /fields\.positionNumber\.getControl\(\)\.readOnly = true/);
+  assert.match(adapter, /alternativeOf:/);
+  assert.match(adapter, /alternativeSuffix:/);
   assert.match(adapter, /showGross = false/);
   assert.match(adapter, /showNep = false/);
   assert.match(adapter, /kind: "toggle"/);
   assert.match(adapter, /getValues\(\)/);
-  assert.match(adapter, /shortText:/);
-  assert.match(adapter, /longText:/);
-  assert.match(adapter, /quantity:/);
-  assert.match(adapter, /unitPrice:/);
-  assert.match(adapter, /gross:/);
-  assert.match(adapter, /nep:/);
 
   assert.doesNotMatch(styles, /\bmin-(?:width|height)\s*:/i);
   assert.doesNotMatch(styles, /\bmax-(?:width|height)\s*:/i);
@@ -74,8 +77,11 @@ function main() {
   assert.match(preview, /position: "absolute"/);
   assert.match(preview, /measure\(\)/);
 
-  assert.match(previewScreen, /LeistungsEditbox · Baustein G/);
+  assert.match(previewScreen, /LeistungsEditbox · Baustein H/);
   assert.match(previewScreen, /new LeistungspositionEditboxAdapter/);
+  assert.match(previewScreen, /basePositionNumber: "21"/);
+  assert.match(previewScreen, /alternativeSuffix: "a"/);
+  assert.match(previewScreen, /type: "alternative"/);
   assert.match(previewScreen, /showGross: true/);
   assert.match(previewScreen, /showNep: true/);
   assert.match(previewScreen, /Leistungsposition bearbeiten/);
@@ -84,7 +90,7 @@ function main() {
   assert.match(demo, /createLeistungsEditboxPreview/);
   assert.match(demo, /leistungsEditboxPreview\.root/);
 
-  console.log("TESTS OK: LeistungsEditbox Baustein G ergänzt optionale Brutto- und NEP-Merkmale über neutrale Toggle-Felder; der neutrale Core bleibt fachfrei.");
+  console.log("TESTS OK: LeistungsEditbox Baustein H ergänzt Standard, Alternative, Hinweis und Text; Alternativen bewahren die feste Hauptpositionsnummer und erhalten Buchstabensuffix plus Zuordnungshinweis, NEP bleibt separates Merkmal.");
 }
 
 main();
