@@ -175,6 +175,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   coreShell.start();
 
+  // Nur auf dem Entwicklungsbranch `leistungseditbox`: der Baustein soll nach
+  // `npm start` ohne Umweg direkt sichtbar und mit dem normalen UI-Editor
+  // abnehmbar sein. Vor einer spaeteren Integration wird dieser Preview-Start
+  // wieder entfernt.
+  const previewModule = await import("./core/leistungseditbox/LeistungsEditboxPreviewScreen.js");
+  await router.show(new previewModule.LeistungsEditboxPreviewScreen(), {
+    section: "leistungseditboxPreview",
+    isTopsView: false,
+    pageTitle: "LeistungsEditbox Test",
+    hideSidebar: false,
+  });
+
   const m80Diagnostic = await window.uiEditor?.getDiagnosticMode?.();
   if (m80Diagnostic?.ok === true && m80Diagnostic.enabled === true) {
     const expiresAt = Date.now() + 2_000;
