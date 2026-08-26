@@ -4,6 +4,7 @@ import {
   bbmUiEditorDemoLayoutStore,
   moveDemoLayoutValue,
 } from "./bbmUiEditorDemoLayout.js";
+import { createLeistungsEditboxPreview } from "../../core/leistungseditbox/index.js";
 
 const BUTTONS = Object.freeze([
   Object.freeze({ label: "Links", action: "left" }),
@@ -147,14 +148,20 @@ function renderDemoView({ ui, layoutEntry, onAction }) {
     controls?.appendChild?.(button);
   }
 
+  const leistungsEditboxPreview = createLeistungsEditboxPreview({
+    documentRef: root.ownerDocument || globalThis.document,
+    parentId: "bbm.demo.root",
+  });
+
   applyCardPosition(card, layoutValue);
   appendChildren(surface, [card]);
-  appendChildren(root, [title, hint, surface, position, controls]);
+  appendChildren(root, [title, hint, surface, position, controls, leistungsEditboxPreview.root]);
 
   return {
     root,
     card,
     position,
+    leistungsEditboxPreview,
     sync(nextLayoutValue) {
       applyCardPosition(card, nextLayoutValue);
       setText(position, renderPositionText(nextLayoutValue));
