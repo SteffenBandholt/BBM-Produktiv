@@ -57,7 +57,7 @@ function main() {
   }
 
   assert.match(adapter, /class LeistungspositionEditboxAdapter/);
-  for (const label of ["Pos.-Nr.", "Kurztext", "Langtext", "Typ", "Zuordnung", "Menge", "Einheit", "Einzelpreis", "Brutto", "NEP"]) {
+  for (const label of ["Pos.-Nr.", "Kurztext", "Langtext", "Typ", "Zuordnung", "Menge", "Einheit", "Einzelpreis", "Positionsbetrag", "Brutto", "NEP"]) {
     assert.match(adapter, new RegExp(`label: "${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`));
   }
   for (const typeLabel of ["Standard", "Alternative", "Hinweis", "Text"]) {
@@ -75,8 +75,13 @@ function main() {
   assert.match(adapter, /minPlaces: 0/);
   assert.match(adapter, /maxPlaces: 4/);
   assert.match(adapter, /formatQuantity\(\)/);
-  assert.match(adapter, /Intl\.NumberFormat\("de-DE"/);
+  assert.match(adapter, /formatPositionAmount/);
+  assert.match(adapter, /showPositionAmount = false/);
+  assert.match(adapter, /fields\.positionAmount\.getControl\(\)\.readOnly = true/);
+  assert.match(adapter, /updatePositionAmount\(\)/);
+  assert.match(adapter, /quantityValue \* unitPriceValue/);
   assert.match(adapter, /quantityDecimalPlaces:/);
+  assert.match(adapter, /positionAmount:/);
   assert.match(adapter, /alternativeOf:/);
   assert.match(adapter, /alternativeSuffix:/);
   assert.match(adapter, /showGross = false/);
@@ -96,19 +101,17 @@ function main() {
   assert.match(preview, /position: "absolute"/);
   assert.match(preview, /measure\(\)/);
 
-  assert.match(previewScreen, /LeistungsEditbox · Baustein J/);
-  assert.match(previewScreen, /Hinweis\/Text ohne Mengen- und Preiszeile/);
-  assert.match(previewScreen, /quantityDecimalPlaces: 2/);
-  assert.match(previewScreen, /new LeistungspositionEditboxAdapter/);
-  assert.match(previewScreen, /basePositionNumber: "21"/);
-  assert.match(previewScreen, /type: "hint"/);
-  assert.match(previewScreen, /showGross: true/);
-  assert.match(previewScreen, /showNep: true/);
+  assert.match(previewScreen, /LeistungsEditbox · Baustein K/);
+  assert.match(previewScreen, /Positionsbetrag live aus Menge × Einzelpreis/);
+  assert.match(previewScreen, /showPositionAmount: true/);
+  assert.match(previewScreen, /quantity: "12,00"/);
+  assert.match(previewScreen, /unitPrice: "18,50"/);
+  assert.match(previewScreen, /type: "standard"/);
 
   assert.match(demo, /createLeistungsEditboxPreview/);
   assert.match(demo, /leistungsEditboxPreview\.root/);
 
-  console.log("TESTS OK: Baustein J blendet für Hinweis und Text die komplette Mengen-/Preiszeile inklusive Brutto, NEP und Mengenpräzision aus; Standard und Alternative bleiben bepreist.");
+  console.log("TESTS OK: Baustein K ergänzt einen optionalen schreibgeschützten Positionsbetrag, der live aus Menge × Einzelpreis berechnet wird; Hinweis/Text blenden die gesamte Preiszeile weiterhin aus.");
 }
 
 main();
