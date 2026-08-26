@@ -63,6 +63,9 @@ function main() {
   for (const typeLabel of ["Standard", "Alternative", "Hinweis", "Text"]) {
     assert.match(adapter, new RegExp(`label: "${typeLabel}"`));
   }
+  assert.match(adapter, /const PRICED_TYPES = new Set\(\["standard", "alternative"\]\)/);
+  assert.match(adapter, /const isPriced = PRICED_TYPES\.has\(type\)/);
+  assert.match(adapter, /this\.detailRow\.getElement\(\)\.hidden = !isPriced/);
   assert.match(adapter, /normalizeAlternativeSuffix/);
   assert.match(adapter, /alternativeDisplayNumber/);
   assert.match(adapter, /Alternativposition zu Pos\./);
@@ -93,18 +96,19 @@ function main() {
   assert.match(preview, /position: "absolute"/);
   assert.match(preview, /measure\(\)/);
 
-  assert.match(previewScreen, /LeistungsEditbox · Baustein I/);
+  assert.match(previewScreen, /LeistungsEditbox · Baustein J/);
+  assert.match(previewScreen, /Hinweis\/Text ohne Mengen- und Preiszeile/);
   assert.match(previewScreen, /quantityDecimalPlaces: 2/);
   assert.match(previewScreen, /new LeistungspositionEditboxAdapter/);
   assert.match(previewScreen, /basePositionNumber: "21"/);
-  assert.match(previewScreen, /type: "alternative"/);
+  assert.match(previewScreen, /type: "hint"/);
   assert.match(previewScreen, /showGross: true/);
   assert.match(previewScreen, /showNep: true/);
 
   assert.match(demo, /createLeistungsEditboxPreview/);
   assert.match(demo, /leistungsEditboxPreview\.root/);
 
-  console.log("TESTS OK: Mengenpräzision bleibt 0/0,0/0,00/0,000/0,0000, ist aber ohne äußere Buttonumrandung und nur über dezente Hover-/Focus-Flächen bedienbar.");
+  console.log("TESTS OK: Baustein J blendet für Hinweis und Text die komplette Mengen-/Preiszeile inklusive Brutto, NEP und Mengenpräzision aus; Standard und Alternative bleiben bepreist.");
 }
 
 main();
