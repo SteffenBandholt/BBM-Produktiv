@@ -12,6 +12,8 @@ const DEFAULT_TYPE_OPTIONS = Object.freeze([
   { value: "text", label: "Text" },
 ]);
 
+const PRICED_TYPES = new Set(["standard", "alternative"]);
+
 function normalizeAlternativeSuffix(value) {
   const suffix = String(value ?? "a").trim().toLowerCase();
   return /^[a-z]$/.test(suffix) ? suffix : "a";
@@ -211,6 +213,7 @@ export class LeistungspositionEditboxAdapter {
   updateTypePresentation() {
     const type = this.fields.type.getValue();
     const isAlternative = type === "alternative";
+    const isPriced = PRICED_TYPES.has(type);
     const displayNumber = isAlternative
       ? alternativeDisplayNumber(this.basePositionNumber, this.alternativeSuffix)
       : this.basePositionNumber;
@@ -222,6 +225,7 @@ export class LeistungspositionEditboxAdapter {
         : ""
     );
     this.fields.alternativeReference.getElement().hidden = !isAlternative;
+    this.detailRow.getElement().hidden = !isPriced;
   }
 
   getElement() {
