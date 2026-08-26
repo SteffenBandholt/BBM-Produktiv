@@ -57,8 +57,8 @@ export class LeistungsEditboxPreviewScreen {
     const toolbar = doc.createElement("div");
     toolbar.style.cssText = "display:flex;align-items:center;gap:12px;min-height:36px;padding:0 2px;";
     toolbar.append(
-      createText(doc, "strong", "LeistungsEditbox · Baustein K"),
-      createText(doc, "span", "Positionsbetrag live aus Menge × Einzelpreis")
+      createText(doc, "strong", "LeistungsEditbox · Baustein L"),
+      createText(doc, "span", "Einzelpreis wird beim Verlassen sauber auf 2 Nachkommastellen formatiert")
     );
 
     const editorButtonHost = doc.createElement("div");
@@ -110,7 +110,7 @@ export class LeistungsEditboxPreviewScreen {
         quantity: "12,00",
         quantityDecimalPlaces: 2,
         unit: "m²",
-        unitPrice: "18,50",
+        unitPrice: "18,5",
         gross: false,
         nep: false,
       },
