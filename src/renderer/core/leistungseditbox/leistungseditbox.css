@@ -3,7 +3,12 @@
 .bbm-leistungseditbox-frame__content,
 .bbm-leistungseditbox-field,
 .bbm-leistungseditbox-field__label,
-.bbm-leistungseditbox-field__control {
+.bbm-leistungseditbox-field__control,
+.bbm-leistungseditbox-header,
+.bbm-leistungseditbox-header__title,
+.bbm-leistungseditbox-header__actions,
+.bbm-leistungseditbox-header__group,
+.bbm-leistungseditbox-action {
   box-sizing: border-box;
 }
 
@@ -55,4 +60,63 @@
 textarea.bbm-leistungseditbox-field__control {
   resize: none;
   height: 100%;
+}
+
+.bbm-leistungseditbox-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 6px 8px;
+  border-bottom: 1px solid #c5cfdb;
+  background: #f3f6fa;
+}
+
+.bbm-leistungseditbox-header__title {
+  font: 700 13px/1.2 system-ui, sans-serif;
+  color: #172033;
+  white-space: nowrap;
+}
+
+.bbm-leistungseditbox-header__actions {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bbm-leistungseditbox-header__group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bbm-leistungseditbox-header__group--left {
+  justify-content: flex-start;
+}
+
+.bbm-leistungseditbox-header__group--center {
+  justify-content: center;
+}
+
+.bbm-leistungseditbox-header__group--right {
+  justify-content: flex-end;
+}
+
+.bbm-leistungseditbox-action {
+  border: 1px solid #b9c3d1;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #172033;
+  font: 600 12px/1.2 system-ui, sans-serif;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+
+.bbm-leistungseditbox-action:disabled {
+  cursor: default;
+  opacity: .55;
 }
