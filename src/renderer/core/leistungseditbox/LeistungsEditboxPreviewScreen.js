@@ -1,11 +1,10 @@
 import { installDevelopmentUiEditorOpenButton } from "../../app/coreShellNavigation.js";
 import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
 import { m80EditorAttributes } from "../../ui-editor/m80Registry.js";
+import { LeistungspositionEditboxAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxAdapter.js";
 import { LeistungsEditboxAction } from "./LeistungsEditboxAction.js";
-import { LeistungsEditboxField } from "./LeistungsEditboxField.js";
 import { LeistungsEditboxFrame } from "./LeistungsEditboxFrame.js";
 import { LeistungsEditboxHeader } from "./LeistungsEditboxHeader.js";
-import { LeistungsEditboxGroup, LeistungsEditboxRow } from "./LeistungsEditboxLayout.js";
 import {
   LEISTUNGSEDITBOX_PREVIEW_COMPONENT_ID,
   LEISTUNGSEDITBOX_PREVIEW_FRAME_ID,
@@ -37,6 +36,7 @@ export class LeistungsEditboxPreviewScreen {
     this.root = null;
     this.overlay = null;
     this.frame = null;
+    this.adapter = null;
   }
 
   render() {
@@ -57,8 +57,8 @@ export class LeistungsEditboxPreviewScreen {
     const toolbar = doc.createElement("div");
     toolbar.style.cssText = "display:flex;align-items:center;gap:12px;min-height:36px;padding:0 2px;";
     toolbar.append(
-      createText(doc, "strong", "LeistungsEditbox · Baustein E"),
-      createText(doc, "span", "Neutrale Layoutzeilen und Feldgruppen")
+      createText(doc, "strong", "LeistungsEditbox · Baustein F"),
+      createText(doc, "span", "Erster echter Verbraucher: Leistungsposition")
     );
 
     const editorButtonHost = doc.createElement("div");
@@ -79,8 +79,8 @@ export class LeistungsEditboxPreviewScreen {
     frameRoot.style.position = "absolute";
     frameRoot.style.left = "36px";
     frameRoot.style.top = "42px";
-    frameRoot.style.width = "780px";
-    frameRoot.style.height = "340px";
+    frameRoot.style.width = "860px";
+    frameRoot.style.height = "390px";
     frameRoot.style.margin = "0";
     frameRoot.style.border = "2px solid #4d6480";
     frameRoot.style.boxShadow = "0 8px 20px rgba(34,48,68,.16)";
@@ -91,57 +91,27 @@ export class LeistungsEditboxPreviewScreen {
     const rightAction = new LeistungsEditboxAction({ documentRef: doc, label: "Aktion rechts" });
     const header = new LeistungsEditboxHeader({
       documentRef: doc,
-      title: "LeistungsEditbox",
+      title: "Leistungsposition bearbeiten",
       left: [leftAction.getElement()],
       center: [centerAction.getElement()],
       right: [rightAction.getElement()],
     });
 
-    const single = new LeistungsEditboxField({
+    const adapter = new LeistungspositionEditboxAdapter({
       documentRef: doc,
-      label: "Einzeiliges Feld",
-      kind: "singleline",
-      value: "Testwert",
+      values: {
+        shortText: "Untergrund vorbereiten",
+        longText: "Flächen reinigen, lose Bestandteile entfernen und für die weitere Bearbeitung vorbereiten.",
+        type: "standard",
+        quantity: "12,00",
+        unit: "m²",
+        unitPrice: "18,50",
+      },
     });
-    const select = new LeistungsEditboxField({
-      documentRef: doc,
-      label: "Auswahlfeld",
-      kind: "select",
-      value: "B",
-      options: [
-        { value: "A", label: "Option A" },
-        { value: "B", label: "Option B" },
-        { value: "C", label: "Option C" },
-      ],
-    });
-    const multiline = new LeistungsEditboxField({
-      documentRef: doc,
-      label: "Mehrzeiliges Feld",
-      kind: "multiline",
-      value: "Mehrzeilige neutrale Testeingabe",
-    });
-
-    const firstRow = new LeistungsEditboxRow({
-      documentRef: doc,
-      columns: ["minmax(0, 1.4fr)", "minmax(0, .6fr)"],
-      children: [single.getElement(), select.getElement()],
-    });
-    const secondRow = new LeistungsEditboxRow({
-      documentRef: doc,
-      columns: ["minmax(0, 1fr)"],
-      children: [multiline.getElement()],
-    });
-    secondRow.getElement().style.flex = "1 1 auto";
-    multiline.getElement().style.height = "100%";
-
-    const content = new LeistungsEditboxGroup({
-      documentRef: doc,
-      children: [firstRow.getElement(), secondRow.getElement()],
-    });
-    content.getElement().style.cssText += "height:100%;padding:12px;";
+    adapter.getElement().style.cssText += "height:100%;padding:12px;";
 
     frame.replaceHeader(header.getElement());
-    frame.replaceContent(content.getElement());
+    frame.replaceContent(adapter.getElement());
 
     surface.appendChild(frameRoot);
     root.append(toolbar, surface);
@@ -150,6 +120,7 @@ export class LeistungsEditboxPreviewScreen {
     this.root = placeholder;
     this.overlay = root;
     this.frame = frame;
+    this.adapter = adapter;
 
     completeM80PilotRender();
     void installDevelopmentUiEditorOpenButton({
