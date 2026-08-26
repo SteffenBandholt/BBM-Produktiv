@@ -3,7 +3,7 @@ import { ensureLeistungsEditboxStyles } from "./styles.js";
 const FIELD_CLASS = "bbm-leistungseditbox-field";
 
 function normalizedKind(kind) {
-  return ["singleline", "multiline", "select"].includes(kind) ? kind : "singleline";
+  return ["singleline", "multiline", "select", "toggle"].includes(kind) ? kind : "singleline";
 }
 
 export class LeistungsEditboxField {
@@ -45,14 +45,16 @@ export class LeistungsEditboxField {
       }
     } else {
       this.control = doc.createElement("input");
-      this.control.type = "text";
+      this.control.type = this.kind === "toggle" ? "checkbox" : "text";
     }
 
     this.control.className = `${FIELD_CLASS}__control`;
-    this.control.value = String(value ?? "");
-    if (placeholder && this.kind !== "select") this.control.placeholder = String(placeholder);
+    if (this.kind === "toggle") this.control.checked = value === true;
+    else this.control.value = String(value ?? "");
+    if (placeholder && !["select", "toggle"].includes(this.kind)) this.control.placeholder = String(placeholder);
 
-    this.root.append(this.labelElement, this.control);
+    if (this.kind === "toggle") this.root.append(this.control, this.labelElement);
+    else this.root.append(this.labelElement, this.control);
   }
 
   getElement() {
@@ -64,11 +66,12 @@ export class LeistungsEditboxField {
   }
 
   getValue() {
-    return this.control.value;
+    return this.kind === "toggle" ? this.control.checked === true : this.control.value;
   }
 
   setValue(value) {
-    this.control.value = String(value ?? "");
+    if (this.kind === "toggle") this.control.checked = value === true;
+    else this.control.value = String(value ?? "");
   }
 
   setLabel(label) {
