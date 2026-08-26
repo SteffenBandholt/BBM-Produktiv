@@ -75,6 +75,9 @@ function main() {
   assert.match(adapter, /minPlaces: 0/);
   assert.match(adapter, /maxPlaces: 4/);
   assert.match(adapter, /formatQuantity\(\)/);
+  assert.match(adapter, /formatUnitPrice\(\)/);
+  assert.match(adapter, /formatLocalizedNumber\(current, 2\)/);
+  assert.match(adapter, /this\.fields\.unitPrice\.getControl\(\)\.addEventListener\("blur"/);
   assert.match(adapter, /formatPositionAmount/);
   assert.match(adapter, /showPositionAmount = false/);
   assert.match(adapter, /fields\.positionAmount\.getControl\(\)\.readOnly = true/);
@@ -101,17 +104,17 @@ function main() {
   assert.match(preview, /position: "absolute"/);
   assert.match(preview, /measure\(\)/);
 
-  assert.match(previewScreen, /LeistungsEditbox · Baustein K/);
-  assert.match(previewScreen, /Positionsbetrag live aus Menge × Einzelpreis/);
+  assert.match(previewScreen, /LeistungsEditbox · Baustein L/);
+  assert.match(previewScreen, /Einzelpreis wird beim Verlassen sauber auf 2 Nachkommastellen formatiert/);
   assert.match(previewScreen, /showPositionAmount: true/);
   assert.match(previewScreen, /quantity: "12,00"/);
-  assert.match(previewScreen, /unitPrice: "18,50"/);
+  assert.match(previewScreen, /unitPrice: "18,5"/);
   assert.match(previewScreen, /type: "standard"/);
 
   assert.match(demo, /createLeistungsEditboxPreview/);
   assert.match(demo, /leistungsEditboxPreview\.root/);
 
-  console.log("TESTS OK: Baustein K ergänzt einen optionalen schreibgeschützten Positionsbetrag, der live aus Menge × Einzelpreis berechnet wird; Hinweis/Text blenden die gesamte Preiszeile weiterhin aus.");
+  console.log("TESTS OK: Baustein L formatiert den Einzelpreis beim Verlassen des Feldes auf zwei deutsche Nachkommastellen und hält den live berechneten Positionsbetrag synchron.");
 }
 
 main();
