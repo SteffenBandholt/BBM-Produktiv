@@ -53,8 +53,8 @@ export class LeistungsEditboxPreviewScreen {
     const toolbar = doc.createElement("div");
     toolbar.style.cssText = "display:flex;align-items:center;gap:12px;min-height:36px;padding:0 2px;";
     toolbar.append(
-      createText(doc, "strong", "LeistungsEditbox · Baustein A"),
-      createText(doc, "span", "Nur Rahmen/Geometrie – noch keine Fachfelder")
+      createText(doc, "strong", "LeistungsEditbox · Baustein B"),
+      createText(doc, "span", "Neutraler Kopfbereich + neutraler Inhaltsbereich")
     );
 
     const editorButtonHost = doc.createElement("div");
@@ -82,18 +82,15 @@ export class LeistungsEditboxPreviewScreen {
     frameRoot.style.boxShadow = "0 8px 20px rgba(34,48,68,.16)";
     frameRoot.style.background = "#fff";
 
+    const header = doc.createElement("div");
+    header.textContent = "LeistungsEditbox – neutraler Kopfbereich";
+    header.style.cssText = "display:flex;align-items:center;height:34px;padding:0 10px;border-bottom:1px solid #c5cfdb;background:#f3f6fa;font:700 13px/1.2 system-ui,sans-serif;";
+
     const content = doc.createElement("div");
-    content.style.cssText = "display:grid;grid-template-rows:34px 1fr;width:100%;height:100%;box-sizing:border-box;overflow:hidden;color:#344255;";
+    content.textContent = "Neutraler Inhaltsbereich";
+    content.style.cssText = "display:grid;place-items:center;width:100%;height:100%;font:600 14px/1.3 system-ui,sans-serif;color:#536172;";
 
-    const titleBar = doc.createElement("div");
-    titleBar.textContent = "LeistungsEditbox – Test";
-    titleBar.style.cssText = "display:flex;align-items:center;padding:0 10px;border-bottom:1px solid #c5cfdb;background:#f3f6fa;font:700 13px/1.2 system-ui,sans-serif;";
-
-    const testArea = doc.createElement("div");
-    testArea.textContent = "Baustein A – Testfläche";
-    testArea.style.cssText = "display:grid;place-items:center;font:600 14px/1.3 system-ui,sans-serif;color:#536172;";
-
-    content.append(titleBar, testArea);
+    frame.replaceHeader(header);
     frame.replaceContent(content);
 
     surface.appendChild(frameRoot);
