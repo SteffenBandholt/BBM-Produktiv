@@ -174,8 +174,12 @@ export class LeistungspositionEditboxAdapter {
     });
     this.fields.quantity.getControl().addEventListener("input", () => this.updatePositionAmount());
     this.fields.unitPrice.getControl().addEventListener("input", () => this.updatePositionAmount());
-    this.fields.unitPrice.getControl().addEventListener("blur", () => this.updatePositionAmount());
+    this.fields.unitPrice.getControl().addEventListener("blur", () => {
+      this.formatUnitPrice();
+      this.updatePositionAmount();
+    });
     this.formatQuantity();
+    this.formatUnitPrice();
 
     this.numberRow = new LeistungsEditboxRow({
       documentRef: doc,
@@ -241,6 +245,12 @@ export class LeistungspositionEditboxAdapter {
     this.fields.quantity.setValue(
       formatLocalizedNumber(current, this.quantityDecimalControl.getValue())
     );
+  }
+
+  formatUnitPrice() {
+    const current = this.fields.unitPrice.getValue();
+    if (String(current ?? "").trim() === "") return;
+    this.fields.unitPrice.setValue(formatLocalizedNumber(current, 2));
   }
 
   updatePositionAmount() {
