@@ -22,7 +22,7 @@ class RechnungEditorScreen extends RechnungScreen {
   }
 
   _installLeistungsEditboxBinding() {
-    if (!this.sheetArea || this.leistungsEditboxBinding) return;
+    if (!this.editor || this.leistungsEditboxBinding) return;
     this.leistungsEditboxBinding = new RechnungLeistungsEditboxBinding({
       documentRef: globalThis.document,
       onAddTitle: () => this._createTitle(),
@@ -30,7 +30,7 @@ class RechnungEditorScreen extends RechnungScreen {
       onMove: () => this._togglePositionMove(),
       onDelete: () => this._deletePosition(),
     });
-    this.sheetArea.append(this.leistungsEditboxBinding.getElement());
+    this.editor.append(this.leistungsEditboxBinding.getElement());
   }
 
   _clearPositionSelection() {
