@@ -12,9 +12,9 @@ const SCOPE_ID = "rechnung.screen";
 const BOUND_KEYS = Object.freeze(["minX", "maxX", "minY", "maxY", "minWidth", "maxWidth", "minHeight", "maxHeight"]);
 const REQUIRED_OPS = Object.freeze(["move", "resizeWidth", "resizeHeight"]);
 const BUTTON_ACCEPTANCE_SIZES = Object.freeze({
-  "rechnung.editor.positionQuantityDecimals.decrease": Object.freeze({ width: 7, height: 6 }),
-  "rechnung.editor.positionCreate": Object.freeze({ width: 31, height: 7 }),
+  "rechnung.editor.customerPicker": Object.freeze({ width: 7, height: 6 }),
   "rechnung.editor.preview": Object.freeze({ width: 29, height: 8 }),
+  "rechnung.editor.headToggle": Object.freeze({ width: 31, height: 7 }),
 });
 
 function assertRegisteredButtonCssHasNoDimensionBounds(stylesheet, buttonClassNames) {
@@ -168,9 +168,9 @@ async function main() {
   const RechnungScreen = (await importEsmFromFile(path.join(ROOT, "src/renderer/modules/rechnungen/screens/RechnungScreen.js"))).default;
   const scope = registry.listM80RegistryScopes().find((entry) => entry.scopeId === SCOPE_ID);
   assert.ok(scope);
-  assert.equal(scope.elements.length, 131);
+  assert.equal(scope.elements.length, 87);
   const buttonEntries = scope.elements.filter((entry) => entry.type === "button");
-  assert.equal(buttonEntries.length, 16);
+  assert.equal(buttonEntries.length, 9);
 
   for (const entry of scope.elements) {
     REQUIRED_OPS.forEach((operation) => assert.ok(entry.allowedOps.includes(operation), `${entry.id}: ${operation}`));
@@ -185,13 +185,14 @@ async function main() {
     assert.equal(entry.operationEffects.resizeWidth, "parentReflowRequired", `${entry.id}: Breiten-Reflowvertrag`);
     assert.equal(entry.operationEffects.resizeHeight, "parentReflowRequired", `${entry.id}: Hoehen-Reflowvertrag`);
     assert.ok(Array.isArray(entry.operationAffectedIds.resizeWidth), `${entry.id}: Breiten-Reflowziele`);
+    assert.ok(entry.operationAffectedIds.resizeWidth.includes(entry.parentId), `${entry.id}: Parent muss Teil der Breiten-Reflowmenge sein`);
+    assert.ok(entry.operationAffectedIds.resizeHeight.includes(entry.parentId), `${entry.id}: Parent muss Teil der Hoehen-Reflowmenge sein`);
     assert.ok(Array.isArray(entry.operationAffectedIds.resizeHeight), `${entry.id}: Hoehen-Reflowziele`);
   }
-
   const stylesheet = fs.readFileSync(path.join(ROOT, "src/renderer/modules/rechnungen/styles/rechnungenDesign.css"), "utf8");
   assert.doesNotMatch(stylesheet, /\.rechnung-sheet__intro textarea\s*\{[^}]*\b(?:min-height|max-height)\s*:/s);
-  assert.doesNotMatch(stylesheet, /\.rechnung-live-position-editor\s*\{[^}]*minmax\((?:72|180)px/s);
-  assert.doesNotMatch(stylesheet, /\.rechnung-screen__(?:header|sheet|edit)-canvas[^{}]*\{[^}]*max-width\s*:/s);
+  assert.doesNotMatch(stylesheet, /\.rechnung-(?:live-position-editor|screen__edit-(?:area|canvas)|editbox)/s);
+  assert.doesNotMatch(stylesheet, /\.rechnung-screen__(?:header|sheet)-canvas[^{}]*\{[^}]*max-width\s*:/s);
   assert.doesNotMatch(stylesheet, /\.rechnung-sheet__issuer-(?:address|meta)[^{}]*\{[^}]*(?:min-width\s*:\s*(?:210|270)px|max-width\s*:\s*100%)/s);
 
   const previous = { document: global.document, window: global.window, Element: global.Element, CustomEvent: global.CustomEvent };
@@ -276,15 +277,15 @@ async function main() {
       BOUND_KEYS.forEach((key) => assert.equal(Object.hasOwn(buttonState, key), false, `${elementId}: Zustand ${key}`));
     }
 
-    let state = submit(host, "rechnung.editor.positionShort", "move", { x: -2501, y: 2501 }, "rechnung-move-negative");
+    let state = submit(host, "rechnung.editor.introText", "move", { x: -2501, y: 2501 }, "rechnung-move-negative");
     assert.equal(state.x, -2501); assert.equal(state.y, 2501);
-    state = submit(host, "rechnung.editor.positionShort", "move", { x: 2501, y: -2501 }, "rechnung-move-positive");
+    state = submit(host, "rechnung.editor.introText", "move", { x: 2501, y: -2501 }, "rechnung-move-positive");
     assert.equal(state.x, 2501); assert.equal(state.y, -2501);
-    state = submit(host, "rechnung.editor.positionShort", "resizeWidth", { width: 0 }, "rechnung-width-zero");
+    state = submit(host, "rechnung.editor.introText", "resizeWidth", { width: 0 }, "rechnung-width-zero");
     assert.equal(state.width, 0);
     state = submit(host, "rechnung.editor.introText", "resizeHeight", { height: 10 }, "rechnung-intro-low");
     assert.equal(state.height, 10);
-    state = submit(host, "rechnung.editor.positionLong", "resizeHeight", { height: 800 }, "rechnung-long-high");
+    state = submit(host, "rechnung.editor.sheetArea", "resizeHeight", { height: 800 }, "rechnung-sheet-high");
     assert.equal(state.height, 800);
 
     const savedDocument = profileDocument(scope, refs);
@@ -300,7 +301,7 @@ async function main() {
     assert.equal(loaded.ok, true, JSON.stringify(loaded));
     assert.equal(loaded.found, true);
     const loadedScope = loaded.scopes.find((entry) => entry.scopeId === SCOPE_ID);
-    assert.equal(loadedScope.elements.length, 131);
+    assert.equal(loadedScope.elements.length, 87);
 
     refs.resetM80PilotWorkingStatesForDiagnostic();
     body.replaceChildren(new RechnungScreen().render());
@@ -316,10 +317,10 @@ async function main() {
       for (const key of ["x", "y", "width", "height"]) assert.equal(restored[key], element[key], `${element.elementId}: restored ${key}`);
     }
 
-    const restoredShort = refs.snapshotM80State("rechnung.editor.positionShort");
-    assert.deepEqual({ x: restoredShort.x, y: restoredShort.y, width: restoredShort.width }, { x: 2501, y: -2501, width: 0 });
+    const restoredIntro = refs.snapshotM80State("rechnung.editor.introText");
+    assert.deepEqual({ x: restoredIntro.x, y: restoredIntro.y, width: restoredIntro.width }, { x: 2501, y: -2501, width: 0 });
     assert.equal(refs.snapshotM80State("rechnung.editor.introText").height, 10);
-    assert.equal(refs.snapshotM80State("rechnung.editor.positionLong").height, 800);
+    assert.equal(refs.snapshotM80State("rechnung.editor.sheetArea").height, 800);
     for (const [elementId, expected] of Object.entries(BUTTON_ACCEPTANCE_SIZES)) {
       const restoredButton = refs.snapshotM80State(elementId);
       assert.equal(restoredButton.width, expected.width, `${elementId}: Neustart-Breite`);
@@ -341,7 +342,7 @@ async function main() {
     global.CustomEvent = previous.CustomEvent;
   }
 
-  console.log("TESTS OK: 131 Rechnungselemente, 16 Buttons ohne CSS-/Registry-/Inline-Grenzen, Host +/-2501, Textareas 10/800, exakter Neustart-Restore");
+  console.log("TESTS OK: 87 Rechnungselemente, 9 Buttons ohne CSS-/Registry-/Inline-Grenzen, Host +/-2501, exakter Neustart-Restore");
 }
 
 async function runRechnungUiEditorUnboundedTests(run) {

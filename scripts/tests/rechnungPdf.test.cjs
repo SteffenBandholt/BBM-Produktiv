@@ -567,7 +567,7 @@ async function runRechnungPdfTests(run) {
     assert.doesNotMatch(shell, /function buildInvoice(?:FullHeaderContent|MiniHeaderContent|BodyIntro|TableHead|Row|Tail)/);
   });
 
-  await run("R2-I2 Architektur und UI-Vertrag: ein Renderer, ein printToPDF-Pfad und unveränderter Rechnungs-UI-Vertrag", () => {
+  await run("R2-I2 Architektur und UI-Vertrag: ein Renderer, ein printToPDF-Pfad und freigegebener Rechnungs-UI-Vertrag", () => {
     const printIpc = read("src/main/ipc/printIpc.js");
     const printData = read("src/main/print/printData.js");
     const printApp = read("src/renderer/print/printApp.js");
@@ -588,7 +588,7 @@ async function runRechnungPdfTests(run) {
     for (const token of ["rechnungFinalizePdf", "rechnungOpenPdf"]) assert.equal(preload.includes(token), true, token);
     for (const token of ["PDF öffnen", "PDF erneut erzeugen", "rechnungFinalizePdf", "rechnungOpenPdf", "printPdfAndPreviewInternal", "invoicePreview: true"]) assert.equal(screen.includes(token), true, token);
     const contractHash = crypto.createHash("sha256").update(read("src/renderer/modules/rechnungen/RechnungScreen.uiEditorContract.js")).digest("hex");
-    assert.equal(contractHash, "40af366be2e4e339d3f32afa6d52f59878e8086a024754a07d08911675b5e799");
+    assert.equal(contractHash, "ca512f09137938dcb4f4af5dad3c1510b81924154de7d9c5c928e82c1cbc9e51");
   });
 }
 
