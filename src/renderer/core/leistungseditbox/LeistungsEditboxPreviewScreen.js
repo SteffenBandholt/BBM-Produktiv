@@ -57,8 +57,8 @@ export class LeistungsEditboxPreviewScreen {
     const toolbar = doc.createElement("div");
     toolbar.style.cssText = "display:flex;align-items:center;gap:12px;min-height:36px;padding:0 2px;";
     toolbar.append(
-      createText(doc, "strong", "LeistungsEditbox · Baustein J"),
-      createText(doc, "span", "Hinweis/Text ohne Mengen- und Preiszeile")
+      createText(doc, "strong", "LeistungsEditbox · Baustein K"),
+      createText(doc, "span", "Positionsbetrag live aus Menge × Einzelpreis")
     );
 
     const editorButtonHost = doc.createElement("div");
@@ -79,7 +79,7 @@ export class LeistungsEditboxPreviewScreen {
     frameRoot.style.position = "absolute";
     frameRoot.style.left = "36px";
     frameRoot.style.top = "42px";
-    frameRoot.style.width = "940px";
+    frameRoot.style.width = "1040px";
     frameRoot.style.height = "430px";
     frameRoot.style.margin = "0";
     frameRoot.style.border = "2px solid #4d6480";
@@ -101,18 +101,18 @@ export class LeistungsEditboxPreviewScreen {
       documentRef: doc,
       showGross: true,
       showNep: true,
+      showPositionAmount: true,
       values: {
         basePositionNumber: "21",
-        alternativeSuffix: "a",
-        shortText: "Hinweis zur Ausführung",
-        longText: "Diese Position dient nur als Hinweis. Menge, Einheit, Einzelpreis, Brutto und NEP sind deshalb in dieser Ansicht ausgeblendet.",
-        type: "hint",
+        shortText: "Untergrund vorbereiten",
+        longText: "Flächen reinigen, lose Bestandteile entfernen und für die weitere Bearbeitung vorbereiten.",
+        type: "standard",
         quantity: "12,00",
         quantityDecimalPlaces: 2,
         unit: "m²",
         unitPrice: "18,50",
         gross: false,
-        nep: true,
+        nep: false,
       },
     });
     adapter.getElement().style.cssText += "height:100%;padding:12px;";
