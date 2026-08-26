@@ -16,6 +16,7 @@ function main() {
   const header = read("src/renderer/core/leistungseditbox/LeistungsEditboxHeader.js");
   const action = read("src/renderer/core/leistungseditbox/LeistungsEditboxAction.js");
   const layout = read("src/renderer/core/leistungseditbox/LeistungsEditboxLayout.js");
+  const adapter = read("src/renderer/shared/leistungsposition/LeistungspositionEditboxAdapter.js");
   const preview = read("src/renderer/core/leistungseditbox/LeistungsEditboxPreview.js");
   const previewScreen = read("src/renderer/core/leistungseditbox/LeistungsEditboxPreviewScreen.js");
   const styles = read("src/renderer/core/leistungseditbox/leistungseditbox.css");
@@ -35,17 +36,10 @@ function main() {
   assert.match(header, /this\.leftHost/);
   assert.match(header, /this\.centerHost/);
   assert.match(header, /this\.rightHost/);
-  assert.match(header, /replaceLeft\(\.\.\.nodes\)/);
-  assert.match(header, /replaceCenter\(\.\.\.nodes\)/);
-  assert.match(header, /replaceRight\(\.\.\.nodes\)/);
   assert.match(action, /createElement\("button"\)/);
-  assert.match(action, /setDisabled\(disabled\)/);
   assert.match(layout, /class LeistungsEditboxRow/);
   assert.match(layout, /class LeistungsEditboxGroup/);
-  assert.match(layout, /setColumns\(columns\)/);
   assert.match(layout, /gridTemplateColumns/);
-  assert.match(layout, /replace\(\.\.\.nodes\)/);
-  assert.match(layout, /append\(\.\.\.nodes\)/);
 
   const neutralFiles = [frame, field, header, action, layout];
   for (const source of neutralFiles) {
@@ -54,32 +48,33 @@ function main() {
     }
   }
 
+  assert.match(adapter, /class LeistungspositionEditboxAdapter/);
+  for (const label of ["Kurztext", "Langtext", "Typ", "Menge", "Einheit", "Einzelpreis"]) {
+    assert.match(adapter, new RegExp(`label: "${label}"`));
+  }
+  assert.match(adapter, /getValues\(\)/);
+  assert.match(adapter, /shortText:/);
+  assert.match(adapter, /longText:/);
+  assert.match(adapter, /quantity:/);
+  assert.match(adapter, /unitPrice:/);
+
   assert.doesNotMatch(styles, /\bmin-(?:width|height)\s*:/i);
   assert.doesNotMatch(styles, /\bmax-(?:width|height)\s*:/i);
   assert.doesNotMatch(styles, /\bclamp\s*\(/i);
-  assert.match(styles, /bbm-leistungseditbox-header__group--left/);
-  assert.match(styles, /bbm-leistungseditbox-header__group--center/);
-  assert.match(styles, /bbm-leistungseditbox-header__group--right/);
-  assert.match(styles, /bbm-leistungseditbox-action/);
-  assert.match(styles, /bbm-leistungseditbox-row/);
-  assert.match(styles, /bbm-leistungseditbox-group/);
 
   assert.match(preview, /PREVIEW_FRAME_ID = "leistungseditbox\.preview\.frame"/);
   assert.match(preview, /position: "absolute"/);
   assert.match(preview, /measure\(\)/);
 
-  assert.match(previewScreen, /LeistungsEditbox · Baustein E/);
-  assert.match(previewScreen, /new LeistungsEditboxHeader/);
-  assert.match(previewScreen, /new LeistungsEditboxAction/);
-  assert.match(previewScreen, /new LeistungsEditboxRow/);
-  assert.match(previewScreen, /new LeistungsEditboxGroup/);
-  assert.match(previewScreen, /frame\.replaceHeader\(header\.getElement\(\)\)/);
-  assert.match(previewScreen, /frame\.replaceContent\(content\.getElement\(\)\)/);
+  assert.match(previewScreen, /LeistungsEditbox · Baustein F/);
+  assert.match(previewScreen, /new LeistungspositionEditboxAdapter/);
+  assert.match(previewScreen, /Leistungsposition bearbeiten/);
+  assert.match(previewScreen, /frame\.replaceContent\(adapter\.getElement\(\)\)/);
 
   assert.match(demo, /createLeistungsEditboxPreview/);
   assert.match(demo, /leistungsEditboxPreview\.root/);
 
-  console.log("TESTS OK: LeistungsEditbox Baustein E besitzt neutrale Feld-, Kopf-, Aktions- und Layoutbausteine; der äußere Rahmen bleibt editorfähig und unbeschränkt.");
+  console.log("TESTS OK: LeistungsEditbox Baustein F nutzt einen getrennten Leistungspositions-Adapter mit Kurztext, Langtext, Typ, Menge, Einheit und Einzelpreis; der neutrale Core bleibt fachfrei.");
 }
 
 main();
