@@ -44,6 +44,17 @@ function formatLocalizedNumber(value, decimalPlaces) {
   }).format(numeric);
 }
 
+function formatPositionAmount(quantity, unitPrice) {
+  const quantityValue = parseLocalizedNumber(quantity);
+  const unitPriceValue = parseLocalizedNumber(unitPrice);
+  if (quantityValue === null || unitPriceValue === null) return "";
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+  }).format(quantityValue * unitPriceValue);
+}
+
 export class LeistungspositionEditboxAdapter {
   constructor({
     documentRef,
@@ -51,6 +62,7 @@ export class LeistungspositionEditboxAdapter {
     typeOptions = DEFAULT_TYPE_OPTIONS,
     showGross = false,
     showNep = false,
+    showPositionAmount = false,
   } = {}) {
     const doc = documentRef || globalThis.document;
     if (!doc?.createElement) throw new Error("LeistungspositionEditboxAdapter benötigt ein Document.");
@@ -113,6 +125,15 @@ export class LeistungspositionEditboxAdapter {
     fields.positionNumber.getControl().readOnly = true;
     fields.alternativeReference.getControl().readOnly = true;
 
+    if (showPositionAmount) {
+      fields.positionAmount = new LeistungsEditboxField({
+        documentRef: doc,
+        label: "Positionsbetrag",
+        kind: "singleline",
+        value: "",
+      });
+      fields.positionAmount.getControl().readOnly = true;
+    }
     if (showGross) {
       fields.gross = new LeistungsEditboxField({
         documentRef: doc,
@@ -137,14 +158,23 @@ export class LeistungspositionEditboxAdapter {
       minPlaces: 0,
       maxPlaces: 4,
       ariaLabel: "Nachkommastellen der Menge",
-      onChange: () => this.formatQuantity(),
+      onChange: () => {
+        this.formatQuantity();
+        this.updatePositionAmount();
+      },
     });
     this.fields.quantity.labelElement.style.display = "flex";
     this.fields.quantity.labelElement.style.alignItems = "center";
     this.fields.quantity.labelElement.style.justifyContent = "space-between";
     this.fields.quantity.labelElement.style.gap = "8px";
     this.fields.quantity.labelElement.appendChild(this.quantityDecimalControl.getElement());
-    this.fields.quantity.getControl().addEventListener("blur", () => this.formatQuantity());
+    this.fields.quantity.getControl().addEventListener("blur", () => {
+      this.formatQuantity();
+      this.updatePositionAmount();
+    });
+    this.fields.quantity.getControl().addEventListener("input", () => this.updatePositionAmount());
+    this.fields.unitPrice.getControl().addEventListener("input", () => this.updatePositionAmount());
+    this.fields.unitPrice.getControl().addEventListener("blur", () => this.updatePositionAmount());
     this.formatQuantity();
 
     this.numberRow = new LeistungsEditboxRow({
@@ -166,6 +196,7 @@ export class LeistungspositionEditboxAdapter {
       this.fields.quantity.getElement(),
       this.fields.unit.getElement(),
       this.fields.unitPrice.getElement(),
+      ...(this.fields.positionAmount ? [this.fields.positionAmount.getElement()] : []),
       ...(this.fields.gross ? [this.fields.gross.getElement()] : []),
       ...(this.fields.nep ? [this.fields.nep.getElement()] : []),
     ];
@@ -173,6 +204,7 @@ export class LeistungspositionEditboxAdapter {
       "minmax(0, 1fr)",
       "minmax(110px, .45fr)",
       "minmax(140px, .65fr)",
+      ...(this.fields.positionAmount ? ["minmax(140px, .65fr)"] : []),
       ...(this.fields.gross ? ["auto"] : []),
       ...(this.fields.nep ? ["auto"] : []),
     ];
@@ -200,6 +232,7 @@ export class LeistungspositionEditboxAdapter {
 
     this.fields.type.getControl().addEventListener("change", () => this.updateTypePresentation());
     this.updateTypePresentation();
+    this.updatePositionAmount();
   }
 
   formatQuantity() {
@@ -207,6 +240,13 @@ export class LeistungspositionEditboxAdapter {
     if (String(current ?? "").trim() === "") return;
     this.fields.quantity.setValue(
       formatLocalizedNumber(current, this.quantityDecimalControl.getValue())
+    );
+  }
+
+  updatePositionAmount() {
+    if (!this.fields.positionAmount) return;
+    this.fields.positionAmount.setValue(
+      formatPositionAmount(this.fields.quantity.getValue(), this.fields.unitPrice.getValue())
     );
   }
 
@@ -254,6 +294,7 @@ export class LeistungspositionEditboxAdapter {
       quantityDecimalPlaces: this.quantityDecimalControl.getValue(),
       unit: this.fields.unit.getValue(),
       unitPrice: this.fields.unitPrice.getValue(),
+      ...(this.fields.positionAmount ? { positionAmount: this.fields.positionAmount.getValue() } : {}),
       ...(this.fields.gross ? { gross: this.fields.gross.getValue() } : {}),
       ...(this.fields.nep ? { nep: this.fields.nep.getValue() } : {}),
     });
@@ -264,4 +305,5 @@ export {
   DEFAULT_TYPE_OPTIONS as LEISTUNGSPOSITION_DEFAULT_TYPE_OPTIONS,
   alternativeDisplayNumber as leistungspositionAlternativeDisplayNumber,
   formatLocalizedNumber as leistungspositionFormatLocalizedNumber,
+  formatPositionAmount as leistungspositionFormatPositionAmount,
 };
