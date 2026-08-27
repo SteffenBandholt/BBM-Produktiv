@@ -7,7 +7,7 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 29,
+  "registryVersion": 32,
   "registryFingerprint": "sha256:5a822b8fb220aa7c09155d0739e059a0465f7c2f47e655ec7412ffb4e2b0244d",
   "registryStatus": "incomplete",
   "activeScopes": [
@@ -18,7 +18,8 @@
     "protokoll.list.root",
     "protokoll.edit.root",
     "rechnung.screen",
-    "leistungseditbox.preview"
+    "leistungseditbox.preview",
+    "bbm.remaining"
   ],
   "uiCapability": "layout",
   "pdfCapability": "available",
@@ -69,5 +70,5 @@
     ]
   },
   "installedAt": "2026-07-27T00:00:00+00:00",
-  "updatedAt": "2026-08-26T00:00:00+00:00"
+  "updatedAt": "2026-08-27T00:00:00+00:00"
 }
