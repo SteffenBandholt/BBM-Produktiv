@@ -4,7 +4,8 @@ import { LeistungspositionEditboxAdapter } from "../../shared/leistungsposition/
 import { LeistungspositionEditboxHeaderAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxHeaderAdapter.js";
 
 const STYLE_MARKER = "rechnung-leistungseditbox-binding-styles";
-const GEOMETRY_STORAGE_KEY = "bbm.rechnung.leistungsEditbox.geometry.v1";
+const GEOMETRY_STORAGE_KEY = "bbm.rechnung.leistungsEditbox.geometry.v2";
+const LEGACY_GEOMETRY_STORAGE_KEY = "bbm.rechnung.leistungsEditbox.geometry.v1";
 let STYLE_HREF = "./styles/rechnungLeistungsEditbox.css";
 
 try {
@@ -27,18 +28,27 @@ function finiteNumber(value) {
   return Number.isFinite(number) ? number : null;
 }
 
+function parseStoredGeometry(raw, { keepHeight = true } = {}) {
+  if (!raw) return null;
+  const value = JSON.parse(raw);
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return {
+    x: finiteNumber(value.x),
+    y: finiteNumber(value.y),
+    width: finiteNumber(value.width),
+    height: keepHeight ? finiteNumber(value.height) : null,
+  };
+}
+
 function readStoredGeometry(doc) {
   try {
-    const raw = doc?.defaultView?.localStorage?.getItem(GEOMETRY_STORAGE_KEY);
-    if (!raw) return null;
-    const value = JSON.parse(raw);
-    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-    return {
-      x: finiteNumber(value.x),
-      y: finiteNumber(value.y),
-      width: finiteNumber(value.width),
-      height: finiteNumber(value.height),
-    };
+    const storage = doc?.defaultView?.localStorage;
+    if (!storage) return null;
+    const current = parseStoredGeometry(storage.getItem(GEOMETRY_STORAGE_KEY));
+    if (current) return current;
+    // Beim Wechsel auf das kompakte Layout bleiben X/Y/Breite erhalten,
+    // die alte große Höhe wird einmalig verworfen.
+    return parseStoredGeometry(storage.getItem(LEGACY_GEOMETRY_STORAGE_KEY), { keepHeight: false });
   } catch (_error) {
     return null;
   }
