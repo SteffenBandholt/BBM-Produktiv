@@ -62,6 +62,7 @@ class RechnungEditorScreen extends RechnungScreen {
     const frameElement = this.leistungsEditboxBinding.getFrameElement();
     bindRuntimeEditorElement(frameElement, "rechnung.editor.leistungsEditbox");
     this.editor.append(this.leistungsEditboxBinding.getElement());
+    this.leistungsEditboxBinding.registerUiEditorRefs();
 
     const header = this.editor.querySelector?.(".rechnung-live-editor__header");
     if (header) {
