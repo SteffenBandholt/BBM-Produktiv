@@ -23,3 +23,9 @@
   height: 100%;
   padding: 12px;
 }
+
+.rechnung-lv-position.is-move-target {
+  outline: 2px solid #2f8f46;
+  outline-offset: -2px;
+  background: rgba(47, 143, 70, .06);
+}
