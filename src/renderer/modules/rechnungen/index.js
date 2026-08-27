@@ -121,6 +121,103 @@ class RechnungEditorScreen extends RechnungScreen {
     });
   }
 
+  _rootTitles() {
+    return this.positions.filter((entry) => entry.is_title === true && !entry.parent_id);
+  }
+
+  _freeRootEntries() {
+    return this.positions.filter((entry) => !entry.parent_id && entry.is_title !== true);
+  }
+
+  _adoptFreeRootEntriesIntoTitle(titleId) {
+    if (!titleId) return false;
+    const freeIds = new Set(this._freeRootEntries().map((entry) => entry.id));
+    if (!freeIds.size) return false;
+    this.positions = this.positions.map((entry) => freeIds.has(entry.id) ? { ...entry, parent_id: titleId } : entry);
+    return true;
+  }
+
+  _repairMixedTitleStructure() {
+    const firstTitle = this._rootTitles()[0] || null;
+    const freeRootEntries = this._freeRootEntries();
+    if (!firstTitle || !freeRootEntries.length) return false;
+
+    const freeIds = new Set(freeRootEntries.map((entry) => entry.id));
+    const earliestFreeIndex = this.positions.findIndex((entry) => freeIds.has(entry.id));
+    const withoutTitle = this.positions.filter((entry) => entry.id !== firstTitle.id);
+    const insertIndex = Math.max(0, earliestFreeIndex);
+    withoutTitle.splice(insertIndex, 0, firstTitle);
+    this.positions = withoutTitle.map((entry) => freeIds.has(entry.id) ? { ...entry, parent_id: firstTitle.id } : entry);
+    this._normalizePositions();
+    return true;
+  }
+
+  _open(invoice) {
+    super._open(invoice);
+    if (!this._repairMixedTitleStructure()) return;
+    this._clearPositionSelection();
+    this._renderPositions();
+    this._syncDerived();
+    if (this.current?.status === "DRAFT") void this._queueDraftSave();
+  }
+
+  _createTitle() {
+    if (!this._isFreeDraft()) return this._error("Titel sind nur in freien Entwürfen verfügbar.");
+
+    const existingTitles = this._rootTitles();
+    if (existingTitles.length) return super._createTitle();
+
+    const freeRootEntries = this._freeRootEntries();
+    if (!freeRootEntries.length) return super._createTitle();
+
+    const id = this._nextPositionId();
+    const title = {
+      id,
+      type: POSITION_TYPES.HEADING,
+      is_title: true,
+      parent_id: null,
+      short_text: "(ohne Bezeichnung)",
+      long_text: "",
+      quantity: null,
+      unit: null,
+      unit_price_cents: null,
+      total_cents: null,
+      is_nep: false,
+      vat_rate_percent: null,
+      price_input_mode: null,
+      price_input_cents: null,
+      alternative_of: null,
+      alternative_suffix: null,
+    };
+
+    const freeIds = new Set(freeRootEntries.map((entry) => entry.id));
+    const firstFreeIndex = this.positions.findIndex((entry) => freeIds.has(entry.id));
+    const next = this.positions.map((entry) => freeIds.has(entry.id) ? { ...entry, parent_id: id } : entry);
+    next.splice(firstFreeIndex < 0 ? 0 : firstFreeIndex, 0, title);
+    this.positions = next;
+    this._normalizePositions();
+    const created = this.positions.find((entry) => entry.id === id) || null;
+    this._selectPosition(created, { setCreateContext: false });
+    this._renderPositions();
+    this._syncDerived();
+    void this._queueDraftSave();
+  }
+
+  _createPosition() {
+    if (!this._isFreeDraft()) return this._error("Positionen sind nur in freien Entwürfen verfügbar.");
+    const titles = this._rootTitles();
+    if (!titles.length) return super._createPosition();
+
+    const selected = this._getSelectedPosition();
+    const parentId = selected?.is_title && !selected.parent_id
+      ? selected.id
+      : selected?.parent_id || null;
+    if (!parentId) {
+      return this._error("Bei einer Rechnung mit Titeln muss die neue Position einem Titel zugeordnet sein.");
+    }
+    this._createPositionEntry({ type: POSITION_TYPES.SERVICE, is_title: false, parent_id: parentId });
+  }
+
   _nextAlternativeSuffix(motherId) {
     const used = new Set(
       this.positions
@@ -228,13 +325,10 @@ class RechnungEditorScreen extends RechnungScreen {
       ? Number(values.quantityDecimalPlaces)
       : this.quantityDecimalPlaces;
 
-    // Während der Eingabe darf der Kurztext vorübergehend leer sein. Die
-    // fachliche Normalisierung läuft wieder, sobald ein speicherbarer Kurztext da ist.
     if (shortText.trim()) {
       try {
         this._normalizePositions();
       } catch (_error) {
-        // Der aktuelle Eingabestand bleibt in der Editbox; kein stilles Verwerfen.
       }
     }
 
@@ -324,6 +418,10 @@ class RechnungEditorScreen extends RechnungScreen {
   }
 
   _moveSelectedPositionToRoot() {
+    if (this._rootTitles().length) {
+      return this._error("Bei einer Rechnung mit Titeln können Positionen nicht als freie Positionen abgelegt werden.");
+    }
+
     const moving = this._getSelectedPosition();
     if (!moving || moving.alternative_of) return;
 
@@ -387,7 +485,7 @@ export function getRechnungModuleEntry() {
 export async function isRechnungenDesignAvailable({ api = globalThis.window?.bbmDb } = {}) {
   if (typeof api?.appGetBuildChannel !== "function") return false;
   try {
-    const result = await api.appGetBuildChannel();
+    const result = await api.appGetBuildChannel?.();
     return result?.ok === true && String(result?.channel || "").trim().toUpperCase() === "DEV";
   } catch (_error) {
     return false;
