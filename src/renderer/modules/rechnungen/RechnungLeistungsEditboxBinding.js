@@ -41,6 +41,7 @@ function bindEditorRef(element, id) {
 function registerField(adapter, name, id) {
   const field = adapter.getField(name);
   if (!field) return;
+  bindEditorRef(field.getElement?.(), `${id}.wrapper`);
   bindEditorRef(field.getControl?.(), id);
   bindEditorRef(field.labelElement, `${id}.label`);
 }
@@ -85,9 +86,7 @@ function applyStoredGeometry(frameElement, geometry) {
   frameElement.dataset.uiEditorX = String(x);
   frameElement.dataset.uiEditorY = String(y);
   frameElement.style.translate = `${x}px ${y}px`;
-  if (geometry?.width !== null && geometry?.width !== undefined && geometry.width >= 0) {
-    frameElement.style.width = `${geometry.width}px`;
-  }
+  if (geometry?.width !== null && geometry?.width !== undefined && geometry.width >= 0) frameElement.style.width = `${geometry.width}px`;
   frameElement.style.height = `${geometry?.height ?? DEFAULT_COMPACT_HEIGHT}px`;
 }
 
@@ -124,10 +123,7 @@ function observeGeometry(doc, frameElement) {
   const Observer = doc?.defaultView?.MutationObserver || globalThis.MutationObserver;
   if (typeof Observer !== "function" || !frameElement) return null;
   const observer = new Observer(() => storeGeometry(doc, frameElement));
-  observer.observe(frameElement, {
-    attributes: true,
-    attributeFilter: ["style", "data-ui-editor-x", "data-ui-editor-y"],
-  });
+  observer.observe(frameElement, { attributes: true, attributeFilter: ["style", "data-ui-editor-x", "data-ui-editor-y"] });
   return observer;
 }
 
@@ -171,11 +167,7 @@ function applyCompactDefaults(adapter, header) {
 
 function centsToInput(cents) {
   const numeric = Number(cents ?? 0);
-  return new Intl.NumberFormat("de-DE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-    useGrouping: true,
-  }).format(Number.isFinite(numeric) ? numeric / 100 : 0);
+  return new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true }).format(Number.isFinite(numeric) ? numeric / 100 : 0);
 }
 
 function editboxTypeForPosition(position) {
@@ -185,21 +177,14 @@ function editboxTypeForPosition(position) {
   return "standard";
 }
 
-export function rechnungPositionToLeistungsEditboxValues(position = {}, {
-  quantityDecimalPlaces = 2,
-  alternativeBasePositionNumber = "",
-} = {}) {
+export function rechnungPositionToLeistungsEditboxValues(position = {}, { quantityDecimalPlaces = 2, alternativeBasePositionNumber = "" } = {}) {
   const isService = position?.type === POSITION_TYPES.SERVICE;
   const isAlternative = isService && !!position?.alternative_of;
   const isGross = isService && position?.price_input_mode === PRICE_INPUT_MODES.GROSS;
-  const inputPriceCents = isGross
-    ? position?.price_input_cents ?? position?.unit_price_cents
-    : position?.unit_price_cents;
+  const inputPriceCents = isGross ? position?.price_input_cents ?? position?.unit_price_cents : position?.unit_price_cents;
 
   return Object.freeze({
-    basePositionNumber: isAlternative
-      ? alternativeBasePositionNumber || String(position?.position_number || "").replace(/[a-z]$/i, "")
-      : position?.position_number || "",
+    basePositionNumber: isAlternative ? alternativeBasePositionNumber || String(position?.position_number || "").replace(/[a-z]$/i, "") : position?.position_number || "",
     alternativeSuffix: isAlternative ? position?.alternative_suffix || "a" : "a",
     shortText: position?.short_text || "",
     longText: position?.long_text || "",
@@ -214,14 +199,7 @@ export function rechnungPositionToLeistungsEditboxValues(position = {}, {
 }
 
 export class RechnungLeistungsEditboxBinding {
-  constructor({
-    documentRef = globalThis.document,
-    onAddTitle = null,
-    onAddPosition = null,
-    onMove = null,
-    onDelete = null,
-    onChange = null,
-  } = {}) {
+  constructor({ documentRef = globalThis.document, onAddTitle = null, onAddPosition = null, onMove = null, onDelete = null, onChange = null } = {}) {
     const doc = documentRef;
     if (!doc?.createElement) throw new Error("RechnungLeistungsEditboxBinding benötigt ein Document.");
     ensureStyles(doc);
@@ -234,32 +212,14 @@ export class RechnungLeistungsEditboxBinding {
     this.host.className = "rechnung-leistungseditbox-host";
     this.host.hidden = true;
 
-    this.frame = new LeistungsEditboxFrame({
-      documentRef: doc,
-      id: "rechnung.leistungseditbox.frame",
-      label: "LeistungsEditbox Rechnung",
-    });
+    this.frame = new LeistungsEditboxFrame({ documentRef: doc, id: "rechnung.leistungseditbox.frame", label: "LeistungsEditbox Rechnung" });
     const frameElement = this.frame.getElement();
-    for (const attribute of [
-      "data-ui-inspector-id",
-      "data-ui-editor-kind",
-      "data-ui-editor-label",
-      "data-ui-editor-parent",
-      "data-ui-editor-editable",
-      "data-ui-editor-ops",
-    ]) frameElement.removeAttribute(attribute);
+    for (const attribute of ["data-ui-inspector-id", "data-ui-editor-kind", "data-ui-editor-label", "data-ui-editor-parent", "data-ui-editor-editable", "data-ui-editor-ops"]) frameElement.removeAttribute(attribute);
 
     applyStoredGeometry(frameElement, readStoredGeometry(doc));
     this.geometryObserver = observeGeometry(doc, frameElement);
 
-    this.header = new LeistungspositionEditboxHeaderAdapter({
-      documentRef: doc,
-      title: "Leistungsposition bearbeiten",
-      onAddTitle,
-      onAddPosition,
-      onMove,
-      onDelete,
-    });
+    this.header = new LeistungspositionEditboxHeaderAdapter({ documentRef: doc, title: "Leistungsposition bearbeiten", onAddTitle, onAddPosition, onMove, onDelete });
     this.adapter = new LeistungspositionEditboxAdapter({
       documentRef: doc,
       compact: true,
@@ -284,16 +244,27 @@ export class RechnungLeistungsEditboxBinding {
   registerUiEditorRefs() {
     if (this.uiEditorRefsRegistered || !this.host.isConnected) return false;
 
+    bindEditorRef(this.frame.getHeaderHost(), "rechnung.editor.leistungsEditbox.frameHeader");
+    bindEditorRef(this.frame.getContentHost(), "rechnung.editor.leistungsEditbox.frameContent");
+
     bindEditorRef(this.header.getElement(), "rechnung.editor.leistungsEditbox.header");
     bindEditorRef(this.header.header?.getTitleHost?.(), "rechnung.editor.leistungsEditbox.header.title");
+    bindEditorRef(this.header.header?.actionsHost, "rechnung.editor.leistungsEditbox.header.actions");
+    bindEditorRef(this.header.header?.getLeftHost?.(), "rechnung.editor.leistungsEditbox.header.actions.left");
+    bindEditorRef(this.header.header?.getCenterHost?.(), "rechnung.editor.leistungsEditbox.header.actions.center");
+    bindEditorRef(this.header.header?.getRightHost?.(), "rechnung.editor.leistungsEditbox.header.actions.right");
     bindEditorRef(this.header.getAction("addTitle")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.addTitle");
     bindEditorRef(this.header.getAction("addPosition")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.addPosition");
     bindEditorRef(this.header.getAction("move")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.move");
     bindEditorRef(this.header.getAction("delete")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.delete");
 
+    bindEditorRef(this.adapter.getElement(), "rechnung.editor.leistungsEditbox.content");
     bindEditorRef(this.adapter.numberRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.meta");
     bindEditorRef(this.adapter.shortDetailRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.shortPrice");
+    bindEditorRef(this.adapter.primaryRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.short");
+    bindEditorRef(this.adapter.detailRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.prices");
     bindEditorRef(this.adapter.longModuleRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.longModule");
+    bindEditorRef(this.adapter.textRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.long");
 
     registerField(this.adapter, "positionNumber", "rechnung.editor.leistungsEditbox.positionNumber");
     registerField(this.adapter, "type", "rechnung.editor.leistungsEditbox.type");
@@ -322,13 +293,8 @@ export class RechnungLeistungsEditboxBinding {
     return true;
   }
 
-  getElement() {
-    return this.host;
-  }
-
-  getFrameElement() {
-    return this.frame.getElement();
-  }
+  getElement() { return this.host; }
+  getFrameElement() { return this.frame.getElement(); }
 
   showPosition(position, options = {}) {
     this.registerUiEditorRefs();
