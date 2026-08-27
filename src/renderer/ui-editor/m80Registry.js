@@ -6,6 +6,7 @@ import { protokollQuicklaneUiEditorContract, protokollScreenUiEditorContract } f
 import { protokollListColumnsUiEditorContract, protokollListUiEditorContract } from "../modules/protokoll/TopsList.uiEditorContract.js";
 import { protokollEditUiEditorContract } from "../modules/protokoll/TopsWorkbench.uiEditorContract.js";
 import { rechnungUiEditorContract } from "../modules/rechnungen/RechnungScreen.uiEditorContract.js";
+import { rechnungLeistungsEditboxUiEditorContract } from "../modules/rechnungen/RechnungLeistungsEditbox.uiEditorContract.js";
 import { leistungsEditboxPreviewUiEditorContract } from "../core/leistungseditbox/LeistungsEditboxPreview.uiEditorContract.js";
 import {
   protokollMainHeaderLauncherUiEditorContract,
@@ -13,7 +14,7 @@ import {
 } from "../ui/MainHeader.uiEditorContract.js";
 import { aggregateBbmM83Components } from "./m83ComponentContract.js";
 
-export const BBM_M80_REGISTRY_VERSION = 29;
+export const BBM_M80_REGISTRY_VERSION = 31;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
@@ -29,6 +30,7 @@ export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
   protokollListColumnsUiEditorContract,
   protokollEditUiEditorContract,
   rechnungUiEditorContract,
+  rechnungLeistungsEditboxUiEditorContract,
   leistungsEditboxPreviewUiEditorContract,
 ]);
 
