@@ -9,7 +9,7 @@ const label = (id, name, parentId, order, role = "content", componentKind = "lab
 const field = (id, name, parentId, order, fieldKind) => invoiceElement({ id, name, type: "field", role: "content", parentId, order, allowedOps: FIELD_LAYOUT, fieldKind });
 const buttonReflowIdsByParent = Object.freeze({
   "rechnung.overview.header": Object.freeze(["rechnung.overview.title", "rechnung.overview.subtitle", "rechnung.overview.new"]),
-  "rechnung.editor.header": Object.freeze(["rechnung.editor.status", "rechnung.editor.headToggle", "rechnung.editor.preview", "rechnung.editor.book", "rechnung.editor.delete", "rechnung.editor.close"]),
+  "rechnung.editor.header": Object.freeze(["rechnung.editor.status", "rechnung.editor.headToggle", "rechnung.editor.leistungsEditboxToggle", "rechnung.editor.preview", "rechnung.editor.book", "rechnung.editor.delete", "rechnung.editor.close"]),
   "rechnung.editor.parties": Object.freeze(["rechnung.editor.customerPicker", "rechnung.editor.customerAddress", "rechnung.editor.issuerBlock", "rechnung.editor.invoiceMetaBlock", "rechnung.editor.introText"]),
   "rechnung.editor.servicePeriod": Object.freeze(["rechnung.editor.servicePeriodToggle", "rechnung.editor.servicePeriodType", "rechnung.editor.serviceDate", "rechnung.editor.serviceMonth", "rechnung.editor.serviceStart", "rechnung.editor.serviceEnd"]),
   "rechnung.preview": Object.freeze(["rechnung.preview.title", "rechnung.preview.body", "rechnung.preview.close"]),
@@ -116,7 +116,12 @@ const fieldLabelElements = Object.freeze(
     ))
 );
 
-const elements = Object.freeze([...baseElements, ...fieldLabelElements]);
+const requiredElements = Object.freeze([...baseElements, ...fieldLabelElements]);
+const optionalElements = Object.freeze([
+  action("rechnung.editor.leistungsEditboxToggle", "LeistungsEditbox ein- oder ausblenden", "rechnung.editor.header", 35, "toggleLeistungsEditbox"),
+  area("rechnung.editor.leistungsEditbox", "LeistungsEditbox", "rechnung.editor", 106, "leistungsEditbox"),
+]);
+const elements = Object.freeze([...requiredElements, ...optionalElements]);
 
-export const RECHNUNG_REQUIRED_SLOTS = Object.freeze(elements.map((entry) => entry.id));
+export const RECHNUNG_REQUIRED_SLOTS = Object.freeze(requiredElements.map((entry) => entry.id));
 export const rechnungUiEditorContract = m83Component({ componentId: RECHNUNG_COMPONENT_ID, scopeId: RECHNUNG_SCOPE_ID, requiredSlots: RECHNUNG_REQUIRED_SLOTS, slots: elements.map((entry) => m83Slot(entry.id, entry)) });
