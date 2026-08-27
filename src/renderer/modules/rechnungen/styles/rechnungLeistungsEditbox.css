@@ -46,6 +46,8 @@
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field {
   gap: 0;
+  min-height: 0;
+  min-block-size: 0;
   overflow: visible;
 }
 
@@ -56,6 +58,22 @@
   gap: 2px;
   font: 600 8px/9px system-ui, sans-serif;
   color: #445166;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-field__control {
+  min-width: 0;
+  min-height: 0;
+  min-inline-size: 0;
+  min-block-size: 0;
+  max-height: none;
+  max-block-size: none;
+}
+
+.rechnung-leistungseditbox-host input.bbm-leistungseditbox-field__control,
+.rechnung-leistungseditbox-host select.bbm-leistungseditbox-field__control,
+.rechnung-leistungseditbox-host textarea.bbm-leistungseditbox-field__control {
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field__control:not(textarea) {
@@ -78,6 +96,8 @@
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-row,
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-group {
   gap: 2px;
+  min-height: 0;
+  min-block-size: 0;
   overflow: visible;
 }
 
@@ -165,10 +185,10 @@
 .rechnung-lv-position.is-move-target {
   position: relative;
   box-shadow: inset 0 0 0 3px #2f8f46 !important;
-  background: rgba(47, 143, 70, .08) !important;
+  background: rgba(47,143,70,.08) !important;
 }
 
 .rechnung-lv-position.is-move-target > .rechnung-lv-position__select,
 .rechnung-lv-position.is-move-target > .rechnung-lv-position__pricing {
-  background: rgba(47, 143, 70, .08) !important;
+  background: rgba(47,143,70,.08) !important;
 }
