@@ -4,7 +4,7 @@
   left: 50vw;
   bottom: 0;
   width: min(calc(100vw - 32px), 980px);
-  height: 240px;
+  height: 220px;
   transform: translateX(-50%);
   background: var(--invoice-color-surface, #fff);
   box-shadow: 0 -8px 20px rgba(15, 23, 42, .12);
@@ -21,70 +21,56 @@
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-frame__content > .bbm-leistungseditbox-group {
   height: 100%;
-  padding: 7px 8px;
+  padding: 6px 8px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-header {
-  gap: 8px;
-  padding: 4px 6px;
+  gap: 7px;
+  padding: 3px 6px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-header__title {
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-action {
-  font-size: 10px;
-  padding: 3px 6px;
+  font-size: 9px;
+  padding: 3px 5px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field {
   gap: 2px;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-field__label {
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-field__label,
+.rechnung-leistungseditbox-host .bbm-leistungsposition-reserved-slot__label {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 10px;
-  line-height: 1.05;
+  gap: 4px;
+  font: 600 9px/1.05 system-ui, sans-serif;
+  color: #445166;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field__control {
-  font-size: 11px;
-  line-height: 1.15;
-  padding: 4px 5px;
+  font-size: 10px;
+  line-height: 1.1;
+  padding: 3px 5px;
+  border-radius: 2px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-row,
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-group {
-  gap: 6px;
+  gap: 5px;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungsposition-number-row {
+.rechnung-leistungseditbox-host .bbm-leistungsposition-number-row,
+.rechnung-leistungseditbox-host .bbm-leistungsposition-short-detail-row {
   align-items: end;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungsposition-body-row {
+.rechnung-leistungseditbox-host .bbm-leistungsposition-long-module-row {
   align-items: stretch;
   height: 100%;
-}
-
-.rechnung-leistungseditbox-host .bbm-leistungsposition-text-column {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  gap: 5px;
-  height: 100%;
-}
-
-.rechnung-leistungseditbox-host .bbm-leistungsposition-price-column {
-  display: flex;
-  align-items: start;
-}
-
-.rechnung-leistungseditbox-host .bbm-leistungsposition-detail-row {
-  width: 100%;
-  align-items: end;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungsposition-long-row,
@@ -95,6 +81,11 @@
 .rechnung-leistungseditbox-host .bbm-leistungsposition-long-row textarea {
   height: 100%;
   min-height: 0;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-detail-row {
+  align-items: end;
+  width: 100%;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungsposition-field--right .bbm-leistungseditbox-field__label,
@@ -120,22 +111,43 @@
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field--toggle {
-  padding-bottom: 4px;
+  padding-bottom: 3px;
   gap: 4px;
 }
 
+.rechnung-leistungseditbox-host .bbm-leistungsposition-reserved-slot {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 2px;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-reserved-slot--gross::after {
+  content: "";
+  display: block;
+  height: 24px;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-module-area {
+  border: 1px dashed rgba(100, 116, 139, .22);
+  background: rgba(148, 163, 184, .05);
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-reserved-slot--module .bbm-leistungsposition-reserved-slot__label {
+  display: none;
+}
+
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-decimal {
-  grid-template-columns: 18px auto 18px;
+  grid-template-columns: 16px auto 16px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-decimal__step {
-  font-size: 12px;
-  padding: 1px 0 2px;
+  font-size: 11px;
+  padding: 0 0 1px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-decimal__pattern {
-  font-size: 9px;
-  padding: 1px 2px 2px;
+  font-size: 8px;
+  padding: 1px 1px 2px;
 }
 
 .rechnung-lv-position.is-move-target {
