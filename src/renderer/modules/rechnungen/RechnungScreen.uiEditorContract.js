@@ -12,6 +12,18 @@ const buttonReflowIdsByParent = Object.freeze({
   "rechnung.editor.header": Object.freeze(["rechnung.editor.status", "rechnung.editor.headToggle", "rechnung.editor.leistungsEditboxToggle", "rechnung.editor.preview", "rechnung.editor.book", "rechnung.editor.delete", "rechnung.editor.close"]),
   "rechnung.editor.parties": Object.freeze(["rechnung.editor.customerPicker", "rechnung.editor.customerAddress", "rechnung.editor.issuerBlock", "rechnung.editor.invoiceMetaBlock", "rechnung.editor.introText"]),
   "rechnung.editor.servicePeriod": Object.freeze(["rechnung.editor.servicePeriodToggle", "rechnung.editor.servicePeriodType", "rechnung.editor.serviceDate", "rechnung.editor.serviceMonth", "rechnung.editor.serviceStart", "rechnung.editor.serviceEnd"]),
+  "rechnung.editor.leistungsEditbox.header": Object.freeze([
+    "rechnung.editor.leistungsEditbox.header.title",
+    "rechnung.editor.leistungsEditbox.action.addTitle",
+    "rechnung.editor.leistungsEditbox.action.addPosition",
+    "rechnung.editor.leistungsEditbox.action.move",
+    "rechnung.editor.leistungsEditbox.action.delete",
+  ]),
+  "rechnung.editor.leistungsEditbox.quantityDecimals": Object.freeze([
+    "rechnung.editor.leistungsEditbox.quantityDecimals.decrease",
+    "rechnung.editor.leistungsEditbox.quantityDecimals.pattern",
+    "rechnung.editor.leistungsEditbox.quantityDecimals.increase",
+  ]),
   "rechnung.preview": Object.freeze(["rechnung.preview.title", "rechnung.preview.body", "rechnung.preview.close"]),
 });
 const action = (id, name, parentId, order, actionKind) => {
@@ -120,6 +132,47 @@ const requiredElements = Object.freeze([...baseElements, ...fieldLabelElements])
 const optionalElements = Object.freeze([
   action("rechnung.editor.leistungsEditboxToggle", "LeistungsEditbox ein- oder ausblenden", "rechnung.editor.header", 35, "toggleLeistungsEditbox"),
   area("rechnung.editor.leistungsEditbox", "LeistungsEditbox", "rechnung.editor", 106, "leistungsEditbox"),
+
+  group("rechnung.editor.leistungsEditbox.header", "Kopf LeistungsEditbox", "rechnung.editor.leistungsEditbox", 107, "leistungsEditboxHeader"),
+  label("rechnung.editor.leistungsEditbox.header.title", "Leistungsposition bearbeiten", "rechnung.editor.leistungsEditbox.header", 108),
+  action("rechnung.editor.leistungsEditbox.action.addTitle", "Titel anlegen", "rechnung.editor.leistungsEditbox.header", 109, "addTitle"),
+  action("rechnung.editor.leistungsEditbox.action.addPosition", "Position anlegen", "rechnung.editor.leistungsEditbox.header", 110, "addPosition"),
+  action("rechnung.editor.leistungsEditbox.action.move", "Position schieben", "rechnung.editor.leistungsEditbox.header", 111, "movePosition"),
+  action("rechnung.editor.leistungsEditbox.action.delete", "Position löschen", "rechnung.editor.leistungsEditbox.header", 112, "deletePosition"),
+
+  group("rechnung.editor.leistungsEditbox.row.meta", "Kopfzeile Position", "rechnung.editor.leistungsEditbox", 120, "leistungsEditboxMetaRow"),
+  field("rechnung.editor.leistungsEditbox.positionNumber", "Positionsnummer", "rechnung.editor.leistungsEditbox.row.meta", 121, "readOnlyText"),
+  label("rechnung.editor.leistungsEditbox.positionNumber.label", "Positionsnummer Bezeichnung", "rechnung.editor.leistungsEditbox.row.meta", 121, "fieldLabel", "fieldLabel"),
+  field("rechnung.editor.leistungsEditbox.type", "Positionstyp", "rechnung.editor.leistungsEditbox.row.meta", 122, "select"),
+  label("rechnung.editor.leistungsEditbox.type.label", "Positionstyp Bezeichnung", "rechnung.editor.leistungsEditbox.row.meta", 122, "fieldLabel", "fieldLabel"),
+  field("rechnung.editor.leistungsEditbox.assignment", "Zuordnung", "rechnung.editor.leistungsEditbox.row.meta", 123, "readOnlyText"),
+  label("rechnung.editor.leistungsEditbox.assignment.label", "Zuordnung Bezeichnung", "rechnung.editor.leistungsEditbox.row.meta", 123, "fieldLabel", "fieldLabel"),
+  field("rechnung.editor.leistungsEditbox.nep", "NEP", "rechnung.editor.leistungsEditbox.row.meta", 124, "checkbox"),
+  label("rechnung.editor.leistungsEditbox.nep.label", "NEP Bezeichnung", "rechnung.editor.leistungsEditbox.row.meta", 124, "fieldLabel", "fieldLabel"),
+
+  group("rechnung.editor.leistungsEditbox.row.shortPrice", "Kurztext und Preise", "rechnung.editor.leistungsEditbox", 130, "leistungsEditboxShortPriceRow"),
+  field("rechnung.editor.leistungsEditbox.shortText", "Kurztext", "rechnung.editor.leistungsEditbox.row.shortPrice", 131, "singleLineText"),
+  label("rechnung.editor.leistungsEditbox.shortText.label", "Kurztext Bezeichnung", "rechnung.editor.leistungsEditbox.row.shortPrice", 131, "fieldLabel", "fieldLabel"),
+  label("rechnung.editor.leistungsEditbox.shortText.remaining", "Kurztext Restzeichen", "rechnung.editor.leistungsEditbox.row.shortPrice", 132, "status", "remainingCharacters"),
+  field("rechnung.editor.leistungsEditbox.quantity", "Menge", "rechnung.editor.leistungsEditbox.row.shortPrice", 133, "singleLineText"),
+  label("rechnung.editor.leistungsEditbox.quantity.label", "Menge Bezeichnung", "rechnung.editor.leistungsEditbox.row.shortPrice", 133, "fieldLabel", "fieldLabel"),
+  field("rechnung.editor.leistungsEditbox.unit", "Einheit", "rechnung.editor.leistungsEditbox.row.shortPrice", 134, "singleLineText"),
+  label("rechnung.editor.leistungsEditbox.unit.label", "Einheit Bezeichnung", "rechnung.editor.leistungsEditbox.row.shortPrice", 134, "fieldLabel", "fieldLabel"),
+  field("rechnung.editor.leistungsEditbox.unitPrice", "Einzelpreis", "rechnung.editor.leistungsEditbox.row.shortPrice", 135, "singleLineText"),
+  label("rechnung.editor.leistungsEditbox.unitPrice.label", "Einzelpreis Bezeichnung", "rechnung.editor.leistungsEditbox.row.shortPrice", 135, "fieldLabel", "fieldLabel"),
+  field("rechnung.editor.leistungsEditbox.positionAmount", "Gesamtpreis", "rechnung.editor.leistungsEditbox.row.shortPrice", 136, "readOnlyText"),
+  label("rechnung.editor.leistungsEditbox.positionAmount.label", "Gesamtpreis Bezeichnung", "rechnung.editor.leistungsEditbox.row.shortPrice", 136, "fieldLabel", "fieldLabel"),
+
+  group("rechnung.editor.leistungsEditbox.quantityDecimals", "Mengen-Nachkommastellen", "rechnung.editor.leistungsEditbox.row.shortPrice", 137, "decimalControl"),
+  action("rechnung.editor.leistungsEditbox.quantityDecimals.decrease", "Weniger Mengen-Nachkommastellen", "rechnung.editor.leistungsEditbox.quantityDecimals", 138, "decreaseDecimalPlaces"),
+  label("rechnung.editor.leistungsEditbox.quantityDecimals.pattern", "Mengen-Nachkommastellen Anzeige", "rechnung.editor.leistungsEditbox.quantityDecimals", 139, "content", "decimalPattern"),
+  action("rechnung.editor.leistungsEditbox.quantityDecimals.increase", "Mehr Mengen-Nachkommastellen", "rechnung.editor.leistungsEditbox.quantityDecimals", 140, "increaseDecimalPlaces"),
+
+  group("rechnung.editor.leistungsEditbox.row.longModule", "Langtext und Modulfläche", "rechnung.editor.leistungsEditbox", 150, "leistungsEditboxLongModuleRow"),
+  field("rechnung.editor.leistungsEditbox.longText", "Langtext", "rechnung.editor.leistungsEditbox.row.longModule", 151, "multilineText"),
+  label("rechnung.editor.leistungsEditbox.longText.label", "Langtext Bezeichnung", "rechnung.editor.leistungsEditbox.row.longModule", 151, "fieldLabel", "fieldLabel"),
+  label("rechnung.editor.leistungsEditbox.longText.remaining", "Langtext Restzeichen", "rechnung.editor.leistungsEditbox.row.longModule", 152, "status", "remainingCharacters"),
+  area("rechnung.editor.leistungsEditbox.moduleArea", "Freie Fachmodulfläche", "rechnung.editor.leistungsEditbox.row.longModule", 153, "moduleExtensionArea"),
 ]);
 const elements = Object.freeze([...requiredElements, ...optionalElements]);
 
