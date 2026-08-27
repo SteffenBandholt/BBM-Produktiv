@@ -11,7 +11,31 @@ import { RECHNUNG_SCOPE_ID } from "./RechnungScreen.uiEditorContract.js";
 
 export const RECHNUNG_LEISTUNGSEDITBOX_COMPONENT_ID = "bbm.rechnung.leistungsEditbox";
 
-const freeElement = (values) => m83Element({ ...values, unboundedGeometry: true });
+function unrestrictedEffects(parentId) {
+  if (!parentId) return {};
+  return {
+    operationEffects: {
+      move: "parentReflowRequired",
+      resizeWidth: "parentReflowRequired",
+      resizeHeight: "parentReflowRequired",
+      textResize: "parentReflowRequired",
+      setVisibility: "parentReflowRequired",
+    },
+    operationAffectedIds: {
+      move: [parentId],
+      resizeWidth: [parentId],
+      resizeHeight: [parentId],
+      textResize: [parentId],
+      setVisibility: [parentId],
+    },
+  };
+}
+
+const freeElement = (values) => m83Element({
+  ...values,
+  ...unrestrictedEffects(values.parentId),
+  unboundedGeometry: true,
+});
 const area = (id, name, parentId, order, componentKind) => freeElement({ id, name, type: "area", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind });
 const group = (id, name, parentId, order, componentKind) => freeElement({ id, name, type: "group", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind });
 const label = (id, name, parentId, order, role = "content", componentKind = "label") => freeElement({ id, name, type: "label", role, parentId, order, allowedOps: TEXT_LAYOUT, componentKind });
@@ -24,13 +48,7 @@ const action = (id, name, parentId, order, actionKind) => m83DomainButton({
   actionKind,
   unboundedGeometry: true,
   fitChromeToOuterSize: false,
-  operationEffects: {
-    move: "elementOnly",
-    resizeWidth: "elementOnly",
-    resizeHeight: "elementOnly",
-    textResize: "elementOnly",
-    setVisibility: "elementOnly",
-  },
+  ...unrestrictedEffects(parentId),
 });
 
 const wrapper = (id, name, parentId, order) => group(id, name, parentId, order, "leistungsEditboxFieldWrapper");
