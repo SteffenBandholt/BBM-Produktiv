@@ -21,51 +21,58 @@
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-frame__content > .bbm-leistungseditbox-group {
   height: 100%;
-  padding: 6px 8px;
+  padding: 4px 6px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-header {
-  gap: 7px;
-  padding: 3px 6px;
+  gap: 5px;
+  padding: 2px 5px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-header__title {
-  font-size: 10px;
+  font: 700 9px/1 system-ui, sans-serif;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-action {
-  font-size: 9px;
-  padding: 3px 5px;
+  font: 600 8px/1 system-ui, sans-serif;
+  padding: 2px 4px;
+  border-radius: 3px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field {
-  gap: 2px;
+  gap: 1px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field__label,
 .rechnung-leistungseditbox-host .bbm-leistungsposition-reserved-slot__label {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font: 600 9px/1.05 system-ui, sans-serif;
+  gap: 3px;
+  font: 600 8px/1 system-ui, sans-serif;
   color: #445166;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field__control {
-  font-size: 10px;
-  line-height: 1.1;
-  padding: 3px 5px;
+  height: 22px;
+  font: 400 9px/1.05 system-ui, sans-serif;
+  padding: 2px 4px;
   border-radius: 2px;
+}
+
+.rechnung-leistungseditbox-host textarea.bbm-leistungseditbox-field__control {
+  height: 100%;
+  padding-top: 3px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-row,
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-group {
-  gap: 5px;
+  gap: 4px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungsposition-number-row,
 .rechnung-leistungseditbox-host .bbm-leistungsposition-short-detail-row {
   align-items: end;
+  justify-content: start;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungsposition-long-module-row {
@@ -85,7 +92,7 @@
 
 .rechnung-leistungseditbox-host .bbm-leistungsposition-detail-row {
   align-items: end;
-  width: 100%;
+  width: max-content;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungsposition-field--right .bbm-leistungseditbox-field__label,
@@ -96,7 +103,7 @@
 
 .rechnung-leistungseditbox-host .bbm-leistungsposition-remaining {
   margin-left: auto;
-  font-size: 9px;
+  font-size: 8px;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   color: #64748b;
@@ -111,25 +118,28 @@
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field--toggle {
-  padding-bottom: 3px;
-  gap: 4px;
+  padding-bottom: 2px;
+  gap: 3px;
+  font-size: 8px;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-field--toggle .bbm-leistungseditbox-field__control {
+  height: auto;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungsposition-reserved-slot {
   display: grid;
   grid-template-rows: auto 1fr;
-  gap: 2px;
+  gap: 1px;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungsposition-reserved-slot--gross::after {
-  content: "";
-  display: block;
-  height: 24px;
+.rechnung-leistungseditbox-host .bbm-leistungsposition-reserved-slot--gross {
+  display: none;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungsposition-module-area {
-  border: 1px dashed rgba(100, 116, 139, .22);
-  background: rgba(148, 163, 184, .05);
+  border: 1px dashed rgba(100, 116, 139, .18);
+  background: rgba(148, 163, 184, .035);
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungsposition-reserved-slot--module .bbm-leistungsposition-reserved-slot__label {
@@ -137,17 +147,17 @@
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-decimal {
-  grid-template-columns: 16px auto 16px;
+  grid-template-columns: 14px auto 14px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-decimal__step {
-  font-size: 11px;
-  padding: 0 0 1px;
+  font-size: 9px;
+  padding: 0;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-decimal__pattern {
-  font-size: 8px;
-  padding: 1px 1px 2px;
+  font-size: 7px;
+  padding: 0 1px 1px;
 }
 
 .rechnung-lv-position.is-move-target {
