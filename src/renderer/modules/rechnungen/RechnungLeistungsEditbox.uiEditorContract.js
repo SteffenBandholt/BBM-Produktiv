@@ -11,45 +11,40 @@ import { RECHNUNG_SCOPE_ID } from "./RechnungScreen.uiEditorContract.js";
 
 export const RECHNUNG_LEISTUNGSEDITBOX_COMPONENT_ID = "bbm.rechnung.leistungsEditbox";
 
-function unrestrictedEffects(parentId) {
+function unrestrictedEffects(parentId, allowedOps = []) {
   if (!parentId) return {};
+  const supported = new Set(allowedOps || []);
+  const editableOps = ["move", "resizeWidth", "resizeHeight", "textResize", "setVisibility"]
+    .filter((operation) => supported.has(operation));
   return {
-    operationEffects: {
-      move: "parentReflowRequired",
-      resizeWidth: "parentReflowRequired",
-      resizeHeight: "parentReflowRequired",
-      textResize: "parentReflowRequired",
-      setVisibility: "parentReflowRequired",
-    },
-    operationAffectedIds: {
-      move: [parentId],
-      resizeWidth: [parentId],
-      resizeHeight: [parentId],
-      textResize: [parentId],
-      setVisibility: [parentId],
-    },
+    operationEffects: Object.fromEntries(editableOps.map((operation) => [operation, "parentReflowRequired"])),
+    operationAffectedIds: Object.fromEntries(editableOps.map((operation) => [operation, [parentId]])),
   };
 }
 
 const freeElement = (values) => m83Element({
   ...values,
-  ...unrestrictedEffects(values.parentId),
+  ...unrestrictedEffects(values.parentId, values.allowedOps),
   unboundedGeometry: true,
 });
 const area = (id, name, parentId, order, componentKind) => freeElement({ id, name, type: "area", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind });
 const group = (id, name, parentId, order, componentKind) => freeElement({ id, name, type: "group", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind });
 const label = (id, name, parentId, order, role = "content", componentKind = "label") => freeElement({ id, name, type: "label", role, parentId, order, allowedOps: TEXT_LAYOUT, componentKind });
 const field = (id, name, parentId, order, fieldKind) => freeElement({ id, name, type: "field", role: "content", parentId, order, allowedOps: FIELD_LAYOUT, fieldKind });
-const action = (id, name, parentId, order, actionKind) => m83DomainButton({
-  id,
-  name,
-  parentId,
-  order,
-  actionKind,
-  unboundedGeometry: true,
-  fitChromeToOuterSize: false,
-  ...unrestrictedEffects(parentId),
-});
+const action = (id, name, parentId, order, actionKind) => {
+  const allowedOps = TEXT_LAYOUT;
+  return m83DomainButton({
+    id,
+    name,
+    parentId,
+    order,
+    actionKind,
+    allowedOps,
+    unboundedGeometry: true,
+    fitChromeToOuterSize: false,
+    ...unrestrictedEffects(parentId, allowedOps),
+  });
+};
 
 const wrapper = (id, name, parentId, order) => group(id, name, parentId, order, "leistungsEditboxFieldWrapper");
 
