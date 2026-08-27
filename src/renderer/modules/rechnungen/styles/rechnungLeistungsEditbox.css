@@ -4,7 +4,7 @@
   left: 50vw;
   bottom: 0;
   width: min(calc(100vw - 32px), 980px);
-  height: 320px;
+  height: 240px;
   transform: translateX(-50%);
   background: var(--invoice-color-surface, #fff);
   box-shadow: 0 -8px 20px rgba(15, 23, 42, .12);
@@ -21,7 +21,121 @@
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-frame__content > .bbm-leistungseditbox-group {
   height: 100%;
-  padding: 12px;
+  padding: 7px 8px;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-header {
+  gap: 8px;
+  padding: 4px 6px;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-header__title {
+  font-size: 11px;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-action {
+  font-size: 10px;
+  padding: 3px 6px;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-field {
+  gap: 2px;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-field__label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  line-height: 1.05;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-field__control {
+  font-size: 11px;
+  line-height: 1.15;
+  padding: 4px 5px;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-row,
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-group {
+  gap: 6px;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-number-row {
+  align-items: end;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-body-row {
+  align-items: stretch;
+  height: 100%;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-text-column {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 5px;
+  height: 100%;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-price-column {
+  display: flex;
+  align-items: start;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-detail-row {
+  width: 100%;
+  align-items: end;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-long-row,
+.rechnung-leistungseditbox-host .bbm-leistungsposition-long-row > .bbm-leistungseditbox-field {
+  height: 100%;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-long-row textarea {
+  height: 100%;
+  min-height: 0;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-field--right .bbm-leistungseditbox-field__label,
+.rechnung-leistungseditbox-host .bbm-leistungsposition-field--right .bbm-leistungseditbox-field__control {
+  text-align: right;
+  justify-content: flex-end;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-remaining {
+  margin-left: auto;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-remaining[data-level="warning"] {
+  color: #9a6700;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungsposition-remaining[data-level="limit"] {
+  color: #b42318;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-field--toggle {
+  padding-bottom: 4px;
+  gap: 4px;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-decimal {
+  grid-template-columns: 18px auto 18px;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-decimal__step {
+  font-size: 12px;
+  padding: 1px 0 2px;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-decimal__pattern {
+  font-size: 9px;
+  padding: 1px 2px 2px;
 }
 
 .rechnung-lv-position.is-move-target {
