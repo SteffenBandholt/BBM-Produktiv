@@ -2,19 +2,21 @@ import { POSITION_TYPES, PRICE_INPUT_MODES } from "../../../shared/rechnung/rech
 import { LeistungsEditboxFrame } from "../../core/leistungseditbox/index.js";
 import { LeistungspositionEditboxAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxAdapter.js";
 import { LeistungspositionEditboxHeaderAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxHeaderAdapter.js";
+import { m80EditorAttributes } from "../../ui-editor/m80Registry.js";
+import { registerM80Ref } from "../../ui-editor/m80Refs.js";
 
-const STYLE_MARKER = "rechnung-leistungseditbox-binding-styles-v4";
+const STYLE_MARKER = "rechnung-leistungseditbox-binding-styles-v5";
 const GEOMETRY_STORAGE_KEY = "bbm.rechnung.leistungsEditbox.geometry.v3";
 const LEGACY_GEOMETRY_STORAGE_KEYS = Object.freeze([
   "bbm.rechnung.leistungsEditbox.geometry.v2",
   "bbm.rechnung.leistungsEditbox.geometry.v1",
 ]);
 const DEFAULT_COMPACT_HEIGHT = 138;
-let STYLE_HREF = "./styles/rechnungLeistungsEditbox.css?v=compact-v4";
+let STYLE_HREF = "./styles/rechnungLeistungsEditbox.css?v=free-v5";
 
 try {
   const url = new URL("./styles/rechnungLeistungsEditbox.css", import.meta.url);
-  url.searchParams.set("v", "compact-v4");
+  url.searchParams.set("v", "free-v5");
   STYLE_HREF = url.href;
 } catch (_error) {
   // Testloader/Data-URL fallback.
@@ -27,6 +29,20 @@ function ensureStyles(doc) {
   link.href = STYLE_HREF;
   link.setAttribute(`data-${STYLE_MARKER}`, "true");
   doc.head.appendChild(link);
+}
+
+function bindEditorRef(element, id) {
+  if (!element || !id) return null;
+  for (const [name, value] of Object.entries(m80EditorAttributes(id))) element.setAttribute(name, value);
+  registerM80Ref(id, element);
+  return element;
+}
+
+function registerField(adapter, name, id) {
+  const field = adapter.getField(name);
+  if (!field) return;
+  bindEditorRef(field.getControl?.(), id);
+  bindEditorRef(field.labelElement, `${id}.label`);
 }
 
 function finiteNumber(value) {
@@ -115,51 +131,41 @@ function observeGeometry(doc, frameElement) {
   return observer;
 }
 
-function setImportant(style, name, value) {
-  style?.setProperty?.(name, value, "important");
-}
-
-function forceCompactControls(adapter, header) {
+function applyCompactDefaults(adapter, header) {
   for (const name of ["positionNumber", "type", "alternativeReference", "shortText", "quantity", "unit", "unitPrice", "positionAmount"]) {
     const control = adapter.getField(name)?.getControl?.();
     if (!control) continue;
-    setImportant(control.style, "height", "18px");
-    setImportant(control.style, "min-height", "18px");
-    setImportant(control.style, "max-height", "18px");
-    setImportant(control.style, "font-size", "9px");
-    setImportant(control.style, "line-height", "16px");
-    setImportant(control.style, "padding", "0 3px");
-    setImportant(control.style, "box-sizing", "border-box");
+    control.style.height = "18px";
+    control.style.fontSize = "9px";
+    control.style.lineHeight = "16px";
+    control.style.padding = "0 3px";
+    control.style.boxSizing = "border-box";
   }
 
   const longText = adapter.getField("longText")?.getControl?.();
   if (longText) {
-    setImportant(longText.style, "height", "42px");
-    setImportant(longText.style, "min-height", "42px");
-    setImportant(longText.style, "max-height", "42px");
-    setImportant(longText.style, "font-size", "9px");
-    setImportant(longText.style, "line-height", "11px");
-    setImportant(longText.style, "padding", "2px 3px");
-    setImportant(longText.style, "box-sizing", "border-box");
+    longText.style.height = "42px";
+    longText.style.fontSize = "9px";
+    longText.style.lineHeight = "11px";
+    longText.style.padding = "2px 3px";
+    longText.style.boxSizing = "border-box";
   }
 
   for (const name of ["positionNumber", "type", "alternativeReference", "shortText", "longText", "quantity", "unit", "unitPrice", "positionAmount", "nep"]) {
-    const field = adapter.getField(name);
-    const label = field?.labelElement;
+    const label = adapter.getField(name)?.labelElement;
     if (!label) continue;
-    setImportant(label.style, "font-size", "8px");
-    setImportant(label.style, "line-height", "9px");
+    label.style.fontSize = "8px";
+    label.style.lineHeight = "9px";
   }
 
   for (const name of ["addTitle", "addPosition", "move", "delete"]) {
     const button = header.getAction(name)?.getElement?.();
     if (!button) continue;
-    setImportant(button.style, "height", "18px");
-    setImportant(button.style, "min-height", "18px");
-    setImportant(button.style, "font-size", "8px");
-    setImportant(button.style, "line-height", "16px");
-    setImportant(button.style, "padding", "0 5px");
-    setImportant(button.style, "box-sizing", "border-box");
+    button.style.height = "18px";
+    button.style.fontSize = "8px";
+    button.style.lineHeight = "16px";
+    button.style.padding = "0 5px";
+    button.style.boxSizing = "border-box";
   }
 }
 
@@ -220,8 +226,10 @@ export class RechnungLeistungsEditboxBinding {
     if (!doc?.createElement) throw new Error("RechnungLeistungsEditboxBinding benötigt ein Document.");
     ensureStyles(doc);
 
+    this.documentRef = doc;
     this.activePositionId = null;
     this.onChange = typeof onChange === "function" ? onChange : null;
+    this.uiEditorRefsRegistered = false;
     this.host = doc.createElement("section");
     this.host.className = "rechnung-leistungseditbox-host";
     this.host.hidden = true;
@@ -267,10 +275,51 @@ export class RechnungLeistungsEditboxBinding {
       },
     });
 
-    forceCompactControls(this.adapter, this.header);
+    applyCompactDefaults(this.adapter, this.header);
     this.frame.replaceHeader(this.header.getElement());
     this.frame.replaceContent(this.adapter.getElement());
     this.host.append(frameElement);
+  }
+
+  registerUiEditorRefs() {
+    if (this.uiEditorRefsRegistered || !this.host.isConnected) return false;
+
+    bindEditorRef(this.header.getElement(), "rechnung.editor.leistungsEditbox.header");
+    bindEditorRef(this.header.header?.getTitleHost?.(), "rechnung.editor.leistungsEditbox.header.title");
+    bindEditorRef(this.header.getAction("addTitle")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.addTitle");
+    bindEditorRef(this.header.getAction("addPosition")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.addPosition");
+    bindEditorRef(this.header.getAction("move")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.move");
+    bindEditorRef(this.header.getAction("delete")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.delete");
+
+    bindEditorRef(this.adapter.numberRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.meta");
+    bindEditorRef(this.adapter.shortDetailRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.shortPrice");
+    bindEditorRef(this.adapter.longModuleRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.longModule");
+
+    registerField(this.adapter, "positionNumber", "rechnung.editor.leistungsEditbox.positionNumber");
+    registerField(this.adapter, "type", "rechnung.editor.leistungsEditbox.type");
+    registerField(this.adapter, "alternativeReference", "rechnung.editor.leistungsEditbox.assignment");
+    registerField(this.adapter, "nep", "rechnung.editor.leistungsEditbox.nep");
+    registerField(this.adapter, "shortText", "rechnung.editor.leistungsEditbox.shortText");
+    registerField(this.adapter, "quantity", "rechnung.editor.leistungsEditbox.quantity");
+    registerField(this.adapter, "unit", "rechnung.editor.leistungsEditbox.unit");
+    registerField(this.adapter, "unitPrice", "rechnung.editor.leistungsEditbox.unitPrice");
+    registerField(this.adapter, "positionAmount", "rechnung.editor.leistungsEditbox.positionAmount");
+    registerField(this.adapter, "longText", "rechnung.editor.leistungsEditbox.longText");
+
+    bindEditorRef(this.adapter.shortTextRemaining, "rechnung.editor.leistungsEditbox.shortText.remaining");
+    bindEditorRef(this.adapter.longTextRemaining, "rechnung.editor.leistungsEditbox.longText.remaining");
+
+    const decimal = this.adapter.getQuantityDecimalControl?.();
+    bindEditorRef(decimal?.getElement?.(), "rechnung.editor.leistungsEditbox.quantityDecimals");
+    bindEditorRef(decimal?.decreaseButton, "rechnung.editor.leistungsEditbox.quantityDecimals.decrease");
+    bindEditorRef(decimal?.pattern, "rechnung.editor.leistungsEditbox.quantityDecimals.pattern");
+    bindEditorRef(decimal?.increaseButton, "rechnung.editor.leistungsEditbox.quantityDecimals.increase");
+
+    const moduleArea = this.adapter.getElement()?.querySelector?.(".bbm-leistungsposition-module-area");
+    bindEditorRef(moduleArea, "rechnung.editor.leistungsEditbox.moduleArea");
+
+    this.uiEditorRefsRegistered = true;
+    return true;
   }
 
   getElement() {
@@ -282,6 +331,7 @@ export class RechnungLeistungsEditboxBinding {
   }
 
   showPosition(position, options = {}) {
+    this.registerUiEditorRefs();
     if (!position || position.is_title === true) {
       this.hide();
       return null;
