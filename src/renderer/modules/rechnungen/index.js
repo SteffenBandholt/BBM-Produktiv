@@ -154,6 +154,22 @@ class RechnungEditorScreen extends RechnungScreen {
     void this._queueDraftSave();
   }
 
+  _activateAlternativeGroupMember(positionId) {
+    const active = this.positions.find((entry) => entry.id === positionId) || null;
+    if (!active || active.type !== POSITION_TYPES.SERVICE) return;
+
+    const motherId = active.alternative_of || active.id;
+    const isGroupMember = (entry) => entry.id === motherId || entry.alternative_of === motherId;
+    this.positions = this.positions.map((entry) => {
+      if (!isGroupMember(entry) || entry.type !== POSITION_TYPES.SERVICE) return entry;
+      return {
+        ...entry,
+        is_nep: entry.id !== active.id,
+        total_cents: null,
+      };
+    });
+  }
+
   _applyLeistungsEditboxChange(positionId, values = {}) {
     if (this.current?.status !== "DRAFT") return;
     const index = this.positions.findIndex((entry) => entry.id === positionId);
@@ -188,6 +204,11 @@ class RechnungEditorScreen extends RechnungScreen {
     }
 
     this.positions[index] = next;
+
+    if (current.type === POSITION_TYPES.SERVICE && next.is_nep === false) {
+      this._activateAlternativeGroupMember(positionId);
+    }
+
     this.quantityDecimalPlaces = Number.isInteger(Number(values.quantityDecimalPlaces))
       ? Number(values.quantityDecimalPlaces)
       : this.quantityDecimalPlaces;
