@@ -119,7 +119,16 @@ const fieldLabelElements = Object.freeze(
 const requiredElements = Object.freeze([...baseElements, ...fieldLabelElements]);
 const optionalElements = Object.freeze([
   action("rechnung.editor.leistungsEditboxToggle", "LeistungsEditbox ein- oder ausblenden", "rechnung.editor.header", 35, "toggleLeistungsEditbox"),
-  area("rechnung.editor.leistungsEditbox", "LeistungsEditbox", "rechnung.editor", 106, "leistungsEditbox"),
+  area("rechnung.editor.leistungsEditbox", "LeistungsEditbox", "rechnung.editor", 106, "leistungsEditbox", {
+    selectionKind: "group",
+    selectionLevels: ["group", "element"],
+    operationEffects: {
+      move: "groupWithChildren",
+      resizeWidth: "elementOnly",
+      resizeHeight: "elementOnly",
+      setVisibility: "groupWithChildren",
+    },
+  }),
 ]);
 const elements = Object.freeze([...requiredElements, ...optionalElements]);
 
