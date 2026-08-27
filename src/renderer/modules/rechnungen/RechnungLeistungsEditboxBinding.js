@@ -82,7 +82,6 @@ function storeGeometry(doc, frameElement) {
     if (geometry.width === null || geometry.height === null) return;
     storage.setItem(GEOMETRY_STORAGE_KEY, JSON.stringify(geometry));
   } catch (_error) {
-    // Lokale Geometrie-Persistenz darf die Rechnung nicht blockieren.
   }
 }
 
@@ -189,6 +188,9 @@ export class RechnungLeistungsEditboxBinding {
     this.adapter = new LeistungspositionEditboxAdapter({
       documentRef: doc,
       compact: true,
+      reserveGrossSlot: true,
+      reserveModuleArea: true,
+      textLimits: { shortText: 100, longText: 600 },
       showGross: false,
       showNep: true,
       showPositionAmount: true,
