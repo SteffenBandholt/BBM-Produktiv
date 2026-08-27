@@ -37,6 +37,11 @@ function priceInputMode(value) {
   return mode;
 }
 
+function normalizeAlternativeSuffix(value) {
+  const suffix = text(value || "a").toLowerCase();
+  return /^[a-z]$/.test(suffix) ? suffix : "a";
+}
+
 function netFromGrossCents(grossCents, ratePercent) {
   return Math.round(cents(grossCents) * 100 / (100 + ratePercent));
 }
@@ -109,6 +114,17 @@ function normalizeParentIds(entries) {
   return parentIds;
 }
 
+function assignAlternativeNumbers(entries, positionNumbers) {
+  const byId = new Map(entries.map((entry) => [entry.id, entry]));
+  for (const entry of entries) {
+    if (entry.type !== POSITION_TYPES.SERVICE || !entry.alternative_of) continue;
+    const mother = byId.get(entry.alternative_of);
+    const motherNumber = mother ? positionNumbers.get(mother.id) : null;
+    if (!motherNumber) continue;
+    positionNumbers.set(entry.id, `${motherNumber}${normalizeAlternativeSuffix(entry.alternative_suffix)}`);
+  }
+}
+
 function assignPositionNumbers(entries, parentIds) {
   const childrenByParentId = new Map();
   for (const entry of entries) {
@@ -124,7 +140,7 @@ function assignPositionNumbers(entries, parentIds) {
   for (const entry of roots) {
     if (entry.type !== POSITION_TYPES.SERVICE && !entry.is_title) continue;
     if (entry.is_title) positionNumbers.set(entry.id, String(++rootTitleNumber));
-    else positionNumbers.set(entry.id, String(++rootPositionNumber).padStart(2, "0"));
+    else if (!entry.alternative_of) positionNumbers.set(entry.id, String(++rootPositionNumber).padStart(2, "0"));
   }
 
   function visit(parentId) {
@@ -132,11 +148,14 @@ function assignPositionNumbers(entries, parentIds) {
     if (!parentNumber) return;
     let siblingNumber = 0;
     for (const entry of childrenByParentId.get(parentId) || []) {
-      if (entry.type === POSITION_TYPES.SERVICE) positionNumbers.set(entry.id, `${parentNumber}.${String(++siblingNumber).padStart(2, "0")}`);
+      if (entry.type === POSITION_TYPES.SERVICE && !entry.alternative_of) {
+        positionNumbers.set(entry.id, `${parentNumber}.${String(++siblingNumber).padStart(2, "0")}`);
+      }
       visit(entry.id);
     }
   }
   for (const root of roots) visit(root.id);
+  assignAlternativeNumbers(entries, positionNumbers);
   return positionNumbers;
 }
 
@@ -152,7 +171,18 @@ export function normalizeInvoicePositions(input = [], { idFactory } = {}) {
     const shortText = text(source?.short_text);
     if (!shortText) throw new Error("Kurztext der Rechnungsposition fehlt.");
     const isTitle = type === POSITION_TYPES.HEADING && source?.is_title !== false;
-    const base = { id, type, is_title: isTitle, parent_id: text(source?.parent_id) || null, short_text: shortText, long_text: text(source?.long_text) };
+    const base = {
+      id,
+      type,
+      is_title: isTitle,
+      parent_id: text(source?.parent_id) || null,
+      short_text: shortText,
+      long_text: text(source?.long_text),
+      alternative_of: type === POSITION_TYPES.SERVICE ? text(source?.alternative_of) || null : null,
+      alternative_suffix: type === POSITION_TYPES.SERVICE && text(source?.alternative_of)
+        ? normalizeAlternativeSuffix(source?.alternative_suffix)
+        : null,
+    };
     if (type !== POSITION_TYPES.SERVICE) return { ...base, quantity: null, unit: null, unit_price_cents: null, total_cents: null, is_nep: false, vat_rate_percent: null, price_input_mode: null, price_input_cents: null };
     const vat_rate_percent = vatRatePercent(source?.vat_rate_percent);
     const price_input_mode = priceInputMode(source?.price_input_mode);
