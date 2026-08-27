@@ -188,7 +188,8 @@ export class RechnungLeistungsEditboxBinding {
     });
     this.adapter = new LeistungspositionEditboxAdapter({
       documentRef: doc,
-      showGross: true,
+      compact: true,
+      showGross: false,
       showNep: true,
       showPositionAmount: true,
       onChange: (values) => {
