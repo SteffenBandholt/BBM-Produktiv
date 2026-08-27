@@ -1,6 +1,6 @@
 import { POSITION_TYPES } from "../../../shared/rechnung/rechnungPositions.mjs";
 import { m80EditorAttributes } from "../../ui-editor/m80Registry.js";
-import { registerM80Ref } from "../../ui-editor/m80Refs.js";
+import { completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
 import RechnungenDesignScreen from "./screens/RechnungenDesignScreen.js";
 import RechnungScreen from "./screens/RechnungScreen.js";
 import { RECHNUNG_WORK_SCREEN_ID } from "./screens/index.js";
@@ -44,6 +44,7 @@ class RechnungEditorScreen extends RechnungScreen {
   render() {
     const root = super.render();
     this._installLeistungsEditboxBinding();
+    completeM80PilotRender();
     return root;
   }
 
