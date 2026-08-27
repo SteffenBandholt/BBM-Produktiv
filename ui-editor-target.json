@@ -7,7 +7,7 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 32,
+  "registryVersion": 33,
   "registryFingerprint": "sha256:5a822b8fb220aa7c09155d0739e059a0465f7c2f47e655ec7412ffb4e2b0244d",
   "registryStatus": "incomplete",
   "activeScopes": [
