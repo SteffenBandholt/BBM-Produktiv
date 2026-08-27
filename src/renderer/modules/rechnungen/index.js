@@ -1,4 +1,6 @@
 import { POSITION_TYPES } from "../../../shared/rechnung/rechnungPositions.mjs";
+import { m80EditorAttributes } from "../../ui-editor/m80Registry.js";
+import { registerM80Ref } from "../../ui-editor/m80Refs.js";
 import RechnungenDesignScreen from "./screens/RechnungenDesignScreen.js";
 import RechnungScreen from "./screens/RechnungScreen.js";
 import { RECHNUNG_WORK_SCREEN_ID } from "./screens/index.js";
@@ -23,11 +25,19 @@ function localizedMoneyToCents(value) {
   return Math.round(parseLocalizedNumber(value) * 100);
 }
 
+function bindRuntimeEditorElement(element, id) {
+  for (const [name, value] of Object.entries(m80EditorAttributes(id))) element.setAttribute(name, value);
+  registerM80Ref(id, element);
+  return element;
+}
+
 class RechnungEditorScreen extends RechnungScreen {
   constructor(args = {}) {
     super(args);
     this.uiEditorScopeId = RECHNUNG_SCOPE_ID;
     this.leistungsEditboxBinding = null;
+    this.leistungsEditboxEnabled = true;
+    this.leistungsEditboxToggleButton = null;
   }
 
   render() {
@@ -46,7 +56,37 @@ class RechnungEditorScreen extends RechnungScreen {
       onDelete: () => this._deletePosition(),
       onChange: (positionId, values) => this._applyLeistungsEditboxChange(positionId, values),
     });
+
+    const frameElement = this.leistungsEditboxBinding.getFrameElement();
+    bindRuntimeEditorElement(frameElement, "rechnung.editor.leistungsEditbox");
     this.editor.append(this.leistungsEditboxBinding.getElement());
+
+    const header = this.editor.querySelector?.(".rechnung-live-editor__header");
+    if (header) {
+      const toggle = globalThis.document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "invoice-button invoice-button--secondary";
+      toggle.onclick = () => this._toggleLeistungsEditbox();
+      bindRuntimeEditorElement(toggle, "rechnung.editor.leistungsEditboxToggle");
+      const spacer = header.querySelector?.(".rechnung-live-footer-spacer");
+      if (spacer) header.insertBefore(toggle, spacer);
+      else header.append(toggle);
+      this.leistungsEditboxToggleButton = toggle;
+      this._syncLeistungsEditboxToggle();
+    }
+  }
+
+  _toggleLeistungsEditbox() {
+    this.leistungsEditboxEnabled = !this.leistungsEditboxEnabled;
+    if (this.leistungsEditboxEnabled) this._showSelectedPositionInLeistungsEditbox();
+    else this.leistungsEditboxBinding?.hide();
+    this._syncLeistungsEditboxToggle();
+  }
+
+  _syncLeistungsEditboxToggle() {
+    if (!this.leistungsEditboxToggleButton) return;
+    this.leistungsEditboxToggleButton.textContent = this.leistungsEditboxEnabled ? "Editbox aus" : "Editbox an";
+    this.leistungsEditboxToggleButton.setAttribute("aria-pressed", String(this.leistungsEditboxEnabled));
   }
 
   _alternativeBasePositionNumber(position) {
@@ -55,6 +95,10 @@ class RechnungEditorScreen extends RechnungScreen {
   }
 
   _showSelectedPositionInLeistungsEditbox() {
+    if (!this.leistungsEditboxEnabled) {
+      this.leistungsEditboxBinding?.hide();
+      return;
+    }
     const selected = this._getSelectedPosition();
     this.leistungsEditboxBinding?.showPosition(selected, {
       quantityDecimalPlaces: this.quantityDecimalPlaces,
