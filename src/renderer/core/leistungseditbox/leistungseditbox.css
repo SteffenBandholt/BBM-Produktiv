@@ -135,6 +135,12 @@ textarea.bbm-leistungseditbox-field__control {
   cursor: pointer;
 }
 
+.bbm-leistungseditbox-action[aria-pressed="true"] {
+  background: #dce8f7;
+  border-color: #7f9fca;
+  color: #173a63;
+}
+
 .bbm-leistungseditbox-action:disabled {
   cursor: default;
   opacity: .55;
