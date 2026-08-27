@@ -31,6 +31,7 @@ function centsToInput(cents) {
 }
 
 function editboxTypeForPosition(position) {
+  if (position?.alternative_of) return "alternative";
   if (position?.type === POSITION_TYPES.NOTE) return "hint";
   if (position?.type === POSITION_TYPES.HEADING) return "text";
   return "standard";
@@ -38,15 +39,20 @@ function editboxTypeForPosition(position) {
 
 export function rechnungPositionToLeistungsEditboxValues(position = {}, {
   quantityDecimalPlaces = 2,
+  alternativeBasePositionNumber = "",
 } = {}) {
   const isService = position?.type === POSITION_TYPES.SERVICE;
+  const isAlternative = isService && !!position?.alternative_of;
   const isGross = isService && position?.price_input_mode === PRICE_INPUT_MODES.GROSS;
   const inputPriceCents = isGross
     ? position?.price_input_cents ?? position?.unit_price_cents
     : position?.unit_price_cents;
 
   return Object.freeze({
-    basePositionNumber: position?.position_number || "",
+    basePositionNumber: isAlternative
+      ? alternativeBasePositionNumber || String(position?.position_number || "").replace(/[a-z]$/i, "")
+      : position?.position_number || "",
+    alternativeSuffix: isAlternative ? position?.alternative_suffix || "a" : "a",
     shortText: position?.short_text || "",
     longText: position?.long_text || "",
     type: editboxTypeForPosition(position),
