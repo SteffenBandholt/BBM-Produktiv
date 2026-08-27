@@ -38,6 +38,7 @@ class RechnungEditorScreen extends RechnungScreen {
     this.leistungsEditboxBinding = null;
     this.leistungsEditboxEnabled = true;
     this.leistungsEditboxToggleButton = null;
+    this.leistungsEditboxToggleLocked = false;
   }
 
   render() {
@@ -66,7 +67,13 @@ class RechnungEditorScreen extends RechnungScreen {
       const toggle = globalThis.document.createElement("button");
       toggle.type = "button";
       toggle.className = "invoice-button invoice-button--secondary";
-      toggle.onclick = () => this._toggleLeistungsEditbox();
+      toggle.addEventListener("pointerdown", (event) => event.stopPropagation());
+      toggle.addEventListener("mousedown", (event) => event.stopPropagation());
+      toggle.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        this._toggleLeistungsEditbox();
+      });
       bindRuntimeEditorElement(toggle, "rechnung.editor.leistungsEditboxToggle");
       const spacer = header.querySelector?.(".rechnung-live-footer-spacer");
       if (spacer) header.insertBefore(toggle, spacer);
@@ -77,16 +84,24 @@ class RechnungEditorScreen extends RechnungScreen {
   }
 
   _toggleLeistungsEditbox() {
-    this.leistungsEditboxEnabled = !this.leistungsEditboxEnabled;
-    if (this.leistungsEditboxEnabled) this._showSelectedPositionInLeistungsEditbox();
-    else this.leistungsEditboxBinding?.hide();
-    this._syncLeistungsEditboxToggle();
+    if (this.leistungsEditboxToggleLocked) return;
+    this.leistungsEditboxToggleLocked = true;
+    try {
+      this.leistungsEditboxEnabled = !this.leistungsEditboxEnabled;
+      if (this.leistungsEditboxEnabled) this._showSelectedPositionInLeistungsEditbox();
+      else this.leistungsEditboxBinding?.hide();
+      this._syncLeistungsEditboxToggle();
+    } finally {
+      globalThis.queueMicrotask?.(() => { this.leistungsEditboxToggleLocked = false; });
+      if (typeof globalThis.queueMicrotask !== "function") this.leistungsEditboxToggleLocked = false;
+    }
   }
 
   _syncLeistungsEditboxToggle() {
     if (!this.leistungsEditboxToggleButton) return;
     this.leistungsEditboxToggleButton.textContent = this.leistungsEditboxEnabled ? "Editbox aus" : "Editbox an";
     this.leistungsEditboxToggleButton.setAttribute("aria-pressed", String(this.leistungsEditboxEnabled));
+    this.leistungsEditboxToggleButton.dataset.editboxEnabled = String(this.leistungsEditboxEnabled);
   }
 
   _alternativeBasePositionNumber(position) {
