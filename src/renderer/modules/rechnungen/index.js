@@ -1,3 +1,4 @@
+import { POSITION_TYPES } from "../../../shared/rechnung/rechnungPositions.mjs";
 import RechnungenDesignScreen from "./screens/RechnungenDesignScreen.js";
 import RechnungScreen from "./screens/RechnungScreen.js";
 import { RECHNUNG_WORK_SCREEN_ID } from "./screens/index.js";
@@ -48,12 +49,82 @@ class RechnungEditorScreen extends RechnungScreen {
     this.editor.append(this.leistungsEditboxBinding.getElement());
   }
 
+  _alternativeBasePositionNumber(position) {
+    if (!position?.alternative_of) return "";
+    return this.positions.find((entry) => entry.id === position.alternative_of)?.position_number || "";
+  }
+
+  _showSelectedPositionInLeistungsEditbox() {
+    const selected = this._getSelectedPosition();
+    this.leistungsEditboxBinding?.showPosition(selected, {
+      quantityDecimalPlaces: this.quantityDecimalPlaces,
+      alternativeBasePositionNumber: this._alternativeBasePositionNumber(selected),
+    });
+  }
+
+  _nextAlternativeSuffix(motherId) {
+    const used = new Set(
+      this.positions
+        .filter((entry) => entry.alternative_of === motherId)
+        .map((entry) => String(entry.alternative_suffix || "").trim().toLowerCase())
+        .filter(Boolean)
+    );
+    for (let code = 97; code <= 122; code += 1) {
+      const suffix = String.fromCharCode(code);
+      if (!used.has(suffix)) return suffix;
+    }
+    return null;
+  }
+
+  _createAlternativeFromPosition(mother) {
+    if (this.current?.status !== "DRAFT") return;
+    if (!mother || mother.type !== POSITION_TYPES.SERVICE || mother.alternative_of) return;
+
+    const suffix = this._nextAlternativeSuffix(mother.id);
+    if (!suffix) return this._error("Für diese Position sind keine weiteren Alternativen verfügbar.");
+
+    const id = this._nextPositionId();
+    const alternative = {
+      ...mother,
+      id,
+      position_number: null,
+      alternative_of: mother.id,
+      alternative_suffix: suffix,
+      is_nep: true,
+      total_cents: null,
+    };
+
+    const motherIndex = this.positions.findIndex((entry) => entry.id === mother.id);
+    let insertIndex = motherIndex + 1;
+    while (insertIndex < this.positions.length && this.positions[insertIndex]?.alternative_of === mother.id) {
+      insertIndex += 1;
+    }
+    this.positions.splice(insertIndex, 0, alternative);
+    this._normalizePositions();
+
+    const created = this.positions.find((entry) => entry.id === id) || null;
+    this._selectPosition(created, { setCreateContext: false });
+    this._renderPositions();
+    this._syncDerived();
+    this._showSelectedPositionInLeistungsEditbox();
+    void this._queueDraftSave();
+  }
+
   _applyLeistungsEditboxChange(positionId, values = {}) {
     if (this.current?.status !== "DRAFT") return;
     const index = this.positions.findIndex((entry) => entry.id === positionId);
     if (index < 0) return;
 
     const current = this.positions[index];
+    if (
+      current.type === POSITION_TYPES.SERVICE &&
+      !current.alternative_of &&
+      values.type === "alternative"
+    ) {
+      this._createAlternativeFromPosition(current);
+      return;
+    }
+
     const shortText = String(values.shortText ?? "");
     const next = {
       ...current,
@@ -61,7 +132,7 @@ class RechnungEditorScreen extends RechnungScreen {
       long_text: String(values.longText ?? ""),
     };
 
-    if (current.type === "service") {
+    if (current.type === POSITION_TYPES.SERVICE) {
       const inputCents = localizedMoneyToCents(values.unitPrice);
       const gross = values.gross === true;
       next.quantity = String(parseLocalizedNumber(values.quantity));
@@ -100,9 +171,7 @@ class RechnungEditorScreen extends RechnungScreen {
   _handlePositionRowClick(entry) {
     super._handlePositionRowClick(entry);
     if (this.isPositionMoveMode) return;
-    this.leistungsEditboxBinding?.showPosition(this._getSelectedPosition(), {
-      quantityDecimalPlaces: this.quantityDecimalPlaces,
-    });
+    this._showSelectedPositionInLeistungsEditbox();
   }
 }
 
