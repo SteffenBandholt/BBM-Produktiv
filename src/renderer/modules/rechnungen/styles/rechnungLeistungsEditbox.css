@@ -53,15 +53,15 @@
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field__control {
-  height: 22px;
-  font: 400 9px/1.05 system-ui, sans-serif;
-  padding: 2px 4px;
+  height: 18px;
+  font: 400 8px/1 system-ui, sans-serif;
+  padding: 1px 3px;
   border-radius: 2px;
 }
 
 .rechnung-leistungseditbox-host textarea.bbm-leistungseditbox-field__control {
   height: 100%;
-  padding-top: 3px;
+  padding-top: 2px;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-row,
@@ -118,7 +118,7 @@
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field--toggle {
-  padding-bottom: 2px;
+  padding-bottom: 1px;
   gap: 3px;
   font-size: 8px;
 }
