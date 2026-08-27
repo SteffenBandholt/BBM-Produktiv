@@ -2,9 +2,6 @@ import { POSITION_TYPES, PRICE_INPUT_MODES } from "../../../shared/rechnung/rech
 import { LeistungsEditboxFrame } from "../../core/leistungseditbox/index.js";
 import { LeistungspositionEditboxAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxAdapter.js";
 import { LeistungspositionEditboxHeaderAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxHeaderAdapter.js";
-import { emitM80RegistryEvent } from "../../ui-editor/m80HostAdapter.js";
-import { m80EditorAttributes } from "../../ui-editor/m80Registry.js";
-import { registerM80Ref } from "../../ui-editor/m80Refs.js";
 
 const STYLE_MARKER = "rechnung-leistungseditbox-binding-styles-v4";
 const GEOMETRY_STORAGE_KEY = "bbm.rechnung.leistungsEditbox.geometry.v3";
@@ -30,22 +27,6 @@ function ensureStyles(doc) {
   link.href = STYLE_HREF;
   link.setAttribute(`data-${STYLE_MARKER}`, "true");
   doc.head.appendChild(link);
-}
-
-function bindEditorRef(element, id) {
-  if (!element || !id) return;
-  for (const [name, value] of Object.entries(m80EditorAttributes(id))) element.setAttribute(name, value);
-  registerM80Ref(id, element);
-}
-
-function notifyEditorRegistry() {
-  try {
-    const notify = () => { void emitM80RegistryEvent("scopeChanged", "rechnung.screen"); };
-    if (typeof globalThis.queueMicrotask === "function") globalThis.queueMicrotask(notify);
-    else globalThis.setTimeout?.(notify, 0);
-  } catch (_error) {
-    // Der produktive Rechnungsdialog darf von einer Editor-Meldung nicht blockiert werden.
-  }
 }
 
 function finiteNumber(value) {
@@ -182,49 +163,6 @@ function forceCompactControls(adapter, header) {
   }
 }
 
-function registerField(adapter, name, id) {
-  const field = adapter.getField(name);
-  if (!field) return;
-  bindEditorRef(field.getControl?.(), id);
-  bindEditorRef(field.labelElement, `${id}.label`);
-}
-
-function registerInnerEditorRefs(adapter, header) {
-  bindEditorRef(header.getElement(), "rechnung.editor.leistungsEditbox.header");
-  bindEditorRef(header.header?.getTitleHost?.(), "rechnung.editor.leistungsEditbox.header.title");
-  bindEditorRef(header.getAction("addTitle")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.addTitle");
-  bindEditorRef(header.getAction("addPosition")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.addPosition");
-  bindEditorRef(header.getAction("move")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.move");
-  bindEditorRef(header.getAction("delete")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.delete");
-
-  bindEditorRef(adapter.numberRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.meta");
-  bindEditorRef(adapter.shortDetailRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.shortPrice");
-  bindEditorRef(adapter.longModuleRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.longModule");
-
-  registerField(adapter, "positionNumber", "rechnung.editor.leistungsEditbox.positionNumber");
-  registerField(adapter, "type", "rechnung.editor.leistungsEditbox.type");
-  registerField(adapter, "alternativeReference", "rechnung.editor.leistungsEditbox.assignment");
-  registerField(adapter, "nep", "rechnung.editor.leistungsEditbox.nep");
-  registerField(adapter, "shortText", "rechnung.editor.leistungsEditbox.shortText");
-  registerField(adapter, "quantity", "rechnung.editor.leistungsEditbox.quantity");
-  registerField(adapter, "unit", "rechnung.editor.leistungsEditbox.unit");
-  registerField(adapter, "unitPrice", "rechnung.editor.leistungsEditbox.unitPrice");
-  registerField(adapter, "positionAmount", "rechnung.editor.leistungsEditbox.positionAmount");
-  registerField(adapter, "longText", "rechnung.editor.leistungsEditbox.longText");
-
-  bindEditorRef(adapter.shortTextRemaining, "rechnung.editor.leistungsEditbox.shortText.remaining");
-  bindEditorRef(adapter.longTextRemaining, "rechnung.editor.leistungsEditbox.longText.remaining");
-
-  const decimal = adapter.getQuantityDecimalControl?.();
-  bindEditorRef(decimal?.getElement?.(), "rechnung.editor.leistungsEditbox.quantityDecimals");
-  bindEditorRef(decimal?.decreaseButton, "rechnung.editor.leistungsEditbox.quantityDecimals.decrease");
-  bindEditorRef(decimal?.pattern, "rechnung.editor.leistungsEditbox.quantityDecimals.pattern");
-  bindEditorRef(decimal?.increaseButton, "rechnung.editor.leistungsEditbox.quantityDecimals.increase");
-
-  const moduleArea = adapter.getElement()?.querySelector?.(".bbm-leistungsposition-module-area");
-  bindEditorRef(moduleArea, "rechnung.editor.leistungsEditbox.moduleArea");
-}
-
 function centsToInput(cents) {
   const numeric = Number(cents ?? 0);
   return new Intl.NumberFormat("de-DE", {
@@ -330,11 +268,9 @@ export class RechnungLeistungsEditboxBinding {
     });
 
     forceCompactControls(this.adapter, this.header);
-    registerInnerEditorRefs(this.adapter, this.header);
     this.frame.replaceHeader(this.header.getElement());
     this.frame.replaceContent(this.adapter.getElement());
     this.host.append(frameElement);
-    notifyEditorRegistry();
   }
 
   getElement() {
@@ -354,7 +290,6 @@ export class RechnungLeistungsEditboxBinding {
     const values = rechnungPositionToLeistungsEditboxValues(position, options);
     this.adapter.setValues(values);
     this.host.hidden = false;
-    notifyEditorRegistry();
     return values;
   }
 
