@@ -1,12 +1,8 @@
-.rechnung-live-editor {
-  position: relative;
-}
-
 .rechnung-leistungseditbox-host {
-  position: absolute;
+  position: fixed;
   z-index: 10050;
   left: 24px;
-  top: 24px;
+  top: 120px;
   width: 980px;
   height: 138px;
   overflow: visible;
