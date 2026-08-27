@@ -5,18 +5,18 @@ import { LeistungspositionEditboxHeaderAdapter } from "../../shared/leistungspos
 import { m80EditorAttributes } from "../../ui-editor/m80Registry.js";
 import { registerM80Ref } from "../../ui-editor/m80Refs.js";
 
-const STYLE_MARKER = "rechnung-leistungseditbox-binding-styles-v5";
+const STYLE_MARKER = "rechnung-leistungseditbox-binding-styles-v6";
 const GEOMETRY_STORAGE_KEY = "bbm.rechnung.leistungsEditbox.geometry.v3";
 const LEGACY_GEOMETRY_STORAGE_KEYS = Object.freeze([
   "bbm.rechnung.leistungsEditbox.geometry.v2",
   "bbm.rechnung.leistungsEditbox.geometry.v1",
 ]);
 const DEFAULT_COMPACT_HEIGHT = 138;
-let STYLE_HREF = "./styles/rechnungLeistungsEditbox.css?v=free-v5";
+let STYLE_HREF = "./styles/rechnungLeistungsEditbox.css?v=free-v6";
 
 try {
   const url = new URL("./styles/rechnungLeistungsEditbox.css", import.meta.url);
-  url.searchParams.set("v", "free-v5");
+  url.searchParams.set("v", "free-v6");
   STYLE_HREF = url.href;
 } catch (_error) {
   // Testloader/Data-URL fallback.
@@ -31,24 +31,121 @@ function ensureStyles(doc) {
   doc.head.appendChild(link);
 }
 
-function bindEditorRef(element, id) {
-  if (!element || !id) return null;
-  for (const [name, value] of Object.entries(m80EditorAttributes(id))) element.setAttribute(name, value);
-  registerM80Ref(id, element);
+function finiteNumber(value, fallback = null) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function px(value) {
+  const number = finiteNumber(value, 0);
+  return `${number}px`;
+}
+
+function readActualEditorState(element, id) {
+  const view = element?.ownerDocument?.defaultView;
+  const style = view?.getComputedStyle?.(element) || element?.style || {};
+  const rect = element?.getBoundingClientRect?.() || { width: 0, height: 0 };
+  const inlineWidth = parseFloat(element?.style?.width || "");
+  const inlineHeight = parseFloat(element?.style?.height || "");
+  return {
+    elementId: id,
+    x: finiteNumber(element?.dataset?.uiEditorX, 0),
+    y: finiteNumber(element?.dataset?.uiEditorY, 0),
+    width: Number.isFinite(inlineWidth) ? Math.max(0, inlineWidth) : Math.max(0, finiteNumber(rect.width, 0)),
+    height: Number.isFinite(inlineHeight) ? Math.max(0, inlineHeight) : Math.max(0, finiteNumber(rect.height, 0)),
+    textOffsetX: finiteNumber(element?.dataset?.uiEditorTextX, finiteNumber(parseFloat(style.paddingLeft), 0)),
+    textOffsetY: finiteNumber(element?.dataset?.uiEditorTextY, finiteNumber(parseFloat(style.paddingTop), 0)),
+    fontSize: finiteNumber(parseFloat(style.fontSize), 0),
+    visible: element?.hidden !== true && String(style.display || "").toLowerCase() !== "none",
+    spacing: {},
+  };
+}
+
+function setFreeGeometryStyle(element, name, value) {
+  if (!element?.style) return;
+  if (["width", "height"].includes(name)) {
+    const axis = name === "width" ? "width" : "height";
+    element.style.removeProperty(`min-${axis}`);
+    element.style.removeProperty(`max-${axis}`);
+  }
+  element.style.setProperty(name, value, "important");
+}
+
+function applyActualEditorState(element, state, requestedOperation = null) {
+  if (!element || !state) return;
+  const applies = (...operations) => requestedOperation === null || operations.includes(requestedOperation);
+
+  if (applies("move")) {
+    const x = finiteNumber(state.x, 0);
+    const y = finiteNumber(state.y, 0);
+    element.dataset.uiEditorX = String(x);
+    element.dataset.uiEditorY = String(y);
+    setFreeGeometryStyle(element, "translate", `${px(x)} ${px(y)}`);
+  }
+
+  if (applies("resize", "resizeWidth") && state.width !== null && state.width !== undefined) {
+    setFreeGeometryStyle(element, "width", px(Math.max(0, finiteNumber(state.width, 0))));
+    element.style.setProperty("box-sizing", "border-box", "important");
+    element.style.setProperty("flex", "none", "important");
+    element.style.setProperty("justify-self", "start", "important");
+  }
+
+  if (applies("resize", "resizeHeight") && state.height !== null && state.height !== undefined) {
+    setFreeGeometryStyle(element, "height", px(Math.max(0, finiteNumber(state.height, 0))));
+    element.style.setProperty("box-sizing", "border-box", "important");
+    element.style.setProperty("align-self", "start", "important");
+  }
+
+  if (applies("textResize") && state.fontSize !== null && state.fontSize !== undefined) {
+    setFreeGeometryStyle(element, "font-size", px(Math.max(0, finiteNumber(state.fontSize, 0))));
+  }
+
+  if (applies("textMove")) {
+    const x = finiteNumber(state.textOffsetX, 0);
+    const y = finiteNumber(state.textOffsetY, 0);
+    element.dataset.uiEditorTextX = String(x);
+    element.dataset.uiEditorTextY = String(y);
+    setFreeGeometryStyle(element, "padding-left", px(x));
+    setFreeGeometryStyle(element, "padding-top", px(y));
+  }
+
+  if (applies("setVisibility") && typeof state.visible === "boolean") {
+    element.hidden = state.visible === false;
+  }
+}
+
+function createEditorProxy(proxyHost, id, attributes) {
+  const proxy = proxyHost.ownerDocument.createElement("span");
+  proxy.dataset.leistungsEditboxEditorProxy = id;
+  proxy.setAttribute("aria-hidden", "true");
+  for (const [name, value] of Object.entries(attributes)) proxy.setAttribute(name, value);
+  proxy.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;margin:0;padding:0;border:0;overflow:hidden;pointer-events:none;opacity:0";
+  proxyHost.append(proxy);
+  return proxy;
+}
+
+function bindEditorRef(element, id, proxyHost) {
+  if (!element || !id || !proxyHost) return null;
+  const attributes = m80EditorAttributes(id);
+  for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
+  const proxy = createEditorProxy(proxyHost, id, attributes);
+
+  registerM80Ref(id, proxy, {
+    applyPrimaryAttributes: false,
+    contractTargets: [proxy],
+    bindingTargets: [proxy, element],
+    read: () => readActualEditorState(element, id),
+    apply: (state, requestedOperation = null) => applyActualEditorState(element, state, requestedOperation),
+  });
   return element;
 }
 
-function registerField(adapter, name, id) {
+function registerField(adapter, name, id, proxyHost) {
   const field = adapter.getField(name);
   if (!field) return;
-  bindEditorRef(field.getElement?.(), `${id}.wrapper`);
-  bindEditorRef(field.getControl?.(), id);
-  bindEditorRef(field.labelElement, `${id}.label`);
-}
-
-function finiteNumber(value) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
+  bindEditorRef(field.getElement?.(), `${id}.wrapper`, proxyHost);
+  bindEditorRef(field.getControl?.(), id, proxyHost);
+  bindEditorRef(field.labelElement, `${id}.label`, proxyHost);
 }
 
 function parseStoredGeometry(raw, { keepHeight = true } = {}) {
@@ -212,6 +309,11 @@ export class RechnungLeistungsEditboxBinding {
     this.host.className = "rechnung-leistungseditbox-host";
     this.host.hidden = true;
 
+    this.editorProxyHost = doc.createElement("div");
+    this.editorProxyHost.dataset.leistungsEditboxEditorProxies = "true";
+    this.editorProxyHost.setAttribute("aria-hidden", "true");
+    this.editorProxyHost.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;margin:0;padding:0;border:0;overflow:hidden;pointer-events:none;opacity:0;z-index:-1";
+
     this.frame = new LeistungsEditboxFrame({ documentRef: doc, id: "rechnung.leistungseditbox.frame", label: "LeistungsEditbox Rechnung" });
     const frameElement = this.frame.getElement();
     for (const attribute of ["data-ui-inspector-id", "data-ui-editor-kind", "data-ui-editor-label", "data-ui-editor-parent", "data-ui-editor-editable", "data-ui-editor-ops"]) frameElement.removeAttribute(attribute);
@@ -238,56 +340,57 @@ export class RechnungLeistungsEditboxBinding {
     applyCompactDefaults(this.adapter, this.header);
     this.frame.replaceHeader(this.header.getElement());
     this.frame.replaceContent(this.adapter.getElement());
-    this.host.append(frameElement);
+    this.host.append(frameElement, this.editorProxyHost);
   }
 
   registerUiEditorRefs() {
     if (this.uiEditorRefsRegistered || !this.host.isConnected) return false;
+    const proxies = this.editorProxyHost;
 
-    bindEditorRef(this.frame.getHeaderHost(), "rechnung.editor.leistungsEditbox.frameHeader");
-    bindEditorRef(this.frame.getContentHost(), "rechnung.editor.leistungsEditbox.frameContent");
+    bindEditorRef(this.frame.getHeaderHost(), "rechnung.editor.leistungsEditbox.frameHeader", proxies);
+    bindEditorRef(this.frame.getContentHost(), "rechnung.editor.leistungsEditbox.frameContent", proxies);
 
-    bindEditorRef(this.header.getElement(), "rechnung.editor.leistungsEditbox.header");
-    bindEditorRef(this.header.header?.getTitleHost?.(), "rechnung.editor.leistungsEditbox.header.title");
-    bindEditorRef(this.header.header?.actionsHost, "rechnung.editor.leistungsEditbox.header.actions");
-    bindEditorRef(this.header.header?.getLeftHost?.(), "rechnung.editor.leistungsEditbox.header.actions.left");
-    bindEditorRef(this.header.header?.getCenterHost?.(), "rechnung.editor.leistungsEditbox.header.actions.center");
-    bindEditorRef(this.header.header?.getRightHost?.(), "rechnung.editor.leistungsEditbox.header.actions.right");
-    bindEditorRef(this.header.getAction("addTitle")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.addTitle");
-    bindEditorRef(this.header.getAction("addPosition")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.addPosition");
-    bindEditorRef(this.header.getAction("move")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.move");
-    bindEditorRef(this.header.getAction("delete")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.delete");
+    bindEditorRef(this.header.getElement(), "rechnung.editor.leistungsEditbox.header", proxies);
+    bindEditorRef(this.header.header?.getTitleHost?.(), "rechnung.editor.leistungsEditbox.header.title", proxies);
+    bindEditorRef(this.header.header?.actionsHost, "rechnung.editor.leistungsEditbox.header.actions", proxies);
+    bindEditorRef(this.header.header?.getLeftHost?.(), "rechnung.editor.leistungsEditbox.header.actions.left", proxies);
+    bindEditorRef(this.header.header?.getCenterHost?.(), "rechnung.editor.leistungsEditbox.header.actions.center", proxies);
+    bindEditorRef(this.header.header?.getRightHost?.(), "rechnung.editor.leistungsEditbox.header.actions.right", proxies);
+    bindEditorRef(this.header.getAction("addTitle")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.addTitle", proxies);
+    bindEditorRef(this.header.getAction("addPosition")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.addPosition", proxies);
+    bindEditorRef(this.header.getAction("move")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.move", proxies);
+    bindEditorRef(this.header.getAction("delete")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.delete", proxies);
 
-    bindEditorRef(this.adapter.getElement(), "rechnung.editor.leistungsEditbox.content");
-    bindEditorRef(this.adapter.numberRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.meta");
-    bindEditorRef(this.adapter.shortDetailRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.shortPrice");
-    bindEditorRef(this.adapter.primaryRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.short");
-    bindEditorRef(this.adapter.detailRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.prices");
-    bindEditorRef(this.adapter.longModuleRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.longModule");
-    bindEditorRef(this.adapter.textRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.long");
+    bindEditorRef(this.adapter.getElement(), "rechnung.editor.leistungsEditbox.content", proxies);
+    bindEditorRef(this.adapter.numberRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.meta", proxies);
+    bindEditorRef(this.adapter.shortDetailRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.shortPrice", proxies);
+    bindEditorRef(this.adapter.primaryRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.short", proxies);
+    bindEditorRef(this.adapter.detailRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.prices", proxies);
+    bindEditorRef(this.adapter.longModuleRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.longModule", proxies);
+    bindEditorRef(this.adapter.textRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.long", proxies);
 
-    registerField(this.adapter, "positionNumber", "rechnung.editor.leistungsEditbox.positionNumber");
-    registerField(this.adapter, "type", "rechnung.editor.leistungsEditbox.type");
-    registerField(this.adapter, "alternativeReference", "rechnung.editor.leistungsEditbox.assignment");
-    registerField(this.adapter, "nep", "rechnung.editor.leistungsEditbox.nep");
-    registerField(this.adapter, "shortText", "rechnung.editor.leistungsEditbox.shortText");
-    registerField(this.adapter, "quantity", "rechnung.editor.leistungsEditbox.quantity");
-    registerField(this.adapter, "unit", "rechnung.editor.leistungsEditbox.unit");
-    registerField(this.adapter, "unitPrice", "rechnung.editor.leistungsEditbox.unitPrice");
-    registerField(this.adapter, "positionAmount", "rechnung.editor.leistungsEditbox.positionAmount");
-    registerField(this.adapter, "longText", "rechnung.editor.leistungsEditbox.longText");
+    registerField(this.adapter, "positionNumber", "rechnung.editor.leistungsEditbox.positionNumber", proxies);
+    registerField(this.adapter, "type", "rechnung.editor.leistungsEditbox.type", proxies);
+    registerField(this.adapter, "alternativeReference", "rechnung.editor.leistungsEditbox.assignment", proxies);
+    registerField(this.adapter, "nep", "rechnung.editor.leistungsEditbox.nep", proxies);
+    registerField(this.adapter, "shortText", "rechnung.editor.leistungsEditbox.shortText", proxies);
+    registerField(this.adapter, "quantity", "rechnung.editor.leistungsEditbox.quantity", proxies);
+    registerField(this.adapter, "unit", "rechnung.editor.leistungsEditbox.unit", proxies);
+    registerField(this.adapter, "unitPrice", "rechnung.editor.leistungsEditbox.unitPrice", proxies);
+    registerField(this.adapter, "positionAmount", "rechnung.editor.leistungsEditbox.positionAmount", proxies);
+    registerField(this.adapter, "longText", "rechnung.editor.leistungsEditbox.longText", proxies);
 
-    bindEditorRef(this.adapter.shortTextRemaining, "rechnung.editor.leistungsEditbox.shortText.remaining");
-    bindEditorRef(this.adapter.longTextRemaining, "rechnung.editor.leistungsEditbox.longText.remaining");
+    bindEditorRef(this.adapter.shortTextRemaining, "rechnung.editor.leistungsEditbox.shortText.remaining", proxies);
+    bindEditorRef(this.adapter.longTextRemaining, "rechnung.editor.leistungsEditbox.longText.remaining", proxies);
 
     const decimal = this.adapter.getQuantityDecimalControl?.();
-    bindEditorRef(decimal?.getElement?.(), "rechnung.editor.leistungsEditbox.quantityDecimals");
-    bindEditorRef(decimal?.decreaseButton, "rechnung.editor.leistungsEditbox.quantityDecimals.decrease");
-    bindEditorRef(decimal?.pattern, "rechnung.editor.leistungsEditbox.quantityDecimals.pattern");
-    bindEditorRef(decimal?.increaseButton, "rechnung.editor.leistungsEditbox.quantityDecimals.increase");
+    bindEditorRef(decimal?.getElement?.(), "rechnung.editor.leistungsEditbox.quantityDecimals", proxies);
+    bindEditorRef(decimal?.decreaseButton, "rechnung.editor.leistungsEditbox.quantityDecimals.decrease", proxies);
+    bindEditorRef(decimal?.pattern, "rechnung.editor.leistungsEditbox.quantityDecimals.pattern", proxies);
+    bindEditorRef(decimal?.increaseButton, "rechnung.editor.leistungsEditbox.quantityDecimals.increase", proxies);
 
     const moduleArea = this.adapter.getElement()?.querySelector?.(".bbm-leistungsposition-module-area");
-    bindEditorRef(moduleArea, "rechnung.editor.leistungsEditbox.moduleArea");
+    bindEditorRef(moduleArea, "rechnung.editor.leistungsEditbox.moduleArea", proxies);
 
     this.uiEditorRefsRegistered = true;
     return true;
