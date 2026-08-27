@@ -5,18 +5,18 @@ import { LeistungspositionEditboxHeaderAdapter } from "../../shared/leistungspos
 import { m80EditorAttributes } from "../../ui-editor/m80Registry.js";
 import { registerM80Ref } from "../../ui-editor/m80Refs.js";
 
-const STYLE_MARKER = "rechnung-leistungseditbox-binding-styles-v7";
+const STYLE_MARKER = "rechnung-leistungseditbox-binding-styles-v8";
 const GEOMETRY_STORAGE_KEY = "bbm.rechnung.leistungsEditbox.geometry.v3";
 const LEGACY_GEOMETRY_STORAGE_KEYS = Object.freeze([
   "bbm.rechnung.leistungsEditbox.geometry.v2",
   "bbm.rechnung.leistungsEditbox.geometry.v1",
 ]);
 const DEFAULT_COMPACT_HEIGHT = 138;
-let STYLE_HREF = "./styles/rechnungLeistungsEditbox.css?v=free-v7";
+let STYLE_HREF = "./styles/rechnungLeistungsEditbox.css?v=free-v8";
 
 try {
   const url = new URL("./styles/rechnungLeistungsEditbox.css", import.meta.url);
-  url.searchParams.set("v", "free-v7");
+  url.searchParams.set("v", "free-v8");
   STYLE_HREF = url.href;
 } catch (_error) {
   // Testloader/Data-URL fallback.
@@ -65,12 +65,58 @@ function setFreeGeometryStyle(element, name, value) {
   if (name === "width") {
     element.style.removeProperty("min-width");
     element.style.removeProperty("max-width");
+    element.style.setProperty("min-width", "0", "important");
+    element.style.setProperty("max-width", "none", "important");
   }
   if (name === "height") {
     element.style.removeProperty("min-height");
     element.style.removeProperty("max-height");
+    element.style.setProperty("min-height", "0", "important");
+    element.style.setProperty("max-height", "none", "important");
   }
   element.style.setProperty(name, value, "important");
+}
+
+function freeControlChromeForHeight(element, height) {
+  if (!element?.style) return;
+  const tag = String(element.tagName || "").toLowerCase();
+  if (!["input", "select", "textarea", "button"].includes(tag)) return;
+
+  const desired = Math.max(0, finiteNumber(height, 0));
+  element.style.setProperty("min-height", "0", "important");
+  element.style.setProperty("max-height", "none", "important");
+  element.style.setProperty("padding-top", "0", "important");
+  element.style.setProperty("padding-bottom", "0", "important");
+  element.style.setProperty("line-height", px(desired), "important");
+  element.style.setProperty("overflow", "hidden", "important");
+
+  if (desired < 2) {
+    element.style.setProperty("border-top-width", "0", "important");
+    element.style.setProperty("border-bottom-width", "0", "important");
+  }
+
+  if (tag === "select") {
+    element.style.setProperty("appearance", "none", "important");
+    element.style.setProperty("-webkit-appearance", "none", "important");
+  }
+}
+
+function freeTextResizeGeometry(element, fontSize) {
+  if (!element?.style) return;
+  const size = Math.max(0, finiteNumber(fontSize, 0));
+  setFreeGeometryStyle(element, "font-size", px(size));
+
+  if (element.classList?.contains?.("bbm-leistungseditbox-decimal__pattern")) {
+    element.style.setProperty("line-height", "1", "important");
+    element.style.setProperty("height", "auto", "important");
+    element.style.setProperty("min-height", "0", "important");
+    element.style.setProperty("max-height", "none", "important");
+    element.style.setProperty("display", "inline-flex", "important");
+    element.style.setProperty("align-items", "center", "important");
+    element.style.setProperty("justify-content", "center", "important");
+    element.style.setProperty("overflow", "visible", "important");
+    element.style.setProperty("vertical-align", "middle", "important");
+  }
 }
 
 function applyActualEditorState(element, state, requestedOperation = null) {
@@ -91,12 +137,14 @@ function applyActualEditorState(element, state, requestedOperation = null) {
   }
 
   if (applies("resize", "resizeHeight") && state.height !== null && state.height !== undefined) {
-    setFreeGeometryStyle(element, "height", px(Math.max(0, finiteNumber(state.height, 0))));
+    const height = Math.max(0, finiteNumber(state.height, 0));
+    freeControlChromeForHeight(element, height);
+    setFreeGeometryStyle(element, "height", px(height));
     element.style.setProperty("box-sizing", "border-box", "important");
   }
 
   if (applies("textResize") && state.fontSize !== null && state.fontSize !== undefined) {
-    setFreeGeometryStyle(element, "font-size", px(Math.max(0, finiteNumber(state.fontSize, 0))));
+    freeTextResizeGeometry(element, state.fontSize);
   }
 
   if (applies("textMove")) {
