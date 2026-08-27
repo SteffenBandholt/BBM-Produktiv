@@ -83,16 +83,28 @@ function freeControlChromeForHeight(element, height) {
   if (!["input", "select", "textarea", "button"].includes(tag)) return;
 
   const desired = Math.max(0, finiteNumber(height, 0));
+  const desiredPx = px(desired);
+
+  // Die Elementhoehe ist reine Geometrie. Schriftgroesse und Zeilenhoehe
+  // werden hier ausdrücklich NICHT veraendert.
+  element.style.setProperty("box-sizing", "border-box", "important");
+  element.style.setProperty("height", desiredPx, "important");
+  element.style.setProperty("block-size", desiredPx, "important");
   element.style.setProperty("min-height", "0", "important");
-  element.style.setProperty("max-height", "none", "important");
+  element.style.setProperty("min-block-size", "0", "important");
+  element.style.setProperty("max-height", desiredPx, "important");
+  element.style.setProperty("max-block-size", desiredPx, "important");
   element.style.setProperty("padding-top", "0", "important");
   element.style.setProperty("padding-bottom", "0", "important");
-  element.style.setProperty("line-height", px(desired), "important");
   element.style.setProperty("overflow", "hidden", "important");
+  element.style.setProperty("align-self", "start", "important");
 
   if (desired < 2) {
     element.style.setProperty("border-top-width", "0", "important");
     element.style.setProperty("border-bottom-width", "0", "important");
+  } else {
+    element.style.removeProperty("border-top-width");
+    element.style.removeProperty("border-bottom-width");
   }
 
   if (tag === "select") {
@@ -140,6 +152,9 @@ function applyActualEditorState(element, state, requestedOperation = null) {
     const height = Math.max(0, finiteNumber(state.height, 0));
     freeControlChromeForHeight(element, height);
     setFreeGeometryStyle(element, "height", px(height));
+    element.style.setProperty("block-size", px(height), "important");
+    element.style.setProperty("max-height", px(height), "important");
+    element.style.setProperty("max-block-size", px(height), "important");
     element.style.setProperty("box-sizing", "border-box", "important");
   }
 
