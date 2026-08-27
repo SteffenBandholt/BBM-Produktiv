@@ -127,6 +127,10 @@ export class RechnungLeistungsEditboxBinding {
     return this.host;
   }
 
+  getFrameElement() {
+    return this.frame.getElement();
+  }
+
   showPosition(position, options = {}) {
     if (!position || position.is_title === true) {
       this.hide();
