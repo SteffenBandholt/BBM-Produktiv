@@ -4,6 +4,11 @@ import {
   LeistungsEditboxGroup,
   LeistungsEditboxRow,
 } from "../../core/leistungseditbox/index.js";
+import {
+  DEFAULT_TEXT_LIMITS,
+  evaluateLongText,
+  evaluateShortText,
+} from "../../core/textregeln/index.js";
 
 const DEFAULT_TYPE_OPTIONS = Object.freeze([
   { value: "standard", label: "Standard" },
@@ -55,6 +60,14 @@ function formatPositionAmount(quantity, unitPrice) {
   }).format(quantityValue * unitPriceValue);
 }
 
+function appendRemainingCounter(doc, field, className) {
+  const remaining = doc.createElement("span");
+  remaining.className = `bbm-leistungsposition-remaining ${className}`;
+  remaining.setAttribute("aria-live", "polite");
+  field.labelElement.appendChild(remaining);
+  return remaining;
+}
+
 export class LeistungspositionEditboxAdapter {
   constructor({
     documentRef,
@@ -63,6 +76,8 @@ export class LeistungspositionEditboxAdapter {
     showGross = false,
     showNep = false,
     showPositionAmount = false,
+    compact = false,
+    textLimits = DEFAULT_TEXT_LIMITS,
     onChange = null,
   } = {}) {
     const doc = documentRef || globalThis.document;
@@ -70,6 +85,11 @@ export class LeistungspositionEditboxAdapter {
 
     this.onChange = typeof onChange === "function" ? onChange : null;
     this.silent = false;
+    this.compact = compact === true;
+    this.textLimits = Object.freeze({
+      shortText: Number(textLimits?.shortText) > 0 ? Math.floor(Number(textLimits.shortText)) : DEFAULT_TEXT_LIMITS.shortText,
+      longText: Number(textLimits?.longText) > 0 ? Math.floor(Number(textLimits.longText)) : DEFAULT_TEXT_LIMITS.longText,
+    });
     this.defaultType = String(typeOptions[0]?.value ?? "");
     this.basePositionNumber = String(values.basePositionNumber ?? values.positionNumber ?? "").trim();
     this.alternativeSuffix = normalizeAlternativeSuffix(values.alternativeSuffix ?? "a");
@@ -82,19 +102,24 @@ export class LeistungspositionEditboxAdapter {
       alternativeReference: new LeistungsEditboxField({ documentRef: doc, label: "Zuordnung", kind: "singleline", value: "" }),
       quantity: new LeistungsEditboxField({ documentRef: doc, label: "Menge", kind: "singleline", value: values.quantity ?? "" }),
       unit: new LeistungsEditboxField({ documentRef: doc, label: "Einheit", kind: "singleline", value: values.unit ?? "" }),
-      unitPrice: new LeistungsEditboxField({ documentRef: doc, label: "Einzelpreis", kind: "singleline", value: values.unitPrice ?? "" }),
+      unitPrice: new LeistungsEditboxField({ documentRef: doc, label: "EP", kind: "singleline", value: values.unitPrice ?? "" }),
     };
 
     fields.positionNumber.getControl().readOnly = true;
     fields.alternativeReference.getControl().readOnly = true;
+    fields.shortText.getControl().maxLength = this.textLimits.shortText;
+    fields.longText.getControl().maxLength = this.textLimits.longText;
 
     if (showPositionAmount) {
-      fields.positionAmount = new LeistungsEditboxField({ documentRef: doc, label: "Positionsbetrag", kind: "singleline", value: "" });
+      fields.positionAmount = new LeistungsEditboxField({ documentRef: doc, label: "GP", kind: "singleline", value: "" });
       fields.positionAmount.getControl().readOnly = true;
     }
     if (showGross) fields.gross = new LeistungsEditboxField({ documentRef: doc, label: "Brutto", kind: "toggle", value: values.gross === true });
     if (showNep) fields.nep = new LeistungsEditboxField({ documentRef: doc, label: "NEP", kind: "toggle", value: values.nep === true });
     this.fields = Object.freeze(fields);
+
+    this.shortTextRemaining = appendRemainingCounter(doc, this.fields.shortText, "bbm-leistungsposition-remaining--short");
+    this.longTextRemaining = appendRemainingCounter(doc, this.fields.longText, "bbm-leistungsposition-remaining--long");
 
     this.quantityDecimalControl = new LeistungsEditboxDecimalControl({
       documentRef: doc,
@@ -115,8 +140,8 @@ export class LeistungspositionEditboxAdapter {
     this.fields.quantity.labelElement.style.gap = "8px";
     this.fields.quantity.labelElement.appendChild(this.quantityDecimalControl.getElement());
 
-    this.fields.shortText.getControl().addEventListener("input", () => this.emitChange());
-    this.fields.longText.getControl().addEventListener("input", () => this.emitChange());
+    this.fields.shortText.getControl().addEventListener("input", () => { this.updateRemainingCounters(); this.emitChange(); });
+    this.fields.longText.getControl().addEventListener("input", () => { this.updateRemainingCounters(); this.emitChange(); });
     this.fields.unit.getControl().addEventListener("input", () => this.emitChange());
     this.fields.quantity.getControl().addEventListener("input", () => { this.updatePositionAmount(); this.emitChange(); });
     this.fields.quantity.getControl().addEventListener("blur", () => { this.formatQuantity(); this.updatePositionAmount(); this.emitChange(); });
@@ -129,37 +154,85 @@ export class LeistungspositionEditboxAdapter {
     this.formatQuantity();
     this.formatUnitPrice();
 
+    const numberChildren = [
+      this.fields.positionNumber.getElement(),
+      this.fields.type.getElement(),
+      this.fields.alternativeReference.getElement(),
+      ...(this.fields.nep ? [this.fields.nep.getElement()] : []),
+      ...(this.fields.gross ? [this.fields.gross.getElement()] : []),
+    ];
+    const numberColumns = this.compact
+      ? [".42fr", ".68fr", ".9fr", ...(this.fields.nep ? ["auto"] : []), ...(this.fields.gross ? ["auto"] : [])]
+      : ["minmax(0, .35fr)", "minmax(0, .65fr)", "minmax(0, 2fr)", ...(this.fields.nep ? ["auto"] : []), ...(this.fields.gross ? ["auto"] : [])];
+
     this.numberRow = new LeistungsEditboxRow({
       documentRef: doc,
-      columns: ["minmax(0, .35fr)", "minmax(0, .65fr)", "minmax(0, 2fr)"],
-      children: [this.fields.positionNumber.getElement(), this.fields.type.getElement(), this.fields.alternativeReference.getElement()],
+      columns: numberColumns,
+      children: numberChildren,
     });
+    this.numberRow.getElement().classList.add("bbm-leistungsposition-number-row");
+
     this.primaryRow = new LeistungsEditboxRow({ documentRef: doc, children: [this.fields.shortText.getElement()] });
+    this.primaryRow.getElement().classList.add("bbm-leistungsposition-short-row");
 
     const detailChildren = [
       this.fields.quantity.getElement(), this.fields.unit.getElement(), this.fields.unitPrice.getElement(),
       ...(this.fields.positionAmount ? [this.fields.positionAmount.getElement()] : []),
-      ...(this.fields.gross ? [this.fields.gross.getElement()] : []),
-      ...(this.fields.nep ? [this.fields.nep.getElement()] : []),
     ];
     const detailColumns = [
-      "minmax(0, 1fr)", "minmax(0, .45fr)", "minmax(0, .65fr)",
-      ...(this.fields.positionAmount ? ["minmax(0, .65fr)"] : []),
-      ...(this.fields.gross ? ["auto"] : []),
-      ...(this.fields.nep ? ["auto"] : []),
+      ".95fr", ".5fr", ".72fr",
+      ...(this.fields.positionAmount ? [".78fr"] : []),
     ];
 
     this.detailRow = new LeistungsEditboxRow({ documentRef: doc, columns: detailColumns, children: detailChildren });
+    this.detailRow.getElement().classList.add("bbm-leistungsposition-detail-row");
+    for (const name of ["quantity", "unit", "unitPrice", "positionAmount"]) {
+      this.fields[name]?.getElement().classList.add("bbm-leistungsposition-field--right");
+    }
+
     this.textRow = new LeistungsEditboxRow({ documentRef: doc, children: [this.fields.longText.getElement()] });
-    this.root = new LeistungsEditboxGroup({ documentRef: doc, children: [this.numberRow.getElement(), this.primaryRow.getElement(), this.detailRow.getElement(), this.textRow.getElement()] });
+    this.textRow.getElement().classList.add("bbm-leistungsposition-long-row");
+
+    if (this.compact) {
+      const textColumn = doc.createElement("div");
+      textColumn.className = "bbm-leistungsposition-text-column";
+      textColumn.append(this.primaryRow.getElement(), this.textRow.getElement());
+
+      const detailColumn = doc.createElement("div");
+      detailColumn.className = "bbm-leistungsposition-price-column";
+      detailColumn.append(this.detailRow.getElement());
+
+      this.bodyRow = new LeistungsEditboxRow({
+        documentRef: doc,
+        columns: ["1.55fr", ".95fr"],
+        children: [textColumn, detailColumn],
+      });
+      this.bodyRow.getElement().classList.add("bbm-leistungsposition-body-row");
+      this.root = new LeistungsEditboxGroup({ documentRef: doc, children: [this.numberRow.getElement(), this.bodyRow.getElement()] });
+      this.root.getElement().classList.add("bbm-leistungsposition-editbox", "bbm-leistungsposition-editbox--compact");
+    } else {
+      this.bodyRow = null;
+      this.root = new LeistungsEditboxGroup({ documentRef: doc, children: [this.numberRow.getElement(), this.primaryRow.getElement(), this.detailRow.getElement(), this.textRow.getElement()] });
+      this.root.getElement().classList.add("bbm-leistungsposition-editbox");
+    }
 
     this.updateTypePresentation();
     this.updatePositionAmount();
+    this.updateRemainingCounters();
   }
 
   emitChange() {
     if (this.silent || !this.onChange) return;
     this.onChange(this.getValues());
+  }
+
+  updateRemainingCounters() {
+    const shortEvaluation = evaluateShortText(this.fields.shortText.getValue(), { limit: this.textLimits.shortText });
+    const longEvaluation = evaluateLongText(this.fields.longText.getValue(), { limit: this.textLimits.longText });
+    this.shortTextRemaining.textContent = String(shortEvaluation.remaining);
+    this.longTextRemaining.textContent = String(longEvaluation.remaining);
+    this.shortTextRemaining.dataset.level = shortEvaluation.level;
+    this.longTextRemaining.dataset.level = longEvaluation.level;
   }
 
   formatQuantity() {
@@ -185,7 +258,7 @@ export class LeistungspositionEditboxAdapter {
     const isPriced = PRICED_TYPES.has(type);
     const displayNumber = isAlternative ? alternativeDisplayNumber(this.basePositionNumber, this.alternativeSuffix) : this.basePositionNumber;
     this.fields.positionNumber.setValue(displayNumber);
-    this.fields.alternativeReference.setValue(isAlternative && this.basePositionNumber ? `Alternativposition zu Pos. ${this.basePositionNumber}` : "");
+    this.fields.alternativeReference.setValue(isAlternative && this.basePositionNumber ? `Alt. zu Pos. ${this.basePositionNumber}` : "");
     this.fields.alternativeReference.getElement().hidden = !isAlternative;
     this.detailRow.getElement().hidden = !isPriced;
   }
@@ -212,6 +285,7 @@ export class LeistungspositionEditboxAdapter {
       this.formatUnitPrice();
       this.updateTypePresentation();
       this.updatePositionAmount();
+      this.updateRemainingCounters();
       return this.getValues();
     } finally {
       this.silent = false;
