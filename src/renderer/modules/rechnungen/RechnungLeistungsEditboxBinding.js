@@ -4,6 +4,7 @@ import { LeistungspositionEditboxAdapter } from "../../shared/leistungsposition/
 import { LeistungspositionEditboxHeaderAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxHeaderAdapter.js";
 
 const STYLE_MARKER = "rechnung-leistungseditbox-binding-styles";
+const GEOMETRY_STORAGE_KEY = "bbm.rechnung.leistungsEditbox.geometry.v1";
 let STYLE_HREF = "./styles/rechnungLeistungsEditbox.css";
 
 try {
@@ -19,6 +20,81 @@ function ensureStyles(doc) {
   link.href = STYLE_HREF;
   link.setAttribute(`data-${STYLE_MARKER}`, "true");
   doc.head.appendChild(link);
+}
+
+function finiteNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function readStoredGeometry(doc) {
+  try {
+    const raw = doc?.defaultView?.localStorage?.getItem(GEOMETRY_STORAGE_KEY);
+    if (!raw) return null;
+    const value = JSON.parse(raw);
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    return {
+      x: finiteNumber(value.x),
+      y: finiteNumber(value.y),
+      width: finiteNumber(value.width),
+      height: finiteNumber(value.height),
+    };
+  } catch (_error) {
+    return null;
+  }
+}
+
+function applyStoredGeometry(frameElement, geometry) {
+  if (!frameElement || !geometry) return;
+  if (geometry.x !== null) frameElement.dataset.uiEditorX = String(geometry.x);
+  if (geometry.y !== null) frameElement.dataset.uiEditorY = String(geometry.y);
+  if (geometry.x !== null || geometry.y !== null) {
+    const x = geometry.x ?? 0;
+    const y = geometry.y ?? 0;
+    frameElement.style.translate = `${x}px ${y}px`;
+  }
+  if (geometry.width !== null && geometry.width >= 0) frameElement.style.width = `${geometry.width}px`;
+  if (geometry.height !== null && geometry.height >= 0) frameElement.style.height = `${geometry.height}px`;
+}
+
+function measuredDimension(frameElement, name) {
+  const inline = String(frameElement?.style?.[name] || "").trim();
+  const pixelMatch = inline.match(/^(-?\d+(?:\.\d+)?)px$/i);
+  if (pixelMatch) return finiteNumber(pixelMatch[1]);
+  const rect = frameElement?.getBoundingClientRect?.();
+  return finiteNumber(rect?.[name]);
+}
+
+function snapshotGeometry(frameElement) {
+  return {
+    x: finiteNumber(frameElement?.dataset?.uiEditorX) ?? 0,
+    y: finiteNumber(frameElement?.dataset?.uiEditorY) ?? 0,
+    width: measuredDimension(frameElement, "width"),
+    height: measuredDimension(frameElement, "height"),
+  };
+}
+
+function storeGeometry(doc, frameElement) {
+  try {
+    const storage = doc?.defaultView?.localStorage;
+    if (!storage || !frameElement) return;
+    const geometry = snapshotGeometry(frameElement);
+    if (geometry.width === null || geometry.height === null) return;
+    storage.setItem(GEOMETRY_STORAGE_KEY, JSON.stringify(geometry));
+  } catch (_error) {
+    // Lokale Geometrie-Persistenz darf die Rechnung nicht blockieren.
+  }
+}
+
+function observeGeometry(doc, frameElement) {
+  const Observer = doc?.defaultView?.MutationObserver || globalThis.MutationObserver;
+  if (typeof Observer !== "function" || !frameElement) return null;
+  const observer = new Observer(() => storeGeometry(doc, frameElement));
+  observer.observe(frameElement, {
+    attributes: true,
+    attributeFilter: ["style", "data-ui-editor-x", "data-ui-editor-y"],
+  });
+  return observer;
 }
 
 function centsToInput(cents) {
@@ -99,6 +175,9 @@ export class RechnungLeistungsEditboxBinding {
       "data-ui-editor-ops",
     ]) frameElement.removeAttribute(attribute);
 
+    applyStoredGeometry(frameElement, readStoredGeometry(doc));
+    this.geometryObserver = observeGeometry(doc, frameElement);
+
     this.header = new LeistungspositionEditboxHeaderAdapter({
       documentRef: doc,
       title: "Leistungsposition bearbeiten",
@@ -146,5 +225,10 @@ export class RechnungLeistungsEditboxBinding {
   hide() {
     this.activePositionId = null;
     this.host.hidden = true;
+  }
+
+  destroy() {
+    this.geometryObserver?.disconnect?.();
+    this.geometryObserver = null;
   }
 }
