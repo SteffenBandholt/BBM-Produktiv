@@ -243,6 +243,109 @@ class RechnungEditorScreen extends RechnungScreen {
     if (shortText.trim()) void this._queueDraftSave();
   }
 
+  _alternativeGroupMembers(position) {
+    if (!position || position.type !== POSITION_TYPES.SERVICE) return [];
+    const motherId = position.alternative_of || position.id;
+    return this.positions.filter((entry) => entry.id === motherId || entry.alternative_of === motherId);
+  }
+
+  _deletePosition() {
+    const selected = this._getSelectedPosition();
+    if (!selected) return;
+
+    if (selected.alternative_of) {
+      const motherId = selected.alternative_of;
+      const wasActive = selected.is_nep === false;
+      this.positions = this.positions.filter((entry) => entry.id !== selected.id);
+      this._normalizePositions();
+      if (wasActive && this.positions.some((entry) => entry.id === motherId)) {
+        this._activateAlternativeGroupMember(motherId);
+        this._normalizePositions();
+      }
+      this._clearPositionSelection();
+      this._renderPositions();
+      this._syncDerived();
+      void this._queueDraftSave();
+      return;
+    }
+
+    if (this.positions.some((entry) => entry.alternative_of === selected.id)) {
+      return this._error("Normalposition mit Alternativen kann nicht gelöscht werden. Zuerst die Alternativpositionen löschen.");
+    }
+
+    return super._deletePosition();
+  }
+
+  _togglePositionMove() {
+    const selected = this._getSelectedPosition();
+    if (selected?.alternative_of) {
+      return this._error("Alternativpositionen werden zusammen mit ihrer Normalposition verschoben.");
+    }
+    return super._togglePositionMove();
+  }
+
+  _isPositionMoveTarget(target, moving = this._getSelectedPosition()) {
+    if (target?.alternative_of) return false;
+    return super._isPositionMoveTarget(target, moving);
+  }
+
+  _moveSelectedPositionTo(target) {
+    const moving = this._getSelectedPosition();
+    if (!moving || moving.alternative_of) return;
+
+    const group = this._alternativeGroupMembers(moving);
+    if (group.length <= 1) return super._moveSelectedPositionTo(target);
+    if (!this._isPositionMoveTarget(target, moving)) return;
+
+    const groupIds = new Set(group.map((entry) => entry.id));
+    const next = this.positions.filter((entry) => !groupIds.has(entry.id));
+    const parentId = target.is_title ? target.id : target.parent_id || null;
+    const movedGroup = group.map((entry) => ({ ...entry, parent_id: parentId }));
+
+    let index;
+    if (target.is_title) {
+      const targetIndex = next.findIndex((entry) => entry.id === target.id);
+      index = next.reduce(
+        (last, entry, currentIndex) => entry.parent_id === target.id ? currentIndex + 1 : last,
+        targetIndex + 1
+      );
+    } else {
+      index = next.findIndex((entry) => entry.id === target.id);
+    }
+
+    next.splice(index < 0 ? next.length : index, 0, ...movedGroup);
+    this.positions = next;
+    this._normalizePositions();
+    this.isPositionMoveMode = false;
+    this._setPositionCreateParentId(parentId);
+    this._selectPosition(this.positions.find((entry) => entry.id === moving.id), { setCreateContext: false });
+    this._renderPositions();
+    void this._queueDraftSave();
+  }
+
+  _moveSelectedPositionToRoot() {
+    const moving = this._getSelectedPosition();
+    if (!moving || moving.alternative_of) return;
+
+    const group = this._alternativeGroupMembers(moving);
+    if (group.length <= 1) return super._moveSelectedPositionToRoot();
+    if (!moving.parent_id || !this._isFreeDraft()) return;
+
+    const groupIds = new Set(group.map((entry) => entry.id));
+    const next = this.positions.filter((entry) => !groupIds.has(entry.id));
+    const movedGroup = group.map((entry) => ({ ...entry, parent_id: null }));
+    const firstTitleIndex = next.findIndex((entry) => entry.is_title && !entry.parent_id);
+    next.splice(firstTitleIndex < 0 ? next.length : firstTitleIndex, 0, ...movedGroup);
+
+    this.positions = next;
+    this._normalizePositions();
+    this.isPositionMoveMode = false;
+    this._setPositionCreateParentId(null);
+    this._selectPosition(this.positions.find((entry) => entry.id === moving.id), { setCreateContext: false });
+    this._renderPositions();
+    void this._queueDraftSave();
+  }
+
   _clearPositionSelection() {
     super._clearPositionSelection();
     this.leistungsEditboxBinding?.hide();
