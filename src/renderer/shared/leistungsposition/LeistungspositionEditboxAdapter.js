@@ -140,7 +140,7 @@ export class LeistungspositionEditboxAdapter {
     this.fields.quantity.labelElement.style.display = "flex";
     this.fields.quantity.labelElement.style.alignItems = "center";
     this.fields.quantity.labelElement.style.justifyContent = "space-between";
-    this.fields.quantity.labelElement.style.gap = "6px";
+    this.fields.quantity.labelElement.style.gap = "4px";
     this.fields.quantity.labelElement.appendChild(this.quantityDecimalControl.getElement());
 
     this.fields.shortText.getControl().addEventListener("input", () => { this.updateRemainingCounters(); this.emitChange(); });
@@ -168,7 +168,7 @@ export class LeistungspositionEditboxAdapter {
       this.fields.unitPrice.getElement(),
       ...(this.fields.positionAmount ? [this.fields.positionAmount.getElement()] : []),
     ];
-    const detailColumns = [".92fr", ".52fr", ".7fr", ...(this.fields.positionAmount ? [".72fr"] : [])];
+    const detailColumns = ["105px", "68px", "105px", ...(this.fields.positionAmount ? ["105px"] : [])];
     this.detailRow = new LeistungsEditboxRow({ documentRef: doc, columns: detailColumns, children: detailChildren });
     this.detailRow.getElement().classList.add("bbm-leistungsposition-detail-row");
     for (const name of ["quantity", "unit", "unitPrice", "positionAmount"]) this.fields[name]?.getElement().classList.add("bbm-leistungsposition-field--right");
@@ -182,13 +182,13 @@ export class LeistungspositionEditboxAdapter {
         ...(grossCell ? [grossCell] : []),
         ...(this.fields.nep ? [this.fields.nep.getElement()] : []),
       ];
-      const numberColumns = [".45fr", ".72fr", "1.3fr", ...(grossCell ? [".58fr"] : []), ...(this.fields.nep ? [".52fr"] : [])];
+      const numberColumns = ["95px", "160px", "240px", ...(grossCell ? ["90px"] : []), ...(this.fields.nep ? ["70px"] : [])];
       this.numberRow = new LeistungsEditboxRow({ documentRef: doc, columns: numberColumns, children: numberChildren });
       this.numberRow.getElement().classList.add("bbm-leistungsposition-number-row");
 
       this.shortDetailRow = new LeistungsEditboxRow({
         documentRef: doc,
-        columns: ["1.38fr", "1fr"],
+        columns: ["minmax(0, 1fr)", "max-content"],
         children: [this.primaryRow.getElement(), this.detailRow.getElement()],
       });
       this.shortDetailRow.getElement().classList.add("bbm-leistungsposition-short-detail-row");
@@ -197,7 +197,7 @@ export class LeistungspositionEditboxAdapter {
       moduleArea.classList.add("bbm-leistungsposition-module-area");
       this.longModuleRow = new LeistungsEditboxRow({
         documentRef: doc,
-        columns: ["1.38fr", "1fr"],
+        columns: ["minmax(0, 1fr)", "383px"],
         children: [this.textRow.getElement(), moduleArea],
       });
       this.longModuleRow.getElement().classList.add("bbm-leistungsposition-long-module-row");
