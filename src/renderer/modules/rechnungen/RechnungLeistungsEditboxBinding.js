@@ -3,7 +3,7 @@ import { LeistungsEditboxFrame } from "../../core/leistungseditbox/index.js";
 import { LeistungspositionEditboxAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxAdapter.js";
 import { LeistungspositionEditboxHeaderAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxHeaderAdapter.js";
 import { m80EditorAttributes } from "../../ui-editor/m80Registry.js";
-import { registerM80Ref } from "../../ui-editor/m80Refs.js";
+import { completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
 
 const STYLE_MARKER = "rechnung-leistungseditbox-binding-styles-v8";
 const GEOMETRY_STORAGE_KEY = "bbm.rechnung.leistungsEditbox.geometry.v3";
@@ -85,8 +85,7 @@ function freeControlChromeForHeight(element, height) {
   const desired = Math.max(0, finiteNumber(height, 0));
   const desiredPx = px(desired);
 
-  // Die Elementhoehe ist reine Geometrie. Schriftgroesse und Zeilenhoehe
-  // werden hier ausdrücklich NICHT veraendert.
+  // Elementhoehe und Text bleiben getrennte Editorwerte.
   element.style.setProperty("box-sizing", "border-box", "important");
   element.style.setProperty("height", desiredPx, "important");
   element.style.setProperty("block-size", desiredPx, "important");
@@ -385,7 +384,7 @@ export class RechnungLeistungsEditboxBinding {
   }
 
   registerUiEditorRefs() {
-    if (this.uiEditorRefsRegistered || !this.host.isConnected) return false;
+    if (!this.host.isConnected) return false;
 
     bindEditorRef(this.frame.getHeaderHost(), "rechnung.editor.leistungsEditbox.frameHeader");
     bindEditorRef(this.frame.getContentHost(), "rechnung.editor.leistungsEditbox.frameContent");
@@ -440,7 +439,6 @@ export class RechnungLeistungsEditboxBinding {
   getFrameElement() { return this.frame.getElement(); }
 
   showPosition(position, options = {}) {
-    this.registerUiEditorRefs();
     if (!position || position.is_title === true) {
       this.hide();
       return null;
@@ -449,6 +447,10 @@ export class RechnungLeistungsEditboxBinding {
     const values = rechnungPositionToLeistungsEditboxValues(position, options);
     this.adapter.setValues(values);
     this.host.hidden = false;
+
+    // Nach jedem Positionswechsel alle realen DOM-Ziele erneut binden. Dadurch
+    // bleibt der Rechnungsscope auch nach dynamischen Renderzyklen vollständig.
+    if (this.registerUiEditorRefs()) completeM80PilotRender();
     return values;
   }
 
