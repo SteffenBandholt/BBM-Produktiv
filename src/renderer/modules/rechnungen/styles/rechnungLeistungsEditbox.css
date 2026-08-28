@@ -17,6 +17,10 @@
 .rechnung-leistungseditbox-host > .bbm-leistungseditbox-frame {
   width: 100%;
   height: 138px;
+  background: #f8fafc;
+  border: 1px solid #9aa8b8;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, .10);
+  color: #1f2937;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-frame__content > .bbm-leistungseditbox-group {
@@ -29,10 +33,13 @@
   gap: 3px;
   padding: 1px 3px;
   overflow: visible;
+  background: #eef2f6;
+  border-bottom: 1px solid #aab5c2;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-header__title {
   font: 700 8px/1 system-ui, sans-serif;
+  color: #182230;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-action {
@@ -40,7 +47,15 @@
   height: 18px;
   font: 600 8px/16px system-ui, sans-serif;
   padding: 0 5px;
-  border-radius: 2px;
+  border: 1px solid #a3afbd;
+  border-radius: 3px;
+  background: #ffffff;
+  color: #1f2937;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-action:hover {
+  background: #f1f4f7;
+  border-color: #7f8d9d;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field {
@@ -56,7 +71,7 @@
   align-items: center;
   gap: 2px;
   font: 600 8px/9px system-ui, sans-serif;
-  color: #445166;
+  color: #2f3d4d;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field__control {
@@ -66,6 +81,9 @@
   min-block-size: 0;
   max-height: none;
   max-block-size: none;
+  border-color: #a8b4c2;
+  background: #ffffff;
+  color: #1f2937;
 }
 
 .rechnung-leistungseditbox-host input.bbm-leistungseditbox-field__control,
@@ -75,12 +93,28 @@
   -webkit-appearance: none;
 }
 
+.rechnung-leistungseditbox-host input[type="checkbox"].bbm-leistungseditbox-field__control {
+  appearance: auto;
+  -webkit-appearance: checkbox;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  margin: 0;
+  accent-color: #4b5563;
+}
+
+.rechnung-leistungseditbox-host .bbm-leistungseditbox-field__control:focus {
+  outline: 1px solid #66778a;
+  outline-offset: 0;
+  border-color: #66778a;
+}
+
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field__control:not(textarea) {
   box-sizing: border-box;
   height: 18px;
   font: 400 9px/16px system-ui, sans-serif;
   padding: 0 3px;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 .rechnung-leistungseditbox-host textarea.bbm-leistungseditbox-field__control {
@@ -88,7 +122,7 @@
   height: 42px;
   font: 400 9px/11px system-ui, sans-serif;
   padding: 2px 3px;
-  border-radius: 2px;
+  border-radius: 3px;
   resize: none;
 }
 
@@ -132,21 +166,22 @@
   font-size: 7px;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  color: #64748b;
+  color: #536274;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungsposition-remaining[data-level="warning"] {
-  color: #9a6700;
+  color: #7a5a00;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungsposition-remaining[data-level="limit"] {
-  color: #b42318;
+  color: #a21d16;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field--toggle {
   padding-bottom: 0;
-  gap: 2px;
+  gap: 3px;
   font-size: 8px;
+  color: #263445;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-field--toggle .bbm-leistungseditbox-field__control {
@@ -159,8 +194,8 @@
 
 .rechnung-leistungseditbox-host .bbm-leistungsposition-module-area {
   height: 42px;
-  border: 1px dashed rgba(100, 116, 139, .12);
-  background: rgba(148, 163, 184, .02);
+  border: 1px dashed rgba(71, 85, 105, .26);
+  background: rgba(148, 163, 184, .05);
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungsposition-reserved-slot--module .bbm-leistungsposition-reserved-slot__label {
@@ -174,11 +209,13 @@
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-decimal__step {
   font-size: 8px;
   padding: 0;
+  color: #273444;
 }
 
 .rechnung-leistungseditbox-host .bbm-leistungseditbox-decimal__pattern {
   font-size: 6px;
   padding: 0;
+  color: #273444;
 }
 
 .rechnung-lv-position.is-move-target {
