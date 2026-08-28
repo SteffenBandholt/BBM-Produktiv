@@ -3,7 +3,8 @@ import { LeistungsEditboxFrame } from "../../core/leistungseditbox/index.js";
 import { LeistungspositionEditboxAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxAdapter.js";
 import { LeistungspositionEditboxHeaderAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxHeaderAdapter.js";
 import { m80EditorAttributes } from "../../ui-editor/m80Registry.js";
-import { completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
+import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
+import { RECHNUNG_LEISTUNGSEDITBOX_COMPONENT_ID } from "./RechnungLeistungsEditbox.uiEditorContract.js";
 
 const STYLE_MARKER = "rechnung-leistungseditbox-binding-styles-v8";
 const GEOMETRY_STORAGE_KEY = "bbm.rechnung.leistungsEditbox.geometry.v3";
@@ -85,7 +86,6 @@ function freeControlChromeForHeight(element, height) {
   const desired = Math.max(0, finiteNumber(height, 0));
   const desiredPx = px(desired);
 
-  // Elementhoehe und Text bleiben getrennte Editorwerte.
   element.style.setProperty("box-sizing", "border-box", "important");
   element.style.setProperty("height", desiredPx, "important");
   element.style.setProperty("block-size", desiredPx, "important");
@@ -386,6 +386,13 @@ export class RechnungLeistungsEditboxBinding {
   registerUiEditorRefs() {
     if (!this.host.isConnected) return false;
 
+    // Die Editbox kann beim Positionswechsel einzelne DOM-Ziele neu erzeugen.
+    // Vor jeder Neubindung werden deshalb ausschließlich die Refs dieses
+    // Komponentenvertrags freigegeben. So entstehen weder veraltete noch
+    // doppelte Single-Refs und gespeicherte Layoutwerte koennen anschließend
+    // sauber auf die neuen realen Elemente angewendet werden.
+    beginM83ComponentBinding(RECHNUNG_LEISTUNGSEDITBOX_COMPONENT_ID);
+
     bindEditorRef(this.frame.getHeaderHost(), "rechnung.editor.leistungsEditbox.frameHeader");
     bindEditorRef(this.frame.getContentHost(), "rechnung.editor.leistungsEditbox.frameContent");
 
@@ -448,8 +455,6 @@ export class RechnungLeistungsEditboxBinding {
     this.adapter.setValues(values);
     this.host.hidden = false;
 
-    // Nach jedem Positionswechsel alle realen DOM-Ziele erneut binden. Dadurch
-    // bleibt der Rechnungsscope auch nach dynamischen Renderzyklen vollständig.
     if (this.registerUiEditorRefs()) completeM80PilotRender();
     return values;
   }
