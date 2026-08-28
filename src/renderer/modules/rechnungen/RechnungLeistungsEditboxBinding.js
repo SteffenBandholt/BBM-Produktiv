@@ -381,18 +381,22 @@ export class RechnungLeistungsEditboxBinding {
     this.frame.replaceHeader(this.header.getElement());
     this.frame.replaceContent(this.adapter.getElement());
     this.host.append(frameElement);
+
+    this._handlePilotRenderComplete = () => {
+      if (!this.host.isConnected) return;
+      this.registerUiEditorRefs();
+    };
+    doc.defaultView?.addEventListener?.("bbm:m80-pilot-render-complete", this._handlePilotRenderComplete);
   }
 
   registerUiEditorRefs() {
     if (!this.host.isConnected) return false;
 
-    // Die Editbox kann beim Positionswechsel einzelne DOM-Ziele neu erzeugen.
-    // Vor jeder Neubindung werden deshalb ausschließlich die Refs dieses
-    // Komponentenvertrags freigegeben. So entstehen weder veraltete noch
-    // doppelte Single-Refs und gespeicherte Layoutwerte koennen anschließend
-    // sauber auf die neuen realen Elemente angewendet werden.
     beginM83ComponentBinding(RECHNUNG_LEISTUNGSEDITBOX_COMPONENT_ID);
 
+    // Der Außenrahmen gehört zum Rechnungskomponentenvertrag und muss nach
+    // jedem Renderabschluss ebenfalls wieder auf dieselbe reale Box zeigen.
+    bindEditorRef(this.frame.getElement(), "rechnung.editor.leistungsEditbox");
     bindEditorRef(this.frame.getHeaderHost(), "rechnung.editor.leistungsEditbox.frameHeader");
     bindEditorRef(this.frame.getContentHost(), "rechnung.editor.leistungsEditbox.frameContent");
 
@@ -465,6 +469,8 @@ export class RechnungLeistungsEditboxBinding {
   }
 
   destroy() {
+    this.documentRef?.defaultView?.removeEventListener?.("bbm:m80-pilot-render-complete", this._handlePilotRenderComplete);
+    this._handlePilotRenderComplete = null;
     this.geometryObserver?.disconnect?.();
     this.geometryObserver = null;
   }
