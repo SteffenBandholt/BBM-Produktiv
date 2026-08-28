@@ -6,18 +6,18 @@ import { m80EditorAttributes } from "../../ui-editor/m80Registry.js";
 import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
 import { RECHNUNG_LEISTUNGSEDITBOX_COMPONENT_ID } from "./RechnungLeistungsEditbox.uiEditorContract.js";
 
-const STYLE_MARKER = "rechnung-leistungseditbox-binding-styles-v8";
+const STYLE_MARKER = "rechnung-leistungseditbox-binding-styles-v9";
 const GEOMETRY_STORAGE_KEY = "bbm.rechnung.leistungsEditbox.geometry.v3";
 const LEGACY_GEOMETRY_STORAGE_KEYS = Object.freeze([
   "bbm.rechnung.leistungsEditbox.geometry.v2",
   "bbm.rechnung.leistungsEditbox.geometry.v1",
 ]);
 const DEFAULT_COMPACT_HEIGHT = 138;
-let STYLE_HREF = "./styles/rechnungLeistungsEditbox.css?v=free-v8";
+let STYLE_HREF = "./styles/rechnungLeistungsEditbox.css?v=free-v9";
 
 try {
   const url = new URL("./styles/rechnungLeistungsEditbox.css", import.meta.url);
-  url.searchParams.set("v", "free-v8");
+  url.searchParams.set("v", "free-v9");
   STYLE_HREF = url.href;
 } catch (_error) {
   // Testloader/Data-URL fallback.
@@ -394,8 +394,6 @@ export class RechnungLeistungsEditboxBinding {
 
     beginM83ComponentBinding(RECHNUNG_LEISTUNGSEDITBOX_COMPONENT_ID);
 
-    // Der Außenrahmen gehört zum Rechnungskomponentenvertrag und muss nach
-    // jedem Renderabschluss ebenfalls wieder auf dieselbe reale Box zeigen.
     bindEditorRef(this.frame.getElement(), "rechnung.editor.leistungsEditbox");
     bindEditorRef(this.frame.getHeaderHost(), "rechnung.editor.leistungsEditbox.frameHeader");
     bindEditorRef(this.frame.getContentHost(), "rechnung.editor.leistungsEditbox.frameContent");
