@@ -1,5 +1,10 @@
 const { randomUUID } = require("crypto");
 const { initDatabase } = require("../db/database");
+const {
+  FIRM_USAGE_CODES,
+  ensureFirmUsagesSchema,
+  setUsage,
+} = require("../db/firmUsagesRepo");
 
 function _db() {
   return initDatabase();
@@ -63,10 +68,15 @@ function _normalizeCustomerRecord(customer = {}) {
   return {
     id,
     customer_number: _trimText(customer.customer_number || customer.customerNumber),
-    company_name: _trimText(customer.company_name || customer.companyName),
+    company_name: _trimText(customer.company_name || customer.companyName || customer.name),
+    company_name2: _optionalText(customer.company_name2 || customer.companyName2 || customer.name2),
     contact_person: _optionalText(customer.contact_person || customer.contactPerson),
+    street: _optionalText(customer.street),
+    zip: _optionalText(customer.zip),
+    city: _optionalText(customer.city),
     email: _optionalText(customer.email),
     phone: _optionalText(customer.phone),
+    trade: _optionalText(customer.trade || customer.gewerk),
     notes: _optionalText(customer.notes),
   };
 }
@@ -82,12 +92,7 @@ function _normalizeLicenseRecord(license = {}) {
       : { license_edition: "test", license_binding: "none", license_mode: "soft" };
   const license_edition = editionRaw === "full" || editionRaw === "test" ? editionRaw : legacyDefaults.license_edition;
   const license_binding = bindingRaw === "machine" || bindingRaw === "none" ? bindingRaw : legacyDefaults.license_binding;
-  const license_mode =
-    modeRaw === "full" || modeRaw === "soft" || modeRaw === "machine" || modeRaw === "none"
-      ? modeRaw
-      : license_binding === "machine"
-        ? "full"
-        : "soft";
+  const license_mode = license_edition === "full" ? "full" : "soft";
 
   return {
     id,
@@ -129,6 +134,82 @@ function _normalizeHistoryEntry(entry = {}) {
   };
 }
 
+function _ensureLegacyCustomerMirror(db, firmId, metadata = {}) {
+  const id = _trimText(firmId);
+  if (!id) throw new Error("customer_id required");
+
+  const firm = db
+    .prepare(`SELECT id, short, name, phone, email, notes FROM firms WHERE id = ? LIMIT 1`)
+    .get(id);
+  if (!firm) throw new Error("license_customer_firm_not_found");
+
+  const customerNumber = _trimText(metadata.customer_number || metadata.customerNumber || firm.short);
+  const companyName = _trimText(metadata.company_name || metadata.companyName || firm.name);
+  const contactPerson = _optionalText(metadata.contact_person || metadata.contactPerson);
+  const email = _optionalText(metadata.email || firm.email);
+  const phone = _optionalText(metadata.phone || firm.phone);
+  const notes = _optionalText(metadata.notes || firm.notes);
+  const now = _nowIso();
+  const existing = db.prepare(`SELECT id FROM license_customers WHERE id = ?`).get(id);
+
+  if (existing) {
+    db.prepare(`
+      UPDATE license_customers
+      SET customer_number = ?, company_name = ?, contact_person = ?, email = ?, phone = ?, notes = ?, updated_at = ?
+      WHERE id = ?
+    `).run(customerNumber, companyName, contactPerson, email, phone, notes, now, id);
+  } else {
+    db.prepare(`
+      INSERT INTO license_customers (
+        id, customer_number, company_name, contact_person, email, phone, notes, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, customerNumber, companyName, contactPerson, email, phone, notes, now, now);
+  }
+}
+
+function _migrateLegacyLicenseCustomersToFirms(db) {
+  ensureFirmUsagesSchema(db);
+  const rows = db.prepare(`SELECT * FROM license_customers`).all();
+  const now = _nowIso();
+
+  const migrate = () => {
+    for (const row of rows) {
+      const id = _trimText(row.id);
+      const companyName = _trimText(row.company_name);
+      if (!id || !companyName) continue;
+
+      const firm = db.prepare(`SELECT id FROM firms WHERE id = ? LIMIT 1`).get(id);
+      if (!firm) {
+        db.prepare(`
+          INSERT INTO firms (
+            id, short, name, name2, street, zip, city, phone, email, gewerk, notes, role_code,
+            use_project_participant, use_customer, removed_at, created_at, updated_at
+          ) VALUES (?, ?, ?, NULL, NULL, NULL, NULL, ?, ?, NULL, ?, 60, 0, 0, NULL, ?, ?)
+        `).run(
+          id,
+          _optionalText(row.customer_number),
+          companyName,
+          _optionalText(row.phone),
+          _optionalText(row.email),
+          _optionalText(row.notes),
+          now,
+          now
+        );
+      }
+
+      setUsage({
+        firmId: id,
+        usageCode: FIRM_USAGE_CODES.LICENSE_CUSTOMER,
+        enabled: true,
+        dbConn: db,
+      });
+    }
+  };
+
+  if (db.inTransaction) migrate();
+  else db.transaction(migrate)();
+}
+
 function _baseListLicensesQuery() {
   return `
     SELECT
@@ -141,89 +222,124 @@ function _baseListLicensesQuery() {
       lr.setup_created_at AS setupCreatedAt,
       lr.license_file_path AS licenseFilePath,
       lr.license_file_created_at AS licenseFileCreatedAt,
-      lc.customer_number AS customer_number,
-      lc.company_name AS company_name,
-      lc.customer_number AS customerNumber,
-      lc.company_name AS companyName,
+      COALESCE(lc.customer_number, f.short, '') AS customer_number,
+      f.name AS company_name,
+      COALESCE(lc.customer_number, f.short, '') AS customerNumber,
+      f.name AS companyName,
       CASE
-        WHEN COALESCE(TRIM(lc.customer_number), '') <> '' AND COALESCE(TRIM(lc.company_name), '') <> ''
-          THEN lc.customer_number || ' | ' || lc.company_name
-        WHEN COALESCE(TRIM(lc.customer_number), '') <> ''
-          THEN lc.customer_number
-        WHEN COALESCE(TRIM(lc.company_name), '') <> ''
-          THEN lc.company_name
+        WHEN COALESCE(TRIM(lc.customer_number), TRIM(f.short), '') <> '' AND COALESCE(TRIM(f.name), '') <> ''
+          THEN COALESCE(lc.customer_number, f.short) || ' | ' || f.name
+        WHEN COALESCE(TRIM(f.name), '') <> ''
+          THEN f.name
         ELSE COALESCE(lr.customer_id, '')
       END AS customerDisplay
     FROM license_records lr
+    LEFT JOIN firms f ON f.id = lr.customer_id
     LEFT JOIN license_customers lc ON lc.id = lr.customer_id
   `;
 }
 
 function listCustomers() {
-  return _db().prepare(`SELECT * FROM license_customers ORDER BY company_name COLLATE NOCASE, customer_number COLLATE NOCASE`).all();
+  const db = _db();
+  _migrateLegacyLicenseCustomersToFirms(db);
+  return db.prepare(`
+    SELECT
+      f.id,
+      COALESCE(lc.customer_number, f.short, '') AS customer_number,
+      COALESCE(lc.customer_number, f.short, '') AS customerNumber,
+      f.name AS company_name,
+      f.name AS companyName,
+      f.name2 AS company_name2,
+      f.name2 AS companyName2,
+      lc.contact_person AS contact_person,
+      lc.contact_person AS contactPerson,
+      f.street,
+      f.zip,
+      f.city,
+      f.email,
+      f.phone,
+      f.gewerk,
+      f.notes
+    FROM firm_usages fu
+    INNER JOIN firms f ON f.id = fu.firm_id
+    LEFT JOIN license_customers lc ON lc.id = f.id
+    WHERE fu.usage_code = ?
+      AND f.removed_at IS NULL
+      AND COALESCE(f.is_trashed, 0) = 0
+    ORDER BY f.name COLLATE NOCASE, COALESCE(lc.customer_number, f.short, '') COLLATE NOCASE
+  `).all(FIRM_USAGE_CODES.LICENSE_CUSTOMER);
 }
 
 function saveCustomer(customer = {}) {
   const db = _db();
+  ensureFirmUsagesSchema(db);
   const record = _normalizeCustomerRecord(customer);
-  if (!record.customer_number) throw new Error("customer_number required");
   if (!record.company_name) throw new Error("company_name required");
-
-  const existing = db.prepare(`SELECT id FROM license_customers WHERE id = ?`).get(record.id);
   const now = _nowIso();
 
-  if (existing) {
-    db.prepare(
-      `
-      UPDATE license_customers
-      SET customer_number = ?,
-          company_name = ?,
-          contact_person = ?,
-          email = ?,
-          phone = ?,
-          notes = ?,
-          updated_at = ?
-      WHERE id = ?
-    `
-    ).run(
-      record.customer_number,
-      record.company_name,
-      record.contact_person,
-      record.email,
-      record.phone,
-      record.notes,
-      now,
-      record.id
-    );
-  } else {
-    db.prepare(
-      `
-      INSERT INTO license_customers (
-        id,
-        customer_number,
-        company_name,
-        contact_person,
-        email,
-        phone,
-        notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    `
-    ).run(
-      record.id,
-      record.customer_number,
-      record.company_name,
-      record.contact_person,
-      record.email,
-      record.phone,
-      record.notes
-    );
-  }
+  const mutate = () => {
+    const existingFirm = db.prepare(`SELECT id FROM firms WHERE id = ? LIMIT 1`).get(record.id);
+    if (existingFirm) {
+      db.prepare(`
+        UPDATE firms
+        SET short = ?, name = ?, name2 = ?, street = ?, zip = ?, city = ?, phone = ?, email = ?, gewerk = ?, notes = ?, updated_at = ?
+        WHERE id = ?
+      `).run(
+        _optionalText(record.customer_number),
+        record.company_name,
+        record.company_name2,
+        record.street,
+        record.zip,
+        record.city,
+        record.phone,
+        record.email,
+        record.trade,
+        record.notes,
+        now,
+        record.id
+      );
+    } else {
+      db.prepare(`
+        INSERT INTO firms (
+          id, short, name, name2, street, zip, city, phone, email, gewerk, notes, role_code,
+          use_project_participant, use_customer, removed_at, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 60, 0, 0, NULL, ?, ?)
+      `).run(
+        record.id,
+        _optionalText(record.customer_number),
+        record.company_name,
+        record.company_name2,
+        record.street,
+        record.zip,
+        record.city,
+        record.phone,
+        record.email,
+        record.trade,
+        record.notes,
+        now,
+        now
+      );
+    }
 
-  return db.prepare(`SELECT * FROM license_customers WHERE id = ?`).get(record.id);
+    setUsage({
+      firmId: record.id,
+      usageCode: FIRM_USAGE_CODES.LICENSE_CUSTOMER,
+      enabled: true,
+      dbConn: db,
+    });
+    _ensureLegacyCustomerMirror(db, record.id, record);
+  };
+
+  if (db.inTransaction) mutate();
+  else db.transaction(mutate)();
+
+  return listCustomers().find((entry) => entry.id === record.id) || null;
 }
 
 function listLicenses() {
-  return _db()
+  const db = _db();
+  _migrateLegacyLicenseCustomersToFirms(db);
+  return db
     .prepare(`${_baseListLicensesQuery()} ORDER BY lr.created_at DESC, lr.license_id COLLATE NOCASE`)
     .all();
 }
@@ -231,7 +347,9 @@ function listLicenses() {
 function listLicensesByCustomer(customerId) {
   const normalizedCustomerId = _trimText(customerId);
   if (!normalizedCustomerId) throw new Error("customer_id required");
-  return _db()
+  const db = _db();
+  _migrateLegacyLicenseCustomersToFirms(db);
+  return db
     .prepare(
       `${_baseListLicensesQuery()} WHERE lr.customer_id = ? ORDER BY lr.created_at DESC, lr.license_id COLLATE NOCASE`
     )
@@ -240,10 +358,9 @@ function listLicensesByCustomer(customerId) {
 
 function saveLicense(license = {}) {
   const db = _db();
+  _migrateLegacyLicenseCustomersToFirms(db);
   const record = _normalizeLicenseRecord(license);
-  if (!record.license_id) {
-    record.license_id = _generateLicenseId();
-  }
+  if (!record.license_id) record.license_id = _generateLicenseId();
   if (!record.customer_id) throw new Error("customer_id required");
   if (!record.product_scope_json) throw new Error("product_scope_json required");
   if (!record.valid_from) throw new Error("valid_from required");
@@ -254,34 +371,26 @@ function saveLicense(license = {}) {
   if (!record.license_edition) throw new Error("license_edition required");
   if (!record.license_binding) throw new Error("license_binding required");
 
+  setUsage({
+    firmId: record.customer_id,
+    usageCode: FIRM_USAGE_CODES.LICENSE_CUSTOMER,
+    enabled: true,
+    dbConn: db,
+  });
+  _ensureLegacyCustomerMirror(db, record.customer_id);
+
   const existing = db.prepare(`SELECT id FROM license_records WHERE id = ?`).get(record.id);
   const now = _nowIso();
 
   if (existing) {
-    db.prepare(
-      `
+    db.prepare(`
       UPDATE license_records
-      SET license_id = ?,
-          customer_id = ?,
-          product_scope_json = ?,
-          valid_from = ?,
-          valid_until = ?,
-          trial_duration_days = ?,
-          license_mode = ?,
-          license_edition = ?,
-          license_binding = ?,
-          machine_id = ?,
-          setup_type = ?,
-          setup_status = ?,
-          setup_file_path = ?,
-          setup_created_at = ?,
-          license_file_path = ?,
-          license_file_created_at = ?,
-          notes = ?,
-          updated_at = ?
+      SET license_id = ?, customer_id = ?, product_scope_json = ?, valid_from = ?, valid_until = ?,
+          trial_duration_days = ?, license_mode = ?, license_edition = ?, license_binding = ?, machine_id = ?,
+          setup_type = ?, setup_status = ?, setup_file_path = ?, setup_created_at = ?, license_file_path = ?,
+          license_file_created_at = ?, notes = ?, updated_at = ?
       WHERE id = ?
-    `
-    ).run(
+    `).run(
       record.license_id,
       record.customer_id,
       record.product_scope_json,
@@ -303,30 +412,13 @@ function saveLicense(license = {}) {
       record.id
     );
   } else {
-    db.prepare(
-      `
+    db.prepare(`
       INSERT INTO license_records (
-        id,
-        license_id,
-        customer_id,
-        product_scope_json,
-        valid_from,
-        valid_until,
-        trial_duration_days,
-        license_mode,
-        license_edition,
-        license_binding,
-        machine_id,
-        setup_type,
-        setup_status,
-        setup_file_path,
-        setup_created_at,
-        license_file_path,
-        license_file_created_at,
-        notes
+        id, license_id, customer_id, product_scope_json, valid_from, valid_until, trial_duration_days,
+        license_mode, license_edition, license_binding, machine_id, setup_type, setup_status, setup_file_path,
+        setup_created_at, license_file_path, license_file_created_at, notes
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-    ).run(
+    `).run(
       record.id,
       record.license_id,
       record.customer_id,
@@ -363,12 +455,12 @@ function deleteLicenseRecord(id) {
   return { ok: true, id: normalizedId };
 }
 
-
 function deleteCustomer(id, options = {}) {
   const normalizedId = _trimText(id);
   if (!normalizedId) throw new Error("customer_id required");
   const db = _db();
-  const existing = db.prepare(`SELECT id FROM license_customers WHERE id = ?`).get(normalizedId);
+  _migrateLegacyLicenseCustomersToFirms(db);
+  const existing = db.prepare(`SELECT id FROM firms WHERE id = ?`).get(normalizedId);
   if (!existing) throw new Error("customer_not_found");
   const licenses = db.prepare(`SELECT id FROM license_records WHERE customer_id = ?`).all(normalizedId);
   const deletedLicenses = Array.isArray(licenses) ? licenses.length : 0;
@@ -376,15 +468,20 @@ function deleteCustomer(id, options = {}) {
   if (deletedLicenses > 0 && !shouldDeleteLicenses) throw new Error("CUSTOMER_HAS_LICENSES");
   if (shouldDeleteLicenses && deletedLicenses > 0) {
     const historyCount = db
-      .prepare(
-        `SELECT COUNT(*) AS c FROM license_history WHERE license_record_id IN (SELECT id FROM license_records WHERE customer_id = ?)`
-      )
+      .prepare(`SELECT COUNT(*) AS c FROM license_history WHERE license_record_id IN (SELECT id FROM license_records WHERE customer_id = ?)`)
       .get(normalizedId);
     if (Number(historyCount?.c || 0) > 0) throw new Error("CUSTOMER_HAS_LICENSE_HISTORY");
     db.prepare(`DELETE FROM license_records WHERE customer_id = ?`).run(normalizedId);
   }
+
+  setUsage({
+    firmId: normalizedId,
+    usageCode: FIRM_USAGE_CODES.LICENSE_CUSTOMER,
+    enabled: false,
+    dbConn: db,
+  });
   db.prepare(`DELETE FROM license_customers WHERE id = ?`).run(normalizedId);
-  return { ok: true, id: normalizedId, deletedLicenses };
+  return { ok: true, id: normalizedId, deletedLicenses, firmRetained: true };
 }
 
 function listHistory() {
@@ -396,19 +493,11 @@ function addHistoryEntry(entry = {}) {
   const record = _normalizeHistoryEntry(entry);
   if (!record.license_record_id) throw new Error("license_record_id required");
 
-  db.prepare(
-    `
+  db.prepare(`
     INSERT INTO license_history (
-      id,
-      license_record_id,
-      generated_at,
-      product_scope_json,
-      valid_until,
-      output_path,
-      notes
+      id, license_record_id, generated_at, product_scope_json, valid_until, output_path, notes
     ) VALUES (?, ?, ?, ?, ?, ?, ?)
-  `
-  ).run(
+  `).run(
     record.id,
     record.license_record_id,
     record.generated_at,
