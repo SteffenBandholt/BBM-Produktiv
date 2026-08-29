@@ -41,7 +41,7 @@ async function runM8620ModuleStartupRestoreTests(run) {
 
   await run("M86.20: produktive Neustart-Fixtures wenden ihr gespeichertes Layout beim normalen Modulstart genau einmal an", () => {
     report ||= runM8620Renderer();
-    for (const moduleId of ["restarbeiten", "protokoll"]) {
+    for (const moduleId of ["restarbeiten", "protokoll", "rechnung"]) {
       assert.deepEqual(report[moduleId] && {
         loadWithoutEditor: report[moduleId].loadWithoutEditor,
         noSecondApply: report[moduleId].noSecondApply,
@@ -49,8 +49,9 @@ async function runM8620ModuleStartupRestoreTests(run) {
     }
     assert.equal(report.restarbeiten.rerender, true);
     assert.equal(report.restarbeiten.projectChange, true);
+    assert.equal(report.rechnung.height, 23, "Rechnung muss die gespeicherte LeistungsEditbox-Höhe 23 wiederherstellen.");
     assert.equal(report.separateModuleProfiles, true);
-    assert.equal(report.loads.length, 2, "Jedes gemountete Fixture-Modulprofil wird genau einmal geladen.");
+    assert.equal(report.loads.length, 3, "Jedes gemountete Fixture-Modulprofil wird genau einmal geladen.");
   });
   await run("M86.25: bestätigte Restarbeiten-Geometrie wird beim Neustart ohne interaktiven Risikodialog wiederhergestellt", () => {
     assert.ok(report?.restarbeiten?.width > 0);
@@ -58,6 +59,11 @@ async function runM8620ModuleStartupRestoreTests(run) {
     assert.equal(report.restarbeiten.loadWithoutEditor, true);
     assert.equal(report.restarbeiten.rerender, true);
     assert.equal(report.restarbeiten.projectChange, true);
+  });
+  await run("M86.20 Rechnung: gespeicherte LeistungsEditbox-Höhe bleibt nach normalem Modulstart und Editoröffnung erhalten", () => {
+    assert.equal(report?.rechnung?.height, 23);
+    assert.equal(report.rechnung.loadWithoutEditor, true);
+    assert.equal(report.rechnung.noSecondApply, true);
   });
 }
 
