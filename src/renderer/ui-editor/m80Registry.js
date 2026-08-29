@@ -53,19 +53,35 @@ function blockedScope(scopeId, name, reason = "registration_inventory_pending") 
   return Object.freeze({ scopeId, name, status: "blocked", inventoryStatus: "notInventoried", componentIds: Object.freeze([]), expectedElementIds: Object.freeze([]), elements: Object.freeze([]), reason });
 }
 
-export const BBM_M80_ACTIVE_SCOPES = Object.freeze([
-  "restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root",
-  "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root",
-  "rechnung.screen",
-  "leistungseditbox.preview",
-]);
+function moduleIdFromScope(scopeId) {
+  return String(scopeId || "").trim().split(".", 1)[0];
+}
 
-export const BBM_M80_ACTIVE_SCOPE_GROUPS = Object.freeze([
-  Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]),
-  Object.freeze(["protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root"]),
-  Object.freeze(["rechnung.screen"]),
-  Object.freeze(["leistungseditbox.preview"]),
-]);
+function discoverActiveScopes() {
+  return [...new Set(
+    aggregate.components
+      .map((component) => String(component?.scopeId || "").trim())
+      .filter(Boolean)
+  )];
+}
+
+function groupActiveScopesByModule(scopeIds) {
+  const groups = new Map();
+  for (const scopeId of scopeIds) {
+    const moduleId = moduleIdFromScope(scopeId);
+    if (!moduleId) continue;
+    const group = groups.get(moduleId) || [];
+    group.push(scopeId);
+    groups.set(moduleId, group);
+  }
+  return [...groups.values()].map((group) => Object.freeze([...group]));
+}
+
+export const BBM_M80_ACTIVE_SCOPES = Object.freeze(discoverActiveScopes());
+
+export const BBM_M80_ACTIVE_SCOPE_GROUPS = Object.freeze(
+  groupActiveScopesByModule(BBM_M80_ACTIVE_SCOPES)
+);
 
 export const BBM_M80_REGISTRY_SCOPES = Object.freeze([
   ...BBM_M80_ACTIVE_SCOPES.map(completeScope),
