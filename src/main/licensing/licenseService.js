@@ -54,7 +54,8 @@ function _normalizeRequestedFeature(feature) {
 }
 
 // Zentrale Kernlogik:
-// Standard-Features gehoeren zur Grundlizenz, optionale Features werden explizit aus der Lizenz gelesen.
+// Fachmodule und administrative Sonderrechte werden ausschliesslich hier
+// gegen die signierte Lizenz geprueft. Der Renderer entscheidet nicht selbst.
 function requireFeature(feature) {
   const normalizedFeature = normalizeFeatureAlias(_normalizeRequestedFeature(feature));
   if (!normalizedFeature) {
@@ -62,22 +63,29 @@ function requireFeature(feature) {
   }
 
   const license = requireValidLicense({ fresh: true });
-
   const modules = normalizeLicensedModules(license?.modules, license?.features);
   const features = normalizeLicensedFeatures(license?.features);
+
   if (isLicensedModule(normalizedFeature)) {
     if (!modules.includes(normalizedFeature)) throw new Error(`FEATURE_NOT_ALLOWED:${normalizedFeature}`);
     return true;
   }
+
   if (normalizedFeature === LICENSE_FEATURES.DIKTAT) {
     if (!modules.includes(LICENSE_MODULES.PROTOKOLL) || !features.includes(LICENSE_FEATURES.DIKTAT)) {
       throw new Error(`FEATURE_NOT_ALLOWED:${normalizedFeature}`);
     }
     return true;
   }
-  if (normalizedFeature !== LICENSE_MODULES.PROTOKOLL) {
-    throw new Error(`FEATURE_NOT_ALLOWED:${normalizedFeature}`);
+
+  if (normalizedFeature === LICENSE_FEATURES.LICENSE_ADMIN) {
+    if (!features.includes(LICENSE_FEATURES.LICENSE_ADMIN)) {
+      throw new Error(`FEATURE_NOT_ALLOWED:${normalizedFeature}`);
+    }
+    return true;
   }
+
+  throw new Error(`FEATURE_NOT_ALLOWED:${normalizedFeature}`);
 }
 
 module.exports = {
