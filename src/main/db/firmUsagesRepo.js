@@ -3,6 +3,7 @@
 const FIRM_USAGE_CODES = Object.freeze({
   PROJECT_PARTICIPANT: "project_participant",
   INVOICE_CUSTOMER: "invoice_customer",
+  LICENSE_CUSTOMER: "license_customer",
 });
 
 const ALLOWED_USAGE_CODES = new Set(Object.values(FIRM_USAGE_CODES));
@@ -38,6 +39,34 @@ function _columnExists(db, tableName, columnName) {
     .some((column) => column.name === columnName);
 }
 
+function _ensureUsageConstraintSupportsLicenseCustomers(db) {
+  if (!_tableExists(db, "firm_usages")) return;
+
+  const definition = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'firm_usages'")
+    .get()?.sql;
+  if (String(definition || "").includes("license_customer")) return;
+
+  db.exec(`
+    ALTER TABLE firm_usages RENAME TO firm_usages_legacy;
+
+    CREATE TABLE firm_usages (
+      firm_id TEXT NOT NULL,
+      usage_code TEXT NOT NULL CHECK (usage_code IN ('project_participant', 'invoice_customer', 'license_customer')),
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (firm_id, usage_code),
+      FOREIGN KEY (firm_id) REFERENCES firms(id) ON DELETE CASCADE
+    );
+
+    INSERT OR IGNORE INTO firm_usages (firm_id, usage_code, created_at, updated_at)
+    SELECT firm_id, usage_code, created_at, updated_at
+    FROM firm_usages_legacy;
+
+    DROP TABLE firm_usages_legacy;
+  `);
+}
+
 function ensureFirmUsagesSchema(dbConn) {
   const db = _getDb(dbConn);
   if (!_tableExists(db, "firms")) return;
@@ -46,13 +75,17 @@ function ensureFirmUsagesSchema(dbConn) {
     db.exec(`
       CREATE TABLE IF NOT EXISTS firm_usages (
         firm_id TEXT NOT NULL,
-        usage_code TEXT NOT NULL CHECK (usage_code IN ('project_participant', 'invoice_customer')),
+        usage_code TEXT NOT NULL CHECK (usage_code IN ('project_participant', 'invoice_customer', 'license_customer')),
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         PRIMARY KEY (firm_id, usage_code),
         FOREIGN KEY (firm_id) REFERENCES firms(id) ON DELETE CASCADE
       );
+    `);
 
+    _ensureUsageConstraintSupportsLicenseCustomers(db);
+
+    db.exec(`
       CREATE INDEX IF NOT EXISTS idx_firm_usages_usage_code
         ON firm_usages (usage_code, firm_id);
     `);
@@ -173,11 +206,11 @@ function hasUsage({ firmId, usageCode, dbConn } = {}) {
 }
 
 function _syncCompatibilityFlag(db, firmId, usageCode, enabled, now) {
-  const column =
-    usageCode === FIRM_USAGE_CODES.PROJECT_PARTICIPANT
-      ? "use_project_participant"
-      : "use_customer";
-  if (!_columnExists(db, "firms", column)) return;
+  let column = null;
+  if (usageCode === FIRM_USAGE_CODES.PROJECT_PARTICIPANT) column = "use_project_participant";
+  if (usageCode === FIRM_USAGE_CODES.INVOICE_CUSTOMER) column = "use_customer";
+  if (!column || !_columnExists(db, "firms", column)) return;
+
   if (_columnExists(db, "firms", "updated_at")) {
     db.prepare(`UPDATE firms SET ${column} = ?, updated_at = ? WHERE id = ?`).run(
       enabled ? 1 : 0,
