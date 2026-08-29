@@ -12,6 +12,14 @@ function _wrapIdArg(name, objKey) {
   };
 }
 
+async function _licenseAdminInvoke(channel, payload, resultKey = null) {
+  const result = await ipcRenderer.invoke(channel, payload);
+  if (!result?.ok) {
+    throw new Error(String(result?.error || "LICENSE_ADMIN_FAILED"));
+  }
+  return resultKey ? result?.[resultKey] : result;
+}
+
 contextBridge.exposeInMainWorld("bbmDb", {
   // ============================================================
   // Projekte
@@ -252,6 +260,23 @@ contextBridge.exposeInMainWorld("bbmDb", {
   licenseDelete: () => ipcRenderer.invoke("license:delete"),
   licenseGetInstalled: () => ipcRenderer.invoke("license:get-installed"),
   licenseCreateRequest: (data) => ipcRenderer.invoke("license:create-request", data),
+
+  // Geschuetzte Lizenzverwaltung. Die eigentliche Berechtigungspruefung
+  // erfolgt immer im Main-Prozess; Preload stellt nur eng begrenzte Methoden bereit.
+  licenseAdminAccessStatus: () => _licenseAdminInvoke("license-admin:access-status"),
+  licenseAdminListLicenseCustomers: () => _licenseAdminInvoke("license-admin:list-customers", undefined, "customers"),
+  licenseAdminSaveLicenseCustomer: (data) => _licenseAdminInvoke("license-admin:save-customer", data, "customer"),
+  licenseAdminDeleteLicenseCustomer: (data) => _licenseAdminInvoke("license-admin:delete-customer", data),
+  licenseAdminListLicenseRecords: () => _licenseAdminInvoke("license-admin:list-licenses", undefined, "licenses"),
+  licenseAdminListLicenseRecordsByCustomer: (customerId) =>
+    _licenseAdminInvoke("license-admin:list-licenses-by-customer", { customerId }, "licenses"),
+  licenseAdminSaveLicenseRecord: (data) => _licenseAdminInvoke("license-admin:save-license", data, "license"),
+  licenseAdminDeleteLicenseRecord: (id) => _licenseAdminInvoke("license-admin:delete-license", { id }),
+  licenseAdminListLicenseHistory: () => _licenseAdminInvoke("license-admin:list-history", undefined, "history"),
+  licenseAdminAddLicenseHistoryEntry: (data) => _licenseAdminInvoke("license-admin:add-history", data, "entry"),
+  licenseAdminListProducts: () => _licenseAdminInvoke("license-admin:list-products", undefined, "products"),
+  licenseAdminKeyStatus: () => _licenseAdminInvoke("license-admin:key-status"),
+  licenseAdminIssue: (data) => _licenseAdminInvoke("license-admin:issue", data),
 
   // DEV: Audio Override Status
   devAudioUnlockStatus: () => ipcRenderer.invoke("dev:audioUnlockStatus"),
