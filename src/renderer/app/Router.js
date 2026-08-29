@@ -18,6 +18,7 @@ import { createEditorV2Core } from "../uiV2/editorV2/editorV2Core.js";
 import { createBbmUiEditorDemoScreen } from "../uiEditor/demo/BbmUiEditorDemoScreen.js";
 import { createBbmUiEditorStatusPanel } from "../ui-editor/BbmUiEditorStatusPanel.js";
 import { injectBbmUiEditorStatusPanelStyles } from "../ui-editor/bbmUiEditorStatusPanel.css.js";
+import { restoreM80StartupLayoutAfterRegistryMount } from "../ui-editor/m80HostAdapter.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
   TopsScreen as ProtokollTopsScreen,
@@ -503,6 +504,11 @@ export default class Router {
     this.contentRoot.innerHTML = "";
     const e = v.render();
     this.contentRoot.appendChild(e);
+
+    if (v.uiEditorScopeId) {
+      await restoreM80StartupLayoutAfterRegistryMount();
+    }
+
     if (v.load) await v.load();
     this.currentView = v;
     this.activeView = v;

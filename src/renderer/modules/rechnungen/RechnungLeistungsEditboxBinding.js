@@ -390,8 +390,6 @@ export class RechnungLeistungsEditboxBinding {
   }
 
   registerUiEditorRefs() {
-    if (!this.host.isConnected) return false;
-
     beginM83ComponentBinding(RECHNUNG_LEISTUNGSEDITBOX_COMPONENT_ID);
 
     bindEditorRef(this.frame.getElement(), "rechnung.editor.leistungsEditbox");

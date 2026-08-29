@@ -712,7 +712,16 @@ function prepareEditorClose(request) {
 }
 
 function mountedActiveScopeGroup() {
-  return BBM_M80_ACTIVE_SCOPE_GROUPS.find((scopeIds) => getM80Ref(scopeIds[0])) || Object.freeze([]);
+  return BBM_M80_ACTIVE_SCOPE_GROUPS.find((scopeIds) => {
+    const rootRef = getM80Ref(scopeIds[0]);
+    if (!rootRef) return false;
+
+    const targets = Array.isArray(rootRef.contractTargets) && rootRef.contractTargets.length
+      ? rootRef.contractTargets
+      : [rootRef.element];
+
+    return targets.some((target) => target && target.isConnected !== false);
+  }) || Object.freeze([]);
 }
 
 export function createM80RegistrationDescriptor() {

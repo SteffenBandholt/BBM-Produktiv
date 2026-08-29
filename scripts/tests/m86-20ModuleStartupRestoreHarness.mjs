@@ -4,6 +4,7 @@ import { getRechnungModuleEntry } from "../../src/renderer/modules/rechnungen/in
 import { bindDevelopmentUiEditorOpenButtonRef, openNativeUiEditor } from "../../src/renderer/app/coreShellNavigation.js";
 import { BBM_M80_ACTIVE_SCOPES, BBM_M80_ACTIVE_SCOPE_GROUPS, listM83ComponentContracts } from "../../src/renderer/ui-editor/m80Registry.js";
 import { getM80Ref, resetM80PilotWorkingStatesForDiagnostic } from "../../src/renderer/ui-editor/m80Refs.js";
+import { restoreM80StartupLayoutAfterRegistryMount } from "../../src/renderer/ui-editor/m80HostAdapter.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 const number = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -160,6 +161,7 @@ async function mountRestarbeiten({ projectId, reset = true } = {}) {
   screen.selectedId = "m86-20-rest";
   screen.draft = sampleRest();
   document.body.appendChild(screen.render());
+  await restoreM80StartupLayoutAfterRegistryMount();
   await waitForStyle('link[data-bbm-restarbeiten-m1-styles="true"]');
   const launcher = document.createElement("button");
   launcher.textContent = "UI-Editor öffnen";
@@ -174,6 +176,7 @@ async function mountProtokoll({ projectId } = {}) {
   const screen = new TopsScreen({ projectId, meetingId: "m86-20-meeting" });
   screen.store.setState({ tops: sampleTops(), selectedTopId: "m86-20-top", showAmpelInList: true, showLongtextInList: true, meetingMeta: { meeting_number: 1, meeting_date: "2026-08-05", keyword: "Prüfung", context_label: "Projekt M86.20" } });
   document.body.appendChild(screen.render());
+  await restoreM80StartupLayoutAfterRegistryMount();
   await waitForStyle('link[data-bbm-tops-v2-styles="true"]');
   const launcher = document.createElement("button");
   launcher.textContent = "UI-Editor öffnen";
@@ -190,6 +193,7 @@ async function mountRechnung() {
   if (typeof Screen !== "function") throw new Error("M86.20 Rechnung: produktiver Screen fehlt.");
   const screen = new Screen();
   document.body.appendChild(screen.render());
+  await restoreM80StartupLayoutAfterRegistryMount();
   const launcher = document.createElement("button");
   launcher.textContent = "UI-Editor öffnen";
   document.body.appendChild(launcher);
