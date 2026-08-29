@@ -1,5 +1,6 @@
 import RestarbeitenScreen from "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js";
 import TopsScreen from "../../src/renderer/modules/protokoll/screens/TopsScreen.js";
+import { getRechnungModuleEntry } from "../../src/renderer/modules/rechnungen/index.js";
 import { bindDevelopmentUiEditorOpenButtonRef, openNativeUiEditor } from "../../src/renderer/app/coreShellNavigation.js";
 import { BBM_M80_ACTIVE_SCOPES, BBM_M80_ACTIVE_SCOPE_GROUPS, listM83ComponentContracts } from "../../src/renderer/ui-editor/m80Registry.js";
 import { getM80Ref, resetM80PilotWorkingStatesForDiagnostic } from "../../src/renderer/ui-editor/m80Refs.js";
@@ -66,22 +67,58 @@ function sampleTops() {
   ];
 }
 
+function sampleRechnungPosition() {
+  return {
+    id: "m86-20-rechnung-position",
+    type: "SERVICE",
+    is_title: false,
+    parent_id: null,
+    position_number: "1",
+    short_text: "M86.20 Rechnungsposition",
+    long_text: "Gespeicherte LeistungsEditbox-Geometrie.",
+    quantity: "1",
+    unit: "Stk",
+    unit_price_cents: 10000,
+    total_cents: 10000,
+    is_nep: false,
+    vat_rate_percent: 19,
+    price_input_mode: "NET",
+    price_input_cents: null,
+    alternative_of: null,
+    alternative_suffix: null,
+  };
+}
+
 function createStartupApi(report) {
   return {
     async loadStartupLayout(registration) {
       const moduleId = String(registration?.activeScopes?.[0] || "").split(".", 1)[0];
-      const elementId = moduleId === "restarbeiten" ? "restarbeiten.edit.short.label" : "protokoll.list.row.short";
+      const elementId = moduleId === "restarbeiten"
+        ? "restarbeiten.edit.short.label"
+        : moduleId === "rechnung"
+          ? "rechnung.editor.leistungsEditbox.action.addPosition"
+          : "protokoll.list.row.short";
       const ref = getM80Ref(elementId);
       if (!ref) throw new Error(`M86.20 Startprofil ohne Ref: ${elementId}`);
       const current = ref.read();
-      const fontSize = number(current.fontSize) + 2;
+      const isRechnung = moduleId === "rechnung";
+      const fontSize = isRechnung ? number(current.fontSize) : number(current.fontSize) + 2;
+      const height = isRechnung ? 23 : number(current.height);
       const width = moduleId === "restarbeiten" ? number(current.width) - 3 : number(current.width);
       const remainingElementId = moduleId === "restarbeiten" ? "restarbeiten.edit.short.remaining" : "";
       const remainingX = moduleId === "restarbeiten" ? -190 : null;
       const layoutStorageKey = `module-${moduleId}`;
-      report.loads.push({ moduleId, layoutStorageKey, activeScopes: [...registration.activeScopes], elementId, fontSize, width, remainingElementId, remainingX, capturedAt: new Date().toISOString() });
-      const elements = [{ elementId, fontSize, ...(moduleId === "restarbeiten" ? { width } : {}) }];
-      const explicitOperations = { [elementId]: moduleId === "restarbeiten" ? ["textResize", "resizeWidth"] : ["textResize"] };
+      report.loads.push({ moduleId, layoutStorageKey, activeScopes: [...registration.activeScopes], elementId, fontSize, width, height, remainingElementId, remainingX, capturedAt: new Date().toISOString() });
+      const elements = isRechnung
+        ? [{ elementId, height }]
+        : [{ elementId, fontSize, ...(moduleId === "restarbeiten" ? { width } : {}) }];
+      const explicitOperations = {
+        [elementId]: isRechnung
+          ? ["resizeHeight"]
+          : moduleId === "restarbeiten"
+            ? ["textResize", "resizeWidth"]
+            : ["textResize"],
+      };
       if (remainingElementId) {
         elements.push({ elementId: remainingElementId, x: remainingX });
         explicitOperations[remainingElementId] = ["move"];
@@ -91,10 +128,10 @@ function createStartupApi(report) {
         found: true,
         state: "compatible",
         profileId: "standard",
-        profileSha256: (moduleId === "restarbeiten" ? "a" : "b").repeat(64),
+        profileSha256: (moduleId === "restarbeiten" ? "a" : moduleId === "rechnung" ? "c" : "b").repeat(64),
         layoutStorageKey,
         scopes: [{
-          scopeId: moduleId === "restarbeiten" ? "restarbeiten.edit.root" : "protokoll.list.root",
+          scopeId: moduleId === "restarbeiten" ? "restarbeiten.edit.root" : moduleId === "rechnung" ? "rechnung.screen" : "protokoll.list.root",
           elements,
           explicitOperations,
         }],
@@ -145,6 +182,20 @@ async function mountProtokoll({ projectId } = {}) {
   return { screen, launcher, elementId: "protokoll.list.row.short" };
 }
 
+async function mountRechnung() {
+  resetM80PilotWorkingStatesForDiagnostic();
+  document.body.replaceChildren();
+  const moduleEntry = getRechnungModuleEntry();
+  const Screen = Object.values(moduleEntry.screens || {})[0];
+  if (typeof Screen !== "function") throw new Error("M86.20 Rechnung: produktiver Screen fehlt.");
+  const screen = new Screen();
+  document.body.appendChild(screen.render());
+  const launcher = document.createElement("button");
+  launcher.textContent = "UI-Editor öffnen";
+  document.body.appendChild(launcher);
+  return { screen, launcher, elementId: "rechnung.editor.leistungsEditbox.action.addPosition" };
+}
+
 async function verifyModule({ moduleId, scopeId, mounted, report }) {
   await waitFor(() => report.loads.filter((entry) => entry.moduleId === moduleId).length === 1 && report.completions.length >= report.loads.length, `M86.20 ${moduleId}: Startprofil wurde nicht automatisch angewandt.`);
   if (document.querySelector("[data-bbm-ui-editor-risk-preview]") || document.querySelector("[data-bbm-ui-editor-overlay]") || document.querySelector("[data-ui-editor-selected]") || document.querySelector("[data-ui-editor-hovered]") || document.querySelector("[data-ui-editor-component]")) {
@@ -152,7 +203,16 @@ async function verifyModule({ moduleId, scopeId, mounted, report }) {
   }
   const load = report.loads.find((entry) => entry.moduleId === moduleId);
   const beforeEditor = getM80Ref(mounted.elementId).read();
-  if (Math.abs(number(beforeEditor.fontSize) - load.fontSize) > 0.01) throw new Error(`M86.20 ${moduleId}: gespeicherte Schriftgröße ist vor dem Editorstart nicht sichtbar.`);
+  if (moduleId === "rechnung") {
+    if (Math.abs(number(beforeEditor.height) - load.height) > 0.01) throw new Error(`M86.20 Rechnung: gespeicherte Buttonhöhe ${load.height} ist vor dem Editorstart nicht wirksam.`);
+    mounted.screen.editor.hidden = false;
+    mounted.screen.leistungsEditboxBinding.showPosition(sampleRechnungPosition());
+    await tick();
+    const visible = getM80Ref(mounted.elementId).read();
+    if (Math.abs(number(visible.height) - load.height) > 0.01) throw new Error(`M86.20 Rechnung: sichtbare LeistungsEditbox verlor die gespeicherte Buttonhöhe ${load.height}.`);
+  } else {
+    if (Math.abs(number(beforeEditor.fontSize) - load.fontSize) > 0.01) throw new Error(`M86.20 ${moduleId}: gespeicherte Schriftgröße ist vor dem Editorstart nicht sichtbar.`);
+  }
   if (moduleId === "restarbeiten") {
     if (Math.abs(number(beforeEditor.width) - load.width) > 0.01) throw new Error("M86.25 Restarbeiten: gespeicherte Breite ist nach dem Neustart nicht sichtbar.");
     const remaining = getM80Ref(load.remainingElementId)?.read();
@@ -161,9 +221,13 @@ async function verifyModule({ moduleId, scopeId, mounted, report }) {
   const opened = await openNativeUiEditor({ scopeId, api: window.uiEditor, launcherButton: mounted.launcher });
   if (!opened.ok) throw new Error(`M86.20 ${moduleId}: späterer Editorstart fehlgeschlagen.`);
   const afterEditor = getM80Ref(mounted.elementId).read();
-  if (Math.abs(number(afterEditor.fontSize) - load.fontSize) > 0.01) throw new Error(`M86.20 ${moduleId}: Editorstart hat das Layout erneut verändert.`);
+  if (moduleId === "rechnung") {
+    if (Math.abs(number(afterEditor.height) - load.height) > 0.01) throw new Error("M86.20 Rechnung: Editorstart hat die gespeicherte Buttonhöhe verändert.");
+  } else if (Math.abs(number(afterEditor.fontSize) - load.fontSize) > 0.01) {
+    throw new Error(`M86.20 ${moduleId}: Editorstart hat das Layout erneut verändert.`);
+  }
   if (report.loads.filter((entry) => entry.moduleId === moduleId).length !== 1) throw new Error(`M86.20 ${moduleId}: späterer Editorstart hat das Startprofil erneut geladen.`);
-  return { moduleId, layoutStorageKey: load.layoutStorageKey, fontSize: load.fontSize, width: load.width, remainingX: load.remainingX, loadWithoutEditor: true, noSecondApply: true };
+  return { moduleId, layoutStorageKey: load.layoutStorageKey, fontSize: load.fontSize, width: load.width, height: load.height, remainingX: load.remainingX, loadWithoutEditor: true, noSecondApply: true };
 }
 
 export async function runM8620ModuleStartupRestore() {
@@ -188,9 +252,15 @@ export async function runM8620ModuleStartupRestore() {
 
     const protokoll = await mountProtokoll({ projectId: "m86-20-project-a" });
     report.protokoll = await verifyModule({ moduleId: "protokoll", scopeId: "protokoll.screen.root", mounted: protokoll, report });
-    report.separateModuleProfiles = report.restarbeiten.layoutStorageKey !== report.protokoll.layoutStorageKey;
-    if (!report.separateModuleProfiles) throw new Error("M86.20: Protokoll und Restarbeiten teilen unzulässig ein Profil.");
-    report.ok = report.registryAutomatic.scopesAutomatic && report.registryAutomatic.groupsAutomatic && report.editorOpens.length === 2 && report.scopeEvents.length === 2;
+
+    const rechnung = await mountRechnung();
+    report.rechnung = await verifyModule({ moduleId: "rechnung", scopeId: "rechnung.screen", mounted: rechnung, report });
+    if (Math.abs(number(report.rechnung.height) - 23) > 0.01) throw new Error("M86.20 Rechnung: Testprofil besitzt nicht die erwartete Höhe 23.");
+
+    const profileKeys = new Set([report.restarbeiten.layoutStorageKey, report.protokoll.layoutStorageKey, report.rechnung.layoutStorageKey]);
+    report.separateModuleProfiles = profileKeys.size === 3;
+    if (!report.separateModuleProfiles) throw new Error("M86.20: produktive Module teilen unzulässig ein Profil.");
+    report.ok = report.registryAutomatic.scopesAutomatic && report.registryAutomatic.groupsAutomatic && report.editorOpens.length === 3 && report.scopeEvents.length === 3;
     return report;
   } finally {
     window.uiEditor = previousApi;
