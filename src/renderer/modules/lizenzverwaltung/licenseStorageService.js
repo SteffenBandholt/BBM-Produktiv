@@ -34,12 +34,6 @@ export async function saveCustomer(customer) {
   return save(record);
 }
 
-export async function deleteCustomer(customer) {
-  const id = String(customer?.id || customer || "").trim();
-  const del = requireApiMethod("licenseAdminDeleteLicenseCustomer");
-  return del(id);
-}
-
 export async function listLicenses() {
   const list = requireApiMethod("licenseAdminListLicenseRecords");
   return list();
@@ -55,7 +49,6 @@ export async function saveLicense(license) {
   const save = requireApiMethod("licenseAdminSaveLicenseRecord");
   return save(record);
 }
-
 
 export async function deleteCustomer(customerOrId, options = {}) {
   const rawId = typeof customerOrId === "string" ? customerOrId : customerOrId?.id;
