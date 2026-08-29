@@ -7,9 +7,14 @@ const LICENSE_MODULES = Object.freeze({
 const LICENSE_FEATURES = Object.freeze({
   DIKTAT: "diktat",
   AUDIO: "diktat",
+  LICENSE_ADMIN: "license_admin",
 });
 
 const KNOWN_LICENSE_MODULE_IDS = Object.freeze(Object.values(LICENSE_MODULES));
+const KNOWN_OPTIONAL_FEATURE_IDS = Object.freeze([
+  LICENSE_FEATURES.DIKTAT,
+  LICENSE_FEATURES.LICENSE_ADMIN,
+]);
 
 const LEGACY_FEATURE_ALIASES = Object.freeze({
   audio: LICENSE_FEATURES.DIKTAT,
@@ -36,7 +41,7 @@ function normalizeOptionalLicensedFeatures(features) {
 
   features.forEach((value) => {
     const feature = normalizeFeatureAlias(value);
-    if (!feature || feature !== LICENSE_FEATURES.DIKTAT || seen.has(feature)) return;
+    if (!feature || !KNOWN_OPTIONAL_FEATURE_IDS.includes(feature) || seen.has(feature)) return;
     seen.add(feature);
     normalized.push(feature);
   });
@@ -59,7 +64,7 @@ function isStandardLicensedFeature(feature) {
 }
 
 function isOptionalLicensedFeature(feature) {
-  return normalizeFeatureAlias(feature) === LICENSE_FEATURES.DIKTAT;
+  return KNOWN_OPTIONAL_FEATURE_IDS.includes(normalizeFeatureAlias(feature));
 }
 
 function _hasLegacyProtokollFeature(features) {
@@ -106,6 +111,7 @@ module.exports = {
   LICENSE_MODULES,
   LICENSE_FEATURES,
   KNOWN_LICENSE_MODULE_IDS,
+  KNOWN_OPTIONAL_FEATURE_IDS,
   LEGACY_PROTOKOLL_FEATURE_IDS,
   normalizeLicensedModules,
   normalizeFeatureAlias,
