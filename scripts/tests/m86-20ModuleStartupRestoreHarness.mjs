@@ -1,6 +1,7 @@
 import RestarbeitenScreen from "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js";
 import TopsScreen from "../../src/renderer/modules/protokoll/screens/TopsScreen.js";
 import { bindDevelopmentUiEditorOpenButtonRef, openNativeUiEditor } from "../../src/renderer/app/coreShellNavigation.js";
+import { BBM_M80_ACTIVE_SCOPES, BBM_M80_ACTIVE_SCOPE_GROUPS, listM83ComponentContracts } from "../../src/renderer/ui-editor/m80Registry.js";
 import { getM80Ref, resetM80PilotWorkingStatesForDiagnostic } from "../../src/renderer/ui-editor/m80Refs.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -25,14 +26,43 @@ async function waitForStyle(selector) {
   });
 }
 
+function moduleIdFromScope(scopeId) {
+  return String(scopeId || "").trim().split(".", 1)[0];
+}
+
+function inspectAutomaticRegistryGroups() {
+  const componentScopes = [...new Set(
+    listM83ComponentContracts()
+      .map((component) => String(component?.scopeId || "").trim())
+      .filter(Boolean)
+  )];
+  const expectedGroups = new Map();
+  for (const scopeId of componentScopes) {
+    const moduleId = moduleIdFromScope(scopeId);
+    const group = expectedGroups.get(moduleId) || [];
+    group.push(scopeId);
+    expectedGroups.set(moduleId, group);
+  }
+  const actualGroups = BBM_M80_ACTIVE_SCOPE_GROUPS.map((group) => [...group]);
+  const expectedGroupValues = [...expectedGroups.values()];
+  return {
+    componentScopes,
+    activeScopes: [...BBM_M80_ACTIVE_SCOPES],
+    expectedGroups: expectedGroupValues,
+    actualGroups,
+    scopesAutomatic: JSON.stringify(BBM_M80_ACTIVE_SCOPES) === JSON.stringify(componentScopes),
+    groupsAutomatic: JSON.stringify(actualGroups) === JSON.stringify(expectedGroupValues),
+  };
+}
+
 function sampleRest() {
-  return { id: "m86-20-rest", running_number: 1, item_class: "rest", status: "offen", short_text: "M86.20 Restarbeit", long_text: "Gespeichertes Restarbeiten-Layout.", due_date: "2026-08-12", responsible_label: "PrÃ¼fung", ampelState: "orange", location_level_1: "GebÃ¤ude", location_level_2: "EG", location_level_3: "Raum", location_level_4: "01" };
+  return { id: "m86-20-rest", running_number: 1, item_class: "rest", status: "offen", short_text: "M86.20 Restarbeit", long_text: "Gespeichertes Restarbeiten-Layout.", due_date: "2026-08-12", responsible_label: "Prüfung", ampelState: "orange", location_level_1: "Gebäude", location_level_2: "EG", location_level_3: "Raum", location_level_4: "01" };
 }
 
 function sampleTops() {
   return [
     { id: "m86-20-title", level: 1, displayNumber: 1, title: "M86.20 Titel", longtext: "Titeltext", created_at: "2026-08-05" },
-    { id: "m86-20-top", level: 2, displayNumber: "1.1", title: "M86.20 TOP", longtext: "Gespeichertes Protokoll-Layout.", created_at: "2026-08-05", due_date: "2026-08-12", status: "offen", responsible_label: "PrÃ¼fung", is_task: 0, is_decision: 0 },
+    { id: "m86-20-top", level: 2, displayNumber: "1.1", title: "M86.20 TOP", longtext: "Gespeichertes Protokoll-Layout.", created_at: "2026-08-05", due_date: "2026-08-12", status: "offen", responsible_label: "Prüfung", is_task: 0, is_decision: 0 },
   ];
 }
 
@@ -95,7 +125,7 @@ async function mountRestarbeiten({ projectId, reset = true } = {}) {
   document.body.appendChild(screen.render());
   await waitForStyle('link[data-bbm-restarbeiten-m1-styles="true"]');
   const launcher = document.createElement("button");
-  launcher.textContent = "UI-Editor Ã¶ffnen";
+  launcher.textContent = "UI-Editor öffnen";
   document.body.appendChild(launcher);
   bindDevelopmentUiEditorOpenButtonRef({ scopeId: "restarbeiten.header.root", button: launcher });
   return { screen, launcher, elementId: "restarbeiten.edit.short.label" };
@@ -105,11 +135,11 @@ async function mountProtokoll({ projectId } = {}) {
   resetM80PilotWorkingStatesForDiagnostic();
   document.body.replaceChildren();
   const screen = new TopsScreen({ projectId, meetingId: "m86-20-meeting" });
-  screen.store.setState({ tops: sampleTops(), selectedTopId: "m86-20-top", showAmpelInList: true, showLongtextInList: true, meetingMeta: { meeting_number: 1, meeting_date: "2026-08-05", keyword: "PrÃ¼fung", context_label: "Projekt M86.20" } });
+  screen.store.setState({ tops: sampleTops(), selectedTopId: "m86-20-top", showAmpelInList: true, showLongtextInList: true, meetingMeta: { meeting_number: 1, meeting_date: "2026-08-05", keyword: "Prüfung", context_label: "Projekt M86.20" } });
   document.body.appendChild(screen.render());
   await waitForStyle('link[data-bbm-tops-v2-styles="true"]');
   const launcher = document.createElement("button");
-  launcher.textContent = "UI-Editor Ã¶ffnen";
+  launcher.textContent = "UI-Editor öffnen";
   screen.header.actionsWrap.appendChild(launcher);
   bindDevelopmentUiEditorOpenButtonRef({ scopeId: "protokoll.screen.root", button: launcher });
   return { screen, launcher, elementId: "protokoll.list.row.short" };
@@ -137,7 +167,7 @@ async function verifyModule({ moduleId, scopeId, mounted, report }) {
 }
 
 export async function runM8620ModuleStartupRestore() {
-  const report = { ok: false, loads: [], completions: [], editorOpens: [], scopeEvents: [] };
+  const report = { ok: false, loads: [], completions: [], editorOpens: [], scopeEvents: [], registryAutomatic: inspectAutomaticRegistryGroups() };
   const previousApi = window.uiEditor;
   window.uiEditor = createStartupApi(report);
   try {
@@ -160,7 +190,7 @@ export async function runM8620ModuleStartupRestore() {
     report.protokoll = await verifyModule({ moduleId: "protokoll", scopeId: "protokoll.screen.root", mounted: protokoll, report });
     report.separateModuleProfiles = report.restarbeiten.layoutStorageKey !== report.protokoll.layoutStorageKey;
     if (!report.separateModuleProfiles) throw new Error("M86.20: Protokoll und Restarbeiten teilen unzulässig ein Profil.");
-    report.ok = report.editorOpens.length === 2 && report.scopeEvents.length === 2;
+    report.ok = report.registryAutomatic.scopesAutomatic && report.registryAutomatic.groupsAutomatic && report.editorOpens.length === 2 && report.scopeEvents.length === 2;
     return report;
   } finally {
     window.uiEditor = previousApi;
