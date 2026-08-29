@@ -2,9 +2,15 @@ import {
   getActiveModuleIds,
   getDerivedActiveModuleCatalog,
   getDerivedActiveModuleIds,
+  LIZENZVERWALTUNG_MODULE_ID,
 } from "./moduleCatalog.js";
 
 const DEFAULT_ACTIVE_MODULE_IDS = Object.freeze(getActiveModuleIds());
+const DEV_ACTIVE_MODULE_IDS = Object.freeze([
+  ...DEFAULT_ACTIVE_MODULE_IDS,
+  LIZENZVERWALTUNG_MODULE_ID,
+]);
+const LICENSE_ADMIN_FEATURE = "license_admin";
 
 let cachedActiveModuleIds = DEFAULT_ACTIVE_MODULE_IDS;
 let cachedActiveModuleSource = "default";
@@ -74,7 +80,7 @@ export async function refreshCachedActiveModuleAccess({ force = false } = {}) {
 
   const packagedRuntime = await isPackagedRuntime();
   if (packagedRuntime === false) {
-    return setCachedActiveModuleIds(DEFAULT_ACTIVE_MODULE_IDS, "dev");
+    return setCachedActiveModuleIds(DEV_ACTIVE_MODULE_IDS, "dev");
   }
 
   const root = typeof window !== "undefined" ? window : globalThis;
@@ -94,7 +100,12 @@ export async function refreshCachedActiveModuleAccess({ force = false } = {}) {
         return setCachedActiveModuleIds([], "license-disabled");
       }
 
-      return setCachedActiveModuleIds(status.modules || [], "license");
+      const licensedModuleIds = normalizeModuleIds(status.modules || []);
+      const licensedFeatures = normalizeModuleIds(status.features || []);
+      if (licensedFeatures.includes(LICENSE_ADMIN_FEATURE)) {
+        licensedModuleIds.push(LIZENZVERWALTUNG_MODULE_ID);
+      }
+      return setCachedActiveModuleIds(licensedModuleIds, "license");
     } catch (_err) {
       return setCachedActiveModuleIds(DEFAULT_ACTIVE_MODULE_IDS, "fallback");
     } finally {
