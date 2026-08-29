@@ -10,6 +10,10 @@ import {
   getRechnungModuleEntry,
   RECHNUNG_MODULE_ID,
 } from "../../modules/rechnungen/index.js";
+import {
+  getLizenzverwaltungModuleEntry,
+  LIZENZVERWALTUNG_MODULE_ID,
+} from "../../modules/lizenzverwaltung/index.js";
 
 const AVAILABLE_MODULE_ENTRIES = Object.freeze([
   Object.freeze({
@@ -24,8 +28,15 @@ const AVAILABLE_MODULE_ENTRIES = Object.freeze([
     moduleId: RECHNUNG_MODULE_ID,
     entry: getRechnungModuleEntry(),
   }),
+  Object.freeze({
+    moduleId: LIZENZVERWALTUNG_MODULE_ID,
+    entry: getLizenzverwaltungModuleEntry(),
+  }),
 ]);
 
+// Produktive Fachmodule. Die Lizenzverwaltung ist absichtlich NICHT Teil
+// dieses Standardumfangs; sie wird nur im DEV-Betrieb oder durch das
+// Sonderrecht license_admin aktiviert.
 const DEFAULT_ACTIVE_MODULE_IDS = Object.freeze([
   PROTOKOLL_MODULE_ID,
   RESTARBEITEN_MODULE_ID,
@@ -199,9 +210,6 @@ const PRODUCTIVE_ACTIVE_MODULE_ACCESS = createProductiveModuleAccess(
   () => ACTIVE_MODULE_IDS
 );
 
-// App-Kern: Produktmodulkatalog der echten Fachmodule.
-// Unterfunktionen wie "Pläne" werden von ihrem Fachmodul registriert und sind
-// keine eigenständigen lizenzierbaren Produktmodule.
 export function getActiveModuleCatalog() {
   return PRODUCTIVE_ACTIVE_MODULE_ACCESS.getCatalog();
 }
@@ -234,4 +242,9 @@ export function getActiveModuleIdsForReleaseState(releaseState) {
   return RELEASE_STATE_MODULE_ACCESS.getModuleIds(releaseState);
 }
 
-export { PROTOKOLL_MODULE_ID, RESTARBEITEN_MODULE_ID, RECHNUNG_MODULE_ID };
+export {
+  PROTOKOLL_MODULE_ID,
+  RESTARBEITEN_MODULE_ID,
+  RECHNUNG_MODULE_ID,
+  LIZENZVERWALTUNG_MODULE_ID,
+};
