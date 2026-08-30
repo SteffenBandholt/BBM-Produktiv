@@ -360,9 +360,28 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-live-overview { display: grid; align-content: start; gap: 14px; }
 .rechnung-live-overview[hidden],
 .rechnung-live-editor[hidden] { display: none; }
-.rechnung-dev-sequence { border-color: #c8a94f; background: #fffdf4; }
-.rechnung-dev-sequence__controls { display: grid; grid-template-columns: minmax(120px, 180px) minmax(120px, 180px) auto; align-items: end; gap: 10px; }
-.rechnung-dev-sequence__value { display: flex; align-items: center; min-height: var(--invoice-control-height); padding: 0 10px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-control); background: var(--invoice-color-surface-subtle); font-variant-numeric: tabular-nums; }
+.rechnung-dev-sequence:not([hidden]) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  gap: 3px 14px;
+  padding: 7px 10px;
+  border-color: #e4dcc5;
+  border-left: 3px solid #c8a94f;
+  border-radius: 6px;
+  background: #fffef9;
+}
+.rechnung-dev-sequence .invoice-form-section__head { align-self: center; justify-content: flex-start; gap: 6px; margin: 0; }
+.rechnung-dev-sequence .invoice-form-section__title { color: #5f6570; font-size: 11px; font-weight: 750; }
+.rechnung-dev-sequence .invoice-design-chip { padding: 1px 5px; background: #f4edd8; color: #806817; font-size: 8px; letter-spacing: 0.05em; }
+.rechnung-dev-sequence__controls { display: flex; flex-wrap: wrap; align-items: end; justify-content: flex-start; gap: 6px 8px; min-width: 0; }
+.rechnung-dev-sequence__controls .invoice-field { width: 94px; gap: 2px; }
+.rechnung-dev-sequence__controls .invoice-field__label { color: #6f7785; font-size: 9px; font-weight: 700; }
+.rechnung-dev-sequence__controls .invoice-control { width: 94px; min-height: 26px; height: 26px; padding: 2px 7px; font-size: 11px; }
+.rechnung-dev-sequence__value { display: flex; align-items: center; width: 94px; min-height: 26px; padding: 0 7px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-control); background: var(--invoice-color-surface-subtle); font-size: 11px; font-variant-numeric: tabular-nums; }
+.rechnung-dev-sequence__controls .invoice-button { min-height: 26px; padding: 2px 8px; border-color: #d7dce3; background: transparent; color: #596273; font-size: 10px; font-weight: 650; }
+.rechnung-dev-sequence .rechnung-live-message { grid-column: 1 / -1; min-height: 14px; margin: 0; padding: 0; background: transparent; font-size: 10px; line-height: 1.25; }
+.rechnung-dev-sequence .rechnung-live-message:empty { display: none; }
 .rechnung-management-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-card); background: var(--invoice-color-surface); }
 .rechnung-live-list { display: grid; gap: 8px; }
 .rechnung-live-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 9px 12px; padding: 10px 12px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-card); background: var(--invoice-color-surface); }
@@ -413,7 +432,7 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-live-preview__card { display: grid; gap: 16px; width: min(620px, 100%); padding: 24px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-dialog); background: #fff; box-shadow: 0 22px 55px rgba(15, 23, 42, 0.28); }
 .rechnung-live-preview__body { min-height: 260px; padding: 28px; border: 1px solid var(--invoice-color-border); background: #fff; white-space: pre-line; line-height: 1.8; }
 @media (max-width: 850px) {
-  .rechnung-dev-sequence__controls { grid-template-columns: 1fr; }
+  .rechnung-dev-sequence:not([hidden]) { grid-template-columns: 1fr; align-items: start; }
   .rechnung-management-card__details { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .rechnung-payment-management__form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rechnung-payment-management__form-actions { grid-column: 1 / -1; justify-content: flex-start; }

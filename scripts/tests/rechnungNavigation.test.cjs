@@ -60,6 +60,14 @@ async function runRechnungNavigationTests(run) {
     assert.match(css, /\.rechnung-live-preview\[hidden\]\s*\{\s*display:\s*none;\s*\}/);
   });
 
+  await run("Rechnung DEV-UI: Nummernkreis bleibt kompakt und der Reset-Button inhaltsbreit", () => {
+    const css = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/styles/rechnungenDesign.css"), "utf8");
+    assert.match(css, /\.rechnung-dev-sequence:not\(\[hidden\]\)\s*\{[\s\S]*?grid-template-columns:\s*auto minmax\(0, 1fr\);[\s\S]*?padding:\s*7px 10px;[\s\S]*?border-left:\s*3px solid #c8a94f;/);
+    assert.match(css, /\.rechnung-dev-sequence__controls\s*\{[^}]*display:\s*flex;[^}]*justify-content:\s*flex-start;/);
+    assert.match(css, /\.rechnung-dev-sequence__controls \.invoice-button\s*\{[^}]*min-height:\s*26px;[^}]*padding:\s*2px 8px;[^}]*background:\s*transparent;/);
+    assert.match(css, /\.rechnung-dev-sequence \.rechnung-live-message:empty\s*\{\s*display:\s*none;\s*\}/);
+  });
+
   await run("Rechnung R3.1 DEV-UI: Bereich ist ungepackt sichtbar und lädt den aktuellen Zähler", async () => {
     const previousWindow = global.window;
     let getCalls = 0;
