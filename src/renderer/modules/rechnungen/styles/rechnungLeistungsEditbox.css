@@ -3,228 +3,158 @@
   z-index: 10050;
   left: 24px;
   top: 120px;
-  width: 980px;
-  height: 138px;
-  overflow: visible;
-  background: transparent;
-  box-shadow: none;
-}
-
-.rechnung-leistungseditbox-host[hidden] {
-  display: none;
-}
-
-.rechnung-leistungseditbox-host > .bbm-leistungseditbox-frame {
-  width: 100%;
-  height: 138px;
-  background: #f8fafc;
-  border: 1px solid #9aa8b8;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, .10);
-  color: #1f2937;
-}
-
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-frame__content > .bbm-leistungseditbox-group {
-  height: 100%;
-  padding: 1px 3px;
-  overflow: visible;
-}
-
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-header {
-  gap: 3px;
-  padding: 1px 3px;
-  overflow: visible;
-  background: #eef2f6;
-  border-bottom: 1px solid #aab5c2;
-}
-
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-header__title {
-  font: 700 8px/1 system-ui, sans-serif;
-  color: #182230;
-}
-
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-action {
+  width: min(1120px, calc(100vw - 48px));
+  height: 270px;
   box-sizing: border-box;
-  height: 18px;
-  font: 600 8px/16px system-ui, sans-serif;
-  padding: 0 5px;
-  border: 1px solid #a3afbd;
-  border-radius: 3px;
-  background: #ffffff;
-  color: #1f2937;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-action:hover {
-  background: #f1f4f7;
-  border-color: #7f8d9d;
+.rechnung-leistungseditbox-host.is-inactive {
+  opacity: 0;
+  pointer-events: none;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-field {
-  gap: 0;
+.rechnung-leistungseditbox-host > .bbm-tops-workbench {
+  width: 100%;
+  height: 100%;
   min-height: 0;
-  min-block-size: 0;
-  overflow: visible;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-field__label,
-.rechnung-leistungseditbox-host .bbm-leistungsposition-reserved-slot__label {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  font: 600 8px/9px system-ui, sans-serif;
-  color: #2f3d4d;
+.rechnung-leistungseditbox-host .bbm-tops-workbench-header {
+  min-height: 0;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-field__control {
+.rechnung-leistungseditbox-host .bbm-tops-workbench-body,
+.rechnung-leistungseditbox-host .bbm-tops-workbench-left {
+  min-height: 0;
+  height: 100%;
+}
+
+.rechnung-leistungseditbox-host .rechnung-shared-editbox-core.bbm-tops-workbench-editbox {
+  display: grid;
+  grid-template-columns: minmax(420px, 1fr) minmax(330px, 0.72fr);
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+  padding: 4px 6px 5px;
+}
+
+.rechnung-leistungseditbox-host .rechnung-shared-editbox-core .editbox-main {
   min-width: 0;
   min-height: 0;
-  min-inline-size: 0;
-  min-block-size: 0;
-  max-height: none;
-  max-block-size: none;
-  border-color: #a8b4c2;
-  background: #ffffff;
-  color: #1f2937;
 }
 
-.rechnung-leistungseditbox-host input.bbm-leistungseditbox-field__control,
-.rechnung-leistungseditbox-host select.bbm-leistungseditbox-field__control,
-.rechnung-leistungseditbox-host textarea.bbm-leistungseditbox-field__control {
-  appearance: none;
-  -webkit-appearance: none;
-}
-
-.rechnung-leistungseditbox-host input[type="checkbox"].bbm-leistungseditbox-field__control {
-  appearance: auto;
-  -webkit-appearance: checkbox;
-  width: 12px;
-  height: 12px;
-  padding: 0;
-  margin: 0;
-  accent-color: #4b5563;
-}
-
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-field__control:focus {
-  outline: 1px solid #66778a;
-  outline-offset: 0;
-  border-color: #66778a;
-}
-
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-field__control:not(textarea) {
-  box-sizing: border-box;
-  height: 18px;
-  font: 400 9px/16px system-ui, sans-serif;
-  padding: 0 3px;
-  border-radius: 3px;
-}
-
-.rechnung-leistungseditbox-host textarea.bbm-leistungseditbox-field__control {
-  box-sizing: border-box;
-  height: 42px;
-  font: 400 9px/11px system-ui, sans-serif;
-  padding: 2px 3px;
-  border-radius: 3px;
-  resize: none;
-}
-
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-row,
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-group {
-  gap: 2px;
+.rechnung-leistungseditbox-host .rechnung-shared-editbox-core .editbox-meta-slot {
+  display: block;
+  min-width: 0;
   min-height: 0;
-  min-block-size: 0;
-  overflow: visible;
+  height: 100%;
+  padding-left: 10px;
+  border-left: 1px solid var(--bbm-tops-line);
+  overflow: auto;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungsposition-number-row,
-.rechnung-leistungseditbox-host .bbm-leistungsposition-short-detail-row {
-  align-items: end;
-  justify-content: start;
+.rechnung-leistungseditbox-host .rechnung-shared-editbox-core .editbox-flags[hidden] {
+  display: none;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungsposition-long-module-row {
-  align-items: start;
-  height: 44px;
+.rechnung-leistungseditbox-host .rechnung-shared-editbox-core .editbox-input,
+.rechnung-leistungseditbox-host .rechnung-shared-editbox-core .editbox-textarea {
+  max-inline-size: none;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungsposition-long-row,
-.rechnung-leistungseditbox-host .bbm-leistungsposition-long-row > .bbm-leistungseditbox-field {
-  height: 44px;
+.rechnung-leistungseditbox-host .rechnung-shared-editbox-core .editbox-textarea {
+  min-height: 76px;
+  height: 100%;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungsposition-detail-row {
-  align-items: end;
-  width: max-content;
+.rechnung-shared-editbox-details {
+  display: grid;
+  grid-template-columns: minmax(72px, 0.7fr) minmax(128px, 1fr) minmax(120px, 1fr);
+  gap: 5px 7px;
+  align-content: start;
+  min-width: 0;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungsposition-field--right .bbm-leistungseditbox-field__label,
-.rechnung-leistungseditbox-host .bbm-leistungsposition-field--right .bbm-leistungseditbox-field__control {
-  text-align: right;
-  justify-content: flex-end;
+.rechnung-shared-editbox-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungsposition-remaining {
-  margin-left: auto;
-  font-size: 7px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  color: #536274;
+.rechnung-shared-editbox-field__label {
+  min-width: 0;
+  color: #27485a;
+  font-size: 8pt;
+  font-weight: 500;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungsposition-remaining[data-level="warning"] {
-  color: #7a5a00;
+.rechnung-shared-editbox-field__control {
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  box-sizing: border-box;
+  padding: 2px 5px;
+  border: 1px solid var(--bbm-tops-line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--bbm-tops-text);
+  font: 8.5pt/1.2 var(--bbm-top-text-font-family);
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungsposition-remaining[data-level="limit"] {
-  color: #a21d16;
+.rechnung-shared-editbox-field__control[readonly],
+.rechnung-shared-editbox-field__control:disabled {
+  background: #f6f8fb;
+  color: #667085;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-field--toggle {
-  padding-bottom: 0;
+.rechnung-shared-editbox-field__control[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  justify-self: start;
+  padding: 0;
+}
+
+.rechnung-shared-editbox-decimals {
+  display: inline-grid;
+  grid-template-columns: 24px minmax(42px, auto) 24px;
+  align-items: center;
   gap: 3px;
-  font-size: 8px;
-  color: #263445;
+  margin-top: 3px;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-field--toggle .bbm-leistungseditbox-field__control {
-  height: auto;
+.rechnung-shared-editbox-decimals .bbm-tops-workbench-btn {
+  min-width: 24px;
+  padding-inline: 3px;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungsposition-reserved-slot--gross {
-  display: none;
+.rechnung-shared-editbox-decimals__pattern {
+  text-align: center;
+  font-size: 7.5pt;
+  color: var(--bbm-tops-muted);
+  white-space: nowrap;
 }
 
-.rechnung-leistungseditbox-host .bbm-leistungsposition-module-area {
-  height: 42px;
-  border: 1px dashed rgba(71, 85, 105, .26);
-  background: rgba(148, 163, 184, .05);
-}
-
-.rechnung-leistungseditbox-host .bbm-leistungsposition-reserved-slot--module .bbm-leistungsposition-reserved-slot__label {
-  display: none;
-}
-
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-decimal {
-  grid-template-columns: 12px auto 12px;
-}
-
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-decimal__step {
-  font-size: 8px;
-  padding: 0;
-  color: #273444;
-}
-
-.rechnung-leistungseditbox-host .bbm-leistungseditbox-decimal__pattern {
-  font-size: 6px;
-  padding: 0;
-  color: #273444;
+.rechnung-shared-editbox-module-area {
+  grid-column: 1 / -1;
+  min-height: 26px;
+  border: 1px dashed rgba(95, 107, 122, 0.35);
+  border-radius: 6px;
+  background: rgba(238, 246, 255, 0.34);
 }
 
 .rechnung-lv-position.is-move-target {
   position: relative;
   box-shadow: inset 0 0 0 3px #2f8f46 !important;
-  background: rgba(47,143,70,.08) !important;
+  background: rgba(47, 143, 70, .08) !important;
 }
 
 .rechnung-lv-position.is-move-target > .rechnung-lv-position__select,
 .rechnung-lv-position.is-move-target > .rechnung-lv-position__pricing {
-  background: rgba(47,143,70,.08) !important;
+  background: rgba(47, 143, 70, .08) !important;
 }

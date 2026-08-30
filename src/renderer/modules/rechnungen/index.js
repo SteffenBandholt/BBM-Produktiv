@@ -41,13 +41,11 @@ class RechnungEditorScreen extends RechnungScreen {
     this.leistungsEditboxToggleLocked = false;
   }
 
-  render() {
-    const root = super.render();
-    this._installLeistungsEditboxBinding();
-    return root;
+  _mountBeforeUiEditorComplete(content) {
+    this._installLeistungsEditboxBinding(content);
   }
 
-  _installLeistungsEditboxBinding() {
+  _installLeistungsEditboxBinding(content) {
     if (!this.editor || this.leistungsEditboxBinding) return;
     this.leistungsEditboxBinding = new RechnungLeistungsEditboxBinding({
       documentRef: globalThis.document,

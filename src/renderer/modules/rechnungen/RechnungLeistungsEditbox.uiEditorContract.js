@@ -11,112 +11,108 @@ import { RECHNUNG_SCOPE_ID } from "./RechnungScreen.uiEditorContract.js";
 
 export const RECHNUNG_LEISTUNGSEDITBOX_COMPONENT_ID = "bbm.rechnung.leistungsEditbox";
 
-function unrestrictedEffects(parentId, allowedOps = []) {
-  if (!parentId) return {};
-  const supported = new Set(allowedOps || []);
-  const editableOps = ["move", "resizeWidth", "resizeHeight", "textResize", "setVisibility"]
-    .filter((operation) => supported.has(operation));
-  return {
-    operationEffects: Object.fromEntries(editableOps.map((operation) => [operation, "parentReflowRequired"])),
-    operationAffectedIds: Object.fromEntries(editableOps.map((operation) => [operation, [parentId]])),
-  };
-}
-
-const freeElement = (values) => m83Element({
-  ...values,
-  ...unrestrictedEffects(values.parentId, values.allowedOps),
-  unboundedGeometry: true,
+const rootId = "rechnung.editor.leistungsEditbox";
+const groupLayout = Object.freeze(["move", "resizeWidth", "resizeHeight"]);
+const group = (id, name, parentId, order, componentKind) => m83Element({
+  id, name, type: "group", role: "layoutGroup", parentId, order,
+  allowedOps: GROUP_LAYOUT, componentKind,
 });
-const area = (id, name, parentId, order, componentKind) => freeElement({ id, name, type: "area", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind });
-const group = (id, name, parentId, order, componentKind) => freeElement({ id, name, type: "group", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind });
-const label = (id, name, parentId, order, role = "content", componentKind = "label") => freeElement({ id, name, type: "label", role, parentId, order, allowedOps: TEXT_LAYOUT, componentKind });
-const field = (id, name, parentId, order, fieldKind) => freeElement({ id, name, type: "field", role: "content", parentId, order, allowedOps: FIELD_LAYOUT, fieldKind });
-const action = (id, name, parentId, order, actionKind) => {
-  const allowedOps = TEXT_LAYOUT;
-  return m83DomainButton({
-    id,
-    name,
-    parentId,
-    order,
-    actionKind,
-    allowedOps,
-    unboundedGeometry: true,
-    fitChromeToOuterSize: false,
-    ...unrestrictedEffects(parentId, allowedOps),
-  });
-};
-
-const wrapper = (id, name, parentId, order) => group(id, name, parentId, order, "leistungsEditboxFieldWrapper");
+const label = (id, name, parentId, order, role = "fieldLabel") => m83Element({
+  id, name, type: "label", role, parentId, order,
+  allowedOps: TEXT_LAYOUT, componentKind: "label",
+});
+const field = (id, name, parentId, order, fieldKind, componentKind = "input") => m83Element({
+  id, name, type: "field", role: "dataFieldLayout", parentId, order,
+  allowedOps: FIELD_LAYOUT, fieldKind, componentKind,
+  ...(fieldKind === "multilineText"
+    ? { baseline: { width: null, height: null, minWidth: 120, maxWidth: 1880, minHeight: 24, maxHeight: 720 } }
+    : {}),
+});
+const action = (id, name, parentId, order, actionKind) => m83DomainButton({
+  id, name, parentId, order, actionKind,
+});
 
 const elements = Object.freeze([
-  area("rechnung.editor.leistungsEditbox.frameHeader", "Rahmen Kopfbereich", "rechnung.editor.leistungsEditbox", 1061, "leistungsEditboxFrameHeader"),
-  area("rechnung.editor.leistungsEditbox.frameContent", "Rahmen Inhaltsbereich", "rechnung.editor.leistungsEditbox", 1062, "leistungsEditboxFrameContent"),
+  m83Element({
+    id: "rechnung.editor.leistungsEditbox.workbench",
+    name: "Rechnung LeistungsEditbox Arbeitsbereich",
+    type: "group",
+    role: "layoutGroup",
+    parentId: rootId,
+    order: 10,
+    allowedOps: groupLayout,
+    componentKind: "workbench",
+  }),
+  group("rechnung.editor.leistungsEditbox.header", "Kopf Leistungsposition bearbeiten", "rechnung.editor.leistungsEditbox.workbench", 20, "header"),
+  label("rechnung.editor.leistungsEditbox.header.title", "Leistungsposition bearbeiten", "rechnung.editor.leistungsEditbox.header", 21),
+  group("rechnung.editor.leistungsEditbox.header.actions.left", "Gruppe Position anlegen", "rechnung.editor.leistungsEditbox.header", 22, "actionGroup"),
+  action("rechnung.editor.leistungsEditbox.action.addTitle", "+Titel", "rechnung.editor.leistungsEditbox.header.actions.left", 23, "createTitle"),
+  action("rechnung.editor.leistungsEditbox.action.addPosition", "+Position", "rechnung.editor.leistungsEditbox.header.actions.left", 24, "createPosition"),
+  group("rechnung.editor.leistungsEditbox.header.actions.right", "Gruppe Positionsaktionen", "rechnung.editor.leistungsEditbox.header", 25, "actionGroup"),
+  action("rechnung.editor.leistungsEditbox.action.move", "Schieben", "rechnung.editor.leistungsEditbox.header.actions.right", 26, "movePosition"),
+  action("rechnung.editor.leistungsEditbox.action.delete", "Papierkorb", "rechnung.editor.leistungsEditbox.header.actions.right", 27, "deletePosition"),
 
-  group("rechnung.editor.leistungsEditbox.header", "Kopf LeistungsEditbox", "rechnung.editor.leistungsEditbox.frameHeader", 1070, "leistungsEditboxHeader"),
-  label("rechnung.editor.leistungsEditbox.header.title", "Leistungsposition bearbeiten", "rechnung.editor.leistungsEditbox.header", 1071),
-  group("rechnung.editor.leistungsEditbox.header.actions", "Aktionsbereich", "rechnung.editor.leistungsEditbox.header", 1072, "leistungsEditboxActions"),
-  group("rechnung.editor.leistungsEditbox.header.actions.left", "Aktionsgruppe links", "rechnung.editor.leistungsEditbox.header.actions", 1073, "leistungsEditboxActionGroup"),
-  group("rechnung.editor.leistungsEditbox.header.actions.center", "Aktionsgruppe mitte", "rechnung.editor.leistungsEditbox.header.actions", 1074, "leistungsEditboxActionGroup"),
-  group("rechnung.editor.leistungsEditbox.header.actions.right", "Aktionsgruppe rechts", "rechnung.editor.leistungsEditbox.header.actions", 1075, "leistungsEditboxActionGroup"),
-  action("rechnung.editor.leistungsEditbox.action.addTitle", "Titel anlegen", "rechnung.editor.leistungsEditbox.header.actions.left", 1080, "addTitle"),
-  action("rechnung.editor.leistungsEditbox.action.addPosition", "Position anlegen", "rechnung.editor.leistungsEditbox.header.actions.left", 1081, "addPosition"),
-  action("rechnung.editor.leistungsEditbox.action.move", "Position schieben", "rechnung.editor.leistungsEditbox.header.actions.center", 1082, "movePosition"),
-  action("rechnung.editor.leistungsEditbox.action.delete", "Position löschen", "rechnung.editor.leistungsEditbox.header.actions.right", 1083, "deletePosition"),
+  m83Element({
+    id: "rechnung.editor.leistungsEditbox.content",
+    name: "Gemeinsamer Editbox-Kern",
+    type: "group",
+    role: "fieldCollection",
+    parentId: "rechnung.editor.leistungsEditbox.workbench",
+    order: 40,
+    allowedOps: groupLayout,
+    componentKind: "editbox",
+    preserveTarget: true,
+  }),
 
-  group("rechnung.editor.leistungsEditbox.content", "LeistungsEditbox Inhalt", "rechnung.editor.leistungsEditbox.frameContent", 1100, "leistungsEditboxContent"),
-  group("rechnung.editor.leistungsEditbox.row.meta", "Kopfzeile Position", "rechnung.editor.leistungsEditbox.content", 1110, "leistungsEditboxMetaRow"),
+  group("rechnung.editor.leistungsEditbox.shortText.wrapper", "Gruppe Kurztext", "rechnung.editor.leistungsEditbox.content", 41, "fieldGroup"),
+  label("rechnung.editor.leistungsEditbox.shortText.label", "Bezeichnung Kurztext", "rechnung.editor.leistungsEditbox.shortText.wrapper", 42),
+  label("rechnung.editor.leistungsEditbox.shortText.remaining", "Restzeichen Kurztext", "rechnung.editor.leistungsEditbox.shortText.wrapper", 43, "status"),
+  field("rechnung.editor.leistungsEditbox.shortText", "Eingabefeld Kurztext", "rechnung.editor.leistungsEditbox.shortText.wrapper", 44, "text"),
 
-  wrapper("rechnung.editor.leistungsEditbox.positionNumber.wrapper", "Positionsnummer Feldgruppe", "rechnung.editor.leistungsEditbox.row.meta", 1111),
-  field("rechnung.editor.leistungsEditbox.positionNumber", "Positionsnummer", "rechnung.editor.leistungsEditbox.positionNumber.wrapper", 1112, "readOnlyText"),
-  label("rechnung.editor.leistungsEditbox.positionNumber.label", "Positionsnummer Bezeichnung", "rechnung.editor.leistungsEditbox.positionNumber.wrapper", 1113, "fieldLabel", "fieldLabel"),
+  group("rechnung.editor.leistungsEditbox.longText.wrapper", "Gruppe Langtext", "rechnung.editor.leistungsEditbox.content", 50, "fieldGroup"),
+  label("rechnung.editor.leistungsEditbox.longText.label", "Bezeichnung Langtext", "rechnung.editor.leistungsEditbox.longText.wrapper", 51),
+  label("rechnung.editor.leistungsEditbox.longText.remaining", "Restzeichen Langtext", "rechnung.editor.leistungsEditbox.longText.wrapper", 52, "status"),
+  field("rechnung.editor.leistungsEditbox.longText", "Eingabefeld Langtext", "rechnung.editor.leistungsEditbox.longText.wrapper", 53, "multilineText", "textarea"),
 
-  wrapper("rechnung.editor.leistungsEditbox.type.wrapper", "Positionstyp Feldgruppe", "rechnung.editor.leistungsEditbox.row.meta", 1120),
-  field("rechnung.editor.leistungsEditbox.type", "Positionstyp", "rechnung.editor.leistungsEditbox.type.wrapper", 1121, "select"),
-  label("rechnung.editor.leistungsEditbox.type.label", "Positionstyp Bezeichnung", "rechnung.editor.leistungsEditbox.type.wrapper", 1122, "fieldLabel", "fieldLabel"),
+  group("rechnung.editor.leistungsEditbox.meta", "Rechnungsspezifische Positionsdaten", "rechnung.editor.leistungsEditbox.content", 60, "metaPanel"),
 
-  wrapper("rechnung.editor.leistungsEditbox.assignment.wrapper", "Zuordnung Feldgruppe", "rechnung.editor.leistungsEditbox.row.meta", 1130),
-  field("rechnung.editor.leistungsEditbox.assignment", "Zuordnung", "rechnung.editor.leistungsEditbox.assignment.wrapper", 1131, "readOnlyText"),
-  label("rechnung.editor.leistungsEditbox.assignment.label", "Zuordnung Bezeichnung", "rechnung.editor.leistungsEditbox.assignment.wrapper", 1132, "fieldLabel", "fieldLabel"),
+  ...[
+    ["positionNumber", "Positionsnummer", "readOnlyText", 70],
+    ["type", "Positionstyp", "select", 80],
+    ["assignment", "Zuordnung", "readOnlyText", 90],
+    ["nep", "NEP", "checkbox", 100],
+    ["quantity", "Menge", "singleLineText", 110],
+    ["unit", "Einheit", "singleLineText", 120],
+    ["unitPrice", "Einzelpreis", "singleLineText", 130],
+    ["positionAmount", "Gesamtpreis", "readOnlyText", 140],
+  ].flatMap(([key, name, fieldKind, order]) => [
+    group(`rechnung.editor.leistungsEditbox.${key}.wrapper`, `Gruppe ${name}`, "rechnung.editor.leistungsEditbox.meta", order, "fieldGroup"),
+    label(`rechnung.editor.leistungsEditbox.${key}.label`, `Bezeichnung ${name}`, `rechnung.editor.leistungsEditbox.${key}.wrapper`, order + 1),
+    field(
+      `rechnung.editor.leistungsEditbox.${key}`,
+      `Eingabefeld ${name}`,
+      `rechnung.editor.leistungsEditbox.${key}.wrapper`,
+      order + 2,
+      fieldKind,
+      fieldKind === "select" ? "select" : fieldKind === "checkbox" ? "checkbox" : "input",
+    ),
+  ]),
 
-  wrapper("rechnung.editor.leistungsEditbox.nep.wrapper", "NEP Feldgruppe", "rechnung.editor.leistungsEditbox.row.meta", 1140),
-  field("rechnung.editor.leistungsEditbox.nep", "NEP", "rechnung.editor.leistungsEditbox.nep.wrapper", 1141, "checkbox"),
-  label("rechnung.editor.leistungsEditbox.nep.label", "NEP Bezeichnung", "rechnung.editor.leistungsEditbox.nep.wrapper", 1142, "fieldLabel", "fieldLabel"),
+  group("rechnung.editor.leistungsEditbox.quantityDecimals", "Mengen-Nachkommastellen", "rechnung.editor.leistungsEditbox.quantity.wrapper", 113, "decimalControl"),
+  action("rechnung.editor.leistungsEditbox.quantityDecimals.decrease", "Weniger Mengen-Nachkommastellen", "rechnung.editor.leistungsEditbox.quantityDecimals", 114, "decreaseDecimalPlaces"),
+  label("rechnung.editor.leistungsEditbox.quantityDecimals.pattern", "Mengen-Nachkommastellen Anzeige", "rechnung.editor.leistungsEditbox.quantityDecimals", 115, "status"),
+  action("rechnung.editor.leistungsEditbox.quantityDecimals.increase", "Mehr Mengen-Nachkommastellen", "rechnung.editor.leistungsEditbox.quantityDecimals", 116, "increaseDecimalPlaces"),
 
-  group("rechnung.editor.leistungsEditbox.row.shortPrice", "Kurztext und Preise", "rechnung.editor.leistungsEditbox.content", 1200, "leistungsEditboxShortPriceRow"),
-  group("rechnung.editor.leistungsEditbox.row.short", "Kurztext Zeile", "rechnung.editor.leistungsEditbox.row.shortPrice", 1210, "leistungsEditboxShortRow"),
-  wrapper("rechnung.editor.leistungsEditbox.shortText.wrapper", "Kurztext Feldgruppe", "rechnung.editor.leistungsEditbox.row.short", 1211),
-  field("rechnung.editor.leistungsEditbox.shortText", "Kurztext", "rechnung.editor.leistungsEditbox.shortText.wrapper", 1212, "singleLineText"),
-  label("rechnung.editor.leistungsEditbox.shortText.label", "Kurztext Bezeichnung", "rechnung.editor.leistungsEditbox.shortText.wrapper", 1213, "fieldLabel", "fieldLabel"),
-  label("rechnung.editor.leistungsEditbox.shortText.remaining", "Kurztext Restzeichen", "rechnung.editor.leistungsEditbox.shortText.label", 1214, "status", "remainingCharacters"),
-
-  group("rechnung.editor.leistungsEditbox.row.prices", "Mengen und Preise Zeile", "rechnung.editor.leistungsEditbox.row.shortPrice", 1220, "leistungsEditboxPriceRow"),
-  wrapper("rechnung.editor.leistungsEditbox.quantity.wrapper", "Menge Feldgruppe", "rechnung.editor.leistungsEditbox.row.prices", 1221),
-  field("rechnung.editor.leistungsEditbox.quantity", "Menge", "rechnung.editor.leistungsEditbox.quantity.wrapper", 1222, "singleLineText"),
-  label("rechnung.editor.leistungsEditbox.quantity.label", "Menge Bezeichnung", "rechnung.editor.leistungsEditbox.quantity.wrapper", 1223, "fieldLabel", "fieldLabel"),
-  group("rechnung.editor.leistungsEditbox.quantityDecimals", "Mengen-Nachkommastellen", "rechnung.editor.leistungsEditbox.quantity.label", 1224, "decimalControl"),
-  action("rechnung.editor.leistungsEditbox.quantityDecimals.decrease", "Weniger Mengen-Nachkommastellen", "rechnung.editor.leistungsEditbox.quantityDecimals", 1225, "decreaseDecimalPlaces"),
-  label("rechnung.editor.leistungsEditbox.quantityDecimals.pattern", "Mengen-Nachkommastellen Anzeige", "rechnung.editor.leistungsEditbox.quantityDecimals", 1226, "content", "decimalPattern"),
-  action("rechnung.editor.leistungsEditbox.quantityDecimals.increase", "Mehr Mengen-Nachkommastellen", "rechnung.editor.leistungsEditbox.quantityDecimals", 1227, "increaseDecimalPlaces"),
-
-  wrapper("rechnung.editor.leistungsEditbox.unit.wrapper", "Einheit Feldgruppe", "rechnung.editor.leistungsEditbox.row.prices", 1230),
-  field("rechnung.editor.leistungsEditbox.unit", "Einheit", "rechnung.editor.leistungsEditbox.unit.wrapper", 1231, "singleLineText"),
-  label("rechnung.editor.leistungsEditbox.unit.label", "Einheit Bezeichnung", "rechnung.editor.leistungsEditbox.unit.wrapper", 1232, "fieldLabel", "fieldLabel"),
-
-  wrapper("rechnung.editor.leistungsEditbox.unitPrice.wrapper", "Einzelpreis Feldgruppe", "rechnung.editor.leistungsEditbox.row.prices", 1240),
-  field("rechnung.editor.leistungsEditbox.unitPrice", "Einzelpreis", "rechnung.editor.leistungsEditbox.unitPrice.wrapper", 1241, "singleLineText"),
-  label("rechnung.editor.leistungsEditbox.unitPrice.label", "Einzelpreis Bezeichnung", "rechnung.editor.leistungsEditbox.unitPrice.wrapper", 1242, "fieldLabel", "fieldLabel"),
-
-  wrapper("rechnung.editor.leistungsEditbox.positionAmount.wrapper", "Gesamtpreis Feldgruppe", "rechnung.editor.leistungsEditbox.row.prices", 1250),
-  field("rechnung.editor.leistungsEditbox.positionAmount", "Gesamtpreis", "rechnung.editor.leistungsEditbox.positionAmount.wrapper", 1251, "readOnlyText"),
-  label("rechnung.editor.leistungsEditbox.positionAmount.label", "Gesamtpreis Bezeichnung", "rechnung.editor.leistungsEditbox.positionAmount.wrapper", 1252, "fieldLabel", "fieldLabel"),
-
-  group("rechnung.editor.leistungsEditbox.row.longModule", "Langtext und Modulfläche", "rechnung.editor.leistungsEditbox.content", 1300, "leistungsEditboxLongModuleRow"),
-  group("rechnung.editor.leistungsEditbox.row.long", "Langtext Zeile", "rechnung.editor.leistungsEditbox.row.longModule", 1310, "leistungsEditboxLongRow"),
-  wrapper("rechnung.editor.leistungsEditbox.longText.wrapper", "Langtext Feldgruppe", "rechnung.editor.leistungsEditbox.row.long", 1311),
-  field("rechnung.editor.leistungsEditbox.longText", "Langtext", "rechnung.editor.leistungsEditbox.longText.wrapper", 1312, "multilineText"),
-  label("rechnung.editor.leistungsEditbox.longText.label", "Langtext Bezeichnung", "rechnung.editor.leistungsEditbox.longText.wrapper", 1313, "fieldLabel", "fieldLabel"),
-  label("rechnung.editor.leistungsEditbox.longText.remaining", "Langtext Restzeichen", "rechnung.editor.leistungsEditbox.longText.label", 1314, "status", "remainingCharacters"),
-  area("rechnung.editor.leistungsEditbox.moduleArea", "Freie Fachmodulfläche", "rechnung.editor.leistungsEditbox.row.longModule", 1320, "moduleExtensionArea"),
+  m83Element({
+    id: "rechnung.editor.leistungsEditbox.moduleArea",
+    name: "Freie Fachmodulfläche",
+    type: "area",
+    role: "layout",
+    parentId: "rechnung.editor.leistungsEditbox.meta",
+    order: 150,
+    allowedOps: GROUP_LAYOUT,
+    componentKind: "moduleExtensionArea",
+  }),
 ]);
 
 export const rechnungLeistungsEditboxUiEditorContract = m83Component({

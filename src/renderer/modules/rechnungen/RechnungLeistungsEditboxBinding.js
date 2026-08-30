@@ -1,29 +1,21 @@
 import { POSITION_TYPES, PRICE_INPUT_MODES } from "../../../shared/rechnung/rechnungPositions.mjs";
-import { LeistungsEditboxFrame } from "../../core/leistungseditbox/index.js";
-import { LeistungspositionEditboxAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxAdapter.js";
-import { LeistungspositionEditboxHeaderAdapter } from "../../shared/leistungsposition/LeistungspositionEditboxHeaderAdapter.js";
+import { SharedEditboxCore } from "../protokoll/SharedEditboxCore.js";
+import { WorkbenchShellFrame } from "../protokoll/WorkbenchShellFrame.js";
+import { ensureProtokollModuleStyles } from "../protokoll/styles.js";
 import { m80EditorAttributes } from "../../ui-editor/m80Registry.js";
-import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../ui-editor/m80Refs.js";
+import { beginM83ComponentBinding, registerM80Ref } from "../../ui-editor/m80Refs.js";
 import { RECHNUNG_LEISTUNGSEDITBOX_COMPONENT_ID } from "./RechnungLeistungsEditbox.uiEditorContract.js";
 
-const STYLE_MARKER = "rechnung-leistungseditbox-binding-styles-v9";
-const GEOMETRY_STORAGE_KEY = "bbm.rechnung.leistungsEditbox.geometry.v3";
-const LEGACY_GEOMETRY_STORAGE_KEYS = Object.freeze([
-  "bbm.rechnung.leistungsEditbox.geometry.v2",
-  "bbm.rechnung.leistungsEditbox.geometry.v1",
-]);
-const DEFAULT_COMPACT_HEIGHT = 138;
-let STYLE_HREF = "./styles/rechnungLeistungsEditbox.css?v=free-v9";
-
+const STYLE_MARKER = "rechnung-shared-editbox-styles";
+let STYLE_HREF = "./styles/rechnungLeistungsEditbox.css";
 try {
-  const url = new URL("./styles/rechnungLeistungsEditbox.css", import.meta.url);
-  url.searchParams.set("v", "free-v9");
-  STYLE_HREF = url.href;
+  STYLE_HREF = new URL("./styles/rechnungLeistungsEditbox.css", import.meta.url).href;
 } catch (_error) {
   // Testloader/Data-URL fallback.
 }
 
 function ensureStyles(doc) {
+  ensureProtokollModuleStyles();
   if (!doc?.head || doc.querySelector?.(`link[data-${STYLE_MARKER}="true"]`)) return;
   const link = doc.createElement("link");
   link.rel = "stylesheet";
@@ -32,316 +24,106 @@ function ensureStyles(doc) {
   doc.head.appendChild(link);
 }
 
-function finiteNumber(value, fallback = null) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : fallback;
-}
-
-function px(value) {
-  return `${finiteNumber(value, 0)}px`;
-}
-
-function readActualEditorState(element, id) {
-  const view = element?.ownerDocument?.defaultView;
-  const style = view?.getComputedStyle?.(element) || element?.style || {};
-  const rect = element?.getBoundingClientRect?.() || { width: 0, height: 0 };
-  const inlineWidth = parseFloat(element?.style?.width || "");
-  const inlineHeight = parseFloat(element?.style?.height || "");
-  return {
-    elementId: id,
-    x: finiteNumber(element?.dataset?.uiEditorX, 0),
-    y: finiteNumber(element?.dataset?.uiEditorY, 0),
-    width: Number.isFinite(inlineWidth) ? Math.max(0, inlineWidth) : Math.max(0, finiteNumber(rect.width, 0)),
-    height: Number.isFinite(inlineHeight) ? Math.max(0, inlineHeight) : Math.max(0, finiteNumber(rect.height, 0)),
-    textOffsetX: finiteNumber(element?.dataset?.uiEditorTextX, 0),
-    textOffsetY: finiteNumber(element?.dataset?.uiEditorTextY, 0),
-    fontSize: finiteNumber(parseFloat(style.fontSize), 0),
-    visible: element?.hidden !== true && String(style.display || "").toLowerCase() !== "none",
-    spacing: {},
-  };
-}
-
-function setFreeGeometryStyle(element, name, value) {
-  if (!element?.style) return;
-  if (name === "width") {
-    element.style.removeProperty("min-width");
-    element.style.removeProperty("max-width");
-    element.style.setProperty("min-width", "0", "important");
-    element.style.setProperty("max-width", "none", "important");
-  }
-  if (name === "height") {
-    element.style.removeProperty("min-height");
-    element.style.removeProperty("max-height");
-    element.style.setProperty("min-height", "0", "important");
-    element.style.setProperty("max-height", "none", "important");
-  }
-  element.style.setProperty(name, value, "important");
-}
-
-function freeControlChromeForHeight(element, height) {
-  if (!element?.style) return;
-  const tag = String(element.tagName || "").toLowerCase();
-  if (!["input", "select", "textarea", "button"].includes(tag)) return;
-
-  const desired = Math.max(0, finiteNumber(height, 0));
-  const desiredPx = px(desired);
-
-  element.style.setProperty("box-sizing", "border-box", "important");
-  element.style.setProperty("height", desiredPx, "important");
-  element.style.setProperty("block-size", desiredPx, "important");
-  element.style.setProperty("min-height", "0", "important");
-  element.style.setProperty("min-block-size", "0", "important");
-  element.style.setProperty("max-height", desiredPx, "important");
-  element.style.setProperty("max-block-size", desiredPx, "important");
-  element.style.setProperty("padding-top", "0", "important");
-  element.style.setProperty("padding-bottom", "0", "important");
-  element.style.setProperty("overflow", "hidden", "important");
-  element.style.setProperty("align-self", "start", "important");
-
-  if (desired < 2) {
-    element.style.setProperty("border-top-width", "0", "important");
-    element.style.setProperty("border-bottom-width", "0", "important");
-  } else {
-    element.style.removeProperty("border-top-width");
-    element.style.removeProperty("border-bottom-width");
-  }
-
-  if (tag === "select") {
-    element.style.setProperty("appearance", "none", "important");
-    element.style.setProperty("-webkit-appearance", "none", "important");
-  }
-}
-
-function freeTextResizeGeometry(element, fontSize) {
-  if (!element?.style) return;
-  const size = Math.max(0, finiteNumber(fontSize, 0));
-  setFreeGeometryStyle(element, "font-size", px(size));
-
-  if (element.classList?.contains?.("bbm-leistungseditbox-decimal__pattern")) {
-    element.style.setProperty("line-height", "1", "important");
-    element.style.setProperty("height", "auto", "important");
-    element.style.setProperty("min-height", "0", "important");
-    element.style.setProperty("max-height", "none", "important");
-    element.style.setProperty("display", "inline-flex", "important");
-    element.style.setProperty("align-items", "center", "important");
-    element.style.setProperty("justify-content", "center", "important");
-    element.style.setProperty("overflow", "visible", "important");
-    element.style.setProperty("vertical-align", "middle", "important");
-  }
-}
-
-function applyActualEditorState(element, state, requestedOperation = null) {
-  if (!element || !state) return;
-  const applies = (...operations) => requestedOperation === null || operations.includes(requestedOperation);
-
-  if (applies("move")) {
-    const x = finiteNumber(state.x, 0);
-    const y = finiteNumber(state.y, 0);
-    element.dataset.uiEditorX = String(x);
-    element.dataset.uiEditorY = String(y);
-    setFreeGeometryStyle(element, "translate", `${px(x)} ${px(y)}`);
-  }
-
-  if (applies("resize", "resizeWidth") && state.width !== null && state.width !== undefined) {
-    setFreeGeometryStyle(element, "width", px(Math.max(0, finiteNumber(state.width, 0))));
-    element.style.setProperty("box-sizing", "border-box", "important");
-  }
-
-  if (applies("resize", "resizeHeight") && state.height !== null && state.height !== undefined) {
-    const height = Math.max(0, finiteNumber(state.height, 0));
-    freeControlChromeForHeight(element, height);
-    setFreeGeometryStyle(element, "height", px(height));
-    element.style.setProperty("block-size", px(height), "important");
-    element.style.setProperty("max-height", px(height), "important");
-    element.style.setProperty("max-block-size", px(height), "important");
-    element.style.setProperty("box-sizing", "border-box", "important");
-  }
-
-  if (applies("textResize") && state.fontSize !== null && state.fontSize !== undefined) {
-    freeTextResizeGeometry(element, state.fontSize);
-  }
-
-  if (applies("textMove")) {
-    const x = finiteNumber(state.textOffsetX, 0);
-    const y = finiteNumber(state.textOffsetY, 0);
-    element.dataset.uiEditorTextX = String(x);
-    element.dataset.uiEditorTextY = String(y);
-    setFreeGeometryStyle(element, "padding-left", px(x));
-    setFreeGeometryStyle(element, "padding-top", px(y));
-  }
-
-  if (applies("setVisibility") && typeof state.visible === "boolean") {
-    element.hidden = state.visible === false;
-  }
-}
-
 function bindEditorRef(element, id) {
   if (!element || !id) return null;
-  for (const [name, value] of Object.entries(m80EditorAttributes(id))) element.setAttribute(name, value);
-  registerM80Ref(id, element, {
-    read: () => readActualEditorState(element, id),
-    apply: (state, requestedOperation = null) => applyActualEditorState(element, state, requestedOperation),
-  });
+  for (const [name, value] of Object.entries(m80EditorAttributes(id))) {
+    element.setAttribute(name, value);
+  }
+  registerM80Ref(id, element);
   return element;
-}
-
-function registerField(adapter, name, id) {
-  const field = adapter.getField(name);
-  if (!field) return;
-  bindEditorRef(field.getElement?.(), `${id}.wrapper`);
-  bindEditorRef(field.getControl?.(), id);
-  bindEditorRef(field.labelElement, `${id}.label`);
-}
-
-function parseStoredGeometry(raw, { keepHeight = true } = {}) {
-  if (!raw) return null;
-  const value = JSON.parse(raw);
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  return {
-    x: finiteNumber(value.x),
-    y: finiteNumber(value.y),
-    width: finiteNumber(value.width),
-    height: keepHeight ? finiteNumber(value.height) : null,
-  };
-}
-
-function readStoredGeometry(doc) {
-  try {
-    const storage = doc?.defaultView?.localStorage;
-    if (!storage) return null;
-    const current = parseStoredGeometry(storage.getItem(GEOMETRY_STORAGE_KEY));
-    if (current) return current;
-    for (const key of LEGACY_GEOMETRY_STORAGE_KEYS) {
-      const legacy = parseStoredGeometry(storage.getItem(key), { keepHeight: false });
-      if (legacy) return legacy;
-    }
-    return null;
-  } catch (_error) {
-    return null;
-  }
-}
-
-function applyStoredGeometry(frameElement, geometry) {
-  if (!frameElement) return;
-  const x = geometry?.x ?? 0;
-  const y = geometry?.y ?? 0;
-  frameElement.dataset.uiEditorX = String(x);
-  frameElement.dataset.uiEditorY = String(y);
-  frameElement.style.translate = `${x}px ${y}px`;
-  if (geometry?.width !== null && geometry?.width !== undefined && geometry.width >= 0) frameElement.style.width = `${geometry.width}px`;
-  frameElement.style.height = `${geometry?.height ?? DEFAULT_COMPACT_HEIGHT}px`;
-}
-
-function measuredDimension(frameElement, name) {
-  const inline = String(frameElement?.style?.[name] || "").trim();
-  const pixelMatch = inline.match(/^(-?\d+(?:\.\d+)?)px$/i);
-  if (pixelMatch) return finiteNumber(pixelMatch[1]);
-  const rect = frameElement?.getBoundingClientRect?.();
-  return finiteNumber(rect?.[name]);
-}
-
-function snapshotGeometry(frameElement) {
-  return {
-    x: finiteNumber(frameElement?.dataset?.uiEditorX) ?? 0,
-    y: finiteNumber(frameElement?.dataset?.uiEditorY) ?? 0,
-    width: measuredDimension(frameElement, "width"),
-    height: measuredDimension(frameElement, "height"),
-  };
-}
-
-function storeGeometry(doc, frameElement) {
-  try {
-    const storage = doc?.defaultView?.localStorage;
-    if (!storage || !frameElement) return;
-    const geometry = snapshotGeometry(frameElement);
-    if (geometry.width === null || geometry.height === null) return;
-    storage.setItem(GEOMETRY_STORAGE_KEY, JSON.stringify(geometry));
-  } catch (_error) {
-    // Lokale Geometrie-Persistenz darf die Rechnung nicht blockieren.
-  }
-}
-
-function observeGeometry(doc, frameElement) {
-  const Observer = doc?.defaultView?.MutationObserver || globalThis.MutationObserver;
-  if (typeof Observer !== "function" || !frameElement) return null;
-  const observer = new Observer(() => storeGeometry(doc, frameElement));
-  observer.observe(frameElement, { attributes: true, attributeFilter: ["style", "data-ui-editor-x", "data-ui-editor-y"] });
-  return observer;
-}
-
-function applyCompactDefaults(adapter, header) {
-  for (const name of ["positionNumber", "type", "alternativeReference", "shortText", "quantity", "unit", "unitPrice", "positionAmount"]) {
-    const control = adapter.getField(name)?.getControl?.();
-    if (!control) continue;
-    control.style.height = "18px";
-    control.style.fontSize = "9px";
-    control.style.lineHeight = "16px";
-    control.style.padding = "0 3px";
-    control.style.boxSizing = "border-box";
-  }
-
-  const longText = adapter.getField("longText")?.getControl?.();
-  if (longText) {
-    longText.style.height = "42px";
-    longText.style.fontSize = "9px";
-    longText.style.lineHeight = "11px";
-    longText.style.padding = "2px 3px";
-    longText.style.boxSizing = "border-box";
-  }
-
-  for (const name of ["positionNumber", "type", "alternativeReference", "shortText", "longText", "quantity", "unit", "unitPrice", "positionAmount", "nep"]) {
-    const label = adapter.getField(name)?.labelElement;
-    if (!label) continue;
-    label.style.fontSize = "8px";
-    label.style.lineHeight = "9px";
-  }
-
-  for (const name of ["addTitle", "addPosition", "move", "delete"]) {
-    const button = header.getAction(name)?.getElement?.();
-    if (!button) continue;
-    button.style.height = "18px";
-    button.style.fontSize = "8px";
-    button.style.lineHeight = "16px";
-    button.style.padding = "0 5px";
-    button.style.boxSizing = "border-box";
-  }
 }
 
 function centsToInput(cents) {
   const numeric = Number(cents ?? 0);
-  return new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true }).format(Number.isFinite(numeric) ? numeric / 100 : 0);
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+  }).format(Number.isFinite(numeric) ? numeric / 100 : 0);
 }
 
 function editboxTypeForPosition(position) {
   if (position?.alternative_of) return "alternative";
   if (position?.type === POSITION_TYPES.NOTE) return "hint";
-  if (position?.type === POSITION_TYPES.HEADING) return "text";
+  if (position?.type === POSITION_TYPES.HEADING || position?.is_title === true) return "text";
   return "standard";
 }
 
-export function rechnungPositionToLeistungsEditboxValues(position = {}, { quantityDecimalPlaces = 2, alternativeBasePositionNumber = "" } = {}) {
+export function rechnungPositionToLeistungsEditboxValues(
+  position = {},
+  { quantityDecimalPlaces = 2, alternativeBasePositionNumber = "" } = {},
+) {
   const isService = position?.type === POSITION_TYPES.SERVICE;
   const isAlternative = isService && !!position?.alternative_of;
   const isGross = isService && position?.price_input_mode === PRICE_INPUT_MODES.GROSS;
-  const inputPriceCents = isGross ? position?.price_input_cents ?? position?.unit_price_cents : position?.unit_price_cents;
+  const inputPriceCents = isGross
+    ? position?.price_input_cents ?? position?.unit_price_cents
+    : position?.unit_price_cents;
 
   return Object.freeze({
-    basePositionNumber: isAlternative ? alternativeBasePositionNumber || String(position?.position_number || "").replace(/[a-z]$/i, "") : position?.position_number || "",
-    alternativeSuffix: isAlternative ? position?.alternative_suffix || "a" : "a",
+    positionNumber: position?.position_number || "",
+    assignment: isAlternative
+      ? `zu Pos.: ${alternativeBasePositionNumber || String(position?.position_number || "").replace(/[a-z]$/i, "")}`
+      : "",
     shortText: position?.short_text || "",
     longText: position?.long_text || "",
     type: editboxTypeForPosition(position),
     quantity: isService ? position?.quantity ?? "" : "",
-    quantityDecimalPlaces,
+    quantityDecimalPlaces: Number.isInteger(Number(quantityDecimalPlaces)) ? Number(quantityDecimalPlaces) : 2,
     unit: isService ? position?.unit || "" : "",
     unitPrice: isService ? centsToInput(inputPriceCents) : "",
+    positionAmount: isService ? centsToInput(position?.total_cents) : "",
     gross: isGross,
     nep: isService && position?.is_nep === true,
   });
 }
 
+function createActionButton(doc, label, handler) {
+  const button = doc.createElement("button");
+  button.type = "button";
+  button.textContent = label;
+  button.className = "bbm-tops-btn bbm-tops-workbench-btn bbm-tops-workbench-btn-neutral";
+  button.addEventListener("pointerdown", (event) => event.stopPropagation());
+  button.addEventListener("mousedown", (event) => event.stopPropagation());
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof handler === "function") handler();
+  });
+  return button;
+}
+
+function createField(doc, { label, kind = "input", readOnly = false, options = [] } = {}) {
+  const wrapper = doc.createElement("label");
+  wrapper.className = "rechnung-shared-editbox-field";
+  const labelElement = doc.createElement("span");
+  labelElement.className = "rechnung-shared-editbox-field__label";
+  labelElement.textContent = label || "";
+  const control = kind === "select" ? doc.createElement("select") : doc.createElement("input");
+  control.className = "rechnung-shared-editbox-field__control";
+  if (kind === "checkbox") control.type = "checkbox";
+  if (readOnly) control.readOnly = true;
+  if (kind === "select") {
+    for (const item of options) {
+      const option = doc.createElement("option");
+      option.value = String(item.value ?? "");
+      option.textContent = String(item.label ?? item.value ?? "");
+      control.appendChild(option);
+    }
+  }
+  wrapper.append(labelElement, control);
+  return { wrapper, labelElement, control };
+}
+
 export class RechnungLeistungsEditboxBinding {
-  constructor({ documentRef = globalThis.document, onAddTitle = null, onAddPosition = null, onMove = null, onDelete = null, onChange = null } = {}) {
+  constructor({
+    documentRef = globalThis.document,
+    onAddTitle = null,
+    onAddPosition = null,
+    onMove = null,
+    onDelete = null,
+    onChange = null,
+  } = {}) {
     const doc = documentRef;
     if (!doc?.createElement) throw new Error("RechnungLeistungsEditboxBinding benötigt ein Document.");
     ensureStyles(doc);
@@ -349,125 +131,252 @@ export class RechnungLeistungsEditboxBinding {
     this.documentRef = doc;
     this.activePositionId = null;
     this.onChange = typeof onChange === "function" ? onChange : null;
-    this.uiEditorRefsRegistered = false;
-    this.host = doc.createElement("section");
-    this.host.className = "rechnung-leistungseditbox-host";
-    this.host.hidden = true;
+    this.values = null;
+    this._syncing = false;
 
-    this.frame = new LeistungsEditboxFrame({ documentRef: doc, id: "rechnung.leistungseditbox.frame", label: "LeistungsEditbox Rechnung" });
-    const frameElement = this.frame.getElement();
-    for (const attribute of ["data-ui-inspector-id", "data-ui-editor-kind", "data-ui-editor-label", "data-ui-editor-parent", "data-ui-editor-editable", "data-ui-editor-ops"]) frameElement.removeAttribute(attribute);
+    // Exakt derselbe wiederverwendbare Workbench-/Editbox-Unterbau wie im Protokoll.
+    this.workbench = new WorkbenchShellFrame();
+    this.workbench.root.classList.add("rechnung-shared-editbox-workbench");
+    this.workbench.leftHeaderTitle.textContent = "Leistungsposition bearbeiten";
 
-    applyStoredGeometry(frameElement, readStoredGeometry(doc));
-    this.geometryObserver = observeGeometry(doc, frameElement);
+    this.actions = {
+      addTitle: createActionButton(doc, "+Titel", onAddTitle),
+      addPosition: createActionButton(doc, "+Position", onAddPosition),
+      move: createActionButton(doc, "Schieben", onMove),
+      delete: createActionButton(doc, "Papierkorb", onDelete),
+    };
+    this.workbench.headerAddActions.append(this.actions.addTitle, this.actions.addPosition);
+    this.workbench.headerPrimaryActions.append(this.actions.move, this.actions.delete);
 
-    this.header = new LeistungspositionEditboxHeaderAdapter({ documentRef: doc, title: "Leistungsposition bearbeiten", onAddTitle, onAddPosition, onMove, onDelete });
-    this.adapter = new LeistungspositionEditboxAdapter({
-      documentRef: doc,
-      compact: true,
-      reserveGrossSlot: false,
-      reserveModuleArea: true,
-      textLimits: { shortText: 100, longText: 600 },
-      showGross: false,
-      showNep: true,
-      showPositionAmount: true,
-      onChange: (values) => {
-        if (!this.activePositionId || !this.onChange) return;
-        this.onChange(this.activePositionId, values);
+    this.sharedEditboxCore = new SharedEditboxCore({
+      onDraftChange: ({ draft } = {}) => {
+        if (this._syncing || !this.activePositionId) return;
+        this.values = {
+          ...(this.values || {}),
+          shortText: String(draft?.title ?? ""),
+          longText: String(draft?.longtext ?? ""),
+        };
+        this._emitChange();
       },
     });
+    this.sharedEditboxCore.root.classList.add("rechnung-shared-editbox-core");
+    this.sharedEditboxCore.editbox.setVisibleFlags([]);
+    this.sharedEditboxCore.flagsWrap.hidden = true;
 
-    applyCompactDefaults(this.adapter, this.header);
-    this.frame.replaceHeader(this.header.getElement());
-    this.frame.replaceContent(this.adapter.getElement());
-    this.host.append(frameElement);
+    this._buildDetails();
+    this.sharedEditboxCore.editbox.metaCol.replaceChildren(this.detailsRoot);
+    this.workbench.left.appendChild(this.sharedEditboxCore.root);
+    this.workbench.mount();
 
-    this._handlePilotRenderComplete = () => {
-      if (!this.host.isConnected) return;
-      this.registerUiEditorRefs();
+    this.host = doc.createElement("section");
+    this.host.className = "rechnung-leistungseditbox-host";
+    this.host.classList.add("is-inactive");
+    this.host.setAttribute("aria-hidden", "true");
+    this.host.appendChild(this.workbench.root);
+  }
+
+  _buildDetails() {
+    const doc = this.documentRef;
+    this.detailsRoot = doc.createElement("div");
+    this.detailsRoot.className = "rechnung-shared-editbox-details";
+
+    this.fields = {
+      positionNumber: createField(doc, { label: "Pos.", readOnly: true }),
+      type: createField(doc, {
+        label: "Typ",
+        kind: "select",
+        options: [
+          { value: "standard", label: "Normalposition" },
+          { value: "alternative", label: "Alternativposition" },
+          { value: "hint", label: "Hinweis" },
+          { value: "text", label: "Text/Titel" },
+        ],
+      }),
+      assignment: createField(doc, { label: "Zuordnung", readOnly: true }),
+      nep: createField(doc, { label: "NEP", kind: "checkbox" }),
+      quantity: createField(doc, { label: "Menge" }),
+      unit: createField(doc, { label: "Einheit" }),
+      unitPrice: createField(doc, { label: "EP netto" }),
+      positionAmount: createField(doc, { label: "Gesamt", readOnly: true }),
     };
-    doc.defaultView?.addEventListener?.("bbm:m80-pilot-render-complete", this._handlePilotRenderComplete);
+
+    this.quantityDecimals = doc.createElement("div");
+    this.quantityDecimals.className = "rechnung-shared-editbox-decimals";
+    this.quantityDecimalsDecrease = createActionButton(doc, "−", () => this._changeQuantityDecimals(-1));
+    this.quantityDecimalsIncrease = createActionButton(doc, "+", () => this._changeQuantityDecimals(1));
+    this.quantityDecimalsPattern = doc.createElement("span");
+    this.quantityDecimalsPattern.className = "rechnung-shared-editbox-decimals__pattern";
+    this.quantityDecimals.append(
+      this.quantityDecimalsDecrease,
+      this.quantityDecimalsPattern,
+      this.quantityDecimalsIncrease,
+    );
+    this.fields.quantity.wrapper.appendChild(this.quantityDecimals);
+
+    this.moduleArea = doc.createElement("div");
+    this.moduleArea.className = "rechnung-shared-editbox-module-area";
+    this.moduleArea.setAttribute("aria-label", "Freie Fachmodulfläche");
+
+    for (const [name, field] of Object.entries(this.fields)) {
+      const eventName = name === "nep" || name === "type" ? "change" : "input";
+      if (!["positionNumber", "assignment", "positionAmount"].includes(name)) {
+        field.control.addEventListener(eventName, () => {
+          if (this._syncing || !this.activePositionId) return;
+          if (name === "nep") this.values.nep = field.control.checked;
+          else this.values[name] = field.control.value;
+          this._syncFieldAvailability();
+          this._emitChange();
+        });
+      }
+      this.detailsRoot.appendChild(field.wrapper);
+    }
+    this.detailsRoot.appendChild(this.moduleArea);
+  }
+
+  _changeQuantityDecimals(delta) {
+    if (!this.values || !this.activePositionId) return;
+    const current = Number(this.values.quantityDecimalPlaces) || 0;
+    this.values.quantityDecimalPlaces = Math.max(0, Math.min(4, current + Number(delta || 0)));
+    this._syncQuantityDecimals();
+    this._emitChange();
+  }
+
+  _syncQuantityDecimals() {
+    const places = Math.max(0, Math.min(4, Number(this.values?.quantityDecimalPlaces) || 0));
+    this.quantityDecimalsPattern.textContent = places > 0 ? `0,${"0".repeat(places)}` : "0";
+  }
+
+  _syncFieldAvailability() {
+    const type = String(this.fields.type.control.value || "standard");
+    const service = type === "standard" || type === "alternative";
+    for (const name of ["quantity", "unit", "unitPrice", "nep"]) {
+      this.fields[name].control.disabled = !service;
+    }
+    this.quantityDecimalsDecrease.disabled = !service;
+    this.quantityDecimalsIncrease.disabled = !service;
+  }
+
+  _emitChange() {
+    if (!this.activePositionId || !this.onChange || !this.values) return;
+    const draft = this.sharedEditboxCore.getDraft();
+    this.onChange(this.activePositionId, {
+      ...this.values,
+      shortText: String(draft?.title ?? this.values.shortText ?? ""),
+      longText: String(draft?.longtext ?? this.values.longText ?? ""),
+      type: String(this.fields.type.control.value || this.values.type || "standard"),
+      quantity: String(this.fields.quantity.control.value ?? ""),
+      unit: String(this.fields.unit.control.value ?? ""),
+      unitPrice: String(this.fields.unitPrice.control.value ?? ""),
+      gross: this.values.gross === true,
+      nep: this.fields.nep.control.checked === true,
+      quantityDecimalPlaces: Number(this.values.quantityDecimalPlaces) || 0,
+    });
   }
 
   registerUiEditorRefs() {
     beginM83ComponentBinding(RECHNUNG_LEISTUNGSEDITBOX_COMPONENT_ID);
 
-    bindEditorRef(this.frame.getElement(), "rechnung.editor.leistungsEditbox");
-    bindEditorRef(this.frame.getHeaderHost(), "rechnung.editor.leistungsEditbox.frameHeader");
-    bindEditorRef(this.frame.getContentHost(), "rechnung.editor.leistungsEditbox.frameContent");
+    bindEditorRef(this.workbench.root, "rechnung.editor.leistungsEditbox.workbench");
+    bindEditorRef(this.workbench.header, "rechnung.editor.leistungsEditbox.header");
+    bindEditorRef(this.workbench.leftHeaderTitle, "rechnung.editor.leistungsEditbox.header.title");
+    bindEditorRef(this.workbench.headerAddActions, "rechnung.editor.leistungsEditbox.header.actions.left");
+    bindEditorRef(this.workbench.headerPrimaryActions, "rechnung.editor.leistungsEditbox.header.actions.right");
+    bindEditorRef(this.actions.addTitle, "rechnung.editor.leistungsEditbox.action.addTitle");
+    bindEditorRef(this.actions.addPosition, "rechnung.editor.leistungsEditbox.action.addPosition");
+    bindEditorRef(this.actions.move, "rechnung.editor.leistungsEditbox.action.move");
+    bindEditorRef(this.actions.delete, "rechnung.editor.leistungsEditbox.action.delete");
 
-    bindEditorRef(this.header.getElement(), "rechnung.editor.leistungsEditbox.header");
-    bindEditorRef(this.header.header?.getTitleHost?.(), "rechnung.editor.leistungsEditbox.header.title");
-    bindEditorRef(this.header.header?.actionsHost, "rechnung.editor.leistungsEditbox.header.actions");
-    bindEditorRef(this.header.header?.getLeftHost?.(), "rechnung.editor.leistungsEditbox.header.actions.left");
-    bindEditorRef(this.header.header?.getCenterHost?.(), "rechnung.editor.leistungsEditbox.header.actions.center");
-    bindEditorRef(this.header.header?.getRightHost?.(), "rechnung.editor.leistungsEditbox.header.actions.right");
-    bindEditorRef(this.header.getAction("addTitle")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.addTitle");
-    bindEditorRef(this.header.getAction("addPosition")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.addPosition");
-    bindEditorRef(this.header.getAction("move")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.move");
-    bindEditorRef(this.header.getAction("delete")?.getElement?.(), "rechnung.editor.leistungsEditbox.action.delete");
+    const editbox = this.sharedEditboxCore.editbox;
+    bindEditorRef(this.sharedEditboxCore.root, "rechnung.editor.leistungsEditbox.content");
+    bindEditorRef(editbox.shortWrap, "rechnung.editor.leistungsEditbox.shortText.wrapper");
+    bindEditorRef(editbox.shortLabel, "rechnung.editor.leistungsEditbox.shortText.label");
+    bindEditorRef(editbox.shortCounter, "rechnung.editor.leistungsEditbox.shortText.remaining");
+    bindEditorRef(editbox.shortInput, "rechnung.editor.leistungsEditbox.shortText");
+    bindEditorRef(editbox.longWrap, "rechnung.editor.leistungsEditbox.longText.wrapper");
+    bindEditorRef(editbox.longLabel, "rechnung.editor.leistungsEditbox.longText.label");
+    bindEditorRef(editbox.longCounter, "rechnung.editor.leistungsEditbox.longText.remaining");
+    bindEditorRef(editbox.longInput, "rechnung.editor.leistungsEditbox.longText");
+    bindEditorRef(editbox.metaCol, "rechnung.editor.leistungsEditbox.meta");
 
-    bindEditorRef(this.adapter.getElement(), "rechnung.editor.leistungsEditbox.content");
-    bindEditorRef(this.adapter.numberRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.meta");
-    bindEditorRef(this.adapter.shortDetailRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.shortPrice");
-    bindEditorRef(this.adapter.primaryRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.short");
-    bindEditorRef(this.adapter.detailRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.prices");
-    bindEditorRef(this.adapter.longModuleRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.longModule");
-    bindEditorRef(this.adapter.textRow?.getElement?.(), "rechnung.editor.leistungsEditbox.row.long");
+    for (const name of ["positionNumber", "type", "assignment", "nep", "quantity", "unit", "unitPrice", "positionAmount"]) {
+      const field = this.fields[name];
+      const id = `rechnung.editor.leistungsEditbox.${name}`;
+      bindEditorRef(field.wrapper, `${id}.wrapper`);
+      bindEditorRef(field.labelElement, `${id}.label`);
+      bindEditorRef(field.control, id);
+    }
 
-    registerField(this.adapter, "positionNumber", "rechnung.editor.leistungsEditbox.positionNumber");
-    registerField(this.adapter, "type", "rechnung.editor.leistungsEditbox.type");
-    registerField(this.adapter, "alternativeReference", "rechnung.editor.leistungsEditbox.assignment");
-    registerField(this.adapter, "nep", "rechnung.editor.leistungsEditbox.nep");
-    registerField(this.adapter, "shortText", "rechnung.editor.leistungsEditbox.shortText");
-    registerField(this.adapter, "quantity", "rechnung.editor.leistungsEditbox.quantity");
-    registerField(this.adapter, "unit", "rechnung.editor.leistungsEditbox.unit");
-    registerField(this.adapter, "unitPrice", "rechnung.editor.leistungsEditbox.unitPrice");
-    registerField(this.adapter, "positionAmount", "rechnung.editor.leistungsEditbox.positionAmount");
-    registerField(this.adapter, "longText", "rechnung.editor.leistungsEditbox.longText");
-
-    bindEditorRef(this.adapter.shortTextRemaining, "rechnung.editor.leistungsEditbox.shortText.remaining");
-    bindEditorRef(this.adapter.longTextRemaining, "rechnung.editor.leistungsEditbox.longText.remaining");
-
-    const decimal = this.adapter.getQuantityDecimalControl?.();
-    bindEditorRef(decimal?.getElement?.(), "rechnung.editor.leistungsEditbox.quantityDecimals");
-    bindEditorRef(decimal?.decreaseButton, "rechnung.editor.leistungsEditbox.quantityDecimals.decrease");
-    bindEditorRef(decimal?.pattern, "rechnung.editor.leistungsEditbox.quantityDecimals.pattern");
-    bindEditorRef(decimal?.increaseButton, "rechnung.editor.leistungsEditbox.quantityDecimals.increase");
-
-    const moduleArea = this.adapter.getElement()?.querySelector?.(".bbm-leistungsposition-module-area");
-    bindEditorRef(moduleArea, "rechnung.editor.leistungsEditbox.moduleArea");
-
-    this.uiEditorRefsRegistered = true;
+    bindEditorRef(this.quantityDecimals, "rechnung.editor.leistungsEditbox.quantityDecimals");
+    bindEditorRef(this.quantityDecimalsDecrease, "rechnung.editor.leistungsEditbox.quantityDecimals.decrease");
+    bindEditorRef(this.quantityDecimalsPattern, "rechnung.editor.leistungsEditbox.quantityDecimals.pattern");
+    bindEditorRef(this.quantityDecimalsIncrease, "rechnung.editor.leistungsEditbox.quantityDecimals.increase");
+    bindEditorRef(this.moduleArea, "rechnung.editor.leistungsEditbox.moduleArea");
     return true;
   }
 
-  getElement() { return this.host; }
-  getFrameElement() { return this.frame.getElement(); }
+  getElement() {
+    return this.host;
+  }
+
+  getFrameElement() {
+    return this.host;
+  }
 
   showPosition(position, options = {}) {
-    if (!position || position.is_title === true) {
+    if (!position) {
       this.hide();
       return null;
     }
-    this.activePositionId = position.id || null;
-    const values = rechnungPositionToLeistungsEditboxValues(position, options);
-    this.adapter.setValues(values);
-    this.host.hidden = false;
 
-    if (this.registerUiEditorRefs()) completeM80PilotRender();
-    return values;
+    this.activePositionId = position.id || null;
+    this.values = { ...rechnungPositionToLeistungsEditboxValues(position, options) };
+    this._syncing = true;
+    try {
+      this.sharedEditboxCore.applyEditorState(
+        {
+          value: {
+            title: this.values.shortText,
+            longtext: this.values.longText,
+          },
+          access: {
+            shortTextReadOnly: false,
+            longTextReadOnly: false,
+            flagsDisabled: true,
+          },
+          level: position?.is_title === true ? 1 : 2,
+        },
+        { hasSelection: true, isReadOnly: false },
+      );
+
+      this.fields.positionNumber.control.value = this.values.positionNumber;
+      this.fields.type.control.value = this.values.type;
+      this.fields.assignment.control.value = this.values.assignment;
+      this.fields.nep.control.checked = this.values.nep === true;
+      this.fields.quantity.control.value = this.values.quantity;
+      this.fields.unit.control.value = this.values.unit;
+      this.fields.unitPrice.control.value = this.values.unitPrice;
+      this.fields.positionAmount.control.value = this.values.positionAmount;
+      this._syncQuantityDecimals();
+      this._syncFieldAvailability();
+    } finally {
+      this._syncing = false;
+    }
+
+    this.workbench.root.dataset.hasSelection = "true";
+    this.host.classList.remove("is-inactive");
+    this.host.setAttribute("aria-hidden", "false");
+    return Object.freeze({ ...this.values });
   }
 
   hide() {
     this.activePositionId = null;
-    this.host.hidden = true;
+    this.workbench.root.dataset.hasSelection = "false";
+    this.host.classList.add("is-inactive");
+    this.host.setAttribute("aria-hidden", "true");
   }
 
   destroy() {
-    this.documentRef?.defaultView?.removeEventListener?.("bbm:m80-pilot-render-complete", this._handlePilotRenderComplete);
-    this._handlePilotRenderComplete = null;
-    this.geometryObserver?.disconnect?.();
-    this.geometryObserver = null;
+    this.sharedEditboxCore?.destroy?.();
+    this.activePositionId = null;
   }
 }

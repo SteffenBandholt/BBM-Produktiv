@@ -488,7 +488,53 @@ function submitChange(changeRequest, scopeId) {
       if (!normalized.ok) throw Object.assign(new Error(normalized.message), { code: normalized.code, textResize: normalized.readback });
       textResizeIntent = normalized.intent;
     }
-    let desired = desiredState(previous, entry, request.operation, request.payload, textResizeIntent);
+    let normalizedPayload = request.payload;
+
+    if (request.operation === "move" &&
+        request.payload?.alignment === "viewportBottomCenter") {
+      const currentBounds = beforeGeometry.get(entry.id);
+      const viewportWidth = Number(globalThis.window?.innerWidth);
+      const viewportHeight = Number(globalThis.window?.innerHeight);
+
+      if (!currentBounds ||
+          !Number.isFinite(viewportWidth) ||
+          !Number.isFinite(viewportHeight) ||
+          viewportWidth <= 0 ||
+          viewportHeight <= 0) {
+        throw Object.assign(
+          new Error("Sichtbarer Arbeitsbereich konnte nicht ermittelt werden."),
+          { code: "electron_invalid_geometry" }
+        );
+      }
+
+      const requestedMargin = Number(request.payload?.margin);
+      const margin = Number.isFinite(requestedMargin)
+        ? Math.max(0, requestedMargin)
+        : 8;
+
+      const targetLeft = Math.max(
+        0,
+        (viewportWidth - currentBounds.width) / 2
+      );
+
+      const targetTop = Math.max(
+        0,
+        viewportHeight - currentBounds.height - margin
+      );
+
+      normalizedPayload = {
+        x: previous.x + (targetLeft - currentBounds.left),
+        y: previous.y + (targetTop - currentBounds.top),
+      };
+    }
+
+    let desired = desiredState(
+      previous,
+      entry,
+      request.operation,
+      normalizedPayload,
+      textResizeIntent
+    );
     if (confirmation && [RISK_ACTIONS.CLAMP_TO_GROUP, RISK_ACTIONS.CLAMP_TO_AREA].includes(confirmation.action)) desired = clampDesiredState(desired, confirmation.risk, confirmation.action);
     if (confirmation?.action === RISK_ACTIONS.PRESERVE_SPACE || confirmation?.action === RISK_ACTIONS.SHRINK_GROUP) {
       desired.spacing = { ...(desired.spacing || {}), reservedWidth: Number(desired.spacing?.reservedWidth || 0) + Number(confirmation.risk.technicalDetails?.freedWidth || 0) };

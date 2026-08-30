@@ -1,7 +1,7 @@
 import { addCalendarDays, draftPreviewIdentifier, formatDocumentType } from "../../../../shared/rechnung/invoiceHeaderRules.mjs";
 import { calculateInvoiceTotalsCents, calculatePositionTotalCents, normalizeInvoicePositions, POSITION_TYPES, PRICE_INPUT_MODES } from "../../../../shared/rechnung/rechnungPositions.mjs";
 import { m80EditorAttributes } from "../../../ui-editor/m80Registry.js";
-import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../../ui-editor/m80Refs.js";
+import { beginM80PilotRender, beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../../ui-editor/m80Refs.js";
 import { ensureRechnungenDesignStyles } from "../styles.js";
 import { RECHNUNG_COMPONENT_ID, RECHNUNG_SCOPE_ID } from "../RechnungScreen.uiEditorContract.js";
 
@@ -68,11 +68,15 @@ export default class RechnungScreen {
 
   render() {
     ensureRechnungenDesignStyles();
+    beginM80PilotRender();
     beginM83ComponentBinding(RECHNUNG_COMPONENT_ID);
     const root = bind(node("section", "bbm-invoice-design bbm-popup-standard bbm-rechnung-live"), RECHNUNG_SCOPE_ID);
     root.dataset.invoiceLiveScreen = "step-2";
     const content = bind(node("div", "rechnung-live-content"), "rechnung.screen.content");
     content.append(this._overview(), this._editor(), this._preview());
+    if (typeof this._mountBeforeUiEditorComplete === "function") {
+      this._mountBeforeUiEditorComplete(content);
+    }
     root.append(content); this.root = root;
     completeM80PilotRender();
     this._setEditorSidebarState(false);
