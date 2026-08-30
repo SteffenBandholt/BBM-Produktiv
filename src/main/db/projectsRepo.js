@@ -4,6 +4,13 @@ const { randomUUID } = require("crypto");
 
 let _ensuredProjectNumberColumn = false;
 let _ensuredArchivedAtColumn = false;
+const PROJECT_MODULE_IDS = new Set([
+  "protokoll",
+  "restarbeiten",
+  "rechnung",
+  "sigeko",
+  "dev-ui-editor",
+]);
 
 function _normText(v) {
   const s = v !== undefined && v !== null ? String(v).trim() : "";
@@ -13,6 +20,12 @@ function _normText(v) {
 function _normName(v) {
   const s = v !== undefined && v !== null ? String(v).trim() : "";
   return s ? s : "";
+}
+
+function _normModuleId(value) {
+  const moduleId = String(value ?? "").trim().toLowerCase();
+  if (!PROJECT_MODULE_IDS.has(moduleId)) throw new Error("moduleId invalid");
+  return moduleId;
 }
 
 function _tableExists(db, tableName) {
@@ -74,6 +87,22 @@ function _addCamelAlias(p) {
   return p;
 }
 
+function _addModuleAliases(db, project) {
+  if (!project || typeof project !== "object") return project;
+  const moduleIds = db
+    .prepare(`SELECT module_id FROM project_modules WHERE project_id = ? ORDER BY module_id COLLATE NOCASE ASC`)
+    .all(project.id)
+    .map((row) => String(row?.module_id || "").trim())
+    .filter(Boolean);
+  project.module_ids = moduleIds;
+  project.moduleIds = moduleIds;
+  return project;
+}
+
+function _decorateProject(db, project) {
+  return _addModuleAliases(db, _addCamelAlias(project));
+}
+
 function _safeGetById(db, projectId) {
   try {
     const p = db
@@ -99,7 +128,7 @@ function _safeGetById(db, projectId) {
       )
       .get(projectId);
 
-    return _addCamelAlias(p);
+    return _decorateProject(db, p);
   } catch (_e) {
     // fallback without archived_at/project_number (very old dbs)
     try {
@@ -126,7 +155,7 @@ function _safeGetById(db, projectId) {
         .get(projectId);
 
       if (p && typeof p === "object") p.archived_at = null;
-      return _addCamelAlias(p);
+      return _decorateProject(db, p);
     } catch (_e2) {
       const p = db
         .prepare(
@@ -153,7 +182,7 @@ function _safeGetById(db, projectId) {
         p.project_number = null;
         p.archived_at = null;
       }
-      return _addCamelAlias(p);
+      return _decorateProject(db, p);
     }
   }
 }
@@ -211,7 +240,7 @@ function listAll() {
       )
       .all();
 
-    return (list || []).map((x) => _addCamelAlias(x));
+    return (list || []).map((x) => _decorateProject(db, x));
   } catch (_e) {
     // fallback: if archived_at not present, behave like old behavior (all projects are active)
     try {
@@ -237,7 +266,7 @@ function listAll() {
         )
         .all();
 
-      return (list || []).map((x) => _addCamelAlias({ ...x, archived_at: null }));
+      return (list || []).map((x) => _decorateProject(db, { ...x, archived_at: null }));
     } catch (_e2) {
       const list = db
         .prepare(
@@ -260,7 +289,7 @@ function listAll() {
         )
         .all();
 
-      return (list || []).map((x) => _addCamelAlias({ ...x, project_number: null, archived_at: null }));
+      return (list || []).map((x) => _decorateProject(db, { ...x, project_number: null, archived_at: null }));
     }
   }
 }
@@ -297,7 +326,7 @@ function listArchived() {
       )
       .all();
 
-    return (list || []).map((x) => _addCamelAlias(x));
+    return (list || []).map((x) => _decorateProject(db, x));
   } catch (_e) {
     // if archived_at missing, nothing is archived
     return [];
@@ -565,6 +594,22 @@ function unarchiveProject(projectId) {
   return _safeGetById(db, projectId);
 }
 
+function assignModule(projectId, moduleId) {
+  const db = initDatabase();
+  const pid = String(projectId ?? "").trim();
+  if (!pid) throw new Error("projectId required");
+  const normalizedModuleId = _normModuleId(moduleId);
+  const project = _safeGetById(db, pid);
+  if (!project) throw new Error("project not found");
+
+  db.prepare(`
+    INSERT OR IGNORE INTO project_modules (project_id, module_id)
+    VALUES (?, ?)
+  `).run(pid, normalizedModuleId);
+
+  return _safeGetById(db, pid);
+}
+
 function deleteForever(projectId) {
   const db = initDatabase();
   if (!projectId) throw new Error("projectId required");
@@ -656,5 +701,6 @@ module.exports = {
   updateProject,
   archiveProject,
   unarchiveProject,
+  assignModule,
   deleteForever,
 };

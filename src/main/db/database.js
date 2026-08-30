@@ -182,6 +182,37 @@ function ensureProjectsSchema(dbConn) {
   addCol("archived_at", "TEXT");
 }
 
+function ensureProjectModulesSchema(dbConn) {
+  dbConn.exec(`
+    CREATE TABLE IF NOT EXISTS project_modules (
+      project_id TEXT NOT NULL,
+      module_id TEXT NOT NULL CHECK (TRIM(module_id) <> ''),
+      created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+      PRIMARY KEY (project_id, module_id),
+      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_project_modules_module_id
+      ON project_modules (module_id, project_id);
+  `);
+
+  const assignExistingProjects = (tableName, moduleId) => {
+    if (!tableExists(dbConn, tableName)) return;
+    dbConn.prepare(`
+      INSERT OR IGNORE INTO project_modules (project_id, module_id)
+      SELECT DISTINCT source.project_id, ?
+      FROM ${tableName} source
+      JOIN projects project ON project.id = source.project_id
+      WHERE source.project_id IS NOT NULL AND TRIM(source.project_id) <> ''
+    `).run(moduleId);
+  };
+
+  assignExistingProjects("meetings", "protokoll");
+  assignExistingProjects("tops", "protokoll");
+  assignExistingProjects("restarbeiten_items", "restarbeiten");
+  assignExistingProjects("restarbeiten_project_settings", "restarbeiten");
+}
+
 function ensureMeetingTopsSnapshotColumns(dbConn) {
   if (!tableExists(dbConn, "meeting_tops")) return;
 
@@ -1892,6 +1923,7 @@ function ensureSchema(dbConn) {
   ensureDictionarySchema(dbConn);
   ensureTableLayoutsSchema(dbConn);
   ensureRestarbeitenSchema(dbConn);
+  ensureProjectModulesSchema(dbConn);
   ensureAppSettingsSchema(dbConn);
   ensureLicenseAdminSchema(dbConn);
   ensureInvoiceSchema(dbConn);

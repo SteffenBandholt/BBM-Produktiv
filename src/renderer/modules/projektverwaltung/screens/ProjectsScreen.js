@@ -5,9 +5,9 @@
 //
 // Projekte-Kacheln:
 
-// - Klick auf Kachel: legt IMMER eine neue Besprechung an und öffnet TopsView
+// - Klick auf Kachel: öffnet im Modulkontext das zugeordnete Fachmodul.
+// - Klick auf Kachel im Kontext Alle: öffnet den zentralen Projektedit.
 // - Edit: öffnet Projektedit (ProjectFormScreen)  ✅ robust gegen Bubble
-// - Projektnummer: eigene Zeile
 
 import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
 import {
@@ -18,15 +18,30 @@ import {
 
 const LAST_PROJECT_KEY = "bbm.lastProjectId";
 const CREATE_MEETING_EDIT_PARTICIPANTS_KEY = "bbm.createMeeting.editParticipants";
+const PROJECT_CONTEXT_ALL = "all";
+const PROJECT_MODULE_PRESENTATION = Object.freeze({
+  protokoll: Object.freeze({ label: "Protokoll", color: "#37a447" }),
+  restarbeiten: Object.freeze({ label: "Restarbeiten", color: "#ef7d00" }),
+  rechnung: Object.freeze({ label: "Rechnungen", color: "#1769d2" }),
+  sigeko: Object.freeze({ label: "SiGeKo", color: "#7b3fb3" }),
+  "dev-ui-editor": Object.freeze({ label: "UI-Editor", color: "#d92d20" }),
+});
+
+function normalizeProjectContext(value) {
+  const context = String(value || "").trim().toLowerCase();
+  return ["protokoll", "restarbeiten"].includes(context) ? context : PROJECT_CONTEXT_ALL;
+}
 
 export default class ProjectsScreen {
-  constructor({ router }) {
+  constructor({ router, moduleContext = PROJECT_CONTEXT_ALL }) {
     this.router = router;
+    this.moduleContext = normalizeProjectContext(moduleContext);
 
     this.root = null;
     this.hostEl = null;
     this.msgEl = null;
 
+    this.allProjects = [];
     this.projects = [];
     this.loading = false;
     this._startingProject = false;
@@ -37,6 +52,7 @@ export default class ProjectsScreen {
     this._projectFormModal = null;
     this._projectFormPrevProjectId = null;
     this._transferModalEl = null;
+    this._addProjectModalEl = null;
   }
 
   _cleanupProjectFormModal() {
@@ -65,6 +81,10 @@ export default class ProjectsScreen {
         mode: "modal",
         onClose: () => this._cleanupProjectFormModal(),
         onSaved: async () => {
+          const savedProjectId = projectId || this.router.currentProjectId || null;
+          if (!projectId && this.moduleContext !== PROJECT_CONTEXT_ALL && savedProjectId) {
+            await this._assignProjectToCurrentModule(savedProjectId);
+          }
           await this.reloadProjects();
           this._cleanupProjectFormModal();
         },
@@ -135,93 +155,79 @@ export default class ProjectsScreen {
     return name || short || "(ohne Name)";
   }
 
-  _getProjectTileModuleActions(project) {
-    const projectId = String(project?.id || "").trim();
-    if (!projectId) return [];
-
-    const moduleEntries = typeof this.router?._getProjectWorkspaceModules === "function"
-      ? this.router._getProjectWorkspaceModules()
-      : [];
-
-    return moduleEntries
-      .filter((entry) => String(entry?.moduleId || "").trim() !== "projectFirms")
-      .map((entry) => {
-        const moduleId = String(entry?.moduleId || "").trim();
-        const navigationKey = String(entry?.navigationKey || "").trim();
-        const label = String(entry?.label || moduleId || "").trim();
-        const description = String(entry?.description || "").trim();
-        if (!moduleId || !navigationKey || !label) return null;
-
-        return {
-          moduleId,
-          navigationKey,
-          label,
-          description,
-          onClick: async () => this._openProjectModuleFromTile({ moduleId, navigationKey, project }),
-        };
-      })
-      .filter(Boolean);
+  _moduleIdsForProject(project) {
+    const raw = project?.module_ids ?? project?.moduleIds ?? [];
+    if (!Array.isArray(raw)) return [];
+    return [...new Set(raw.map((value) => String(value || "").trim().toLowerCase()).filter(Boolean))];
   }
 
-  async _openProjectModuleFromTile({ moduleId, navigationKey, project } = {}) {
-    const normalizedModuleId = String(moduleId || "").trim();
-    const normalizedNavigationKey = String(navigationKey || "").trim();
-    const effectiveProjectId = String(project?.id || "").trim();
-    if (!normalizedModuleId || !effectiveProjectId) return false;
+  _projectsForCurrentContext(projects = this.allProjects) {
+    const list = Array.isArray(projects) ? projects : [];
+    if (this.moduleContext === PROJECT_CONTEXT_ALL) return [...list];
+    return list.filter((project) => this._moduleIdsForProject(project).includes(this.moduleContext));
+  }
 
-    if (normalizedModuleId === "protokoll") {
-      if (typeof this.router?.openProjectModule === "function") {
-        const result = await this.router.openProjectModule(effectiveProjectId, normalizedModuleId, {
-          project: project || null,
-          navigationKey: normalizedNavigationKey,
-        });
-        if (typeof result === "object") {
-          if (result?.blocked) {
-            this._flashMsg("Protokoll ist fuer diese Lizenz nicht freigeschaltet.", 9000);
-          }
-          return !!result?.ok;
-        }
-        return result !== false;
-      }
+  _projectsAvailableToAdd() {
+    if (this.moduleContext === PROJECT_CONTEXT_ALL) return [];
+    return (this.allProjects || []).filter(
+      (project) => !this._moduleIdsForProject(project).includes(this.moduleContext)
+    );
+  }
 
-      if (typeof this.router?.openProjectProtocol === "function") {
-        const result = await this.router.openProjectProtocol(effectiveProjectId, {
-          project: project || null,
-        });
-        if (typeof result === "object") {
-          if (result?.blocked) {
-            this._flashMsg("Protokoll ist fuer diese Lizenz nicht freigeschaltet.", 9000);
-          }
-          return !!result?.ok;
-        }
-        return result !== false;
-      }
-      return false;
+  _contextPresentation() {
+    return PROJECT_MODULE_PRESENTATION[this.moduleContext] || Object.freeze({ label: "Projekte", color: "#667085" });
+  }
+
+  _createModuleBadges(project) {
+    const row = document.createElement("div");
+    row.dataset.projectModuleBadges = "true";
+    row.style.display = "flex";
+    row.style.flexWrap = "wrap";
+    row.style.gap = "4px";
+
+    for (const moduleId of this._moduleIdsForProject(project)) {
+      const presentation = PROJECT_MODULE_PRESENTATION[moduleId];
+      if (!presentation) continue;
+      const badge = document.createElement("span");
+      badge.dataset.projectModuleBadge = moduleId;
+      badge.textContent = presentation.label;
+      badge.style.display = "inline-flex";
+      badge.style.alignItems = "center";
+      badge.style.minHeight = "18px";
+      badge.style.padding = "1px 7px";
+      badge.style.borderRadius = "999px";
+      badge.style.background = presentation.color;
+      badge.style.color = "#fff";
+      badge.style.fontSize = "10px";
+      badge.style.fontWeight = "750";
+      row.appendChild(badge);
     }
 
-    if (normalizedModuleId === "projectFirms") {
-      if (typeof this.router?.showProjectFirms === "function") {
-        await this.router.showProjectFirms(effectiveProjectId);
-        return true;
-      }
+    return row;
+  }
+
+  async _assignProjectToCurrentModule(projectId) {
+    if (this.moduleContext === PROJECT_CONTEXT_ALL) return false;
+    const pid = String(projectId || "").trim();
+    const api = window.bbmDb || {};
+    if (!pid || typeof api.projectsAssignModule !== "function") {
+      this._flashMsg("Projektzuordnung ist nicht verfügbar.", 9000);
       return false;
     }
-
-    if (typeof this.router?.openProjectModule === "function") {
-      const result = await this.router.openProjectModule(effectiveProjectId, normalizedModuleId, {
-        project: project || null,
-        navigationKey: normalizedNavigationKey,
+    try {
+      const result = await api.projectsAssignModule({
+        projectId: pid,
+        moduleId: this.moduleContext,
       });
-      if (typeof result === "object") {
-        if (result?.blocked) {
-          this._flashMsg(`${normalizedModuleId} ist fuer diese Lizenz nicht freigeschaltet.`, 9000);
-        }
-        return !!result?.ok;
+      if (!result?.ok) {
+        this._flashMsg(result?.error || "Projekt konnte nicht hinzugefügt werden.", 9000);
+        return false;
       }
-      return result !== false;
+      return true;
+    } catch (error) {
+      this._flashMsg(error?.message || "Projekt konnte nicht hinzugefügt werden.", 9000);
+      return false;
     }
-
-    return false;
   }
 
   _readUiMode() {
@@ -493,6 +499,164 @@ export default class ProjectsScreen {
       } catch (_) {}
     }
     this._transferModalEl = null;
+  }
+
+  _showProjectTransferPlaceholder() {
+    window.alert?.("Under construction");
+  }
+
+  _closeAddProjectModal() {
+    if (this._addProjectModalEl) {
+      try {
+        cleanupPopupHandlers(this._addProjectModalEl);
+        this._addProjectModalEl.remove();
+      } catch (_) {}
+    }
+    this._addProjectModalEl = null;
+  }
+
+  _openProjectSelectionModal() {
+    if (this.moduleContext === PROJECT_CONTEXT_ALL || this._addProjectModalEl) return false;
+
+    const presentation = this._contextPresentation();
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 9999 });
+    overlay.style.display = "flex";
+    registerPopupCloseHandlers(overlay, () => this._closeAddProjectModal());
+
+    const box = document.createElement("div");
+    box.className = "bbm-popup-standard bbm-popup-dialog";
+    box.style.width = "min(620px, calc(100vw - 32px))";
+    box.style.maxHeight = "min(720px, calc(100vh - 32px))";
+    box.style.display = "flex";
+    box.style.flexDirection = "column";
+    box.style.overflow = "hidden";
+
+    const header = document.createElement("div");
+    header.className = "bbm-popup-header";
+    header.style.display = "flex";
+    header.style.alignItems = "center";
+    header.style.gap = "10px";
+
+    const title = document.createElement("div");
+    title.textContent = `${presentation.label}: Projekt auswählen`;
+    title.style.fontWeight = "800";
+
+    const close = document.createElement("button");
+    close.type = "button";
+    close.textContent = "Schließen";
+    applyPopupButtonStyle(close);
+    close.style.marginLeft = "auto";
+    close.addEventListener("click", () => this._closeAddProjectModal());
+    header.append(title, close);
+
+    const body = document.createElement("div");
+    body.className = "bbm-popup-body";
+    body.style.overflow = "auto";
+    body.style.padding = "0";
+
+    const list = document.createElement("div");
+    list.dataset.projectSelectionList = "true";
+    list.setAttribute("role", "list");
+    list.style.display = "flex";
+    list.style.flexDirection = "column";
+    list.style.gap = "0";
+    list.style.margin = "0";
+    list.style.padding = "0";
+    list.style.background = "transparent";
+
+    const createListItem = ({ label, dataKey, onClick, badges = null }) => {
+      const item = document.createElement("div");
+      item.dataset[dataKey] = "true";
+      item.dataset.projectSelectionRow = "true";
+      item.setAttribute("role", "listitem");
+      item.tabIndex = 0;
+      item.style.display = "flex";
+      item.style.alignItems = "center";
+      item.style.width = "100%";
+      item.style.gap = "10px";
+      item.style.minHeight = "40px";
+      item.style.margin = "0";
+      item.style.padding = "8px 16px";
+      item.style.border = "0";
+      item.style.borderBottom = "1px solid #dfe5ec";
+      item.style.borderRadius = "0";
+      item.style.boxShadow = "none";
+      item.style.background = "transparent";
+      item.style.cursor = "pointer";
+
+      const text = document.createElement("span");
+      text.textContent = label;
+      text.style.fontWeight = "700";
+      item.appendChild(text);
+
+      if (badges) {
+        badges.style.marginLeft = "auto";
+        badges.style.justifyContent = "flex-end";
+        item.appendChild(badges);
+      }
+
+      const activate = async () => {
+        if (item.dataset.busy === "true") return;
+        item.dataset.busy = "true";
+        await onClick();
+      };
+      item.addEventListener("click", activate);
+      item.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        activate();
+      });
+      return item;
+    };
+
+    list.appendChild(createListItem({
+      label: "Neues Projekt",
+      dataKey: "projectCreateOption",
+      onClick: async () => {
+        this._closeAddProjectModal();
+        await this.openCreateProject();
+      },
+    }));
+
+    const available = this._projectsAvailableToAdd();
+    if (!available.length) {
+      const empty = document.createElement("div");
+      empty.textContent = `Keine weiteren Projekte für ${presentation.label} verfügbar.`;
+      empty.style.fontSize = "12px";
+      empty.style.color = "#667085";
+      empty.style.padding = "10px 2px 2px";
+      list.appendChild(empty);
+    }
+
+    for (const project of available) {
+      const projectNumber = this._getProjectNumber(project);
+      const label = projectNumber
+        ? `${projectNumber} - ${this._labelForTile(project)}`
+        : this._labelForTile(project);
+      const item = createListItem({
+        label,
+        dataKey: "projectAddCandidate",
+        badges: this._createModuleBadges(project),
+        onClick: async () => {
+          const assigned = await this._assignProjectToCurrentModule(project?.id);
+          if (!assigned) {
+            item.dataset.busy = "false";
+            return;
+          }
+          await this.reloadProjects();
+          this._closeAddProjectModal();
+        },
+      });
+      item.dataset.projectId = String(project?.id || "");
+      list.appendChild(item);
+    }
+
+    body.appendChild(list);
+    box.append(header, body);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    this._addProjectModalEl = overlay;
+    return true;
   }
 
   _formatBytes(value) {
@@ -838,7 +1002,9 @@ export default class ProjectsScreen {
     head.style.marginBottom = "10px";
 
     const h = document.createElement("h2");
-    h.textContent = "Projekte";
+    h.textContent = this.moduleContext === PROJECT_CONTEXT_ALL
+      ? "Projekte / Alle"
+      : this._contextPresentation().label;
     h.style.margin = "0";
 
     const msg = document.createElement("div");
@@ -900,38 +1066,27 @@ export default class ProjectsScreen {
     this._setProjectRuntimeContext(project.id, null);
     this._rememberLastProject(project.id);
 
-    if (typeof this.router?.openProjectModule === "function") {
-      const result = await this.router.openProjectModule(project.id, "protokoll", {
-        project,
-      });
-      if (typeof result === "object") {
-        if (result?.ok) return true;
-        if (result?.blocked) {
-          this._flashMsg("Protokoll ist fuer diese Lizenz nicht freigeschaltet.", 9000);
-        }
-        return false;
-      }
-      if (result !== false) {
-        return true;
-      }
+    if (this.moduleContext === PROJECT_CONTEXT_ALL) {
+      await this._openProjectFormModal({ projectId: project.id });
+      return true;
     }
 
-    if (typeof this.router?.openProjectProtocol === "function") {
-      const result = await this.router.openProjectProtocol(project.id, { project });
-      if (typeof result === "object") {
-        if (result?.ok) return true;
-        if (result?.blocked) {
-          this._flashMsg("Protokoll ist fuer diese Lizenz nicht freigeschaltet.", 9000);
-        }
-        return false;
-      }
-      if (result !== false) {
-        return true;
-      }
+    if (typeof this.router?.openProjectModule !== "function") {
+      this._flashMsg(`${this._contextPresentation().label} ist nicht verfügbar.`, 9000);
+      return false;
     }
 
-    this._flashMsg("Protokollstart ist nicht verfuegbar.", 9000);
-    return false;
+    const result = await this.router.openProjectModule(project.id, this.moduleContext, {
+      project,
+      navigationKey: this.moduleContext,
+    });
+    if (typeof result === "object") {
+      if (result?.blocked) {
+        this._flashMsg(`${this._contextPresentation().label} ist für diese Lizenz nicht freigeschaltet.`, 9000);
+      }
+      return !!result?.ok;
+    }
+    return result !== false;
   }
 
   _rememberLastProject(projectId) {
@@ -975,6 +1130,7 @@ export default class ProjectsScreen {
     try {
       const api = window.bbmDb || {};
       if (typeof api.projectsList !== "function") {
+        this.allProjects = [];
         this.projects = [];
         this._flashMsg("projectsList ist nicht verfügbar (Preload/IPC fehlt).", 9000);
         return;
@@ -982,12 +1138,14 @@ export default class ProjectsScreen {
 
       const res = await api.projectsList();
       if (!res?.ok) {
+        this.allProjects = [];
         this.projects = [];
         this._flashMsg(res?.error || "Fehler beim Laden", 9000);
         return;
       }
 
-      this.projects = res.list || [];
+      this.allProjects = Array.isArray(res.list) ? res.list : [];
+      this.projects = this._projectsForCurrentContext(this.allProjects);
       this._setMsg("");
     } finally {
       this.loading = false;
@@ -995,13 +1153,143 @@ export default class ProjectsScreen {
     }
   }
 
+  _renderModuleContextList() {
+    const list = document.createElement("div");
+    list.dataset.projectContextList = "true";
+    list.setAttribute("role", "list");
+    list.style.display = "flex";
+    list.style.flexDirection = "column";
+    list.style.gap = "0";
+    list.style.margin = "0";
+    list.style.padding = "0";
+    list.style.background = "transparent";
+
+    const createRow = ({ label, dataKey, projectId = "", badges = null, onActivate, action = null }) => {
+      const row = document.createElement("div");
+      row.dataset.projectContextRow = "true";
+      row.dataset[dataKey] = "true";
+      if (projectId) row.dataset.projectId = String(projectId);
+      row.setAttribute("role", "listitem");
+      row.tabIndex = 0;
+      row.style.display = "flex";
+      row.style.alignItems = "center";
+      row.style.width = "100%";
+      row.style.minHeight = "42px";
+      row.style.gap = "10px";
+      row.style.margin = "0";
+      row.style.padding = "8px 12px";
+      row.style.border = "0";
+      row.style.borderBottom = "1px solid var(--card-border)";
+      row.style.borderRadius = "0";
+      row.style.boxShadow = "none";
+      row.style.background = "transparent";
+      row.style.color = "var(--text-main)";
+      row.style.cursor = "pointer";
+      row.style.userSelect = "none";
+
+      const text = document.createElement("div");
+      text.textContent = label;
+      text.style.minWidth = "0";
+      text.style.fontWeight = "750";
+      text.style.fontSize = "14px";
+      text.style.overflow = "hidden";
+      text.style.textOverflow = "ellipsis";
+      text.style.whiteSpace = "nowrap";
+      row.appendChild(text);
+
+      const right = document.createElement("div");
+      right.style.display = "flex";
+      right.style.alignItems = "center";
+      right.style.gap = "10px";
+      right.style.marginLeft = "auto";
+      right.style.flex = "0 0 auto";
+      if (badges) right.appendChild(badges);
+      if (action) right.appendChild(action);
+      if (right.children.length) row.appendChild(right);
+
+      const activate = async () => {
+        if (this.loading || this._startingProject || row.dataset.busy === "true") return;
+        row.dataset.busy = "true";
+        await onActivate?.();
+      };
+      row.addEventListener("click", activate);
+      row.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        activate();
+      });
+      return row;
+    };
+
+    list.appendChild(createRow({
+      label: "Neues Projekt",
+      dataKey: "projectContextCreate",
+      onActivate: () => this._openProjectSelectionModal(),
+    }));
+
+    for (const project of this.projects || []) {
+      const projectId = String(project?.id || "");
+      const number = this._getProjectNumber(project);
+      const label = number
+        ? `${number} - ${this._labelForTile(project)}`
+        : this._labelForTile(project);
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.textContent = "Edit";
+      edit.dataset.projectAction = "edit";
+      edit.style.padding = "0";
+      edit.style.margin = "0";
+      edit.style.border = "0";
+      edit.style.borderRadius = "0";
+      edit.style.boxShadow = "none";
+      edit.style.background = "transparent";
+      edit.style.color = "#0b61ff";
+      edit.style.fontSize = "12px";
+      edit.style.fontWeight = "650";
+      edit.style.cursor = "pointer";
+      edit.addEventListener("click", async (event) => {
+        event?.preventDefault?.();
+        event?.stopPropagation?.();
+        event?.stopImmediatePropagation?.();
+        if (this.loading || this._startingProject || !projectId) return;
+        this.router.currentProjectId = projectId;
+        this.router.currentMeetingId = null;
+        await this._openProjectFormModal({ projectId });
+      });
+
+      list.appendChild(createRow({
+        label,
+        dataKey: "projectContextProject",
+        projectId,
+        badges: this._createModuleBadges(project),
+        action: edit,
+        onActivate: () => this.openProjectById(projectId),
+      }));
+    }
+
+    this.hostEl.appendChild(list);
+
+    if (this.loading) {
+      const hint = document.createElement("div");
+      hint.textContent = "Lade Projekte...";
+      hint.style.opacity = "0.8";
+      hint.style.marginTop = "10px";
+      this.hostEl.appendChild(hint);
+    }
+  }
+
   // ------------------------------------------------------------
-  // Grid
+  // Projekte / Alle: bestehende Kartenansicht
   // ------------------------------------------------------------
   _renderGrid() {
     if (!this.hostEl) return;
 
     this.hostEl.innerHTML = "";
+
+    if (this.moduleContext !== PROJECT_CONTEXT_ALL) {
+      this._renderModuleContextList();
+      return;
+    }
 
     const grid = document.createElement("div");
     grid.style.display = "grid";
@@ -1037,26 +1325,26 @@ export default class ProjectsScreen {
       return t;
     };
 
-    // + Projekt anlegen
     const createTile = mkTile();
     createTile.style.background = "var(--card-bg)";
     createTile.style.borderStyle = "dashed";
 
     const createTitle = document.createElement("div");
-    createTitle.textContent = "+ Projekt anlegen";
+    createTitle.textContent = this.moduleContext === PROJECT_CONTEXT_ALL
+      ? "+ Projekt anlegen"
+      : "Projekt\nneu / hinzufügen";
     createTitle.style.fontWeight = "800";
     createTitle.style.fontSize = "16px";
-    createTitle.style.marginBottom = "6px";
+    createTitle.style.whiteSpace = "pre-line";
 
-    const createHint = document.createElement("div");
-    createHint.textContent = "Stammdaten erfassen";
-    createHint.style.opacity = "0.8";
-    createHint.style.fontSize = "12px";
-
-    createTile.append(createTitle, createHint);
+    createTile.appendChild(createTitle);
 
     const openCreate = async () => {
-      await this.openCreateProject();
+      if (this.moduleContext === PROJECT_CONTEXT_ALL) {
+        await this.openCreateProject();
+        return;
+      }
+      this._openProjectSelectionModal();
     };
 
     createTile.addEventListener("click", openCreate);
@@ -1075,21 +1363,19 @@ export default class ProjectsScreen {
     transferTile.style.borderStyle = "dashed";
 
     const transferTitle = document.createElement("div");
-    transferTitle.textContent = "Projekt Import / Export";
+    transferTitle.textContent = "Import / Export";
     transferTitle.style.fontWeight = "800";
     transferTitle.style.fontSize = "16px";
     transferTitle.style.marginBottom = "6px";
 
     const transferHint = document.createElement("div");
-    transferHint.textContent = "Projekte sichern oder aus Exporten wiederherstellen";
+    transferHint.textContent = "Under construction";
     transferHint.style.opacity = "0.8";
     transferHint.style.fontSize = "12px";
 
     transferTile.append(transferTitle, transferHint);
 
-    const openTransfer = async () => {
-      await this._openProjectTransferModal();
-    };
+    const openTransfer = () => this._showProjectTransferPlaceholder();
 
     transferTile.addEventListener("click", openTransfer);
     transferTile.addEventListener("keydown", (e) => {
@@ -1106,6 +1392,18 @@ export default class ProjectsScreen {
       const tile = mkTile();
       tile.dataset.projectCard = "true";
       tile.dataset.projectId = String(p?.id || "");
+
+      if (this.moduleContext !== PROJECT_CONTEXT_ALL) {
+        const contextColor = this._contextPresentation().color;
+        tile.style.border = `2px solid ${contextColor}`;
+        tile.onmouseenter = () => {
+          if (this.loading || this._startingProject) return;
+          tile.style.borderColor = contextColor;
+        };
+        tile.onmouseleave = () => {
+          tile.style.borderColor = contextColor;
+        };
+      }
 
       const pn = this._getProjectNumber(p);
 
@@ -1138,6 +1436,9 @@ export default class ProjectsScreen {
       subtitle.textContent = hasShort ? name : String(p.city || "").trim();
 
       content.append(pnLine, title, subtitle);
+      if (this.moduleContext === PROJECT_CONTEXT_ALL) {
+        content.appendChild(this._createModuleBadges(p));
+      }
 
       const actionsRail = document.createElement("div");
       actionsRail.dataset.projectActionRail = "true";
@@ -1157,13 +1458,11 @@ export default class ProjectsScreen {
           e.stopImmediatePropagation?.();
         } catch (_) {}
       };
-      const makeRailButton = ({ text, actionType, moduleId = "", navigationKey = "", titleText = "", onClick }) => {
+      const makeRailButton = ({ text, actionType, titleText = "", onClick }) => {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = text;
         btn.dataset.projectAction = actionType;
-        if (moduleId) btn.dataset.moduleId = moduleId;
-        if (navigationKey) btn.dataset.navigationKey = navigationKey;
         btn.title = titleText || text;
         btn.style.width = "auto";
         btn.style.padding = "0";
@@ -1213,20 +1512,6 @@ export default class ProjectsScreen {
 
         return btn;
       };
-
-      const moduleActions = this._getProjectTileModuleActions(p);
-      for (const moduleAction of moduleActions) {
-        actionsRail.appendChild(
-          makeRailButton({
-            text: moduleAction.label,
-            actionType: "module",
-            moduleId: moduleAction.moduleId,
-            navigationKey: moduleAction.navigationKey,
-            titleText: moduleAction.description,
-            onClick: moduleAction.onClick,
-          })
-        );
-      }
 
       const btnEdit = makeRailButton({
         text: "Edit",

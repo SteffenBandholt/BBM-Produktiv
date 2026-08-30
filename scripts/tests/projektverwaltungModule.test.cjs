@@ -1,6 +1,8 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
+const Module = require("node:module");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 function read(relPath) {
@@ -228,6 +230,10 @@ async function runProjektverwaltungModuleTests(run) {
   const workspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const formSource = read("src/renderer/modules/projektverwaltung/screens/ProjectFormScreen.js");
   const archiveSource = read("src/renderer/modules/projektverwaltung/screens/ArchiveScreen.js");
+  const databaseSource = read("src/main/db/database.js");
+  const projectsRepoSource = read("src/main/db/projectsRepo.js");
+  const projectsIpcSource = read("src/main/ipc/projectsIpc.js");
+  const preloadSource = read("src/main/preload.js");
   const projectsViewSource = read("src/renderer/views/ProjectsView.js");
   const formViewSource = read("src/renderer/views/ProjectFormView.js");
   const archiveViewSource = read("src/renderer/views/ArchiveView.js");
@@ -458,7 +464,7 @@ async function runProjektverwaltungModuleTests(run) {
     }
   });
 
-  await run("Projektverwaltung: Projektklick startet direkt den Protokollpfad", async () => {
+  await run("Projektverwaltung: Projektklick startet im Protokollkontext direkt den Protokollpfad", async () => {
     const calls = [];
     const previousWindow = global.window;
     global.window = {
@@ -469,11 +475,13 @@ async function runProjektverwaltungModuleTests(run) {
 
     try {
       const screen = new ProjectsScreen({
+        moduleContext: "protokoll",
         router: {
           currentProjectId: null,
           currentMeetingId: null,
-          async openProjectProtocol(projectId, options) {
-            calls.push({ projectId, options });
+          async openProjectModule(projectId, moduleId, options) {
+            calls.push({ projectId, moduleId, options });
+            return true;
           },
         },
       });
@@ -492,6 +500,7 @@ async function runProjektverwaltungModuleTests(run) {
       assert.deepEqual(calls, [
         {
           projectId: "17",
+          moduleId: "protokoll",
           options: {
             project: {
               id: "17",
@@ -499,10 +508,58 @@ async function runProjektverwaltungModuleTests(run) {
               name: "Projekt A",
               project_number: "17",
             },
+            navigationKey: "protokoll",
           },
         },
       ]);
-      assert.equal(projectsSource.includes('openProjectModule(project.id, "protokoll", {'), true);
+    } finally {
+      global.window = previousWindow;
+    }
+  });
+
+  await run("Projektverwaltung: Projektklick startet im Restarbeitenkontext direkt den Restarbeitenpfad", async () => {
+    const calls = [];
+    const previousWindow = global.window;
+    global.window = { localStorage: { setItem() {} } };
+
+    try {
+      const screen = new ProjectsScreen({
+        moduleContext: "restarbeiten",
+        router: {
+          currentProjectId: null,
+          currentMeetingId: null,
+          async openProjectModule(projectId, moduleId, options) {
+            calls.push({ projectId, moduleId, options });
+            return true;
+          },
+        },
+      });
+      screen.projects = [{ id: "18", name: "Projekt B", module_ids: ["restarbeiten"] }];
+
+      assert.equal(await screen.openProjectById("18"), true);
+      assert.deepEqual(calls, [{
+        projectId: "18",
+        moduleId: "restarbeiten",
+        options: {
+          project: { id: "18", name: "Projekt B", module_ids: ["restarbeiten"] },
+          navigationKey: "restarbeiten",
+        },
+      }]);
+    } finally {
+      global.window = previousWindow;
+    }
+  });
+
+  await run("Projektverwaltung: Projektklick in Alle öffnet ausschließlich die zentrale Bearbeitung", async () => {
+    const calls = [];
+    const previousWindow = global.window;
+    global.window = { localStorage: { setItem() {} } };
+    try {
+      const screen = new ProjectsScreen({ router: { currentProjectId: null, currentMeetingId: null } });
+      screen.projects = [{ id: "17", name: "Projekt A", module_ids: ["protokoll"] }];
+      screen._openProjectFormModal = async ({ projectId }) => calls.push(projectId);
+      assert.equal(await screen.openProjectById("17"), true);
+      assert.deepEqual(calls, ["17"]);
     } finally {
       global.window = previousWindow;
     }
@@ -519,6 +576,7 @@ async function runProjektverwaltungModuleTests(run) {
 
     try {
       const screen = new ProjectsScreen({
+        moduleContext: "protokoll",
         router: {
           currentProjectId: null,
           currentMeetingId: null,
@@ -565,6 +623,7 @@ async function runProjektverwaltungModuleTests(run) {
             name: "Projekt A",
             project_number: "17",
           },
+          navigationKey: "protokoll",
         },
       });
       assert.equal(calls.some((item) => item.type === "protocol"), false);
@@ -591,6 +650,185 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(moduleIds.filter((moduleId) => moduleId === "restarbeiten").length, 2);
     assert.equal(navigationKeys.includes("restarbeiten"), true);
     assert.equal(navigationKeys.includes("plaene"), true);
+  });
+
+  await run("Projektverwaltung: Kontexte filtern zentral gespeicherte Projekte ohne Duplikate", () => {
+    const projects = [
+      { id: "p1", module_ids: ["protokoll"] },
+      { id: "p2", module_ids: ["restarbeiten"] },
+      { id: "p3", module_ids: ["protokoll", "restarbeiten"] },
+    ];
+    const protocol = new ProjectsScreen({ router: {}, moduleContext: "protokoll" });
+    protocol.allProjects = projects;
+    assert.deepEqual(protocol._projectsForCurrentContext().map((project) => project.id), ["p1", "p3"]);
+    assert.deepEqual(protocol._projectsAvailableToAdd().map((project) => project.id), ["p2"]);
+
+    const restarbeiten = new ProjectsScreen({ router: {}, moduleContext: "restarbeiten" });
+    restarbeiten.allProjects = projects;
+    assert.deepEqual(restarbeiten._projectsForCurrentContext().map((project) => project.id), ["p2", "p3"]);
+    assert.deepEqual(restarbeiten._projectsAvailableToAdd().map((project) => project.id), ["p1"]);
+
+    const all = new ProjectsScreen({ router: {}, moduleContext: "all" });
+    all.allProjects = projects;
+    assert.deepEqual(all._projectsForCurrentContext().map((project) => project.id), ["p1", "p2", "p3"]);
+    assert.deepEqual(all._projectsAvailableToAdd(), []);
+  });
+
+  await run("Projektverwaltung: Hinzufügen ergänzt nur die Modulzuordnung am bestehenden Projekt", async () => {
+    const previousWindow = global.window;
+    const calls = [];
+    global.window = {
+      bbmDb: {
+        async projectsAssignModule(payload) {
+          calls.push(payload);
+          return { ok: true, project: { id: payload.projectId, module_ids: [payload.moduleId] } };
+        },
+      },
+    };
+    try {
+      const screen = new ProjectsScreen({ router: {}, moduleContext: "restarbeiten" });
+      assert.equal(await screen._assignProjectToCurrentModule("p1"), true);
+      assert.deepEqual(calls, [{ projectId: "p1", moduleId: "restarbeiten" }]);
+    } finally {
+      global.window = previousWindow;
+    }
+  });
+
+  await run("Projektverwaltung: gemeinsame Projektauswahl listet Neues zuerst und zeigt vorhandene Badges", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const calls = [];
+    global.document = createFakeDocumentWithBubbling();
+    global.window = { addEventListener() {}, removeEventListener() {} };
+
+    try {
+      const screen = new ProjectsScreen({ router: {}, moduleContext: "restarbeiten" });
+      screen.allProjects = [
+        { id: "existing", name: "Projekt Müller", project_number: "M-1", module_ids: ["protokoll", "sigeko"] },
+        { id: "assigned", name: "Bereits zugeordnet", module_ids: ["restarbeiten"] },
+      ];
+      screen._assignProjectToCurrentModule = async (projectId) => {
+        calls.push({ type: "assign", projectId });
+        return true;
+      };
+      screen.reloadProjects = async () => calls.push({ type: "reload" });
+
+      assert.equal(screen._openProjectSelectionModal(), true);
+      const list = findNode(global.document.body, (node) => node?.dataset?.projectSelectionList === "true");
+      const createOption = findNode(global.document.body, (node) => node?.dataset?.projectCreateOption === "true");
+      const candidate = findNode(global.document.body, (node) => node?.dataset?.projectAddCandidate === "true");
+      const badges = findNodes(candidate, (node) => !!node?.dataset?.projectModuleBadge);
+
+      assert.equal(list.children[0], createOption);
+      assert.equal(list.style.display, "flex");
+      assert.equal(list.style.flexDirection, "column");
+      assert.equal(list.style.gap, "0");
+      assert.equal(createOption.textContent, "");
+      assert.equal(collectText(createOption), "Neues Projekt");
+      assert.equal(createOption.dataset.projectSelectionRow, "true");
+      assert.equal(candidate.dataset.projectSelectionRow, "true");
+      assert.equal(candidate.style.width, "100%");
+      assert.equal(candidate.style.borderRadius, "0");
+      assert.equal(candidate.style.boxShadow, "none");
+      assert.equal(candidate.style.background, "transparent");
+      assert.equal(candidate.style.borderBottom, "1px solid #dfe5ec");
+      assert.equal(collectText(candidate).includes("M-1 - Projekt Müller"), true);
+      assert.deepEqual(badges.map((badge) => badge.dataset.projectModuleBadge), ["protokoll", "sigeko"]);
+
+      await candidate.click();
+      assert.deepEqual(calls, [{ type: "assign", projectId: "existing" }, { type: "reload" }]);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("Projektverwaltung: Neues Projekt aus der Auswahl nutzt den bestehenden zentralen Anlegeweg", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    global.document = createFakeDocumentWithBubbling();
+    global.window = { addEventListener() {}, removeEventListener() {} };
+
+    try {
+      const calls = [];
+      const screen = new ProjectsScreen({ router: {}, moduleContext: "protokoll" });
+      screen.openCreateProject = async () => calls.push("create");
+
+      assert.equal(screen._openProjectSelectionModal(), true);
+      const createOption = findNode(global.document.body, (node) => node?.dataset?.projectCreateOption === "true");
+      await createOption.click();
+      assert.deepEqual(calls, ["create"]);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("Projektverwaltung: zentrale Projekt-Modul-Zuordnung ist additiv und idempotent verdrahtet", () => {
+    assert.match(databaseSource, /CREATE TABLE IF NOT EXISTS project_modules/);
+    assert.match(databaseSource, /assignExistingProjects\("meetings", "protokoll"\)/);
+    assert.match(databaseSource, /assignExistingProjects\("restarbeiten_items", "restarbeiten"\)/);
+    assert.match(projectsRepoSource, /INSERT OR IGNORE INTO project_modules/);
+    assert.match(projectsIpcSource, /projects:assignModule/);
+    assert.match(preloadSource, /projectsAssignModule/);
+  });
+
+  await run("Projektverwaltung: Bestandsdaten werden automatisch zugeordnet und IDs bleiben einmalig", () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-project-modules-"));
+    const userDataPath = path.join(tempRoot, "userData");
+    const databasePath = path.resolve(__dirname, "../../src/main/db/database.js");
+    const projectsRepoPath = path.resolve(__dirname, "../../src/main/db/projectsRepo.js");
+    const originalLoad = Module._load;
+    Module._load = function patched(request, parent, isMain) {
+      if (request === "electron" && String(parent?.filename || "").endsWith(path.join("db", "database.js"))) {
+        return { app: { getPath: (name) => (name === "userData" ? userDataPath : ""), isPackaged: true } };
+      }
+      return originalLoad.call(this, request, parent, isMain);
+    };
+    try {
+      delete require.cache[databasePath];
+      delete require.cache[projectsRepoPath];
+      const database = require(databasePath);
+      let db = database.initDatabase();
+      const insertProject = db.prepare("INSERT INTO projects (id, name) VALUES (?, ?)");
+      insertProject.run("protocol", "Protokollprojekt");
+      insertProject.run("rest", "Restarbeitenprojekt");
+      insertProject.run("both", "Mehrmodulprojekt");
+      insertProject.run("mapped", "Vorhandene Zuordnung");
+      db.prepare("INSERT INTO meetings (id, project_id, meeting_index, title) VALUES (?, ?, ?, ?)")
+        .run("m1", "protocol", 1, "Protokoll");
+      db.prepare("INSERT INTO meetings (id, project_id, meeting_index, title) VALUES (?, ?, ?, ?)")
+        .run("m2", "both", 1, "Protokoll");
+      db.prepare("INSERT INTO restarbeiten_project_settings (project_id) VALUES (?)").run("rest");
+      db.prepare("INSERT INTO restarbeiten_project_settings (project_id) VALUES (?)").run("both");
+      db.prepare("INSERT INTO project_modules (project_id, module_id) VALUES (?, ?)").run("mapped", "sigeko");
+      database.closeDatabase();
+
+      db = database.initDatabase();
+      const projectsRepo = require(projectsRepoPath);
+      const projects = projectsRepo.listAll();
+      const byId = new Map(projects.map((project) => [project.id, project]));
+      assert.deepEqual(byId.get("protocol").module_ids, ["protokoll"]);
+      assert.deepEqual(byId.get("rest").module_ids, ["restarbeiten"]);
+      assert.deepEqual(byId.get("both").module_ids, ["protokoll", "restarbeiten"]);
+      assert.deepEqual(byId.get("mapped").module_ids, ["sigeko"]);
+
+      projectsRepo.assignModule("protocol", "restarbeiten");
+      projectsRepo.assignModule("protocol", "restarbeiten");
+      assert.equal(
+        db.prepare("SELECT COUNT(*) AS count FROM project_modules WHERE project_id = ? AND module_id = ?")
+          .get("protocol", "restarbeiten").count,
+        1
+      );
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM projects WHERE id = ?").get("protocol").count, 1);
+      database.closeDatabase();
+    } finally {
+      try { require(databasePath).closeDatabase(); } catch (_) {}
+      Module._load = originalLoad;
+      try { fs.rmSync(tempRoot, { recursive: true, force: true }); } catch (_) {}
+      delete require.cache[databasePath];
+      delete require.cache[projectsRepoPath];
+    }
   });
 
   await run("Projektverwaltung: DEV-Version schaltet Modulfreigabe auf alle aktiven Module frei", async () => {
@@ -626,39 +864,17 @@ async function runProjektverwaltungModuleTests(run) {
     }
   });
 
-  await run("Projektverwaltung: Projektkarte rendert rechte Modul-Aktionsleiste und stoppt Bubble", async () => {
+  await run("Projektverwaltung: Projektkarte zeigt neutrale Modulbadges statt Fachmodul-Startbuttons", async () => {
     const previousDocument = global.document;
     const fakeDocument = createFakeDocumentWithBubbling();
     global.document = fakeDocument;
 
     const calls = [];
     const screen = new ProjectsScreen({
+      moduleContext: "all",
       router: {
         currentProjectId: null,
         currentMeetingId: null,
-        _getProjectWorkspaceModules() {
-          return [
-            ...getActiveProjectModuleNavigation().map((entry) => ({
-              moduleId: String(entry?.moduleId || "").trim(),
-              navigationKey: String(entry?.key || "").trim(),
-              label: String(entry?.label || "").trim(),
-              description: String(entry?.description || "").trim(),
-            })),
-            {
-              moduleId: "projectFirms",
-              navigationKey: "projectFirms",
-              label: "Firmen im Projekt",
-              description: "Projektfirmen anzeigen.",
-            },
-          ];
-        },
-        async openProjectProtocol(projectId, options) {
-          calls.push({ type: "protocol", projectId, options });
-        },
-        async openProjectModule(projectId, moduleId, options) {
-          calls.push({ type: "module", projectId, moduleId, options });
-          return { ok: true };
-        },
       },
     });
 
@@ -668,6 +884,7 @@ async function runProjektverwaltungModuleTests(run) {
         short: "Projekt A",
         name: "Projekt A",
         project_number: "17",
+        module_ids: ["protokoll", "restarbeiten", "sigeko"],
       },
     ];
     screen.openProjectById = async (projectId) => {
@@ -684,49 +901,20 @@ async function runProjektverwaltungModuleTests(run) {
 
       const projectCard = findNode(root, (node) => node?.dataset?.projectCard === "true");
       const actionRail = findNode(root, (node) => node?.dataset?.projectActionRail === "true");
-      const moduleButton = findNode(
-        root,
-        (node) => node?.dataset?.projectAction === "module" && node?.dataset?.navigationKey === "protokoll"
-      );
-      const restarbeitenButton = findNode(
-        root,
-        (node) => node?.dataset?.projectAction === "module" && node?.dataset?.navigationKey === "restarbeiten"
-      );
-      const plaeneButton = findNode(
-        root,
-        (node) => node?.dataset?.projectAction === "module" && node?.dataset?.navigationKey === "plaene"
-      );
-      const allRestarbeitenButtons = findNodes(
-        root,
-        (node) => node?.dataset?.projectAction === "module" && node?.dataset?.moduleId === "restarbeiten"
-      );
-      const projectFirmsButton = findNode(
-        root,
-        (node) => node?.dataset?.projectAction === "module" && node?.dataset?.moduleId === "projectFirms"
-      );
+      const moduleButtons = findNodes(root, (node) => node?.dataset?.projectAction === "module");
+      const badges = findNodes(root, (node) => !!node?.dataset?.projectModuleBadge);
       const editButton = findNode(root, (node) => node?.dataset?.projectAction === "edit");
 
       assert.equal(!!projectCard, true);
       assert.equal(!!actionRail, true);
-      assert.equal(!!moduleButton, true);
-      assert.equal(!!restarbeitenButton, true);
-      assert.equal(!!plaeneButton, true);
-      assert.equal(allRestarbeitenButtons.length, 2);
-      assert.equal(!!projectFirmsButton, false);
+      assert.equal(moduleButtons.length, 0);
+      assert.deepEqual(badges.map((badge) => badge.dataset.projectModuleBadge), [
+        "protokoll",
+        "restarbeiten",
+        "sigeko",
+      ]);
       assert.equal(!!editButton, true);
-      assert.equal(actionRail.children.length >= 4, true);
-
-      await moduleButton.click();
-      await restarbeitenButton.click();
-      await plaeneButton.click();
-      assert.deepEqual(
-        calls.map((item) => [item.type, item.moduleId, item.options?.navigationKey]),
-        [
-          ["module", "protokoll", "protokoll"],
-          ["module", "restarbeiten", "restarbeiten"],
-          ["module", "restarbeiten", "plaene"],
-        ]
-      );
+      assert.equal(actionRail.children.length, 1);
 
       await editButton.click();
       assert.deepEqual(calls.at(-1), { type: "edit", projectId: "17" });
@@ -738,10 +926,51 @@ async function runProjektverwaltungModuleTests(run) {
     }
   });
 
+  await run("Projektverwaltung: Modulkontext zeigt Projekte als kompakte Zeilenliste", async () => {
+    const previousDocument = global.document;
+    const fakeDocument = createFakeDocumentWithBubbling();
+    global.document = fakeDocument;
+
+    try {
+      for (const moduleContext of ["protokoll", "restarbeiten"]) {
+        const screen = new ProjectsScreen({ moduleContext, router: {} });
+        screen.projects = [{ id: moduleContext, name: "Projekt", module_ids: [moduleContext, "sigeko"] }];
+        const calls = [];
+        screen.openProjectById = async (projectId) => calls.push({ type: "open", projectId });
+        screen._openProjectSelectionModal = () => calls.push({ type: "create" });
+
+        const root = screen.render();
+        const list = findNode(root, (node) => node?.dataset?.projectContextList === "true");
+        const createRow = findNode(root, (node) => node?.dataset?.projectContextCreate === "true");
+        const projectRow = findNode(root, (node) => node?.dataset?.projectContextProject === "true");
+        const cards = findNodes(root, (node) => node?.dataset?.projectCard === "true");
+        const badges = findNodes(root, (node) => !!node?.dataset?.projectModuleBadge);
+        assert.equal(list.style.display, "flex");
+        assert.equal(list.style.flexDirection, "column");
+        assert.equal(list.style.gap, "0");
+        assert.equal(list.children[0], createRow);
+        assert.equal(createRow.style.borderRadius, "0");
+        assert.equal(createRow.style.boxShadow, "none");
+        assert.equal(projectRow.style.borderRadius, "0");
+        assert.equal(projectRow.style.boxShadow, "none");
+        assert.equal(cards.length, 0);
+        assert.deepEqual(badges.map((badge) => badge.dataset.projectModuleBadge), [moduleContext, "sigeko"]);
+
+        await createRow.click();
+        await projectRow.click();
+        assert.deepEqual(calls, [{ type: "create" }, { type: "open", projectId: moduleContext }]);
+      }
+    } finally {
+      global.document = previousDocument;
+    }
+  });
+
   await run("Projektverwaltung: neue Screen-Dateien enthalten die Implementierung", () => {
     assert.equal(projectsSource.includes("export default class ProjectsScreen"), true);
     assert.equal(workspaceSource.includes("export default class ProjectWorkspaceScreen"), true);
-    assert.equal(projectsSource.includes("_getProjectWorkspaceModules"), true);
+    assert.equal(projectsSource.includes("PROJECT_MODULE_PRESENTATION"), true);
+    assert.equal(projectsSource.includes("projectsAssignModule"), true);
+    assert.equal(projectsSource.includes("Under construction"), true);
     assert.equal(projectsSource.includes('"protokoll"'), true);
     assert.equal(projectsSource.includes("projectActionRail"), true);
     assert.equal(projectsSource.includes("dataset.projectAction = actionType"), true);

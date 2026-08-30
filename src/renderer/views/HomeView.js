@@ -233,7 +233,7 @@ export default class HomeView {
     const mode = String(entry?.presentation?.start?.mode || "project").trim().toLowerCase();
     if (mode === "project") {
       await this.router?.ensureActiveModuleAccess?.({ force: true });
-      await this.router?.showProjects?.();
+      await this.router?.showProjects?.({ moduleContext: moduleId, source: "home" });
       return;
     }
 

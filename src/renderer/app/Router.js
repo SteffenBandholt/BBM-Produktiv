@@ -524,12 +524,20 @@ export default class Router {
   }
 
   // Kern-Routing / UI-Rahmenlogik: allgemeine Screen-Wechsel bleiben im Router gebuendelt.
-  async showProjects() {
+  async showProjects(options = {}) {
     await this.ensureActiveModuleAccess({ force: true });
     const mod = await import("../modules/projektverwaltung/index.js");
     const V = mod.ProjectsScreen;
+    const requestedContext = String(options?.moduleContext || "").trim().toLowerCase();
+    const moduleContext = ["protokoll", "restarbeiten"].includes(requestedContext)
+      ? requestedContext
+      : "all";
     this.currentMeetingId = null;
-    await this.show(new V({ router: this }), { section: "projects", isTopsView: false, hideSidebar: false });
+    await this.show(new V({ router: this, moduleContext }), {
+      section: "projects",
+      isTopsView: false,
+      hideSidebar: false,
+    });
   }
 
   async showProjectWorkspace(projectId, options = {}) {

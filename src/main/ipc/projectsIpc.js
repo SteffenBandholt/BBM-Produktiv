@@ -113,6 +113,17 @@ function registerProjectsIpc() {
     })
   );
 
+  ipcMain.handle("projects:assignModule", (_e, data) =>
+    _runProjectTask(() => {
+      const d = data && typeof data === "object" ? data : {};
+      const project = projectsRepo.assignModule(
+        d.projectId ?? d.project_id ?? d.id ?? null,
+        d.moduleId ?? d.module_id ?? null
+      );
+      return { ok: true, project };
+    })
+  );
+
   ipcMain.handle("projects:storagePreview", (_e, data) =>
     _runProjectTask(() => {
       const d = data && typeof data === "object" ? data : {};

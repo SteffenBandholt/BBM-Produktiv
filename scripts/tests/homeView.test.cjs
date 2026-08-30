@@ -275,7 +275,7 @@ async function runHomeViewTests(run) {
     ]);
   });
 
-  await run("HomeView: Projektmodule öffnen die aktuelle Projektübersicht ohne historischen Startziel-Schlüssel", async () => {
+  await run("HomeView: Projektmodule öffnen die gemeinsame Projektübersicht im passenden Modulkontext", async () => {
     await withDom({ channel: "PROD" }, async ({ storageWrites }) => {
       const calls = [];
       const view = new HomeView({
@@ -283,8 +283,8 @@ async function runHomeViewTests(run) {
           async ensureActiveModuleAccess(options) {
             calls.push({ type: "ensure", options });
           },
-          async showProjects() {
-            calls.push({ type: "projects" });
+          async showProjects(options) {
+            calls.push({ type: "projects", options });
           },
         },
       });
@@ -293,7 +293,7 @@ async function runHomeViewTests(run) {
 
       assert.deepEqual(calls, [
         { type: "ensure", options: { force: true } },
-        { type: "projects" },
+        { type: "projects", options: { moduleContext: "restarbeiten", source: "home" } },
       ]);
       assert.deepEqual(storageWrites, []);
       assert.equal(homeViewSource.includes("bbm.startTargetModuleId"), false);

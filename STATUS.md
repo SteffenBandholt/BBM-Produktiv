@@ -4423,3 +4423,30 @@ Wichtig:
   Basiscommit vorhandenen, paketfremden Schutz-Hash von `docs/licensing.md`
   rot; Datei und Assertion sind gegenüber R3.2 unverändert. Kein Commit, Push,
   Merge oder PR.
+
+## Projektverwaltung / Modulkontext
+
+- Status: technisch umgesetzt, Commit offen. Die bestehende Projektverwaltung
+  arbeitet als gemeinsame UI in den Kontexten `Alle`, `Protokoll` und
+  `Restarbeiten`; Rechnungen öffnen weiterhin direkt den Rechnungsbereich.
+- Die additive Tabelle `project_modules` ordnet eine zentrale Projekt-ID
+  mehreren Modulen zu. Bestehende Protokoll- und Restarbeitendaten werden
+  idempotent zugeordnet, vorhandene Zuordnungen bleiben erhalten und Projekte
+  werden nicht dupliziert.
+- Modulkontexte filtern ihre Projekte, öffnen das jeweilige Fachmodul direkt
+  und bieten den zentralen Anlegeweg sowie die zusätzliche Zuordnung eines
+  vorhandenen Projekts. Die zentrale Alle-Ansicht zeigt nur neutrale
+  Projektkacheln mit farbigen Modulbadges; Import/Export meldet ausschließlich
+  `Under construction`.
+- Praktische Electron-Abnahme mit bestehendem Datenbestand sowie isoliertem
+  Testprofil: direkte Einstiege in Protokoll und Restarbeiten, Alle-Ansicht,
+  unveränderter Rechnungseinstieg, idempotentes Hinzufügen, Mehrfachbadges und
+  Neuanlage nur im aktuellen Modul wurden bestätigt. Das Testprofil enthielt
+  genau zwei zentrale Projekte; ein nur Restarbeiten zugeordnetes Projekt war
+  im Protokollkontext ausschließlich unter `Projekt hinzufügen` sichtbar.
+- Prüfung: alle neuen Projekt-/Modulkontexttests und die gezielten HomeView-Tests
+  sind grün; UI-Editor-Vertragscheck, relevantes ESLint ohne Fehler und
+  `git diff --check` sind grün. Die breitere Gruppe `app-modules` bleibt an
+  denselben vier bereits im Ausgangsstand roten MainHeader/CoreShell-Assertions
+  rot. Weitere paketfremde bekannte Fehler und der Dirty-Worktree-Guard wurden
+  nicht repariert. Kein Commit, Push, Merge oder PR.

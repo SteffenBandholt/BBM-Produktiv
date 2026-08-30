@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   projectsList: () => ipcRenderer.invoke("projects:list"),
   projectsCreate: (data) => ipcRenderer.invoke("projects:create", data),
   projectsUpdate: (data) => ipcRenderer.invoke("projects:update", data),
+  projectsAssignModule: (data) => ipcRenderer.invoke("projects:assignModule", data),
   projectsStoragePreview: (data) => ipcRenderer.invoke("projects:storagePreview", data),
   projectsOpenRestarbeitenDir: (data) => ipcRenderer.invoke("projects:openRestarbeitenDir", data),
 
