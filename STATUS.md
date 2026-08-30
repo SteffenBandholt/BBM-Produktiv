@@ -1,5 +1,12 @@
 # STATUS.md â€” BBM-Produktiv
 
+## 2026-08-30 - Kachel-Startseite gezielt wiederhergestellt
+
+- Status: `[A]`; die bekannte Dashboard-Struktur aus `073b4ac6911a73a41919198b58adb25a8be20138` ist gezielt in die aktuelle `HomeView` portiert. Sichtbar sind die verfügbaren Modulkacheln sowie `Zuletzt verwendet`, `Schnellaktionen` und `Hinweise`; DEV ergänzt SiGeKo und UI-Editor.
+- Die aktuelle Modul-/Lizenzquelle und `openGlobalModule()` bleiben führend. Projektmodule öffnen ohne den verwaisten Schlüssel `bbm.startTargetModuleId` die aktuelle Projektübersicht mit ihren vorhandenen Modulaktionen.
+- Prüfung: `restarbeiten-v2` und `rechnungen-design` unter Electron-Node, UI-Editor-Vertrags-Selbsttest, Rechnung-Mounted-Refs 81/81, ESLint, praktische Playwright-Prüfung und `git diff --check` sind grün.
+- Kein Commit und kein Push. Nächster Schritt: Review und separater Git-Abschluss.
+
 ## 2026-08-21 - Rechnung: rechter Kopf feingranular für UI-Editor registriert
 
 - Status: `[A]`; der aktive Rechnungsscreen besitzt acht neue echte Kopf-Refs: `issuerBlock` mit Name 1, Name 2, Straße und PLZ/Ort sowie `invoiceMetaBlock` mit Rechnungsdatum und Leistungszeitraum. Die Einzelzeilen sind direkte gemountete DOM-Ziele mit textuellen Layoutoperationen.
