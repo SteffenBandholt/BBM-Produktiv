@@ -188,12 +188,21 @@ function ensureProjectModulesSchema(dbConn) {
       project_id TEXT NOT NULL,
       module_id TEXT NOT NULL CHECK (TRIM(module_id) <> ''),
       created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+      archived_at TEXT,
       PRIMARY KEY (project_id, module_id),
       FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
     );
+  `);
 
+  if (!columnExists(dbConn, "project_modules", "archived_at")) {
+    dbConn.exec(`ALTER TABLE project_modules ADD COLUMN archived_at TEXT;`);
+  }
+
+  dbConn.exec(`
     CREATE INDEX IF NOT EXISTS idx_project_modules_module_id
       ON project_modules (module_id, project_id);
+    CREATE INDEX IF NOT EXISTS idx_project_modules_archive
+      ON project_modules (archived_at, module_id, project_id);
   `);
 
   const assignExistingProjects = (tableName, moduleId) => {

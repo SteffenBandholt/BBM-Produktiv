@@ -197,6 +197,7 @@ async function runProjektverwaltungModuleTests(run) {
       getProjektverwaltungModuleEntry,
       PROJEKTVERWALTUNG_MODULE_ID,
       ProjectsScreen,
+      ArchiveScreen,
       ProjectWorkspaceScreen,
     },
     { resolveModuleScreenFromEntry },
@@ -657,11 +658,12 @@ async function runProjektverwaltungModuleTests(run) {
       { id: "p1", module_ids: ["protokoll"] },
       { id: "p2", module_ids: ["restarbeiten"] },
       { id: "p3", module_ids: ["protokoll", "restarbeiten"] },
+      { id: "p4", module_ids: [], archived_module_ids: ["restarbeiten"], all_module_ids: ["restarbeiten"] },
     ];
     const protocol = new ProjectsScreen({ router: {}, moduleContext: "protokoll" });
     protocol.allProjects = projects;
     assert.deepEqual(protocol._projectsForCurrentContext().map((project) => project.id), ["p1", "p3"]);
-    assert.deepEqual(protocol._projectsAvailableToAdd().map((project) => project.id), ["p2"]);
+    assert.deepEqual(protocol._projectsAvailableToAdd().map((project) => project.id), ["p2", "p4"]);
 
     const restarbeiten = new ProjectsScreen({ router: {}, moduleContext: "restarbeiten" });
     restarbeiten.allProjects = projects;
@@ -670,7 +672,7 @@ async function runProjektverwaltungModuleTests(run) {
 
     const all = new ProjectsScreen({ router: {}, moduleContext: "all" });
     all.allProjects = projects;
-    assert.deepEqual(all._projectsForCurrentContext().map((project) => project.id), ["p1", "p2", "p3"]);
+    assert.deepEqual(all._projectsForCurrentContext().map((project) => project.id), ["p1", "p2", "p3", "p4"]);
     assert.deepEqual(all._projectsAvailableToAdd(), []);
   });
 
@@ -766,11 +768,15 @@ async function runProjektverwaltungModuleTests(run) {
 
   await run("Projektverwaltung: zentrale Projekt-Modul-Zuordnung ist additiv und idempotent verdrahtet", () => {
     assert.match(databaseSource, /CREATE TABLE IF NOT EXISTS project_modules/);
+    assert.match(databaseSource, /ALTER TABLE project_modules ADD COLUMN archived_at TEXT/);
     assert.match(databaseSource, /assignExistingProjects\("meetings", "protokoll"\)/);
     assert.match(databaseSource, /assignExistingProjects\("restarbeiten_items", "restarbeiten"\)/);
     assert.match(projectsRepoSource, /INSERT OR IGNORE INTO project_modules/);
     assert.match(projectsIpcSource, /projects:assignModule/);
     assert.match(preloadSource, /projectsAssignModule/);
+    assert.match(projectsRepoSource, /function archiveModule/);
+    assert.match(projectsRepoSource, /function unarchiveModule/);
+    assert.match(projectsRepoSource, /function deleteArchivedModule/);
   });
 
   await run("Projektverwaltung: Bestandsdaten werden automatisch zugeordnet und IDs bleiben einmalig", () => {
@@ -831,6 +837,145 @@ async function runProjektverwaltungModuleTests(run) {
     }
   });
 
+  await run("Projektverwaltung: Modul- und Projektarchive erhalten IDs und löschen nur den gewählten Archivinhalt", () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-project-archive-"));
+    const userDataPath = path.join(tempRoot, "userData");
+    const databasePath = path.resolve(__dirname, "../../src/main/db/database.js");
+    const projectsRepoPath = path.resolve(__dirname, "../../src/main/db/projectsRepo.js");
+    const originalLoad = Module._load;
+    Module._load = function patched(request, parent, isMain) {
+      if (request === "electron" && String(parent?.filename || "").endsWith(path.join("db", "database.js"))) {
+        return { app: { getPath: (name) => (name === "userData" ? userDataPath : ""), isPackaged: true } };
+      }
+      return originalLoad.call(this, request, parent, isMain);
+    };
+
+    try {
+      delete require.cache[databasePath];
+      delete require.cache[projectsRepoPath];
+      const database = require(databasePath);
+      const db = database.initDatabase();
+      const projectsRepo = require(projectsRepoPath);
+
+      const insertProject = db.prepare("INSERT INTO projects (id, name) VALUES (?, ?)");
+      insertProject.run("module-project", "Modulprojekt");
+      insertProject.run("protocol-module-project", "Protokollmodulprojekt");
+      insertProject.run("whole-project", "Gesamtprojekt");
+      insertProject.run("active-project", "Aktivprojekt");
+      insertProject.run("invoice-project", "Rechnungsprojekt");
+
+      const assign = db.prepare("INSERT INTO project_modules (project_id, module_id) VALUES (?, ?)");
+      for (const projectId of ["module-project", "protocol-module-project", "whole-project"]) {
+        assign.run(projectId, "protokoll");
+        assign.run(projectId, "restarbeiten");
+      }
+      assign.run("active-project", "protokoll");
+      assign.run("invoice-project", "protokoll");
+
+      const addProtocolData = (projectId, suffix) => {
+        db.prepare("INSERT INTO meetings (id, project_id, meeting_index, title) VALUES (?, ?, ?, ?)")
+          .run(`meeting-${suffix}`, projectId, 1, `Protokoll ${suffix}`);
+        db.prepare("INSERT INTO tops (id, project_id, level, number, title) VALUES (?, ?, ?, ?, ?)")
+          .run(`top-${suffix}`, projectId, 1, 1, `TOP ${suffix}`);
+        db.prepare("INSERT INTO meeting_tops (meeting_id, top_id) VALUES (?, ?)")
+          .run(`meeting-${suffix}`, `top-${suffix}`);
+      };
+      const addRestarbeitenData = (projectId, suffix) => {
+        db.prepare("INSERT INTO restarbeiten_project_settings (project_id) VALUES (?)").run(projectId);
+        db.prepare(`
+          INSERT INTO restarbeiten_items (id, project_id, running_number, short_text, long_text)
+          VALUES (?, ?, 1, 'Kurz', 'Lang')
+        `).run(`rest-${suffix}`, projectId);
+        db.prepare(`
+          INSERT INTO restarbeiten_attachments (id, restarbeit_id, project_id, file_path)
+          VALUES (?, ?, ?, ?)
+        `).run(`attachment-${suffix}`, `rest-${suffix}`, projectId, path.join(tempRoot, `${suffix}.jpg`));
+        db.prepare("INSERT INTO restarbeiten_notes (id, restarbeit_id, note_text) VALUES (?, ?, ?)")
+          .run(`note-${suffix}`, `rest-${suffix}`, "Notiz");
+      };
+
+      addProtocolData("module-project", "module");
+      addRestarbeitenData("module-project", "module");
+      addProtocolData("protocol-module-project", "protocol-module");
+      addRestarbeitenData("protocol-module-project", "protocol-module");
+      addProtocolData("whole-project", "whole");
+      addRestarbeitenData("whole-project", "whole");
+
+      projectsRepo.archiveModule("module-project", "restarbeiten");
+      let moduleProject = projectsRepo.getById("module-project");
+      assert.deepEqual(moduleProject.module_ids, ["protokoll"]);
+      assert.deepEqual(moduleProject.archived_module_ids, ["restarbeiten"]);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM restarbeiten_items WHERE project_id = ?").get("module-project").count, 1);
+      let archiveEntries = projectsRepo.listArchiveEntries();
+      assert.equal(archiveEntries.some((entry) => entry.archive_type === "module" && entry.project_id === "module-project" && entry.module_id === "restarbeiten"), true);
+
+      projectsRepo.unarchiveModule("module-project", "restarbeiten");
+      moduleProject = projectsRepo.getById("module-project");
+      assert.equal(moduleProject.id, "module-project");
+      assert.deepEqual(moduleProject.module_ids, ["protokoll", "restarbeiten"]);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM restarbeiten_items WHERE id = ?").get("rest-module").count, 1);
+
+      projectsRepo.archiveModule("module-project", "restarbeiten");
+      const moduleDelete = projectsRepo.deleteArchivedModule("module-project", "restarbeiten");
+      assert.deepEqual(moduleDelete.deletedFilePaths, [path.join(tempRoot, "module.jpg")]);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM projects WHERE id = ?").get("module-project").count, 1);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM meetings WHERE project_id = ?").get("module-project").count, 1);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM restarbeiten_items WHERE project_id = ?").get("module-project").count, 0);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM restarbeiten_notes WHERE restarbeit_id = ?").get("rest-module").count, 0);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM project_modules WHERE project_id = ? AND module_id = ?").get("module-project", "restarbeiten").count, 0);
+
+      projectsRepo.archiveModule("protocol-module-project", "protokoll");
+      projectsRepo.deleteArchivedModule("protocol-module-project", "protokoll");
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM projects WHERE id = ?").get("protocol-module-project").count, 1);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM meetings WHERE project_id = ?").get("protocol-module-project").count, 0);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM tops WHERE project_id = ?").get("protocol-module-project").count, 0);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM restarbeiten_items WHERE project_id = ?").get("protocol-module-project").count, 1);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM project_modules WHERE project_id = ? AND module_id = ?").get("protocol-module-project", "protokoll").count, 0);
+
+      projectsRepo.archiveModule("whole-project", "restarbeiten");
+      projectsRepo.archiveProject("whole-project");
+      assert.equal(projectsRepo.listAll().some((project) => project.id === "whole-project"), false);
+      archiveEntries = projectsRepo.listArchiveEntries();
+      const wholeArchive = archiveEntries.find((entry) => entry.archive_type === "project" && entry.project_id === "whole-project");
+      assert.deepEqual(wholeArchive.module_ids, ["protokoll", "restarbeiten"]);
+
+      projectsRepo.unarchiveProject("whole-project");
+      const restoredWhole = projectsRepo.getById("whole-project");
+      assert.equal(restoredWhole.id, "whole-project");
+      assert.deepEqual(restoredWhole.module_ids, ["protokoll"]);
+      assert.deepEqual(restoredWhole.archived_module_ids, ["restarbeiten"]);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM restarbeiten_items WHERE id = ?").get("rest-whole").count, 1);
+
+      projectsRepo.unarchiveModule("whole-project", "restarbeiten");
+      projectsRepo.archiveProject("whole-project");
+      projectsRepo.deleteArchivedProject("whole-project");
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM projects WHERE id = ?").get("whole-project").count, 0);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM meetings WHERE project_id = ?").get("whole-project").count, 0);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM restarbeiten_items WHERE project_id = ?").get("whole-project").count, 0);
+      assert.throws(() => projectsRepo.deleteArchivedProject("active-project"), /not archived/);
+
+      db.prepare(`
+        INSERT INTO invoices (id, invoice_date, due_date, project_id, created_at, updated_at)
+        VALUES ('invoice-1', '2026-08-30', '2026-09-07', 'invoice-project', '2026-08-30T10:00:00.000Z', '2026-08-30T10:00:00.000Z')
+      `).run();
+      projectsRepo.archiveProject("invoice-project");
+      assert.throws(
+        () => projectsRepo.deleteArchivedProject("invoice-project"),
+        /solange Rechnungen darauf verweisen/
+      );
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM projects WHERE id = ?").get("invoice-project").count, 1);
+      assert.equal(db.prepare("SELECT COUNT(*) AS count FROM invoices WHERE id = ?").get("invoice-1").count, 1);
+
+      database.closeDatabase();
+    } finally {
+      try { require(databasePath).closeDatabase(); } catch (_) {}
+      Module._load = originalLoad;
+      try { fs.rmSync(tempRoot, { recursive: true, force: true }); } catch (_) {}
+      delete require.cache[databasePath];
+      delete require.cache[projectsRepoPath];
+    }
+  });
+
   await run("Projektverwaltung: DEV-Version schaltet Modulfreigabe auf alle aktiven Module frei", async () => {
     const moduleAccessState = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/app/modules/moduleAccessState.js")
@@ -864,10 +1009,12 @@ async function runProjektverwaltungModuleTests(run) {
     }
   });
 
-  await run("Projektverwaltung: Projektkarte zeigt neutrale Modulbadges statt Fachmodul-Startbuttons", async () => {
+  await run("Projektverwaltung: Projekte Alle ist eine Zeilenliste mit Badges und Archivaktion", async () => {
     const previousDocument = global.document;
+    const previousWindow = global.window;
     const fakeDocument = createFakeDocumentWithBubbling();
     global.document = fakeDocument;
+    global.window = { addEventListener() {}, removeEventListener() {} };
 
     const calls = [];
     const screen = new ProjectsScreen({
@@ -891,38 +1038,176 @@ async function runProjektverwaltungModuleTests(run) {
       calls.push({ type: "main", projectId });
       return true;
     };
-    screen._openProjectFormModal = async ({ projectId } = {}) => {
-      calls.push({ type: "edit", projectId });
-    };
+    screen._openArchiveSelectionModal = (project) => calls.push({ type: "archive", projectId: project?.id });
 
     try {
       const root = screen.render();
       assert.equal(!!root, true);
 
-      const projectCard = findNode(root, (node) => node?.dataset?.projectCard === "true");
-      const actionRail = findNode(root, (node) => node?.dataset?.projectActionRail === "true");
+      const list = findNode(root, (node) => node?.dataset?.projectsAllList === "true");
+      const projectRow = findNode(root, (node) => node?.dataset?.projectAllProjectRow === "true");
+      const cards = findNodes(root, (node) => node?.dataset?.projectCard === "true");
       const moduleButtons = findNodes(root, (node) => node?.dataset?.projectAction === "module");
       const badges = findNodes(root, (node) => !!node?.dataset?.projectModuleBadge);
-      const editButton = findNode(root, (node) => node?.dataset?.projectAction === "edit");
+      const archiveButton = findNode(root, (node) => node?.dataset?.projectAction === "archive");
+      const editButtons = findNodes(root, (node) => node?.dataset?.projectAction === "edit");
 
-      assert.equal(!!projectCard, true);
-      assert.equal(!!actionRail, true);
+      assert.equal(list.style.display, "flex");
+      assert.equal(list.style.flexDirection, "column");
+      assert.equal(list.style.gap, "0");
+      assert.equal(projectRow.style.borderRadius, "0");
+      assert.equal(projectRow.style.boxShadow, "none");
+      assert.equal(cards.length, 0);
       assert.equal(moduleButtons.length, 0);
       assert.deepEqual(badges.map((badge) => badge.dataset.projectModuleBadge), [
         "protokoll",
         "restarbeiten",
         "sigeko",
       ]);
-      assert.equal(!!editButton, true);
-      assert.equal(actionRail.children.length, 1);
+      assert.equal(editButtons.length, 0);
+      assert.equal(!!archiveButton, true);
 
-      await editButton.click();
-      assert.deepEqual(calls.at(-1), { type: "edit", projectId: "17" });
+      await archiveButton.click();
+      assert.deepEqual(calls.at(-1), { type: "archive", projectId: "17" });
 
-      await projectCard.click();
+      await projectRow.click();
       assert.deepEqual(calls.at(-1), { type: "main", projectId: "17" });
     } finally {
       global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("Projektverwaltung: Archiv-Auswahl ist eine Zeilenliste und bietet nur aktive Fachmodule", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    global.document = createFakeDocumentWithBubbling();
+    global.window = { addEventListener() {}, removeEventListener() {} };
+
+    try {
+      const calls = [];
+      const screen = new ProjectsScreen({ moduleContext: "all", router: {} });
+      screen._archiveSelection = async (project, moduleId) => {
+        calls.push({ projectId: project?.id, moduleId });
+        return true;
+      };
+      const project = {
+        id: "p1",
+        name: "Projekt Archiv",
+        module_ids: ["protokoll", "restarbeiten", "rechnung"],
+      };
+
+      assert.equal(screen._openArchiveSelectionModal(project), true);
+      const list = findNode(global.document.body, (node) => node?.dataset?.projectArchiveSelectionList === "true");
+      const choices = findNodes(list, (node) => !!node?.dataset?.projectArchiveChoice);
+      assert.equal(list.style.display, "flex");
+      assert.equal(list.style.flexDirection, "column");
+      assert.deepEqual(choices.map((node) => node.dataset.projectArchiveChoice), [
+        "project",
+        "protokoll",
+        "restarbeiten",
+      ]);
+      assert.deepEqual(choices.map(collectText), [
+        "Gesamtes Projekt archivieren",
+        "Nur Protokoll archivieren",
+        "Nur Restarbeiten archivieren",
+      ]);
+
+      await choices[2].click();
+      assert.deepEqual(calls, [{ projectId: "p1", moduleId: "restarbeiten" }]);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("Projektverwaltung: Archivliste benennt Projekt und Inhalt und verdrahtet Wiederherstellen und Löschen", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const previousAlert = global.alert;
+    const previousConfirm = global.confirm;
+    global.document = createFakeDocumentWithBubbling();
+    const calls = [];
+    global.window = {
+      bbmDb: {
+        async projectsRestoreArchive(payload) {
+          calls.push({ type: "restore", payload });
+          return { ok: true };
+        },
+        async projectsDeleteArchiveForever(payload) {
+          calls.push({ type: "delete", payload });
+          return { ok: true };
+        },
+      },
+    };
+    global.alert = () => {};
+    global.confirm = () => true;
+
+    try {
+      const screen = new ArchiveScreen({ router: {} });
+      screen.projects = [
+        {
+          id: "p1",
+          project_id: "p1",
+          project_number: "101",
+          name: "Bauhof",
+          archive_type: "project",
+          archive_scope_label: "Gesamtes Projekt",
+          module_ids: ["protokoll", "restarbeiten"],
+          archived_at: "2026-08-30T10:00:00.000Z",
+        },
+        {
+          id: "p2",
+          project_id: "p2",
+          name: "Hafen",
+          archive_type: "module",
+          archive_scope_label: "Restarbeiten",
+          module_id: "restarbeiten",
+          module_ids: ["restarbeiten"],
+          archived_at: "2026-08-29T10:00:00.000Z",
+        },
+      ];
+      screen.reload = async () => calls.push({ type: "reload" });
+
+      const root = screen.render();
+      const list = findNode(root, (node) => node?.dataset?.projectArchiveList === "true");
+      const rows = findNodes(list, (node) => node?.dataset?.projectArchiveRow === "true");
+      const names = findNodes(list, (node) => node?.dataset?.archiveName === "true");
+      const badges = findNodes(list, (node) => !!node?.dataset?.archiveModuleBadge);
+      const restoreButtons = findNodes(list, (node) => node?.dataset?.archiveAction === "restore");
+      const deleteButtons = findNodes(list, (node) => node?.dataset?.archiveAction === "delete");
+
+      assert.equal(list.style.display, "flex");
+      assert.equal(list.style.flexDirection, "column");
+      assert.equal(rows.length, 2);
+      assert.deepEqual(names.map((node) => node.textContent), [
+        "101 - Bauhof – Gesamtes Projekt",
+        "Hafen – Restarbeiten",
+      ]);
+      assert.deepEqual(badges.map((node) => node.dataset.archiveModuleBadge), [
+        "protokoll",
+        "restarbeiten",
+        "restarbeiten",
+      ]);
+      assert.equal(rows.every((row) => row.style.borderRadius === "0" && row.style.boxShadow === "none"), true);
+
+      await restoreButtons[1].click();
+      await deleteButtons[0].click();
+      assert.deepEqual(calls.filter((call) => call.type !== "reload"), [
+        {
+          type: "restore",
+          payload: { archiveType: "module", projectId: "p2", moduleId: "restarbeiten" },
+        },
+        {
+          type: "delete",
+          payload: { archiveType: "project", projectId: "p1" },
+        },
+      ]);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+      global.alert = previousAlert;
+      global.confirm = previousConfirm;
     }
   });
 
@@ -980,13 +1265,19 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(projectsSource.includes("projectsAssignModule"), true);
     assert.equal(projectsSource.includes("Under construction"), true);
     assert.equal(projectsSource.includes('"protokoll"'), true);
-    assert.equal(projectsSource.includes("projectActionRail"), true);
-    assert.equal(projectsSource.includes("dataset.projectAction = actionType"), true);
+    assert.equal(projectsSource.includes("projectsAllList"), true);
+    assert.equal(projectsSource.includes('dataset.projectAction = "archive"'), true);
+    assert.equal(projectsSource.includes("projectsArchiveModule"), true);
     assert.equal(formSource.includes("export default class ProjectFormScreen"), true);
     assert.equal(formSource.includes("../../../ui/popupButtonStyles.js"), true);
     assert.equal(formSource.includes("pdf.footerUseUserData"), false);
     assert.equal(archiveSource.includes("export default class ArchiveScreen"), true);
     assert.equal(archiveSource.includes("../../../ui/popupButtonStyles.js"), true);
+    assert.equal(archiveSource.includes("projectArchiveList"), true);
+    assert.equal(projectsIpcSource.includes("projects:listArchiveEntries"), true);
+    assert.equal(projectsIpcSource.includes("projects:deleteArchiveForever"), true);
+    assert.equal(preloadSource.includes("projectsListArchiveEntries"), true);
+    assert.equal(preloadSource.includes("projectsDeleteArchiveForever"), true);
   });
 
   await run("Projektverwaltung: Projekt-Popup nutzt die kompakte Formular-Referenz", () => {

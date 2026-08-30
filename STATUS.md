@@ -4450,3 +4450,29 @@ Wichtig:
   denselben vier bereits im Ausgangsstand roten MainHeader/CoreShell-Assertions
   rot. Weitere paketfremde bekannte Fehler und der Dirty-Worktree-Guard wurden
   nicht repariert. Kein Commit, Push, Merge oder PR.
+
+## Projektverwaltung / Archivierung
+
+- Status: technisch umgesetzt, Commit offen. `Projekte / Alle` und das Archiv
+  sind kompakte vertikale Zeilenlisten; Modulzuordnungen und Archivinhalt sind
+  über farbige Badges sowie die Bezeichnung `Gesamtes Projekt`, `Protokoll`
+  oder `Restarbeiten` eindeutig sichtbar.
+- `project_modules.archived_at` ergänzt den bestehenden Projekt-/Modulverbund
+  additiv und idempotent. Ein Modularchiv erhält Projekt-ID und Fachdaten,
+  während andere Module aktiv bleiben; ein Gesamtarchiv erhält sämtliche
+  Zuordnungen und Fachdaten. Wiederherstellen reaktiviert denselben Datensatz.
+- Endgültiges Löschen ist nur aus dem Archiv erreichbar und wirkt auf den dort
+  gewählten Inhalt. Modularchive löschen ausschließlich ihre Protokoll- bzw.
+  Restarbeiten-Daten; beim Gesamtprojekt werden alle Projektdaten entfernt.
+  Ein Gesamtprojekt mit vorhandener Rechnungsreferenz wird sicher abgewiesen,
+  damit keine Rechnungsfachlogik verändert wird.
+- Praktische Prüfung im isolierten Browser-Testprofil bestätigte Listenansicht,
+  Badges, zentrale Projektbearbeitung, Modul- und Gesamtarchiv, Wiederherstellen,
+  Löschbestätigung sowie die Direkteinstiege in Protokoll und Restarbeiten.
+  Die echte lokale Nutzdatenbank wurde dabei nicht verändert.
+- Prüfung: 12/12 gezielte Projekt-/Archivtests und 3/3 Rechnungseinstiegstests
+  sind grün; Syntax, relevantes ESLint ohne Fehler und `git diff --check` sind
+  grün. Die breitere Gruppe `app-modules` bleibt ausschließlich an denselben
+  vier paketfremden MainHeader/CoreShell-Assertions rot. Nächster offener
+  Schritt: fachliche Sichtabnahme und anschließend ein getrennter Commitlauf.
+  Kein Commit, Push, Merge oder PR.

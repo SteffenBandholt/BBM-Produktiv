@@ -25,8 +25,12 @@ contextBridge.exposeInMainWorld("bbmDb", {
 
   // Archiv
   projectsArchive: _wrapIdArg("projects:archive", "projectId"),
+  projectsArchiveModule: (data) => ipcRenderer.invoke("projects:archiveModule", data),
   projectsUnarchive: _wrapIdArg("projects:unarchive", "projectId"),
   projectsListArchived: () => ipcRenderer.invoke("projects:listArchived"),
+  projectsListArchiveEntries: () => ipcRenderer.invoke("projects:listArchiveEntries"),
+  projectsRestoreArchive: (data) => ipcRenderer.invoke("projects:restoreArchive", data),
+  projectsDeleteArchiveForever: (data) => ipcRenderer.invoke("projects:deleteArchiveForever", data),
   projectsDeleteForever: _wrapIdArg("projects:deleteForever", "projectId"),
 
   // ============================================================

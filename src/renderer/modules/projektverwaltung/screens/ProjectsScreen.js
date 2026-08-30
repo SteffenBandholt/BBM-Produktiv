@@ -3,11 +3,10 @@
 // TECH-CONTRACT (verbindlich): docs/UI-TECH-CONTRACT.md
 // CONTRACT-VERSION: 1.0.1
 //
-// Projekte-Kacheln:
-
-// - Klick auf Kachel: öffnet im Modulkontext das zugeordnete Fachmodul.
-// - Klick auf Kachel im Kontext Alle: öffnet den zentralen Projektedit.
-// - Edit: öffnet Projektedit (ProjectFormScreen)  ✅ robust gegen Bubble
+// Projektlisten:
+// - Klick auf eine Modulkontext-Zeile öffnet das zugeordnete Fachmodul.
+// - Klick auf eine Zeile im Kontext Alle öffnet den zentralen Projektedit.
+// - Archivieren bleibt eine getrennte Aktion innerhalb der Projektzeile.
 
 import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
 import {
@@ -53,6 +52,7 @@ export default class ProjectsScreen {
     this._projectFormPrevProjectId = null;
     this._transferModalEl = null;
     this._addProjectModalEl = null;
+    this._archiveModalEl = null;
   }
 
   _cleanupProjectFormModal() {
@@ -161,6 +161,12 @@ export default class ProjectsScreen {
     return [...new Set(raw.map((value) => String(value || "").trim().toLowerCase()).filter(Boolean))];
   }
 
+  _allModuleIdsForProject(project) {
+    const raw = project?.all_module_ids ?? project?.allModuleIds ?? project?.module_ids ?? project?.moduleIds ?? [];
+    if (!Array.isArray(raw)) return [];
+    return [...new Set(raw.map((value) => String(value || "").trim().toLowerCase()).filter(Boolean))];
+  }
+
   _projectsForCurrentContext(projects = this.allProjects) {
     const list = Array.isArray(projects) ? projects : [];
     if (this.moduleContext === PROJECT_CONTEXT_ALL) return [...list];
@@ -170,7 +176,7 @@ export default class ProjectsScreen {
   _projectsAvailableToAdd() {
     if (this.moduleContext === PROJECT_CONTEXT_ALL) return [];
     return (this.allProjects || []).filter(
-      (project) => !this._moduleIdsForProject(project).includes(this.moduleContext)
+      (project) => !this._allModuleIdsForProject(project).includes(this.moduleContext)
     );
   }
 
@@ -513,6 +519,128 @@ export default class ProjectsScreen {
       } catch (_) {}
     }
     this._addProjectModalEl = null;
+  }
+
+  _closeArchiveModal() {
+    if (this._archiveModalEl) {
+      try {
+        cleanupPopupHandlers(this._archiveModalEl);
+        this._archiveModalEl.remove();
+      } catch (_) {}
+    }
+    this._archiveModalEl = null;
+  }
+
+  _archivableModuleIdsForProject(project) {
+    return this._moduleIdsForProject(project).filter((moduleId) =>
+      ["protokoll", "restarbeiten"].includes(moduleId)
+    );
+  }
+
+  async _archiveSelection(project, moduleId = null) {
+    const projectId = String(project?.id || "").trim();
+    if (!projectId) return false;
+    const api = window.bbmDb || {};
+
+    try {
+      const result = moduleId
+        ? await api.projectsArchiveModule?.({ projectId, moduleId })
+        : await api.projectsArchive?.(projectId);
+      if (!result?.ok) {
+        this._flashMsg(result?.error || "Archivieren fehlgeschlagen.", 9000);
+        return false;
+      }
+      this._closeArchiveModal();
+      await this.reloadProjects();
+      return true;
+    } catch (error) {
+      this._flashMsg(error?.message || "Archivieren fehlgeschlagen.", 9000);
+      return false;
+    }
+  }
+
+  _openArchiveSelectionModal(project) {
+    if (this.moduleContext !== PROJECT_CONTEXT_ALL || this._archiveModalEl) return false;
+    const projectId = String(project?.id || "").trim();
+    if (!projectId) return false;
+
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 9999 });
+    overlay.style.display = "flex";
+    registerPopupCloseHandlers(overlay, () => this._closeArchiveModal());
+
+    const box = document.createElement("div");
+    box.className = "bbm-popup-standard bbm-popup-dialog";
+    box.style.width = "min(620px, calc(100vw - 32px))";
+    box.style.maxHeight = "min(720px, calc(100vh - 32px))";
+    box.style.display = "flex";
+    box.style.flexDirection = "column";
+    box.style.overflow = "hidden";
+
+    const header = document.createElement("div");
+    header.className = "bbm-popup-header";
+    header.style.display = "flex";
+    header.style.alignItems = "center";
+    header.style.gap = "10px";
+
+    const title = document.createElement("div");
+    title.textContent = `${this._labelFull(project)} archivieren`;
+    title.style.fontWeight = "800";
+
+    const close = document.createElement("button");
+    close.type = "button";
+    close.textContent = "Schließen";
+    applyPopupButtonStyle(close);
+    close.style.marginLeft = "auto";
+    close.addEventListener("click", () => this._closeArchiveModal());
+    header.append(title, close);
+
+    const list = document.createElement("div");
+    list.dataset.projectArchiveSelectionList = "true";
+    list.setAttribute("role", "list");
+    list.style.display = "flex";
+    list.style.flexDirection = "column";
+    list.style.gap = "0";
+
+    const appendChoice = ({ label, moduleId = null }) => {
+      const row = document.createElement("div");
+      row.dataset.projectArchiveChoice = moduleId || "project";
+      row.setAttribute("role", "listitem");
+      row.tabIndex = 0;
+      row.style.display = "flex";
+      row.style.alignItems = "center";
+      row.style.minHeight = "42px";
+      row.style.padding = "8px 16px";
+      row.style.borderBottom = "1px solid var(--card-border)";
+      row.style.cursor = "pointer";
+      row.style.fontWeight = "700";
+      row.textContent = label;
+
+      const activate = async () => {
+        if (row.dataset.busy === "true") return;
+        row.dataset.busy = "true";
+        const archived = await this._archiveSelection(project, moduleId);
+        if (!archived) row.dataset.busy = "false";
+      };
+      row.addEventListener("click", activate);
+      row.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        activate();
+      });
+      list.appendChild(row);
+    };
+
+    appendChoice({ label: "Gesamtes Projekt archivieren" });
+    for (const moduleId of this._archivableModuleIdsForProject(project)) {
+      const moduleLabel = PROJECT_MODULE_PRESENTATION[moduleId]?.label || moduleId;
+      appendChoice({ label: `Nur ${moduleLabel} archivieren`, moduleId });
+    }
+
+    box.append(header, list);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    this._archiveModalEl = overlay;
+    return true;
   }
 
   _openProjectSelectionModal() {
@@ -1259,8 +1387,140 @@ export default class ProjectsScreen {
     }
   }
 
+  _renderAllProjectsList() {
+    const list = document.createElement("div");
+    list.dataset.projectsAllList = "true";
+    list.setAttribute("role", "list");
+    list.style.display = "flex";
+    list.style.flexDirection = "column";
+    list.style.gap = "0";
+    list.style.margin = "0";
+    list.style.padding = "0";
+
+    const createRow = ({ dataKey, onActivate }) => {
+      const row = document.createElement("div");
+      row.dataset.projectsAllRow = "true";
+      row.dataset[dataKey] = "true";
+      row.setAttribute("role", "listitem");
+      row.tabIndex = 0;
+      row.style.display = "flex";
+      row.style.alignItems = "center";
+      row.style.width = "100%";
+      row.style.minHeight = "44px";
+      row.style.gap = "12px";
+      row.style.padding = "8px 12px";
+      row.style.border = "0";
+      row.style.borderBottom = "1px solid var(--card-border)";
+      row.style.borderRadius = "0";
+      row.style.boxShadow = "none";
+      row.style.background = "transparent";
+      row.style.color = "var(--text-main)";
+      row.style.cursor = "pointer";
+
+      const activate = async () => {
+        if (this.loading || row.dataset.busy === "true") return;
+        row.dataset.busy = "true";
+        try {
+          await onActivate?.();
+        } finally {
+          row.dataset.busy = "false";
+        }
+      };
+      row.addEventListener("click", activate);
+      row.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        activate();
+      });
+      return row;
+    };
+
+    const createProjectRow = createRow({
+      dataKey: "projectCreateRow",
+      onActivate: () => this.openCreateProject(),
+    });
+    const createProjectText = document.createElement("span");
+    createProjectText.textContent = "+ Projekt anlegen";
+    createProjectText.style.fontWeight = "800";
+    createProjectRow.appendChild(createProjectText);
+    list.appendChild(createProjectRow);
+
+    const transferRow = createRow({
+      dataKey: "projectTransferRow",
+      onActivate: () => this._showProjectTransferPlaceholder(),
+    });
+    const transferTitle = document.createElement("span");
+    transferTitle.textContent = "Import / Export";
+    transferTitle.style.fontWeight = "800";
+    const transferHint = document.createElement("span");
+    transferHint.textContent = "Under construction";
+    transferHint.style.marginLeft = "auto";
+    transferHint.style.fontSize = "12px";
+    transferHint.style.color = "var(--text-muted)";
+    transferRow.append(transferTitle, transferHint);
+    list.appendChild(transferRow);
+
+    for (const project of this.projects || []) {
+      const projectId = String(project?.id || "");
+      const row = createRow({
+        dataKey: "projectAllProjectRow",
+        onActivate: () => this.openProjectById(projectId),
+      });
+      row.dataset.projectId = projectId;
+
+      const labelWrap = document.createElement("div");
+      labelWrap.style.display = "flex";
+      labelWrap.style.flexDirection = "column";
+      labelWrap.style.minWidth = "0";
+      labelWrap.style.flex = "1 1 auto";
+
+      const projectNumber = this._getProjectNumber(project);
+      const label = document.createElement("span");
+      label.textContent = projectNumber
+        ? `${projectNumber} - ${this._labelForTile(project)}`
+        : this._labelForTile(project);
+      label.style.fontWeight = "750";
+      label.style.overflow = "hidden";
+      label.style.textOverflow = "ellipsis";
+      label.style.whiteSpace = "nowrap";
+      labelWrap.appendChild(label);
+
+      const keyword = String(project?.keyword ?? project?.project_keyword ?? project?.schlagwort ?? "").trim();
+      const createdAt = String(project?.created_at ?? project?.createdAt ?? "").trim();
+      const detailText = keyword || this._isoToDDMMYYYY(createdAt);
+      if (detailText) {
+        const detail = document.createElement("span");
+        detail.dataset.projectAllDetail = "true";
+        detail.textContent = detailText;
+        detail.style.fontSize = "12px";
+        detail.style.color = "var(--text-muted)";
+        labelWrap.appendChild(detail);
+      }
+
+      const badges = this._createModuleBadges(project);
+      badges.style.marginLeft = "auto";
+      badges.style.justifyContent = "flex-end";
+
+      const archiveButton = document.createElement("button");
+      archiveButton.type = "button";
+      archiveButton.textContent = "Archivieren";
+      archiveButton.dataset.projectAction = "archive";
+      applyPopupButtonStyle(archiveButton, { variant: "neutral" });
+      archiveButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        this._openArchiveSelectionModal(project);
+      });
+
+      row.append(labelWrap, badges, archiveButton);
+      list.appendChild(row);
+    }
+
+    this.hostEl.appendChild(list);
+  }
+
   // ------------------------------------------------------------
-  // Projekte / Alle: bestehende Kartenansicht
+  // Projekte / Alle: kompakte Zeilenliste
   // ------------------------------------------------------------
   _renderGrid() {
     if (!this.hostEl) return;
@@ -1272,275 +1532,7 @@ export default class ProjectsScreen {
       return;
     }
 
-    const grid = document.createElement("div");
-    grid.style.display = "grid";
-    grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(220px, 1fr))";
-    grid.style.gap = "10px";
-    grid.style.alignItems = "stretch";
-
-    const mkTile = () => {
-      const t = document.createElement("div");
-      t.style.border = "1px solid var(--card-border)";
-      t.style.borderRadius = "10px";
-      t.style.background = "var(--card-bg)";
-      t.style.color = "var(--text-main)";
-      t.style.padding = "12px";
-      t.style.boxSizing = "border-box";
-      t.style.cursor = "pointer";
-      t.style.userSelect = "none";
-      t.style.position = "relative";
-      t.style.display = "flex";
-      t.style.gap = "12px";
-      t.style.alignItems = "stretch";
-      t.style.justifyContent = "space-between";
-      t.tabIndex = 0;
-
-      t.onmouseenter = () => {
-        if (this.loading || this._startingProject) return;
-        t.style.borderColor = "var(--sidebar-active-indicator)";
-      };
-      t.onmouseleave = () => {
-        t.style.borderColor = "var(--card-border)";
-      };
-
-      return t;
-    };
-
-    const createTile = mkTile();
-    createTile.style.background = "var(--card-bg)";
-    createTile.style.borderStyle = "dashed";
-
-    const createTitle = document.createElement("div");
-    createTitle.textContent = this.moduleContext === PROJECT_CONTEXT_ALL
-      ? "+ Projekt anlegen"
-      : "Projekt\nneu / hinzufügen";
-    createTitle.style.fontWeight = "800";
-    createTitle.style.fontSize = "16px";
-    createTitle.style.whiteSpace = "pre-line";
-
-    createTile.appendChild(createTitle);
-
-    const openCreate = async () => {
-      if (this.moduleContext === PROJECT_CONTEXT_ALL) {
-        await this.openCreateProject();
-        return;
-      }
-      this._openProjectSelectionModal();
-    };
-
-    createTile.addEventListener("click", openCreate);
-    createTile.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter") return;
-      e.preventDefault();
-      e.stopPropagation();
-      openCreate();
-    });
-
-    grid.appendChild(createTile);
-
-    // Projekt Import / Export Kachel
-    const transferTile = mkTile();
-    transferTile.style.background = "var(--card-bg)";
-    transferTile.style.borderStyle = "dashed";
-
-    const transferTitle = document.createElement("div");
-    transferTitle.textContent = "Import / Export";
-    transferTitle.style.fontWeight = "800";
-    transferTitle.style.fontSize = "16px";
-    transferTitle.style.marginBottom = "6px";
-
-    const transferHint = document.createElement("div");
-    transferHint.textContent = "Under construction";
-    transferHint.style.opacity = "0.8";
-    transferHint.style.fontSize = "12px";
-
-    transferTile.append(transferTitle, transferHint);
-
-    const openTransfer = () => this._showProjectTransferPlaceholder();
-
-    transferTile.addEventListener("click", openTransfer);
-    transferTile.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter") return;
-      e.preventDefault();
-      e.stopPropagation();
-      openTransfer();
-    });
-
-    grid.appendChild(transferTile);
-
-    // Projektkacheln
-    for (const p of this.projects || []) {
-      const tile = mkTile();
-      tile.dataset.projectCard = "true";
-      tile.dataset.projectId = String(p?.id || "");
-
-      if (this.moduleContext !== PROJECT_CONTEXT_ALL) {
-        const contextColor = this._contextPresentation().color;
-        tile.style.border = `2px solid ${contextColor}`;
-        tile.onmouseenter = () => {
-          if (this.loading || this._startingProject) return;
-          tile.style.borderColor = contextColor;
-        };
-        tile.onmouseleave = () => {
-          tile.style.borderColor = contextColor;
-        };
-      }
-
-      const pn = this._getProjectNumber(p);
-
-      const content = document.createElement("div");
-      content.style.flex = "1 1 auto";
-      content.style.minWidth = "0";
-      content.style.display = "flex";
-      content.style.flexDirection = "column";
-      content.style.gap = "6px";
-
-      const pnLine = document.createElement("div");
-      pnLine.style.fontSize = "12px";
-      pnLine.style.opacity = "0.9";
-      pnLine.style.whiteSpace = "nowrap";
-      pnLine.textContent = pn ? `Nr.: ${pn}` : "";
-      pnLine.style.display = pn ? "block" : "none";
-
-      const title = document.createElement("div");
-      title.textContent = this._labelForTile(p);
-      title.style.fontWeight = "900";
-      title.style.fontSize = "18px";
-
-      const subtitle = document.createElement("div");
-      subtitle.style.opacity = "0.85";
-      subtitle.style.fontSize = "12px";
-      subtitle.style.minHeight = "16px";
-
-      const hasShort = String(p.short || "").trim().length > 0;
-      const name = String(p.name || "").trim();
-      subtitle.textContent = hasShort ? name : String(p.city || "").trim();
-
-      content.append(pnLine, title, subtitle);
-      if (this.moduleContext === PROJECT_CONTEXT_ALL) {
-        content.appendChild(this._createModuleBadges(p));
-      }
-
-      const actionsRail = document.createElement("div");
-      actionsRail.dataset.projectActionRail = "true";
-      actionsRail.style.display = "flex";
-      actionsRail.style.flexDirection = "column";
-      actionsRail.style.alignItems = "flex-end";
-      actionsRail.style.gap = "8px";
-      actionsRail.style.flex = "0 0 76px";
-      actionsRail.style.minWidth = "76px";
-      actionsRail.style.paddingLeft = "10px";
-      actionsRail.style.borderLeft = "1px solid rgba(15, 23, 42, 0.08)";
-
-      const stop = (e) => {
-        try {
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation?.();
-        } catch (_) {}
-      };
-      const makeRailButton = ({ text, actionType, titleText = "", onClick }) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.textContent = text;
-        btn.dataset.projectAction = actionType;
-        btn.title = titleText || text;
-        btn.style.width = "auto";
-        btn.style.padding = "0";
-        btn.style.margin = "0";
-        btn.style.border = "none";
-        btn.style.background = "transparent";
-        btn.style.boxShadow = "none";
-        btn.style.fontSize = "12px";
-        btn.style.lineHeight = "1.2";
-        btn.style.textAlign = "right";
-        btn.style.whiteSpace = "nowrap";
-        btn.style.color = "#0b61ff";
-        btn.style.fontWeight = "600";
-        btn.style.cursor = "pointer";
-        btn.style.display = "block";
-        btn.style.letterSpacing = "0.1px";
-        btn.style.textDecoration = "none";
-        btn.style.outline = "none";
-        btn.style.transition = "color 120ms ease, text-decoration-color 120ms ease, background 120ms ease";
-        btn.style.borderRadius = "4px";
-
-        btn.addEventListener("pointerdown", stop);
-        btn.addEventListener("mousedown", stop);
-
-        btn.addEventListener("mouseenter", () => {
-          btn.style.color = "#0747c9";
-          btn.style.textDecoration = "underline";
-        });
-        btn.addEventListener("mouseleave", () => {
-          btn.style.color = "#0b61ff";
-          btn.style.textDecoration = "none";
-        });
-        btn.addEventListener("focus", () => {
-          btn.style.textDecoration = "underline";
-          btn.style.boxShadow = "0 0 0 2px rgba(11, 97, 255, 0.18)";
-        });
-        btn.addEventListener("blur", () => {
-          btn.style.boxShadow = "none";
-          btn.style.textDecoration = "none";
-        });
-
-        btn.addEventListener("click", async (e) => {
-          stop(e);
-          if (this.loading || this._startingProject) return;
-          await onClick?.();
-        });
-
-        return btn;
-      };
-
-      const btnEdit = makeRailButton({
-        text: "Edit",
-        actionType: "edit",
-        onClick: async () => {
-          const pid = p?.id || null;
-          if (!pid) {
-            this._flashMsg("Projekt hat keine ID (id fehlt).", 7000);
-            return;
-          }
-
-          this.router.currentProjectId = pid;
-          this.router.currentMeetingId = null;
-
-          await this._openProjectFormModal({ projectId: pid });
-        },
-      });
-
-      const openProject = async () => {
-        await this.openProjectById(p?.id || null);
-      };
-
-      tile.addEventListener("click", (e) => {
-        openProject();
-      });
-
-      tile.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter") return;
-        e.preventDefault();
-        e.stopPropagation();
-        openProject();
-      });
-
-      actionsRail.appendChild(btnEdit);
-
-      tile.append(content, actionsRail);
-      grid.appendChild(tile);
-    }
-
-    this.hostEl.appendChild(grid);
-
-    if (this.loading) {
-      const hint = document.createElement("div");
-      hint.textContent = "Lade Projekte...";
-      hint.style.opacity = "0.8";
-      hint.style.marginTop = "10px";
-      this.hostEl.appendChild(hint);
-    }
+    this._renderAllProjectsList();
   }
 
   // ------------------------------------------------------------
@@ -1748,6 +1740,8 @@ export default class ProjectsScreen {
     }
 
     this._closeCreateMeetingModal(null);
+    this._closeAddProjectModal();
+    this._closeArchiveModal();
 
     if (this._projectFormModal) {
       try {

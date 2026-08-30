@@ -11,6 +11,7 @@ const PROJECT_MODULE_IDS = new Set([
   "sigeko",
   "dev-ui-editor",
 ]);
+const ARCHIVABLE_PROJECT_MODULE_IDS = new Set(["protokoll", "restarbeiten"]);
 
 function _normText(v) {
   const s = v !== undefined && v !== null ? String(v).trim() : "";
@@ -25,6 +26,14 @@ function _normName(v) {
 function _normModuleId(value) {
   const moduleId = String(value ?? "").trim().toLowerCase();
   if (!PROJECT_MODULE_IDS.has(moduleId)) throw new Error("moduleId invalid");
+  return moduleId;
+}
+
+function _normArchivableModuleId(value) {
+  const moduleId = _normModuleId(value);
+  if (!ARCHIVABLE_PROJECT_MODULE_IDS.has(moduleId)) {
+    throw new Error(`module archive not supported: ${moduleId}`);
+  }
   return moduleId;
 }
 
@@ -89,13 +98,40 @@ function _addCamelAlias(p) {
 
 function _addModuleAliases(db, project) {
   if (!project || typeof project !== "object") return project;
-  const moduleIds = db
-    .prepare(`SELECT module_id FROM project_modules WHERE project_id = ? ORDER BY module_id COLLATE NOCASE ASC`)
-    .all(project.id)
+  let rows = [];
+  try {
+    rows = db
+      .prepare(`
+        SELECT module_id, archived_at
+        FROM project_modules
+        WHERE project_id = ?
+        ORDER BY module_id COLLATE NOCASE ASC
+      `)
+      .all(project.id);
+  } catch (_e) {
+    rows = db
+      .prepare(`SELECT module_id, NULL AS archived_at FROM project_modules WHERE project_id = ? ORDER BY module_id COLLATE NOCASE ASC`)
+      .all(project.id);
+  }
+
+  const activeModuleIds = rows
+    .filter((row) => !row?.archived_at)
     .map((row) => String(row?.module_id || "").trim())
     .filter(Boolean);
-  project.module_ids = moduleIds;
-  project.moduleIds = moduleIds;
+  const archivedModuleIds = rows
+    .filter((row) => !!row?.archived_at)
+    .map((row) => String(row?.module_id || "").trim())
+    .filter(Boolean);
+  const allModuleIds = rows
+    .map((row) => String(row?.module_id || "").trim())
+    .filter(Boolean);
+
+  project.module_ids = activeModuleIds;
+  project.moduleIds = activeModuleIds;
+  project.archived_module_ids = archivedModuleIds;
+  project.archivedModuleIds = archivedModuleIds;
+  project.all_module_ids = allModuleIds;
+  project.allModuleIds = allModuleIds;
   return project;
 }
 
@@ -331,6 +367,84 @@ function listArchived() {
     // if archived_at missing, nothing is archived
     return [];
   }
+}
+
+function listArchiveEntries() {
+  const db = initDatabase();
+  _ensureProjectNumber(db);
+  _ensureArchivedAt(db);
+
+  const projectEntries = listArchived().map((project) => ({
+    ...project,
+    project_id: project.id,
+    projectId: project.id,
+    archive_type: "project",
+    archiveType: "project",
+    archive_scope_label: "Gesamtes Projekt",
+    archiveScopeLabel: "Gesamtes Projekt",
+    module_id: null,
+    moduleId: null,
+    module_ids: [...(project.all_module_ids || project.module_ids || [])],
+    moduleIds: [...(project.all_module_ids || project.module_ids || [])],
+  }));
+
+  const moduleRows = db
+    .prepare(
+      `
+        SELECT
+          p.id,
+          p.project_number,
+          p.name,
+          p.short,
+          p.street,
+          p.zip,
+          p.city,
+          p.project_lead,
+          p.project_lead_phone,
+          p.start_date,
+          p.end_date,
+          p.notes,
+          p.archived_at,
+          pm.module_id,
+          pm.archived_at AS module_archived_at
+        FROM project_modules pm
+        JOIN projects p ON p.id = pm.project_id
+        WHERE p.archived_at IS NULL
+          AND pm.archived_at IS NOT NULL
+          AND pm.module_id IN ('protokoll', 'restarbeiten')
+        ORDER BY pm.archived_at DESC, p.name COLLATE NOCASE ASC, pm.module_id COLLATE NOCASE ASC
+      `
+    )
+    .all();
+
+  const moduleEntries = moduleRows.map((row) => {
+    const project = _decorateProject(db, { ...row, archived_at: null });
+    const moduleId = String(row?.module_id || "").trim();
+    const moduleLabel = moduleId === "protokoll" ? "Protokoll" : "Restarbeiten";
+    return {
+      ...project,
+      project_id: project.id,
+      projectId: project.id,
+      archive_type: "module",
+      archiveType: "module",
+      archive_scope_label: moduleLabel,
+      archiveScopeLabel: moduleLabel,
+      archived_at: row.module_archived_at,
+      archivedAt: row.module_archived_at,
+      module_id: moduleId,
+      moduleId,
+      active_module_ids: [...(project.module_ids || [])],
+      activeModuleIds: [...(project.module_ids || [])],
+      module_ids: moduleId ? [moduleId] : [],
+      moduleIds: moduleId ? [moduleId] : [],
+    };
+  });
+
+  return [...projectEntries, ...moduleEntries].sort((left, right) => {
+    const byDate = String(right?.archived_at || "").localeCompare(String(left?.archived_at || ""));
+    if (byDate !== 0) return byDate;
+    return String(left?.name || "").localeCompare(String(right?.name || ""), "de");
+  });
 }
 
 /**
@@ -594,6 +708,54 @@ function unarchiveProject(projectId) {
   return _safeGetById(db, projectId);
 }
 
+function archiveModule(projectId, moduleId) {
+  const db = initDatabase();
+  const pid = String(projectId ?? "").trim();
+  if (!pid) throw new Error("projectId required");
+  const normalizedModuleId = _normArchivableModuleId(moduleId);
+  const project = _safeGetById(db, pid);
+  if (!project) throw new Error("project not found");
+  if (project.archived_at) throw new Error("project is archived");
+
+  const assignment = db
+    .prepare(`SELECT archived_at FROM project_modules WHERE project_id = ? AND module_id = ?`)
+    .get(pid, normalizedModuleId);
+  if (!assignment) throw new Error("project module not assigned");
+  if (assignment.archived_at) throw new Error("project module already archived");
+
+  db.prepare(`
+    UPDATE project_modules
+    SET archived_at = ?
+    WHERE project_id = ? AND module_id = ?
+  `).run(new Date().toISOString(), pid, normalizedModuleId);
+
+  return _safeGetById(db, pid);
+}
+
+function unarchiveModule(projectId, moduleId) {
+  const db = initDatabase();
+  const pid = String(projectId ?? "").trim();
+  if (!pid) throw new Error("projectId required");
+  const normalizedModuleId = _normArchivableModuleId(moduleId);
+  const project = _safeGetById(db, pid);
+  if (!project) throw new Error("project not found");
+  if (project.archived_at) throw new Error("restore whole project first");
+
+  const assignment = db
+    .prepare(`SELECT archived_at FROM project_modules WHERE project_id = ? AND module_id = ?`)
+    .get(pid, normalizedModuleId);
+  if (!assignment) throw new Error("archived project module not found");
+  if (!assignment.archived_at) throw new Error("project module is not archived");
+
+  db.prepare(`
+    UPDATE project_modules
+    SET archived_at = NULL
+    WHERE project_id = ? AND module_id = ?
+  `).run(pid, normalizedModuleId);
+
+  return _safeGetById(db, pid);
+}
+
 function assignModule(projectId, moduleId) {
   const db = initDatabase();
   const pid = String(projectId ?? "").trim();
@@ -610,97 +772,194 @@ function assignModule(projectId, moduleId) {
   return _safeGetById(db, pid);
 }
 
+function _listRestarbeitenFilePaths(db, projectId) {
+  if (!_tableExists(db, "restarbeiten_attachments")) return [];
+  const paths = db
+    .prepare(`SELECT file_path, thumbnail_path FROM restarbeiten_attachments WHERE project_id = ?`)
+    .all(projectId)
+    .flatMap((row) => [row?.file_path, row?.thumbnail_path])
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+  return [...new Set(paths)];
+}
+
+function _deleteProtokollData(db, projectId) {
+  if (_tableExists(db, "audio_imports")) {
+    const audioImportIds = db
+      .prepare(`SELECT id FROM audio_imports WHERE project_id = ?`)
+      .all(projectId)
+      .map((row) => row?.id)
+      .filter(Boolean);
+
+    if (audioImportIds.length && _tableExists(db, "transcripts")) {
+      const deleteTranscript = db.prepare(`DELETE FROM transcripts WHERE audio_import_id = ?`);
+      for (const audioImportId of audioImportIds) deleteTranscript.run(audioImportId);
+    }
+    if (_tableExists(db, "audio_suggestions")) {
+      db.prepare(`DELETE FROM audio_suggestions WHERE project_id = ?`).run(projectId);
+    }
+    db.prepare(`DELETE FROM audio_imports WHERE project_id = ?`).run(projectId);
+  }
+
+  if (_tableExists(db, "meetings")) {
+    const meetingIds = db
+      .prepare(`SELECT id FROM meetings WHERE project_id = ?`)
+      .all(projectId)
+      .map((row) => row?.id)
+      .filter(Boolean);
+
+    if (meetingIds.length && _tableExists(db, "meeting_participants")) {
+      const deleteParticipants = db.prepare(`DELETE FROM meeting_participants WHERE meeting_id = ?`);
+      for (const meetingId of meetingIds) deleteParticipants.run(meetingId);
+    }
+    if (meetingIds.length && _tableExists(db, "meeting_tops")) {
+      const deleteMeetingTops = db.prepare(`DELETE FROM meeting_tops WHERE meeting_id = ?`);
+      for (const meetingId of meetingIds) deleteMeetingTops.run(meetingId);
+    }
+    db.prepare(`DELETE FROM meetings WHERE project_id = ?`).run(projectId);
+  }
+
+  if (_tableExists(db, "tops")) {
+    const topIds = db
+      .prepare(`SELECT id FROM tops WHERE project_id = ?`)
+      .all(projectId)
+      .map((row) => row?.id)
+      .filter(Boolean);
+    if (topIds.length && _tableExists(db, "meeting_tops")) {
+      const deleteMeetingTops = db.prepare(`DELETE FROM meeting_tops WHERE top_id = ?`);
+      for (const topId of topIds) deleteMeetingTops.run(topId);
+    }
+    db.prepare(`DELETE FROM tops WHERE project_id = ?`).run(projectId);
+  }
+}
+
+function _deleteRestarbeitenData(db, projectId) {
+  if (_tableExists(db, "restarbeiten_items")) {
+    const itemIds = db
+      .prepare(`SELECT id FROM restarbeiten_items WHERE project_id = ?`)
+      .all(projectId)
+      .map((row) => row?.id)
+      .filter(Boolean);
+
+    if (itemIds.length && _tableExists(db, "restarbeiten_notes")) {
+      const deleteNotes = db.prepare(`DELETE FROM restarbeiten_notes WHERE restarbeit_id = ?`);
+      for (const itemId of itemIds) deleteNotes.run(itemId);
+    }
+    if (_tableExists(db, "restarbeiten_attachments")) {
+      db.prepare(`DELETE FROM restarbeiten_attachments WHERE project_id = ?`).run(projectId);
+    }
+    db.prepare(`DELETE FROM restarbeiten_items WHERE project_id = ?`).run(projectId);
+  }
+  if (_tableExists(db, "restarbeiten_project_settings")) {
+    db.prepare(`DELETE FROM restarbeiten_project_settings WHERE project_id = ?`).run(projectId);
+  }
+}
+
+function deleteArchivedModule(projectId, moduleId) {
+  const db = initDatabase();
+  const pid = String(projectId ?? "").trim();
+  if (!pid) throw new Error("projectId required");
+  const normalizedModuleId = _normArchivableModuleId(moduleId);
+  const deletedFilePaths = normalizedModuleId === "restarbeiten"
+    ? _listRestarbeitenFilePaths(db, pid)
+    : [];
+
+  const tx = db.transaction(() => {
+    const project = _safeGetById(db, pid);
+    if (!project) throw new Error("project not found");
+    if (project.archived_at) throw new Error("delete the whole archived project instead");
+
+    const assignment = db
+      .prepare(`SELECT archived_at FROM project_modules WHERE project_id = ? AND module_id = ?`)
+      .get(pid, normalizedModuleId);
+    if (!assignment?.archived_at) throw new Error("project module is not archived");
+
+    if (normalizedModuleId === "protokoll") {
+      _deleteProtokollData(db, pid);
+    } else {
+      _deleteRestarbeitenData(db, pid);
+    }
+
+    db.prepare(`DELETE FROM project_modules WHERE project_id = ? AND module_id = ?`)
+      .run(pid, normalizedModuleId);
+  });
+
+  tx();
+  return { ok: true, deletedFilePaths };
+}
+
 function deleteForever(projectId) {
   const db = initDatabase();
-  if (!projectId) throw new Error("projectId required");
+  const pid = String(projectId ?? "").trim();
+  if (!pid) throw new Error("projectId required");
+  const deletedFilePaths = _listRestarbeitenFilePaths(db, pid);
 
-  // Hard delete: remove all project-related data
-  // Strategy:
-  // 1) delete project_persons (RESTRICT FK) for firms of this project
-  // 2) delete project_firms
-  // 3) delete meetings (cascades meeting_tops + meeting_participants)
-  // 4) delete tops (cascades meeting_tops)
-  // 5) delete other project-scoped tables
-  // 6) delete projects row
   const tx = db.transaction(() => {
-    // collect project_firm ids (for project_persons)
     let firmIds = [];
     if (_tableExists(db, "project_firms")) {
-      firmIds = (db.prepare(`SELECT id FROM project_firms WHERE project_id = ?`).all(projectId) || [])
-        .map((r) => r.id)
+      firmIds = (db.prepare(`SELECT id FROM project_firms WHERE project_id = ?`).all(pid) || [])
+        .map((row) => row.id)
         .filter(Boolean);
     }
 
     if (firmIds.length && _tableExists(db, "project_persons")) {
-      const delPP = db.prepare(`DELETE FROM project_persons WHERE project_firm_id = ?`);
-      for (const fid of firmIds) delPP.run(fid);
+      const deleteProjectPersons = db.prepare(`DELETE FROM project_persons WHERE project_firm_id = ?`);
+      for (const firmId of firmIds) deleteProjectPersons.run(firmId);
     }
+
+    _deleteProtokollData(db, pid);
+    _deleteRestarbeitenData(db, pid);
 
     if (_tableExists(db, "project_firms")) {
-      db.prepare(`DELETE FROM project_firms WHERE project_id = ?`).run(projectId);
+      db.prepare(`DELETE FROM project_firms WHERE project_id = ?`).run(pid);
     }
-
-    // meetings (and cascades)
-    if (_tableExists(db, "meetings")) {
-      // defensive cleanup before meetings delete (in case FK settings differ on old DBs)
-      const mids = (db.prepare(`SELECT id FROM meetings WHERE project_id = ?`).all(projectId) || [])
-        .map((r) => r.id)
-        .filter(Boolean);
-
-      if (mids.length && _tableExists(db, "meeting_participants")) {
-        const delMP = db.prepare(`DELETE FROM meeting_participants WHERE meeting_id = ?`);
-        for (const mid of mids) delMP.run(mid);
-      }
-
-      if (mids.length && _tableExists(db, "meeting_tops")) {
-        const delMT = db.prepare(`DELETE FROM meeting_tops WHERE meeting_id = ?`);
-        for (const mid of mids) delMT.run(mid);
-      }
-
-      db.prepare(`DELETE FROM meetings WHERE project_id = ?`).run(projectId);
-    }
-
-    // tops (and cascades)
-    if (_tableExists(db, "tops")) {
-      // defensive cleanup: meeting_tops may reference tops
-      if (_tableExists(db, "meeting_tops")) {
-        const topIds = (db.prepare(`SELECT id FROM tops WHERE project_id = ?`).all(projectId) || [])
-          .map((r) => r.id)
-          .filter(Boolean);
-
-        if (topIds.length) {
-          const delByTop = db.prepare(`DELETE FROM meeting_tops WHERE top_id = ?`);
-          for (const tid of topIds) delByTop.run(tid);
-        }
-      }
-      db.prepare(`DELETE FROM tops WHERE project_id = ?`).run(projectId);
-    }
-
-    // project-scoped link tables
     if (_tableExists(db, "project_candidates")) {
-      db.prepare(`DELETE FROM project_candidates WHERE project_id = ?`).run(projectId);
+      db.prepare(`DELETE FROM project_candidates WHERE project_id = ?`).run(pid);
     }
     if (_tableExists(db, "project_global_firms")) {
-      db.prepare(`DELETE FROM project_global_firms WHERE project_id = ?`).run(projectId);
+      db.prepare(`DELETE FROM project_global_firms WHERE project_id = ?`).run(pid);
     }
 
-    // finally project
-    db.prepare(`DELETE FROM projects WHERE id = ?`).run(projectId);
+    db.prepare(`DELETE FROM projects WHERE id = ?`).run(pid);
   });
 
   tx();
+  return { ok: true, deletedFilePaths };
+}
 
-  return { ok: true };
+function deleteArchivedProject(projectId) {
+  const db = initDatabase();
+  const pid = String(projectId ?? "").trim();
+  if (!pid) throw new Error("projectId required");
+  const project = _safeGetById(db, pid);
+  if (!project) throw new Error("project not found");
+  if (!project.archived_at) throw new Error("project is not archived");
+
+  if (_tableExists(db, "invoices")) {
+    const invoiceCount = Number(
+      db.prepare(`SELECT COUNT(*) AS count FROM invoices WHERE project_id = ?`).get(pid)?.count || 0
+    );
+    if (invoiceCount > 0) {
+      throw new Error("Projekt kann nicht endgültig gelöscht werden, solange Rechnungen darauf verweisen.");
+    }
+  }
+
+  return deleteForever(pid);
 }
 
 module.exports = {
   getById,
   listAll,
   listArchived,
+  listArchiveEntries,
   createProject,
   updateProject,
   archiveProject,
   unarchiveProject,
+  archiveModule,
+  unarchiveModule,
   assignModule,
+  deleteArchivedModule,
+  deleteArchivedProject,
   deleteForever,
 };

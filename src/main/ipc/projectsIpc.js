@@ -7,6 +7,7 @@ const projectsRepo = require("../db/projectsRepo");
 const { buildStoragePreviewPaths } = require("./projectStoragePaths");
 const { toLicenseErrorPayload } = require("../licensing/featureGuard");
 const fs = require("fs");
+const path = require("path");
 
 function _isLicenseError(err) {
   const message = String(err?.message || "");
@@ -24,6 +25,69 @@ function _runProjectTask(task) {
   }
 }
 
+function _projectStorage(project) {
+  const settings = appSettingsGetMany(["pdf.protocolsDir"]) || {};
+  const baseDir = String(settings["pdf.protocolsDir"] || "").trim() || app.getPath("downloads");
+  const preview = buildStoragePreviewPaths({ baseDir, project: project || {} });
+  return {
+    rootDir: path.resolve(baseDir, "bbm"),
+    projectDir: path.resolve(path.dirname(preview.protocolsDir)),
+    preview,
+  };
+}
+
+function _isInside(rootDir, targetPath, { allowRoot = false } = {}) {
+  const root = path.resolve(String(rootDir || ""));
+  const target = path.resolve(String(targetPath || ""));
+  if (!root || !target) return false;
+  if (allowRoot && target === root) return true;
+  const relative = path.relative(root, target);
+  return !!relative && !relative.startsWith("..") && !path.isAbsolute(relative);
+}
+
+function _removeArchiveFiles({ project, moduleId = null, deletedFilePaths = [] }) {
+  const warnings = [];
+  const storage = _projectStorage(project);
+  const targets = [];
+
+  if (!moduleId) {
+    if (path.dirname(storage.projectDir) === storage.rootDir) targets.push(storage.projectDir);
+  } else if (moduleId === "protokoll") {
+    targets.push(storage.preview.protocolsDir, storage.preview.previewDir);
+  } else if (moduleId === "restarbeiten") {
+    targets.push(storage.preview.restarbeitenDir);
+  }
+
+  for (const filePath of deletedFilePaths || []) {
+    const normalized = String(filePath || "").trim();
+    if (normalized && _isInside(storage.rootDir, normalized)) targets.push(normalized);
+  }
+
+  for (const targetPath of [...new Set(targets.map((value) => path.resolve(value)))]) {
+    const isProjectTarget = targetPath === storage.projectDir;
+    const safe = isProjectTarget
+      ? path.dirname(targetPath) === storage.rootDir
+      : _isInside(storage.rootDir, targetPath);
+    if (!safe) {
+      warnings.push(`Unsicherer Archivpfad wurde nicht gelöscht: ${targetPath}`);
+      continue;
+    }
+    try {
+      fs.rmSync(targetPath, { recursive: true, force: true });
+    } catch (error) {
+      warnings.push(`Archivdateien konnten nicht vollständig gelöscht werden (${targetPath}): ${error?.message || error}`);
+    }
+  }
+
+  return warnings;
+}
+
+function _archiveType(data) {
+  const value = String(data?.archiveType ?? data?.archive_type ?? "").trim().toLowerCase();
+  if (value !== "project" && value !== "module") throw new Error("archiveType invalid");
+  return value;
+}
+
 function registerProjectsIpc() {
   ipcMain.handle("projects:list", () =>
     _runProjectTask(() => {
@@ -35,6 +99,13 @@ function registerProjectsIpc() {
   ipcMain.handle("projects:listArchived", () =>
     _runProjectTask(() => {
       const list = projectsRepo.listArchived();
+      return { ok: true, list };
+    })
+  );
+
+  ipcMain.handle("projects:listArchiveEntries", () =>
+    _runProjectTask(() => {
+      const list = projectsRepo.listArchiveEntries();
       return { ok: true, list };
     })
   );
@@ -59,13 +130,63 @@ function registerProjectsIpc() {
     })
   );
 
+  ipcMain.handle("projects:archiveModule", (_e, data) =>
+    _runProjectTask(() => {
+      const d = data && typeof data === "object" ? data : {};
+      const project = projectsRepo.archiveModule(
+        d.projectId ?? d.project_id ?? d.id ?? null,
+        d.moduleId ?? d.module_id ?? null
+      );
+      return { ok: true, project };
+    })
+  );
+
+  ipcMain.handle("projects:restoreArchive", (_e, data) =>
+    _runProjectTask(() => {
+      const d = data && typeof data === "object" ? data : {};
+      const projectId = d.projectId ?? d.project_id ?? d.id ?? null;
+      const archiveType = _archiveType(d);
+      const project = archiveType === "project"
+        ? projectsRepo.unarchiveProject(projectId)
+        : projectsRepo.unarchiveModule(projectId, d.moduleId ?? d.module_id ?? null);
+      return { ok: true, project };
+    })
+  );
+
+  ipcMain.handle("projects:deleteArchiveForever", (_e, data) =>
+    _runProjectTask(() => {
+      const d = data && typeof data === "object" ? data : {};
+      const projectId = d.projectId ?? d.project_id ?? d.id ?? null;
+      const archiveType = _archiveType(d);
+      const project = projectsRepo.getById(projectId);
+      if (!project) throw new Error("project not found");
+      const moduleId = archiveType === "module"
+        ? String(d.moduleId ?? d.module_id ?? "").trim().toLowerCase()
+        : null;
+      const result = archiveType === "project"
+        ? projectsRepo.deleteArchivedProject(projectId)
+        : projectsRepo.deleteArchivedModule(projectId, moduleId);
+      const warnings = _removeArchiveFiles({
+        project,
+        moduleId,
+        deletedFilePaths: result?.deletedFilePaths || [],
+      });
+      return { ok: true, ...(warnings.length ? { warning: warnings.join(" | ") } : {}) };
+    })
+  );
+
   ipcMain.handle("projects:deleteForever", (_e, data) =>
     _runProjectTask(() => {
       const d = data && typeof data === "object" ? data : {};
       const projectId = d.projectId ?? d.project_id ?? d.id ?? null;
       if (!projectId) throw new Error("projectId required");
-      projectsRepo.deleteForever(projectId);
-      return { ok: true };
+      const project = projectsRepo.getById(projectId);
+      const result = projectsRepo.deleteArchivedProject(projectId);
+      const warnings = _removeArchiveFiles({
+        project,
+        deletedFilePaths: result?.deletedFilePaths || [],
+      });
+      return { ok: true, ...(warnings.length ? { warning: warnings.join(" | ") } : {}) };
     })
   );
 
