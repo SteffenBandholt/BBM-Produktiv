@@ -4317,3 +4317,37 @@ Wichtig:
 - Kompatibilität: Die bisherigen `use_*`-Spalten bleiben synchronisierte Übergangsfelder für Protokoll/Restarbeiten. Projektlokale Firmen bleiben dort erhalten, werden aber nicht mehr als Rechnungskunden angeboten.
 - Prüfung: Gruppe `rechnungen-design` einschließlich R2-I1-Rollen-, DRAFT-, Migrations-, Buchungs- und Snapshotfällen ist grün; UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün. Die Firmen-/Projektfirmenfälle der Core-Gruppe sind grün. Der globale `npm test`-Lauf bleibt an bereits vorhandenen paketfremden Guardrails rot (unter anderem Protokoll-Testfixture/Quicklane, MainHeader, Editor-Inventarzähler und Lizenz-Dokumenthash).
 - Kein Commit, kein Push. Nächster fachlicher Schritt laut Bestandsprüfung: getrennte Rechnung-PDF-V2-Finalisierung; nicht Bestandteil von R2-I1.
+
+## Rechnung R3.1 - Zahlungs-/Forderungsbasis und DEV-Reset
+
+- Status: technisch umgesetzt; Abschlussregression wegen paketfremder roter
+  Guardrails noch nicht vollständig grün. Kein Commit und Push. `invoice_payments` ist
+  als additive, idempotente
+  Tabelle mit Rechnungs-Fremdschlüssel und positiven Integer-Centbeträgen
+  vorbereitet. Repository und `InvoiceService` erfassen und korrigieren
+  Zahlungen ausschließlich für `BOOKED` und leiten Brutto, bezahlt, offen sowie
+  `OPEN`, `PARTIALLY_PAID`, `PAID` und `OVERDUE` aus der zentralen
+  Positionsberechnung ab.
+- Der Sequenzreset löscht bei zulässigem Reset nur den Sequenzdatensatz. Jede
+  bereits vorhandene Rechnungsnummer desselben Jahres – auch bei `CANCELLED` –
+  blockiert den Reset; Rechnungen und Unique-Index bleiben unverändert.
+- IPC und Preload stellen Zahlungs-, Forderungs- und DEV-Sequenzoperationen
+  bereit. Der Main-Prozess blockiert den Reset fail-closed im gepackten Build;
+  die kleine Reset-UI ist nur ungepackt sichtbar und kein UI-Editor-Ziel.
+- Praktische Electron-Prüfung in einem isolierten Profil: Rechnungen geöffnet,
+  DEV-Bereich und Zähler sichtbar, Bestätigung zuerst abgebrochen und danach
+  bestätigt; Erfolgsmeldung sichtbar. Das Profil wurde anschließend entfernt.
+- Prüfung: Testgruppe `rechnungen-design` einschließlich Migration, Zahlungen,
+  Überzahlung, Fälligkeit, Reset, IPC und Renderer-Sperre vollständig grün.
+  UI-Editor-Vertragscheck und `git diff --check` sind grün; der breite Lauf
+  bestätigt außerdem die 81/81 Rechnung-Mounted-Refs. Sechs globale
+  Testgruppen waren bereits auf dem Ausgangsstand `6e969dc9` rot.
+  `restarbeiten-v2` ist im uncommitteten R3.1-Arbeitsbaum neu rot, weil dessen
+  Diff-Scope-Guard über `git diff --name-only` uncommittete `src/main/`-Dateien
+  außerhalb seiner historischen Restarbeiten-Allowlist erkennt. Eine
+  funktionale Restarbeiten-Regression wurde nicht nachgewiesen. Ob die Gruppe
+  nach dem Commit wieder grün ist, muss unmittelbar danach verifiziert werden.
+- Ausdrücklich unverändert: PDF/Druck, ZUGFeRD/E-Rechnung, Mahnwesen, Router,
+  Lizenzarchitektur, Protokoll, Restarbeiten und bestehende UI-Editor-Registry.
+  Nächster sinnvoller Schritt: fachliche Abnahme und danach ein getrennt
+  beauftragtes Commit-/Push-Paket.

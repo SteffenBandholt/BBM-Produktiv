@@ -4,6 +4,38 @@ Stand: 18.08.2026
 Scope: `rechnung.screen`
 Komponente: `bbm.rechnung.screen`
 
+## R3.1 Zahlungs-/Forderungsbasis und DEV-Reset 30.08.2026
+
+Art der Ausgabe: ausschließlich UI, kein PDF. Der vorhandene Scope
+`rechnung.screen` bleibt mit seinen 81 klassifizierten Editor-Zielen
+editorfähig. An IDs, Typen, Rollen, Parent-Beziehungen, Reihenfolge,
+Sichtbarkeit, `editable`, `allowedOps`, `lockedOps` und den sechs vorhandenen
+`data-ui-*`-Attributen wird nichts geändert.
+
+Der neue Bereich `DEV · Rechnungsnummernkreis` ist vollständig **nicht
+editorfähig**. Für Panel, Nummernkreis-Eingabe, Zähleranzeige, Reset-Button,
+Bestätigung und Statusmeldung werden deshalb weder `data-ui-inspector-id`,
+`data-ui-editor-kind`, `data-ui-editor-label`, `data-ui-editor-parent`,
+`data-ui-editor-editable` noch `data-ui-editor-ops` vergeben. Es entstehen
+keine neuen Registry-Einträge und keine neuen Parent-Ziele. Die Parent-Struktur
+der 81 vorhandenen Ziele bleibt vollständig bestehen; jedes vorhandene Ziel
+außer dem Root besitzt weiterhin einen registrierten Parent.
+
+Nicht editorfähig und als Editor-Ziele verboten bleiben insbesondere der
+Nummernkreis-Reset, Bestätigung und Status, Zahlungen erfassen oder korrigieren,
+fachliches Speichern, Anlegen und Löschen, Buchung, Upload, Import, Export,
+Autosave sowie sämtliche fachlichen IPC-, Datenbank- und sonstigen
+Fachdatenaktionen. Der Reset ist zusätzlich im Main-Prozess ausschließlich für
+den ungepackten Entwicklungsmodus freigegeben.
+
+Prüfung: `node scripts/ui-editor-contract-check.cjs --self-test`, die
+Rechnungs-Komponenten-/Mounted-Ref-Prüfungen und die Testgruppe
+`rechnungen-design`. Der praktische Electron-Ablauf prüft Sichtbarkeit im
+ungepackten Lauf, Abbrechen der Bestätigung und den bestätigten Reset. Die
+Packaged-Sperre wird zusätzlich im Renderer- und IPC-Test geprüft. Es wurde
+kein neuer Tabellenlayout-Vertrag und kein PDF-Guardrail benötigt, weil weder
+eine Inhaltstabelle noch eine PDF-Ausgabe geändert wird.
+
 ## Rechter Rechnungskopf – feine UI-Editor-Refs 21.08.2026
 
 Art der Ausgabe: ausschließlich UI, kein PDF. Der sichtbare Stand und die

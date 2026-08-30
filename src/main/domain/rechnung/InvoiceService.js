@@ -20,6 +20,16 @@ function normalizeIntroText(value) {
   return value === null || value === undefined ? "" : String(value);
 }
 
+function normalizePaymentAmount(value) {
+  if (!Number.isSafeInteger(value) || value <= 0) throw new Error("Der Zahlbetrag muss als positive ganze Centzahl angegeben werden.");
+  return value;
+}
+
+function normalizePaymentNote(value) {
+  const note = value === null || value === undefined ? "" : String(value).trim();
+  return note || null;
+}
+
 class InvoiceService {
   constructor({ repository = new InvoiceRepository(), settingsGetMany = appSettingsGetMany, today = () => new Date().toISOString().slice(0, 10) } = {}) {
     this.repository = repository;
@@ -42,6 +52,52 @@ class InvoiceService {
 
   list() { return this.repository.list(); }
   get(id) { return this.repository.get(id); }
+
+  listPayments(invoiceId) {
+    const invoice = this.repository.get(invoiceId);
+    if (!invoice) throw new Error("Rechnung wurde nicht gefunden.");
+    return this.repository.listPayments(invoice.id);
+  }
+
+  async recordPayment(invoiceId, input = {}) {
+    const rules = await loadRules();
+    if (!rules.isIsoDate(input.payment_date)) throw new Error("Bitte ein gültiges Zahlungsdatum eingeben.");
+    return this.repository.createPayment(invoiceId, {
+      payment_date: String(input.payment_date).trim(),
+      amount_cents: normalizePaymentAmount(input.amount_cents),
+      note: normalizePaymentNote(input.note),
+    });
+  }
+
+  async correctPayment(invoiceId, paymentId, input = {}) {
+    const rules = await loadRules();
+    if (!rules.isIsoDate(input.payment_date)) throw new Error("Bitte ein gültiges Zahlungsdatum eingeben.");
+    return this.repository.updatePayment(invoiceId, paymentId, {
+      payment_date: String(input.payment_date).trim(),
+      amount_cents: normalizePaymentAmount(input.amount_cents),
+      note: normalizePaymentNote(input.note),
+    });
+  }
+
+  async paymentSummary(invoiceId) {
+    const invoice = this.repository.get(invoiceId);
+    if (!invoice) throw new Error("Rechnung wurde nicht gefunden.");
+    const positions = await loadPositions();
+    const { gross_cents } = positions.calculateInvoiceTotalsCents(invoice.positions || []);
+    const paid_cents = this.repository.sumPayments(invoice.id);
+    const open_cents = Math.max(gross_cents - paid_cents, 0);
+    let payment_status = null;
+    if (invoice.status === "BOOKED") {
+      if (open_cents === 0) payment_status = "PAID";
+      else if (invoice.due_date && invoice.due_date < this.today()) payment_status = "OVERDUE";
+      else if (paid_cents > 0) payment_status = "PARTIALLY_PAID";
+      else payment_status = "OPEN";
+    }
+    return { invoice_id: invoice.id, gross_cents, paid_cents, open_cents, payment_status };
+  }
+
+  getDevNumberSequence(sequenceKey) { return this.repository.getNumberSequence(sequenceKey); }
+  resetDevNumberSequence(sequenceKey) { return this.repository.resetNumberSequence(sequenceKey); }
 
   async createDraft(input = {}) {
     const rules = await loadRules();

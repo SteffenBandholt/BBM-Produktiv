@@ -222,6 +222,23 @@ function ensureInvoiceIndexes(db) {
   }
 }
 
+function ensureInvoicePaymentsSchema(db) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS invoice_payments (
+      id TEXT PRIMARY KEY,
+      invoice_id TEXT NOT NULL,
+      payment_date TEXT NOT NULL,
+      amount_cents INTEGER NOT NULL CHECK (typeof(amount_cents) = 'integer' AND amount_cents > 0),
+      note TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE RESTRICT
+    );
+    CREATE INDEX IF NOT EXISTS idx_invoice_payments_invoice_date
+      ON invoice_payments(invoice_id, payment_date, created_at);
+  `);
+}
+
 function normalizedIdentity(value) {
   return String(value || "").trim().toLocaleLowerCase("de-DE").replace(/\s+/g, " ");
 }
@@ -333,6 +350,7 @@ function ensureInvoiceSchema(db) {
         updated_at TEXT NOT NULL
       )
     `);
+    ensureInvoicePaymentsSchema(db);
     customerMigration = migrateDraftCustomerRefs(db);
   };
   if (db.inTransaction) migrate();
@@ -340,4 +358,4 @@ function ensureInvoiceSchema(db) {
   return { customerMigration };
 }
 
-module.exports = { ensureInvoiceSchema, migrateDraftCustomerRefs };
+module.exports = { ensureInvoiceSchema, ensureInvoicePaymentsSchema, migrateDraftCustomerRefs };

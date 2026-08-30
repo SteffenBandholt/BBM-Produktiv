@@ -99,3 +99,19 @@ Die Rechnungsübersicht des echten Screens ist eine Karten-/Listengruppe und
 keine Inhaltstabelle. Deshalb wird sie nicht in den Tabellenlayout-Editor
 aufgenommen. Die statische Designreferenz bleibt ebenfalls außerhalb der
 Tabellenlayout-Registry.
+
+## R3.1 Zahlungs-/Forderungsbasis
+
+Gebuchte Rechnungen können über den Service-/IPC-Vertrag positive
+Integer-Centzahlungen erhalten und korrigieren. Der Forderungsstatus wird aus
+der bestehenden zentralen Bruttoberechnung, der Zahlungssumme und dem
+Fälligkeitsdatum als `OPEN`, `PARTIALLY_PAID`, `PAID` oder `OVERDUE` abgeleitet;
+der Rechnungsstatus selbst wird dabei nicht verändert. Eine umfangreiche
+Zahlungs- oder Mahnungsübersicht ist nicht Bestandteil dieses Pakets.
+
+Im ungepackten Entwicklungsmodus zeigt die Rechnungsübersicht einen kleinen,
+nicht editorfähigen Reset-Bereich für den Rechnungsnummernkreis. Er löscht
+ausschließlich den Sequenzstand und wird abgelehnt, sobald bereits eine
+Rechnungsnummer desselben Jahres existiert. Rechnungen, Nummern und der
+Unique-Index bleiben unverändert. Im gepackten Build bleibt der Bereich
+verborgen und der Main-Prozess blockiert den IPC-Aufruf zusätzlich.

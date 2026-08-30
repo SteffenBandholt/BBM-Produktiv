@@ -106,6 +106,12 @@ contextBridge.exposeInMainWorld("bbmDb", {
   rechnungDeleteDraft: (id) => ipcRenderer.invoke("rechnung:deleteDraft", { id }),
   rechnungPreviewDraft: (id, header) => ipcRenderer.invoke("rechnung:previewDraft", { id, header }),
   rechnungBookDraft: (id, header) => ipcRenderer.invoke("rechnung:bookDraft", { id, header }),
+  rechnungListPayments: (invoiceId) => ipcRenderer.invoke("rechnung:listPayments", { invoiceId }),
+  rechnungRecordPayment: (invoiceId, payment) => ipcRenderer.invoke("rechnung:recordPayment", { invoiceId, payment }),
+  rechnungCorrectPayment: (invoiceId, paymentId, payment) => ipcRenderer.invoke("rechnung:correctPayment", { invoiceId, paymentId, payment }),
+  rechnungPaymentSummary: (invoiceId) => ipcRenderer.invoke("rechnung:paymentSummary", { invoiceId }),
+  rechnungDevNumberSequenceGet: (sequenceKey) => ipcRenderer.invoke("rechnung:devNumberSequenceGet", { sequenceKey }),
+  rechnungDevNumberSequenceReset: (sequenceKey) => ipcRenderer.invoke("rechnung:devNumberSequenceReset", { sequenceKey }),
   rechnungListCustomers: () => ipcRenderer.invoke("rechnung:listCustomers"),
   rechnungListProjects: () => ipcRenderer.invoke("rechnung:listProjects"),
 

@@ -37,6 +37,24 @@ function formatInvoiceNumber(sequenceKey, value) {
   return `${sequenceKey}-${String(value).padStart(4, "0")}`;
 }
 
+function sequenceKeyValue(value) {
+  const sequenceKey = String(value || "").trim();
+  if (!/^\d{4}$/.test(sequenceKey)) throw new Error("Der Rechnungsnummernkreis muss ein vierstelliges Jahr sein.");
+  return sequenceKey;
+}
+
+function paymentWriteParams({ invoiceId, payment, id = randomUUID(), now }) {
+  return {
+    id: String(id || ""),
+    invoice_id: String(invoiceId || ""),
+    payment_date: payment.payment_date,
+    amount_cents: payment.amount_cents,
+    note: payment.note || null,
+    created_at: now,
+    updated_at: now,
+  };
+}
+
 class InvoiceRepository {
   constructor({ dbProvider = initDatabase, clock = () => new Date().toISOString() } = {}) {
     this.dbProvider = dbProvider;
@@ -53,6 +71,107 @@ class InvoiceRepository {
   get(id) {
     const db = this._db();
     return parseRow(db.prepare("SELECT * FROM invoices WHERE id = ?").get(String(id || "")), db);
+  }
+
+  listPayments(invoiceId) {
+    return this._db().prepare(`
+      SELECT id, invoice_id, payment_date, amount_cents, note, created_at, updated_at
+      FROM invoice_payments
+      WHERE invoice_id = ?
+      ORDER BY payment_date ASC, created_at ASC, id ASC
+    `).all(String(invoiceId || ""));
+  }
+
+  sumPayments(invoiceId) {
+    const row = this._db().prepare(`
+      SELECT COALESCE(SUM(amount_cents), 0) AS paid_cents
+      FROM invoice_payments
+      WHERE invoice_id = ?
+    `).get(String(invoiceId || ""));
+    const paidCents = Number(row?.paid_cents || 0);
+    if (!Number.isSafeInteger(paidCents) || paidCents < 0) throw new Error("Die Zahlungssumme ist außerhalb des zulässigen Bereichs.");
+    return paidCents;
+  }
+
+  createPayment(invoiceId, payment) {
+    const db = this._db();
+    const transaction = db.transaction(() => {
+      const invoice = db.prepare("SELECT id, status FROM invoices WHERE id = ?").get(String(invoiceId || ""));
+      if (!invoice) throw new Error("Rechnung wurde nicht gefunden.");
+      if (invoice.status !== "BOOKED") throw new Error("Zahlungen können nur für gebuchte Rechnungen erfasst werden.");
+      const params = paymentWriteParams({ invoiceId: invoice.id, payment, now: this.clock() });
+      db.prepare(`
+        INSERT INTO invoice_payments (
+          id, invoice_id, payment_date, amount_cents, note, created_at, updated_at
+        ) VALUES (
+          @id, @invoice_id, @payment_date, @amount_cents, @note, @created_at, @updated_at
+        )
+      `).run(params);
+      return db.prepare("SELECT * FROM invoice_payments WHERE id = ?").get(params.id);
+    });
+    return transaction.immediate();
+  }
+
+  updatePayment(invoiceId, paymentId, payment) {
+    const db = this._db();
+    const transaction = db.transaction(() => {
+      const invoice = db.prepare("SELECT id, status FROM invoices WHERE id = ?").get(String(invoiceId || ""));
+      if (!invoice) throw new Error("Rechnung wurde nicht gefunden.");
+      if (invoice.status !== "BOOKED") throw new Error("Zahlungen können nur für gebuchte Rechnungen korrigiert werden.");
+      const params = {
+        invoice_id: invoice.id,
+        id: String(paymentId || ""),
+        payment_date: payment.payment_date,
+        amount_cents: payment.amount_cents,
+        note: payment.note || null,
+        updated_at: this.clock(),
+      };
+      const result = db.prepare(`
+        UPDATE invoice_payments
+        SET payment_date = @payment_date,
+            amount_cents = @amount_cents,
+            note = @note,
+            updated_at = @updated_at
+        WHERE id = @id AND invoice_id = @invoice_id
+      `).run(params);
+      if (result.changes !== 1) throw new Error("Zahlung wurde nicht gefunden.");
+      return db.prepare("SELECT * FROM invoice_payments WHERE id = ?").get(params.id);
+    });
+    return transaction.immediate();
+  }
+
+  getNumberSequence(sequenceKey) {
+    const key = sequenceKeyValue(sequenceKey);
+    const row = this._db().prepare(`
+      SELECT sequence_key, last_value, updated_at
+      FROM invoice_number_sequences
+      WHERE sequence_key = ?
+    `).get(key);
+    return row || { sequence_key: key, last_value: 0, updated_at: null };
+  }
+
+  resetNumberSequence(sequenceKey) {
+    const key = sequenceKeyValue(sequenceKey);
+    const db = this._db();
+    const transaction = db.transaction(() => {
+      const prefix = `${key}-`;
+      const collision = db.prepare(`
+        SELECT invoice_number
+        FROM invoices
+        WHERE invoice_number IS NOT NULL
+          AND substr(invoice_number, 1, ?) = ?
+        ORDER BY invoice_number ASC
+        LIMIT 1
+      `).get(prefix.length, prefix);
+      if (collision) {
+        const error = new Error(`Der Rechnungsnummernkreis ${key} kann nicht zurückgesetzt werden, weil bereits die Rechnungsnummer ${collision.invoice_number} existiert.`);
+        error.code = "INVOICE_SEQUENCE_RESET_COLLISION";
+        throw error;
+      }
+      db.prepare("DELETE FROM invoice_number_sequences WHERE sequence_key = ?").run(key);
+      return { sequence_key: key, last_value: 0, updated_at: null };
+    });
+    return transaction.immediate();
   }
 
   _assertDraftCustomer(db, header, current = null) {
@@ -206,4 +325,4 @@ class InvoiceRepository {
   }
 }
 
-module.exports = { InvoiceRepository, formatInvoiceNumber };
+module.exports = { InvoiceRepository, formatInvoiceNumber, sequenceKeyValue };

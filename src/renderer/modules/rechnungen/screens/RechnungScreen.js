@@ -51,8 +51,20 @@ export default class RechnungScreen {
     const heading = node("div", "invoice-page-heading");
     heading.append(bind(node("h1", "invoice-page-title", "Rechnungen"), "rechnung.overview.title"), bind(node("p", "invoice-page-subtitle", "Rechnungsgrunddaten und Belegköpfe"), "rechnung.overview.subtitle"));
     header.append(heading, button("Freie Rechnung", "rechnung.overview.new", () => void this._newDraft(), "primary"));
+    this.devSequencePanel = node("section", "invoice-form-section rechnung-dev-sequence"); this.devSequencePanel.hidden = true;
+    const devHead = node("div", "invoice-form-section__head");
+    devHead.append(node("h2", "invoice-form-section__title", "DEV · Rechnungsnummernkreis"), node("span", "invoice-design-chip", "Nur Entwicklung"));
+    const devControls = node("div", "rechnung-dev-sequence__controls");
+    this.devSequenceKey = node("input", "invoice-control"); this.devSequenceKey.type = "text"; this.devSequenceKey.inputMode = "numeric"; this.devSequenceKey.maxLength = 4; this.devSequenceKey.value = String(new Date().getFullYear());
+    this.devSequenceValue = node("strong", "rechnung-dev-sequence__value", "–");
+    this.devSequenceResetButton = node("button", "invoice-button invoice-button--secondary", "Rechnungsnummern zurücksetzen"); this.devSequenceResetButton.type = "button";
+    this.devSequenceStatus = node("div", "rechnung-live-message"); this.devSequenceStatus.setAttribute("role", "status");
+    devControls.append(field("Nummernkreis", this.devSequenceKey), field("Aktueller Zähler", this.devSequenceValue), this.devSequenceResetButton);
+    this.devSequencePanel.append(devHead, devControls, this.devSequenceStatus);
+    this.devSequenceKey.addEventListener("change", () => void this._refreshDevNumberSequence());
+    this.devSequenceResetButton.addEventListener("click", () => void this._resetDevNumberSequence());
     this.list = bind(node("div", "rechnung-live-list"), "rechnung.overview.list");
-    overview.append(header, this.list); this.overview = overview; return overview;
+    overview.append(header, this.devSequencePanel, this.list); this.overview = overview; return overview;
   }
 
   _editor() {
@@ -277,6 +289,65 @@ export default class RechnungScreen {
     this.profile = profile?.ok ? profile.profile || profile.data || null : null;
     await this._loadTextLimits(); this._bindTextLimitSettings();
     this._renderList();
+    await this._loadDevNumberSequenceTool();
+  }
+
+  async _loadDevNumberSequenceTool() {
+    if (!this.devSequencePanel || typeof api().appIsPackaged !== "function") return false;
+    try {
+      const runtime = await api().appIsPackaged();
+      if (runtime?.ok !== true || runtime.isPackaged !== false) return false;
+      this.devSequencePanel.hidden = false;
+      await this._refreshDevNumberSequence();
+      return true;
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  _devNumberSequenceKey() {
+    const sequenceKey = String(this.devSequenceKey?.value || "").trim();
+    if (!/^\d{4}$/.test(sequenceKey)) throw new Error("Bitte einen vierstelligen Nummernkreis eingeben.");
+    return sequenceKey;
+  }
+
+  async _refreshDevNumberSequence() {
+    try {
+      const sequenceKey = this._devNumberSequenceKey();
+      const result = await api().rechnungDevNumberSequenceGet?.(sequenceKey);
+      if (!result?.ok) throw new Error(result?.error || "Nummernkreis konnte nicht geladen werden.");
+      this.devSequenceValue.textContent = String(result.data?.last_value ?? 0);
+      this.devSequenceStatus.textContent = "";
+      this.devSequenceStatus.dataset.tone = "";
+      return true;
+    } catch (error) {
+      if (this.devSequenceValue) this.devSequenceValue.textContent = "–";
+      if (this.devSequenceStatus) { this.devSequenceStatus.textContent = error?.message || "Nummernkreis konnte nicht geladen werden."; this.devSequenceStatus.dataset.tone = "error"; }
+      return false;
+    }
+  }
+
+  async _resetDevNumberSequence() {
+    let sequenceKey;
+    try { sequenceKey = this._devNumberSequenceKey(); }
+    catch (error) { this.devSequenceStatus.textContent = error.message; this.devSequenceStatus.dataset.tone = "error"; return false; }
+    const confirmed = globalThis.window?.confirm?.(`Rechnungsnummernkreis ${sequenceKey} wirklich zurücksetzen?\n\nVorhandene Rechnungen werden nicht gelöscht. Der Vorgang wird abgelehnt, wenn vorhandene Rechnungsnummern mit einem Neustart kollidieren würden.`);
+    if (!confirmed) return false;
+    this.devSequenceResetButton.disabled = true;
+    try {
+      const result = await api().rechnungDevNumberSequenceReset?.(sequenceKey);
+      if (!result?.ok) throw new Error(result?.error || "Nummernkreis konnte nicht zurückgesetzt werden.");
+      this.devSequenceValue.textContent = String(result.data?.last_value ?? 0);
+      this.devSequenceStatus.textContent = `Rechnungsnummernkreis ${sequenceKey} wurde zurückgesetzt.`;
+      this.devSequenceStatus.dataset.tone = "";
+      return true;
+    } catch (error) {
+      this.devSequenceStatus.textContent = error?.message || "Nummernkreis konnte nicht zurückgesetzt werden.";
+      this.devSequenceStatus.dataset.tone = "error";
+      return false;
+    } finally {
+      this.devSequenceResetButton.disabled = false;
+    }
   }
 
   _renderList() {

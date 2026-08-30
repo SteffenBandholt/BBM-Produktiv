@@ -60,6 +60,68 @@ async function runRechnungNavigationTests(run) {
     assert.match(css, /\.rechnung-live-preview\[hidden\]\s*\{\s*display:\s*none;\s*\}/);
   });
 
+  await run("Rechnung R3.1 DEV-UI: Bereich ist ungepackt sichtbar und lädt den aktuellen Zähler", async () => {
+    const previousWindow = global.window;
+    let getCalls = 0;
+    try {
+      global.window = { bbmDb: {
+        appIsPackaged: async () => ({ ok: true, isPackaged: false }),
+        rechnungDevNumberSequenceGet: async (sequenceKey) => { getCalls += 1; return { ok: true, data: { sequence_key: sequenceKey, last_value: 17 } }; },
+      } };
+      const screen = new rechnung.RechnungScreen();
+      screen.devSequencePanel = { hidden: true };
+      screen.devSequenceKey = { value: "2026" };
+      screen.devSequenceValue = { textContent: "–" };
+      screen.devSequenceStatus = { textContent: "", dataset: {} };
+      assert.equal(await screen._loadDevNumberSequenceTool(), true);
+      assert.equal(screen.devSequencePanel.hidden, false);
+      assert.equal(screen.devSequenceValue.textContent, "17");
+      assert.equal(getCalls, 1);
+    } finally { global.window = previousWindow; }
+  });
+
+  await run("Rechnung R3.1 DEV-UI: gepackter Lauf bleibt verborgen und ruft keine DEV-API auf", async () => {
+    const previousWindow = global.window;
+    let getCalls = 0;
+    try {
+      global.window = { bbmDb: {
+        appIsPackaged: async () => ({ ok: true, isPackaged: true }),
+        rechnungDevNumberSequenceGet: async () => { getCalls += 1; return { ok: true, data: { last_value: 17 } }; },
+      } };
+      const screen = new rechnung.RechnungScreen();
+      screen.devSequencePanel = { hidden: true };
+      assert.equal(await screen._loadDevNumberSequenceTool(), false);
+      assert.equal(screen.devSequencePanel.hidden, true);
+      assert.equal(getCalls, 0);
+    } finally { global.window = previousWindow; }
+  });
+
+  await run("Rechnung R3.1 DEV-UI: Sicherheitsabfrage schützt Reset und meldet Erfolg", async () => {
+    const previousWindow = global.window;
+    let confirmed = false;
+    let resetCalls = 0;
+    try {
+      global.window = {
+        confirm: () => confirmed,
+        bbmDb: { rechnungDevNumberSequenceReset: async (sequenceKey) => { resetCalls += 1; return { ok: true, data: { sequence_key: sequenceKey, last_value: 0 } }; } },
+      };
+      const screen = new rechnung.RechnungScreen();
+      screen.devSequenceKey = { value: "2026" };
+      screen.devSequenceValue = { textContent: "17" };
+      screen.devSequenceStatus = { textContent: "", dataset: {} };
+      screen.devSequenceResetButton = { disabled: false };
+      assert.equal(await screen._resetDevNumberSequence(), false);
+      assert.equal(resetCalls, 0);
+      assert.equal(screen.devSequenceValue.textContent, "17");
+      confirmed = true;
+      assert.equal(await screen._resetDevNumberSequence(), true);
+      assert.equal(resetCalls, 1);
+      assert.equal(screen.devSequenceValue.textContent, "0");
+      assert.match(screen.devSequenceStatus.textContent, /wurde zurückgesetzt/);
+      assert.equal(screen.devSequenceResetButton.disabled, false);
+    } finally { global.window = previousWindow; }
+  });
+
   await run("Rechnung Navigation: vorhandener DRAFT oeffnet und schliesst ohne Profil", () => {
     const previousDocument = global.document;
     const createElement = (tagName) => {

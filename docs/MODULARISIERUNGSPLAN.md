@@ -463,6 +463,24 @@ Dabei gilt:
 - `git diff --check`, `node scripts/ui-editor-contract-check.cjs --self-test`, `npm test` und `npm start` liefen gruen; das App-Fenster `BBM` war sichtbar und antwortend.
 - Neue Doku: `docs/M37_UI_EDITOR_KLICK_ABNAHME.md`.
 
+### Rechnung R3.1 Zahlungs-/Forderungsbasis und DEV-Reset (neu)
+
+- Die additive Tabelle `invoice_payments` speichert positive Integer-Centbeträge
+  mit Datum, Notiz und Rechnungs-Fremdschlüssel. Zahlungen und Korrekturen sind
+  ausschließlich für `BOOKED` zulässig.
+- Brutto, bezahlt, offen und die abgeleiteten Forderungsstände `OPEN`,
+  `PARTIALLY_PAID`, `PAID` und `OVERDUE` verwenden die bestehende zentrale
+  Rechnungsberechnung; der Rechnungsstatus wird nicht verändert.
+- Der Sequenzreset arbeitet transaktional, löscht nur den Sequenzdatensatz und
+  blockiert bei jeder vorhandenen Rechnungsnummer desselben Jahres, auch bei
+  stornierten Rechnungen. Nummern und Unique-Index bleiben unangetastet.
+- Der kleine Reset-Bereich ist nur im ungepackten Entwicklungsmodus sichtbar,
+  kein UI-Editor-Ziel und im Main-Prozess zusätzlich fail-closed geschützt.
+- PDF, Druck, ZUGFeRD/E-Rechnung, Mahnwesen, große Zahlungsübersicht, Router,
+  Lizenzarchitektur, Protokoll und Restarbeiten blieben unverändert.
+- Guardrails: Rechnungs-Testgruppe, IPC-/Packaged-Sperrtests,
+  UI-Editor-Vertragscheck und praktischer isolierter Electron-Ablauf.
+
 ### Zentraler Popup-/Formularstandard (fünftes Migrationspaket umgesetzt, Freigabe offen)
 
 - Das fünfte kontrollierte Paket ergänzt Hilfe/Info, Folgetermin,
