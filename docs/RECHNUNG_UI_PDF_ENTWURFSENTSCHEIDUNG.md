@@ -507,3 +507,22 @@ Die Entscheidung wird abgesichert durch:
 Der Scope darf nur bei grünen Vertrags- und Runtime-Nachweisen als `complete`
 veröffentlicht werden. Der globale Registrystatus bleibt wegen bewusst
 blockierter, nicht inventarisierter BBM-Bereiche `incomplete`.
+
+## Ergänzung R3.2 – Rechnungsverwaltung
+
+- Art der Ausgabe: UI; PDF und Druck bleiben unverändert.
+- Die Rechnungsübersicht bleibt eine kompakte Karten-/Listengruppe und ist keine
+  Inhaltstabelle. Es entsteht kein Tabellenlayout-Registry-Eintrag.
+- Die vorhandenen 81 expliziten Ziele des Scopes `rechnung.screen` bleiben
+  vollständig und unverändert erhalten.
+- Filterleiste, Verwaltungsdetails, Zahlungsformular und Zahlungsliste sind
+  fachliche Anzeige- und Bedienbereiche ohne UI-Editor-Registrierung.
+- Öffnen, Filter wechseln, Zahlung erfassen, Zahlung korrigieren und die
+  vorhandene DEV-Reset-Aktion sind Fachaktionen und nicht editorfähig.
+- Rechnungs-, Kunden-, Datums-, Betrags-, Fälligkeits-, Belegstatus- und
+  Zahlungsstatuswerte sind keine Editorziele.
+- Die vorhandene Parent-Struktur der 81 registrierten Ziele bleibt unverändert;
+  R3.2 ergänzt keine neue Editor-Parent-Beziehung.
+- Abgesichert wird die Ergänzung durch den Rechnung-Mounted-Ref-Test mit exakt
+  81 Referenzen, den UI-Editor-Vertragscheck, den R3.2-Fachaktionstest und einen
+  isolierten praktischen Electron-Ablauf.

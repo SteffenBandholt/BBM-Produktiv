@@ -100,6 +100,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   // ============================================================
   rechnungDefaults: () => ipcRenderer.invoke("rechnung:defaults"),
   rechnungList: () => ipcRenderer.invoke("rechnung:list"),
+  rechnungListManagement: () => ipcRenderer.invoke("rechnung:listManagement"),
   rechnungGet: (id) => ipcRenderer.invoke("rechnung:get", { id }),
   rechnungCreateDraft: (header) => ipcRenderer.invoke("rechnung:createDraft", header),
   rechnungUpdateDraft: (id, header) => ipcRenderer.invoke("rechnung:updateDraft", { id, header }),

@@ -93,6 +93,21 @@ class InvoiceRepository {
     return paidCents;
   }
 
+  sumPaymentsByInvoice() {
+    const sums = new Map();
+    const rows = this._db().prepare(`
+      SELECT invoice_id, COALESCE(SUM(amount_cents), 0) AS paid_cents
+      FROM invoice_payments
+      GROUP BY invoice_id
+    `).all();
+    for (const row of rows) {
+      const paidCents = Number(row?.paid_cents || 0);
+      if (!Number.isSafeInteger(paidCents) || paidCents < 0) throw new Error("Die Zahlungssumme ist außerhalb des zulässigen Bereichs.");
+      sums.set(String(row.invoice_id), paidCents);
+    }
+    return sums;
+  }
+
   createPayment(invoiceId, payment) {
     const db = this._db();
     const transaction = db.transaction(() => {

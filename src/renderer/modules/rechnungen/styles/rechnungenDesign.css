@@ -240,6 +240,8 @@ select.invoice-control { padding-right: 28px; }
 .invoice-status--paid { background: #e8f5ee; color: #246b49; }
 .invoice-status--due { background: #fff0e8; color: #a43f19; }
 .invoice-status--draft { background: #edf0f4; color: #5e6877; }
+.invoice-status--partial { background: #fff6d8; color: #805500; }
+.invoice-status--cancelled { background: #fbe9e7; color: #9b2c24; }
 .invoice-empty { padding: 26px !important; color: var(--invoice-color-muted); text-align: center !important; }
 .invoice-design-message { min-height: 17px; color: var(--invoice-color-muted); font-size: 11px; text-align: right; }
 
@@ -361,10 +363,29 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-dev-sequence { border-color: #c8a94f; background: #fffdf4; }
 .rechnung-dev-sequence__controls { display: grid; grid-template-columns: minmax(120px, 180px) minmax(120px, 180px) auto; align-items: end; gap: 10px; }
 .rechnung-dev-sequence__value { display: flex; align-items: center; min-height: var(--invoice-control-height); padding: 0 10px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-control); background: var(--invoice-color-surface-subtle); font-variant-numeric: tabular-nums; }
+.rechnung-management-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-card); background: var(--invoice-color-surface); }
 .rechnung-live-list { display: grid; gap: 8px; }
-.rechnung-live-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-card); background: var(--invoice-color-surface); }
+.rechnung-live-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 9px 12px; padding: 10px 12px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-card); background: var(--invoice-color-surface); }
 .rechnung-live-card__body { display: grid; gap: 2px; min-width: 0; }
 .rechnung-live-card__title { color: var(--invoice-color-text); font-size: 13px; }
+.rechnung-management-card__details { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(120px, 1.2fr) repeat(7, minmax(76px, 1fr)) auto auto; align-items: end; gap: 8px 10px; padding-top: 9px; border-top: 1px solid #e8edf3; }
+.rechnung-management-card__item { display: grid; gap: 2px; min-width: 0; }
+.rechnung-management-card__label { color: var(--invoice-color-muted); font-size: 9px; font-weight: 750; text-transform: uppercase; }
+.rechnung-management-card__value { overflow: hidden; color: var(--invoice-color-text); font-size: 11.5px; font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
+.rechnung-management-card__identity .rechnung-management-card__value { color: var(--invoice-color-primary); }
+.rechnung-management-card__statuses { display: flex; align-items: center; gap: 5px; min-width: max-content; }
+.rechnung-payment-management { display: grid; gap: 10px; border-color: #b8c9dc; background: #f8fbff; }
+.rechnung-payment-management[hidden] { display: none; }
+.rechnung-payment-management__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rechnung-payment-management__heading { min-width: 0; }
+.rechnung-payment-management__summary { display: grid; grid-template-columns: repeat(3, minmax(110px, 170px)); gap: 8px; }
+.rechnung-payment-management__summary-item { display: grid; gap: 2px; padding: 8px 10px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-control); background: var(--invoice-color-surface); }
+.rechnung-payment-management__form { display: grid; grid-template-columns: minmax(130px, 180px) minmax(130px, 180px) minmax(220px, 1fr) auto; align-items: end; gap: 8px 10px; }
+.rechnung-payment-management__form .invoice-field--wide { grid-column: auto; }
+.rechnung-payment-management__form-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.rechnung-payment-management__list { display: grid; gap: 5px; }
+.rechnung-payment-management__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 9px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-control); background: var(--invoice-color-surface); }
+.rechnung-payment-management__row-description { display: grid; gap: 1px; min-width: 0; }
 .rechnung-live-editor { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: 8px; }
 .rechnung-live-editor__header,
 .rechnung-live-editor__footer { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-card); background: var(--invoice-color-surface); }
@@ -393,11 +414,18 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-live-preview__body { min-height: 260px; padding: 28px; border: 1px solid var(--invoice-color-border); background: #fff; white-space: pre-line; line-height: 1.8; }
 @media (max-width: 850px) {
   .rechnung-dev-sequence__controls { grid-template-columns: 1fr; }
+  .rechnung-management-card__details { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .rechnung-payment-management__form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rechnung-payment-management__form-actions { grid-column: 1 / -1; justify-content: flex-start; }
   .rechnung-live-editor__body .invoice-form-grid,
   .rechnung-live-service { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 620px) {
   .rechnung-live-card { grid-template-columns: 1fr; }
+  .rechnung-management-card__details { grid-column: 1; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rechnung-payment-management__summary { grid-template-columns: 1fr; }
+  .rechnung-payment-management__form { grid-template-columns: 1fr; }
+  .rechnung-payment-management__form-actions { grid-column: auto; }
   .rechnung-live-parties,
   .rechnung-live-editor__body .invoice-form-grid,
   .rechnung-live-service,

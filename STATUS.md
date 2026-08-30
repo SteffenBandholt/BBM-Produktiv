@@ -4351,3 +4351,41 @@ Wichtig:
   Lizenzarchitektur, Protokoll, Restarbeiten und bestehende UI-Editor-Registry.
   Nächster sinnvoller Schritt: fachliche Abnahme und danach ein getrennt
   beauftragtes Commit-/Push-Paket.
+
+## Rechnung R3.2 - Rechnungsverwaltung für den Alltag
+
+- Status: technisch umgesetzt, Commit offen. Die Rechnungskartenliste zeigt
+  Entwurfskennung bzw. Rechnungsnummer, Datum, Kunde, Art, Brutto, bezahlt,
+  offen, Fälligkeit sowie getrennte Beleg- und Zahlungsstatus.
+- Filter für Alle, Entwürfe, Offen, Teilbezahlt, Überfällig, Bezahlt und
+  vorhandene Stornierungen greifen auf den bestehenden Belegstatus und die aus
+  R3.1 abgeleiteten Zahlungsstände zu.
+- Zahlungen auf `BOOKED` können mit Datum, Eurobetrag und optionaler Notiz
+  erfasst und korrigiert werden. Die UI übergibt Integer-Centbeträge; Summen und
+  Zahlungsstatus werden unmittelbar aus dem zentralen Rechnungsmodell neu
+  geladen. `DRAFT` bleibt bearbeitbar, `BOOKED` und `CANCELLED` bleiben
+  inhaltlich schreibgeschützt.
+- Keine neue Tabelle oder Statusspalte, keine Zahlungslöschung, keine neue
+  PDF-/Druckfunktion und keine Änderung an DEV-Reset, Nummernlogik oder
+  Rechnungskette.
+- Der UI-Editor-Vertrag bleibt bei exakt 81 Rechnungselementen. Filter,
+  Zahlungsaktionen und DEV-Reset sind keine Editorziele.
+- Praktische Electron-Prüfung in isoliertem Profil: fünf Rechnungen deckten
+  Entwurf, offen, teilbezahlt, bezahlt und überfällig ab; alle Filter stimmten.
+  Eine Zahlung über 40,00 EUR führte sofort zu `PARTIALLY_PAID`, ihre Korrektur
+  auf 119,00 EUR zu `PAID` und 0,00 EUR offen. DRAFT war editierbar und BOOKED
+  schreibgeschützt. Das Profil wurde anschließend entfernt.
+- Prüfung: Rechnungsgruppe einschließlich aller R3.1-Fachtests und 20 neuer
+  R3.2-Szenarien grün; Rechnung-Mounted-Ref-Test 81/81,
+  UI-Editor-Vertrags-Selbsttest, Syntax, gezieltes ESLint ohne Fehler und
+  `git diff --check` grün.
+- Der globale Lauf bleibt mit 3/10 grünen Gruppen rot. Die sechs bereits vor
+  R3.2 dokumentierten Altgruppen `core-protokoll`, `app-modules`,
+  `restarbeiten-module`, `popup-form-standard`, `licensing-native` und
+  `ui-editor-m51-m80` bleiben paketfremd. Zusätzlich ist `restarbeiten-v2` im
+  uncommittierten Arbeitsbaum rot, weil sein historischer Diff-Scope-Guard die
+  R3.2-Dateien `invoiceRepository.js`, `InvoiceService.js` und
+  `rechnungIpc.js` außerhalb seiner Allowlist erkennt. Eine funktionale
+  Restarbeiten-Regression wurde nicht nachgewiesen; die Gruppe ist unmittelbar
+  nach einem später beauftragten Commit erneut zu prüfen.
+- Kein Commit, Push, Merge oder PR.

@@ -115,3 +115,19 @@ ausschließlich den Sequenzstand und wird abgelehnt, sobald bereits eine
 Rechnungsnummer desselben Jahres existiert. Rechnungen, Nummern und der
 Unique-Index bleiben unverändert. Im gepackten Build bleibt der Bereich
 verborgen und der Main-Prozess blockiert den IPC-Aufruf zusätzlich.
+
+## R3.2 Rechnungsverwaltung
+
+Die Übersicht ergänzt die bestehende Kartenliste um Entwurfskennung bzw.
+Rechnungsnummer, Datum, Kunde, Art, Brutto, bezahlt, offen, Fälligkeit sowie
+getrennte Beleg- und Zahlungsstatus. Ansichten für Alle, Entwürfe, Offen,
+Teilbezahlt, Überfällig, Bezahlt und vorhandene Stornierungen filtern nur die
+abgeleiteten Verwaltungsdaten.
+
+Bei `BOOKED` können vorhandene R3.1-Zahlungen direkt in der Übersicht erfasst
+und korrigiert werden. Die UI nimmt Eurobeträge entgegen und übergibt weiterhin
+ausschließlich Integer-Centbeträge. `DRAFT` bleibt im vorhandenen Editor
+bearbeitbar; `BOOKED` und `CANCELLED` bleiben inhaltlich schreibgeschützt. Es
+wurden weder Zahlungstabelle noch Statusspalte, PDF-Funktion oder
+Stornorechnungsworkflow ergänzt. Filter- und Zahlungsaktionen sind keine
+UI-Editor-Ziele; der bestehende Vertrag umfasst weiterhin exakt 81 Referenzen.

@@ -9,6 +9,51 @@ import { RECHNUNG_COMPONENT_ID, RECHNUNG_SCOPE_ID } from "../RechnungScreen.uiEd
 const api = () => globalThis.window?.bbmDb || {};
 const node = (tag, className = "", content = "") => { const element = document.createElement(tag); if (className) element.className = className; if (content) element.textContent = content; return element; };
 const option = (value, label) => Object.assign(document.createElement("option"), { value, textContent: label });
+const plainButton = (label, handler, variant = "secondary") => { const element = node("button", `invoice-button invoice-button--${variant}`, label); element.type = "button"; element.onclick = handler; return element; };
+
+export const MANAGEMENT_FILTERS = Object.freeze([
+  Object.freeze({ id: "ALL", label: "Alle" }),
+  Object.freeze({ id: "DRAFT", label: "Entwürfe" }),
+  Object.freeze({ id: "OPEN", label: "Offen" }),
+  Object.freeze({ id: "PARTIALLY_PAID", label: "Teilbezahlt" }),
+  Object.freeze({ id: "OVERDUE", label: "Überfällig" }),
+  Object.freeze({ id: "PAID", label: "Bezahlt" }),
+  Object.freeze({ id: "CANCELLED", label: "Storniert" }),
+]);
+
+export function invoiceMatchesManagementFilter(invoice, filterId) {
+  if (!invoice || filterId === "ALL") return Boolean(invoice);
+  if (filterId === "DRAFT" || filterId === "CANCELLED") return invoice.status === filterId;
+  return invoice.status === "BOOKED" && invoice.payment_status === filterId;
+}
+
+export function parseEuroToCents(value) {
+  let normalized = String(value ?? "").trim().replace(/(?:EUR|€)/gi, "").replace(/\s/g, "");
+  if (!normalized) throw new Error("Bitte einen Zahlbetrag eingeben.");
+  const validFormat = [
+    /^\d+$/,
+    /^\d+[,.]\d{1,2}$/,
+    /^\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?$/,
+    /^\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?$/,
+  ].some((pattern) => pattern.test(normalized));
+  if (!validFormat) throw new Error("Bitte einen gültigen Euro-Betrag eingeben.");
+  const comma = normalized.lastIndexOf(",");
+  const dot = normalized.lastIndexOf(".");
+  if (comma >= 0 && dot >= 0) {
+    const decimalSeparator = comma > dot ? "," : ".";
+    const thousandsSeparator = decimalSeparator === "," ? "." : ",";
+    normalized = normalized.replaceAll(thousandsSeparator, "");
+  }
+  const separatorIndex = Math.max(normalized.lastIndexOf(","), normalized.lastIndexOf("."));
+  const hasDecimalFraction = separatorIndex >= 0 && normalized.length - separatorIndex - 1 <= 2;
+  if (separatorIndex >= 0 && !hasDecimalFraction) normalized = normalized.replace(/[.,]/g, "");
+  else if (separatorIndex >= 0) normalized = `${normalized.slice(0, separatorIndex).replace(/[.,]/g, "")}.${normalized.slice(separatorIndex + 1)}`;
+  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) throw new Error("Bitte einen gültigen Euro-Betrag eingeben.");
+  const [whole, fraction = ""] = normalized.split(".");
+  const cents = (Number(whole) * 100) + Number(fraction.padEnd(2, "0"));
+  if (!Number.isSafeInteger(cents) || cents <= 0) throw new Error("Der Zahlbetrag muss größer als 0,00 EUR sein.");
+  return cents;
+}
 
 function bind(element, id) {
   for (const [name, value] of Object.entries(m80EditorAttributes(id))) element.setAttribute(name, value);
@@ -30,7 +75,7 @@ export function selectContentOnFocus(element) { element.addEventListener("focus"
 export function draftPreviewIdentifier(draftId) { const compact = String(draftId || "").replace(/[^a-z0-9]/gi, "").toUpperCase(); return `PR-${(compact || "ENTWURF").slice(-6)}`; }
 
 export default class RechnungScreen {
-  constructor({ textLimitSettingsService = null } = {}) { this.invoices = []; this.customers = []; this.projects = []; this.positions = []; this.selectedPositionId = null; this.positionCreateParentId = null; this.positionSequence = 0; this.positionIsTitle = false; this.isPositionMoveMode = false; this.current = null; this.root = null; this.draftSaveChain = Promise.resolve(true); this.textLimitSettingsService = textLimitSettingsService || new TextLimitSettingsService(); this.textLimits = { ...DEFAULT_TEXT_LIMITS }; this._textLimitUnsubscribe = null; }
+  constructor({ textLimitSettingsService = null } = {}) { this.invoices = []; this.customers = []; this.projects = []; this.positions = []; this.selectedPositionId = null; this.positionCreateParentId = null; this.positionSequence = 0; this.positionIsTitle = false; this.isPositionMoveMode = false; this.managementFilter = "ALL"; this.paymentInvoice = null; this.paymentEditingId = null; this.current = null; this.root = null; this.draftSaveChain = Promise.resolve(true); this.textLimitSettingsService = textLimitSettingsService || new TextLimitSettingsService(); this.textLimits = { ...DEFAULT_TEXT_LIMITS }; this._textLimitUnsubscribe = null; }
 
   render() {
     ensureRechnungenDesignStyles();
@@ -51,6 +96,14 @@ export default class RechnungScreen {
     const heading = node("div", "invoice-page-heading");
     heading.append(bind(node("h1", "invoice-page-title", "Rechnungen"), "rechnung.overview.title"), bind(node("p", "invoice-page-subtitle", "Rechnungsgrunddaten und Belegköpfe"), "rechnung.overview.subtitle"));
     header.append(heading, button("Freie Rechnung", "rechnung.overview.new", () => void this._newDraft(), "primary"));
+    this.filterBar = node("nav", "rechnung-management-filters"); this.filterBar.setAttribute("aria-label", "Rechnungsansicht");
+    this.filterButtons = new Map();
+    MANAGEMENT_FILTERS.forEach(({ id, label }) => {
+      const filterButton = plainButton(label, () => this._setManagementFilter(id), id === "ALL" ? "primary" : "quiet");
+      filterButton.dataset.filter = id; filterButton.setAttribute("aria-pressed", String(id === "ALL"));
+      this.filterButtons.set(id, filterButton); this.filterBar.append(filterButton);
+    });
+    this.paymentPanel = this._paymentManagementPanel();
     this.devSequencePanel = node("section", "invoice-form-section rechnung-dev-sequence"); this.devSequencePanel.hidden = true;
     const devHead = node("div", "invoice-form-section__head");
     devHead.append(node("h2", "invoice-form-section__title", "DEV · Rechnungsnummernkreis"), node("span", "invoice-design-chip", "Nur Entwicklung"));
@@ -64,7 +117,36 @@ export default class RechnungScreen {
     this.devSequenceKey.addEventListener("change", () => void this._refreshDevNumberSequence());
     this.devSequenceResetButton.addEventListener("click", () => void this._resetDevNumberSequence());
     this.list = bind(node("div", "rechnung-live-list"), "rechnung.overview.list");
-    overview.append(header, this.devSequencePanel, this.list); this.overview = overview; return overview;
+    overview.append(header, this.filterBar, this.paymentPanel, this.list, this.devSequencePanel); this.overview = overview; return overview;
+  }
+
+  _paymentManagementPanel() {
+    const panel = node("section", "invoice-form-section rechnung-payment-management"); panel.hidden = true;
+    const header = node("header", "rechnung-payment-management__header");
+    const heading = node("div", "rechnung-payment-management__heading");
+    this.paymentPanelTitle = node("h2", "invoice-form-section__title", "Zahlungen");
+    this.paymentPanelSubtitle = node("p", "invoice-page-subtitle");
+    heading.append(this.paymentPanelTitle, this.paymentPanelSubtitle);
+    header.append(heading, plainButton("Schließen", () => this._closePaymentManagement(), "quiet"));
+    this.paymentSummaryView = node("div", "rechnung-payment-management__summary");
+    this.paymentGrossValue = node("strong", "invoice-amount", money(0));
+    this.paymentPaidValue = node("strong", "invoice-amount", money(0));
+    this.paymentOpenValue = node("strong", "invoice-amount", money(0));
+    [["Brutto", this.paymentGrossValue], ["Bezahlt", this.paymentPaidValue], ["Offen", this.paymentOpenValue]].forEach(([label, value]) => {
+      const item = node("div", "rechnung-payment-management__summary-item"); item.append(node("span", "invoice-cell-muted", label), value); this.paymentSummaryView.append(item);
+    });
+    const form = node("div", "rechnung-payment-management__form");
+    this.paymentDate = node("input", "invoice-control"); this.paymentDate.type = "date";
+    this.paymentAmount = node("input", "invoice-control"); this.paymentAmount.type = "text"; this.paymentAmount.inputMode = "decimal"; this.paymentAmount.placeholder = "0,00";
+    this.paymentNote = node("input", "invoice-control"); this.paymentNote.type = "text"; this.paymentNote.maxLength = 500; this.paymentNote.placeholder = "optional";
+    this.paymentSaveButton = plainButton("Zahlung speichern", () => void this._savePayment(), "primary");
+    this.paymentCancelButton = plainButton("Eingabe leeren", () => this._resetPaymentForm(), "quiet");
+    const actions = node("div", "rechnung-payment-management__form-actions"); actions.append(this.paymentCancelButton, this.paymentSaveButton);
+    form.append(field("Zahlungsdatum", this.paymentDate), field("Zahlbetrag in EUR", this.paymentAmount), field("Notiz / Verwendungszweck", this.paymentNote, "invoice-field--wide"), actions);
+    this.paymentMessage = node("div", "rechnung-live-message"); this.paymentMessage.setAttribute("role", "status");
+    this.paymentList = node("div", "rechnung-payment-management__list");
+    panel.append(header, this.paymentSummaryView, form, this.paymentMessage, this.paymentList);
+    return panel;
   }
 
   _editor() {
@@ -282,7 +364,8 @@ export default class RechnungScreen {
   }
 
   async _load() {
-    const [invoices, customers, projects, profile] = await Promise.all([api().rechnungList?.(), api().rechnungListCustomers?.(), api().rechnungListProjects?.(), api().userProfileGet?.()]);
+    const listManagement = api().rechnungListManagement || api().rechnungList;
+    const [invoices, customers, projects, profile] = await Promise.all([listManagement?.(), api().rechnungListCustomers?.(), api().rechnungListProjects?.(), api().userProfileGet?.()]);
     this.invoices = invoices?.ok ? invoices.list || [] : [];
     this.customers = customers?.ok ? customers.list || [] : [];
     this.projects = projects?.ok ? projects.list || [] : [];
@@ -352,17 +435,21 @@ export default class RechnungScreen {
 
   _renderList() {
     this.list.replaceChildren();
+    this._syncManagementFilterButtons();
+    const visibleInvoices = this.invoices.filter((invoice) => invoiceMatchesManagementFilter(invoice, this.managementFilter));
+    if (this.invoices.length && !visibleInvoices.length) { this.list.append(node("div", "invoice-empty", "Keine Rechnungen in dieser Ansicht.")); return; }
     if (!this.invoices.length) { this.list.append(node("div", "invoice-empty", "Noch keine Rechnungen oder Entwürfe vorhanden.")); return; }
     const draftCounts = new Map();
     this.invoices.filter((invoice) => invoice.status === "DRAFT").forEach((invoice) => {
       const key = this._draftIdentity(invoice);
       draftCounts.set(key, (draftCounts.get(key) || 0) + 1);
     });
-    for (const invoice of this.invoices) {
+    for (const invoice of visibleInvoices) {
       const card = node("article", "rechnung-live-card");
       const badge = node("span", `invoice-status invoice-status--${invoice.status === "BOOKED" ? "paid" : "draft"}`, invoice.status === "BOOKED" ? "Erstellt / Gebucht" : "Entwurf");
+      const documentStatus = this._documentStatus(invoice); badge.className = `invoice-status ${documentStatus.className}`; badge.textContent = documentStatus.label;
       const body = node("div", "rechnung-live-card__body");
-      if (invoice.status === "BOOKED") {
+      if (invoice.status !== "DRAFT") {
         body.append(
           node("strong", "rechnung-live-card__title", invoice.invoice_number || "Rechnungs-Nr.: wird bei Buchung vergeben"),
           node("span", "invoice-cell-muted", [invoice.service_reference || "Ohne Leistungsbezug", invoice.invoice_date, invoice.due_date].filter(Boolean).join(" · "))
@@ -379,14 +466,160 @@ export default class RechnungScreen {
         if (draftCounts.get(this._draftIdentity(invoice)) > 1 && firstPosition) body.append(node("span", "invoice-cell-muted", `1. Pos.: ${firstPosition}`));
       }
       const open = node("button", "invoice-button invoice-button--quiet", "Öffnen"); open.type = "button"; open.onclick = () => this._open(invoice);
-      card.append(badge, body, open); this.list.append(card);
+      card.append(badge, body, open, this._managementDetails(invoice)); this.list.append(card);
     }
   }
 
-  _draftCustomerLabel(invoice) {
+  _setManagementFilter(filterId) {
+    if (!MANAGEMENT_FILTERS.some((entry) => entry.id === filterId)) return false;
+    this.managementFilter = filterId; this._renderList(); return true;
+  }
+
+  _syncManagementFilterButtons() {
+    this.filterButtons?.forEach((filterButton, filterId) => {
+      const active = filterId === this.managementFilter;
+      const definition = MANAGEMENT_FILTERS.find((entry) => entry.id === filterId);
+      const count = this.invoices.filter((invoice) => invoiceMatchesManagementFilter(invoice, filterId)).length;
+      filterButton.textContent = `${definition?.label || filterId} (${count})`;
+      filterButton.setAttribute("aria-pressed", String(active));
+      filterButton.className = `invoice-button invoice-button--${active ? "primary" : "quiet"}`;
+    });
+  }
+
+  _managementDetails(invoice) {
+    const details = node("div", "rechnung-management-card__details");
+    const values = [
+      ["Kennung / Nummer", invoice.status === "DRAFT" ? draftPreviewIdentifier(invoice.id) : invoice.invoice_number || "–", "rechnung-management-card__identity"],
+      ["Datum", formatDate(invoice.invoice_date) || "–"],
+      ["Kunde", this._invoiceCustomerLabel(invoice) || "Kein Kunde"],
+      ["Art", formatDocumentType(invoice)],
+      ["Brutto", money(invoice.gross_cents)],
+      ["Bezahlt", money(invoice.paid_cents)],
+      ["Offen", money(invoice.open_cents)],
+      ["Fälligkeit", formatDate(invoice.due_date) || "–"],
+    ];
+    values.forEach(([label, value, className = ""]) => {
+      const item = node("div", `rechnung-management-card__item${className ? ` ${className}` : ""}`);
+      item.append(node("span", "rechnung-management-card__label", label), node("strong", "rechnung-management-card__value", value)); details.append(item);
+    });
+    const documentStatus = this._documentStatus(invoice); const paymentStatus = this._paymentStatus(invoice);
+    const statuses = node("div", "rechnung-management-card__statuses");
+    statuses.append(node("span", `invoice-status ${documentStatus.className}`, documentStatus.label), node("span", `invoice-status ${paymentStatus.className}`, paymentStatus.label));
+    details.append(statuses);
+    if (invoice.status === "BOOKED") details.append(plainButton("Zahlungen", () => void this._openPaymentManagement(invoice), "secondary"));
+    return details;
+  }
+
+  _documentStatus(invoice) {
+    if (invoice.status === "DRAFT") return { label: "Entwurf", className: "invoice-status--draft" };
+    if (invoice.status === "CANCELLED") return { label: "Storniert", className: "invoice-status--cancelled" };
+    return { label: "Gebucht", className: "invoice-status--open" };
+  }
+
+  _paymentStatus(invoice) {
+    return ({
+      OPEN: { label: "Offen", className: "invoice-status--open" },
+      PARTIALLY_PAID: { label: "Teilbezahlt", className: "invoice-status--partial" },
+      OVERDUE: { label: "Überfällig", className: "invoice-status--due" },
+      PAID: { label: "Bezahlt", className: "invoice-status--paid" },
+    })[invoice.payment_status] || { label: invoice.status === "DRAFT" ? "Noch nicht gebucht" : "Kein Zahlungsstatus", className: "invoice-status--draft" };
+  }
+
+  _invoiceCustomerLabel(invoice) {
     const snapshot = invoice.customer_snapshot || {};
     const customer = this.customers.find((entry) => customerKey(entry) === `${invoice.customer_ref_kind || ""}:${invoice.customer_firm_id || ""}`);
     return text(snapshot.companyName || snapshot.name || customer?.label || customer?.name || invoice.legacy_customer?.name);
+  }
+
+  async _openPaymentManagement(invoice) {
+    if (invoice?.status !== "BOOKED") return false;
+    this.paymentInvoice = invoice; this.paymentPanel.hidden = false;
+    this.paymentPanelTitle.textContent = `Zahlungen · ${invoice.invoice_number || "Gebuchte Rechnung"}`;
+    this.paymentPanelSubtitle.textContent = this._invoiceCustomerLabel(invoice) || "Ohne Kundenbezeichnung";
+    this._syncPaymentSummary(); this._resetPaymentForm();
+    return this._reloadPayments();
+  }
+
+  _closePaymentManagement() {
+    if (this.paymentPanel) this.paymentPanel.hidden = true;
+    this.paymentInvoice = null; this.paymentEditingId = null;
+  }
+
+  _syncPaymentSummary() {
+    if (!this.paymentInvoice) return;
+    this.paymentGrossValue.textContent = money(this.paymentInvoice.gross_cents);
+    this.paymentPaidValue.textContent = money(this.paymentInvoice.paid_cents);
+    this.paymentOpenValue.textContent = money(this.paymentInvoice.open_cents);
+  }
+
+  _resetPaymentForm() {
+    this.paymentEditingId = null;
+    if (this.paymentDate) this.paymentDate.value = new Date().toISOString().slice(0, 10);
+    if (this.paymentAmount) this.paymentAmount.value = this.paymentInvoice?.open_cents > 0 ? price(this.paymentInvoice.open_cents).replace(".", ",") : "";
+    if (this.paymentNote) this.paymentNote.value = "";
+    if (this.paymentSaveButton) this.paymentSaveButton.textContent = "Zahlung speichern";
+    if (this.paymentCancelButton) this.paymentCancelButton.textContent = "Eingabe leeren";
+    if (this.paymentMessage) { this.paymentMessage.textContent = ""; this.paymentMessage.dataset.tone = ""; }
+  }
+
+  _editPayment(payment) {
+    this.paymentEditingId = payment.id;
+    this.paymentDate.value = payment.payment_date || "";
+    this.paymentAmount.value = price(payment.amount_cents).replace(".", ",");
+    this.paymentNote.value = payment.note || "";
+    this.paymentSaveButton.textContent = "Korrektur speichern";
+    this.paymentCancelButton.textContent = "Korrektur abbrechen";
+    this.paymentMessage.textContent = "Bestehende Zahlung wird korrigiert.";
+    this.paymentMessage.dataset.tone = "";
+    this.paymentAmount.focus?.();
+  }
+
+  async _reloadPayments() {
+    if (!this.paymentInvoice) return false;
+    const result = await api().rechnungListPayments?.(this.paymentInvoice.id);
+    if (!result?.ok) { this._paymentError(result?.error || "Zahlungen konnten nicht geladen werden."); return false; }
+    this._renderPaymentList(result.list || []); return true;
+  }
+
+  _renderPaymentList(payments) {
+    this.paymentList.replaceChildren();
+    if (!payments.length) { this.paymentList.append(node("div", "invoice-empty", "Noch keine Zahlungen erfasst.")); return; }
+    payments.forEach((payment) => {
+      const row = node("div", "rechnung-payment-management__row");
+      const description = node("div", "rechnung-payment-management__row-description");
+      description.append(node("strong", "invoice-amount", money(payment.amount_cents)), node("span", "invoice-cell-muted", [formatDate(payment.payment_date), payment.note].filter(Boolean).join(" · ")));
+      row.append(description, plainButton("Korrigieren", () => this._editPayment(payment), "quiet")); this.paymentList.append(row);
+    });
+  }
+
+  async _savePayment() {
+    if (this.paymentInvoice?.status !== "BOOKED") { this._paymentError("Zahlungen können nur für gebuchte Rechnungen erfasst werden."); return false; }
+    let amountCents;
+    try { amountCents = parseEuroToCents(this.paymentAmount.value); }
+    catch (error) { this._paymentError(error?.message); return false; }
+    const payment = { payment_date: this.paymentDate.value, amount_cents: amountCents, note: this.paymentNote.value };
+    this.paymentSaveButton.disabled = true;
+    try {
+      const result = this.paymentEditingId
+        ? await api().rechnungCorrectPayment?.(this.paymentInvoice.id, this.paymentEditingId, payment)
+        : await api().rechnungRecordPayment?.(this.paymentInvoice.id, payment);
+      if (!result?.ok) { this._paymentError(result?.error || "Zahlung konnte nicht gespeichert werden."); return false; }
+      const invoiceId = this.paymentInvoice.id;
+      await this._refreshList();
+      this.paymentInvoice = this.invoices.find((invoice) => invoice.id === invoiceId) || this.paymentInvoice;
+      this._syncPaymentSummary(); this._resetPaymentForm(); await this._reloadPayments();
+      this.paymentMessage.textContent = "Zahlung wurde gespeichert; Summen und Status sind aktualisiert.";
+      return true;
+    } finally { this.paymentSaveButton.disabled = false; }
+  }
+
+  _paymentError(message) {
+    this.paymentMessage.textContent = message || "Zahlungsaktion fehlgeschlagen.";
+    this.paymentMessage.dataset.tone = "error";
+  }
+
+  _draftCustomerLabel(invoice) {
+    return this._invoiceCustomerLabel(invoice);
   }
 
   _draftContext(invoice) {
@@ -405,10 +638,11 @@ export default class RechnungScreen {
     const defaults = await api().rechnungDefaults?.();
     const result = await api().rechnungCreateDraft?.({ ...(defaults?.data || {}), service_date: (defaults?.data || {}).invoice_date });
     if (!result?.ok) return this._overviewMessage(result?.error);
-    this.invoices.unshift(result.data); this._renderList(); this._open(result.data);
+    await this._refreshList(); this._open(this.invoices.find((invoice) => invoice.id === result.data.id) || result.data);
   }
 
   _open(invoice) {
+    this._closePaymentManagement();
     this.current = invoice; this.overview.hidden = true; this.editor.hidden = false; this.message.textContent = "";
     this.source.value = invoice.source_type || "FREE"; this.documentType.value = invoice.document_type || "INVOICE"; this.installmentNumber.value = invoice.installment_number || "";
     this.invoiceNumber.value = invoice.invoice_number || "wird bei Buchung vergeben"; this.invoiceDate.value = invoice.invoice_date || "";
@@ -421,7 +655,7 @@ export default class RechnungScreen {
     this.customer.value = selectedCustomerKey === ":" ? "" : selectedCustomerKey;
     this.project.replaceChildren(option("", "Kein Projekt")); this.projects.forEach((entry) => this.project.append(option(entry.id, entry.name))); this.project.value = invoice.project_id || "";
     this._isServicePeriodEditing = false; this.servicePeriodContainer?.classList.toggle("is-editing", false);
-    if (this.headContent) { this.headContent.hidden = false; this._syncHeadToggle(); } this._syncDerived(); this._setBooked(invoice.status === "BOOKED");
+    if (this.headContent) { this.headContent.hidden = false; this._syncHeadToggle(); } this._syncDerived(); this._setBooked(invoice.status !== "DRAFT");
   }
 
   _payload() {
@@ -540,7 +774,8 @@ export default class RechnungScreen {
 
   _setBooked(booked) {
     this._updatePaymentText();
-    this.status.textContent = booked ? "Erstellt / Gebucht" : "Entwurf"; this.status.className = `invoice-status invoice-status--${booked ? "paid" : "draft"}`;
+    const cancelled = this.current?.status === "CANCELLED";
+    this.status.textContent = cancelled ? "Storniert" : booked ? "Erstellt / Gebucht" : "Entwurf"; this.status.className = `invoice-status invoice-status--${cancelled ? "cancelled" : booked ? "paid" : "draft"}`;
     [this.source, this.documentType, this.installmentNumber, this.customer, this.project, this.invoiceDate, this.serviceType, this.serviceDate, this.serviceMonth, this.serviceStart, this.serviceEnd, this.reference, this.constructionProject, this.introText, this.paymentTerm, this.positionType, this.positionShort, this.positionLong, this.positionQuantity, this.positionUnit, this.positionPrice, this.positionPriceGross, this.positionNep, this.positionDeleteButton, this.positionCreateTitleButton, this.positionCreateButton, this.positionMoveButton, this.positionMoveRootButton].filter(Boolean).forEach((element) => { element.disabled = booked; });
     if (this.customerPickerButton) this.customerPickerButton.disabled = booked;
     if (this.servicePeriodToggle) this.servicePeriodToggle.disabled = booked;
@@ -552,7 +787,7 @@ export default class RechnungScreen {
   async _delete() { if (!globalThis.window?.confirm?.("Rechnungsentwurf wirklich verwerfen?")) return; const result = await api().rechnungDeleteDraft?.(this.current.id); if (!result?.ok) return this._error(result?.error); await this._refreshList(); this._close(); }
   async _book() { if ((await this.draftSaveChain) === false) return; if (!globalThis.window?.confirm?.("Rechnung jetzt verbindlich buchen? Danach ist sie nicht mehr bearbeitbar.")) return; const result = await api().rechnungBookDraft?.(this.current.id, this._payload()); if (!result?.ok) return this._error(result?.error); this.current = result.data; this._open(result.data); this.message.textContent = `Rechnung ${result.data.invoice_number} wurde gebucht.`; await this._refreshList(); }
   async _showPreview() { if ((await this.draftSaveChain) === false) return; const result = await api().rechnungPreviewDraft?.(this.current.id, this.current.status === "DRAFT" ? this._payload() : null); if (!result?.ok) return this._error(result?.error); const invoice = result.data; const draftLines = invoice.status === "DRAFT" ? [`Kennung: ${draftPreviewIdentifier(invoice.id)}`, "Diese Kennung ist keine Rechnungsnummer."] : []; this.previewBody.textContent = [`PROBERECHNUNG${invoice.status === "DRAFT" ? " · ENTWURF" : ""}`, ...draftLines, formatDocumentType(invoice), invoice.invoice_number ? `Rechnungs-Nr.: ${invoice.invoice_number}` : "Rechnungs-Nr.: wird erst bei Buchung vergeben", invoice.service_reference || "Ohne Leistungsbezug", `Rechnungsdatum: ${invoice.invoice_date}`, `Fällig am: ${invoice.due_date}`].join("\n"); this.preview.hidden = false; }
-  async _refreshList() { const result = await api().rechnungList?.(); if (result?.ok) { this.invoices = result.list || []; this._renderList(); } }
+  async _refreshList() { const listManagement = api().rechnungListManagement || api().rechnungList; const result = await listManagement?.(); if (result?.ok) { this.invoices = result.list || []; this._renderList(); } }
   _close() { this.editor.hidden = true; this.preview.hidden = true; this.overview.hidden = false; this.current = null; }
   destroy() { this._textLimitUnsubscribe?.(); this._textLimitUnsubscribe = null; }
   _error(message) { this.message.textContent = message || "Aktion fehlgeschlagen."; this.message.dataset.tone = "error"; }

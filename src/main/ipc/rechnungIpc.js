@@ -25,6 +25,7 @@ function registerRechnungIpc({ ipcMain = electronIpcMain, app = electronApp, ser
   });
   handle("rechnung:defaults", () => service.defaults());
   handle("rechnung:list", () => service.list(), "list");
+  handle("rechnung:listManagement", () => service.listManagement(), "list");
   handle("rechnung:get", (data) => service.get(data.id));
   handle("rechnung:createDraft", (data) => service.createDraft(data));
   handle("rechnung:updateDraft", (data) => service.updateDraft(data.id, data.header));

@@ -30,6 +30,20 @@ function normalizePaymentNote(value) {
   return note || null;
 }
 
+function buildPaymentSummary(invoice, paidCents, calculateTotals, today) {
+  const { gross_cents } = calculateTotals(invoice.positions || []);
+  const paid_cents = Number(paidCents || 0);
+  const open_cents = Math.max(gross_cents - paid_cents, 0);
+  let payment_status = null;
+  if (invoice.status === "BOOKED") {
+    if (open_cents === 0) payment_status = "PAID";
+    else if (invoice.due_date && invoice.due_date < today) payment_status = "OVERDUE";
+    else if (paid_cents > 0) payment_status = "PARTIALLY_PAID";
+    else payment_status = "OPEN";
+  }
+  return { invoice_id: invoice.id, gross_cents, paid_cents, open_cents, payment_status };
+}
+
 class InvoiceService {
   constructor({ repository = new InvoiceRepository(), settingsGetMany = appSettingsGetMany, today = () => new Date().toISOString().slice(0, 10) } = {}) {
     this.repository = repository;
@@ -52,6 +66,19 @@ class InvoiceService {
 
   list() { return this.repository.list(); }
   get(id) { return this.repository.get(id); }
+
+  async listManagement() {
+    const invoices = this.repository.list();
+    const positions = await loadPositions();
+    const paidByInvoice = typeof this.repository.sumPaymentsByInvoice === "function"
+      ? this.repository.sumPaymentsByInvoice()
+      : new Map(invoices.map((invoice) => [invoice.id, this.repository.sumPayments(invoice.id)]));
+    const today = this.today();
+    return invoices.map((invoice) => ({
+      ...invoice,
+      ...buildPaymentSummary(invoice, paidByInvoice.get(invoice.id) || 0, positions.calculateInvoiceTotalsCents, today),
+    }));
+  }
 
   listPayments(invoiceId) {
     const invoice = this.repository.get(invoiceId);
@@ -83,17 +110,7 @@ class InvoiceService {
     const invoice = this.repository.get(invoiceId);
     if (!invoice) throw new Error("Rechnung wurde nicht gefunden.");
     const positions = await loadPositions();
-    const { gross_cents } = positions.calculateInvoiceTotalsCents(invoice.positions || []);
-    const paid_cents = this.repository.sumPayments(invoice.id);
-    const open_cents = Math.max(gross_cents - paid_cents, 0);
-    let payment_status = null;
-    if (invoice.status === "BOOKED") {
-      if (open_cents === 0) payment_status = "PAID";
-      else if (invoice.due_date && invoice.due_date < this.today()) payment_status = "OVERDUE";
-      else if (paid_cents > 0) payment_status = "PARTIALLY_PAID";
-      else payment_status = "OPEN";
-    }
-    return { invoice_id: invoice.id, gross_cents, paid_cents, open_cents, payment_status };
+    return buildPaymentSummary(invoice, this.repository.sumPayments(invoice.id), positions.calculateInvoiceTotalsCents, this.today());
   }
 
   getDevNumberSequence(sequenceKey) { return this.repository.getNumberSequence(sequenceKey); }

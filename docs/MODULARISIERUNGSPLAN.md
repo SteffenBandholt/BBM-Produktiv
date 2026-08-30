@@ -501,3 +501,25 @@ Dabei gilt:
 - Der bestehende Settings-Change-Kanal aktualisiert geoeffnete Editboxen. Ueberlanger gespeicherter Bestand bleibt vollstaendig erhalten.
 - Der Nachweis in Container 6 umfasst gezielte Modul-/Diktat-/Restzeichen-Tests, den UI-Editor-Vertragscheck und einen isolierten praktischen Electron-Lauf beider Module.
 - Das Paket aendert keine aktive Modularisierungsachse und zieht keinen weiteren Folgeschritt vor.
+
+### Rechnung R3.2 Rechnungsverwaltung für den Alltag (umgesetzt, Commit offen)
+
+- Die bestehende Rechnungskartenliste zeigt Entwurfskennung bzw. offizielle
+  Rechnungsnummer, Datum, Kunde, Rechnungsart, Brutto, bezahlt, offen,
+  Fälligkeit sowie getrennten Beleg- und Zahlungsstatus.
+- Die Ansichten Alle, Entwürfe, Offen, Teilbezahlt, Überfällig, Bezahlt und
+  vorhandene Stornierungen verwenden den bestehenden Belegstatus und die aus
+  R3.1 abgeleiteten Zahlungsstände ohne neue Statuspersistenz.
+- `BOOKED`-Zahlungen lassen sich mit Datum, Eurobetrag und optionaler Notiz
+  erfassen und korrigieren; intern bleiben positive Integer-Centbeträge
+  verbindlich. Eine Lösch- oder Buchungshistorie wurde nicht ergänzt.
+- `DRAFT` bleibt im vorhandenen Screen bearbeitbar. `BOOKED` und `CANCELLED`
+  bleiben inhaltlich schreibgeschützt; der Zahlungsweg ist nur für `BOOKED`
+  erreichbar.
+- Die Verwaltungsdaten werden in Service und Repository als abgeleitete
+  Listenansicht bereitgestellt. Neue Tabellen, Zahlungsstatusspalten,
+  PDF-Funktionen und universelle Dokumentarchitektur wurden nicht eingeführt.
+- Der bestehende Rechnung-UI-Editor-Vertrag bleibt bei exakt 81 Referenzen;
+  Filter, Zahlungen und DEV-Reset sind keine Editorziele.
+- Guardrails: 20 gezielte R3.2-Szenarien, bestehende R3.1-Rechnungstests,
+  UI-Editor-Vertragsprüfungen und isolierter praktischer Electron-Ablauf.
