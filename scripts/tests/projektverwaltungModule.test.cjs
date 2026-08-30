@@ -926,7 +926,7 @@ async function runProjektverwaltungModuleTests(run) {
     }
   });
 
-  await run("Projektverwaltung: Modulkontext zeigt Projekte als kompakte Zeilenliste", async () => {
+  await run("Projektverwaltung: Modulkontext zeigt Projekte als kompakte Zeilenliste ohne Badges", async () => {
     const previousDocument = global.document;
     const fakeDocument = createFakeDocumentWithBubbling();
     global.document = fakeDocument;
@@ -934,7 +934,10 @@ async function runProjektverwaltungModuleTests(run) {
     try {
       for (const moduleContext of ["protokoll", "restarbeiten"]) {
         const screen = new ProjectsScreen({ moduleContext, router: {} });
-        screen.projects = [{ id: moduleContext, name: "Projekt", module_ids: [moduleContext, "sigeko"] }];
+        screen.projects = [
+          { id: moduleContext, name: "Projekt mit Schlagwort", keyword: "Bauabschnitt Nord", module_ids: [moduleContext] },
+          { id: `${moduleContext}-date`, name: "Projekt mit Anlagedatum", created_at: "2026-08-30T12:00:00.000Z", module_ids: [moduleContext] },
+        ];
         const calls = [];
         screen.openProjectById = async (projectId) => calls.push({ type: "open", projectId });
         screen._openProjectSelectionModal = () => calls.push({ type: "create" });
@@ -942,22 +945,27 @@ async function runProjektverwaltungModuleTests(run) {
         const root = screen.render();
         const list = findNode(root, (node) => node?.dataset?.projectContextList === "true");
         const createRow = findNode(root, (node) => node?.dataset?.projectContextCreate === "true");
-        const projectRow = findNode(root, (node) => node?.dataset?.projectContextProject === "true");
+        const projectRows = findNodes(root, (node) => node?.dataset?.projectContextProject === "true");
         const cards = findNodes(root, (node) => node?.dataset?.projectCard === "true");
         const badges = findNodes(root, (node) => !!node?.dataset?.projectModuleBadge);
+        const details = findNodes(root, (node) => node?.dataset?.projectContextDetail === "true");
+        const editActions = findNodes(root, (node) => node?.dataset?.projectAction === "edit");
         assert.equal(list.style.display, "flex");
         assert.equal(list.style.flexDirection, "column");
         assert.equal(list.style.gap, "0");
         assert.equal(list.children[0], createRow);
         assert.equal(createRow.style.borderRadius, "0");
         assert.equal(createRow.style.boxShadow, "none");
-        assert.equal(projectRow.style.borderRadius, "0");
-        assert.equal(projectRow.style.boxShadow, "none");
+        assert.equal(projectRows.length, 2);
+        assert.equal(projectRows[0].style.borderRadius, "0");
+        assert.equal(projectRows[0].style.boxShadow, "none");
         assert.equal(cards.length, 0);
-        assert.deepEqual(badges.map((badge) => badge.dataset.projectModuleBadge), [moduleContext, "sigeko"]);
+        assert.equal(badges.length, 0);
+        assert.equal(editActions.length, 0);
+        assert.deepEqual(details.map((node) => node.textContent), ["Bauabschnitt Nord", "30.08.2026"]);
 
         await createRow.click();
-        await projectRow.click();
+        await projectRows[0].click();
         assert.deepEqual(calls, [{ type: "create" }, { type: "open", projectId: moduleContext }]);
       }
     } finally {

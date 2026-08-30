@@ -1164,7 +1164,7 @@ export default class ProjectsScreen {
     list.style.padding = "0";
     list.style.background = "transparent";
 
-    const createRow = ({ label, dataKey, projectId = "", badges = null, onActivate, action = null }) => {
+    const createRow = ({ label, detail = "", dataKey, projectId = "", onActivate }) => {
       const row = document.createElement("div");
       row.dataset.projectContextRow = "true";
       row.dataset[dataKey] = "true";
@@ -1197,15 +1197,17 @@ export default class ProjectsScreen {
       text.style.whiteSpace = "nowrap";
       row.appendChild(text);
 
-      const right = document.createElement("div");
-      right.style.display = "flex";
-      right.style.alignItems = "center";
-      right.style.gap = "10px";
-      right.style.marginLeft = "auto";
-      right.style.flex = "0 0 auto";
-      if (badges) right.appendChild(badges);
-      if (action) right.appendChild(action);
-      if (right.children.length) row.appendChild(right);
+      if (detail) {
+        const right = document.createElement("div");
+        right.dataset.projectContextDetail = "true";
+        right.textContent = detail;
+        right.style.marginLeft = "auto";
+        right.style.flex = "0 0 auto";
+        right.style.color = "var(--text-muted)";
+        right.style.fontSize = "12px";
+        right.style.whiteSpace = "nowrap";
+        row.appendChild(right);
+      }
 
       const activate = async () => {
         if (this.loading || this._startingProject || row.dataset.busy === "true") return;
@@ -1222,7 +1224,7 @@ export default class ProjectsScreen {
     };
 
     list.appendChild(createRow({
-      label: "Neues Projekt",
+      label: "Projekt neu / hinzufÃ¼gen",
       dataKey: "projectContextCreate",
       onActivate: () => this._openProjectSelectionModal(),
     }));
@@ -1233,36 +1235,15 @@ export default class ProjectsScreen {
       const label = number
         ? `${number} - ${this._labelForTile(project)}`
         : this._labelForTile(project);
-      const edit = document.createElement("button");
-      edit.type = "button";
-      edit.textContent = "Edit";
-      edit.dataset.projectAction = "edit";
-      edit.style.padding = "0";
-      edit.style.margin = "0";
-      edit.style.border = "0";
-      edit.style.borderRadius = "0";
-      edit.style.boxShadow = "none";
-      edit.style.background = "transparent";
-      edit.style.color = "#0b61ff";
-      edit.style.fontSize = "12px";
-      edit.style.fontWeight = "650";
-      edit.style.cursor = "pointer";
-      edit.addEventListener("click", async (event) => {
-        event?.preventDefault?.();
-        event?.stopPropagation?.();
-        event?.stopImmediatePropagation?.();
-        if (this.loading || this._startingProject || !projectId) return;
-        this.router.currentProjectId = projectId;
-        this.router.currentMeetingId = null;
-        await this._openProjectFormModal({ projectId });
-      });
+      const keyword = String(project?.keyword ?? project?.project_keyword ?? project?.schlagwort ?? "").trim();
+      const createdAt = String(project?.created_at ?? project?.createdAt ?? "").trim();
+      const detail = keyword || this._isoToDDMMYYYY(createdAt);
 
       list.appendChild(createRow({
         label,
+        detail,
         dataKey: "projectContextProject",
         projectId,
-        badges: this._createModuleBadges(project),
-        action: edit,
         onActivate: () => this.openProjectById(projectId),
       }));
     }
