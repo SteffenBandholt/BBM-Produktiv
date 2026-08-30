@@ -65,6 +65,37 @@ F. PrÃ¼f-/Testangabe:
 - Welche vorhandene PrÃ¼fung oder welcher Guardrail-Test sichert die Regel ab?
 - Falls noch keine technische PrÃ¼fung existiert: ausdrÃ¼cklich melden, nicht behaupten.
 
+### Eng begrenzte Ausnahme fÃ¼r reine Mikro-UI-Fixes
+Die vollstÃ¤ndige UI-/PDF-Entwurfsentscheidung ist ausschlieÃŸlich dann nicht erforderlich, wenn nur ein bereits vorhandenes UI-Element:
+
+- verschoben,
+- verkleinert oder vergrÃ¶ÃŸert,
+- optisch angepasst,
+- umbeschriftet,
+- ein- oder ausgeblendet
+- oder mit einer bereits vorhandenen Fachaktion an anderer Stelle dargestellt
+
+wird und gleichzeitig ausnahmslos alle folgenden Bedingungen erfÃ¼llt sind:
+
+- keine neue Fachaktion,
+- keine neue Datenbindung,
+- keine neue IPC- oder DB-Logik,
+- keine neue Editor-Registrierung,
+- keine Ã„nderung an Registry oder Parent-Struktur,
+- keine TabellenstrukturÃ¤nderung,
+- keine PDF- oder DruckÃ¤nderung,
+- keine ArchitekturÃ¤nderung.
+
+Vor der Umsetzung eines solchen Mikro-UI-Fixes genÃ¼gen:
+
+- Ziel,
+- erlaubter Dateiscope,
+- kurze Abnahme.
+
+Die Ausnahme gilt nicht fÃ¼r neue UI-Bereiche, Masken oder Formulare, neue Fachaktionen, neue Datenbindungen, neue editorfÃ¤hige Elemente, Registry-, Parent- oder VertragsÃ¤nderungen, Tabellen- oder Layoutstruktur sowie PDF oder Druck. DafÃ¼r bleibt die vollstÃ¤ndige UI-/PDF-Entwurfsentscheidung unverÃ¤ndert Pflicht.
+
+Diese Ausnahme ist abschlieÃŸend und gilt nur fÃ¼r die Pflicht zur vollstÃ¤ndigen UI-/PDF-Entwurfsentscheidung sowie die unmittelbar darauf bezogenen Stop-Regeln in dieser Datei. Alle Ã¼brigen Schutz-, Scope-, Editor-, PrÃ¼f- und Stop-Regeln bleiben unverÃ¤ndert verbindlich. Sobald eine der Bedingungen nicht eindeutig erfÃ¼llt ist, gilt die Ausnahme nicht; dann ist vor jeder Umsetzung die vollstÃ¤ndige UI-/PDF-Entwurfsentscheidung erforderlich.
+
 ### Harte Stop-Regel fÃ¼r UI-/PDF-Aufgaben
 Wenn die UI-/PDF-Entwurfsentscheidung fehlt, unvollstÃ¤ndig ist oder gegen `docs/UI_EDITOR_VERTRAG.md` verstÃ¶ÃŸt:
 - `STOPP`
