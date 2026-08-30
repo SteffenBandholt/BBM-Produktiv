@@ -523,3 +523,20 @@ Dabei gilt:
   Filter, Zahlungen und DEV-Reset sind keine Editorziele.
 - Guardrails: 20 gezielte R3.2-Szenarien, bestehende R3.1-Rechnungstests,
   UI-Editor-Vertragsprüfungen und isolierter praktischer Electron-Ablauf.
+
+### Rechnung R3.3 Herkunft von Rechnungspositionen (umgesetzt, Commit offen)
+
+- Normalisierte Rechnungspositionen tragen optional `catalog_item_id`,
+  `source_offer_id`, `source_offer_position_id`, `source_order_id` und
+  `source_order_position_id` als getrimmte String-IDs oder `null`.
+- Der vorhandene JSON-Positionssnapshot erhält diese Felder über Create,
+  Draft-Update, Reload/Get, Vorschau und Buchung. Fachlicher Positionsinhalt
+  bleibt unabhängig von der Herkunft vollständig in der Rechnung gespeichert.
+- Invoice-Level-Herkunft des Gesamtbelegs und Positions-Level-Herkunft bleiben
+  getrennte Konzepte. Es gibt keine Quellenauflösung, ID-Syntax, Fremdschlüssel,
+  neue SQL-Positionstabelle oder universelle Dokumentarchitektur.
+- Summen, MwSt., NEP, Titel-/Text-/Hinweispositionen, Hierarchie, Nummerierung,
+  Zahlungen, DEV-Reset, R3.2-Verwaltung, UI, PDF und UI-Editor bleiben
+  unverändert.
+- Guardrails: 16 direkte R3.3-Szenarien, vollständige Rechnungsgruppe mit R3.1
+  und R3.2 sowie UI-Editor-Vertrag und Rechnung-Mounted-Refs 81/81.

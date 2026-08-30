@@ -131,3 +131,21 @@ bearbeitbar; `BOOKED` und `CANCELLED` bleiben inhaltlich schreibgeschützt. Es
 wurden weder Zahlungstabelle noch Statusspalte, PDF-Funktion oder
 Stornorechnungsworkflow ergänzt. Filter- und Zahlungsaktionen sind keine
 UI-Editor-Ziele; der bestehende Vertrag umfasst weiterhin exakt 81 Referenzen.
+
+## R3.3 Positionsherkunft
+
+Jede normalisierte Rechnungsposition kann optional die Herkunfts-IDs
+`catalog_item_id`, `source_offer_id`, `source_offer_position_id`,
+`source_order_id` und `source_order_position_id` tragen. IDs werden nur
+getrimmt; leere Werte werden als `null` normalisiert. Es gibt weder eine
+vorgegebene ID-Syntax noch Fremdschlüssel oder eine Auflösung gegen noch nicht
+vorhandene Quellenmodule.
+
+Die Herkunft bleibt reine Nachvollziehbarkeit am eigenständigen
+Rechnungspositions-Snapshot. Kurztext, Langtext, Menge, Einheit, Preis, MwSt.,
+NEP, Positionstyp, Hierarchie und Nummerierung werden unabhängig davon in der
+Rechnung gespeichert. Änderungen an späteren Katalog-, Angebots- oder
+Auftragsdaten wirken nicht rückwirkend auf gespeicherte Rechnungen. Die
+Invoice-Level-Herkunft des Gesamtbelegs bleibt davon getrennt. UI, PDF,
+Rechnungsverwaltung und der Vertrag mit 81 Editor-Referenzen bleiben
+unverändert.

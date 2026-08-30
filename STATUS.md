@@ -4389,3 +4389,30 @@ Wichtig:
   Restarbeiten-Regression wurde nicht nachgewiesen; die Gruppe ist unmittelbar
   nach einem später beauftragten Commit erneut zu prüfen.
 - Kein Commit, Push, Merge oder PR.
+
+## Rechnung R3.3 - Herkunft von Rechnungspositionen
+
+- Status: technisch umgesetzt, Commit offen. Rechnungspositionen können die
+  optionalen Herkunfts-IDs `catalog_item_id`, `source_offer_id`,
+  `source_offer_position_id`, `source_order_id` und
+  `source_order_position_id` als getrimmte Strings oder `null` im bestehenden
+  Positionssnapshot führen.
+- Create, Draft-Update, Reload/Get, Vorschau und Buchung verwenden weiterhin
+  denselben Normalisierungs- und `positions_json`-Weg. Eine gebuchte Position
+  bleibt mit Kurz-/Langtext, Menge, Einheit, Preis, MwSt., NEP, Typ, Hierarchie
+  und Nummerierung ein eigenständiger Snapshot; spätere Quellenänderungen haben
+  keine Rückwirkung.
+- Invoice-Level-Herkunft und Positions-Level-Herkunft bleiben getrennt. Es
+  wurden keine Quelle, Auflösungslogik, ID-Syntax, Fremdschlüssel, neue Tabelle,
+  Teil-/Schlussrechnungslogik oder universelle Dokumentarchitektur ergänzt.
+- Die bestehende interne Positionsbearbeitung reicht vorhandene
+  Herkunftsmetadaten beim Bearbeiten weiter. Sichtbare UI, PDF/Druck,
+  Rechnungsverwaltung R3.2, Zahlungen, Nummern und DEV-Reset bleiben
+  unverändert; der UI-Editor-Vertrag bleibt bei 81 Referenzen.
+- Prüfung: 16 direkte R3.3-Szenarien sowie die vollständige Rechnungsgruppe mit
+  R3.1 und R3.2 sind grün. UI-Editor-Vertragschecker und Rechnung-Mounted-Refs
+  sind mit 81/81 grün; `restarbeiten-v2` und `git diff --check` sind ebenfalls
+  grün. Der vollständige M83-Sammeltest bleibt ausschließlich am bereits im
+  Basiscommit vorhandenen, paketfremden Schutz-Hash von `docs/licensing.md`
+  rot; Datei und Assertion sind gegenüber R3.2 unverändert. Kein Commit, Push,
+  Merge oder PR.

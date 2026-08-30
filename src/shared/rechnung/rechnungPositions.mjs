@@ -2,6 +2,14 @@ export const POSITION_TYPES = Object.freeze({ SERVICE: "service", HEADING: "head
 export const DEFAULT_VAT_RATE_PERCENT = 19;
 export const PRICE_INPUT_MODES = Object.freeze({ NET: "NET", GROSS: "GROSS" });
 
+const POSITION_ORIGIN_ID_FIELDS = Object.freeze([
+  "catalog_item_id",
+  "source_offer_id",
+  "source_offer_position_id",
+  "source_order_id",
+  "source_order_position_id",
+]);
+
 const text = (value) => String(value ?? "").trim();
 
 function createPositionId(idFactory) {
@@ -9,6 +17,10 @@ function createPositionId(idFactory) {
     ? idFactory()
     : globalThis.crypto?.randomUUID?.();
   return text(generated);
+}
+
+function normalizePositionOriginIds(source) {
+  return Object.fromEntries(POSITION_ORIGIN_ID_FIELDS.map((field) => [field, text(source?.[field]) || null]));
 }
 
 function decimal(value, label) {
@@ -152,7 +164,7 @@ export function normalizeInvoicePositions(input = [], { idFactory } = {}) {
     const shortText = text(source?.short_text);
     if (!shortText) throw new Error("Kurztext der Rechnungsposition fehlt.");
     const isTitle = type === POSITION_TYPES.HEADING && source?.is_title !== false;
-    const base = { id, type, is_title: isTitle, parent_id: text(source?.parent_id) || null, short_text: shortText, long_text: text(source?.long_text) };
+    const base = { id, type, is_title: isTitle, parent_id: text(source?.parent_id) || null, short_text: shortText, long_text: text(source?.long_text), ...normalizePositionOriginIds(source) };
     if (type !== POSITION_TYPES.SERVICE) return { ...base, quantity: null, unit: null, unit_price_cents: null, total_cents: null, is_nep: false, vat_rate_percent: null, price_input_mode: null, price_input_cents: null };
     const vat_rate_percent = vatRatePercent(source?.vat_rate_percent);
     const price_input_mode = priceInputMode(source?.price_input_mode);
