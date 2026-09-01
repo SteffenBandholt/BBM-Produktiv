@@ -122,10 +122,14 @@ export function openFirmEditor({
     scopeCaption.textContent = "Ablage";
     scopeCaption.classList.add("bbm-form-label");
     const scope = document.createElement("select");
-    for (const [value, label] of [
-      ["project_firm", "Projektlokaler Kunde"],
-      ["global_firm", "Globaler Kunde"],
-    ]) {
+    for (const [value, label] of (
+      origin === "invoice"
+        ? [["global_firm", "Zentrale Firma"]]
+        : [
+            ["project_firm", "Projektlokaler Kunde"],
+            ["global_firm", "Globaler Kunde"],
+          ]
+    )) {
       const entry = document.createElement("option");
       entry.value = value;
       entry.textContent = label;
@@ -133,10 +137,8 @@ export function openFirmEditor({
     }
     const defaultKind =
       firm?.kind ||
-      kind ||
-      (origin === "firms" || (origin === "invoice" && !projectId)
-        ? "global_firm"
-        : "project_firm");
+      (origin === "invoice" ? "global_firm" : kind) ||
+      (origin === "firms" ? "global_firm" : "project_firm");
     scope.value = defaultKind;
     scopeRow.append(scopeCaption, scope);
     const fixedKind = defaultKind;

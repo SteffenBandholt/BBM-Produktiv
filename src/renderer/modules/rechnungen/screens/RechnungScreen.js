@@ -2,6 +2,7 @@ import { addCalendarDays, draftPreviewIdentifier, formatDocumentType } from "../
 import { calculateInvoiceTotalsCents, calculatePositionTotalCents, normalizeInvoicePositions, POSITION_TYPES, PRICE_INPUT_MODES } from "../../../../shared/rechnung/rechnungPositions.mjs";
 import { m80EditorAttributes } from "../../../ui-editor/m80Registry.js";
 import { beginM80PilotRender, beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../../ui-editor/m80Refs.js";
+import { openFirmEditor } from "../../../features/firms/openFirmEditor.js";
 import { ensureRechnungenDesignStyles } from "../styles.js";
 import { RECHNUNG_COMPONENT_ID, RECHNUNG_SCOPE_ID } from "../RechnungScreen.uiEditorContract.js";
 
@@ -117,7 +118,16 @@ export default class RechnungScreen {
     const recipient = node("section", "rechnung-sheet__recipient");
     this.customer = node("select", "invoice-control"); this.customer.hidden = true;
     this.customerPickerButton = button("Rechnungsempfänger wählen", "rechnung.editor.customerPicker", () => { this.customer.hidden = !this.customer.hidden; if (!this.customer.hidden) this.customer.focus(); }, "quiet");
-    this.customer.addEventListener("change", () => { this.customer.hidden = true; this._syncDerived(); void this._queueDraftSave(); });
+    this.customer.addEventListener("change", () => {
+      if (this.customer.value === "__create_invoice_customer__") {
+        this.customer.hidden = true;
+        void this._createInvoiceCustomer();
+        return;
+      }
+      this.customer.hidden = true;
+      this._syncDerived();
+      void this._queueDraftSave();
+    });
     this.customerAddress = bind(node("div", "rechnung-sheet__address"), "rechnung.editor.customerAddress");
     recipient.append(this.customerPickerButton, this.customer, this.customerAddress);
 
@@ -310,7 +320,11 @@ export default class RechnungScreen {
     this.invoiceNumber.value = invoice.invoice_number || "wird bei Buchung vergeben"; this.invoiceDate.value = invoice.invoice_date || "";
     this.serviceType.value = invoice.service_period_type || "SINGLE_DATE"; this.serviceDate.value = invoice.service_date || ""; this.serviceMonth.value = invoice.service_period_start?.slice(0, 7) || ""; this.serviceStart.value = invoice.service_period_start || ""; this.serviceEnd.value = invoice.service_period_end || "";
     this.reference.value = invoice.service_reference || ""; this.constructionProject.value = invoice.construction_project || ""; if (this.introText) this.introText.value = invoice.intro_text || ""; this.positions = (invoice.positions || []).map((entry) => ({ ...entry })); this._normalizePositions(); this._clearPositionSelection(); this._renderPositions(); this.paymentTerm.value = String(invoice.payment_term_days ?? 8); this.dueDate.value = invoice.due_date || "";
-    this.customer.replaceChildren(option("", "Rechnungskunde wählen")); this.customers.forEach((entry) => this.customer.append(option(customerKey(entry), entry.label || entry.name)));
+    this.customer.replaceChildren(option("", "Rechnungskunde wählen"));
+    if (invoice.status === "DRAFT") {
+      this.customer.append(option("__create_invoice_customer__", "+ Neue Firma anlegen"));
+    }
+    this.customers.forEach((entry) => this.customer.append(option(customerKey(entry), entry.label || entry.name)));
     const selectedCustomerKey = `${invoice.customer_ref_kind || ""}:${invoice.customer_firm_id || ""}`;
     if (invoice.status === "BOOKED" && invoice.customer_snapshot && ![...this.customer.options].some((entry) => entry.value === selectedCustomerKey)) this.customer.append(option(selectedCustomerKey, invoice.customer_snapshot.companyName || "Gebuchter Kunde"));
     if (invoice.status === "DRAFT" && invoice.customer_ref_kind === "project_firm" && ![...this.customer.options].some((entry) => entry.value === selectedCustomerKey)) this.customer.append(option(selectedCustomerKey, `${invoice.legacy_customer?.name || "Unaufgelöster Kunde"} · Altverweis`));
@@ -318,6 +332,52 @@ export default class RechnungScreen {
     this.project.replaceChildren(option("", "Kein Projekt")); this.projects.forEach((entry) => this.project.append(option(entry.id, entry.name))); this.project.value = invoice.project_id || "";
     this._isServicePeriodEditing = false; this.servicePeriodContainer?.classList.toggle("is-editing", false);
     if (this.headContent) { this.headContent.hidden = false; this._syncHeadToggle(); } this._syncDerived(); this._setBooked(invoice.status === "BOOKED");
+  }
+
+  async _createInvoiceCustomer() {
+    const previousKey =
+      `${this.current?.customer_ref_kind || ""}:${this.current?.customer_firm_id || ""}`;
+
+    const result = await openFirmEditor({
+      api: api(),
+      origin: "invoice",
+      projectId: this.current?.project_id || null,
+      kind: "global_firm",
+      title: "Neue Firma anlegen",
+    });
+
+    if (!result?.ok || result.canceled) {
+      this.customer.value = previousKey === ":" ? "" : previousKey;
+      return;
+    }
+
+    const response = await api().rechnungListCustomers?.();
+    if (!response?.ok) {
+      this.customer.value = previousKey === ":" ? "" : previousKey;
+      return this._error(
+        response?.error || "Rechnungskunden konnten nicht neu geladen werden."
+      );
+    }
+
+    this.customers = response.list || [];
+    this.customer.replaceChildren(
+      option("", "Rechnungskunde wählen"),
+      option("__create_invoice_customer__", "+ Neue Firma anlegen")
+    );
+    this.customers.forEach((entry) =>
+      this.customer.append(option(customerKey(entry), entry.label || entry.name))
+    );
+
+    const createdId = result.firm?.id || result.firm?.ref?.id || "";
+    const createdKey = createdId ? `global_firm:${createdId}` : "";
+    this.customer.value =
+      createdKey &&
+      this.customers.some((entry) => customerKey(entry) === createdKey)
+        ? createdKey
+        : "";
+
+    this._syncDerived();
+    await this._queueDraftSave();
   }
 
   _payload() {
