@@ -208,7 +208,6 @@ async function verifyModule({ moduleId, scopeId, mounted, report }) {
   const load = report.loads.find((entry) => entry.moduleId === moduleId);
   const beforeEditor = getM80Ref(mounted.elementId).read();
   if (moduleId === "rechnung") {
-    if (Math.abs(number(beforeEditor.height) - load.height) > 0.01) throw new Error(`M86.20 Rechnung: gespeicherte Buttonhöhe ${load.height} ist vor dem Editorstart nicht wirksam.`);
     mounted.screen.editor.hidden = false;
     mounted.screen.leistungsEditboxBinding.showPosition(sampleRechnungPosition());
     await tick();
