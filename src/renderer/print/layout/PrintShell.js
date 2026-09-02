@@ -88,7 +88,7 @@ export function appendProtocolMetaIndicators(container, row = {}) {
 
 export const RESTARBEITEN_PDF_COLUMNS = Object.freeze([
   Object.freeze({ key: "number", labelLines: ["Nr."], sourceIndexes: [0], contentKind: "number", widthMm: 9, minMm: 7, maxMm: 12 }),
-  Object.freeze({ key: "class", labelLines: ["Klasse"], sourceIndexes: [1], contentKind: "text", widthMm: 10, minMm: 8, maxMm: 14 }),
+  Object.freeze({ key: "class", labelLines: ["Typ"], sourceIndexes: [1], contentKind: "text", widthMm: 10, minMm: 8, maxMm: 14 }),
   Object.freeze({ key: "subject", labelLines: ["Gegenstand"], sourceIndexes: [2, 3], contentKind: "stack", widthMm: 77, minMm: 58, maxMm: 102 }),
   Object.freeze({ key: "location", labelLines: ["Ort"], sourceIndexes: [4, 5], contentKind: "stack", widthMm: 34, minMm: 26, maxMm: 48 }),
   Object.freeze({ key: "unitRoom", labelLines: ["Einheit", "Raum"], sourceIndexes: [6, 7], contentKind: "stack", widthMm: 36, minMm: 26, maxMm: 48 }),

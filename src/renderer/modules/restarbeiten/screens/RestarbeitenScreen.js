@@ -11,7 +11,9 @@ import {
 import { toRestarbeitenListItems, getRestarbeitenAmpelState } from "../viewModel/restarbeitenListItems.js";
 import { buildRestarbeitenFilterbar } from "../RestarbeitenFilterbar.js";
 import { buildRestarbeitenMainBody } from "../RestarbeitenMainBody.js";
-import { buildRestarbeitenEditbox } from "../RestarbeitenEditbox.js";
+import { RestarbeitenSharedEditboxBinding } from "../RestarbeitenSharedEditboxBinding.js";
+import { attachAudioFeature } from "../../../features/audio/AudioFeature.js";
+import { DictationController } from "../../../features/audio-dictation/DictationController.js";
 import {
   DEFAULT_TEXT_LIMITS,
   TextLimitSettingsService,
@@ -175,6 +177,26 @@ export default class RestarbeitenScreen {
     this._lastRestarbeitNotePrint = null;
     this.quicklanePinned = false;
     this.outputPreviewOpen = false;
+
+    attachAudioFeature(this);
+
+    this.dictationController = new DictationController({
+      view: this,
+      ensureAudioAvailable: (options) =>
+        this._ensureAudioAvailable?.(options),
+      hasActiveRecord: () => !!this.editboxBinding,
+      requiresMeetingId: false,
+      onTextApplied: async ({ shortText, longText }) => {
+        this._updateDraft(
+          {
+            short_text: shortText,
+            long_text: longText,
+          },
+          { render: false }
+        );
+        await this._autoSaveDraft();
+      },
+    });
   }
 
   render() {
@@ -587,8 +609,81 @@ export default class RestarbeitenScreen {
     }
   }
 
+  get inpTitle() {
+    return this.editboxBinding?.sharedEditboxCore?.editbox?.shortInput || null;
+  }
+
+  get taLongtext() {
+    return this.editboxBinding?.sharedEditboxCore?.editbox?.longInput || null;
+  }
+
+  get btnTitleDictate() {
+    return this.editboxBinding?.sharedEditboxCore?.shortDictateButton || null;
+  }
+
+  get btnLongDictate() {
+    return this.editboxBinding?.sharedEditboxCore?.longDictateButton || null;
+  }
+
+  get isReadOnly() {
+    return false;
+  }
+
+  get _busy() {
+    return !!this.isLoading;
+  }
+
+  _titleMax() {
+    return Number(this.inpTitle?.maxLength || this.textLimits.shortText);
+  }
+
+  _longMax() {
+    return Number(this.taLongtext?.maxLength || this.textLimits.longText);
+  }
+
+  _normTitle(value) {
+    return String(value ?? "").trim().replace(/\s+/g, " ");
+  }
+
+  _normLong(value) {
+    return String(value ?? "").replace(/\r\n/g, "\n").trimEnd();
+  }
+
+  _updateCharCounters() {
+    this.editboxBinding?.sharedEditboxCore?.editbox?._updateCounters?.();
+  }
+
+  setDictationStatus(payload) {
+    return this.editboxBinding?.sharedEditboxCore?.setDictionaryStatus?.(payload);
+  }
+
+  clearDictationStatus() {
+    return this.editboxBinding?.sharedEditboxCore?.clearDictionaryStatus?.();
+  }
+
+  _startDictation({ target } = {}) {
+
+    return this.dictationController?.start({
+      target,
+      projectId: this.projectId || null,
+      meetingId: null,
+    });
+  }
+
+  applyEditBoxState() {
+    this.dictationController?.updateButtons({
+      readOnly: false,
+      busy: this.isLoading,
+      meetingId: null,
+    });
+  }
+
   _renderShell() {
     if (!this.root) return;
+
+    this.editboxBinding?.destroy?.();
+    this.editboxBinding = null;
+
     beginM80PilotRender();
     this.root.replaceChildren();
     const filteredRows = this._getFilteredItems();
@@ -647,18 +742,27 @@ export default class RestarbeitenScreen {
         onSelect: (id) => this._selectItem(id),
         onPhotos: (id) => this.openRestarbeitPhotos(id),
       });
-      const editbox = buildRestarbeitenEditbox({
+      this.editboxBinding = new RestarbeitenSharedEditboxBinding({
         settings: this.settings,
         textLimits: this.textLimits,
-        draft: this.draft,
         showAmpel: this.showAmpelInList,
         responsibleOptions,
         onNew: () => this._newDraft(),
+        onStartDictation: (target) => this._startDictation({ target }),
         onDraftChange: (patch, options) => this._updateDraft(patch, options),
         onDelete: () => this._deleteDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
         onNote: () => this._openNotesPopup().catch((err) => this._setStubMessage(err?.message || String(err))),
         onAutoSave: () => this._autoSaveDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
       });
+
+      this.editboxBinding.showDraft(this.draft);
+      this.editboxBinding.registerUiEditorRefs();
+
+      void this._loadAudioLicenseState?.().then(() => {
+        this.applyEditBoxState();
+      });
+
+      const editbox = this.editboxBinding.getElement();
       const workspace = document.createElement("div");
       workspace.className = "bbm-restarbeiten-workspace";
       const listPane = document.createElement("div");
@@ -681,6 +785,9 @@ export default class RestarbeitenScreen {
   }
 
   destroy() {
+    this.editboxBinding?.destroy?.();
+    this.editboxBinding = null;
+
     this._textLimitUnsubscribe?.();
     this._textLimitUnsubscribe = null;
     this.notesOverlay?.remove?.();

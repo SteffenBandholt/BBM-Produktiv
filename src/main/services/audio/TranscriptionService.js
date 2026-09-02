@@ -83,6 +83,29 @@ class TranscriptionService {
     return meeting;
   }
 
+  async transcribeFile({ filePath, language = "de" } = {}) {
+    const normalizedFilePath = String(filePath || "").trim();
+    if (!normalizedFilePath) throw new Error("filePath required");
+
+    const requestedModelFileName = this._resolveModelFileName();
+    const resolvedModelFileName =
+      this._resolveTranscriptionModelFileName(requestedModelFileName);
+
+    const result = await this.engine.transcribe({
+      filePath: normalizedFilePath,
+      language,
+      modelFileName: resolvedModelFileName,
+      audioImport: null,
+    });
+
+    return {
+      fullText: String(result?.fullText || ""),
+      segments: Array.isArray(result?.segments) ? result.segments : [],
+      language: result?.language || null,
+      engine: result?.engine || "whisper.cpp",
+    };
+  }
+
   async transcribe({ audioImportId, language = "de" }) {
     if (!audioImportId) throw new Error("audioImportId required");
 

@@ -14,6 +14,39 @@ function createFakeDocument() {
       dataset: {},
       attributes: {},
       className: "",
+      classList: {
+        add(...names) {
+          const current = new Set(String(node.className || "").split(/\s+/).filter(Boolean));
+          names.forEach((name) => current.add(String(name)));
+          node.className = [...current].join(" ");
+        },
+        remove(...names) {
+          const removeSet = new Set(names.map(String));
+          node.className = String(node.className || "")
+            .split(/\s+/)
+            .filter(Boolean)
+            .filter((name) => !removeSet.has(name))
+            .join(" ");
+        },
+        contains(name) {
+          return String(node.className || "")
+            .split(/\s+/)
+            .filter(Boolean)
+            .includes(String(name));
+        },
+        toggle(name, force) {
+          const has = this.contains(name);
+          const shouldHave = force === undefined ? !has : Boolean(force);
+
+          if (shouldHave) {
+            this.add(name);
+          } else {
+            this.remove(name);
+          }
+
+          return shouldHave;
+        },
+      },
       textContent: "",
       disabled: false,
       value: "",
@@ -24,6 +57,18 @@ function createFakeDocument() {
       appendChild(child) {
         if (child && typeof child === "object") child.parentElement = this;
         this.children.push(child);
+        return child;
+      },
+      insertBefore(child, referenceChild) {
+        if (child && typeof child === "object") child.parentElement = this;
+
+        const index = this.children.indexOf(referenceChild);
+        if (index < 0) {
+          this.children.push(child);
+        } else {
+          this.children.splice(index, 0, child);
+        }
+
         return child;
       },
       removeChild(child) {
@@ -86,8 +131,24 @@ function createFakeDocument() {
         return true;
       },
       querySelector(selector) {
-        const attributeMatch = String(selector || "").match(/^\[([A-Za-z_][A-Za-z0-9_.:-]*)="((?:\\.|[^"])*)"\]$/u);
+        const rawSelector = String(selector || "");
+
+        const classMatch = rawSelector.match(/^\.([A-Za-z_][A-Za-z0-9_-]*)$/u);
+        if (classMatch) {
+          const className = classMatch[1];
+          return (
+            findNodes(this, (entry) =>
+              String(entry.className || "")
+                .split(/\s+/)
+                .filter(Boolean)
+                .includes(className)
+            )[0] || null
+          );
+        }
+
+        const attributeMatch = rawSelector.match(/^\[([A-Za-z_][A-Za-z0-9_.:-]*)="((?:\\.|[^"])*)"\]$/u);
         if (!attributeMatch) return null;
+
         const attributeName = attributeMatch[1];
         const attributeValue = attributeMatch[2].replace(/\\"/gu, '"').replace(/\\\\/gu, "\\");
         return findNodes(this, (entry) => entry.getAttribute?.(attributeName) === attributeValue)[0] || null;
@@ -102,6 +163,14 @@ function createFakeDocument() {
         this.textContent = "";
       },
     });
+
+    Object.defineProperty(node, "options", {
+      get() {
+        if (this.tagName !== "SELECT") return [];
+        return this.children.filter((child) => child?.tagName === "OPTION");
+      },
+    });
+
     return node;
   };
 

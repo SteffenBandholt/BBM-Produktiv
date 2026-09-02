@@ -246,7 +246,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
   }),
   createRegistryEntry({
     id: "restarbeiten.filterbar.group.class",
-    name: "Klasse",
+    name: "Typ",
     type: "group",
     role: "layout",
     parentId: "restarbeiten.filterbar",
@@ -491,7 +491,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
   }),
   createRegistryEntry({
     id: "restarbeiten.record.itemClass",
-    name: "Klasse",
+    name: "Typ",
     type: "label",
     role: "status",
     parentId: "restarbeiten.record.numberColumn",
@@ -816,7 +816,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.meta.itemClass",
-    name: "Klasse",
+    name: "Typ",
     type: "field",
     role: "meta",
     parentId: "restarbeiten.editbox.text.short",
@@ -825,7 +825,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.meta.itemClass.label",
-    name: "Klasse",
+    name: "Typ",
     type: "label",
     role: "meta",
     parentId: "restarbeiten.editbox.meta.itemClass",

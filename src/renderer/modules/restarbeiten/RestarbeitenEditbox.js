@@ -206,7 +206,7 @@ function createClassToggle({ value = "rest", uiId, labelUiId, onChange, onCommit
       : "bbm-restarbeiten-field bbm-restarbeiten-class-field",
     uiId,
   });
-  const labelElement = createEl("span", { text: "Klasse", uiId: labelUiId });
+  const labelElement = createEl("span", { text: "Typ", uiId: labelUiId });
   if (!inline || labelUiId) wrap.appendChild(labelElement);
   const classToggle = createEl("div", { className: "bbm-restarbeiten-class-toggle" });
   for (const option of [

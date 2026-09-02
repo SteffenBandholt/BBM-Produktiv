@@ -4,10 +4,21 @@ const DICTATION_START_ICON_URL = "./assets/icons/dictation-start.svg";
 const DICTATION_STOP_ICON_URL = "./assets/icons/dictation-stop.svg";
 
 export class DictationController {
-  constructor({ view, ensureAudioAvailable }) {
+  constructor({
+    view,
+    ensureAudioAvailable,
+    hasActiveRecord = null,
+    requiresMeetingId = true,
+    onTextApplied = null,
+  }) {
     this.view = view;
     this.ensureAudioAvailable =
       typeof ensureAudioAvailable === "function" ? ensureAudioAvailable : async () => true;
+    this.hasActiveRecord =
+      typeof hasActiveRecord === "function" ? hasActiveRecord : null;
+    this.requiresMeetingId = requiresMeetingId !== false;
+    this.onTextApplied =
+      typeof onTextApplied === "function" ? onTextApplied : null;
 
     this._audioDictationBusy = false;
     this._audioDictationActive = false;
@@ -78,10 +89,15 @@ export class DictationController {
     const btnLong = view.btnLongDictate;
     const ro = readOnly === null ? !!view.isReadOnly : !!readOnly;
     const isBusy = busy === null ? !!view._busy : !!busy;
-    const hasMeeting = !!(meetingId === null ? view.meetingId : meetingId);
+    const hasMeeting =
+      !this.requiresMeetingId ||
+      !!(meetingId === null ? view.meetingId : meetingId);
+    const hasRecord = this.hasActiveRecord
+      ? !!this.hasActiveRecord()
+      : !!(view.selectedTop || view.selectedTopId);
     const licensed = !!view._audioLicensed || !!view._audioDevOverride;
     const audioLocked = !licensed;
-    const disabledBase = ro || isBusy || !hasMeeting || !view.selectedTop || audioLocked;
+    const disabledBase = ro || isBusy || !hasMeeting || !hasRecord || audioLocked;
 
     const applyBtnState = (btn, isTarget) => {
       if (!btn) return;
@@ -108,6 +124,7 @@ export class DictationController {
   }
 
   async start({ target, meetingId, projectId } = {}) {
+
     const tgt = target === "longText" ? "longText" : "shortText";
     if (this._audioDictationBusy) return;
 
@@ -125,14 +142,19 @@ export class DictationController {
 
   async _startFieldDictation({ target, meetingId, projectId }) {
     const view = this.view || {};
-    const hasTop = !!(view.selectedTop || view.selectedTopId);
-    if (!hasTop) return;
-    if (!meetingId) {
+    const hasRecord = this.hasActiveRecord
+      ? !!this.hasActiveRecord()
+      : !!(view.selectedTop || view.selectedTopId);
+
+    if (!hasRecord) return;
+
+    if (this.requiresMeetingId && !meetingId) {
       alert("Kein aktives Protokoll gefunden. Diktat nicht m\u00f6glich.");
       return;
     }
 
     const audioReady = await this.ensureAudioAvailable({ alertOnFailure: true, force: false });
+
     if (!audioReady) return;
 
     this._audioDictationTarget = target;
@@ -392,6 +414,15 @@ export class DictationController {
     if (typeof view._updateCharCounters === "function") {
       view._updateCharCounters();
     }
+
+    if (this.onTextApplied) {
+      await this.onTextApplied({
+        target: tgt,
+        shortText: String(shortField?.value || ""),
+        longText: String(longField?.value || ""),
+      });
+    }
+
     this._publishDictionaryStatus();
   }
 

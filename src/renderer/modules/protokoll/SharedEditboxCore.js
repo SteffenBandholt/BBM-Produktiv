@@ -44,13 +44,13 @@ function isCompletedStatus(value) {
 }
 
 export class SharedEditboxCore {
-  constructor({ onDraftChange, onTextBlur, onStartDictation } = {}) {
+  constructor({ documentRef, onDraftChange, onTextBlur, onStartDictation } = {}) {
     this.onDraftChange = typeof onDraftChange === "function" ? onDraftChange : null;
     this.onTextBlur = typeof onTextBlur === "function" ? onTextBlur : null;
     this.onStartDictation =
       typeof onStartDictation === "function" ? onStartDictation : null;
 
-    this.editbox = new EditboxShell();
+    this.editbox = new EditboxShell({ documentRef });
     this.root = this.editbox.getElement();
     this.flagsWrap = this.editbox.flagsWrap;
     this.shortLabel = this.editbox.shortLabel;

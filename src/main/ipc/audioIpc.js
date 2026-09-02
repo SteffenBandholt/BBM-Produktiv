@@ -223,8 +223,7 @@ function registerAudioIpc() {
     try {
       _ensureAudioLicensed();
       const meetingId = String(payload?.meetingId || "").trim();
-      if (!meetingId) return { ok: false, error: "meetingId fehlt" };
-      const projectId = payload?.projectId || null;
+      const projectId = String(payload?.projectId || "").trim() || null;
       const base64 = String(payload?.base64 || "").trim();
       if (!base64) return { ok: false, error: "audioPayload fehlt" };
 
@@ -235,14 +234,30 @@ function registerAudioIpc() {
       const buffer = Buffer.from(base64, "base64");
       await fs.promises.writeFile(filePath, buffer);
 
-      const audioImport = audioImportService.importAudio({
-        meetingId,
-        projectId,
-        filePath,
-        processingMode: "dictation",
-      });
+      let audioImport = null;
+      let result = null;
 
-      const result = await transcriptionService.transcribe({ audioImportId: audioImport.id });
+      if (meetingId) {
+        audioImport = audioImportService.importAudio({
+          meetingId,
+          projectId,
+          filePath,
+          processingMode: "dictation",
+        });
+
+        result = await transcriptionService.transcribe({
+          audioImportId: audioImport.id,
+        });
+      } else {
+        if (!projectId) {
+          return { ok: false, error: "projectId fehlt" };
+        }
+
+        result = await transcriptionService.transcribeFile({
+          filePath,
+          language: "de",
+        });
+      }
       const rawTranscriptText =
         result?.transcript?.full_text ??
         result?.transcript?.fullText ??
@@ -254,7 +269,7 @@ function registerAudioIpc() {
       const dictionaryResult = dictionaryService.applyCorrectionsToText(rawTranscriptText);
       let transcript = result?.transcript || null;
 
-      if (dictionaryResult.appliedCount > 0 && transcript) {
+      if (meetingId && dictionaryResult.appliedCount > 0 && transcript && audioImport?.id) {
         transcript = transcriptsRepo.upsertTranscript({
           audioImportId: audioImport.id,
           engine: transcript.engine || result?.engine || "whisper.cpp",
