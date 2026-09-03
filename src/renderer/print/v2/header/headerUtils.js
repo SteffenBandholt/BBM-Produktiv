@@ -35,7 +35,7 @@ function _docLabelFromMode(mode) {
   if (m === "topsAll") return "Liste aller Top´s im Projekt";
   if (m === "firms") return "Firmenliste";
   if (m === "todo") return "ToDo-Liste";
-  if (m === "restarbeiten") return "Restarbeitenliste";
+  if (m === "restarbeiten") return "Restarbeiten";
   if (m === "headerTest") return "Kopf-Test";
   return "Dokument";
 }
@@ -158,6 +158,25 @@ function _listStandLine({ data, meeting } = {}) {
   if (!(mode === "firms" || mode === "todo" || mode === "topsAll" || mode === "protocol" || mode === "restarbeiten")) return "";
   // In der v2-Vollkopfzeile sollen für Protokoll/Vorabzug keine Nummer-/Datumszeilen angezeigt werden.
   if (mode === "protocol" || mode === "preview") return "";
+
+  if (mode === "restarbeiten") {
+    const snapshot = data?.restarbeitenSnapshot || {};
+    const createdAt = String(snapshot.createdAt || "").trim();
+    const stand = createdAt ? _formatDateIso(createdAt.slice(0, 10)) : "";
+    const type = String(snapshot.type || "").trim() || "Mängel + Restarbeiten";
+    const view = Array.isArray(snapshot.view)
+      ? snapshot.view.map((value) => String(value || "").trim()).filter(Boolean)
+      : [];
+
+    const lines = [
+      `Typ: ${type}`,
+    ];
+
+    if (stand) lines.push(`Stand: ${stand}`);
+    lines.push(`Sicht: ${view.length ? view.join(" | ") : "Alle"}`);
+
+    return lines.join("\n");
+  }
 
   const meetingIndex =
     meeting?.meeting_index ?? meeting?.meetingIndex ?? meeting?.index ?? meeting?.number ?? "";

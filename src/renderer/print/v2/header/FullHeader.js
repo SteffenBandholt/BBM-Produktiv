@@ -18,7 +18,10 @@ export function renderV2FullHeader({ data, pageNo, totalPages, modeLabel, conten
   const settings = data?.settings || {};
   const meeting = data?.meeting || {};
   const useUserData = headerUtils.parseBool(settings["pdf.footerUseUserData"], false);
-  const titleText = headerUtils.resolveHeaderTitle({ data, settings, meeting, modeLabel });
+  const titleText =
+    String(data?.mode || "").trim().toLowerCase() === "restarbeiten"
+      ? String(data?.restarbeitenSnapshot?.type || "").trim() || "Restarbeitenliste und Mängelliste"
+      : headerUtils.resolveHeaderTitle({ data, settings, meeting, modeLabel });
   const listStandLine = headerUtils.listStandLine({ data, meeting });
   const brandingText = headerUtils.resolveBranding({ data });
 

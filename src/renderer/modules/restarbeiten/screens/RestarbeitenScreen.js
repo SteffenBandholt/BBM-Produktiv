@@ -267,6 +267,40 @@ export default class RestarbeitenScreen {
     const restarbeitenRows = this._getFilteredItems()
       .filter((row) => !normalizeText(row?.deleted_at))
       .map((row) => ({ ...row }));
+
+    const snapshotView = [];
+
+    const snapshotType =
+      this.filters.itemClass === "rest"
+        ? "Restarbeitenliste"
+        : this.filters.itemClass === "mangel"
+          ? "Mängelliste"
+          : "Restarbeitenliste und Mängelliste";
+
+    const locationLabels = {
+      level1: normalizeText(this.settings?.level_1_label) || "Haus",
+      level2: normalizeText(this.settings?.level_2_label) || "Geschoss",
+      level3: normalizeText(this.settings?.level_3_label) || "Einheit",
+      level4: normalizeText(this.settings?.level_4_label) || "Raum",
+    };
+
+    for (let level = 1; level <= 4; level += 1) {
+      const value = normalizeText(this.filters[`level${level}`]);
+      if (value) snapshotView.push(`${locationLabels[`level${level}`]}: ${value}`);
+    }
+
+    if (this.filters.status) {
+      snapshotView.push(`Status: ${this.filters.status}`);
+    }
+
+    if (this.filters.dueDate) {
+      snapshotView.push(`Fertig bis: ${this.filters.dueDate}`);
+    }
+
+    if (this.filters.responsible) {
+      snapshotView.push(`Verantwortlich: ${this.filters.responsible}`);
+    }
+
     return {
       mode: "restarbeiten",
       orientation: "landscape",
@@ -279,7 +313,12 @@ export default class RestarbeitenScreen {
         level_4_label: normalizeText(this.settings?.level_4_label) || "Raum",
       },
       showAmpelInList: this.showAmpelInList,
-      previewTitle: "Restarbeitenliste",
+      restarbeitenSnapshot: {
+        createdAt: new Date().toISOString(),
+        type: snapshotType,
+        view: snapshotView,
+      },
+      previewTitle: "Restarbeiten",
     };
   }
 
