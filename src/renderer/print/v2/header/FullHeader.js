@@ -24,6 +24,7 @@ export function renderV2FullHeader({ data, pageNo, totalPages, modeLabel, conten
       : headerUtils.resolveHeaderTitle({ data, settings, meeting, modeLabel });
   const listStandLine = headerUtils.listStandLine({ data, meeting });
   const brandingText = headerUtils.resolveBranding({ data });
+  let responsibleBox = null;
 
   const left = headerUtils.el("div", "v2HeaderLeft v2FullLeftWrap");
   left.appendChild(headerUtils.el("div", "v2Project", "Projekt:"));
@@ -32,6 +33,49 @@ export function renderV2FullHeader({ data, pageNo, totalPages, modeLabel, conten
   if (listStandLine) {
     const lines = String(listStandLine).split("\n");
     lines.forEach((ln) => left.appendChild(headerUtils.el("div", "v2ListStand", ln)));
+  }
+
+  if (String(data?.mode || "").trim().toLowerCase() === "restarbeiten") {
+    const responsible = data?.restarbeitenSnapshot?.responsible || null;
+    if (responsible) {
+      responsibleBox = headerUtils.el("div", "v2RestarbeitenResponsible");
+
+      responsibleBox.style.position = "absolute";
+      responsibleBox.style.left = "50%";
+      responsibleBox.style.top = "12mm";
+      responsibleBox.style.width = "40%";
+      responsibleBox.style.lineHeight = "1.35";
+
+      responsibleBox.appendChild(
+        headerUtils.el("div", "v2RestarbeitenResponsibleTitle", "Verantwortlich:")
+      );
+
+      const name = String(responsible.label || "").trim();
+      const street = String(responsible.street || "").trim();
+      const zip = String(responsible.zip || "").trim();
+      const city = String(responsible.city || "").trim();
+      const zipCity = [zip, city].filter(Boolean).join(" ");
+
+      if (name) {
+        responsibleBox.appendChild(
+          headerUtils.el("div", "v2RestarbeitenResponsibleName", name)
+        );
+      }
+
+      if (street) {
+        responsibleBox.appendChild(
+          headerUtils.el("div", "v2RestarbeitenResponsibleRow", street)
+        );
+      }
+
+      if (zipCity) {
+        responsibleBox.appendChild(
+          headerUtils.el("div", "v2RestarbeitenResponsibleRow", zipCity)
+        );
+      }
+
+
+    }
   }
 
   const right = headerUtils.el("div", "v2HeaderRight");
@@ -73,7 +117,11 @@ export function renderV2FullHeader({ data, pageNo, totalPages, modeLabel, conten
 
   const textBlock = headerUtils.el("div", "v2FullTextBlock");
   const row = headerUtils.el("div", "v2FullRow");
+  row.style.position = "relative";
   row.append(left, right);
+  if (responsibleBox) {
+    row.appendChild(responsibleBox);
+  }
   textBlock.appendChild(row);
 
   const line2Divider = headerUtils.el("div", "v2Divider v2FullDivider");

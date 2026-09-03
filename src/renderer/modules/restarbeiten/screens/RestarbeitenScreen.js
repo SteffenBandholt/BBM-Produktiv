@@ -297,9 +297,34 @@ export default class RestarbeitenScreen {
       snapshotView.push(`Fertig bis: ${this.filters.dueDate}`);
     }
 
-    if (this.filters.responsible) {
-      snapshotView.push(`Verantwortlich: ${this.filters.responsible}`);
-    }
+    const responsibleFilter = normalizeText(this.filters.responsible);
+
+    const responsibleFirm = responsibleFilter
+      ? this.responsibleFirms.find((firm) => {
+          const firmLabel = normalizeText(
+            firm?.shortName ||
+            firm?.short_name ||
+            firm?.name ||
+            firm?.company_name
+          );
+          return firmLabel === responsibleFilter;
+        }) || null
+      : null;
+
+    const responsibleSnapshot = responsibleFilter
+      ? {
+          label:
+            normalizeText(responsibleFirm?.name) ||
+            normalizeText(responsibleFirm?.company_name) ||
+            normalizeText(responsibleFirm?.shortName) ||
+            normalizeText(responsibleFirm?.short_name) ||
+            responsibleFilter,
+          street: normalizeText(responsibleFirm?.street),
+          zip: normalizeText(responsibleFirm?.zip),
+          city: normalizeText(responsibleFirm?.city),
+        }
+      : null;
+
 
     return {
       mode: "restarbeiten",
@@ -317,6 +342,7 @@ export default class RestarbeitenScreen {
         createdAt: new Date().toISOString(),
         type: snapshotType,
         view: snapshotView,
+        responsible: responsibleSnapshot,
       },
       previewTitle: "Restarbeiten",
     };

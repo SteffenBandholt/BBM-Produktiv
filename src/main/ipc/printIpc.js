@@ -435,6 +435,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
     todoResponsibleFilter: payload.todoResponsibleFilter || null,
     restarbeitenRows: payload.restarbeitenRows || null,
     restarbeitenLocationLabels: payload.restarbeitenLocationLabels || null,
+    restarbeitenSnapshot: payload.restarbeitenSnapshot || null,
     showAmpelInList: typeof payload.showAmpelInList === "boolean" ? payload.showAmpelInList : null,
   });
   const projectNumber = data?.project?.project_number || data?.project?.projectNumber || null;
@@ -549,6 +550,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
         invoicePreview,
         restarbeitenRows: payload.restarbeitenRows || null,
         restarbeitenLocationLabels: payload.restarbeitenLocationLabels || null,
+        restarbeitenSnapshot: payload.restarbeitenSnapshot || null,
         settingsOverride: payload.settingsOverride || null,
         orientation,
         testOrientation: payload.testOrientation || null,
@@ -594,6 +596,7 @@ function registerPrintIpc() {
         todoResponsibleFilter: p.todoResponsibleFilter || null,
         restarbeitenRows: p.restarbeitenRows || null,
         restarbeitenLocationLabels: p.restarbeitenLocationLabels || null,
+        restarbeitenSnapshot: p.restarbeitenSnapshot || null,
         showAmpelInList: typeof p.showAmpelInList === "boolean" ? p.showAmpelInList : null,
       });
       const pdfResolution = _getPdfEditorAdapterResolver().resolvePrintRegistration({ documentTypeId: p.documentTypeId, mode: data.mode });
@@ -647,6 +650,7 @@ function registerPrintIpc() {
           invoicePreview: p.invoicePreview === true,
           restarbeitenRows: p.restarbeitenRows || null,
           restarbeitenLocationLabels: p.restarbeitenLocationLabels || null,
+          restarbeitenSnapshot: p.restarbeitenSnapshot || null,
           settingsOverride: p.settingsOverride || null,
           orientation,
           testOrientation: p.testOrientation || null,

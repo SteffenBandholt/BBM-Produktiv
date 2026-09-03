@@ -163,17 +163,14 @@ function _listStandLine({ data, meeting } = {}) {
     const snapshot = data?.restarbeitenSnapshot || {};
     const createdAt = String(snapshot.createdAt || "").trim();
     const stand = createdAt ? _formatDateIso(createdAt.slice(0, 10)) : "";
-    const type = String(snapshot.type || "").trim() || "Mängel + Restarbeiten";
     const view = Array.isArray(snapshot.view)
       ? snapshot.view.map((value) => String(value || "").trim()).filter(Boolean)
       : [];
 
-    const lines = [
-      `Typ: ${type}`,
-    ];
+    const lines = [];
 
     if (stand) lines.push(`Stand: ${stand}`);
-    lines.push(`Sicht: ${view.length ? view.join(" | ") : "Alle"}`);
+    if (view.length) lines.push(`Filter: ${view.join(" | ")}`);
 
     return lines.join("\n");
   }

@@ -959,6 +959,7 @@ function _loadPrintDocumentContent({
   todoResponsibleFilter,
   restarbeitenRows,
   restarbeitenLocationLabels,
+  restarbeitenSnapshot,
   showAmpelInList,
   invoice,
 } = {}) {
@@ -1012,6 +1013,7 @@ function _loadPrintDocumentContent({
     todoRows,
     restarbeitenItems,
     restarbeitenLocationLabels: restarbeitenLabels,
+    restarbeitenSnapshot: restarbeitenSnapshot || null,
     showAmpelInList:
       typeof showAmpelInList === "boolean"
         ? showAmpelInList
@@ -1078,6 +1080,7 @@ async function getPrintData({
   todoResponsibleFilter,
   restarbeitenRows,
   restarbeitenLocationLabels,
+  restarbeitenSnapshot,
   showAmpelInList,
   invoiceId,
   invoicePreview,
@@ -1114,6 +1117,7 @@ async function getPrintData({
     todoResponsibleFilter,
     restarbeitenRows,
     restarbeitenLocationLabels,
+  restarbeitenSnapshot,
     showAmpelInList,
     invoice,
   });
