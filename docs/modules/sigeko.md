@@ -598,7 +598,45 @@ Insbesondere gilt:
 
 ---
 
-## 16. Verbindliche Struktur für jeden Codex-Goal-Lauf
+## 16. UI-Editor- und PDF-Editor-Registrierung
+
+Diese Regel gilt querschnittlich für alle Entwicklungsabschnitte von BBM SiGeKo, sobald UI- oder PDF-Ausgabe betroffen sind.
+
+### 16.1 UI
+- Alle neuen UI-relevanten und später editierbaren SiGeKo-Elemente müssen gemäß der bestehenden BBM-/UI-Editor-kit-Architektur in der von der Ziel-App gelieferten ElementRegistry registriert werden.
+- Nicht registrierte Elemente dürfen nicht stillschweigend als editierbare Sonderlösung außerhalb des Editors entstehen.
+- Der UI-Editor bleibt generisch und erhält keine SiGeKo-Fachlogik.
+- Keine automatische UI-Erkennung, kein DOM-Scan, kein UI-Scanning und keine automatische Registry-Befüllung.
+- Keine parallele oder zweite SiGeKo-spezifische Registry neben dem bestehenden Registry-Prinzip.
+- Soweit ein Element bewusst nicht editierbar sein soll, muss dies eine fachlich bzw. technisch bewusste Entscheidung sein und darf nicht aus vergessener Registrierung entstehen.
+
+### 16.2 PDF
+- Alle neuen PDF-relevanten und später im PDF-Editor editierbaren SiGeKo-Layoutbausteine müssen entsprechend der bestehenden PDF-/Editor-Architektur registriert werden.
+- SiGeKo-Bericht, SiGe-Plan und Vorankündigung dürfen keine unnötige parallele PDF-Plattform erhalten.
+- Wiederverwendbare vorhandene PDF-, Layout-, Vorlagen- und Editor-Dienste von BBM sind zu nutzen, soweit sie für den jeweiligen Abschnitt fachlich und technisch geeignet sind.
+- PDF-Elemente, deren Position, Größe, Sichtbarkeit, Schrift oder sonstiges Layout später durch den Editor angepasst werden soll, dürfen nicht ausschließlich hart verdrahtet werden.
+
+### 16.3 Bestandsschutz der Editor-Einstellungen
+- Bereits gespeicherte UI-Editor- und PDF-Editor-Anpassungen dürfen durch SiGeKo-Erweiterungen, Neustart, Updates, reine CSS-/Farbänderungen oder spätere Goal-Läufe nicht unbeabsichtigt verloren gehen, zurückgesetzt oder überschrieben werden.
+- Persistente Editor-Einstellungen bleiben führend, sofern nicht ausdrücklich eine bewusste Migration beschlossen und umgesetzt wird.
+
+### 16.4 Pflicht in Codex-Goal-Läufen
+Sobald ein Goal-Lauf UI oder PDF betrifft, muss der Auftrag unter `BESTANDSSCHUTZ` bzw. den Abnahmekriterien ausdrücklich enthalten:
+
+```text
+EDITOR-REGISTRIERUNG
+- Neue UI-Elemente gemäß bestehender ElementRegistry registrieren, soweit sie editierbar sein sollen.
+- Neue PDF-/Layout-Elemente gemäß bestehender PDF-/Editor-Registry registrieren, soweit sie editierbar sein sollen.
+- Keine automatische UI-Erkennung und keine parallele Registry aufbauen.
+- Bestehende gespeicherte UI-/PDF-Editor-Anpassungen nicht zurücksetzen oder überschreiben.
+- Nach Umsetzung nachweisen, welche neuen Elemente registriert wurden und welche bewusst nicht editierbar sind.
+```
+
+Diese Editor-Regel ist kein eigener späterer Entwicklungsabschnitt, sondern gilt ab dem ersten betroffenen UI-/PDF-Goal-Lauf.
+
+---
+
+## 17. Verbindliche Struktur für jeden Codex-Goal-Lauf
 
 Jeder Goal-Auftrag für dieses Projekt erhält zwingend folgende Abschnitte:
 
@@ -634,7 +672,7 @@ Wenn eine für den aktuellen Abschnitt notwendige Grundlage fehlt, soll Codex di
 
 ---
 
-## 17. Führungsregel für das Projekt
+## 18. Führungsregel für das Projekt
 
 Von diesem Plan wird nur bewusst abgewichen.
 
