@@ -202,3 +202,50 @@ Ein tragfaehiger Zustand ist erst dann erreicht, wenn der Modulrahmen fachlich u
 
 Die dafuer noetige Freigabelogik gehoert in den App-Kern und den Modulrahmen.
 Die Fachlogik bleibt in den Modulen.
+
+---
+
+## 8. Branch- und Integrationsregel bei paralleler Entwicklung
+
+BBM wird in mehreren Entwicklungsstraengen parallel weiterentwickelt. Dadurch duerfen Fachmodule und Querschnittsfunktionen nicht unkontrolliert auseinanderlaufen.
+
+Verbindlich gilt fuer jeden neuen groesseren Goal-Lauf, insbesondere fuer neue Fachmodule:
+
+1. **Vor Beginn Branch- und Integrationsstand pruefen.**
+   - Relevante aktive Entwicklungsbranches muessen vor dem Start betrachtet werden.
+   - Es ist festzulegen, welcher Stand fuer den aktuellen Goal-Lauf die fuehrende Ausgangsbasis ist.
+   - Ein neuer Fachmodul-Branch wird nicht automatisch von `main` abgeleitet, wenn relevante gemeinsame Infrastruktur auf anderen Branches weiterentwickelt wird.
+
+2. **Gemeinsame Infrastruktur nicht duplizieren.**
+   - Modulrahmen, Projekt- und Firmendomaenen, UI-Editor, PDF-/Layout-Editor, Persistenz, gemeinsame Dienste und Lizenz-/Freigabelogik duerfen nicht fachmodulspezifisch noch einmal aufgebaut werden, wenn dafuer bereits ein gemeinsamer Entwicklungsstrang existiert.
+   - Ein Fachmodul darf fehlende Querschnittsfunktion nicht durch einen dauerhaften Parallelweg ersetzen.
+
+3. **Abhaengigkeiten offen benennen.**
+   - Wenn ein Goal-Lauf von einer noch unfertigen Querschnittsfunktion abhaengt, muss diese Abhaengigkeit im Auftrag und im Abschlussbericht benannt werden.
+   - Es darf nur minimal vorbereitet werden, was fuer einen sauberen Abschluss des aktuellen Pakets erforderlich ist.
+   - Keine vorgezogene Komplettimplementierung eines fremden Entwicklungsstrangs.
+
+4. **Integrationsfaehigkeit ist Teil der Abnahme.**
+   - Neue Fachlogik muss so umgesetzt werden, dass sie mit den fuehrenden Querschnittsstaenden zusammengefuehrt werden kann.
+   - Relevante Konfliktfelder sind vor Abschluss zu pruefen: Modulrahmen, Navigation, Projektverwaltung, Firmen, Datenmodelle, UI-Registry, PDF-Registry, Editor-Persistenz, Lizenz-/Modulfreigabe und gemeinsame Dienste.
+
+5. **Stabile Querschnittspakete werden zur gemeinsamen Wahrheit.**
+   - Sobald ein gemeinsamer Baustein fachlich und technisch stabil abgeschlossen ist, soll er kontrolliert in den vorgesehenen Integrationsstand uebernommen werden.
+   - Fachmodule richten sich danach an diesem gemeinsamen Stand aus, statt eigene Varianten weiterzufuehren.
+
+6. **Kein Goal-Lauf darf stillschweigend die Integrationsstrategie aendern.**
+   - Branchwechsel, neue Integrationsbranches, Cherry-Pick-Strategien, breite Merges oder eine neue gemeinsame Basis muessen bewusst festgelegt werden.
+   - Kein Codex-Lauf soll aus Eigeninitiative mehrere parallele Entwicklungsstraenge grossflaechig zusammenfuehren.
+
+Fuer Goal-Auftraege gilt deshalb zusaetzlich als Pflichtblock:
+
+```text
+AUSGANGSBASIS / INTEGRATION
+- Welche Branches bzw. Entwicklungsstaende sind fuer dieses Paket relevant?
+- Welcher Stand ist die fuehrende Ausgangsbasis?
+- Welche gemeinsame Infrastruktur darf nicht dupliziert werden?
+- Von welchen noch offenen Querschnittspaketen haengt dieses Paket ab?
+- Welche Integrationskonflikte muessen vor Abschluss geprueft werden?
+```
+
+Diese Regel gilt fachmoduluebergreifend und nicht nur fuer `SiGeKo`.
