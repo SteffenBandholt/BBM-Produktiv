@@ -47,6 +47,7 @@ Nicht jedes Modul ist ein auswählbares Projektmodul:
 - `Woerterbuch` ist ein vorbereiteter Baustein innerhalb von `Diktieren`.
 - `Lizenzierung` ist in der Mutter-App ein Verwaltungs-/Maschinenraum-Bereich, in Kinder-Apps nur Lizenzpruefung und Status.
 - Die geplante Lizenzverwaltung wird als eigenes Adminmodul beschrieben: [docs/modules/lizenzverwaltung.md](docs/modules/lizenzverwaltung.md).
+- Das geplante Fachmodul `SiGeKo` wird im fuehrenden Fachkonzept beschrieben: [docs/modules/sigeko.md](docs/modules/sigeko.md).
 - `Settings`, `Updates`, `Backup` und `Diagnose` sind Maschinenraum oder Verwaltung, keine Projektmodule.
 - Die Projektverwaltung setzt den Projektkontext und oeffnet den Projekt-Arbeitsbereich.
 - Die Projektverwaltung ist nicht fachlicher Besitzer des `Protokoll`-Moduls.
@@ -116,6 +117,9 @@ Dazu koennen insbesondere gehoeren:
 Aktuell relevante Fachmodule:
 - `Protokoll`
 - `Restarbeiten` als erreichbarer, aber fachlich/funktional unfertiger Pilot-Scope fuer den UI-Editor
+
+Geplantes Fachmodul:
+- `SiGeKo`; fuehrendes Fachkonzept: [docs/modules/sigeko.md](docs/modules/sigeko.md)
 
 Diese bleiben fachlich getrennt.
 
