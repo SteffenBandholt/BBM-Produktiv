@@ -18,6 +18,17 @@ Diese Datei ist **kein** Architekturpapier und **kein** Codex-Ausfuehrungsmanual
 
 ## 1. Operative Arbeitsgrundsaetze
 
+### Rechnung #275 – Paket 4c-fix (2026-09-06)
+
+Container 5: angehaltenen 4c-Snapshotbestand geprüft und dessen DB-Blocker
+reproduzierbar korrigiert. Einzige neue Produktänderung gegenüber dem 4c-Stopp:
+beide Snapshotspalten in regulärer Neuanlage und historischem Neuaufbau ergänzt.
+Drei Fix-Prüfungen sowie unverändert neun 4c-Tests grün; relevante Regression
+wieder ohne neuen Fehler. Integration umfasst den zuvor uncommitteten 4c-Bestand
+plus Korrektur; Detailnachweis in `docs/RECHNUNG_REVISION_275.md` und #275.
+Kurzfahrplan: 4c-fix integrieren/dokumentieren; 4d separat; danach 4e.
+4d wurde nicht begonnen.
+
 ### Rechnung #275 – Paket 4b (2026-09-06)
 
 Container 5: minimale Auftrags-LV-Anwendungsgrenze auf Paket 4a / PR #313.

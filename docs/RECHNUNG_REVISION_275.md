@@ -1,6 +1,61 @@
 # Rechnung – Revision #275
 
-Stand: 2026-09-06, Paket 4b / R4 Auftrags-LV-Anwendungsgrenze.
+Stand: 2026-09-06, Paket 4c mit Korrekturpaket 4c-fix.
+
+## Paket 4c-fix – konsistente Snapshotspalten
+
+Ausgangsbasis: `main` / `b5b3b005aefa136c42070767e2f7482254ef2406`,
+einschließlich PR #313 und #314. Die zuvor angehaltene lokale 4c-Arbeit wurde
+gegen den Blockernachweis in #275 geprüft und der Fehler vor Korrektur erneut
+reproduziert: `invoices_current_migration` fehlte `order_snapshot_at`.
+
+Die Korrektur ergänzt ausschließlich die beiden bereits für 4c festgelegten
+Spalten `order_snapshot_at TEXT` und `order_snapshot_json TEXT` in zwei
+vorhandenen Tabellendefinitionen: reguläre Neuanlage und historischer
+Kompatibilitäts-Neuaufbau. Die additive Spaltenliste enthält sie bereits.
+Kopierspalten und Zielspalten sind damit konsistent. Bestehende Snapshotwerte
+werden unverändert kopiert; Altbelege ohne solche Werte behalten NULL.
+
+Gegenüber dem angehaltenen 4c-Stand sind nur diese vier Produktzeilen geändert.
+Service, Repository, IPC, Preload, Screen und die neun bestehenden Snapshottests
+sind per Dateihash unverändert. Weil 4c noch nicht committed/in main enthalten
+war, umfasst die Integration den geprüften vorhandenen 4c-Bestand plus Fix.
+Es entsteht keine zusätzliche Fachfunktion, keine neue UI und kein 4d-Scope.
+
+### Nachweis
+
+- Ursprünglichen Legacy-Migrationsfehler vor Korrektur reproduziert.
+- Drei Fix-Prüfungen grün: ursprünglicher realer Legacy-Test; frische, additive
+  und historisch neu aufgebaute DB; Erhalt bereits vorhandener Snapshotbytes.
+- Wiederholte Migration bewahrt Schema und Daten; historische Beleg-/Empfänger-/
+  Ausstellerwerte und fremde Bestandsspalten bleiben erhalten.
+- Der bisher im Volltest verdeckte Legacy-Test läuft jetzt zusätzlich vor dem
+  bekannten ui-editor-kit-Abbruch. Die ursprüngliche Suite bleibt erhalten.
+- Bestehende 4c-Pakettests unverändert 9/9 grün.
+- Relevante Rechnung-/Core-Regression: 92 grün, nur bekannte Screen-Erwartung
+  `Rechnungspositionen` rot. Der neue Migrationsfehler ist beseitigt.
+- Volltest: 455 grün / neun bekannte Einzelfehler, weiterhin 0/10 Gruppen durch
+  dokumentierte Baselinefehler und fehlende ui-editor-kit-Artefakte. Fehlersignaturen
+  wurden mit der main-Baseline identisch verglichen. Keine neue Regression.
+
+### Mitgeführter 4c-Vertrag
+
+`InvoiceService.createDraftFromOrder` liest ausschließlich über BillingOrderService
+einen bestätigten Auftrag innerhalb derselben SQLite-Transaktion und legt genau
+einen neuen Entwurf je Anlageaufruf an. Die Bindung erfolgt einmal pro Rechnung,
+nicht als Beschränkung auf eine Rechnung je Auftrag. Der Entwurf besitzt eigene
+Positions-IDs, Quell-IDs, unveränderte Vertragsnummern/Reihenfolge, Auftragskopf,
+Snapshotzeitpunkt und Snapshot-JSON. Er übernimmt keine Nachträge.
+
+Speichern, Vorschauen und Buchen prüfen den gespeicherten Snapshot und lesen die
+Auftragsquelle nicht erneut. Auftragsbezogene Quellfelder und Positionen bleiben
+über Service-/DB-Guards gesperrt. LEGACY_UNRESOLVED wird nicht nachträglich gebunden.
+Die freie Rechnung behält ihren bisherigen Positionsnormalisierer. Der bestehende
+Screen umgeht dessen Neunummerierung und Umsortierung bei gebundenen Snapshots.
+Diese bereits vorhandenen 4c-Anpassungen wurden im Fixlauf nicht erweitert.
+
+Paket 4d ist nicht begonnen. PR, finaler Main-Commit und CI-Nachweis werden nach
+Integration in #275 dokumentiert; das Gesamtissue bleibt offen.
 
 ## Paket 4b – minimale Anwendungsgrenze
 

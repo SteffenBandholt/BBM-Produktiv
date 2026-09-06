@@ -3,6 +3,8 @@
 const firmUsagesRepo = require("./firmUsagesRepo");
 
 const CURRENT_INVOICE_COLUMN_DEFINITIONS = Object.freeze([
+  ["order_snapshot_at", "TEXT"],
+  ["order_snapshot_json", "TEXT"],
   ["status", "TEXT NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'BOOKED', 'CANCELLED'))"],
   ["source_type", "TEXT NOT NULL DEFAULT 'FREE' CHECK (source_type IN ('FREE', 'FROM_ORDER'))"],
   ["document_type", "TEXT NOT NULL DEFAULT 'INVOICE' CHECK (document_type IN ('INVOICE', 'PARTIAL', 'FINAL', 'HOURLY'))"],
@@ -91,6 +93,8 @@ const CREATE_INVOICES_SQL = `
     source_order_number TEXT,
     source_order_date TEXT,
     order_binding_state TEXT NOT NULL DEFAULT 'NOT_APPLICABLE' CHECK (order_binding_state IN ('NOT_APPLICABLE', 'LEGACY_UNRESOLVED', 'LEGACY_SNAPSHOT', 'BOUND')),
+    order_snapshot_at TEXT,
+    order_snapshot_json TEXT,
     service_reference TEXT,
     construction_project TEXT,
     intro_text TEXT,
@@ -210,6 +214,8 @@ function rebuildIncompatibleLegacyInvoices(db, columns) {
       source_order_number TEXT,
       source_order_date TEXT,
       order_binding_state TEXT NOT NULL DEFAULT 'NOT_APPLICABLE',
+      order_snapshot_at TEXT,
+      order_snapshot_json TEXT,
       service_reference TEXT,
       construction_project TEXT,
       intro_text TEXT,
@@ -475,6 +481,43 @@ const CREATE_BILLING_ORDER_SCHEMA_SQL = `
   WHEN OLD.order_binding_state = 'LEGACY_UNRESOLVED' AND NEW.status = 'BOOKED'
   BEGIN
     SELECT RAISE(ABORT, 'invoice_order_binding_legacy_unresolved');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_invoices_order_snapshot_insert
+  BEFORE INSERT ON invoices
+  WHEN NEW.order_binding_state = 'BOUND'
+  BEGIN
+    SELECT CASE WHEN NEW.source_type IS NOT 'FROM_ORDER'
+      OR NEW.order_snapshot_at IS NULL OR NEW.order_snapshot_json IS NULL
+      OR NOT json_valid(NEW.order_snapshot_json)
+      THEN RAISE(ABORT, 'invoice_order_snapshot_invalid') END;
+    SELECT CASE WHEN json_extract(NEW.order_snapshot_json, '$.order.id') IS NOT NEW.source_order_id
+      OR json_extract(NEW.order_snapshot_json, '$.positions') IS NOT NEW.positions_json
+      OR NOT EXISTS (SELECT 1 FROM billing_orders WHERE id = NEW.source_order_id AND status = 'CONFIRMED')
+      THEN RAISE(ABORT, 'invoice_order_snapshot_invalid') END;
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_invoices_order_snapshot_no_rebind
+  BEFORE UPDATE OF order_binding_state ON invoices
+  WHEN NEW.order_binding_state = 'BOUND' AND OLD.order_binding_state != 'BOUND'
+  BEGIN
+    SELECT RAISE(ABORT, 'invoice_order_snapshot_create_only');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_invoices_order_snapshot_immutable
+  BEFORE UPDATE ON invoices
+  WHEN OLD.order_binding_state = 'BOUND' AND (
+    NEW.order_binding_state IS NOT OLD.order_binding_state
+    OR NEW.order_snapshot_json IS NOT OLD.order_snapshot_json OR NEW.order_snapshot_at IS NOT OLD.order_snapshot_at
+    OR NEW.positions_json IS NOT OLD.positions_json OR NEW.source_type IS NOT OLD.source_type
+    OR NEW.source_order_id IS NOT OLD.source_order_id OR NEW.source_order_number IS NOT OLD.source_order_number
+    OR NEW.source_order_date IS NOT OLD.source_order_date OR NEW.customer_firm_id IS NOT OLD.customer_firm_id
+    OR NEW.customer_ref_kind IS NOT OLD.customer_ref_kind OR NEW.customer_project_id IS NOT OLD.customer_project_id
+    OR NEW.project_id IS NOT OLD.project_id OR NEW.service_reference IS NOT OLD.service_reference
+    OR NEW.document_type IS NOT OLD.document_type OR NEW.installment_number IS NOT OLD.installment_number
+  )
+  BEGIN
+    SELECT RAISE(ABORT, 'invoice_order_snapshot_immutable');
   END;
 `;
 

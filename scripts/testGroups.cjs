@@ -72,6 +72,8 @@ const TEST_GROUPS = Object.freeze([
       ["rechnungIssuerProfile.test.cjs", "runRechnungIssuerProfileTests"],
       ["rechnungBillingOrderPersistence.test.cjs", "runRechnungBillingOrderPersistenceTests"],
       ["rechnungBillingOrderService.test.cjs", "runRechnungBillingOrderServiceTests"],
+      ["rechnungOrderSnapshot.test.cjs", "runRechnungOrderSnapshotTests"],
+      ["rechnungOrderSnapshotMigration.test.cjs", "runRechnungOrderSnapshotMigrationTests"],
       ["rechnungenDesignModule.test.cjs", "runRechnungenDesignModuleTests"],
       ["rechnungHeaderRules.test.cjs", "runRechnungHeaderRulesTests"],
       ["rechnungBooking.test.cjs", "runRechnungBookingTests"],
