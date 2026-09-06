@@ -3,6 +3,7 @@ import {
   getDerivedActiveModuleCatalog,
   getDerivedActiveModuleIds,
 } from "./moduleCatalog.js";
+import { deriveActiveModuleIds } from "./moduleRouteRuntime.js";
 
 const DEFAULT_ACTIVE_MODULE_IDS = Object.freeze(getActiveModuleIds());
 
@@ -57,6 +58,12 @@ export function getCachedActiveModuleCatalog() {
   return getDerivedActiveModuleCatalog(getCachedActiveModuleIds());
 }
 
+export function findCachedActiveModuleEntry(moduleId) {
+  const normalizedModuleId = String(moduleId || "").trim();
+  if (!normalizedModuleId) return null;
+  return getCachedActiveModuleCatalog().find((entry) => entry?.moduleId === normalizedModuleId) || null;
+}
+
 export function getCachedActiveModuleSource() {
   return cachedActiveModuleSource;
 }
@@ -72,15 +79,18 @@ export async function refreshCachedActiveModuleAccess({ force = false } = {}) {
     return await cachedActiveModulePromise;
   }
 
-  const packagedRuntime = await isPackagedRuntime();
-  if (packagedRuntime === false) {
-    return setCachedActiveModuleIds(DEFAULT_ACTIVE_MODULE_IDS, "dev");
-  }
-
   const root = typeof window !== "undefined" ? window : globalThis;
   const api = root?.bbmDb || {};
+  const packagedRuntime = await isPackagedRuntime();
+
   if (typeof api.licenseGetStatus !== "function") {
-    return setCachedActiveModuleIds(DEFAULT_ACTIVE_MODULE_IDS, "default");
+    if (packagedRuntime === true) {
+      return setCachedActiveModuleIds([], "license-api-missing");
+    }
+    return setCachedActiveModuleIds(
+      DEFAULT_ACTIVE_MODULE_IDS,
+      packagedRuntime === false ? "dev-build" : "default"
+    );
   }
 
   cachedActiveModulePromise = (async () => {
@@ -94,9 +104,21 @@ export async function refreshCachedActiveModuleAccess({ force = false } = {}) {
         return setCachedActiveModuleIds([], "license-disabled");
       }
 
-      return setCachedActiveModuleIds(status.modules || [], "license");
+      const licensedModuleIds = Array.isArray(status.modules)
+        ? status.modules
+        : Array.isArray(status?.license?.modules)
+          ? status.license.modules
+          : [];
+      const activeModuleIds = deriveActiveModuleIds(
+        DEFAULT_ACTIVE_MODULE_IDS,
+        licensedModuleIds
+      );
+      return setCachedActiveModuleIds(activeModuleIds, "product-build-license");
     } catch (_err) {
-      return setCachedActiveModuleIds(DEFAULT_ACTIVE_MODULE_IDS, "fallback");
+      if (packagedRuntime === true) {
+        return setCachedActiveModuleIds([], "license-error");
+      }
+      return setCachedActiveModuleIds(DEFAULT_ACTIVE_MODULE_IDS, "dev-fallback");
     } finally {
       cachedActiveModulePromise = null;
     }
