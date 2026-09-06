@@ -191,9 +191,7 @@ export default class RestarbeitenScreen {
       noteText: "",
       isLoading: false,
       error: "",
-      printStatus: "",
     };
-    this._lastRestarbeitNotePrint = null;
     this.quicklanePinned = false;
   }
 
@@ -624,7 +622,6 @@ export default class RestarbeitenScreen {
       noteText: "",
       isLoading: true,
       error: "",
-      printStatus: "",
     };
     this._renderNotesPopup();
     try {
@@ -653,7 +650,6 @@ export default class RestarbeitenScreen {
     const restarbeitId = normalizeText(this.notesPopup.restarbeitId);
     if (!restarbeitId || !text) return;
     this.notesPopup.error = "";
-    this.notesPopup.printStatus = "";
     try {
       await createRestarbeitNote(restarbeitId, text);
       this.notesPopup.noteText = "";
@@ -661,25 +657,6 @@ export default class RestarbeitenScreen {
     } catch (err) {
       this.notesPopup.error = err?.message || String(err);
     }
-    this._renderNotesPopup();
-  }
-
-  printRestarbeitNoteHistory(restarbeitId = this.notesPopup.restarbeitId) {
-    const id = normalizeText(restarbeitId);
-    const result = {
-      ok: Boolean(id),
-      status: id ? "prepared" : "missing-restarbeit",
-      mode: "restarbeit-note-history",
-      restarbeitId: id,
-      notes: Array.isArray(this.notesPopup.notes) ? [...this.notesPopup.notes] : [],
-    };
-    this._lastRestarbeitNotePrint = result;
-    return result;
-  }
-
-  _printRestarbeitNoteHistory() {
-    const result = this.printRestarbeitNoteHistory();
-    this.notesPopup.printStatus = result.ok ? "Druck vorbereitet." : "Kein Datensatz ausgewählt.";
     this._renderNotesPopup();
   }
 
@@ -765,22 +742,15 @@ export default class RestarbeitenScreen {
       addBtn.disabled = !normalizeText(input.value);
     });
     addBtn.addEventListener("click", () => this._addNoteFromPopup(input.value));
+    actions.appendChild(addBtn);
 
-    const printBtn = document.createElement("button");
-    printBtn.type = "button";
-    applyPopupButtonStyle(printBtn);
-    printBtn.textContent = "Drucken";
-    printBtn.setAttribute("data-bbm-restarbeiten-note-action", "print");
-    printBtn.addEventListener("click", () => this._printRestarbeitNoteHistory());
-    actions.append(addBtn, printBtn);
-
-    const status = document.createElement("div");
-    status.className = "bbm-restarbeiten-notes-popup__status";
-    status.textContent = this.notesPopup.printStatus || "";
+    const printAvailability = document.createElement("div");
+    printAvailability.className = "bbm-restarbeiten-notes-popup__print-availability";
+    printAvailability.textContent = "Notizdruck ist derzeit nicht verfügbar.";
 
     const footer = document.createElement("div");
     footer.className = "bbm-restarbeiten-notes-popup__footer bbm-popup-footer";
-    footer.append(status, actions);
+    footer.append(printAvailability, actions);
 
     body.append(summary, history, input);
     card.append(header, body, footer);

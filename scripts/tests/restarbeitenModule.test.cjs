@@ -1257,7 +1257,7 @@ async function runRestarbeitenModuleTests(run) {
     }
   });
 
-  await run("Restarbeiten: Notiz-Popup oeffnet, fuegt Notiz hinzu, bleibt offen und bereitet Druck vor", async () => {
+  await run("Restarbeiten: Notiz-Popup bleibt offen und kennzeichnet nicht verfügbaren Druck ehrlich", async () => {
     const mod = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
     );
@@ -1328,11 +1328,9 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(collectText(doc.body).includes("Erste Notiz zur Restarbeit"), true);
       assert.equal(Boolean(screen.notesOverlay), true);
 
-      findByData(doc.body, "data-bbm-restarbeiten-note-action", "print").click();
-      assert.equal(screen._lastRestarbeitNotePrint.status, "prepared");
-      assert.equal(screen._lastRestarbeitNotePrint.mode, "restarbeit-note-history");
-      assert.equal(screen._lastRestarbeitNotePrint.restarbeitId, "ra-1");
-      assert.equal(collectText(doc.body).includes("Druck vorbereitet."), true);
+      assert.equal(findByData(doc.body, "data-bbm-restarbeiten-note-action", "print"), null);
+      assert.equal(collectText(doc.body).includes("Notizdruck ist derzeit nicht verfügbar."), true);
+      assert.equal(collectText(doc.body).includes("Druck vorbereitet."), false);
 
       findByData(doc.body, "data-bbm-restarbeiten-note-action", "close").click();
       assert.equal(screen.notesOverlay, null);
