@@ -79,6 +79,7 @@ async function runModuleIpcRegistrationTests(run) {
     const main = read("src/main/main.js");
     assert.equal(main.includes('require("./ipc/meetingsIpc")'), false);
     assert.equal(main.includes('require("./ipc/topsIpc")'), false);
+    assert.match(main, /registerProjectParticipantsIpc\(\)/);
     assert.equal(main.includes('require("./ipc/restarbeitenIpc")'), false);
     assert.equal(main.includes('require("./ipc/rechnungIpc")'), false);
     assert.equal(main.includes("registerRechnungIpc({ ipcMain })"), false);
