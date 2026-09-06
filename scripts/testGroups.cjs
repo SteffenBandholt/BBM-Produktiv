@@ -4,6 +4,7 @@ const TEST_GROUPS = Object.freeze([
     label: "Kern, Protokoll und Projektfirmen",
     includeStoragePathTests: true,
     suites: Object.freeze([
+      ["protokollRevision272Path.test.cjs", "runProtokollRevision272PathTests"],
       ["gateBRegression.test.cjs", "runGateBRegressionTests"],
       ["ownOrganizationBoundary.test.cjs", "runOwnOrganizationBoundaryTests"],
       ["moduleServiceProviders.test.cjs", "runModuleServiceProviderTests"],
@@ -24,7 +25,6 @@ const TEST_GROUPS = Object.freeze([
       ["firmDirectoryIpc.test.cjs", "runFirmDirectoryIpcTests"],
       ["projectTransferFirmLogic.test.cjs", "runProjectTransferFirmLogicTests"],
       ["projectFirmsLayout.test.cjs", "runProjectFirmsLayoutTests"],
-      ["protokollRevision272Path.test.cjs", "runProtokollRevision272PathTests"],
       ["protokollRouterFallback.test.cjs", "runProtokollRouterFallbackTests"],
       ["protokollProjectEntryRouting.test.cjs", "runProtokollProjectEntryRoutingTests"],
       ["protokollUiEditorElements.test.cjs", "runProtokollUiEditorElementsTests"],
