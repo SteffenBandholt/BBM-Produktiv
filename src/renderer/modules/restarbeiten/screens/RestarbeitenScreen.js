@@ -195,7 +195,6 @@ export default class RestarbeitenScreen {
     };
     this._lastRestarbeitNotePrint = null;
     this.quicklanePinned = false;
-    this.outputPreviewOpen = false;
   }
 
   render() {
@@ -313,11 +312,6 @@ export default class RestarbeitenScreen {
   async openRestarbeitenOutput({ mode = "print" } = {}) {
     if (mode !== "print") return { ok: false, error: `Ausgabeart ${String(mode)} ist nicht verfügbar.` };
     return this.openRestarbeitenPreview();
-  }
-
-  closeRestarbeitenPreview() {
-    this.outputPreviewOpen = false;
-    this._renderShell();
   }
 
   async openRestarbeitPhotos(restarbeitId = this.selectedId) {
@@ -807,7 +801,6 @@ export default class RestarbeitenScreen {
     this.root.replaceChildren();
     const filteredRows = this._getFilteredItems();
     this.viewItems = toRestarbeitenListItems(filteredRows);
-    this.root.setAttribute("data-output-preview", this.outputPreviewOpen ? "true" : "false");
     const responsibleOptions = this.responsibleFirms
       .map((firm) => ({
         value: normalizeText(firm.key || `${firm.kind}:${firm.id}`),
@@ -852,38 +845,36 @@ export default class RestarbeitenScreen {
     this.root.append(header);
     this._mountQuicklane(quicklane);
 
-    if (!this.outputPreviewOpen) {
-      const main = buildRestarbeitenMainBody({
-        items: this.viewItems,
-        selectedId: this.selectedId,
-        showAmpel: this.showAmpelInList,
-        showLongtext: this.showLongtextInList,
-        onSelect: (id) => this._selectItem(id),
-        onPhotos: (id) => this.openRestarbeitPhotos(id),
-      });
-      const editbox = buildRestarbeitenEditbox({
-        settings: this.settings,
-        textLimits: this.textLimits,
-        draft: this.draft,
-        showAmpel: this.showAmpelInList,
-        responsibleOptions,
-        onNew: () => this._newDraft(),
-        onDraftChange: (patch, options) => this._updateDraft(patch, options),
-        onDelete: () => this._deleteDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
-        onNote: () => this._openNotesPopup().catch((err) => this._setStubMessage(err?.message || String(err))),
-        onAutoSave: () => this._autoSaveDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
-      });
-      const workspace = document.createElement("div");
-      workspace.className = "bbm-restarbeiten-workspace";
-      const listPane = document.createElement("div");
-      listPane.className = "bbm-restarbeiten-workspace__list";
-      const editPane = document.createElement("div");
-      editPane.className = "bbm-restarbeiten-workspace__edit";
-      listPane.appendChild(main);
-      editPane.appendChild(editbox);
-      workspace.append(listPane, editPane);
-      this.root.appendChild(workspace);
-    }
+    const main = buildRestarbeitenMainBody({
+      items: this.viewItems,
+      selectedId: this.selectedId,
+      showAmpel: this.showAmpelInList,
+      showLongtext: this.showLongtextInList,
+      onSelect: (id) => this._selectItem(id),
+      onPhotos: (id) => this.openRestarbeitPhotos(id),
+    });
+    const editbox = buildRestarbeitenEditbox({
+      settings: this.settings,
+      textLimits: this.textLimits,
+      draft: this.draft,
+      showAmpel: this.showAmpelInList,
+      responsibleOptions,
+      onNew: () => this._newDraft(),
+      onDraftChange: (patch, options) => this._updateDraft(patch, options),
+      onDelete: () => this._deleteDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
+      onNote: () => this._openNotesPopup().catch((err) => this._setStubMessage(err?.message || String(err))),
+      onAutoSave: () => this._autoSaveDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
+    });
+    const workspace = document.createElement("div");
+    workspace.className = "bbm-restarbeiten-workspace";
+    const listPane = document.createElement("div");
+    listPane.className = "bbm-restarbeiten-workspace__list";
+    const editPane = document.createElement("div");
+    editPane.className = "bbm-restarbeiten-workspace__edit";
+    listPane.appendChild(main);
+    editPane.appendChild(editbox);
+    workspace.append(listPane, editPane);
+    this.root.appendChild(workspace);
 
     if (this.isLoading || this.error) {
       const status = document.createElement("div");
