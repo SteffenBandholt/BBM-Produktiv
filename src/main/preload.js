@@ -13,6 +13,9 @@ function _wrapIdArg(name, objKey) {
 }
 
 contextBridge.exposeInMainWorld("bbmDb", {
+  // SiGeKo: technische Anwendungsgrenze, noch keine Fachoperationen.
+  sigekoGetModuleInfo: () => ipcRenderer.invoke("sigeko:getModuleInfo"),
+
   // ============================================================
   // Projekte
   // ============================================================

@@ -89,10 +89,9 @@ async function runModuleIpcRegistrationTests(run) {
   await run("Paket 4: jedes installierte Fachmodul besitzt einen kleinen Registrar", () => {
     const registry = JSON.parse(read("src/main/module-registry.json"));
     const registrarCatalog = require(path.join(process.cwd(), "src/main/moduleIpcRegistrars.js"));
-    const moduleDirs = { protokoll: "protokoll", restarbeiten: "restarbeiten", rechnung: "rechnung" };
-    for (const [moduleId, definition] of Object.entries(registry.modules)) {
+    for (const definition of Object.values(registry.modules)) {
       assert.equal(typeof registrarCatalog[definition.ipcRegistrar], "function");
-      const source = read(`src/main/modules/${moduleDirs[moduleId]}/registerIpc.js`);
+      const source = read(`src/main/modules/${definition.ipcRegistrar}/registerIpc.js`);
       assert.match(source, /function registerIpc/);
       assert.equal(source.includes("ipcMain.handle"), false);
     }
