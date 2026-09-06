@@ -104,6 +104,7 @@ const TEST_GROUPS = Object.freeze([
     id: "restarbeiten-v2",
     label: "Restarbeiten-V2 und Einstellungen",
     suites: Object.freeze([
+      ["restarbeitenV2Revision273.test.cjs", "runRestarbeitenV2Revision273Tests"],
       ["restarbeitenV2DevAccess.test.cjs", "runRestarbeitenV2DevAccessTests"],
       ["restarbeitenV2DataContract.test.cjs", "runRestarbeitenV2DataContractTests"],
       ["restarbeitenV2DataSource.test.cjs", "runRestarbeitenV2DataSourceTests"],
