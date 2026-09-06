@@ -49,6 +49,15 @@ function buildProtokollModulePresentation() {
   });
 }
 
+function buildProtokollRoutingAdapter() {
+  return Object.freeze({
+    project: async ({ router, projectId, options }) => {
+      if (!router || typeof router.openProjectProtocol !== "function") return false;
+      return await router.openProjectProtocol(projectId, options || {});
+    },
+  });
+}
+
 export function getProtokollModuleEntry() {
   return createModuleDescriptor({
     moduleId: PROTOKOLL_MODULE_ID,
@@ -65,6 +74,7 @@ export function getProtokollModuleEntry() {
       ]),
     }),
     navigation: buildProtokollModuleNavigation(),
+    routing: buildProtokollRoutingAdapter(),
     ipcRegistrar: "protokoll",
     migrationRegistrar: "protokoll",
     requiredCapabilities: Object.freeze([
