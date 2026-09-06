@@ -1,6 +1,101 @@
 # Rechnung – Revision #275
 
-Stand: 2026-09-06, Paket 4c mit Korrekturpaket 4c-fix.
+Stand: 2026-09-06, Paket 4d – Nachträge und Ursprungsreferenzen.
+
+## Paket 4d – Nachtragszugang am bestätigten Auftrag
+
+Basis: main `62bf2fb99a61a0bbd6b39a10f0aba7fd8d38285b`; PR #313, #314 und
+#315 sind enthalten. Container 5, ausschließlich Rechnungsfachlogik. Der aktuelle
+4d-Auftrag begrenzt den älteren Gesamtvertrag: Nachtragsübernahme in Rechnungen
+und sichtbare Darstellung sind hier ausdrücklich nicht enthalten.
+
+### Anwendungsgrenze
+
+Der bestehende `BillingOrderService` bleibt der einzige produktive Importeur des
+`BillingOrderRepository`. Zwei Operationen ergänzen die vorhandene Auftragsgrenze:
+
+| Operation | Payload | Ergebnis |
+| --- | --- | --- |
+| `createDraftAmendment` | `{ id, amendment }` | DRAFT mit serverseitiger UUID; Nummer, Sequenz und Bestätigungszeitpunkt NULL |
+| `confirmAmendment` | `{ id, amendment_id }` | bestätigter Nachtrag mit atomar vergebener Nummer und Zeitstempel |
+
+`id` bezeichnet immer die Auftrags-UUID. `amendment` enthält ausschließlich
+`relates_to_order_position_id`, Kurz-/Langtext und die bereits vorhandenen Mengen-/
+Preis-/Steuer-/NEP-Felder. Client-IDs, Nummern, Sequenzen, Status, Zeitstempel,
+Vertragsnummern und Sortierungsfelder werden nicht akzeptiert. Gemeinsame
+Fachwerte verwenden dieselbe bestehende Validierung wie Vertragspositionen.
+
+Vor Anlage und Bestätigung werden Auftrag und Referenz innerhalb einer
+Schreibtransaktion geprüft: nur CONFIRMED, nur eine ursprüngliche service-Position
+dieses Auftrags. Titel, Notizen, Nachtrags-IDs, fremde Aufträge, fehlende IDs und
+LEGACY_UNRESOLVED-Payloads werden abgewiesen. Bestätigung prüft gespeicherte
+Fachwerte erneut; ein ungültiger Altentwurf bleibt unverändert DRAFT.
+
+Der bestehende Rechnungs-IPC-Registrar erhält die Kanäle
+`rechnung:order:amendment:createDraft` und `rechnung:order:amendment:confirm`.
+Preload bietet `rechnungOrderAmendmentCreateDraft(id, amendment)` und
+`rechnungOrderAmendmentConfirm(id, amendment_id)`. Beide Zugriffe unterliegen
+modularer Aktivierung und aktueller fachlicher Lizenzprüfung. Kein UI-Neubau.
+
+### Atomare Nummernvergabe und Bestand
+
+Die bestehende SQLite-IMMEDIATE-Transaktionshülle umfasst Serviceprüfung,
+Ermittlung von MAX(sequence_no) + 1 pro Auftrag und abschließendes UPDATE.
+`sequence_no`, `amendment_number` per `printf('N %02d', sequence_no)`, Status und
+Zeitstempel werden gemeinsam geschrieben. Erst dann wird committed. Zwei
+Verbindungen können denselben Höchstwert nicht parallel reservieren. Die
+vorhandenen UNIQUE-Regeln sichern Auftrag/Sequenz und Auftrag/Kennung zusätzlich.
+
+Unbestätigte Entwürfe verbrauchen keine Nummer. Abgewiesene oder zurückgerollte
+Bestätigungen ebenfalls nicht. Erneute Bestätigung desselben Entwurfs wird
+abgewiesen. Bereits vergebene Nummern, auch aus bestehendem CANCELLED-Bestand,
+bleiben belegt. Es gibt keine automatische Neunummerierung historischen Bestands.
+
+Keine Schemaänderung, keine zweite Persistenz, keine neue DB-Datei. Bestehende
+4a-Trigger schützen UUIDs, Ursprungsreferenzen und bestätigte Nachtragsinhalte.
+Ein Änderungs-/Lösch-/Stornierungsservice ist nicht Bestandteil dieser Grenze.
+
+Das Vertrags-LV bleibt in `positions` vollständig unverändert. Nachträge stehen
+separat in `amendments`, bestätigte in sequence_no-Reihenfolge, unnummerierte
+Entwürfe danach. Sie sind fachlich der nachgelagerte LV-Teil und erhalten keinen
+Vertrags-sort_index. Die Ursprungsnummer bleibt über die stabile UUID der
+unveränderlichen Vertragsposition nachvollziehbar. Eine zusammengeführte UI-
+oder Rechnungsliste wird in diesem Paket nicht erzeugt.
+
+4c bleibt unverändert: Rechnungssnapshots werden weder nachträglich aktualisiert
+noch um Nachträge ergänzt. Auch eine neue Rechnung übernimmt in diesem Paket
+weiterhin ausschließlich das Vertrags-LV. Der umfassendere Nachtrags-Snapshot-
+Vertrag benötigt einen gesondert freigegebenen Anschlussauftrag.
+
+### Tests / Abgrenzung
+
+- 8/8 neue Fach-/Persistenz-/IPC-/Guard-Prüfungen grün.
+- Echter Konkurrenznachweis: vier getrennte Electron-Prozesse mit unabhängigen
+  SQLite-Verbindungen auf derselben Datei konkurrieren um die Schreibsperre;
+  danach N 01 bis N 04 ohne Duplikat oder Lücke. Zwei weitere Prozesse bestätigen
+  denselben Entwurf: genau einer erfolgreich (N 05), der zweite abgewiesen;
+  anschließender Entwurf erhält N 06.
+- Injizierter Write-Abbruch: kompletter Rollback, nächster Erfolg erhält N 01.
+- Bestandsnachweis: vorhandene N 01/N 02 bleiben erhalten; nächste Vergabe N 03;
+  wiederholte Migration bewahrt bestätigte und unbestätigte Nachtragsdaten.
+- Vertrags-LV und vorhandene reale 4c-Rechnungszeile bleiben vollständig identisch.
+- Bestehende 4c-Prüfungen 9/9 und 4c-fix-Prüfungen 3/3 unverändert grün.
+- Relevante Rechnungs-/Migrations-/Core-Gruppe: 100 grün, nur die bekannte
+  historische Screen-Text-Erwartung `Rechnungspositionen` rot.
+- Frische main-Baseline: 455 grüne Einzelprüfungen / 9 bekannte Fehler.
+- Volltest nach Änderung: 463 grün / identische 9 Fehler. Fehlertitel und
+  ui-editor-kit-Ladeabbrüche maschinell identisch verglichen; 0/10 Gesamtgruppen.
+- Keine neue Regression. Keine visuellen UI- oder Windows-Buildtests behauptet.
+
+Die alten 4a/4b-Assertions zur ausdrücklichen Abwesenheit der erst für 4d
+vorgesehenen Operationen wurden dem beauftragten Funktionsausbau angepasst.
+Die ursprünglichen Persistenz-/Fachguards bleiben geprüft. Ein erster Testaufbau
+verwendete doppelte Auftragsnummern und wurde im Fixture korrigiert; kein
+Produktfehler. PR-/CI-/Main-Commit-Nachweis folgt nach Integration in #275.
+
+Paket 4e ist nicht begonnen. Das Gesamtissue #275 bleibt offen.
+
+Die folgenden Abschnitte dokumentieren die damaligen Einzelpaketstände.
 
 ## Paket 4c-fix – konsistente Snapshotspalten
 

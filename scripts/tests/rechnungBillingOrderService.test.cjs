@@ -41,7 +41,7 @@ async function runRechnungBillingOrderServiceTests(run) {
       assert.equal(service.repository, undefined);
       assert.equal(db.prepare("SELECT COUNT(*) AS n FROM invoices").get().n, 0);
       assert.equal(db.prepare("SELECT COUNT(*) AS n FROM billing_order_amendments").get().n, 0);
-      assert.equal(service.createDraftAmendment, undefined);
+      // Nachtragsoperationen ergänzt in Paket 4d; der unveränderte Auftrag hat keine Nachträge.
     } finally { db.close(); }
   });
 
@@ -161,7 +161,7 @@ async function runRechnungBillingOrderServiceTests(run) {
         assert.equal(name, "electron");
         return { contextBridge: { exposeInMainWorld: (key, value) => { if (key === "bbmDb") api = value; } }, ipcRenderer: { invoke: (channel, payload) => handlers.get(channel)({}, payload), on() {} } };
       }, console, process: { env: {} } });
-      assert.deepEqual([...handlers.keys()].filter(k => k.startsWith("rechnung:order:")), ["rechnung:order:get", "rechnung:order:createDraft", "rechnung:order:addPosition", "rechnung:order:confirm"]);
+      assert.deepEqual([...handlers.keys()].filter(k => k.startsWith("rechnung:order:")), ["rechnung:order:get", "rechnung:order:createDraft", "rechnung:order:addPosition", "rechnung:order:confirm", "rechnung:order:amendment:createDraft", "rechnung:order:amendment:confirm"]);
       const created = await api.rechnungOrderCreateDraft(header());
       assert.equal(created.ok, true);
       const { id } = created.data;

@@ -18,6 +18,18 @@ Diese Datei ist **kein** Architekturpapier und **kein** Codex-Ausfuehrungsmanual
 
 ## 1. Operative Arbeitsgrundsaetze
 
+### Rechnung #275 – Paket 4d (2026-09-06)
+
+Container 5: Nachtragsentwurf und Bestätigung über den bestehenden BillingOrderService.
+Atomare Nummernfolge pro Auftrag, stabile Ursprungs-Serviceposition, unverändertes
+Vertrags-LV und unveränderte 4c-Snapshots. Vorhandene 4a-Persistenz und DB-Guards
+bleiben bestehen; keine Schema-/UI-/Core-Änderung. Acht Pakettests einschließlich
+konkurrierender SQLite-Prozesse grün; relevante Regression 100 grün / bekannte
+Screen-Baseline rot. Volltest 463 grün / unveränderte neun Baselinefehler.
+Detailnachweis in `docs/RECHNUNG_REVISION_275.md` und #275.
+Kurzfahrplan: 4d integrieren/dokumentieren; 4e nur nach gesondertem Auftrag;
+weiterer Rechnungsfachscope anschließend gemäß #275. 4e nicht begonnen.
+
 ### Rechnung #275 – Paket 4c-fix (2026-09-06)
 
 Container 5: angehaltenen 4c-Snapshotbestand geprüft und dessen DB-Blocker

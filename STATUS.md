@@ -1,3 +1,14 @@
+## Rechnung #275 – Paket 4d (2026-09-06)
+
+Auf main-Basis 62bf2fb (PR #313–#315) Nachtragsanlage und atomare Bestätigung
+über bestehenden Auftragsservice ergänzt. 8/8 Pakettests einschließlich echter
+Prozesskonkurrenz, Ursprungs-/Lizenzguards und Rechnungssnapshot-Erhalt grün.
+Relevante Regression: 100 grün / eine bekannte Screen-Baseline rot. Volltest:
+463 grün / dieselben neun Baselinefehler und ui-editor-kit-Abbrüche. Keine neue
+Regression; keine Schema-/UI-/Core-Änderung. Details: docs/RECHNUNG_REVISION_275.md.
+PR, CI und Main-Commit werden in #275 nach Integration dokumentiert.
+Paket 4e nicht begonnen; #275 bleibt offen.
+
 # STATUS.md â€” BBM-Produktiv
 
 ## 2026-09-06 – Rechnung #275 Paket 4c-fix

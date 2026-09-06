@@ -194,6 +194,25 @@ class BillingOrderRepository {
     return db.prepare("SELECT * FROM billing_order_amendments WHERE id = ?").get(id);
   }
 
+  confirmAmendment(orderId, amendmentId) {
+    const db = this._db();
+    return this.withTransaction(() => {
+      // Acquire the write lock before reading the sequence, including cancelled numbers.
+      const { next } = db.prepare("SELECT COALESCE(MAX(sequence_no), 0) + 1 AS next FROM billing_order_amendments WHERE order_id = ?").get(orderId);
+      if (!Number.isSafeInteger(next) || next < 1) throw new Error("billing_order_amendment_sequence_invalid");
+      const now = this.clock();
+      const result = db.prepare(`
+        UPDATE billing_order_amendments
+        SET sequence_no = @sequence, amendment_number = printf('N %02d', @sequence),
+            status = 'CONFIRMED', confirmed_at = @now, updated_at = @now
+        WHERE id = @id AND order_id = @order_id AND status = 'DRAFT'
+          AND EXISTS (SELECT 1 FROM billing_orders WHERE id = @order_id AND status = 'CONFIRMED')
+      `).run({ id: amendmentId, order_id: orderId, sequence: next, now });
+      if (result.changes !== 1) throw new Error("billing_order_amendment_not_confirmable");
+      return db.prepare("SELECT * FROM billing_order_amendments WHERE id = ?").get(amendmentId);
+    });
+  }
+
 }
 
 module.exports = { BillingOrderRepository };

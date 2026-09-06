@@ -38,6 +38,8 @@ function registerRechnungIpc({
   handle("rechnung:order:createDraft", (data) => billingOrderService.createDraft(data));
   handle("rechnung:order:addPosition", (data) => billingOrderService.addPosition(data));
   handle("rechnung:order:confirm", (data) => billingOrderService.confirmOrder(data));
+  handle("rechnung:order:amendment:createDraft", (data) => billingOrderService.createDraftAmendment(data));
+  handle("rechnung:order:amendment:confirm", (data) => billingOrderService.confirmAmendment(data));
   handle("rechnung:list", () => service.list(), "list");
   handle("rechnung:get", (data) => service.get(data.id));
   handle("rechnung:createDraft", (data) => service.createDraft(data));
