@@ -225,4 +225,4 @@ async function runRechnungOrderSnapshotTests(run) {
   });
 }
 
-module.exports = { runRechnungOrderSnapshotTests };
+module.exports = { runRechnungOrderSnapshotTests, orderSnapshotFixture: fixture };

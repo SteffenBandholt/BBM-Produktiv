@@ -375,7 +375,13 @@ export default class RechnungScreen {
       const row = node("article", `rechnung-lv-position${entry.id === this.selectedPositionId ? " is-selected" : ""}${entry.is_title ? " is-title" : ""}${isMoveTarget ? " is-move-target" : ""} is-depth-${Math.min(depth, 4)}`);
       const select = node("button", "rechnung-lv-position__select"); select.type = "button"; select.onclick = () => this._handlePositionRowClick(entry);
       const amount = calculatePositionTotalCents(entry);
-      select.append(node("span", "rechnung-lv-position__number", entry.position_origin === "CONTRACT" ? entry.position_number : entry.type === POSITION_TYPES.NOTE ? "Hinweis" : entry.type === POSITION_TYPES.HEADING && !entry.is_title ? "Text" : entry.position_number || ""), node("strong", "rechnung-lv-position__short", entry.short_text)); row.append(select);
+      const shortText = node("strong", "rechnung-lv-position__short", entry.short_text);
+      let content = shortText;
+      if (entry.position_origin === "AMENDMENT") {
+        content = node("span", "rechnung-lv-position__amendment-content");
+        content.append(node("span", "rechnung-lv-position__origin", `Nachtragspos. zu Pos.: ${entry.relates_to_position_number}`), shortText);
+      }
+      select.append(node("span", "rechnung-lv-position__number", ["CONTRACT", "AMENDMENT"].includes(entry.position_origin) ? entry.position_number : entry.type === POSITION_TYPES.NOTE ? "Hinweis" : entry.type === POSITION_TYPES.HEADING && !entry.is_title ? "Text" : entry.position_number || ""), content); row.append(select);
       if (entry.long_text) row.append(node("p", "rechnung-lv-position__long", entry.long_text));
       if (entry.type === POSITION_TYPES.SERVICE) {
         const quantity = entry.quantity === null || entry.quantity === undefined || entry.quantity === "" ? "" : formatQuantityForDisplay(entry.quantity, this.quantityDecimalPlaces);

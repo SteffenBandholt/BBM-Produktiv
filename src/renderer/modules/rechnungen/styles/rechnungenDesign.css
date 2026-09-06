@@ -426,6 +426,8 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-lv-position__select:hover .rechnung-lv-position__short { color: var(--invoice-color-primary); }
 .rechnung-lv-position__number { color: var(--invoice-color-muted); font-variant-numeric: tabular-nums; }
 .rechnung-lv-position__short { font-size: 13px; line-height: 1.4; }
+.rechnung-lv-position__amendment-content { display: grid; gap: 3px; min-width: 0; }
+.rechnung-lv-position__origin { color: var(--invoice-color-muted); font-size: 11px; line-height: 1.4; }
 .rechnung-lv-position__long { margin-left: 52px; color: var(--invoice-color-muted); font-size: 12px; line-height: 1.5; }
 .rechnung-lv-position__long summary { cursor: pointer; color: var(--invoice-color-primary); }
 .rechnung-lv-position__long p { margin: 5px 0 0; white-space: pre-line; }
