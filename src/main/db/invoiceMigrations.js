@@ -40,6 +40,34 @@ const CURRENT_INVOICE_COLUMN_SET = new Set(CURRENT_INVOICE_COLUMN_NAMES);
 const LEGACY_REQUIRED_COLUMNS = Object.freeze(["customer_firm_id", "issuer_snapshot_json", "recipient_snapshot_json"]);
 const LEGACY_MIGRATION_TABLE = "invoices_current_migration";
 
+const CREATE_INVOICE_ISSUER_PROFILES_SQL = `
+  CREATE TABLE IF NOT EXISTS invoice_issuer_profiles (
+    id TEXT PRIMARY KEY,
+    legal_name TEXT NOT NULL DEFAULT '',
+    additional_name TEXT NOT NULL DEFAULT '',
+    street TEXT NOT NULL DEFAULT '',
+    zip TEXT NOT NULL DEFAULT '',
+    city TEXT NOT NULL DEFAULT '',
+    country TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL DEFAULT '',
+    website TEXT NOT NULL DEFAULT '',
+    logo_path TEXT NOT NULL DEFAULT '',
+    tax_number TEXT NOT NULL DEFAULT '',
+    vat_id TEXT NOT NULL DEFAULT '',
+    iban TEXT NOT NULL DEFAULT '',
+    bic TEXT NOT NULL DEFAULT '',
+    bank_name TEXT NOT NULL DEFAULT '',
+    commercial_register TEXT NOT NULL DEFAULT '',
+    register_number TEXT NOT NULL DEFAULT '',
+    managing_director TEXT NOT NULL DEFAULT '',
+    legal_notice TEXT NOT NULL DEFAULT '',
+    initialized_from_own_organization_at TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )
+`;
+
 const CREATE_INVOICES_SQL = `
   CREATE TABLE IF NOT EXISTS invoices (
     id TEXT PRIMARY KEY,
@@ -351,6 +379,39 @@ function migrateDraftCustomerRefs(db) {
   return { globalRolesAdded, projectRefsMigrated, unresolvedProjectRefs };
 }
 
+function ensureInvoiceIssuerProfile(db) {
+  db.exec(CREATE_INVOICE_ISSUER_PROFILES_SQL);
+  const existing = db.prepare("SELECT 1 FROM invoice_issuer_profiles WHERE id = 'default'").get();
+  if (existing) return { initialized: false };
+  const source = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'user_profile'").get()
+    ? db.prepare("SELECT * FROM user_profile WHERE id = 1").get()
+    : null;
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT INTO invoice_issuer_profiles (
+      id, legal_name, additional_name, street, zip, city, country, phone, email,
+      website, logo_path, tax_number, vat_id, iban, bic, bank_name,
+      commercial_register, register_number, managing_director, legal_notice,
+      initialized_from_own_organization_at, created_at, updated_at
+    ) VALUES (
+      'default', @name1, @name2, @street, @zip, @city, @country, @phone, @email,
+      @website, @logo_path, @tax_number, @vat_id, @iban, @bic, @bank_name,
+      @commercial_register, @register_number, @managing_director, @legal_notice,
+      @now, @now, @now
+    )
+  `).run({
+    name1: source?.name1 || "", name2: source?.name2 || "", street: source?.street || "",
+    zip: source?.zip || "", city: source?.city || "", country: source?.country || "",
+    phone: source?.phone || "", email: source?.email || "", website: source?.website || "",
+    logo_path: source?.logo_path || "", tax_number: source?.tax_number || "",
+    vat_id: source?.vat_id || "", iban: source?.iban || "", bic: source?.bic || "",
+    bank_name: source?.bank_name || "", commercial_register: source?.commercial_register || "",
+    register_number: source?.register_number || "", managing_director: source?.managing_director || "",
+    legal_notice: source?.legal_notice || "", now,
+  });
+  return { initialized: true };
+}
+
 function ensureInvoiceSchema(db) {
   if (!db) throw new Error("db required");
   let customerMigration = null;
@@ -418,6 +479,7 @@ function ensureInvoiceSchema(db) {
             AND f.is_final = 1
         );
     `);
+    ensureInvoiceIssuerProfile(db);
     customerMigration = migrateDraftCustomerRefs(db);
   };
   if (db.inTransaction) migrate();
@@ -425,4 +487,4 @@ function ensureInvoiceSchema(db) {
   return { customerMigration };
 }
 
-module.exports = { ensureInvoiceSchema, migrateDraftCustomerRefs };
+module.exports = { ensureInvoiceSchema, migrateDraftCustomerRefs, ensureInvoiceIssuerProfile };
