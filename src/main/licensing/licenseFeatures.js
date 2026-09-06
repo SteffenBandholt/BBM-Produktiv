@@ -1,7 +1,32 @@
+const {
+  getCanonicalModuleIds,
+  getCapabilityIds,
+} = require("../moduleRegistry");
+
+function requireCanonicalId(ids, id, kind) {
+  if (!ids.includes(id)) {
+    throw new Error(`Unbekannte kanonische ${kind}-ID: ${id}`);
+  }
+  return id;
+}
+
+const CANONICAL_MODULE_IDS = getCanonicalModuleIds();
+const CANONICAL_CAPABILITY_IDS = getCapabilityIds();
+
 const LICENSE_MODULES = Object.freeze({
-  PROTOKOLL: "protokoll",
-  RESTARBEITEN: "restarbeiten",
-  RECHNUNG: "rechnung",
+  PROTOKOLL: requireCanonicalId(CANONICAL_MODULE_IDS, "protokoll", "Modul"),
+  RESTARBEITEN: requireCanonicalId(CANONICAL_MODULE_IDS, "restarbeiten", "Modul"),
+  RECHNUNG: requireCanonicalId(CANONICAL_MODULE_IDS, "rechnung", "Modul"),
+  SIGEKO: requireCanonicalId(CANONICAL_MODULE_IDS, "sigeko", "Modul"),
+});
+
+const LICENSE_CAPABILITIES = Object.freeze({
+  PDF: requireCanonicalId(CANONICAL_CAPABILITY_IDS, "pdf", "Capability"),
+  MAIL: requireCanonicalId(CANONICAL_CAPABILITY_IDS, "mail", "Capability"),
+  EXPORT: requireCanonicalId(CANONICAL_CAPABILITY_IDS, "export", "Capability"),
+  FILE_STORAGE: requireCanonicalId(CANONICAL_CAPABILITY_IDS, "file-storage", "Capability"),
+  AUDIO: requireCanonicalId(CANONICAL_CAPABILITY_IDS, "audio", "Capability"),
+  UI_EDITOR: requireCanonicalId(CANONICAL_CAPABILITY_IDS, "ui-editor", "Capability"),
 });
 
 const LICENSE_FEATURES = Object.freeze({
@@ -9,7 +34,7 @@ const LICENSE_FEATURES = Object.freeze({
   AUDIO: "diktat",
 });
 
-const KNOWN_LICENSE_MODULE_IDS = Object.freeze(Object.values(LICENSE_MODULES));
+const KNOWN_LICENSE_MODULE_IDS = CANONICAL_MODULE_IDS;
 
 const LEGACY_FEATURE_ALIASES = Object.freeze({
   audio: LICENSE_FEATURES.DIKTAT,
@@ -104,6 +129,7 @@ function isLicensedProduct(product) {
 
 module.exports = {
   LICENSE_MODULES,
+  LICENSE_CAPABILITIES,
   LICENSE_FEATURES,
   KNOWN_LICENSE_MODULE_IDS,
   LEGACY_PROTOKOLL_FEATURE_IDS,

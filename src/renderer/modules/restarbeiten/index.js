@@ -2,6 +2,7 @@ import RestarbeitenScreen from "./screens/RestarbeitenScreen.js";
 import { RESTARBEITEN_WORK_SCREEN_ID } from "./screens/index.js";
 import PlaeneScreen from "../plaene/screens/PlaeneScreen.js";
 import { PLAENE_WORK_SCREEN_ID } from "../plaene/screens/index.js";
+import { createModuleDescriptor } from "../../app/modules/moduleDescriptorContract.js";
 
 export const RESTARBEITEN_MODULE_ID = "restarbeiten";
 export const RESTARBEITEN_MODULE_LABEL = "Restarbeiten";
@@ -51,12 +52,28 @@ function buildRestarbeitenModulePresentation() {
 }
 
 export function getRestarbeitenModuleEntry() {
-  return Object.freeze({
+  return createModuleDescriptor({
     moduleId: RESTARBEITEN_MODULE_ID,
     moduleLabel: RESTARBEITEN_MODULE_LABEL,
+    moduleType: "project",
+    licenseKey: "module:restarbeiten",
     workScreenId: RESTARBEITEN_WORK_SCREEN_ID,
     screens: buildRestarbeitenModuleScreens(),
+    routes: Object.freeze({
+      project: Object.freeze([
+        Object.freeze({ screenId: RESTARBEITEN_WORK_SCREEN_ID }),
+        Object.freeze({ screenId: PLAENE_WORK_SCREEN_ID }),
+      ]),
+    }),
     navigation: buildRestarbeitenModuleNavigation(),
+    ipcRegistrar: "restarbeiten",
+    migrationRegistrar: "restarbeiten",
+    requiredCapabilities: Object.freeze([
+      "pdf",
+      "export",
+      "file-storage",
+      "ui-editor",
+    ]),
     presentation: buildRestarbeitenModulePresentation(),
     shell: Object.freeze({
       hideSidebar: true,

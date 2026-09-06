@@ -1,25 +1,78 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "moduleTypes": [
+    "global",
+    "project",
+    "hybrid"
+  ],
+  "canonicalModuleIds": [
+    "protokoll",
+    "restarbeiten",
+    "rechnung",
+    "sigeko"
+  ],
   "modules": {
     "protokoll": {
       "kind": "project",
-      "ipcGroup": "protokoll"
+      "licenseKey": "module:protokoll",
+      "ipcGroup": "protokoll",
+      "ipcRegistrar": "protokoll",
+      "migrationRegistrar": "protokoll",
+      "requiredCapabilities": [
+        "pdf",
+        "mail",
+        "export",
+        "file-storage",
+        "audio",
+        "ui-editor"
+      ]
     },
     "restarbeiten": {
       "kind": "project",
-      "ipcGroup": "restarbeiten"
+      "licenseKey": "module:restarbeiten",
+      "ipcGroup": "restarbeiten",
+      "ipcRegistrar": "restarbeiten",
+      "migrationRegistrar": "restarbeiten",
+      "requiredCapabilities": [
+        "pdf",
+        "export",
+        "file-storage",
+        "ui-editor"
+      ]
     },
     "rechnung": {
       "kind": "hybrid",
-      "ipcGroup": "rechnung"
+      "licenseKey": "module:rechnung",
+      "ipcGroup": "rechnung",
+      "ipcRegistrar": "rechnung",
+      "migrationRegistrar": "rechnung",
+      "requiredCapabilities": [
+        "pdf",
+        "mail",
+        "export",
+        "file-storage",
+        "ui-editor"
+      ]
     }
   },
-  "sharedServices": [
-    "pdf",
-    "mail",
-    "export",
-    "file-storage",
-    "ui-editor",
-    "audio"
-  ]
+  "capabilities": {
+    "pdf": {
+      "licenseKey": "service:pdf"
+    },
+    "mail": {
+      "licenseKey": "service:mail"
+    },
+    "export": {
+      "licenseKey": "service:export"
+    },
+    "file-storage": {
+      "licenseKey": "service:file-storage"
+    },
+    "audio": {
+      "licenseKey": "service:audio"
+    },
+    "ui-editor": {
+      "licenseKey": "service:ui-editor"
+    }
+  }
 }
