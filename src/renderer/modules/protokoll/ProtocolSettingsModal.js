@@ -1,17 +1,6 @@
 import { applyPopupButtonStyle } from "../../ui/popupButtonStyles.js";
 import { cleanupPopupHandlers, createPopupOverlay } from "../../ui/popupCommon.js";
-
-const KEYS = Object.freeze([
-  "pdf.protocolTitle",
-  "pdf.footerPlace",
-  "pdf.footerDate",
-  "pdf.footerName1",
-  "pdf.footerName2",
-  "pdf.footerRecorder",
-  "pdf.footerStreet",
-  "pdf.footerZip",
-  "pdf.footerCity",
-]);
+import { PROTOKOLL_PROJECT_SETTING_KEYS } from "./settings/ProtokollSettingsContract.js";
 
 function todayDe() {
   const now = new Date();
@@ -37,7 +26,10 @@ export async function openProtocolSettingsModal({ projectId } = {}) {
     return false;
   }
 
-  const settingsRes = await api.projectSettingsGetMany({ projectId: effectiveProjectId, keys: KEYS });
+  const settingsRes = await api.projectSettingsGetMany({
+    projectId: effectiveProjectId,
+    keys: PROTOKOLL_PROJECT_SETTING_KEYS,
+  });
   if (!settingsRes?.ok) {
     alert(settingsRes?.error || "Protokoll-Einstellungen konnten nicht geladen werden.");
     return false;

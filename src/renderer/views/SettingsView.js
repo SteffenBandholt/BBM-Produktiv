@@ -14,6 +14,7 @@ import {
   parseCssColor,
 } from "../theme/themes.js";
 import { createDictationDevSection } from "../modules/audio/index.js";
+import { openGlobalProtocolSettings } from "../modules/protokoll/settings/openGlobalProtocolSettings.js";
 import { TEXT_LIMIT_SETTINGS } from "../core/textregeln/index.js";
 import { DEFAULT_PAYMENT_TERM_DAYS, PAYMENT_TERM_SETTING_KEY } from "../../shared/rechnung/invoiceHeaderRules.mjs";
 
@@ -4638,7 +4639,7 @@ export default class SettingsView {
     });
   }
 
-  async _createProtocolContent() {
+  async _createLegacyProtocolContent() {
     const api = window.bbmDb || {};
     const wrap = document.createElement("div");
     wrap.classList.add("bbm-form-content");
@@ -4821,6 +4822,10 @@ export default class SettingsView {
       },
       closeOnly: false,
     });
+  }
+
+  async _createProtocolContent() {
+    return await openGlobalProtocolSettings({ host: this });
   }
 
   _createLicenseSettingsContent() {
