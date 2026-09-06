@@ -18,6 +18,17 @@ Diese Datei ist **kein** Architekturpapier und **kein** Codex-Ausfuehrungsmanual
 
 ## 1. Operative Arbeitsgrundsaetze
 
+### Rechnung #275 – Paket 4b (2026-09-06)
+
+Container 5: minimale Auftrags-LV-Anwendungsgrenze auf Paket 4a / PR #313.
+`BillingOrderService` kapselt als einziger produktiver Repositoryzugang Lesen,
+Entwurfsanlage, Positionsaufnahme und atomare Bestätigung. Fachvalidierung,
+aktuelle Modulfreigabe und modularer IPC-/Preload-Zugang sind geprüft. Keine
+zweite Persistenz, UI oder Rechnungsanlage aus Auftrag. Der Detailvertrag und
+die Baselineabgrenzung stehen in `docs/RECHNUNG_REVISION_275.md` und Issue #275.
+Kurzfahrplan: 4b abschließen; anschließend separat 4c Snapshot; danach 4d
+Nachtragsworkflow. Folgepakete sind in diesem Arbeitslauf nicht begonnen.
+
 Der Umbau erfolgt:
 - paketweise
 - konservativ

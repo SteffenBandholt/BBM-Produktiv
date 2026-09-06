@@ -1,5 +1,14 @@
 # STATUS.md â€” BBM-Produktiv
 
+## 2026-09-06 – Rechnung #275 Paket 4b
+
+- Auf Basis von Paket 4a / PR #313: minimale BillingOrder-Anwendungsgrenze mit
+  vier expliziten Service-/IPC-/Preload-Operationen und atomaren Fachguards.
+- Acht neue Pakettests grün; keine zweite Persistenz und keine Core-Fachlogik.
+- Volltest behält bekannte Baselinefehler; Detailnachweis und PR-/Main-Commit
+  werden nach Integration in #275 dokumentiert.
+- Nächster offener Schritt: Paket 4c; in diesem Lauf nicht begonnen.
+
 ## 2026-08-24 - Rechnungs-Editbox: Standard 2, Titel und deutsche LV-Zahlen
 
 - Status: `[A]`; der transiente Nachkommastellenwert startet beim Öffnen beziehungsweise Aktivieren jeder Position bei 2. Beide vorhandenen Pfeilbuttons bleiben mit den Grenzen 0 und 4 verbunden; Mengenfeld und LV-Liste werden nach jedem Klick aus demselben Mengenformatter aktualisiert.

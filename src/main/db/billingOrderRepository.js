@@ -87,6 +87,11 @@ class BillingOrderRepository {
     return this.dbProvider();
   }
 
+  // Service guards and their write share the same SQLite transaction.
+  withTransaction(operation) {
+    return this._db().transaction(operation).immediate();
+  }
+
   get(id) {
     const db = this._db();
     const order = db.prepare("SELECT * FROM billing_orders WHERE id = ?").get(String(id || ""));
