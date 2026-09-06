@@ -20,6 +20,7 @@ import { createBbmUiEditorStatusPanel } from "../ui-editor/BbmUiEditorStatusPane
 import { injectBbmUiEditorStatusPanelStyles } from "../ui-editor/bbmUiEditorStatusPanel.css.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
+  PROTOKOLL_GLOBAL_SETTING_KEYS,
   TopsScreen as ProtokollTopsScreen,
 } from "../modules/protokoll/index.js";
 
@@ -62,19 +63,7 @@ const APP_KERNEL_SETTINGS_KEYS = [
   "pdf.userLogoWidthMm",
   "pdf.userLogoTopMm",
   "pdf.userLogoRightMm",
-  "pdf.protocolTitle",
-  "pdf.preRemarks",
-  "pdf.trafficLightAllEnabled",
-  "pdf.footerPlace",
-  "pdf.footerDate",
-  "pdf.footerName1",
-  "pdf.footerName2",
-  "pdf.footerRecorder",
-  "pdf.footerStreet",
-  "pdf.footerZip",
-  "pdf.footerCity",
-  "pdf.footerUseUserData",
-  "tops.ampelEnabled",
+  ...PROTOKOLL_GLOBAL_SETTING_KEYS,
 ];
 
 function _pickAppKernelSettings(raw = {}) {

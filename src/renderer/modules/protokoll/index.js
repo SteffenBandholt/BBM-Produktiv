@@ -93,3 +93,4 @@ export function getProtokollModuleEntry() {
 export { ProtokollStartScreen, TopsScreen, PROTOKOLL_WORK_SCREEN_ID };
 export * from "./screens/index.js";
 export * from "./viewmodel/index.js";
+export * from "./settings/ProtokollSettingsContract.js";

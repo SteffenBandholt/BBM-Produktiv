@@ -10,6 +10,7 @@ import {
   applyPopupButtonStyle,
 } from "../../../ui/popupButtonStyles.js";
 import { cleanupPopupHandlers, createPopupOverlay } from "../../../ui/popupCommon.js";
+import { openProtocolSettingsModal } from "../../protokoll/ProtocolSettingsModal.js";
 
 export default class ProjectFormScreen {
   constructor({ router, projectId, mode = "page", onClose, onSaved } = {}) {
@@ -813,7 +814,7 @@ export default class ProjectFormScreen {
     this.projectSettingsOverlayEl = null;
   }
 
-  async _openProjectSettingsModal() {
+  async _openLegacyProjectSettingsModal() {
     if (this.busy) return;
     if (!this.projectId) {
       alert("Bitte zuerst das Projekt speichern.");
@@ -1031,6 +1032,11 @@ export default class ProjectFormScreen {
     document.body.appendChild(overlay);
     this.projectSettingsOverlayEl = overlay;
     try { overlay.focus(); } catch (_e) {}
+  }
+
+  async _openProjectSettingsModal() {
+    if (this.busy) return false;
+    return await openProtocolSettingsModal({ projectId: this.projectId });
   }
 
   _buildPageButtonRow() {

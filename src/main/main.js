@@ -42,7 +42,6 @@ const { registerParticipantsIpc } = require("./ipc/participantsIpc");
 const { registerPrintIpc } = require("./ipc/printIpc");
 const { registerTableLayoutsIpc } = require("./ipc/tableLayoutsIpc");
 const { registerSettingsIpc } = require("./ipc/settingsIpc");
-const { registerProjectSettingsIpc } = require("./ipc/projectSettingsIpc");
 const { registerEditorIpc } = require("./ipc/editorIpc");
 const { registerProjectTransferIpc } = require("./ipc/projectTransferIpc");
 const { registerLicenseIpc, importLicenseFromFilePath } = require("./ipc/licenseIpc");
@@ -583,7 +582,6 @@ app.whenReady().then(async () => {
   registerPrintIpc();
   registerTableLayoutsIpc();
   registerSettingsIpc();
-  registerProjectSettingsIpc();
   registerEditorIpc({ getMainWindow: () => mainWindow });
   registerProjectTransferIpc();
   registerLicenseIpc();

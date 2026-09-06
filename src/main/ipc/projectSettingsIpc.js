@@ -1,17 +1,10 @@
 const { ipcMain } = require("electron");
 const projectSettingsRepo = require("../db/projectSettingsRepo");
+const {
+  PROTOKOLL_PROJECT_SETTING_KEYS,
+} = require("../modules/protokoll/settingsKeys");
 
-const ALLOWED_KEYS = new Set([
-  "pdf.protocolTitle",
-  "pdf.footerPlace",
-  "pdf.footerDate",
-  "pdf.footerName1",
-  "pdf.footerName2",
-  "pdf.footerRecorder",
-  "pdf.footerStreet",
-  "pdf.footerZip",
-  "pdf.footerCity",
-]);
+const ALLOWED_KEYS = new Set(PROTOKOLL_PROJECT_SETTING_KEYS);
 
 function _normalizeProjectId(data) {
   const value = String(data?.projectId ?? data?.project_id ?? data?.id ?? "").trim();
@@ -35,8 +28,8 @@ function _cleanPatch(patch) {
   return out;
 }
 
-function registerProjectSettingsIpc() {
-  ipcMain.handle("projectSettings:getMany", (_evt, data) => {
+function registerProjectSettingsIpc({ ipcMain: effectiveIpcMain = ipcMain } = {}) {
+  effectiveIpcMain.handle("projectSettings:getMany", (_evt, data) => {
     try {
       const projectId = _normalizeProjectId(data || {});
       const keys = _cleanKeys(data?.keys);
@@ -46,7 +39,7 @@ function registerProjectSettingsIpc() {
     }
   });
 
-  ipcMain.handle("projectSettings:setMany", (_evt, data) => {
+  effectiveIpcMain.handle("projectSettings:setMany", (_evt, data) => {
     try {
       const projectId = _normalizeProjectId(data || {});
       const patch = _cleanPatch(data?.patch || {});

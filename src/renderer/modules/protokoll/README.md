@@ -25,6 +25,18 @@ Der aktuelle Modulbestand umfasst ausserdem:
 - `WorkbenchShellFrame.js` als modulinterner Kern fuer die technische Workbench-Huelle
 - `WorkbenchActionDraftState.js` als modulinterner Kern fuer Draft-Zusammenfuehrung und Action-State
 
+## Settings-Eigentum
+
+`settings/ProtokollSettingsContract.js` ist der Renderer-Vertrag fuer globale und
+projektbezogene Protokoll-Einstellungen. Der Main-Prozess spiegelt denselben Vertrag in
+`src/main/modules/protokoll/settingsKeys.js`. Die bestehenden persistenten Schluessel bleiben
+kompatibel; ihre fachliche Namespace-Grenze ist das Modul `protokoll`.
+
+Der allgemeine Settings-Screen hostet den vom Protokollmodul gelieferten Bereich. Das
+Projektformular delegiert an `ProtocolSettingsModal.js`. Der projektbezogene Settings-IPC wird
+nur ueber den Protokoll-IPC-Registrar aktiviert. Die vorerst noch vorhandenen, nicht mehr
+aufgerufenen Dialogimplementierungen werden erst im gesonderten Legacy-Paket bewertet.
+
 Die Ordner `components/`, `domain/`, `data/`, `state/`, `viewmodel/`, `dialogs/` und `rules/`
 sind absichtlich schon angelegt, damit spaetere Umzuege dort sauber anschliessen koennen.
 

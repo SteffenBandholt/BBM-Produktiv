@@ -14,6 +14,9 @@ const { getOwnOrganization, upsertOwnOrganization } = require("../db/ownOrganiza
 const { createDictionaryService } = require("../services/dictionary/DictionaryService");
 const firmsRepo = require("../db/firmsRepo");
 const projectFirmsRepo = require("../db/projectFirmsRepo");
+const {
+  PROTOKOLL_GLOBAL_SETTING_KEYS,
+} = require("../modules/protokoll/settingsKeys");
 
 const DEFAULT_ROLE_LABELS = {
   10: "Bauherr",
@@ -211,10 +214,6 @@ const GLOBAL_APP_SETTING_KEYS = new Set([
   "user_street",
   "user_zip",
   "user_city",
-  "firm_role_order",
-  "firm_role_labels",
-  "email_subject",
-  "email_body",
   "header.logoSizePx",
   "header.logoPadLeftPx",
   "header.logoPadTopPx",
@@ -239,21 +238,8 @@ const GLOBAL_APP_SETTING_KEYS = new Set([
   "pdf.userLogoWidthMm",
   "pdf.userLogoTopMm",
   "pdf.userLogoRightMm",
-  "pdf.protocolTitle",
-  "pdf.preRemarks",
   "pdf.userLogoFilePath",
-  "pdf.trafficLightAllEnabled",
-  "pdf.protocolsDir",
-  "pdf.footerPlace",
-  "pdf.footerDate",
-  "pdf.footerName1",
-  "pdf.footerName2",
-  "pdf.footerRecorder",
-  "pdf.footerStreet",
-  "pdf.footerZip",
-  "pdf.footerCity",
-  "pdf.footerUseUserData",
-  "print.preRemarks.enabled",
+  ...PROTOKOLL_GLOBAL_SETTING_KEYS,
   "print.logo1.enabled",
   "print.logo1.size",
   "print.logo1.align",
@@ -279,10 +265,6 @@ const GLOBAL_APP_SETTING_KEYS = new Set([
   "dbMigrationPromptDismissed",
   "tops.titleMax",
   "tops.longMax",
-  "tops.level1Collapsed",
-  "tops.showLongtextInList",
-  "tops.fontscale.list",
-  "tops.fontscale.editbox",
   "invoice.paymentTermDays",
   "audio.whisper.quality",
   "dev.audioDictationUnlock",
