@@ -4528,3 +4528,12 @@ Wichtig:
 - Guardrails: `rechnungButtonEffectiveGeometry.test.cjs` ist in der Rechnungs-Testgruppe registriert; `rechnungUiEditorUnbounded.test.cjs`, die neue Produktpfad-Abnahme und der korrigierte M86.24-Rechnungslauf sind grün. Messberichte: `output/playwright/rechnung-buttons-product-acceptance/`.
 - Bekannte paketfremde rote Baselines: Der gesamte M86.24-Dreimodullauf verwirft unveränderte Protokoll-/Restarbeiten-Profile wegen bereits ungültiger Registrygeometrien. Die Rechnungs-Testgruppe bleibt an bestehenden PDF-Hash-, Screen-Alias-, Dezimalwert-, Briefkopf-CSS- und Alt-Renderer-Assertions rot; beide neuen Buttonguards sind darin grün.
 - Fachfunktion, PDF/Druck, Navigation, Button-Handler, Registry-IDs und Parentstruktur blieben unverändert. Kein Commit, kein Push.
+# SiGeKo #274 – S1.1 technischer Modulanschluss
+
+- Main-/Renderer-Deskriptor, modularer IPC-/Migrationsregistrar und technische
+  Preload-/Servicegrenze umgesetzt; gemeinsamer Guard berücksichtigt Freigabeentzug.
+- Keine Fachtabellen oder sichtbaren Screens; produktive UI-Freigabe bleibt unverändert.
+- 10/10 Pakettests, 78 relevante Prüfungen grün mit 1 bekannter Baseline;
+  Volltest 473 grün / dieselben 9 Baselinefehler gegenüber 463/9 auf Ausgangs-main.
+- Nachweis: `docs/SIGEKO_S1_1.md`; PR/Integration und Commit werden in #274 dokumentiert.
+- Nächster offener Schritt: S1.2 einschließlich isolierter Windows-Abnahme, nicht begonnen.

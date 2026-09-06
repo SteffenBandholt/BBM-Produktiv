@@ -10,8 +10,16 @@ import {
   getRechnungModuleEntry,
   RECHNUNG_MODULE_ID,
 } from "../../modules/rechnungen/index.js";
+import {
+  getSigekoModuleEntry,
+  SIGEKO_MODULE_ID,
+} from "../../modules/sigeko/index.js";
 
 const AVAILABLE_MODULE_ENTRIES = Object.freeze([
+  Object.freeze({
+    moduleId: SIGEKO_MODULE_ID,
+    entry: getSigekoModuleEntry(),
+  }),
   Object.freeze({
     moduleId: PROTOKOLL_MODULE_ID,
     entry: getProtokollModuleEntry(),

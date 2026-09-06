@@ -40,6 +40,19 @@
         "ui-editor"
       ]
     },
+    "sigeko": {
+      "kind": "project",
+      "licenseKey": "module:sigeko",
+      "ipcGroup": "sigeko",
+      "ipcRegistrar": "sigeko",
+      "migrationRegistrar": "sigeko",
+      "requiredCapabilities": [
+        "pdf",
+        "mail",
+        "file-storage",
+        "ui-editor"
+      ]
+    },
     "rechnung": {
       "kind": "hybrid",
       "licenseKey": "module:rechnung",
