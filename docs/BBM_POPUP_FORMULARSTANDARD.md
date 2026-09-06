@@ -153,7 +153,7 @@ einem Dialog ausgebaut. Noch nichts davon wird gelöscht.
 Die Re-Export-Datei
 `src/renderer/modules/protokoll/TopsViewDialogs.js` ist keine zweite TOP-Regeln-
 Variante, sondern nur der aktive Modulpfad zur bestehenden Dialogbasis. Auch
-`CloseMeetingOutputFlow` und `TopsCloseFlow` enthalten keine zusätzliche Mail-UI,
+`TopsCloseFlow` enthält keine zusätzliche Mail-UI,
 sondern delegieren an die nun migrierte `MailFlow`-Variante. Die vorbereitete
 Kompatibilitätsdatei `src/renderer/ui/PrintModal.js` ist nur ein Re-Export der
 produktiven Ausgabe-Implementierung und keine zusätzliche Vorschauvariante.

@@ -54,6 +54,12 @@ Payload uebergibt der bestehende Header-Adapter an `features/mail/MailTransportS
 dort bleiben Outlook/mailto, Attachment-Fehlerbehandlung und technische Transportnormalisierung
 fachneutral gemeinsam. Der
 historische Pfad `features/mail/MailFlow.js` ist nur noch ein Kompatibilitaets-Re-Export.
+
+Der unreferenzierte Parallelbestand `features/output/CloseMeetingOutputFlow.js` wurde nach
+Import-, Runtime- und Regressionstestnachweis entfernt. Der produktive Abschlussweg bleibt
+`modules/protokoll/TopsCloseFlow.js` und delegiert auf die erhaltene Fachimplementierung unter
+`renderer/tops/domain/`. Die Kompatibilitaets-Re-Exports fuer TopsScreen und Mail bleiben
+bewusst bestehen.
 `mail/ProtokollMailPayloadService.js` besitzt die aktiven Regeln fuer Projekt-/Besprechungskontext,
 Empfaenger aus dem fachlichen Verteiler, Protokoll-Betreff/-Text, Anhangsliste und die Suche nach
 dem gespeicherten Protokoll-PDF. `MainHeader` behaelt seine bisherigen Methodennamen nur als
