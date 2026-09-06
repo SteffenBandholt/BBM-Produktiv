@@ -41,8 +41,16 @@ function setStyles(el, styles = {}) {
 const MODULE_STYLE = Object.freeze({
   protokoll: { color: "#22c55e", icon: "protocol" },
   restarbeiten: { color: "#f59e0b", icon: "rest" },
-  projectFirms: { color: "#475569", icon: "firms" },
 });
+
+const CORE_ACTION_STYLE = Object.freeze({ color: "#475569", icon: "firms" });
+const DEFAULT_CORE_PROJECT_ACTIONS = Object.freeze([
+  Object.freeze({
+    coreActionId: "projectFirms",
+    label: "Firmen im Projekt",
+    description: "Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen.",
+  }),
+]);
 
 const ICONS = Object.freeze({
   protocol: `<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="10" y="7" width="28" height="34" rx="4" fill="none" stroke="currentColor" stroke-width="3"/><path d="M17 17h14M17 24h14M17 31h9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`,
@@ -57,16 +65,6 @@ function groupProjectModules(items = []) {
   for (const item of Array.isArray(items) ? items : []) {
     const moduleId = normalizeText(item?.moduleId);
     if (!moduleId) continue;
-
-    if (moduleId === "projectFirms") {
-      groups.push({
-        moduleId,
-        label: "Firmen im Projekt",
-        description: item?.description || "Projektbeteiligte und Firmen verwalten.",
-        entries: [item],
-      });
-      continue;
-    }
 
     let group = byModule.get(moduleId);
     if (!group) {
@@ -86,11 +84,14 @@ function groupProjectModules(items = []) {
 }
 
 export default class ProjectWorkspaceScreen {
-  constructor({ router, projectId, project, projectModules } = {}) {
+  constructor({ router, projectId, project, projectModules, coreProjectActions } = {}) {
     this.router = router || null;
     this.projectId = projectId || null;
     this.project = project || null;
     this.projectModules = Array.isArray(projectModules) ? projectModules : [];
+    this.coreProjectActions = Array.isArray(coreProjectActions)
+      ? coreProjectActions
+      : DEFAULT_CORE_PROJECT_ACTIONS;
     this.root = null;
     this.hostEl = null;
     this.msgEl = null;
@@ -100,6 +101,10 @@ export default class ProjectWorkspaceScreen {
 
   getAvailableProjectModules() {
     return this.projectModules;
+  }
+
+  getAvailableCoreProjectActions() {
+    return this.coreProjectActions;
   }
 
   getProjectDisplayText() {
@@ -167,17 +172,24 @@ export default class ProjectWorkspaceScreen {
     return false;
   }
 
+  async openCoreProjectAction(coreActionId) {
+    const normalizedActionId = normalizeText(coreActionId);
+    const projectId = this.projectId || this.router?.currentProjectId || null;
+    if (!projectId) return false;
+
+    if (normalizedActionId === "projectFirms") {
+      if (typeof this.router?.showProjectFirms !== "function") return false;
+      await this.router.showProjectFirms(projectId);
+      return true;
+    }
+    return false;
+  }
+
   async openProjectModule(moduleId, navigationKey = "") {
     const normalizedModuleId = normalizeText(moduleId);
     const normalizedNavigationKey = normalizeText(navigationKey);
     const projectId = this.projectId || this.router?.currentProjectId || null;
     if (!projectId) return false;
-
-    if (normalizedModuleId === "projectFirms") {
-      if (typeof this.router?.showProjectFirms !== "function") return false;
-      await this.router.showProjectFirms(projectId);
-      return true;
-    }
     if (normalizedModuleId === "protokoll") return await this._openProtocolModule(projectId);
     if (typeof this.router?.openProjectModule !== "function") return false;
 
@@ -186,6 +198,62 @@ export default class ProjectWorkspaceScreen {
       navigationKey: normalizedNavigationKey,
     });
     return typeof result === "object" ? !!result?.ok : result !== false;
+  }
+
+  _createCoreActionCard(action) {
+    const style = CORE_ACTION_STYLE;
+    const card = setStyles(document.createElement("div"), {
+      background: "#ffffff",
+      border: "1px solid #e3e8ef",
+      borderRadius: "14px",
+      padding: "16px",
+      minHeight: "176px",
+      boxShadow: "0 5px 18px rgba(15,23,42,0.045)",
+      display: "flex",
+      flexDirection: "column",
+      gap: "10px",
+    });
+    const iconWrap = setStyles(document.createElement("div"), {
+      width: "46px",
+      height: "46px",
+      borderRadius: "12px",
+      display: "grid",
+      placeItems: "center",
+      background: style.color + "16",
+      color: style.color,
+    });
+    iconWrap.innerHTML = ICONS[style.icon] || ICONS.firms;
+    const title = setStyles(document.createElement("div"), {
+      fontWeight: "800",
+      fontSize: "17px",
+      color: "#172033",
+    });
+    title.textContent = normalizeText(action?.label) || "Core-Funktion";
+    const description = setStyles(document.createElement("div"), {
+      fontSize: "12px",
+      lineHeight: "1.45",
+      color: "#667085",
+      flex: "1",
+    });
+    description.textContent = normalizeText(action?.description);
+    const button = setStyles(document.createElement("button"), {
+      border: "0",
+      borderRadius: "8px",
+      background: style.color,
+      color: "#ffffff",
+      padding: "7px 11px",
+      fontSize: "11.5px",
+      fontWeight: "750",
+      cursor: "pointer",
+      alignSelf: "flex-start",
+    });
+    button.type = "button";
+    button.textContent = "Öffnen";
+    button.addEventListener("click", async () => {
+      await this.openCoreProjectAction(action?.coreActionId);
+    });
+    card.append(iconWrap, title, description, button);
+    return card;
   }
 
   _createModuleCard(group) {
@@ -386,8 +454,9 @@ export default class ProjectWorkspaceScreen {
       gap: "12px",
     });
 
+    const coreActions = this.getAvailableCoreProjectActions();
     const groups = groupProjectModules(this.getAvailableProjectModules());
-    if (!groups.length) {
+    if (!coreActions.length && !groups.length) {
       const empty = setStyles(document.createElement("div"), {
         padding: "14px",
         border: "1px solid #e3e8ef",
@@ -399,6 +468,7 @@ export default class ProjectWorkspaceScreen {
       empty.textContent = "Für dieses Projekt sind keine Arbeitsmodule freigeschaltet.";
       grid.appendChild(empty);
     } else {
+      coreActions.forEach((action) => grid.appendChild(this._createCoreActionCard(action)));
       groups.forEach((group) => grid.appendChild(this._createModuleCard(group)));
     }
 
