@@ -312,11 +312,6 @@ async function runProjektverwaltungModuleTests(run) {
           label: "Protokoll",
           description: "Protokoll im aktuellen Projekt öffnen.",
         },
-        {
-          moduleId: "projectFirms",
-          label: "Firmen im Projekt",
-          description: "Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen.",
-        },
       ],
     });
 
@@ -340,11 +335,11 @@ async function runProjektverwaltungModuleTests(run) {
       const modules = screen.getAvailableProjectModules();
       assert.deepEqual(
         modules.map((item) => item.moduleId),
-        ["protokoll", "projectFirms"]
+        ["protokoll"]
       );
       assert.deepEqual(
         modules.map((item) => item.label),
-        ["Protokoll", "Firmen im Projekt"]
+        ["Protokoll"]
       );
       assert.equal(screen.getProjectDisplayText(), "P-12 - Rohbau");
 
@@ -352,7 +347,12 @@ async function runProjektverwaltungModuleTests(run) {
       assert.equal(opened, true);
       assert.deepEqual(routerCalls, [{ module: "protocol", projectId: "9" }]);
 
-      const openedFirms = await screen.openProjectModule("projectFirms");
+      assert.deepEqual(
+        screen.getAvailableCoreProjectActions().map((item) => item.coreActionId),
+        ["projectFirms"]
+      );
+
+      const openedFirms = await screen.openCoreProjectAction("projectFirms");
       assert.equal(openedFirms, true);
       assert.deepEqual(routerCalls, [
         { module: "protocol", projectId: "9" },
