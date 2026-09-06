@@ -21,6 +21,7 @@ const CURRENT_INVOICE_COLUMN_DEFINITIONS = Object.freeze([
   ["source_order_id", "TEXT"],
   ["source_order_number", "TEXT"],
   ["source_order_date", "TEXT"],
+  ["order_binding_state", "TEXT NOT NULL DEFAULT 'NOT_APPLICABLE' CHECK (order_binding_state IN ('NOT_APPLICABLE', 'LEGACY_UNRESOLVED', 'LEGACY_SNAPSHOT', 'BOUND'))"],
   ["service_reference", "TEXT"],
   ["construction_project", "TEXT"],
   ["intro_text", "TEXT"],
@@ -89,6 +90,7 @@ const CREATE_INVOICES_SQL = `
     source_order_id TEXT,
     source_order_number TEXT,
     source_order_date TEXT,
+    order_binding_state TEXT NOT NULL DEFAULT 'NOT_APPLICABLE' CHECK (order_binding_state IN ('NOT_APPLICABLE', 'LEGACY_UNRESOLVED', 'LEGACY_SNAPSHOT', 'BOUND')),
     service_reference TEXT,
     construction_project TEXT,
     intro_text TEXT,
@@ -125,7 +127,7 @@ function addMissingInvoiceColumns(db, columns) {
   }
 }
 
-function applySafeLegacyDefaults(db) {
+function applySafeLegacyDefaults(db, { initializeOrderBindingState = false } = {}) {
   db.exec(`
     UPDATE invoices SET source_type = 'FREE' WHERE source_type IS NULL;
     UPDATE invoices SET document_type = 'INVOICE' WHERE document_type IS NULL;
@@ -134,6 +136,16 @@ function applySafeLegacyDefaults(db) {
     UPDATE invoices SET status = 'DRAFT' WHERE status IS NULL;
     UPDATE invoices SET pdf_finalization_status = 'NONE' WHERE pdf_finalization_status IS NULL;
   `);
+  if (initializeOrderBindingState) {
+    db.exec(`
+      UPDATE invoices
+      SET order_binding_state = CASE
+        WHEN source_type = 'FREE' THEN 'NOT_APPLICABLE'
+        WHEN status = 'DRAFT' THEN 'LEGACY_UNRESOLVED'
+        ELSE 'LEGACY_SNAPSHOT'
+      END
+    `);
+  }
 }
 
 function needsLegacyCompatibilityRebuild(columns, createSql) {
@@ -197,6 +209,7 @@ function rebuildIncompatibleLegacyInvoices(db, columns) {
       source_order_id TEXT,
       source_order_number TEXT,
       source_order_date TEXT,
+      order_binding_state TEXT NOT NULL DEFAULT 'NOT_APPLICABLE',
       service_reference TEXT,
       construction_project TEXT,
       intro_text TEXT,
@@ -239,6 +252,234 @@ function rebuildIncompatibleLegacyInvoices(db, columns) {
     DROP TABLE invoices;
     ALTER TABLE ${quoteIdentifier(LEGACY_MIGRATION_TABLE)} RENAME TO invoices;
   `);
+}
+
+const CREATE_BILLING_ORDER_SCHEMA_SQL = `
+  CREATE TABLE IF NOT EXISTS billing_orders (
+    id TEXT PRIMARY KEY CHECK (
+      length(id) = 36 AND substr(id, 9, 1) = '-' AND substr(id, 14, 1) = '-'
+      AND substr(id, 19, 1) = '-' AND substr(id, 24, 1) = '-'
+    ),
+    order_number TEXT NOT NULL UNIQUE CHECK (length(trim(order_number)) > 0),
+    order_date TEXT NOT NULL CHECK (length(order_date) = 10),
+    customer_firm_id TEXT NOT NULL,
+    project_id TEXT,
+    service_reference TEXT NOT NULL CHECK (length(trim(service_reference)) > 0),
+    status TEXT NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'CONFIRMED', 'CANCELLED')),
+    confirmed_at TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    CHECK ((status = 'DRAFT' AND confirmed_at IS NULL) OR (status IN ('CONFIRMED', 'CANCELLED') AND confirmed_at IS NOT NULL)),
+    FOREIGN KEY (customer_firm_id) REFERENCES firms(id) ON DELETE RESTRICT,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT
+  );
+
+  CREATE TABLE IF NOT EXISTS billing_order_positions (
+    id TEXT PRIMARY KEY CHECK (
+      length(id) = 36 AND substr(id, 9, 1) = '-' AND substr(id, 14, 1) = '-'
+      AND substr(id, 19, 1) = '-' AND substr(id, 24, 1) = '-'
+    ),
+    order_id TEXT NOT NULL,
+    parent_position_id TEXT,
+    type TEXT NOT NULL CHECK (type IN ('heading', 'service', 'note')),
+    position_number TEXT NOT NULL CHECK (length(trim(position_number)) > 0),
+    sort_index INTEGER NOT NULL CHECK (sort_index >= 0),
+    short_text TEXT NOT NULL CHECK (length(trim(short_text)) > 0),
+    long_text TEXT NOT NULL DEFAULT '',
+    quantity TEXT,
+    unit TEXT,
+    unit_price_cents INTEGER CHECK (unit_price_cents IS NULL OR unit_price_cents >= 0),
+    is_nep INTEGER NOT NULL DEFAULT 0 CHECK (is_nep IN (0, 1)),
+    vat_rate_percent INTEGER CHECK (vat_rate_percent IS NULL OR vat_rate_percent BETWEEN 0 AND 100),
+    price_input_mode TEXT CHECK (price_input_mode IS NULL OR price_input_mode IN ('NET', 'GROSS')),
+    price_input_cents INTEGER CHECK (price_input_cents IS NULL OR price_input_cents >= 0),
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE (order_id, id),
+    UNIQUE (order_id, position_number),
+    UNIQUE (order_id, sort_index),
+    FOREIGN KEY (order_id) REFERENCES billing_orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id, parent_position_id) REFERENCES billing_order_positions(order_id, id) ON DELETE RESTRICT
+  );
+
+  CREATE TABLE IF NOT EXISTS billing_order_amendments (
+    id TEXT PRIMARY KEY CHECK (
+      length(id) = 36 AND substr(id, 9, 1) = '-' AND substr(id, 14, 1) = '-'
+      AND substr(id, 19, 1) = '-' AND substr(id, 24, 1) = '-'
+    ),
+    order_id TEXT NOT NULL,
+    sequence_no INTEGER,
+    amendment_number TEXT,
+    relates_to_order_position_id TEXT NOT NULL,
+    short_text TEXT NOT NULL CHECK (length(trim(short_text)) > 0),
+    long_text TEXT NOT NULL DEFAULT '',
+    quantity TEXT,
+    unit TEXT,
+    unit_price_cents INTEGER CHECK (unit_price_cents IS NULL OR unit_price_cents >= 0),
+    is_nep INTEGER NOT NULL DEFAULT 0 CHECK (is_nep IN (0, 1)),
+    vat_rate_percent INTEGER CHECK (vat_rate_percent IS NULL OR vat_rate_percent BETWEEN 0 AND 100),
+    price_input_mode TEXT CHECK (price_input_mode IS NULL OR price_input_mode IN ('NET', 'GROSS')),
+    price_input_cents INTEGER CHECK (price_input_cents IS NULL OR price_input_cents >= 0),
+    status TEXT NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'CONFIRMED', 'CANCELLED')),
+    confirmed_at TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE (order_id, sequence_no),
+    UNIQUE (order_id, amendment_number),
+    CHECK (
+      (status = 'DRAFT' AND sequence_no IS NULL AND amendment_number IS NULL AND confirmed_at IS NULL)
+      OR
+      (status IN ('CONFIRMED', 'CANCELLED') AND sequence_no > 0 AND amendment_number = printf('N %02d', sequence_no) AND confirmed_at IS NOT NULL)
+    ),
+    FOREIGN KEY (order_id) REFERENCES billing_orders(id) ON DELETE RESTRICT,
+    FOREIGN KEY (order_id, relates_to_order_position_id) REFERENCES billing_order_positions(order_id, id) ON DELETE RESTRICT
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_billing_orders_customer ON billing_orders(customer_firm_id, order_date DESC);
+  CREATE INDEX IF NOT EXISTS idx_billing_orders_project ON billing_orders(project_id, order_date DESC);
+  CREATE INDEX IF NOT EXISTS idx_billing_order_positions_order ON billing_order_positions(order_id, sort_index);
+  CREATE INDEX IF NOT EXISTS idx_billing_order_amendments_order ON billing_order_amendments(order_id, sequence_no);
+
+  CREATE TRIGGER IF NOT EXISTS trg_billing_orders_stable_id
+  BEFORE UPDATE OF id ON billing_orders
+  WHEN NEW.id IS NOT OLD.id
+  BEGIN
+    SELECT RAISE(ABORT, 'billing_order_id_immutable');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_billing_orders_confirmed_immutable
+  BEFORE UPDATE ON billing_orders
+  WHEN OLD.status IN ('CONFIRMED', 'CANCELLED') AND (
+    NEW.order_number IS NOT OLD.order_number OR NEW.order_date IS NOT OLD.order_date
+    OR NEW.customer_firm_id IS NOT OLD.customer_firm_id OR NEW.project_id IS NOT OLD.project_id
+    OR NEW.service_reference IS NOT OLD.service_reference OR NEW.confirmed_at IS NOT OLD.confirmed_at
+    OR (OLD.status = 'CONFIRMED' AND NEW.status NOT IN ('CONFIRMED', 'CANCELLED'))
+    OR (OLD.status = 'CANCELLED' AND NEW.status IS NOT OLD.status)
+  )
+  BEGIN
+    SELECT RAISE(ABORT, 'billing_order_confirmed_immutable');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_billing_orders_confirmed_no_delete
+  BEFORE DELETE ON billing_orders
+  WHEN OLD.status IN ('CONFIRMED', 'CANCELLED')
+  BEGIN
+    SELECT RAISE(ABORT, 'billing_order_confirmed_immutable');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_billing_order_positions_draft_insert
+  BEFORE INSERT ON billing_order_positions
+  WHEN NOT EXISTS (SELECT 1 FROM billing_orders WHERE id = NEW.order_id AND status = 'DRAFT')
+  BEGIN
+    SELECT RAISE(ABORT, 'billing_order_positions_require_draft_order');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_billing_order_positions_stable_identity
+  BEFORE UPDATE OF id, order_id ON billing_order_positions
+  WHEN NEW.id IS NOT OLD.id OR NEW.order_id IS NOT OLD.order_id
+  BEGIN
+    SELECT RAISE(ABORT, 'billing_order_position_identity_immutable');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_billing_order_positions_draft_update
+  BEFORE UPDATE ON billing_order_positions
+  WHEN NOT EXISTS (SELECT 1 FROM billing_orders WHERE id = OLD.order_id AND status = 'DRAFT')
+  BEGIN
+    SELECT RAISE(ABORT, 'billing_order_positions_confirmed_immutable');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_billing_order_positions_draft_delete
+  BEFORE DELETE ON billing_order_positions
+  WHEN NOT EXISTS (SELECT 1 FROM billing_orders WHERE id = OLD.order_id AND status = 'DRAFT')
+  BEGIN
+    SELECT RAISE(ABORT, 'billing_order_positions_confirmed_immutable');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_billing_order_amendments_confirmed_order_insert
+  BEFORE INSERT ON billing_order_amendments
+  WHEN NOT EXISTS (SELECT 1 FROM billing_orders WHERE id = NEW.order_id AND status = 'CONFIRMED')
+  BEGIN
+    SELECT RAISE(ABORT, 'billing_order_amendments_require_confirmed_order');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_billing_order_amendments_stable_identity
+  BEFORE UPDATE OF id, order_id ON billing_order_amendments
+  WHEN NEW.id IS NOT OLD.id OR NEW.order_id IS NOT OLD.order_id
+  BEGIN
+    SELECT RAISE(ABORT, 'billing_order_amendment_identity_immutable');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_billing_order_amendments_valid_origin_insert
+  BEFORE INSERT ON billing_order_amendments
+  WHEN NOT EXISTS (
+    SELECT 1 FROM billing_order_positions
+    WHERE order_id = NEW.order_id AND id = NEW.relates_to_order_position_id AND type = 'service'
+  )
+  BEGIN
+    SELECT RAISE(ABORT, 'billing_order_amendment_origin_invalid');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_billing_order_amendments_valid_origin_update
+  BEFORE UPDATE OF order_id, relates_to_order_position_id ON billing_order_amendments
+  WHEN NOT EXISTS (
+    SELECT 1 FROM billing_order_positions
+    WHERE order_id = NEW.order_id AND id = NEW.relates_to_order_position_id AND type = 'service'
+  )
+  BEGIN
+    SELECT RAISE(ABORT, 'billing_order_amendment_origin_invalid');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_billing_order_amendments_confirmed_immutable
+  BEFORE UPDATE ON billing_order_amendments
+  WHEN OLD.status IN ('CONFIRMED', 'CANCELLED') AND (
+    NEW.id IS NOT OLD.id OR NEW.order_id IS NOT OLD.order_id
+    OR NEW.sequence_no IS NOT OLD.sequence_no OR NEW.amendment_number IS NOT OLD.amendment_number
+    OR NEW.relates_to_order_position_id IS NOT OLD.relates_to_order_position_id
+    OR NEW.short_text IS NOT OLD.short_text OR NEW.long_text IS NOT OLD.long_text
+    OR NEW.quantity IS NOT OLD.quantity OR NEW.unit IS NOT OLD.unit
+    OR NEW.unit_price_cents IS NOT OLD.unit_price_cents OR NEW.is_nep IS NOT OLD.is_nep
+    OR NEW.vat_rate_percent IS NOT OLD.vat_rate_percent OR NEW.price_input_mode IS NOT OLD.price_input_mode
+    OR NEW.price_input_cents IS NOT OLD.price_input_cents OR NEW.confirmed_at IS NOT OLD.confirmed_at
+    OR (OLD.status = 'CONFIRMED' AND NEW.status NOT IN ('CONFIRMED', 'CANCELLED'))
+    OR (OLD.status = 'CANCELLED' AND NEW.status IS NOT OLD.status)
+  )
+  BEGIN
+    SELECT RAISE(ABORT, 'billing_order_amendment_confirmed_immutable');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_billing_order_amendments_confirmed_no_delete
+  BEFORE DELETE ON billing_order_amendments
+  WHEN OLD.status IN ('CONFIRMED', 'CANCELLED')
+  BEGIN
+    SELECT RAISE(ABORT, 'billing_order_amendment_confirmed_immutable');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_invoices_order_binding_insert
+  AFTER INSERT ON invoices
+  WHEN NEW.source_type = 'FROM_ORDER' AND NEW.order_binding_state = 'NOT_APPLICABLE'
+  BEGIN
+    UPDATE invoices SET order_binding_state = 'LEGACY_UNRESOLVED' WHERE id = NEW.id;
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_invoices_order_binding_source_change
+  AFTER UPDATE OF source_type ON invoices
+  WHEN NEW.status = 'DRAFT' AND NEW.source_type IS NOT OLD.source_type
+  BEGIN
+    UPDATE invoices
+    SET order_binding_state = CASE WHEN NEW.source_type = 'FREE' THEN 'NOT_APPLICABLE' ELSE 'LEGACY_UNRESOLVED' END
+    WHERE id = NEW.id;
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS trg_invoices_legacy_unresolved_no_booking
+  BEFORE UPDATE OF status ON invoices
+  WHEN OLD.order_binding_state = 'LEGACY_UNRESOLVED' AND NEW.status = 'BOOKED'
+  BEGIN
+    SELECT RAISE(ABORT, 'invoice_order_binding_legacy_unresolved');
+  END;
+`;
+
+function ensureBillingOrderSchema(db) {
+  db.exec(CREATE_BILLING_ORDER_SCHEMA_SQL);
 }
 
 function hasUniqueInvoiceNumberIndex(db) {
@@ -419,14 +660,16 @@ function ensureInvoiceSchema(db) {
   const migrate = () => {
     db.exec(CREATE_INVOICES_SQL);
     const originalColumns = invoiceColumns(db);
+    const hadOrderBindingState = originalColumns.some((column) => column.name === "order_binding_state");
     const createSql = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'invoices'").get()?.sql || "";
     addMissingInvoiceColumns(db, originalColumns);
-    applySafeLegacyDefaults(db);
+    applySafeLegacyDefaults(db, { initializeOrderBindingState: !hadOrderBindingState });
     const currentColumns = invoiceColumns(db);
     if (needsLegacyCompatibilityRebuild(originalColumns, createSql)) {
       rebuildIncompatibleLegacyInvoices(db, currentColumns);
     }
     ensureInvoiceIndexes(db);
+    ensureBillingOrderSchema(db);
     db.exec(`
       CREATE TABLE IF NOT EXISTS invoice_number_sequences (
         sequence_key TEXT PRIMARY KEY,
@@ -488,4 +731,4 @@ function ensureInvoiceSchema(db) {
   return { customerMigration };
 }
 
-module.exports = { ensureInvoiceSchema, migrateDraftCustomerRefs, ensureInvoiceIssuerProfile };
+module.exports = { ensureInvoiceSchema, migrateDraftCustomerRefs, ensureInvoiceIssuerProfile, ensureBillingOrderSchema };

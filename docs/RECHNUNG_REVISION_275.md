@@ -1,6 +1,6 @@
 # Rechnung – Revision #275
 
-Stand: 2026-09-06, Paket 1 / R2 Bestandsbergung.
+Stand: 2026-09-06, Paket 4a / R4 Auftrags-LV-Persistenz.
 
 ## Integrationsbasis
 
@@ -88,3 +88,31 @@ rechtlich relevanten Adress-, Steuer-, Bank-, Register- und Kontaktdaten sowie
 die Profil-ID. Der Empfänger wird weiterhin aus der zentralen Firmenbasis
 gesnapshottet. Nach der Buchung verändern weder Firmenstamm, Betreiberprofil
 noch Rechnungstellerprofil den gespeicherten Beleg.
+
+## Paket 4a / R4 – Auftrags-LV-Persistenz und Bestandsmigration
+
+Die in #275 festgelegte minimale Auftrags-LV-Basis wird ausschließlich als
+Rechnungsfachpersistenz vorbereitet:
+
+- `billing_orders` besitzt stabile UUIDs, gemeinsamen Firmen-/optionalen
+  Projektbezug und einen bestätigbaren Auftragskopf.
+- `billing_order_positions` bewahrt sichtbare Vertragsnummern und einen
+  expliziten `sort_index`; die freie Rechnungsnummerierung wird nicht verwendet.
+- `billing_order_amendments` ist mit stabiler Ursprungsreferenz sowie Feldern,
+  Format- und Eindeutigkeitsregeln für `N 01`, `N 02` usw. vorbereitet. Die
+  operative Nummernvergabe bleibt Paket 4d.
+- Datenbanktrigger schützen IDs sowie bestätigte Auftrags-, LV- und
+  Nachtragsdaten auch unterhalb eines späteren Service-/IPC-Pfads.
+- Die additive Rechnungsfachmigration ordnet freien Bestand als
+  `NOT_APPLICABLE`, alte gebuchte Auftragsbelege als `LEGACY_SNAPSHOT` und alte
+  bzw. noch nicht gebundene Auftragsentwürfe als `LEGACY_UNRESOLVED` ein.
+- Es wird kein Auftrag aus Auftragsnummer, Positionstext, Positionsnummer oder
+  Listenreihenfolge rekonstruiert. Historisches `positions_json` bleibt
+  byte-inhaltlich unverändert.
+
+Neue `LEGACY_UNRESOLVED`-Entwürfe können vor Paket 4c nicht gebucht werden.
+Vorhandene gebuchte Auftragsbelege bleiben als historische Snapshots lesbar.
+
+Nicht enthalten sind die 4b-Anwendungs-/IPC-Grenze, eine UI, die Erzeugung
+eines Rechnungsentwurfs aus Auftrag, Nachtragsbedienung, PDF oder andere
+Provider. Der Core enthält weiterhin keine Auftrags-/LV-/Nachtragsfachlogik.
