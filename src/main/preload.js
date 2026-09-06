@@ -99,6 +99,10 @@ contextBridge.exposeInMainWorld("bbmDb", {
   // Rechnung: Grunddaten und Belegkopf
   // ============================================================
   rechnungDefaults: () => ipcRenderer.invoke("rechnung:defaults"),
+  rechnungOrderGet: (id) => ipcRenderer.invoke("rechnung:order:get", { id }),
+  rechnungOrderCreateDraft: (header) => ipcRenderer.invoke("rechnung:order:createDraft", header),
+  rechnungOrderAddPosition: (id, position) => ipcRenderer.invoke("rechnung:order:addPosition", { id, position }),
+  rechnungOrderConfirm: (id) => ipcRenderer.invoke("rechnung:order:confirm", { id }),
   rechnungList: () => ipcRenderer.invoke("rechnung:list"),
   rechnungGet: (id) => ipcRenderer.invoke("rechnung:get", { id }),
   rechnungCreateDraft: (header) => ipcRenderer.invoke("rechnung:createDraft", header),

@@ -1,8 +1,69 @@
 # Rechnung – Revision #275
 
-Stand: 2026-09-06, Paket 4a / R4 Auftrags-LV-Persistenz.
+Stand: 2026-09-06, Paket 4b / R4 Auftrags-LV-Anwendungsgrenze.
+
+## Paket 4b – minimale Anwendungsgrenze
+
+`BillingOrderService` ist der einzige produktive Zugang zum vorhandenen
+`BillingOrderRepository`. Der Service enthält keine SQL-Anweisungen. Das
+Repository erhält nur eine Transaktionshülle für atomare Prüfung und Änderung;
+Schema, Migrationen und SQLite-Datei bleiben unverändert.
+
+| Operation | Payload | Wirkung / Grenze |
+| --- | --- | --- |
+| `get` | `{ id }` | Bestehenden Auftrag einschließlich LV und gespeicherter Nachträge lesen; DRAFT, CONFIRMED und CANCELLED bleiben unterscheidbar. |
+| `createDraft` | Auftragskopffelder | DRAFT anlegen; UUID und Status ausschließlich serverseitig. |
+| `addPosition` | `{ id, position }` | Vertragsposition ausschließlich an DRAFT aufnehmen; Nummer und `sort_index` unverändert übernehmen. |
+| `confirmOrder` | `{ id }` | Kopf und gesamtes LV prüfen und atomar bestätigen; anschließend nur lesbar. |
+
+Der Minimalumfang dient der schrittweisen Erfassung einer Vertragsquelle.
+Allgemeine Auftragsbearbeitung, Löschen/Stornieren und Nachtragsaktionen werden
+nicht als neue Serviceoperationen angeboten. Vorhandene Nachträge sind beim
+Lesen Bestandsdaten; daraus entsteht keine Freigabe zur Rechnungsübernahme.
+
+Zulässige Kopffelder: `order_number`, `order_date`, `customer_firm_id`,
+optionales `project_id`, `service_reference`. Positionsfelder entsprechen dem
+4a-Bestand ohne `id`, `order_id`, Status oder Zeitstempel. UUIDs werden nicht aus
+Nummern abgeleitet. Firmen-/Projektbeziehungen bleiben durch die vorhandenen
+Fremdschlüssel abgesichert.
+
+Die Grenze validiert Objekte und Feldlisten strikt: echtes Kalenderdatum,
+UUID beim Zugriff, ganzzahliger nichtnegativer `sort_index`, eindeutige Nummern
+und Reihenfolge, vorhandener früherer Parent desselben LV (damit keine Zyklen),
+Positionstypen und nichtnegative ganzzahlige Centwerte. Mengen werden als
+Dezimalstrings mit Punkt übergeben; eine UI-Lokalisierung ist nicht Teil dieses
+Pakets. Nullable Preis-/Mengenfelder bleiben nullable. Bestätigung erfordert
+mindestens eine Leistungsposition. Ungültiger Entwurfsbestand bleibt DRAFT;
+er wird weder still normalisiert noch durch Bestätigung legitimiert.
+
+Alle vier Operationen prüfen die aktuelle Rechnungsfreigabe über den bestehenden
+Lizenzdienst, zusätzlich zum bestehenden modularen IPC-Guard. Preload stellt
+`rechnungOrderGet`, `rechnungOrderCreateDraft`, `rechnungOrderAddPosition` und
+`rechnungOrderConfirm` bereit. Der bestehende Rechnungsregistrar bindet die
+Kanäle `rechnung:order:get`, `:createDraft`, `:addPosition`, `:confirm` ein.
+IPC transportiert nur zum Service und liefert dessen Fehlercodes zurück.
+
+LEGACY_UNRESOLVED ist weiterhin ein Rechnungszustand, kein Auftrag.
+Rechnungs-/Legacy-Payloads, fremde Statusfelder und `source_order_id` werden
+hier abgewiesen. Es gibt keine Suche/Zuordnung nach Auftragsnummer und keinen
+Schreibzugriff auf Rechnungen. Selbst eine Legacy-Rechnung mit zufällig bereits
+passender Quell-ID und Auftragsnummer bleibt ungelöst. Ein UUID-Auftragsabruf
+belegt ausschließlich das Auftragsobjekt, niemals die Bindung einer Rechnung.
+
+Nachweis: acht gezielte Service-/IPC-/Preload-/Guard-/Architekturtests,
+die sechs unveränderten 4a-Tests sowie Rechnungs-/Core-Regressionen. Der Volltest
+wird mit der vor Änderung aufgenommenen main-Baseline abgeglichen. Bekannte
+neun Einzelfehler und fehlende ui-editor-kit-Artefakte bleiben getrennt; isoliert
+besteht zusätzlich die historische Screen-Erwartung `Rechnungspositionen`.
+
+Paket 4c kann den Service erweitern, um einen bestätigten Auftrag atomar als
+Rechnungssnapshot zu übernehmen. Diese Operation, UI, Nachtragsnummernvergabe,
+Abschlag/Schluss und sämtliche Ausgabeprovider sind hier nicht implementiert.
 
 ## Integrationsbasis
+
+Paket 4b setzt auf `6bc4f6aa9157876cf6569ec71c5462dd91e2f947` auf;
+Paket 4a / PR #313 ist darin enthalten.
 
 `main` bleibt die einzige Integrationsbasis. Der Rechnungsbestand wird nicht neu
 aufgebaut und kein historischer Branch wird pauschal gemergt.

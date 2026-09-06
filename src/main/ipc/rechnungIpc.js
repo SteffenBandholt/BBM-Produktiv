@@ -9,6 +9,7 @@ const {
 const projectsRepo = require("../db/projectsRepo");
 const { getFirmDirectoryService } = require("../domain/firms/FirmDirectoryService");
 const { getInvoiceService } = require("../domain/rechnung/InvoiceService");
+const { getBillingOrderService } = require("../domain/rechnung/BillingOrderService");
 const { InvoicePdfFinalizer } = require("../domain/rechnung/InvoicePdfFinalizer");
 
 function failure(error) { return { ok: false, error: error?.message || String(error), code: error?.code || null }; }
@@ -16,6 +17,7 @@ function failure(error) { return { ok: false, error: error?.message || String(er
 function registerRechnungIpc({
   ipcMain = electronIpcMain,
   service = getInvoiceService(),
+  billingOrderService = getBillingOrderService(),
   firmDirectory = getFirmDirectoryService(),
   projectRepository = projectsRepo,
   app = electronApp,
@@ -32,6 +34,10 @@ function registerRechnungIpc({
     catch (error) { return failure(error); }
   });
   handle("rechnung:defaults", () => service.defaults());
+  handle("rechnung:order:get", (data) => billingOrderService.get(data));
+  handle("rechnung:order:createDraft", (data) => billingOrderService.createDraft(data));
+  handle("rechnung:order:addPosition", (data) => billingOrderService.addPosition(data));
+  handle("rechnung:order:confirm", (data) => billingOrderService.confirmOrder(data));
   handle("rechnung:list", () => service.list(), "list");
   handle("rechnung:get", (data) => service.get(data.id));
   handle("rechnung:createDraft", (data) => service.createDraft(data));
