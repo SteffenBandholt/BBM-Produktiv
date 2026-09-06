@@ -1,4 +1,16 @@
 import { MailFlow } from "../../features/mail/MailFlow.js";
+import { PdfDocumentService } from "../../features/output/PdfDocumentService.js";
+
+const CLOSE_PDF_OUTPUTS = Object.freeze([
+  Object.freeze({
+    key: "protocol",
+    operation: "printClosedMeetingDirect",
+    errorLabel: "Protokoll-PDF",
+  }),
+  Object.freeze({ key: "firms", operation: "printFirmsDirect", errorLabel: "Firmenliste-PDF" }),
+  Object.freeze({ key: "todo", operation: "printTodoDirect", errorLabel: "ToDo-PDF" }),
+  Object.freeze({ key: "tops", operation: "printTopListAllDirect", errorLabel: "Top-Liste-PDF" }),
+]);
 
 // Fachmodul `Protokoll`:
 // Abschluss- und Ausgabeablauf des Protokolls; Mail/Print bleiben gemeinsame Dienste.
@@ -11,6 +23,8 @@ export class TopsCloseFlow {
     this.isReadOnly = false;
     this.showAmpelInList = true;
     this._lastClosedMeetingForEmail = null;
+    this.pdfDocumentService =
+      options.pdfDocumentService || new PdfDocumentService({ router: this.router });
 
     this._mailViewAdapter = {
       get projectId() {
@@ -110,8 +124,8 @@ export class TopsCloseFlow {
   }
 
   async _printAllOutputs({ projectId, meetingId }) {
-    // Gemeinsame Dienste / Addons:
-    // PDF-/Print-Erzeugung bleibt technisch im Router/PrintModal und nicht im Modul-Unterbau selbst.
+    // Das Fachmodul bestimmt Dokumente, Reihenfolge und Fehlertexte. Die technische
+    // Ausfuehrung bleibt hinter PdfDocumentService -> Router/PrintModal gemeinsam.
     const printResults = {
       protocol: { ok: false, filePath: "" },
       firms: { ok: false, filePath: "" },
@@ -119,48 +133,18 @@ export class TopsCloseFlow {
       tops: { ok: false, filePath: "" },
     };
 
-    try {
-      if (typeof this.router?.printClosedMeetingDirect === "function") {
-        const r = await this.router.printClosedMeetingDirect({ projectId, meetingId });
-        printResults.protocol.ok = r?.ok !== false;
-        printResults.protocol.filePath = r?.filePath || r?.path || "";
+    for (const output of CLOSE_PDF_OUTPUTS) {
+      try {
+        const result = await this.pdfDocumentService.create({
+          operation: output.operation,
+          payload: { projectId, meetingId },
+        });
+        printResults[output.key].ok = result?.ok !== false;
+        printResults[output.key].filePath = result?.filePath || result?.path || "";
+      } catch (err) {
+        console.warn(`[tops-v2] ${output.errorLabel} nach Schliessen fehlgeschlagen:`, err);
+        alert(`${output.errorLabel} konnte nach dem Schliessen nicht erzeugt werden.`);
       }
-    } catch (err) {
-      console.warn("[tops-v2] Protokoll-PDF nach Schliessen fehlgeschlagen:", err);
-      alert("Protokoll-PDF konnte nach dem Schliessen nicht erzeugt werden.");
-    }
-
-    try {
-      if (typeof this.router?.printFirmsDirect === "function") {
-        const r = await this.router.printFirmsDirect({ projectId, meetingId });
-        printResults.firms.ok = r?.ok !== false;
-        printResults.firms.filePath = r?.filePath || r?.path || "";
-      }
-    } catch (err) {
-      console.warn("[tops-v2] Firmenliste-PDF nach Schliessen fehlgeschlagen:", err);
-      alert("Firmenliste-PDF konnte nach dem Schliessen nicht erzeugt werden.");
-    }
-
-    try {
-      if (typeof this.router?.printTodoDirect === "function") {
-        const r = await this.router.printTodoDirect({ projectId, meetingId });
-        printResults.todo.ok = r?.ok !== false;
-        printResults.todo.filePath = r?.filePath || r?.path || "";
-      }
-    } catch (err) {
-      console.warn("[tops-v2] ToDo-PDF nach Schliessen fehlgeschlagen:", err);
-      alert("ToDo-PDF konnte nach dem Schliessen nicht erzeugt werden.");
-    }
-
-    try {
-      if (typeof this.router?.printTopListAllDirect === "function") {
-        const r = await this.router.printTopListAllDirect({ projectId, meetingId });
-        printResults.tops.ok = r?.ok !== false;
-        printResults.tops.filePath = r?.filePath || r?.path || "";
-      }
-    } catch (err) {
-      console.warn("[tops-v2] Top-Liste-PDF nach Schliessen fehlgeschlagen:", err);
-      alert("Top-Liste-PDF konnte nach dem Schliessen nicht erzeugt werden.");
     }
 
     return printResults;

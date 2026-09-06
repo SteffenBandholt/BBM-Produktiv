@@ -37,6 +37,15 @@ Projektformular delegiert an `ProtocolSettingsModal.js`. Der projektbezogene Set
 nur ueber den Protokoll-IPC-Registrar aktiviert. Die vorerst noch vorhandenen, nicht mehr
 aufgerufenen Dialogimplementierungen werden erst im gesonderten Legacy-Paket bewertet.
 
+## PDF-/Print-Grenze
+
+Der Protokoll-Abschluss bestimmt weiterhin fachlich, welche Dokumente in welcher Reihenfolge
+erzeugt werden. `renderer/tops/domain/TopsCloseFlow.js` liefert dazu ausschliesslich Operation
+und Projekt-/Besprechungskontext an `features/output/PdfDocumentService.js`. Dieser gemeinsame
+technische Dienst fuehrt die bereits vorhandenen Router-/`PrintModal`-Operationen aus und kennt
+keine Protokoll-Dokumentart, kein Fach-ViewModel, keine Layoutregel und keinen Dateinamen.
+Renderer, Satzweg, Preview, Speicherung und Druck bleiben unveraendert.
+
 Die Ordner `components/`, `domain/`, `data/`, `state/`, `viewmodel/`, `dialogs/` und `rules/`
 sind absichtlich schon angelegt, damit spaetere Umzuege dort sauber anschliessen koennen.
 

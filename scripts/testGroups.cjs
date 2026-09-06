@@ -6,6 +6,7 @@ const TEST_GROUPS = Object.freeze([
     suites: Object.freeze([
       ["protokollRevision272Path.test.cjs", "runProtokollRevision272PathTests"],
       ["protokollSettingsOwnership.test.cjs", "runProtokollSettingsOwnershipTests"],
+      ["protokollPdfServiceBoundary.test.cjs", "runProtokollPdfServiceBoundaryTests"],
       ["gateBRegression.test.cjs", "runGateBRegressionTests"],
       ["ownOrganizationBoundary.test.cjs", "runOwnOrganizationBoundaryTests"],
       ["moduleServiceProviders.test.cjs", "runModuleServiceProviderTests"],
