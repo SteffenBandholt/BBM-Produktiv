@@ -66,3 +66,15 @@ eine Branchübernahme umgangen, sondern ist Gegenstand des nächsten Pakets.
 Paket 1 verändert keinen Produktcode, keine UI und keine PDF-Ausgabe. Es hält
 den geborgenen Bestand, ausgeschlossene Altinfrastruktur und die nächste
 fachliche Lücke reproduzierbar fest.
+
+## Paket 2 / R3 – InvoiceIssuerProfile
+
+Das Rechnungsmodul besitzt ein eigenständiges `InvoiceIssuerProfile`. Die
+additive Fachmigration legt das Profil in derselben BBM-SQLite-Datei an und
+initialisiert es genau einmal aus dem bestehenden `user_profile`-Stand der
+`OwnOrganization`. Danach sind beide Identitäten unabhängig änderbar. Eine
+Lizenzidentität wird weder gelesen noch als Rechnungsteller interpretiert.
+
+Die Buchung verwendet bis zum getrennten Snapshot-Paket weiterhin den
+bestehenden Pfad. Damit werden Einführung der Identität und Umstellung der
+rechtlich wirksamen Buchung nicht in einem unprüfbaren Mischpaket verbunden.
