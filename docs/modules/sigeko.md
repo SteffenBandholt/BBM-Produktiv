@@ -1,681 +1,336 @@
-# BBM SiGeKo – Zielbild und Entwicklungsplan
+# BBM SiGeKo – verbindliches Zielbild
 
 ## Zweck
 
-Diese Datei ist die führende fachliche Beschreibung für das geplante BBM-Fachmodul `SiGeKo`.
+Diese Datei ist die **führende Übersicht** für das geplante BBM-Fachmodul `SiGeKo`.
 
-Sie hält fest:
-- welches Ziel das Modul verfolgt
-- wie BBM und BBM-Mobil zusammenarbeiten sollen
-- welche fachlichen Bereiche getrennt bleiben müssen
-- welche Funktionen später vorgesehen sind
-- in welcher Reihenfolge die Entwicklung erfolgen soll
-- welche Grenzen für einzelne Codex-Goal-Läufe verbindlich gelten
+Sie verweist bewusst auf die detaillierten GitHub-Issues, statt deren Inhalte mehrfach und widersprüchlich zu duplizieren.
 
-Diese Datei ist bewusst kein Tagesstatus und kein vollständiges technisches Implementierungsdetail. Änderungen am Zielbild sollen bewusst und nachvollziehbar erfolgen, nicht nebenbei während eines Entwicklungs-Laufs.
+Verbindliche Grundlagen:
+- fachliche Detailplanung: Issues **#250–#260**
+- technische Zielarchitektur und Umsetzungspakete: **#274**
+- allgemeine BBM-Zielarchitektur: `ARCHITECTURE.md`
+
+Bei Widersprüchen gilt:
+1. der jüngere bereinigte Revisionsstand,
+2. fachlich die jeweiligen Haupt-Issues #250–#260,
+3. technisch #274,
+4. anschließend diese Übersicht.
 
 ---
 
 ## 1. Grundidee
 
-`BBM SiGeKo` wird ein eigenständiges Fachmodul innerhalb der BBM-Familie.
+`SiGeKo` ist ein eigenständiges Fachmodul innerhalb der BBM-Familie.
 
 Es ist:
-- keine separate Fremd-App
-- keine Einzellösung nur für einen einzelnen Nutzer
-- kein Ersatz für BBM
-- sondern ein später lizenzierbares bzw. freischaltbares Fachmodul innerhalb der bestehenden BBM-Architektur
+- keine separate Fremd-App,
+- keine zweite Projektverwaltung,
+- kein Unterbereich von Protokoll oder Restarbeiten,
+- sondern ein lizenzierbares/freischaltbares Fachmodul innerhalb des bestehenden BBM-Modulrahmens.
 
-BBM bleibt die führende Mutteranwendung.
+BBM bleibt Mutteranwendung und führender Datenbestand.
 
-BBM-Mobil wird der mobile Erfassungskanal für mehrere BBM-Fachbereiche.
-
----
-
-## 2. Mobile Fachbereiche in BBM-Mobil
-
-BBM-Mobil soll künftig drei fachlich getrennte Bereiche bedienen:
-
-### 2.1 Qualitätssicherung
-- Restarbeiten
-- Baumängel
-- später ggf. weitere QS-Funktionen
-
-### 2.2 SiGeKo-Begehung
-- sicherheitsrelevante Feststellungen / Mängel
-- Fotos
-- Diktat
-- Maßnahmen
-- Verantwortliche
-- Fristen
-- spätere KI- und Regelwerksunterstützung
-
-### 2.3 Baudokumentation
-Bewusst sehr schlank:
-- Foto
-- optional kurzer Kommentar
-- Datum/Uhrzeit automatisch
-- Projektzuordnung
-- speichern
-
-Die drei Bereiche dürfen gemeinsame technische Komponenten verwenden, müssen aber fachlich und im Datenmodell sauber getrennt bleiben.
+BBM-Mobil bleibt die gemeinsame mobile Erfassungs-App für mehrere fachlich getrennte Bereiche.
 
 ---
 
-## 3. Fachlicher Umfang von BBM SiGeKo
+## 2. Verbindliche Fachabgrenzung
 
-Ein SiGeKo-Projekt gehört zu einem bestehenden BBM-Projekt.
-
-Das Modul soll später mindestens folgende Bereiche besitzen:
-- Übersicht
-- Projektdaten
-- Vorankündigung
-- SiGe-Plan
-- Behörden und Notfallkontakte
-- Begehungen
-- offene Mängel
-- abgeschlossene Mängel
-- Berichte
-- später Regelwerke / KI
-
----
-
-## 4. Projektdaten
-
-Projektdaten werden einmal erfasst bzw. soweit möglich aus BBM übernommen und anschließend mehrfach verwendet.
-
-### 4.1 Bauvorhaben
-- Bezeichnung
-- Straße
-- PLZ
-- Ort
-- Art des Bauvorhabens
-- geplanter Beginn
-- geplante Dauer
-
-### 4.2 Bauherr
-- Firma / Person
-- Anschrift
-- Ansprechpartner
-
-### 4.3 Architekt / Planer
-- Firma
-- Ansprechpartner
-- Anschrift
-- Telefon
-- E-Mail
-
-### 4.4 SiGeKo
-- aus Benutzer-/Firmenstamm
-- Kontaktdaten
-
-Diese Daten sollen unter anderem für folgende Funktionen wiederverwendet werden:
-- SiGe-Plan
-- Vorankündigung
-- Begehungsberichte
-- Dokumentablage
-
-Keine doppelte Projekt-, Firmen- oder Benutzerverwaltung nur für SiGeKo aufbauen.
-
----
-
-## 5. SiGe-Plan
-
-Der heutige Arbeitsstand des SiGe-Plans wird fachlich wie folgt eingeordnet.
-
-### 5.1 Fester Inhalt
-- Gefährdungsmatrix
-- Standardtexte
-- Baustellenordnung
-- Maßnahmen
-- Legenden
-
-### 5.2 Variable Inhalte
-- Schriftkopf
-- Projekt
-- Bauherr
-- Architekt
-- SiGeKo
-- Datum
-- Behörden
-- Polizei
-- Krankenhaus
-- Durchgangsarzt
-- Strom
-- Gas
-- Wasser
-- Arbeitsschutzbehörde
-
-### 5.3 Zielbild
-Keine tägliche DWG-Bearbeitung mehr.
-
-Stattdessen:
-- feste SiGe-Plan-Vorlage
-- definierte Platzhalter
-- BBM füllt die projektspezifischen Daten ein
-- PDF wird automatisch erzeugt
-
-### 5.4 Nicht Ziel der ersten Stufe
-- keine dynamische Gefährdungsmatrix
-- keine AutoCAD-Automatisierung
-- keine DWG-Manipulation
-- keine automatische fachliche Anpassung der Matrix
-
----
-
-## 6. Vorankündigung
-
-Die Vorankündigung folgt demselben Grundprinzip:
-- feste Vorlage
-- variable Projektdaten
-- automatische Befüllung
-- PDF-Ausgabe
-
-Die Daten stammen aus demselben SiGeKo-Projekt.
-
-Keine doppelte Dateneingabe.
-
----
-
-## 7. Behörden und Notfallkontakte
-
-Später sollen abhängig von der Baustellenadresse automatisch oder halbautomatisch passende Stellen ermittelt werden können.
-
-Vorgesehen sind mindestens:
-- Polizei
-- Krankenhaus / ZNA
-- Durchgangsarzt
-- Arbeitsschutzbehörde
-- Stromnetzbetreiber
-- Gasnetzbetreiber
-- Wasser / Abwasser
-- freie weitere Einträge
-
-Gespeichert werden mindestens:
-- Organisation
-- Bezeichnung
-- Anschrift
-- Telefonnummer
-- Störungs-/Notfallnummer
-- Quelle
-- geprüft am
-
-Die Daten werden projektbezogen gespeichert und nicht bei jeder PDF-Erzeugung erneut recherchiert.
-
-Automatische Internetrecherche gehört nicht zu den ersten Entwicklungsabschnitten.
-
----
-
-## 8. SiGeKo-Begehung
-
-Eine Begehung ist ein übergeordneter fachlicher Vorgang.
-
-Beispiel:
+Für BBM-Mobil und die spätere Synchronisation gilt weiterhin:
 
 ```text
-SiGeKo-Begehung
-04.09.2026
-Projekt Bachstraße
-
-- Mangel 1
-- Mangel 2
-- Mangel 3
-- allgemeine Bemerkung
+Qualitätssicherung != SiGeKo != Baudokumentation
 ```
 
-Eine Begehung enthält mindestens:
-- eindeutige ID
-- Projekt
-- Datum/Uhrzeit
-- Bearbeiter
-- Teilnehmer
-- allgemeine Bemerkung
-- Status `Entwurf` / `abgeschlossen`
-- zugehörige SiGeKo-Mängel
+Gemeinsame Technik darf wiederverwendet werden, z. B.:
+- Kamera,
+- Diktat,
+- Offline-Speicherung,
+- Projektwahl,
+- Orts-/Gebäudezuordnung,
+- GPS,
+- Synchronisation.
 
-Ein späterer Begehungsbericht wird aus diesem Vorgang erzeugt.
+Die Fachdaten und fachlichen Lebenszyklen bleiben getrennt.
 
----
+### Wichtige Bereinigung gegenüber älteren Grobständen
 
-## 9. SiGeKo-Mangel
-
-Ein einzelner SiGeKo-Mangel enthält später mindestens:
-- eindeutige stabile ID
-- Projekt
-- Begehung
-- Datum
-- Foto/Fotos
-- Originaldiktat bzw. Originalbeschreibung
-- Feststellung
-- erforderliche Maßnahme
-- Kategorie / Prüfbereich
-- Firma / Verantwortlicher
-- Frist
-- Status
-- Dringlichkeit
-- optional Gebäude / Geschoss / Bereich
-
-Als Status sind zunächst vorgesehen:
-- offen
-- erledigt
-- erneut festgestellt
-
-Ein Mangel soll über mehrere Begehungen weitergeführt werden können.
-
-Beispiel:
-
-```text
-SG-0017
-
-04.09.2026 festgestellt
-18.09.2026 weiterhin offen
-02.10.2026 erledigt
-```
-
-Das Datenmodell muss diese Nachverfolgung von Anfang an ermöglichen, auch wenn die vollständige Folgelogik erst später umgesetzt wird.
-
----
-
-## 10. KI-Unterstützung – später
-
-Geplanter fachlicher Ablauf:
-
-```text
-Foto + Diktat
-      ↓
-KI analysiert
-      ↓
-mehrere mögliche fachliche Treffer
-      ↓
-Treffer mit Quelle anzeigen
-      ↓
-Nutzer wählt einen oder mehrere Treffer
-      ↓
-Feststellung / Maßnahme / Quellen werden übernommen
-```
-
-Die KI darf später unterstützen bei:
-- Bildanalyse
-- Diktat verstehen
-- Mangel strukturieren
-- fachlich passende Regelwerkstreffer finden
-- Maßnahmen vorschlagen
-- Berichtstext formulieren
-
-### 10.1 Unverrückbare Grenze
-
-Die KI trifft keine verbindliche fachliche Entscheidung.
-
-Sie darf insbesondere nicht selbst:
-- einen Mangel verbindlich feststellen
-- einen Mangel schließen
-- einen Regelwerkstreffer ungefragt übernehmen
-- einen sicheren Zustand bestätigen
-
-Der SiGeKo entscheidet.
-
-Nur aktiv vom Nutzer bestätigte bzw. übernommene Treffer dürfen in einen Bericht einfließen.
-
----
-
-## 11. Regelwerke
-
-Später vorgesehene Wissensbasis:
-- BG BAU
-- DGUV Vorschriften
-- DGUV Regeln
-- DGUV Informationen
-- ASR
-- Baustellenverordnung
-- RAB
-- ggf. BetrSichV
-
-Jeder KI-Treffer soll eine nachvollziehbare Quelle haben.
-
-Zu einem Treffer sollen mindestens gespeichert werden können:
-- Regelwerk
-- Titel
-- Abschnitt / Fundstelle
-- Quellenbezeichnung
-- Stand / Ausgabe
-- Quellen-ID oder URL
-- Relevanz / Confidence
-- vom Nutzer übernommen: ja/nein
-
-Die Regelwerke werden nicht bereits im ersten Entwicklungsabschnitt vollständig integriert.
-
-Das Datenmodell wird jedoch so vorbereitet, dass die spätere Regelwerksanbindung keinen grundlegenden Umbau erfordert.
-
----
-
-## 12. Baudokumentation
-
-Die Baudokumentation bleibt bewusst einfach.
-
-Ablauf:
-
-```text
-Projekt
-→ Baudokumentation
-→ Foto
-→ optional Kommentar
-→ speichern
-```
-
-Automatisch erfassen:
-- Datum
-- Uhrzeit
-- Projekt
-- Benutzer, soweit im System vorhanden
-- optional GPS
-
-### 12.1 Nicht Ziel
-
-Keine Pflicht für:
-- Frist
-- Priorität
-- Mangelbewertung
-- Regelwerksprüfung
-- Gewerk
-- aufwendige Eingabemasken
-
-Baudokumentation ist kein Qualitätsmangel und kein SiGeKo-Mangel.
-
----
-
-## 13. Qualitätssicherung
-
-Die bestehende Restarbeiten-/Mängelerfassung in BBM-Mobil bleibt bestehen.
-
-Sie wird nicht mit SiGeKo vermischt.
-
-Technische Gemeinsamkeiten dürfen verwendet werden, insbesondere:
-- Kamera
-- Spracheingabe
-- Offline-Speicherung
-- Projektwahl
-- Gebäude / Geschoss / Bereich
-- GPS
-- Planmarker
-- Synchronisation
-
-Fachlich bleiben die Datensätze unterscheidbar und separat auswertbar.
+Im SiGeKo werden **keine Verantwortlichen und keine Fristen zur Maßnahmenverfolgung geführt**.
 
 Verbindlich gilt:
 
-`Qualitätssicherung != SiGeKo != Baudokumentation`
-
----
-
-## 14. Entwicklungsreihenfolge
-
-Die Entwicklung erfolgt in klar abgegrenzten, in sich geschlossenen Goal-Läufen.
-
-### Abschnitt 1 – BBM-Produktiv: Modulrahmen SiGeKo
-
-**Ziel**
-- Modul `SiGeKo` sauber in BBM registrieren
-- Projekt-Arbeitsbereich anbinden
-- Navigation herstellen
-- Modulaktivierung im bestehenden Modulrahmen berücksichtigen
-
-**Nicht Ziel**
-- keine Begehungslogik
-- keine KI
-- keine PDF-Automatik
-- keine Mobil-Synchronisation
-
----
-
-### Abschnitt 2 – BBM-Produktiv: SiGeKo-Datenmodell
-
-**Ziel**
-- SiGeKo-Projektdaten
-- Begehung
-- SiGeKo-Mangel
-- Behördenkontakte
-- Status
-- Quellen-/KI-Felder
-
-**Nicht Ziel**
-- keine echte KI
-- keine Internetrecherche
-- keine Regelwerksdaten
-- keine fertigen PDFs
-
----
-
-### Abschnitt 3 – BBM-Produktiv: SiGeKo-Grundoberfläche
-
-**Ziel**
-- Übersicht
-- Begehungen
-- Mängel
-- Behörden / Notfall
-- Projektdaten
-
-**Nicht Ziel**
-- keine mobile Anbindung
-- keine KI
-- keine automatische Recherche
-
----
-
-### Abschnitt 4 – BBM-Mobil: fachliche Aufteilung
-
-**Ziel**
-- Qualitätssicherung
-- SiGeKo-Begehung
-- Baudokumentation
-- gemeinsame technische Basis wiederverwenden
-
-**Nicht Ziel**
-- Restarbeiten nicht im selben Lauf vollständig fertigstellen
-- keine KI
-- keine echte Sync-Neuentwicklung
-
----
-
-### Abschnitt 5 – BBM-Mobil: mobile SiGeKo-Begehung
-
-**Ziel**
-- Begehung anlegen
-- mehrere Mängel zuordnen
-- Foto
-- Diktat
-- Feststellung
-- Maßnahme
-- Frist
-- Verantwortlicher
-- Offline-Speicherung
-
-**Nicht Ziel**
-- keine KI
-- keine Regelwerksprüfung
-- kein fertiger Begehungsbericht
-
----
-
-### Abschnitt 6 – BBM-Mobil: Baudokumentation
-
-**Ziel**
-- Foto
-- optional Kommentar
-- Datum/Uhrzeit automatisch
-- Projektzuordnung
-- speichern
-
-Bewusst nicht mehr.
-
----
-
-### Abschnitt 7 – BBM ↔ BBM-Mobil
-
-**Ziel**
-- definierte echte Schnittstelle
-- Synchronisation
-- Dubletten verhindern
-- Offline-Warteschlange
-- sichere Fotoübertragung
-
-**Nicht Ziel**
-- keine neue Plattformarchitektur
-- keine Vermischung der Fachdatentypen
-
----
-
-### Abschnitt 8 – SiGeKo-Begehungsbericht
-
-**Ziel**
-- abgeschlossene Begehung
-- Mängel
-- Bilder
-- Maßnahmen
-- Verantwortliche
-- PDF-Bericht
-
-**Nicht Ziel**
-- KI ist dafür noch nicht erforderlich
-
----
-
-### Abschnitt 9 – SiGe-Plan und Vorankündigung
-
-**Ziel**
-- Vorlagen
-- Platzhalter
-- automatische PDF-Erzeugung
-
-**Nicht Ziel**
-- keine dynamische Matrix
-- kein AutoCAD
-- keine DWG-Bearbeitung
-
----
-
-### Abschnitt 10 – KI und Regelwerke
-
-Erst in diesem Abschnitt:
-- Fotoanalyse
-- Diktatanalyse
-- mehrere Treffer
-- Quellen
-- Übernahme durch Nutzer
-- Berichtstext
-
-Die KI bleibt Vorschlagssystem; die fachliche Entscheidung verbleibt beim Nutzer.
-
----
-
-## 15. Architekturgrenzen
-
-Diese Grenzen gelten für das gesamte Projekt.
-
-### 15.1 Verbindlich
-- BBM bleibt Mutteranwendung.
-- BBM SiGeKo bleibt eigenes Fachmodul.
-- BBM-Mobil bleibt gemeinsame mobile Erfassungs-App.
-- Projekt-, Firmen- und Benutzerdaten sollen aus gemeinsamen BBM-Domänen stammen, soweit geeignet.
-- vorhandene gemeinsame Dienste werden wiederverwendet, wenn fachlich passend.
-
-### 15.2 Nicht aufbauen
-- keine zweite Projektverwaltung
-- keine zweite Firmenverwaltung
-- keine zweite Benutzerverwaltung
-- keine separate SiGeKo-Insel
-- keine eigene parallele PDF-Plattform ohne Notwendigkeit
-- keine unnötigen neuen Frameworks
-- keine allgemeine „Superplattform“
-- keine unnötige Neuschreibung vorhandener BBM-Funktionen
-
-### 15.3 Bestandsschutz
-Vorhandene Funktionen in anderen BBM-Modulen dürfen durch SiGeKo-Arbeiten nicht beschädigt oder fachlich umgedeutet werden.
-
-Insbesondere gilt:
-- Qualitätssicherung bleibt fachlich Qualitätssicherung.
-- SiGeKo bleibt fachlich SiGeKo.
-- Baudokumentation bleibt eine schlanke Dokumentationsfunktion.
-
----
-
-## 16. UI-Editor- und PDF-Editor-Registrierung
-
-Diese Regel gilt querschnittlich für alle Entwicklungsabschnitte von BBM SiGeKo, sobald UI- oder PDF-Ausgabe betroffen sind.
-
-### 16.1 UI
-- Alle neuen UI-relevanten und später editierbaren SiGeKo-Elemente müssen gemäß der bestehenden BBM-/UI-Editor-kit-Architektur in der von der Ziel-App gelieferten ElementRegistry registriert werden.
-- Nicht registrierte Elemente dürfen nicht stillschweigend als editierbare Sonderlösung außerhalb des Editors entstehen.
-- Der UI-Editor bleibt generisch und erhält keine SiGeKo-Fachlogik.
-- Keine automatische UI-Erkennung, kein DOM-Scan, kein UI-Scanning und keine automatische Registry-Befüllung.
-- Keine parallele oder zweite SiGeKo-spezifische Registry neben dem bestehenden Registry-Prinzip.
-- Soweit ein Element bewusst nicht editierbar sein soll, muss dies eine fachlich bzw. technisch bewusste Entscheidung sein und darf nicht aus vergessener Registrierung entstehen.
-
-### 16.2 PDF
-- Alle neuen PDF-relevanten und später im PDF-Editor editierbaren SiGeKo-Layoutbausteine müssen entsprechend der bestehenden PDF-/Editor-Architektur registriert werden.
-- SiGeKo-Bericht, SiGe-Plan und Vorankündigung dürfen keine unnötige parallele PDF-Plattform erhalten.
-- Wiederverwendbare vorhandene PDF-, Layout-, Vorlagen- und Editor-Dienste von BBM sind zu nutzen, soweit sie für den jeweiligen Abschnitt fachlich und technisch geeignet sind.
-- PDF-Elemente, deren Position, Größe, Sichtbarkeit, Schrift oder sonstiges Layout später durch den Editor angepasst werden soll, dürfen nicht ausschließlich hart verdrahtet werden.
-
-### 16.3 Bestandsschutz der Editor-Einstellungen
-- Bereits gespeicherte UI-Editor- und PDF-Editor-Anpassungen dürfen durch SiGeKo-Erweiterungen, Neustart, Updates, reine CSS-/Farbänderungen oder spätere Goal-Läufe nicht unbeabsichtigt verloren gehen, zurückgesetzt oder überschrieben werden.
-- Persistente Editor-Einstellungen bleiben führend, sofern nicht ausdrücklich eine bewusste Migration beschlossen und umgesetzt wird.
-
-### 16.4 Pflicht in Codex-Goal-Läufen
-Sobald ein Goal-Lauf UI oder PDF betrifft, muss der Auftrag unter `BESTANDSSCHUTZ` bzw. den Abnahmekriterien ausdrücklich enthalten:
-
 ```text
-EDITOR-REGISTRIERUNG
-- Neue UI-Elemente gemäß bestehender ElementRegistry registrieren, soweit sie editierbar sein sollen.
-- Neue PDF-/Layout-Elemente gemäß bestehender PDF-/Editor-Registry registrieren, soweit sie editierbar sein sollen.
-- Keine automatische UI-Erkennung und keine parallele Registry aufbauen.
-- Bestehende gespeicherte UI-/PDF-Editor-Anpassungen nicht zurücksetzen oder überschreiben.
-- Nach Umsetzung nachweisen, welche neuen Elemente registriert wurden und welche bewusst nicht editierbar sind.
+SiGeKo = feststellen + dokumentieren + berichten
+Restarbeiten = Maßnahmen verfolgen + Verantwortliche + Fristen
 ```
 
-Diese Editor-Regel ist kein eigener späterer Entwicklungsabschnitt, sondern gilt ab dem ersten betroffenen UI-/PDF-Goal-Lauf.
+Nur SiGeKo-Berichtspunkte vom Typ `Mangel` können optional an Restarbeiten übergeben werden. Danach gibt es keine Rücksynchronisation.
+
+Die früheren Grobformulierungen zu SiGeKo-Mängeln mit eigenem Verantwortlichem, eigener Frist, eigener Maßnahmenverfolgung oder entsprechender mobiler Pflichtpflege sind verworfen.
+
+Führend dafür: **#253, #254 und #274**.
 
 ---
 
-## 17. Verbindliche Struktur für jeden Codex-Goal-Lauf
+## 3. Fachliche Hauptbereiche
 
-Jeder Goal-Auftrag für dieses Projekt erhält zwingend folgende Abschnitte:
+### #250 – Projekt- und Grunddaten
+- SiGeKo gehört immer zu einem bestehenden BBM-Projekt.
+- Projektadresse = Baustellenadresse.
+- zentrale Projektdaten werden nur gelesen.
+- Änderungen erfolgen ausschließlich in der Projektverwaltung.
+- zentrales zusätzliches Projektfeld: `geplanter Baubeginn`.
+- SiGeKo Planung und SiGeKo Ausführung bleiben getrennte Rollen; `wie Planung` ist zulässig.
+- freie SiGeKo-Angaben bleiben projektbezogen und erzeugen keine automatischen zentralen Kontakte.
+- Start-/Freigabepanel zeigt konkrete fehlende/unsichere Punkte.
+- unvollständige Daten erzeugen Warnungen, keine Arbeitssperre.
+
+### #251 – Vorankündigung
+- Bearbeitungs-UI folgt direkt dem Vorankündigungsformular.
+- bekannte zentrale Daten werden vorbelegt.
+- fachvorgangsbezogene Abweichungen bleiben lokale Overrides und schreiben nicht zurück.
+- Arbeitsschutzbehörde kommt aus den bestätigten SiGeKo-Projektdaten.
+- Punkt 9 nur `Noch nicht bekannt` oder `Firmenliste im Anhang`.
+- BBM V2-Kopf, darunter Formularaufbau wie Vorlage.
+- Versand zur Unterschrift wird vorbereitet und vom Nutzer bewusst ausgelöst.
+- optionales Rücklaufdatum / Outlook-Erinnerung.
+- unterschriebener Rücklauf wird dem Vorgang zugeordnet.
+- Abschluss entweder durch eigenen Behördenversand oder dokumentierte Versandbestätigung durch Bauherr/Architekt.
+- Status automatisch Rot / Orange / Grün aus dem echten Prozessstand ableiten.
+
+### #252 – SiGePlan
+- V1 arbeitet mit unveränderter Standardmatrix.
+- variabel sind im Wesentlichen Schriftfeld und Adressenleiste.
+- keine DWG-Manipulation, keine AutoCAD-Automatisierung, keine dynamische Matrix in V1.
+- jede Ausgabe erzeugt eine neue Fassung `01`, `02`, `03` ...
+- ältere Fassungen bleiben erhalten.
+- Dateiname: `SiGePlan_<Projektnummer>_<Index>.pdf`.
+
+### #253 – Baustellenbesuche und Berichte
+- projektweit fortlaufende Berichtspunkte/TOPs.
+- Typen: `Mangel`, `Hinweis`, `Feststellung`.
+- gemeinsame Nummerierung über alle Typen.
+- Nummer bleibt dauerhaft erhalten.
+- neue TOPs sind bis zur ersten PDF-Erzeugung frei bearbeitbar und löschbar.
+- nach PDF-Erzeugung inhaltlich eingefroren.
+- erledigte TOPs verschwinden aus der aktuellen Liste.
+- Reaktivierung über `TOP an` mit gleicher Nummer und unverändertem Inhalt; neues Datum und erneut `*`.
+- maximal 3 Fotos je TOP.
+- `*` kennzeichnet neue/reaktivierte Punkte für das nächste Protokoll.
+- PDF enthält nur aktuelle/offene Punkte.
+- PDF erzeugt + gespeichert = Bericht beendet.
+- Versand ist optionaler Folgeschritt und kein eigener Berichtsstatus.
+- keine Verantwortlichen, keine Fristen im SiGeKo-Bericht.
+
+### #254 – Übergabe an Restarbeiten
+- nur Typ `Mangel`.
+- nur wenn Restarbeiten im Projekt aktiv/vorhanden ist.
+- Übergabe gesammelt am Ende der Begehung bzw. vor Abschluss.
+- übergeben werden Fachinhalt, Fotos, Ortsdaten und Herkunftsbezug.
+- Verantwortlicher und Frist werden nicht übertragen.
+- erfolgreicher Transfer wird in SiGeKo markiert.
+- keine Rücksynchronisation.
+
+### #255 – Behörden, Notfallstellen und Versorger
+- bestätigten BBM-Bestand zuerst nutzen.
+- eindeutige geprüfte Treffer direkt Grün übernehmen.
+- Web/KI nur für fehlende, unsichere oder veraltete Daten.
+- unsichere Treffer Orange mit konkretem Grund.
+- Zielkategorien: Arbeitsschutzbehörde, Krankenhaus/ZNA, D-Arzt, Wasser/Abwasser, Strom, Gas, Notarzt 112, Polizei 110 + örtliche Dienststelle.
+- Netzbetreiber statt Lieferant.
+- Havarie-/Störkontakt ist bei Versorgern Pflichtkontakt.
+- vorhandene YAML-Dateien sind Start-/Seed-Bestand, nicht dauerhafte fachführende Datenhaltung.
+
+### #256 – Firmen, Beteiligte und Ansprechpartner
+- ausschließlich zentrale BBM-Firmen-/Personen-/Projektstruktur verwenden.
+- aus SiGeKo keine Änderung zentraler Stammdaten.
+- keine eigene Kontaktliste und keine zweite Firmenlistenlogik.
+- vorhandene Projekt-Firmenliste wird für die Vorankündigung wiederverwendet.
+
+### #257 – Dokumente, Nachweise und Ablage
+SiGeKo erhält keine Dokumentenverwaltung.
+
+Projektordner:
 
 ```text
-ZIEL
-Was muss nach diesem Lauf funktionieren?
-
-IN SCOPE
-Was darf Codex verändern und bauen?
-
-NICHT ZIEL
-Was gehört ausdrücklich nicht in diesen Lauf?
-
-VERBOTEN
-Was darf Codex auf keinen Fall tun?
-
-ABNAHMEKRITERIEN
-Woran erkennen wir objektiv, dass der Lauf fertig ist?
-
-BESTANDSSCHUTZ
-Welche vorhandenen Funktionen dürfen nicht verändert oder beschädigt werden?
-
-ABSCHLUSSBERICHT
-Was wurde tatsächlich geändert?
-Was ist noch offen?
-Welche Tests liefen?
-Welche bekannten Grenzen bestehen?
+SiGeKo/
+├─ Unterlagen/
+├─ SiGePläne/
+├─ Zeichnungen/
+└─ Berichte/
 ```
 
-Ein Goal-Lauf darf nicht stillschweigend in den nächsten Entwicklungsabschnitt hineinwachsen.
+Automatische Ablage:
+- Vorankündigung -> `Unterlagen`
+- SiGePlan -> `SiGePläne`
+- Begehungsprotokoll -> `Berichte`
 
-Wenn eine für den aktuellen Abschnitt notwendige Grundlage fehlt, soll Codex die Lücke dokumentieren und nur dann minimal vorbereiten, wenn dies für einen sauberen Abschluss des aktuellen Abschnitts erforderlich ist.
+`Zeichnungen` bleibt reine Nutzerablage.
+
+### #258 – Termine, Fristen und Wiedervorlagen
+- keine allgemeine SiGeKo-Termin-/Fristenverwaltung.
+- einzige fachliche Wiedervorlage: Rücklauf der unterschriebenen Vorankündigung.
+- Outlook-Erinnerung nur auf ausdrücklichen Nutzerwunsch.
+- keine bidirektionale Outlook-Synchronisation und kein automatisches späteres Abhaken/Löschen.
+
+### #259 – E-Mail, Outlook und Kommunikation
+Genau drei fachliche Mailvorgänge:
+1. Vorankündigung zur Unterschrift
+2. unterschriebene Vorankündigung an Behörde
+3. Begehungsprotokoll
+
+Kein Hintergrundversand. Empfänger, Betreff, Text und Anhänge werden vor Versand geprüft und können geändert werden.
+
+Keine Protokoll-Modulabhängigkeit; gemeinsame Mailtechnik muss fachmodulneutral genutzt werden.
+
+### #260 – Status, Historie und Nachvollziehbarkeit
+- keine allgemeine Workflow-/Historienplattform für SiGeKo.
+- Vorankündigung erhält die fachlich benötigte Rot-/Orange-/Grün-Anzeige.
+- SiGePlan und Begehungsprotokolle erhalten keinen zusätzlichen künstlichen Workflowstatus.
+- technisch notwendige Ereignisse eines TOPs dürfen zur Nachvollziehbarkeit gespeichert werden, ohne daraus eine universelle Historienengine zu machen.
 
 ---
 
-## 18. Führungsregel für das Projekt
+## 4. Verbindliche technische Architektur
 
-Von diesem Plan wird nur bewusst abgewichen.
+Vollständig führend: **#274 – SiGeKo: Technische Zielarchitektur und Umsetzungspakete**.
 
-Neue Ideen, spätere Erweiterungen oder technische Verbesserungen werden zunächst gegen dieses Zielbild geprüft und anschließend als eigene Änderung oder eigener Entwicklungsabschnitt aufgenommen.
+Kernaussagen:
+- eigener Renderer-Modulbereich `src/renderer/modules/sigeko/`.
+- Fachservices unter `src/main/domain/sigeko/`.
+- SiGeKo-Repositories innerhalb der bestehenden BBM-SQLite-Schicht.
+- keine separate `sigeko.db`.
+- keine JSON-Hauptpersistenz.
+- gemeinsame Projekt-, Firmen- und Personendomänen wiederverwenden.
+- gemeinsame PDF-/Druck-, Speicher-, Mail- und Lizenztechnik wiederverwenden.
+- Electron-Grenze einhalten: Renderer -> Preload/IPC -> Main -> Service/Repository.
+- Projektbereitschaft, Vorankündigungsstatus und TOP-Zustand sind drei getrennte Statuskonzepte.
+- Snapshots bei dokumentrelevanten Datenständen, damit ältere PDFs/Fassungen nicht rückwirkend verändert werden.
+- stabile IDs sowie `created_at`/`updated_at` von Anfang an für spätere BBM-Mobil-Synchronisation.
 
-Keine Nebenfunktion darf während eines Goal-Laufs unbemerkt die fachliche oder technische Zielrichtung von BBM SiGeKo verändern.
+---
+
+## 5. Verbindliche technische Umsetzungspakete
+
+### S1 – Modulrahmen / Integration
+- Modul registrieren
+- Projekt-Arbeitsbereich / Navigation
+- Lizenz-/Modulfreigabe
+- noch keine Fachprozesse
+
+### S2 – zentrale Projekterweiterung + SiGeKo-Grunddaten
+- `geplanter_baubeginn`
+- SiGeKo-Projektmodell
+- Rollen Planung/Ausführung
+- Migrationen
+
+### S3 – Übersicht / Readiness
+- Grundoberfläche
+- Readiness-Panel
+- Warnung statt Sperre
+
+### S4 – Behörden / Notfall / Versorger
+- strukturierter Bestand
+- Projektzuordnung / Snapshots
+- Bestandslookup / manuelle Prüfung
+- noch keine automatische Web-/KI-Recherche
+
+### S5 – Vorankündigung End-to-End
+- formularnahe UI
+- Overrides
+- PDF
+- Rücklauf-/Abschlussprozess
+
+### S6 – SiGePlan V1
+- Schriftfeld
+- Adressenleiste
+- feste Matrix
+- indexierte PDF-Versionen / Snapshots
+
+### S7 – Begehungen / TOPs / Fotos / Bericht
+- projektweite Nummerierung
+- Einfrieren
+- Erledigen / Reaktivieren
+- PDF
+
+### S8 – Übergabe an Restarbeiten
+- definierter Transfervertrag
+- keine Rücksynchronisation
+
+### S9 – Mail-/Outlook-Integration + Abschlussbereinigung
+- gemeinsame Mailanbindung vollständig nutzen
+- optionale Outlook-Wiedervorlage
+- Integrations-/Regressionstests
+
+Danach separat:
+- BBM-Mobil-Fachumsetzung
+- echte BBM<->Mobil-Synchronisation
+- automatische Recherche
+- KI / Regelwerke
+
+---
+
+## 6. Abhängigkeiten und Integrationsregel
+
+Vor jedem größeren SiGeKo-Goal-Lauf ist der aktuelle Branch-/Integrationsstand zu prüfen.
+
+Pflichtblock:
+
+```text
+AUSGANGSBASIS / INTEGRATION
+- Welche Branches bzw. Entwicklungsstände sind relevant?
+- Welcher Stand ist die führende Ausgangsbasis?
+- Welche gemeinsame Infrastruktur darf nicht dupliziert werden?
+- Von welchen offenen Querschnittspaketen hängt das Paket ab?
+- Welche Integrationskonflikte müssen vor Abschluss geprüft werden?
+```
+
+Besonders prüfen:
+- Modulrahmen / Navigation
+- Projektverwaltung
+- Firmen / Personen
+- Datenbank / Migrationen
+- PDF-/Layout-Technik
+- Mail
+- UI-Registry
+- Lizenz-/Modulfreigabe
+- Restarbeiten-Schnittstelle
+
+Kein SiGeKo-Lauf darf fehlende gemeinsame Infrastruktur dauerhaft durch einen eigenen Parallelweg ersetzen.
+
+---
+
+## 7. Nicht vorziehen
+
+In den ersten Desktop-Paketen nicht eigenständig aufbauen:
+- Sync-Server / Cloud-Plattform
+- allgemeine API-Plattform
+- universelle KI-/Agentenplattform
+- automatische Webrecherche als Voraussetzung
+- vollständige Regelwerksintegration
+- allgemeine Terminverwaltung
+- zweite Dokumentenverwaltung
+- neue globale Workflowengine
+
+---
+
+## 8. Nächster Schritt
+
+**Nächster Umsetzungsabschnitt: S1 – SiGeKo Modulrahmen / Integration.**
+
+Vor Beginn:
+1. aktuelle relevante Branches prüfen,
+2. führende Ausgangsbasis festlegen,
+3. offene Core-/Querschnittsabhängigkeiten dokumentieren,
+4. erst danach einen abgegrenzten S1-Goal-Lauf starten.
+
+S1 darf noch keine Vorankündigungs-, Begehungs-, PDF-, Mobil- oder KI-Fachlogik vorziehen.
+
+---
+
+## Status
+
+**Fachliche Detailplanung abgeschlossen.**  
+**Technische Planung abgeschlossen.**  
+**GitHub ist ab diesem Revisionsstand die verbindliche Grundlage für die weitere SiGeKo-Planung und Umsetzung.**
