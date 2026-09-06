@@ -9,6 +9,7 @@ import {
   MailTransportService,
   normalizeMailTransportPayload,
 } from "../features/mail/MailTransportService.js";
+import { ProtokollMailPayloadService } from "../modules/protokoll/mail/ProtokollMailPayloadService.js";
 import { openClosedProtocolSelector } from "./react/ClosedProtocolSelector.js";
 import { resolveProtocolsDir } from "../utils/pdfProtocolsDir.js";
 import { PROTOKOLL_MODULE_ID } from "../app/modules/index.js";
@@ -1874,50 +1875,16 @@ export default class MainHeader {
     this.setStickyNotice(stickyFromContext);
   }
 
+  _getProtokollMailPayloadService() {
+    return new ProtokollMailPayloadService({
+      router: this.router,
+      getActiveProjectLabel: (projectId) =>
+        this._activeLabelForProjectId === projectId ? this._activeLabel : "",
+    });
+  }
+
   async _getCurrentProjectMailContext() {
-    const projectId = this.router?.currentProjectId || null;
-    const clean = (v) => String(v || "").trim();
-    const splitProjectLabel = (label) => {
-      const raw = clean(label);
-      if (!raw) return { projectNumber: "", projectShortName: "" };
-      const parts = raw.split(" - ");
-      if (parts.length >= 2) {
-        return {
-          projectNumber: clean(parts.shift()),
-          projectShortName: clean(parts.join(" - ")),
-        };
-      }
-      return { projectNumber: "", projectShortName: raw };
-    };
-
-    if (!projectId) {
-      return splitProjectLabel(this.router?.context?.projectLabel || "");
-    }
-
-    const api = window.bbmDb || {};
-    if (typeof api.projectsList === "function") {
-      try {
-        const res = await api.projectsList();
-        if (res?.ok && Array.isArray(res.list)) {
-          const project = res.list.find((x) => x && x.id === projectId) || null;
-          if (project) {
-            const projectNumber = clean(project.project_number ?? project.projectNumber ?? "");
-            const projectShortName = clean(project.short ?? project.short_name ?? project.projectShortName ?? "");
-            if (projectNumber || projectShortName) {
-              return { projectNumber, projectShortName };
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("[header] project mail context fallback used:", err);
-      }
-    }
-
-    const fallbackLabel =
-      (this._activeLabelForProjectId === projectId && this._activeLabel) ||
-      this.router?.context?.projectLabel ||
-      "";
-    return splitProjectLabel(fallbackLabel);
+    return await this._getProtokollMailPayloadService().getCurrentProjectContext();
   }
 
   _buildEmailSubject({ projectNumber, projectShortName, mailType } = {}) {
@@ -1932,187 +1899,63 @@ export default class MainHeader {
 
 
 _formatEmailDate(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return "";
-  const direct = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (direct) return `${direct[3]}.${direct[2]}.${direct[1]}`;
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return "";
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const yyyy = String(d.getFullYear());
-  return `${dd}.${mm}.${yyyy}`;
+  return this._getProtokollMailPayloadService().formatDate(value);
 }
 
 async _resolveProtocolTitleForEmail(projectId = null) {
-  const api = window.bbmDb || {};
-
-  try {
-    if (projectId && typeof api.projectSettingsGetMany === "function") {
-      const res = await api.projectSettingsGetMany({
-        projectId,
-        keys: ["pdf.protocolTitle"],
-      });
-      const value = String(res?.data?.["pdf.protocolTitle"] || "").trim();
-      if (res?.ok && value) return value;
-    }
-  } catch (_err) {
-    // ignore
-  }
-
-  try {
-    if (typeof api.appSettingsGetMany === "function") {
-      const res = await api.appSettingsGetMany(["pdf.protocolTitle"]);
-      const value = String(res?.data?.["pdf.protocolTitle"] || "").trim();
-      if (res?.ok && value) return value;
-    }
-  } catch (_err) {
-    // ignore
-  }
-
-  return "Baubesprechung";
+  return await this._getProtokollMailPayloadService().resolveProtocolTitle(projectId);
 }
 
   async _getStoredEmailTemplate() {
-    const api = window.bbmDb || {};
-    const out = { subject: "", body: "" };
-    if (typeof api.appSettingsGetMany !== "function") return out;
-
-  try {
-    const res = await api.appSettingsGetMany(["email_subject", "email_body"]);
-    if (!res?.ok) return out;
-    const data = res.data || {};
-    out.subject = String(data.email_subject || "");
-    out.body = String(data.email_body || "");
-  } catch (_err) {
-    // ignore
-  }
-
-  return out;
+    return await this._getProtokollMailPayloadService().getStoredTemplate();
 }
 
 _buildEmailTemplateContext({ projectNumber, projectShortName, protocolTitle, meeting } = {}) {
-  const clean = (v) => String(v || "").trim();
-  const idxRaw = meeting?.meeting_index ?? meeting?.meetingIndex ?? meeting?.index ?? meeting?.number ?? "";
-  const idx = clean(idxRaw);
-  const dateRaw =
-    meeting?.meeting_date ||
-    meeting?.meetingDate ||
-    meeting?.date ||
-    meeting?.created_at ||
-    meeting?.createdAt ||
-    "";
-  const date = this._formatEmailDate(dateRaw);
-  return {
-    projectNumber: clean(projectNumber),
-    projectShortName: clean(projectShortName),
-    protocolTitle: clean(protocolTitle) || "Protokoll",
-    meetingIndex: idx,
-    meetingDate: date,
-  };
+  return this._getProtokollMailPayloadService().buildTemplateContext({
+    projectNumber,
+    projectShortName,
+    protocolTitle,
+    meeting,
+  });
 }
 
 _defaultMeetingEmailSubject(context = {}) {
-  const clean = (v) => String(v || "").trim();
-  const left = [clean(context.projectNumber), clean(context.projectShortName)].filter(Boolean).join(" - ");
-  let right = clean(context.protocolTitle) || "Protokoll";
-  if (clean(context.meetingIndex)) right += ` #${clean(context.meetingIndex)}`;
-  if (clean(context.meetingDate)) right += ` - ${clean(context.meetingDate)}`;
-  if (left && right) return `${left}  |  ${right}`;
-  return left || right;
+  return this._getProtokollMailPayloadService().defaultSubject(context);
 }
 
 _applyEmailSubjectTemplate(template, context = {}) {
-  const raw = String(template || "");
-  if (!raw.trim()) return this._defaultMeetingEmailSubject(context);
-  const replacements = {
-    "{projectNumber}": String(context.projectNumber || ""),
-    "{projectShortName}": String(context.projectShortName || ""),
-    "{protocolTitle}": String(context.protocolTitle || ""),
-    "{meetingIndex}": String(context.meetingIndex || ""),
-    "{meetingDate}": String(context.meetingDate || ""),
-  };
-  let out = raw;
-  Object.entries(replacements).forEach(([token, value]) => {
-    out = out.split(token).join(value);
-  });
-  out = out
-    .replace(/\s+\|\s+\|\s+/g, "  |  ")
-    .replace(/\s*\|\s*/g, "  |  ")
-    .replace(/\s{3,}/g, "  ")
-    .replace(/\s+-\s+-\s+/g, " - ")
-    .replace(/\s+#\s+-/g, " -")
-    .replace(/\|\s*$/g, "")
-    .trim();
-  return out || this._defaultMeetingEmailSubject(context);
+  return this._getProtokollMailPayloadService().applySubjectTemplate(template, context);
 }
 
 _buildFallbackEmailSubject({ projectNumber, projectShortName, mailType } = {}) {
-  const clean = (v) => String(v || "").trim();
-  const numberPart = clean(projectNumber);
-  const shortNamePart = clean(projectShortName);
-  const typePart = clean(mailType);
-  const base = [numberPart, shortNamePart].filter(Boolean).join(" - ");
-  if (!typePart) return base;
-  return base ? `${base} - ${typePart}` : typePart;
+  return this._getProtokollMailPayloadService().buildFallbackSubject({
+    projectNumber,
+    projectShortName,
+    mailType,
+  });
 }
 
-  // Fachlicher Mailaufbau:
-  // Projekt-/Protokollbezug, Betreff-Templates und Standardtexte
-  // bleiben hier in der nutzenden Schicht und sind noch kein technischer Versanddienst.
+  // Kompatible Delegationspunkte; die Fachregeln besitzt das Protokollmodul.
   _getDefaultMailBody() {
-    return (
-      "Sehr geehrte Damen und Herren,\n\n" +
-      "anbei erhalten Sie das neue Protokoll für das oben genannte Projekt mit der Bitte um Beachtung und Veranlassung."
-    );
+    return this._getProtokollMailPayloadService().getDefaultBody();
   }
 
   _buildInitialRecipientSelection(recOptions = {}) {
-    const allRecipients = Array.isArray(recOptions?.all) ? recOptions.all : [];
-    const distributionRecipients = Array.isArray(recOptions?.distribution) ? recOptions.distribution : [];
-    if (recOptions?.anyDistributionField && distributionRecipients.length) {
-      return [...distributionRecipients];
-    }
-    return [...allRecipients];
+    return this._getProtokollMailPayloadService().buildInitialRecipientSelection(recOptions);
   }
 
   _buildMailAttachmentEntries(attachmentsByKey = {}) {
-    return [
-      { key: "protocol", label: "Protokoll", path: String(attachmentsByKey?.protocol || "").trim(), selected: true },
-      { key: "firms", label: "Firmenliste", path: String(attachmentsByKey?.firms || "").trim(), selected: true },
-      { key: "todo", label: "ToDo-Liste", path: String(attachmentsByKey?.todo || "").trim(), selected: true },
-      { key: "tops", label: "Top-Liste", path: String(attachmentsByKey?.tops || "").trim(), selected: true },
-    ];
+    return this._getProtokollMailPayloadService().buildAttachmentEntries(attachmentsByKey);
   }
 
   async _buildMeetingMailDraft({ projectId = null, meeting = null, mailType = "", subject = "", body } = {}) {
-    const { projectNumber, projectShortName } = await this._getCurrentProjectMailContext();
-    const protocolTitle = await this._resolveProtocolTitleForEmail(projectId);
-    const emailTemplate = await this._getStoredEmailTemplate();
-    const templateContext = this._buildEmailTemplateContext({
-      projectNumber,
-      projectShortName,
-      protocolTitle,
+    return await this._getProtokollMailPayloadService().buildDraft({
+      projectId,
       meeting,
+      mailType,
+      subject,
+      body,
     });
-
-    let nextSubject = String(subject || "").trim();
-    if (!nextSubject) {
-      nextSubject =
-        this._applyEmailSubjectTemplate(emailTemplate.subject || "", templateContext) ||
-        this._buildFallbackEmailSubject({ projectNumber, projectShortName, mailType }) ||
-        this._defaultMeetingEmailSubject(templateContext) ||
-        "Protokoll";
-    }
-
-    let nextBody = typeof body === "string" ? body : String(emailTemplate.body || "");
-    if (!nextBody.trim()) nextBody = this._getDefaultMailBody();
-
-    return {
-      subject: nextSubject,
-      body: nextBody,
-      templateContext,
-    };
   }
 
   // Technischer Versanddienst:
@@ -2169,187 +2012,18 @@ _buildFallbackEmailSubject({ projectNumber, projectShortName, mailType } = {}) {
   }
 
   async _getMeetingRecipientOptions(meetingId = null) {
-    const selectedMeeting =
-      this.router?.activeView?.getSelectedClosedMeetingForEmail?.() ||
-      this.router?.activeView?.getSelectedClosedMeeting?.() ||
-      null;
-    const mid = meetingId || selectedMeeting?.id || null;
-    if (!mid) return { distribution: [], all: [], anyDistributionField: false };
-
-    const api = window.bbmDb || {};
-    if (typeof api.meetingParticipantsList !== "function") {
-      return { distribution: [], all: [], anyDistributionField: false };
-    }
-
-    const getRows = (res) =>
-      Array.isArray(res?.items) ? res.items : Array.isArray(res?.list) ? res.list : [];
-
-    const readEmail = (item) =>
-      String(
-        item?.email ??
-          item?.email_raw ??
-          item?.mail ??
-          item?.e_mail ??
-          item?.person_email ??
-          item?.personEmail ??
-          item?.participant_email ??
-          item?.participantEmail ??
-          ""
-      ).trim();
-
-    const hasDistributionField = (item) =>
-      item &&
-      (Object.prototype.hasOwnProperty.call(item, "isInDistribution") ||
-        Object.prototype.hasOwnProperty.call(item, "is_in_distribution") ||
-        Object.prototype.hasOwnProperty.call(item, "inDistribution") ||
-        Object.prototype.hasOwnProperty.call(item, "in_distribution") ||
-        Object.prototype.hasOwnProperty.call(item, "send_email") ||
-        Object.prototype.hasOwnProperty.call(item, "sendEmail") ||
-        Object.prototype.hasOwnProperty.call(item, "email_enabled") ||
-        Object.prototype.hasOwnProperty.call(item, "emailEnabled"));
-
-    const inDistribution = (item) =>
-      Number(
-        item?.isInDistribution ??
-          item?.is_in_distribution ??
-          item?.inDistribution ??
-          item?.in_distribution ??
-          item?.send_email ??
-          item?.sendEmail ??
-          item?.email_enabled ??
-          item?.emailEnabled ??
-          0
-      ) === 1;
-
-    try {
-      const res = await api.meetingParticipantsList({ meetingId: mid });
-      const rows = getRows(res);
-      if (!res?.ok || !rows.length) return { distribution: [], all: [], anyDistributionField: false };
-
-      const anyDistributionField = rows.some((item) => hasDistributionField(item));
-      const seenAll = new Set();
-      const all = [];
-      for (const item of rows) {
-        const email = readEmail(item);
-        if (!email) continue;
-        const key = email.toLowerCase();
-        if (seenAll.has(key)) continue;
-        seenAll.add(key);
-        all.push(email);
-      }
-
-      if (!anyDistributionField) {
-        return { distribution: [...all], all, anyDistributionField: false };
-      }
-
-      const dist = [];
-      const seenDist = new Set();
-      for (const item of rows) {
-        if (!inDistribution(item)) continue;
-        const email = readEmail(item);
-        if (!email) continue;
-        const key = email.toLowerCase();
-        if (seenDist.has(key)) continue;
-        seenDist.add(key);
-        dist.push(email);
-      }
-
-      return { distribution: dist, all, anyDistributionField: true };
-    } catch (err) {
-      console.warn("[header] recipients lookup failed:", err);
-      return { distribution: [], all: [], anyDistributionField: false };
-    }
+    return await this._getProtokollMailPayloadService().getMeetingRecipientOptions(meetingId);
   }
 
   async _getSelectedMeetingRecipients() {
-    const opt = await this._getMeetingRecipientOptions();
-    if (opt.anyDistributionField && opt.distribution.length) return opt.distribution;
-    if (opt.all.length) return opt.all;
-    return [];
+    return await this._getProtokollMailPayloadService().getSelectedMeetingRecipients();
   }
 
 async _buildProtocolPdfLookupPayload(selectedMeeting, projectId) {
-  if (!selectedMeeting || !projectId) return null;
-
-  const api = window.bbmDb || {};
-  if (typeof api.projectsList !== "function" || typeof api.appSettingsGetMany !== "function") return null;
-
-  try {
-    const [projectsRes, settingsRes] = await Promise.all([
-      api.projectsList(),
-      api.appSettingsGetMany(["pdf.protocolsDir", "pdf.protocolTitle"]),
-    ]);
-
-    if (!projectsRes?.ok || !Array.isArray(projectsRes.list) || !settingsRes?.ok) return null;
-
-    const project = projectsRes.list.find((x) => x && x.id === projectId) || null;
-    const baseDir = String(settingsRes?.data?.["pdf.protocolsDir"] || "").trim();
-    const protocolTitle =
-      String(settingsRes?.data?.["pdf.protocolTitle"] || "").trim() || "Baubesprechung";
-
-    if (!project || !baseDir) return null;
-
-    const cleanPart = (v) =>
-      String(v || "")
-        .replace(/[<>:"/\\|?*]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-
-    const formatDateParts = (value) => {
-      const d = value instanceof Date ? value : new Date(value);
-      if (Number.isNaN(d.getTime())) return { dot: "", iso: "" };
-      const dd = String(d.getDate()).padStart(2, "0");
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
-      const yyyy = d.getFullYear();
-      return { dot: `${dd}.${mm}.${yyyy}`, iso: `${yyyy}-${mm}-${dd}` };
-    };
-
-    const meetingIndex =
-      selectedMeeting?.meeting_index ??
-      selectedMeeting?.meetingIndex ??
-      selectedMeeting?.index ??
-      selectedMeeting?.number ??
-      "";
-
-    const dateParts = formatDateParts(
-      selectedMeeting?.meeting_date ||
-        selectedMeeting?.meetingDate ||
-        selectedMeeting?.date ||
-        selectedMeeting?.created_at ||
-        selectedMeeting?.createdAt ||
-        selectedMeeting?.updated_at ||
-        selectedMeeting?.updatedAt ||
-        ""
-    );
-
-    const expectedFileNames = [];
-    const numberPart = cleanPart(project?.project_number ?? project?.projectNumber ?? project?.number ?? "");
-    const shortPart = cleanPart(project?.short || project?.name || "");
-    const titlePart = cleanPart(protocolTitle);
-
-    if (numberPart && titlePart && meetingIndex && dateParts.iso) {
-      expectedFileNames.push(`${numberPart}_${titlePart}_#${meetingIndex}-${dateParts.iso}.pdf`);
-    }
-    if (numberPart && shortPart && titlePart && meetingIndex && dateParts.dot) {
-      expectedFileNames.push(
-        `${numberPart}_${shortPart}_${titlePart}_#${meetingIndex} - ${dateParts.dot}.pdf`
-      );
-    }
-
-    return {
-      baseDir,
-      project: {
-        project_number: project?.project_number ?? project?.projectNumber ?? project?.number ?? "",
-        short: project?.short || "",
-        name: project?.name || "",
-      },
-      expectedFileNames,
-      meetingIndex: String(meetingIndex || "").trim(),
-    };
-  } catch (err) {
-    console.warn("[header] protocol pdf lookup payload failed:", err);
-    return null;
-  }
+  return await this._getProtokollMailPayloadService().buildProtocolPdfLookupPayload(
+    selectedMeeting,
+    projectId
+  );
   }
 
 
