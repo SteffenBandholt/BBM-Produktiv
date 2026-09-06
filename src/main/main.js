@@ -59,7 +59,7 @@ const {
   enforceLicensedFeature,
 } = require("./licensing/featureGuard");
 const { appSettingsGetMany, appSettingsSetMany } = require("./db/appSettingsRepo");
-const { getDatabaseDiagnostics, importLegacyIntoActive } = require("./db/database");
+const { configureDatabaseMigrations, getDatabaseDiagnostics, importLegacyIntoActive } = require("./db/database");
 const firmsRepo = require("./db/firmsRepo");
 const personsRepo = require("./db/personsRepo");
 const { buildStoragePreviewPaths } = require("./ipc/projectStoragePaths");
@@ -574,6 +574,8 @@ async function maybePromptLegacyMigration(win) {
 
 app.whenReady().then(async () => {
   // ✅ IPCs zuerst registrieren (verhindert "No handler registered" beim invoke)
+  const licenseStatus = checkLicense();
+  configureDatabaseMigrations(licenseStatus);
   registerProjectsIpc();
   registerCoreProjectFirmsIpc();
   registerFirmDirectoryIpc();
@@ -587,7 +589,7 @@ app.whenReady().then(async () => {
   registerLicenseIpc();
   registerAudioIpc();
   registerActiveModuleIpcs({
-    licenseStatus: checkLicense(),
+    licenseStatus,
     getLicenseStatus,
     ipcMain,
     registrars: moduleIpcRegistrars,
