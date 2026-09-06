@@ -34,8 +34,9 @@ kompatibel; ihre fachliche Namespace-Grenze ist das Modul `protokoll`.
 
 Der allgemeine Settings-Screen hostet den vom Protokollmodul gelieferten Bereich. Das
 Projektformular delegiert an `ProtocolSettingsModal.js`. Der projektbezogene Settings-IPC wird
-nur ueber den Protokoll-IPC-Registrar aktiviert. Die vorerst noch vorhandenen, nicht mehr
-aufgerufenen Dialogimplementierungen werden erst im gesonderten Legacy-Paket bewertet.
+nur ueber den Protokoll-IPC-Registrar aktiviert. Die nicht mehr aufgerufenen historischen
+Dialogimplementierungen in SettingsView und ProjectFormScreen wurden nach dem bestehenden
+Funktions-, Import- und Runtime-Nachweis des kanonischen Modulwegs entfernt.
 
 ## PDF-/Print-Grenze
 
