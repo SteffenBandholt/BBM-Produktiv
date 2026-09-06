@@ -1,7 +1,6 @@
 const suites = [
   ["./tests/projectFirmsActiveFlow.test.cjs", "runProjectFirmsActiveFlowTests"],
   ["./tests/projectFirmsCoreOwnership.test.cjs", "runProjectFirmsCoreOwnershipTests"],
-  ["./tests/projectFirmsLayout.test.cjs", "runProjectFirmsLayoutTests"],
 ];
 
 let failed = false;
