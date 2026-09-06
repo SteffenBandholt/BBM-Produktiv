@@ -1166,7 +1166,8 @@
 }
 
 .bbm-restarbeiten-notes-popup__empty,
-.bbm-restarbeiten-notes-popup__status {
+.bbm-restarbeiten-notes-popup__status,
+.bbm-restarbeiten-notes-popup__print-availability {
   color: var(--bbm-muted);
 }
 
