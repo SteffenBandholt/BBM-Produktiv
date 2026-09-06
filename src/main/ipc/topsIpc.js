@@ -2,7 +2,7 @@
 // CONTRACT-VERSION: 1.0.0
 // src/main/ipc/topsIpc.js
 
-const { ipcMain } = require("electron");
+const { ipcMain: electronIpcMain } = require("electron");
 const fs = require("fs");
 
 const topsRepo = require("../db/topsRepo");
@@ -924,7 +924,7 @@ function normalizeDisplayNumbers(list, meeting) {
   return items;
 }
 
-function registerTopsIpc() {
+function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
   const firmDirectory = getFirmDirectoryService();
   const topService = createTopService({ topsRepo, meetingsRepo, meetingTopsRepo });
 

@@ -36,8 +36,6 @@ if (uiEditorAcceptanceProfile.enabled) {
 
 // IPCs
 const { registerProjectsIpc } = require("./ipc/projectsIpc");
-const { registerMeetingsIpc } = require("./ipc/meetingsIpc");
-const { registerTopsIpc } = require("./ipc/topsIpc");
 const { registerCoreProjectFirmsIpc } = require("./core/projectFirmsCore");
 const { registerFirmDirectoryIpc } = require("./ipc/firmDirectoryIpc");
 const { registerParticipantsIpc } = require("./ipc/participantsIpc");
@@ -49,11 +47,10 @@ const { registerEditorIpc } = require("./ipc/editorIpc");
 const { registerProjectTransferIpc } = require("./ipc/projectTransferIpc");
 const { registerLicenseIpc, importLicenseFromFilePath } = require("./ipc/licenseIpc");
 const { registerAudioIpc } = require("./ipc/audioIpc");
-const { registerRestarbeitenIpc } = require("./ipc/restarbeitenIpc");
-const { registerRechnungIpc } = require("./ipc/rechnungIpc");
 const { registerUiEditorIpc } = require("./ipc/uiEditorIpc");
 const { registerActiveModuleIpcs } = require("./moduleIpcRegistry");
-const { checkLicense } = require("./licensing/licenseService");
+const moduleIpcRegistrars = require("./moduleIpcRegistrars");
+const { checkLicense, getStatus: getLicenseStatus } = require("./licensing/licenseService");
 const { loadCustomerSetup } = require("./licensing/licenseStorage");
 const {
   toLicenseErrorPayload,
@@ -589,16 +586,11 @@ app.whenReady().then(async () => {
   registerProjectTransferIpc();
   registerLicenseIpc();
   registerAudioIpc();
-  registerRechnungIpc({ ipcMain });
   registerActiveModuleIpcs({
     licenseStatus: checkLicense(),
-    registrars: {
-      protokoll: () => {
-        registerMeetingsIpc();
-        registerTopsIpc();
-      },
-      restarbeiten: () => registerRestarbeitenIpc({ ipcMain }),
-    },
+    getLicenseStatus,
+    ipcMain,
+    registrars: moduleIpcRegistrars,
   });
   uiEditorSessionController = registerUiEditorIpc({ app, ipcMain, getMainWindow: () => mainWindow });
   ipcMain.handle("uiEditor:getDiagnosticMode", () => {

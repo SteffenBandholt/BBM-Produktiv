@@ -256,6 +256,13 @@ Dabei gilt:
 - keine Parallelplaene anlegen
 - keine Fortschritte groesser schreiben, als sie technisch sind
 
+### Core #271 – Paket 4 modulare Fach-IPC-Registrierung
+
+- Fach-IPCs werden am Main-Kompositionspunkt nur fuer aktive, lizenzierte Module ueber den im Moduldeskriptor benannten Registrar registriert.
+- Protokoll, Restarbeiten und Rechnung besitzen kleine fachmoduleigene IPC-Registrare; `main.js` registriert keinen dieser Fach-IPC-Pfade mehr einzeln.
+- Registrierte Fachhandler pruefen die aktuelle Modulfreigabe bei jedem Aufruf erneut. Statische Preload-Funktionen erhalten bei inaktiven Modulen deshalb keinen ungeguardeten Handler.
+- Datenbankmigrationen, Providergrenzen und `OwnOrganization` bleiben den Core-Paketen 5 bis 7 vorbehalten; Gate B wird erst mit Paket 8 bewertet.
+
 
 
 ### M3 Restarbeiten-Datenmodell (neu)
