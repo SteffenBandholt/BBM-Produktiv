@@ -270,6 +270,8 @@ contextBridge.exposeInMainWorld("bbmDb", {
   // ============================================================
   userProfileGet: () => ipcRenderer.invoke("userProfile:get"),
   userProfileUpsert: (data) => ipcRenderer.invoke("userProfile:upsert", data),
+  ownOrganizationGet: () => ipcRenderer.invoke("ownOrganization:get"),
+  ownOrganizationUpsert: (data) => ipcRenderer.invoke("ownOrganization:upsert", data),
 
   // ============================================================
   // Restarbeiten

@@ -10,6 +10,7 @@ const {
 } = require("../db/database");
 const { appSettingsGetMany, appSettingsSetMany, appSettingsGetManyWithDb, appSettingsSetManyWithDb } = require("../db/appSettingsRepo");
 const { getUserProfile, upsertUserProfile } = require("../db/userProfileRepo");
+const { getOwnOrganization, upsertOwnOrganization } = require("../db/ownOrganizationRepo");
 const { createDictionaryService } = require("../services/dictionary/DictionaryService");
 const firmsRepo = require("../db/firmsRepo");
 const projectFirmsRepo = require("../db/projectFirmsRepo");
@@ -757,6 +758,22 @@ function registerSettingsIpc() {
     try {
       const profile = getUserProfile();
       return { ok: true, profile };
+    } catch (err) {
+      return { ok: false, error: err?.message || String(err) };
+    }
+  });
+
+  ipcMain.handle("ownOrganization:get", async () => {
+    try {
+      return { ok: true, organization: getOwnOrganization() };
+    } catch (err) {
+      return { ok: false, error: err?.message || String(err) };
+    }
+  });
+
+  ipcMain.handle("ownOrganization:upsert", async (_evt, payload) => {
+    try {
+      return { ok: true, organization: upsertOwnOrganization(payload || {}) };
     } catch (err) {
       return { ok: false, error: err?.message || String(err) };
     }

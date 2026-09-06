@@ -279,6 +279,14 @@ Dabei gilt:
 - Bestehende PDF-, Mail- und Exportengines sowie ihre produktiven Abläufe bleiben unverändert; eine tiefe Bereinigung ist ausdrücklich nicht Teil dieses Pakets.
 - `OwnOrganization` bleibt Paket 7 vorbehalten; Gate B wird erst mit Paket 8 bewertet.
 
+### Core #271 – Paket 7 OwnOrganization-Identitaetsgrenze
+
+- `OwnOrganization` ist ein neutraler, unveraenderlicher Core-Vertrag fuer die eigene Betreiberorganisation und wird weiterhin aus dem bestehenden `user_profile` persistiert.
+- Eigene Organisation und Lizenzsubjekt sind getrennte Identitaeten; `customerName` oder `licenseId` werden nicht als Organisationsstammdaten interpretiert.
+- Getrennte Core-IPC-/Preload-Einstiege stellen den Vertrag bereit, ohne bestehende `userProfile`-Kompatibilitaet zu brechen.
+- `InvoiceIssuerProfile`, Empfaenger-/Aussteller-Snapshots und sonstige Rechnungsfachidentitaeten bleiben ausserhalb dieses Pakets.
+- Gate B wird erst mit Paket 8 nach der Gesamtregression bewertet.
+
 
 
 ### M3 Restarbeiten-Datenmodell (neu)
