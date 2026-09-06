@@ -6,8 +6,12 @@ const { app } = require("electron");
 const path = require("path");
 const { ensureInvoiceSchema } = require("./invoiceMigrations");
 const { ensureFirmUsagesSchema } = require("./firmUsagesRepo");
+const { getModuleIds, resolveActiveModuleIds } = require("../moduleRegistry");
+const moduleMigrationRegistrars = require("../moduleMigrationRegistrars");
+const { runModuleMigrations } = require("../moduleMigrationRegistry");
 
 let db;
+let configuredModuleIds = null;
 
 function getDbPaths() {
   const userDataPath = app.getPath("userData");
@@ -44,7 +48,7 @@ function isDbLikelyEmpty(dbPath, compareLegacyPath = null) {
   let probeDb = null;
   try {
     probeDb = new Database(dbPath, { readonly: true, fileMustExist: true });
-    const coreTables = ["projects", "firms", "meetings", "tops"];
+    const coreTables = ["projects", "firms"];
     const placeholders = coreTables.map(() => "?").join(",");
     const present = probeDb
       .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name IN (${placeholders})`)
@@ -54,9 +58,7 @@ function isDbLikelyEmpty(dbPath, compareLegacyPath = null) {
 
     const projectCount = probeDb.prepare(`SELECT COUNT(*) AS c FROM projects`).get()?.c || 0;
     const firmsCount = probeDb.prepare(`SELECT COUNT(*) AS c FROM firms`).get()?.c || 0;
-    const meetingCount = probeDb.prepare(`SELECT COUNT(*) AS c FROM meetings`).get()?.c || 0;
-    const topsCount = probeDb.prepare(`SELECT COUNT(*) AS c FROM tops`).get()?.c || 0;
-    const totalRows = projectCount + firmsCount + meetingCount + topsCount;
+    const totalRows = projectCount + firmsCount;
     if (totalRows > 0) return false;
 
     if (compareLegacyPath && fs.existsSync(compareLegacyPath)) {
@@ -1777,28 +1779,59 @@ function migrateLegacyTopsToMeetingTops(dbConn) {
   ensureTopsSoftDeleteColumns(dbConn);
 }
 
-function ensureSchema(dbConn) {
+function ensureCoreSchema(dbConn) {
   // ✅ Projekte zuerst
   ensureProjectsSchema(dbConn);
   ensureUserProfileSchema(dbConn);
+
+  ensureFirmsAndPersonsSchema(dbConn);
+  ensureProjectGlobalFirmsSchema(dbConn);
+  ensureProjectFirmsAndPersonsSchema(dbConn);
+  ensureFirmUsesSchema(dbConn);
+  ensureFirmUsagesSchema(dbConn);
+
+  ensureProjectSettingsSchema(dbConn);
+  ensureProjectCandidatesSchema(dbConn);
+  ensureDictionarySchema(dbConn);
+  ensureTableLayoutsSchema(dbConn);
+  ensureAppSettingsSchema(dbConn);
+  ensureLicenseAdminSchema(dbConn);
+}
+
+function ensureProtokollSchema(dbConn) {
+  if (!tableExists(dbConn, "meetings")) {
+    dbConn.exec(`
+      CREATE TABLE IF NOT EXISTS meetings (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        meeting_index INTEGER NOT NULL,
+        title TEXT,
+        is_closed INTEGER NOT NULL DEFAULT 0,
+        pdf_show_ampel INTEGER,
+        todo_snapshot_json TEXT,
+        next_meeting_enabled INTEGER,
+        next_meeting_date TEXT,
+        next_meeting_time TEXT,
+        next_meeting_place TEXT,
+        next_meeting_extra TEXT,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+      );
+    `);
+  }
 
   // meetings: is_closed + created_at + updated_at müssen existieren
   if (!columnExists(dbConn, "meetings", "is_closed")) {
     dbConn.exec(`ALTER TABLE meetings ADD COLUMN is_closed INTEGER NOT NULL DEFAULT 0;`);
   }
   if (!columnExists(dbConn, "meetings", "created_at")) {
-    dbConn.exec(`
-      ALTER TABLE meetings
-      ADD COLUMN created_at TEXT NOT NULL
-      DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'));
-    `);
+    dbConn.exec(`ALTER TABLE meetings ADD COLUMN created_at TEXT;`);
+    dbConn.prepare(`UPDATE meetings SET created_at = ? WHERE created_at IS NULL`).run(new Date().toISOString());
   }
   if (!columnExists(dbConn, "meetings", "updated_at")) {
-    dbConn.exec(`
-      ALTER TABLE meetings
-      ADD COLUMN updated_at TEXT NOT NULL
-      DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'));
-    `);
+    dbConn.exec(`ALTER TABLE meetings ADD COLUMN updated_at TEXT;`);
+    dbConn.prepare(`UPDATE meetings SET updated_at = COALESCE(created_at, ?) WHERE updated_at IS NULL`).run(new Date().toISOString());
   }
 
   if (!columnExists(dbConn, "meetings", "pdf_show_ampel")) {
@@ -1875,26 +1908,26 @@ function ensureSchema(dbConn) {
   ensureMeetingTopsContactColumns(dbConn);
   ensureMeetingTopsTaskFlagColumns(dbConn);
   ensureTopsSoftDeleteColumns(dbConn);
-  ensureFirmsAndPersonsSchema(dbConn);
-  ensureProjectGlobalFirmsSchema(dbConn);
-  ensureProjectFirmsAndPersonsSchema(dbConn);
-  ensureFirmUsesSchema(dbConn);
-  ensureFirmUsagesSchema(dbConn);
-
-  ensureProjectSettingsSchema(dbConn);
-  ensureProjectCandidatesSchema(dbConn);
   ensureMeetingParticipantsSchema(dbConn);
   ensureAudioImportsSchema(dbConn);
   ensureTranscriptsSchema(dbConn);
   ensureAudioSuggestionsSchema(dbConn);
   ensureAudioTermCorrectionsSchema(dbConn);
+}
 
-  ensureDictionarySchema(dbConn);
-  ensureTableLayoutsSchema(dbConn);
-  ensureRestarbeitenSchema(dbConn);
-  ensureAppSettingsSchema(dbConn);
-  ensureLicenseAdminSchema(dbConn);
-  ensureInvoiceSchema(dbConn);
+function configureDatabaseMigrations(licenseStatus) {
+  configuredModuleIds = [...resolveActiveModuleIds(licenseStatus)];
+  return Object.freeze([...configuredModuleIds]);
+}
+
+function ensureSchema(dbConn, { moduleIds = configuredModuleIds ?? getModuleIds() } = {}) {
+  ensureCoreSchema(dbConn);
+  return runModuleMigrations({
+    db: dbConn,
+    moduleIds,
+    registrars: moduleMigrationRegistrars,
+    migrations: { ensureProtokollSchema, ensureRestarbeitenSchema, ensureInvoiceSchema },
+  });
 }
 
 function initDatabase() {
@@ -1940,23 +1973,6 @@ function initDatabase() {
       archived_at TEXT
     );
 
-    CREATE TABLE IF NOT EXISTS meetings (
-      id TEXT PRIMARY KEY,
-      project_id TEXT NOT NULL,
-      meeting_index INTEGER NOT NULL,
-      title TEXT,
-      is_closed INTEGER NOT NULL DEFAULT 0,
-      pdf_show_ampel INTEGER,
-      todo_snapshot_json TEXT,
-      next_meeting_enabled INTEGER,
-      next_meeting_date TEXT,
-      next_meeting_time TEXT,
-      next_meeting_place TEXT,
-      next_meeting_extra TEXT,
-      created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-      updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
-    );
   `);
 
   ensureSchema(db);
@@ -1967,6 +1983,10 @@ function initDatabase() {
 module.exports = {
   initDatabase,
   closeDatabase,
+  configureDatabaseMigrations,
+  ensureCoreSchema,
+  ensureProtokollSchema,
+  ensureSchema,
   ensureFirmUsesSchema,
   getDbPaths,
   getDatabaseDiagnostics,

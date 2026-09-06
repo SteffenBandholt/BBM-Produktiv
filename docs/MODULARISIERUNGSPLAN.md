@@ -263,6 +263,14 @@ Dabei gilt:
 - Registrierte Fachhandler pruefen die aktuelle Modulfreigabe bei jedem Aufruf erneut. Statische Preload-Funktionen erhalten bei inaktiven Modulen deshalb keinen ungeguardeten Handler.
 - Datenbankmigrationen, Providergrenzen und `OwnOrganization` bleiben den Core-Paketen 5 bis 7 vorbehalten; Gate B wird erst mit Paket 8 bewertet.
 
+### Core #271 – Paket 5 modulare DB-Migrationen
+
+- Die gemeinsame SQLite-Datei bleibt bestehen; Core- und Fachmigrationen werden logisch getrennt registriert.
+- Der Core erzeugt und prueft seine neutralen Tabellen ohne `meetings`, `tops` oder `meeting_tops` vorauszusetzen.
+- Protokoll, Restarbeiten und Rechnung binden ihre vorhandenen Schemafunktionen ueber die im Moduldeskriptor benannten Migrationsregistrare ein.
+- Der aktive Lizenz-/Modulumfang steuert beim App-Start dieselben Fachmodule fuer Migrationen und IPCs; Bestandsmigrationen bleiben idempotent und erhalten vorhandene Daten.
+- Providergrenzen und `OwnOrganization` bleiben den Paketen 6 und 7 vorbehalten; Gate B wird erst mit Paket 8 bewertet.
+
 
 
 ### M3 Restarbeiten-Datenmodell (neu)
