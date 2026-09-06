@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 function read(relPath) {
   return fs.readFileSync(path.join(process.cwd(), relPath), "utf8");
@@ -35,11 +36,37 @@ async function runProjectFirmsCoreOwnershipTests(run) {
     assert.match(workspaceSource, /openCoreProjectAction/);
   });
 
-  await run("Paket 3: Projektfirmen bleiben ohne aktives Fachmodul erreichbar", async () => {
+  await run("Paket 3: Projektfirmen bleiben ohne aktives Fachmodul direkt erreichbar", async () => {
+    const { default: ProjectWorkspaceScreen } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js")
+    );
+    const calls = [];
+    const screen = new ProjectWorkspaceScreen({
+      router: {
+        currentProjectId: "17",
+        async showProjectFirms(projectId) {
+          calls.push(projectId);
+        },
+      },
+      projectId: "17",
+      projectModules: [],
+    });
+
+    assert.deepEqual(screen.getAvailableProjectModules(), []);
+    assert.deepEqual(
+      screen.getAvailableCoreProjectActions().map((item) => item.coreActionId),
+      ["projectFirms"]
+    );
+    assert.equal(await screen.openCoreProjectAction("projectFirms"), true);
+    assert.deepEqual(calls, ["17"]);
+  });
+
+  await run("Paket 3: Projektfirmen benoetigen weder Fachmodul- noch Lizenzpruefung", () => {
     const source = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
     assert.match(source, /DEFAULT_CORE_PROJECT_ACTIONS/);
     assert.match(source, /showProjectFirms/);
     assert.equal(source.includes("isModuleActive"), false);
+    assert.equal(source.includes("license"), false);
   });
 
   await run("Paket 3: bestehende Projektfirmenlogik bleibt singulaer", () => {
