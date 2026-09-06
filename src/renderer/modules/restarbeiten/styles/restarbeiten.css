@@ -93,10 +93,6 @@
   height: 100%;
 }
 
-.bbm-restarbeiten-screen[data-output-preview="true"] {
-  grid-template-rows: auto minmax(0, 1fr);
-}
-
 .bbm-restarbeiten-screen,
 .bbm-restarbeiten-screen * {
   box-sizing: border-box;
