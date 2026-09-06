@@ -68,6 +68,7 @@ const TEST_GROUPS = Object.freeze([
     id: "rechnungen-design",
     label: "Rechnungen UI-Designreferenz",
     suites: Object.freeze([
+      ["rechnungRevision275Inventory.test.cjs", "runRechnungRevision275InventoryTests"],
       ["rechnungenDesignModule.test.cjs", "runRechnungenDesignModuleTests"],
       ["rechnungHeaderRules.test.cjs", "runRechnungHeaderRulesTests"],
       ["rechnungBooking.test.cjs", "runRechnungBookingTests"],
