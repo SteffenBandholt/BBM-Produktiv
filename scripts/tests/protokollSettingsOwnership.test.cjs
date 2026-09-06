@@ -65,6 +65,8 @@ async function runProtokollSettingsOwnershipTests(run) {
     assert.equal(projectForm.includes("openProtocolSettingsModal({ projectId: this.projectId })"), true);
     assert.equal(settingsView.includes("this._createLegacyProtocolContent()"), false);
     assert.equal(projectForm.includes("this._openLegacyProjectSettingsModal()"), false);
+    assert.equal(settingsView.includes("_createLegacyProtocolContent()"), false);
+    assert.equal(projectForm.includes("_openLegacyProjectSettingsModal()"), false);
   });
 
   await run("Protokoll #272 Settings: Projektsettings-IPC wird nur modular registriert", () => {
