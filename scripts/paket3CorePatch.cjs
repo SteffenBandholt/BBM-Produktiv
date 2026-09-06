@@ -159,7 +159,7 @@ const DEFAULT_CORE_PROJECT_ACTIONS = Object.freeze([
       borderRadius: "12px",
       display: "grid",
       placeItems: "center",
-      background: `${style.color}16`,
+      background: style.color + "16",
       color: style.color,
     });
     iconWrap.innerHTML = ICONS[style.icon] || ICONS.firms;
