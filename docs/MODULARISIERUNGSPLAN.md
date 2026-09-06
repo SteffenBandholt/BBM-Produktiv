@@ -271,6 +271,14 @@ Dabei gilt:
 - Der aktive Lizenz-/Modulumfang steuert beim App-Start dieselben Fachmodule fuer Migrationen und IPCs; Bestandsmigrationen bleiben idempotent und erhalten vorhandene Daten.
 - Providergrenzen und `OwnOrganization` bleiben den Paketen 6 und 7 vorbehalten; Gate B wird erst mit Paket 8 bewertet.
 
+### Core #271 – Paket 6 fachneutrale Providergrenzen
+
+- `PdfDocumentProvider`, `MailPayloadProvider` und `ExportProvider` bilden eine gemeinsame technische Anschlussgrenze ohne Fachimporte.
+- Jeder Provider ist eindeutig einem Modul und einem von diesem Modul gelieferten Fachtyp zugeordnet; das Fachmodul liefert ViewModel/Payload und Layout- bzw. Exportregeln.
+- Die neutrale Registry akzeptiert Provider nur, wenn das Modul die passende Capability im kanonischen Deskriptor deklariert.
+- Bestehende PDF-, Mail- und Exportengines sowie ihre produktiven Abläufe bleiben unverändert; eine tiefe Bereinigung ist ausdrücklich nicht Teil dieses Pakets.
+- `OwnOrganization` bleibt Paket 7 vorbehalten; Gate B wird erst mit Paket 8 bewertet.
+
 
 
 ### M3 Restarbeiten-Datenmodell (neu)

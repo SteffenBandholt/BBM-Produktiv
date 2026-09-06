@@ -4,6 +4,7 @@ const TEST_GROUPS = Object.freeze([
     label: "Kern, Protokoll und Projektfirmen",
     includeStoragePathTests: true,
     suites: Object.freeze([
+      ["moduleServiceProviders.test.cjs", "runModuleServiceProviderTests"],
       ["moduleMigrationRegistration.test.cjs", "runModuleMigrationRegistrationTests"],
       ["moduleIpcRegistration.test.cjs", "runModuleIpcRegistrationTests"],
       ["m86-2-2ProtokollAcceptanceSeeder.test.cjs", "runM8622ProtokollAcceptanceSeederTests"],
