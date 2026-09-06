@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
+const { runModuleRoutingNavigationTests } = require("./moduleRoutingNavigation.test.cjs");
 
 function loadLicenseServiceWithStatus(status) {
   const servicePath = path.join(process.cwd(), "src/main/licensing/licenseService.js");
@@ -34,6 +35,8 @@ function loadLicenseServiceWithStatus(status) {
 }
 
 async function runLicenseStandardFeaturesTests(run) {
+  await runModuleRoutingNavigationTests(run);
+
   await run("Modulvertrag: kanonische IDs, Typen und Lizenzschluessel sind zentral konsistent", () => {
     const moduleRegistry = require(path.join(process.cwd(), "src/main/moduleRegistry.js"));
     const licenseFeatures = require(path.join(process.cwd(), "src/main/licensing/licenseFeatures.js"));
