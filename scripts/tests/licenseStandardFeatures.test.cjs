@@ -1,5 +1,7 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const path = require("node:path");
+const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 function loadLicenseServiceWithStatus(status) {
   const servicePath = path.join(process.cwd(), "src/main/licensing/licenseService.js");
@@ -32,6 +34,115 @@ function loadLicenseServiceWithStatus(status) {
 }
 
 async function runLicenseStandardFeaturesTests(run) {
+  await run("Modulvertrag: kanonische IDs, Typen und Lizenzschluessel sind zentral konsistent", () => {
+    const moduleRegistry = require(path.join(process.cwd(), "src/main/moduleRegistry.js"));
+    const licenseFeatures = require(path.join(process.cwd(), "src/main/licensing/licenseFeatures.js"));
+
+    assert.deepEqual(moduleRegistry.getModuleTypes(), ["global", "project", "hybrid"]);
+    assert.deepEqual(moduleRegistry.getCanonicalModuleIds(), [
+      "protokoll",
+      "restarbeiten",
+      "rechnung",
+      "sigeko",
+    ]);
+    assert.deepEqual(moduleRegistry.getCapabilityIds(), [
+      "pdf",
+      "mail",
+      "export",
+      "file-storage",
+      "audio",
+      "ui-editor",
+    ]);
+    assert.deepEqual(Object.values(licenseFeatures.LICENSE_MODULES), moduleRegistry.getCanonicalModuleIds());
+    assert.deepEqual(Object.values(licenseFeatures.LICENSE_CAPABILITIES), moduleRegistry.getCapabilityIds());
+    assert.equal(moduleRegistry.getModuleLicenseKey("rechnung"), "module:rechnung");
+    assert.equal(moduleRegistry.getCapabilityLicenseKey("pdf"), "service:pdf");
+    assert.equal(moduleRegistry.isKnownModuleId("sigeko"), true);
+    assert.equal(moduleRegistry.isKnownCapabilityId("mail"), true);
+  });
+
+  await run("Modulvertrag: installierte Main-Deskriptoren referenzieren nur kanonische Capabilities", () => {
+    const moduleRegistry = require(path.join(process.cwd(), "src/main/moduleRegistry.js"));
+    for (const moduleId of moduleRegistry.getModuleIds()) {
+      const definition = moduleRegistry.getModuleDefinition(moduleId);
+      assert.ok(definition);
+      assert.ok(moduleRegistry.getModuleTypes().includes(definition.kind));
+      assert.equal(definition.licenseKey, `module:${moduleId}`);
+      assert.equal(definition.ipcRegistrar, moduleId);
+      assert.equal(definition.migrationRegistrar, moduleId);
+      assert.ok(Array.isArray(definition.requiredCapabilities));
+      definition.requiredCapabilities.forEach((capabilityId) => {
+        assert.equal(moduleRegistry.isKnownCapabilityId(capabilityId), true);
+      });
+    }
+  });
+
+  await run("Modulvertrag: gemeinsame Renderer-Deskriptorstruktur validiert Typ, Routen und Screens", async () => {
+    const contract = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/app/modules/moduleDescriptorContract.js")
+    );
+    const TestScreen = class TestScreen {};
+    const descriptor = contract.createModuleDescriptor({
+      moduleId: "testmodul",
+      moduleLabel: "Testmodul",
+      moduleType: "hybrid",
+      licenseKey: "module:testmodul",
+      screens: { work: TestScreen },
+      routes: {
+        global: [{ screenId: "work" }],
+        project: [{ screenId: "work" }],
+      },
+      navigation: {
+        global: [{ key: "test", label: "Test", workScreenId: "work" }],
+      },
+      ipcRegistrar: "testmodul",
+      migrationRegistrar: "testmodul",
+      requiredCapabilities: ["pdf", "mail"],
+    });
+
+    assert.equal(descriptor.moduleType, "hybrid");
+    assert.equal(descriptor.routes.global[0].screenId, "work");
+    assert.equal(descriptor.routes.project[0].screenId, "work");
+    assert.equal(descriptor.screens.work, TestScreen);
+    assert.deepEqual(descriptor.requiredCapabilities, ["pdf", "mail"]);
+    assert.throws(
+      () => contract.createModuleDescriptor({ ...descriptor, moduleType: "invalid" }),
+      /unbekannter moduleType/
+    );
+    assert.throws(
+      () => contract.createModuleDescriptor({
+        ...descriptor,
+        routes: { global: [{ screenId: "missing" }] },
+      }),
+      /hat keinen Screen/
+    );
+  });
+
+  await run("Modulvertrag: vorhandene Fachmodule deklarieren den gemeinsamen Vertrag ohne Runtime-Import", () => {
+    const moduleRegistry = require(path.join(process.cwd(), "src/main/moduleRegistry.js"));
+    const moduleFiles = {
+      protokoll: "src/renderer/modules/protokoll/index.js",
+      restarbeiten: "src/renderer/modules/restarbeiten/index.js",
+      rechnung: "src/renderer/modules/rechnungen/index.js",
+    };
+
+    for (const [moduleId, relativePath] of Object.entries(moduleFiles)) {
+      const source = fs.readFileSync(path.join(process.cwd(), relativePath), "utf8");
+      const definition = moduleRegistry.getModuleDefinition(moduleId);
+      assert.ok(definition);
+      assert.match(source, /createModuleDescriptor/);
+      assert.ok(source.includes(`moduleType: "${definition.kind}"`));
+      assert.ok(source.includes(`licenseKey: "${definition.licenseKey}"`));
+      assert.ok(source.includes(`ipcRegistrar: "${definition.ipcRegistrar}"`));
+      assert.ok(source.includes(`migrationRegistrar: "${definition.migrationRegistrar}"`));
+      assert.match(source, /routes:/);
+      assert.match(source, /navigation:/);
+      definition.requiredCapabilities.forEach((capabilityId) => {
+        assert.ok(source.includes(`"${capabilityId}"`));
+      });
+    }
+  });
+
   await run("Lizenzmodell: APP ohne gueltige Lizenz wirft LICENSE_INVALID", () => {
     const svc = loadLicenseServiceWithStatus({ valid: false, reason: "NO_LICENSE" });
     assert.throws(() => svc.requireFeature("app"), /LICENSE_INVALID:NO_LICENSE/);
@@ -100,7 +211,6 @@ async function runLicenseStandardFeaturesTests(run) {
     assert.throws(() => svc.requireFeature("protokoll"), /FEATURE_NOT_ALLOWED:protokoll/);
   });
 
-
   await run("Lizenzmodell: RESTARBEITEN als Modul ist erlaubt", () => {
     const svc = loadLicenseServiceWithStatus({
       valid: true,
@@ -138,6 +248,7 @@ async function runLicenseStandardFeaturesTests(run) {
     assert.equal(svc.requireFeature("protokoll"), true);
     assert.throws(() => svc.requireFeature("restarbeiten"), /FEATURE_NOT_ALLOWED:restarbeiten/);
   });
+
   await run("Lizenzmodell: Legacy ohne modules-Feld erkennt protokoll ueber features", () => {
     const svc = loadLicenseServiceWithStatus({
       valid: true,

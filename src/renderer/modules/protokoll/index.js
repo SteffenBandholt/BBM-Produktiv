@@ -1,7 +1,8 @@
-﻿import TopsScreen from "./screens/TopsScreenIntegrationView.js";
+import TopsScreen from "./screens/TopsScreenIntegrationView.js";
 import ProtokollStartScreen from "./screens/ProtokollStartScreen.js";
 import { PROTOKOLL_WORK_SCREEN_ID } from "./screens/index.js";
 import * as protokollViewModels from "./viewmodel/index.js";
+import { createModuleDescriptor } from "../../app/modules/moduleDescriptorContract.js";
 
 export const PROTOKOLL_MODULE_ID = "protokoll";
 export const PROTOKOLL_MODULE_LABEL = "Protokoll";
@@ -49,13 +50,31 @@ function buildProtokollModulePresentation() {
 }
 
 export function getProtokollModuleEntry() {
-  return Object.freeze({
+  return createModuleDescriptor({
     moduleId: PROTOKOLL_MODULE_ID,
     moduleLabel: PROTOKOLL_MODULE_LABEL,
+    moduleType: "project",
+    licenseKey: "module:protokoll",
     startScreenId: PROTOKOLL_START_SCREEN_ID,
     workScreenId: PROTOKOLL_WORK_SCREEN_ID,
     screens: buildProtokollModuleScreens(),
+    routes: Object.freeze({
+      project: Object.freeze([
+        Object.freeze({ screenId: PROTOKOLL_START_SCREEN_ID }),
+        Object.freeze({ screenId: PROTOKOLL_WORK_SCREEN_ID }),
+      ]),
+    }),
     navigation: buildProtokollModuleNavigation(),
+    ipcRegistrar: "protokoll",
+    migrationRegistrar: "protokoll",
+    requiredCapabilities: Object.freeze([
+      "pdf",
+      "mail",
+      "export",
+      "file-storage",
+      "audio",
+      "ui-editor",
+    ]),
     presentation: buildProtokollModulePresentation(),
     movedParts: buildMovedProtocolModuleParts(),
   });

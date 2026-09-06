@@ -2,6 +2,7 @@ import RechnungenDesignScreen from "./screens/RechnungenDesignScreen.js";
 import RechnungScreen from "./screens/RechnungScreen.js";
 import { RECHNUNG_WORK_SCREEN_ID } from "./screens/index.js";
 import { RECHNUNG_SCOPE_ID } from "./RechnungScreen.uiEditorContract.js";
+import { createModuleDescriptor } from "../../app/modules/moduleDescriptorContract.js";
 
 export const RECHNUNG_MODULE_ID = "rechnung";
 export const RECHNUNG_MODULE_LABEL = "Rechnungen";
@@ -15,12 +16,22 @@ class RechnungEditorScreen extends RechnungScreen {
 }
 
 export function getRechnungModuleEntry() {
-  return Object.freeze({
+  return createModuleDescriptor({
     moduleId: RECHNUNG_MODULE_ID,
     moduleLabel: RECHNUNG_MODULE_LABEL,
+    moduleType: "hybrid",
+    licenseKey: "module:rechnung",
     workScreenId: RECHNUNG_WORK_SCREEN_ID,
     screens: Object.freeze({
       [RECHNUNG_WORK_SCREEN_ID]: RechnungEditorScreen,
+    }),
+    routes: Object.freeze({
+      global: Object.freeze([
+        Object.freeze({ screenId: RECHNUNG_WORK_SCREEN_ID }),
+      ]),
+      project: Object.freeze([
+        Object.freeze({ screenId: RECHNUNG_WORK_SCREEN_ID }),
+      ]),
     }),
     navigation: Object.freeze({
       global: Object.freeze([
@@ -33,6 +44,15 @@ export function getRechnungModuleEntry() {
         }),
       ]),
     }),
+    ipcRegistrar: "rechnung",
+    migrationRegistrar: "rechnung",
+    requiredCapabilities: Object.freeze([
+      "pdf",
+      "mail",
+      "export",
+      "file-storage",
+      "ui-editor",
+    ]),
     presentation: Object.freeze({
       start: Object.freeze({ mode: "global" }),
     }),

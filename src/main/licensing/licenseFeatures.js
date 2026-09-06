@@ -1,15 +1,46 @@
+const {
+  getCanonicalModuleIds,
+  getCapabilityIds,
+} = require("../moduleRegistry");
+
+function assertCanonicalIds(actualIds, canonicalIds, kind) {
+  for (const id of actualIds) {
+    if (!canonicalIds.includes(id)) {
+      throw new Error(`Unbekannte kanonische ${kind}-ID: ${id}`);
+    }
+  }
+}
+
+const CANONICAL_MODULE_IDS = getCanonicalModuleIds();
+const CANONICAL_CAPABILITY_IDS = getCapabilityIds();
+
+// Die Literale bleiben aus Kompatibilitaetsgruenden sichtbar; die Registry ist
+// dennoch die kanonische Quelle und wird beim Laden gegen diese Werte geprueft.
 const LICENSE_MODULES = Object.freeze({
   PROTOKOLL: "protokoll",
   RESTARBEITEN: "restarbeiten",
   RECHNUNG: "rechnung",
+  SIGEKO: "sigeko",
 });
+
+const LICENSE_CAPABILITIES = Object.freeze({
+  PDF: "pdf",
+  MAIL: "mail",
+  EXPORT: "export",
+  FILE_STORAGE: "file-storage",
+  AUDIO: "audio",
+  UI_EDITOR: "ui-editor",
+});
+
+assertCanonicalIds(Object.values(LICENSE_MODULES), CANONICAL_MODULE_IDS, "Modul");
+assertCanonicalIds(Object.values(LICENSE_CAPABILITIES), CANONICAL_CAPABILITY_IDS, "Capability");
 
 const LICENSE_FEATURES = Object.freeze({
   DIKTAT: "diktat",
   AUDIO: "diktat",
 });
 
-const KNOWN_LICENSE_MODULE_IDS = Object.freeze(Object.values(LICENSE_MODULES));
+const KNOWN_LICENSE_MODULE_IDS = CANONICAL_MODULE_IDS;
 
 const LEGACY_FEATURE_ALIASES = Object.freeze({
   audio: LICENSE_FEATURES.DIKTAT,
@@ -82,9 +113,9 @@ function normalizeLicensedModules(modules, features) {
     normalized.push(mod);
   });
 
-  // Bestandslizenzen vor dem kanonischen Modulmodell führten app/pdf/export/mail
-  // als Feature-Kennungen. Diese Übersetzung bleibt ausschließlich hier als
-  // Kompatibilitätsschicht bestehen; die Begriffe sind keine Modul-IDs mehr.
+  // Bestandslizenzen vor dem kanonischen Modulmodell fuehrten app/pdf/export/mail
+  // als Feature-Kennungen. Diese Uebersetzung bleibt ausschliesslich hier als
+  // Kompatibilitaetsschicht bestehen; die Begriffe sind keine Modul-IDs mehr.
   if (!seen.has(LICENSE_MODULES.PROTOKOLL) && _hasLegacyProtokollFeature(features)) {
     normalized.push(LICENSE_MODULES.PROTOKOLL);
   }
@@ -104,6 +135,7 @@ function isLicensedProduct(product) {
 
 module.exports = {
   LICENSE_MODULES,
+  LICENSE_CAPABILITIES,
   LICENSE_FEATURES,
   KNOWN_LICENSE_MODULE_IDS,
   LEGACY_PROTOKOLL_FEATURE_IDS,
