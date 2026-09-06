@@ -287,6 +287,14 @@ Dabei gilt:
 - `InvoiceIssuerProfile`, Empfaenger-/Aussteller-Snapshots und sonstige Rechnungsfachidentitaeten bleiben ausserhalb dieses Pakets.
 - Gate B wird erst mit Paket 8 nach der Gesamtregression bewertet.
 
+### Core #271 – Paket 8 Gate-B-Gesamtregression
+
+- Alle acht Gate-B-Kriterien aus #277 sind durch `gateBRegression.test.cjs` und die bestehenden Router-, Modul-, Core- und Fachregressionen nachgewiesen.
+- Core ohne Protokolltabellen, aktive Einzelmodule, nicht lizenzierte Rechnung, modulare IPCs/Migrationen, Bestands-DB und Mehrmodul-Provider sind explizit abgedeckt.
+- Die Vollregression bleibt bei den bereits vor Paket 4 dokumentierten neun Einzeltestfehlern und den fehlenden `ui-editor-kit`-Artefakten; keine neue Fehlerklasse ist hinzugekommen.
+- Der vollständige Kriterien- und Baselinebericht steht in `docs/GATE_B_REGRESSION.md`.
+- **Gate B ist erfuellt.** Diese Bewertung bezieht sich ausschließlich auf den Core-Vorbau #271/#277 und zieht keine Fachentwicklung vor.
+
 
 
 ### M3 Restarbeiten-Datenmodell (neu)
