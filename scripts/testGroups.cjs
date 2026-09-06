@@ -8,6 +8,7 @@ const TEST_GROUPS = Object.freeze([
       ["protokollSettingsOwnership.test.cjs", "runProtokollSettingsOwnershipTests"],
       ["protokollPdfServiceBoundary.test.cjs", "runProtokollPdfServiceBoundaryTests"],
       ["protokollMailTransportBoundary.test.cjs", "runProtokollMailTransportBoundaryTests"],
+      ["protokollMailPayloadOwnership.test.cjs", "runProtokollMailPayloadOwnershipTests"],
       ["gateBRegression.test.cjs", "runGateBRegressionTests"],
       ["ownOrganizationBoundary.test.cjs", "runOwnOrganizationBoundaryTests"],
       ["moduleServiceProviders.test.cjs", "runModuleServiceProviderTests"],

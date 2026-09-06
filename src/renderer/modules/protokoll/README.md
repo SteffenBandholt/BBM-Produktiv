@@ -54,6 +54,10 @@ Payload uebergibt der bestehende Header-Adapter an `features/mail/MailTransportS
 dort bleiben Outlook/mailto, Attachment-Fehlerbehandlung und technische Transportnormalisierung
 fachneutral gemeinsam. Der
 historische Pfad `features/mail/MailFlow.js` ist nur noch ein Kompatibilitaets-Re-Export.
+`mail/ProtokollMailPayloadService.js` besitzt die aktiven Regeln fuer Projekt-/Besprechungskontext,
+Empfaenger aus dem fachlichen Verteiler, Protokoll-Betreff/-Text, Anhangsliste und die Suche nach
+dem gespeicherten Protokoll-PDF. `MainHeader` behaelt seine bisherigen Methodennamen nur als
+Delegationspunkte fuer bestehende Aufrufer.
 
 Die Ordner `components/`, `domain/`, `data/`, `state/`, `viewmodel/`, `dialogs/` und `rules/`
 sind absichtlich schon angelegt, damit spaetere Umzuege dort sauber anschliessen koennen.

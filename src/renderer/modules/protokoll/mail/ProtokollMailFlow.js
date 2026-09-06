@@ -1,5 +1,6 @@
 import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
 import { cleanupPopupHandlers, createPopupOverlay } from "../../../ui/popupCommon.js";
+import { ProtokollMailPayloadService } from "./ProtokollMailPayloadService.js";
 
 export class ProtokollMailFlow {
   constructor({ view, router }) {
@@ -14,6 +15,7 @@ export class ProtokollMailFlow {
   async openSendMailAfterClose({ printResults, meeting }) {
     const MainHeader = (await import("../../../ui/MainHeader.js")).default;
     const headerHelper = new MainHeader({ router: this.router });
+    const payloadService = new ProtokollMailPayloadService({ router: this.router });
     const meetingRef =
       meeting ||
       (typeof this.view.getSelectedClosedMeetingForEmail === "function"
@@ -21,17 +23,17 @@ export class ProtokollMailFlow {
         : null) || { id: this.view.meetingId };
     const meetingId = meetingRef?.id || this.view.meetingId || null;
 
-    const recOptions = await headerHelper._getMeetingRecipientOptions(meetingId);
+    const recOptions = await payloadService.getMeetingRecipientOptions(meetingId);
     const allRecipients = recOptions.all || [];
-    let selectedRecipients = headerHelper._buildInitialRecipientSelection(recOptions);
+    let selectedRecipients = payloadService.buildInitialRecipientSelection(recOptions);
 
-    const draft = await headerHelper._buildMeetingMailDraft({
+    const draft = await payloadService.buildDraft({
       projectId: this.view.projectId || this.router?.currentProjectId,
       meeting: meetingRef,
       mailType: "",
     });
 
-    const attachments = headerHelper._buildMailAttachmentEntries({
+    const attachments = payloadService.buildAttachmentEntries({
       protocol: printResults?.protocol?.filePath || "",
       firms: printResults?.firms?.filePath || "",
       todo: printResults?.todo?.filePath || "",
@@ -40,7 +42,7 @@ export class ProtokollMailFlow {
 
     if (!attachments[0].path) {
       try {
-        const lookup = await headerHelper._buildProtocolPdfLookupPayload(
+        const lookup = await payloadService.buildProtocolPdfLookupPayload(
           meetingRef,
           this.view.projectId || this.router?.currentProjectId
         );
