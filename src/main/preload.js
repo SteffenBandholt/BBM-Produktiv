@@ -103,6 +103,8 @@ contextBridge.exposeInMainWorld("bbmDb", {
   rechnungOrderCreateDraft: (header) => ipcRenderer.invoke("rechnung:order:createDraft", header),
   rechnungOrderAddPosition: (id, position) => ipcRenderer.invoke("rechnung:order:addPosition", { id, position }),
   rechnungOrderConfirm: (id) => ipcRenderer.invoke("rechnung:order:confirm", { id }),
+  rechnungOrderAmendmentCreateDraft: (id, amendment) => ipcRenderer.invoke("rechnung:order:amendment:createDraft", { id, amendment }),
+  rechnungOrderAmendmentConfirm: (id, amendment_id) => ipcRenderer.invoke("rechnung:order:amendment:confirm", { id, amendment_id }),
   rechnungList: () => ipcRenderer.invoke("rechnung:list"),
   rechnungGet: (id) => ipcRenderer.invoke("rechnung:get", { id }),
   rechnungCreateDraft: (header) => ipcRenderer.invoke("rechnung:createDraft", header),

@@ -128,7 +128,7 @@ async function runRechnungBillingOrderPersistenceTests(run) {
     } finally { db.close(); }
   });
 
-  await run("Rechnung #275 Paket 4a: Nachtragsschema bereitet Referenz und N 01/N 02 vor, ohne Paket-4d-Workflow", () => {
+  await run("Rechnung #275 Paket 4a/4d: Nachtragsbestand bewahrt Referenz und N 01/N 02 bei fortgesetzter Nummernvergabe", () => {
     const db = database();
     try {
       const repo = repository(db);
@@ -161,7 +161,8 @@ async function runRechnungBillingOrderPersistenceTests(run) {
         /billing_order_amendment_confirmed_immutable/
       );
       assert.throws(() => db.prepare("DELETE FROM billing_order_amendments WHERE id = ?").run(UUID.amendment2), /billing_order_amendment_confirmed_immutable/);
-      assert.equal(typeof repo.confirmAmendment, "undefined");
+      const confirmed = repo.confirmAmendment(UUID.order, firstDraft.id);
+      assert.deepEqual([confirmed.id, confirmed.sequence_no, confirmed.amendment_number], [firstDraft.id, 3, "N 03"]);
     } finally { db.close(); }
   });
 

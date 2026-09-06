@@ -5,6 +5,7 @@ const { BillingOrderRepository } = require("../../db/billingOrderRepository");
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const HEADER_FIELDS = ["order_number", "order_date", "customer_firm_id", "project_id", "service_reference"];
 const POSITION_FIELDS = ["parent_position_id", "type", "position_number", "sort_index", "short_text", "long_text", "quantity", "unit", "unit_price_cents", "is_nep", "vat_rate_percent", "price_input_mode", "price_input_cents"];
+const AMENDMENT_FIELDS = ["relates_to_order_position_id", "short_text", "long_text", "quantity", "unit", "unit_price_cents", "is_nep", "vat_rate_percent", "price_input_mode", "price_input_cents"];
 
 function fail(code) {
   const error = new Error(code);
@@ -48,6 +49,11 @@ function position(input) {
   if (!["heading", "service", "note"].includes(result.type)) fail("billing_order_position_type_invalid");
   if (!Number.isSafeInteger(input.sort_index) || input.sort_index < 0) fail("billing_order_sort_index_invalid");
   if (input.parent_position_id != null) id(input.parent_position_id);
+  validateValues(input);
+  return result;
+}
+
+function validateValues(input) {
   if (input.long_text != null && typeof input.long_text !== "string") fail("billing_order_long_text_invalid");
   if (input.quantity != null && (typeof input.quantity !== "string" || !/^\d+(?:\.\d+)?$/.test(input.quantity) || !Number.isFinite(Number(input.quantity)))) fail("billing_order_quantity_invalid");
   if (input.unit != null) text(input.unit, "unit");
@@ -57,7 +63,11 @@ function position(input) {
   if (input.vat_rate_percent > 100) fail("billing_order_vat_rate_percent_invalid");
   if (input.is_nep != null && ![true, false, 0, 1].includes(input.is_nep)) fail("billing_order_is_nep_invalid");
   if (input.price_input_mode != null && !["NET", "GROSS"].includes(input.price_input_mode)) fail("billing_order_price_input_mode_invalid");
-  return result;
+}
+
+function amendment(input) {
+  validateValues(input);
+  return { ...input, short_text: text(input.short_text, "short_text"), relates_to_order_position_id: id(input.relates_to_order_position_id) };
 }
 
 function validateLv(positions) {
@@ -130,6 +140,40 @@ class BillingOrderService {
       validateLv(order.positions);
       if (!order.positions.some((entry) => entry.type === "service")) fail("billing_order_service_position_required");
       return this.#repository.confirmOrder(order.id);
+    });
+  }
+
+  #amendable(orderId, originId) {
+    const order = this.#load(orderId);
+    if (order.status !== "CONFIRMED") fail("billing_order_amendments_require_confirmed_order");
+    if (!order.positions.some((entry) => entry.id === originId && entry.type === "service")) {
+      fail("billing_order_amendment_origin_invalid");
+    }
+    return order;
+  }
+
+  createDraftAmendment(input) {
+    this.#authorize();
+    const command = inputObject(input, ["id", "amendment"]);
+    const values = amendment(inputObject(command.amendment, AMENDMENT_FIELDS));
+    return this.#repository.withTransaction(() => {
+      const order = this.#amendable(command.id, values.relates_to_order_position_id);
+      return this.#repository.createDraftAmendment(order.id, values);
+    });
+  }
+
+  confirmAmendment(input) {
+    this.#authorize();
+    const command = inputObject(input, ["id", "amendment_id"]);
+    const amendmentId = id(command.amendment_id);
+    return this.#repository.withTransaction(() => {
+      const order = this.#load(command.id);
+      const draft = order.amendments.find((entry) => entry.id === amendmentId);
+      if (!draft) fail("billing_order_amendment_not_found");
+      if (draft.status !== "DRAFT") fail("billing_order_amendment_not_confirmable");
+      const values = amendment(draft);
+      this.#amendable(order.id, values.relates_to_order_position_id);
+      return this.#repository.confirmAmendment(order.id, draft.id);
     });
   }
 }
