@@ -118,7 +118,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - kleine Nachweise und Konsolidierungen mitziehen, wo sie den Umbau direkt belegen
 - der erreichte Screen-Stand in `Protokoll` bleibt dabei sichtbar abgesichert
 - M21-Einordnung: `Restarbeiten` ist erreichbar, aber fachlich/funktional unfertig und fuer den UI-Editor nur Pilot-Scope.
-- M21-Einordnung: `Protokoll` ist noch nicht fertig bereinigt und wird fuer UI-Editor-Themen defensiv/read-only behandelt.
+- M21-Einordnung: Die Besitzgrenzen der Protokoll-Revision #272 sind abgeschlossen; fuer UI-Editor-Themen wird der produktive Bestand weiterhin defensiv/read-only behandelt.
 - M21-Einordnung: BBM-Produktiv ist Beispiel-/Pilot-Zielapp fuer das generische UI-Editor-kit; die Ziel-App liefert die ElementRegistry, der Editor liest ausschliesslich diese Registry.
 - Keine Selbstuntersuchung der Ziel-App-Oberflaeche, keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung.
 - M80.2 ist `[A]` abgenommen: tatsächlicher Restarbeiten-Header und stabiler Editbox-Root sind direkt größenfähig, der alte Splitpfad ist gesperrt und die Hauptliste als flexibler Scrollbereich gesichert. M80.2a stabilisiert ausschließlich Testharness und Node-/Electron-ABI-Wechsel. M81 und M81.1 sind abgenommen; M81.1 trennt alte/beschädigte Benutzerprofile vom gültigen Electron-Handshake und archiviert sie vor einem Baselinestart byte-identisch. M82 ist als deklarative App-Starterpaket-Bestandsreferenz `[A]` abgenommen. M82.1 ergänzt ausschließlich Start-Restore, Direktauswahl und begrenzte Layoutwirkung und ist nach vollständiger sichtbarer Abnahme `[A]` abgenommen. M82.2 bindet ausschließlich den gemeinsamen Geführt-/Frei-Geometrierisikovertrag an dieselben Registry-, Pipe-, HostAdapter- und Profilwege an und ist nach vollständiger sichtbarer UI-/PDF-Abnahme mit kontrolliertem Diagnostic-Build `[A]` abgenommen. Der Fachausbau bleibt offen.
@@ -158,7 +158,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - weitere kleine Kernstellen fuer den aktiven Modulumfang sind noch moeglich
 
 ### 6.2 Container 4 – Fachmodul `Protokoll`
-**Status:** weit vorbereitet, Uebergangscontainer aktiv
+**Status:** Revision #272 abgeschlossen; erhaltener Unterbau aktiv
 
 **Erreicht**
 - sichtbare Modulheimat
@@ -173,11 +173,16 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - ein kleiner Nachweis fuer den entmischten Screen-Stand ist vorhanden
 - die Diktat-Buttons nutzen jetzt die vorhandenen SVG-Assets und sitzen direkt neben der Restzeichenanzeige in der echten Tops-Editbox
 - Protokoll-Popups verwenden die gemeinsame, an der realen Header-Unterkante ausgerichtete Popup-Flaeche; Projekt und Mail sind ohne fachliche Aenderung an dieselbe Basis angeschlossen
+- kanonischer produktiver Moduleinstieg und reine `views/TopsScreen.js`-Kompatibilitaet sind nachgewiesen
+- protokollspezifische Settings besitzen einen gemeinsamen Modulvertrag und modulare IPC-Grenze
+- PDF und Mail laufen ueber gemeinsame technische Dienste; Fachpayload und Abschlussregeln bleiben Protokollbesitz
+- Besprechungsteilnahme, Anwesenheit und Verteiler sind von Core-Stammdaten und Projektpool getrennt
+- nachweislich tote Parallel- und Settings-Legacypfade sind entfernt; notwendige Kompatibilitaets-Re-Exports bleiben erhalten
+- der vollstaendige Kriterien- und Baselinebericht steht in `docs/PROTOKOLL_REVISION_272.md`
 
 **Noch offen**
-- grosser Unterbau liegt weiter unter `src/renderer/tops/`
-- tieferer Unterbau und weitere Restentmischung in `Protokoll` bleiben offen
-- weitere direkte `tops/`-Altpfade sind fuer spaetere Minischritte noch vorhanden
+- der grosse Unterbau unter `src/renderer/tops/` bleibt bewusst erhalten und ist kein konkurrierender Moduleinstieg
+- tiefere Router-/Strukturkonsolidierung bleibt gemaess #272 eine spaetere, bedarfsgetriebene Arbeit
 
 ### 6.3 Container 5 – Fachmodul `weitere Module`
 **Status:** sichtbar, klein, kontrolliert ausbaufaehig
