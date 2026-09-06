@@ -47,6 +47,7 @@ const TEST_GROUPS = Object.freeze([
     id: "restarbeiten-module",
     label: "Restarbeiten-Modul",
     suites: Object.freeze([
+      ["restarbeitenPhotoUi.test.cjs", "runRestarbeitenPhotoUiTests"],
       ["restarbeitenModule.test.cjs", "runRestarbeitenModuleTests"],
     ]),
   }),

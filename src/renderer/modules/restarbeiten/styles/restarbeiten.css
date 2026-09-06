@@ -1178,3 +1178,68 @@
   color: var(--bbm-error);
   font-weight: 700;
 }
+
+.bbm-restarbeiten-photos-popup {
+  color: var(--bbm-text);
+  font-family: var(--bbm-rest-font-family);
+}
+
+.bbm-restarbeiten-photos-popup__header,
+.bbm-restarbeiten-photos-popup__footer,
+.bbm-restarbeiten-photos-popup__item-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--bbm-popup-footer-gap);
+  justify-content: space-between;
+}
+
+.bbm-restarbeiten-photos-popup__header h2 {
+  margin: 0;
+  font-size: 11.5pt;
+}
+
+.bbm-restarbeiten-photos-popup__body {
+  min-height: 150px;
+  overflow: auto;
+}
+
+.bbm-restarbeiten-photos-popup__gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.bbm-restarbeiten-photos-popup__item {
+  display: grid;
+  gap: 8px;
+}
+
+.bbm-restarbeiten-photos-popup__item img {
+  width: 100%;
+  height: 160px;
+  object-fit: contain;
+  border-radius: var(--bbm-radius-sm);
+  background: var(--bbm-surface-soft);
+}
+
+.bbm-restarbeiten-photos-popup__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--bbm-muted);
+}
+
+.bbm-restarbeiten-photos-popup__primary {
+  color: var(--bbm-success);
+  font-weight: 700;
+}
+
+.bbm-restarbeiten-photos-popup__empty,
+.bbm-restarbeiten-photos-popup__status {
+  color: var(--bbm-muted);
+}
+
+.bbm-restarbeiten-photos-popup__error {
+  color: var(--bbm-error);
+  font-weight: 700;
+}

@@ -1,11 +1,15 @@
 import {
   createRestarbeitNote,
   createRestarbeitItem,
+  deleteRestarbeitAttachment,
   getRestarbeitenProjectSettings,
+  importRestarbeitAttachments,
+  listRestarbeitAttachments,
   listRestarbeitNotes,
   listResponsibleProjectFirms,
   listRestarbeitenByProject,
   softDeleteRestarbeitItem,
+  setPrimaryRestarbeitAttachment,
   updateRestarbeitItem,
 } from "../data/restarbeitenDataSource.js";
 import { toRestarbeitenListItems, getRestarbeitenAmpelState } from "../viewModel/restarbeitenListItems.js";
@@ -33,6 +37,14 @@ import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
 
 function normalizeText(value) {
   return String(value ?? "").trim();
+}
+
+function toLocalFileUrl(value) {
+  const filePath = normalizeText(value);
+  if (!filePath) return "";
+  if (/^file:\/\//iu.test(filePath)) return encodeURI(filePath);
+  const normalized = filePath.replace(/\\/gu, "/");
+  return encodeURI(`file:///${normalized.replace(/^\/+/, "")}`);
 }
 
 function formatNoteTimestamp(value) {
@@ -164,6 +176,15 @@ export default class RestarbeitenScreen {
     this.error = null;
     this.isLoading = false;
     this.notesOverlay = null;
+    this.photosOverlay = null;
+    this._photosRequestId = 0;
+    this.photosPopup = {
+      restarbeitId: "",
+      attachments: [],
+      isLoading: false,
+      error: "",
+      warning: "",
+    };
     this.notesPopup = {
       restarbeitId: "",
       notes: [],
@@ -294,10 +315,198 @@ export default class RestarbeitenScreen {
     this._renderShell();
   }
 
-  openRestarbeitPhotos(restarbeitId = this.selectedId) {
+  async openRestarbeitPhotos(restarbeitId = this.selectedId) {
     const id = normalizeText(restarbeitId);
-    this._setStubMessage(id ? "Fotos folgen in einem späteren Paket." : "Kein Datensatz ausgewählt.");
-    return { ok: Boolean(id), restarbeitId: id };
+    if (!id) {
+      this._setStubMessage("Kein Datensatz ausgewählt.");
+      return { ok: false, restarbeitId: "" };
+    }
+    if (!this.photosOverlay) {
+      this.photosOverlay = createPopupOverlay({ background: "rgba(15, 23, 42, 0.34)" });
+      document.body?.appendChild?.(this.photosOverlay);
+      registerPopupCloseHandlers(this.photosOverlay, () => this._closePhotosPopup(), { closeOnBackdrop: false });
+    }
+    const requestId = ++this._photosRequestId;
+    this.photosPopup = {
+      restarbeitId: id,
+      attachments: [],
+      isLoading: true,
+      error: "",
+      warning: "",
+    };
+    this._renderPhotosPopup();
+    try {
+      const attachments = await listRestarbeitAttachments(id);
+      if (requestId !== this._photosRequestId) return { ok: false, restarbeitId: id, canceled: true };
+      this.photosPopup.attachments = attachments;
+      return { ok: true, restarbeitId: id, attachments: [...this.photosPopup.attachments] };
+    } catch (error) {
+      if (requestId !== this._photosRequestId) return { ok: false, restarbeitId: id, canceled: true };
+      this.photosPopup.error = error?.message || String(error);
+      return { ok: false, restarbeitId: id, error: this.photosPopup.error };
+    } finally {
+      if (requestId === this._photosRequestId) {
+        this.photosPopup.isLoading = false;
+        this._renderPhotosPopup();
+      }
+    }
+  }
+
+  _closePhotosPopup() {
+    if (!this.photosOverlay) return;
+    cleanupPopupHandlers(this.photosOverlay);
+    this.photosOverlay.remove?.();
+    this.photosOverlay = null;
+    this._photosRequestId += 1;
+  }
+
+  async _importRestarbeitPhotos() {
+    const restarbeitId = normalizeText(this.photosPopup.restarbeitId);
+    if (!restarbeitId || this.photosPopup.attachments.length >= 3) return;
+    this.photosPopup.isLoading = true;
+    this.photosPopup.error = "";
+    this.photosPopup.warning = "";
+    this._renderPhotosPopup();
+    try {
+      const result = await importRestarbeitAttachments(restarbeitId, this.projectId);
+      this.photosPopup.attachments = result.attachments;
+    } catch (error) {
+      this.photosPopup.error = error?.message || String(error);
+    } finally {
+      this.photosPopup.isLoading = false;
+      this._renderPhotosPopup();
+    }
+  }
+
+  async _setPrimaryRestarbeitPhoto(attachmentId) {
+    const restarbeitId = normalizeText(this.photosPopup.restarbeitId);
+    if (!restarbeitId || !normalizeText(attachmentId)) return;
+    this.photosPopup.isLoading = true;
+    this.photosPopup.error = "";
+    this.photosPopup.warning = "";
+    this._renderPhotosPopup();
+    try {
+      await setPrimaryRestarbeitAttachment(restarbeitId, attachmentId);
+      this.photosPopup.attachments = await listRestarbeitAttachments(restarbeitId);
+    } catch (error) {
+      this.photosPopup.error = error?.message || String(error);
+    } finally {
+      this.photosPopup.isLoading = false;
+      this._renderPhotosPopup();
+    }
+  }
+
+  async _deleteRestarbeitPhoto(attachmentId) {
+    const restarbeitId = normalizeText(this.photosPopup.restarbeitId);
+    if (!restarbeitId || !normalizeText(attachmentId)) return;
+    if (typeof window?.confirm === "function" && !window.confirm("Foto wirklich löschen?")) return;
+    this.photosPopup.isLoading = true;
+    this.photosPopup.error = "";
+    this.photosPopup.warning = "";
+    this._renderPhotosPopup();
+    try {
+      const result = await deleteRestarbeitAttachment(restarbeitId, attachmentId);
+      this.photosPopup.attachments = result.attachments;
+      this.photosPopup.warning = result.warning || "";
+    } catch (error) {
+      this.photosPopup.error = error?.message || String(error);
+    } finally {
+      this.photosPopup.isLoading = false;
+      this._renderPhotosPopup();
+    }
+  }
+
+  _renderPhotosPopup() {
+    if (!this.photosOverlay) return;
+    this.photosOverlay.replaceChildren();
+    this.photosOverlay.style.display = "flex";
+
+    const card = document.createElement("section");
+    card.className = "bbm-restarbeiten-photos-popup bbm-popup-standard bbm-popup-dialog";
+    stylePopupCard(card, { width: "min(880px, calc(100vw - 32px))", maxHeight: "100%" });
+
+    const header = document.createElement("header");
+    header.className = "bbm-restarbeiten-photos-popup__header bbm-popup-header";
+    const title = document.createElement("h2");
+    title.textContent = "Fotos zur Restarbeit";
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.textContent = "Schließen";
+    applyPopupButtonStyle(closeBtn);
+    closeBtn.setAttribute("data-bbm-restarbeiten-photo-action", "close");
+    closeBtn.addEventListener("click", () => this._closePhotosPopup());
+    header.append(title, closeBtn);
+
+    const body = document.createElement("div");
+    body.className = "bbm-restarbeiten-photos-popup__body bbm-popup-body bbm-form-content";
+    if (this.photosPopup.isLoading) {
+      const loading = document.createElement("p");
+      loading.textContent = "Fotos werden geladen ...";
+      body.appendChild(loading);
+    } else if (!this.photosPopup.attachments.length) {
+      const empty = document.createElement("p");
+      empty.className = "bbm-restarbeiten-photos-popup__empty";
+      empty.textContent = "Noch keine Fotos vorhanden.";
+      body.appendChild(empty);
+    } else {
+      const gallery = document.createElement("div");
+      gallery.className = "bbm-restarbeiten-photos-popup__gallery";
+      for (const attachment of this.photosPopup.attachments) {
+        const item = document.createElement("article");
+        item.className = "bbm-restarbeiten-photos-popup__item bbm-form-card";
+        const image = document.createElement("img");
+        image.src = toLocalFileUrl(attachment.thumbnail_path || attachment.file_path);
+        image.alt = normalizeText(attachment.original_file_name || attachment.file_name) || "Foto zur Restarbeit";
+        const label = document.createElement("div");
+        label.className = "bbm-restarbeiten-photos-popup__label";
+        label.textContent = normalizeText(attachment.original_file_name || attachment.file_name) || "Foto";
+        const actions = document.createElement("div");
+        actions.className = "bbm-restarbeiten-photos-popup__item-actions";
+        if (attachment.is_primary === true || Number(attachment.is_primary) === 1) {
+          const primary = document.createElement("span");
+          primary.className = "bbm-restarbeiten-photos-popup__primary";
+          primary.textContent = "Hauptfoto";
+          actions.appendChild(primary);
+        } else {
+          const primaryBtn = document.createElement("button");
+          primaryBtn.type = "button";
+          primaryBtn.textContent = "Als Hauptfoto";
+          applyPopupButtonStyle(primaryBtn);
+          primaryBtn.setAttribute("data-bbm-restarbeiten-photo-action", "primary");
+          primaryBtn.addEventListener("click", () => this._setPrimaryRestarbeitPhoto(attachment.id));
+          actions.appendChild(primaryBtn);
+        }
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.textContent = "Löschen";
+        applyPopupButtonStyle(deleteBtn, { variant: "danger" });
+        deleteBtn.setAttribute("data-bbm-restarbeiten-photo-action", "delete");
+        deleteBtn.addEventListener("click", () => this._deleteRestarbeitPhoto(attachment.id));
+        actions.appendChild(deleteBtn);
+        item.append(image, label, actions);
+        gallery.appendChild(item);
+      }
+      body.appendChild(gallery);
+    }
+
+    const message = document.createElement("div");
+    message.className = this.photosPopup.error
+      ? "bbm-restarbeiten-photos-popup__error"
+      : "bbm-restarbeiten-photos-popup__status";
+    message.textContent = this.photosPopup.error || this.photosPopup.warning || "";
+
+    const footer = document.createElement("footer");
+    footer.className = "bbm-restarbeiten-photos-popup__footer bbm-popup-footer";
+    const importBtn = document.createElement("button");
+    importBtn.type = "button";
+    importBtn.textContent = this.photosPopup.attachments.length >= 3 ? "Maximal 3 Fotos" : "Fotos importieren";
+    importBtn.disabled = this.photosPopup.isLoading || this.photosPopup.attachments.length >= 3;
+    applyPopupButtonStyle(importBtn, { variant: "primary" });
+    importBtn.setAttribute("data-bbm-restarbeiten-photo-action", "import");
+    importBtn.addEventListener("click", () => this._importRestarbeitPhotos());
+    footer.append(message, importBtn);
+    card.append(header, body, footer);
+    this.photosOverlay.appendChild(card);
   }
 
   _setStubMessage(message) {
@@ -685,6 +894,8 @@ export default class RestarbeitenScreen {
     this._textLimitUnsubscribe = null;
     this.notesOverlay?.remove?.();
     this.notesOverlay = null;
+    this.photosOverlay?.remove?.();
+    this.photosOverlay = null;
     this.quicklaneEl?.remove?.();
     this.quicklaneEl = null;
   }
