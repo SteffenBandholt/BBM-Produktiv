@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
@@ -76,32 +77,69 @@ async function runLicenseStandardFeaturesTests(run) {
     }
   });
 
-  await run("Modulvertrag: Renderer-Deskriptoren entsprechen dem Main-Vertrag", async () => {
-    const moduleRegistry = require(path.join(process.cwd(), "src/main/moduleRegistry.js"));
-    const protokoll = await importEsmFromFile(path.join(process.cwd(), "src/renderer/modules/protokoll/index.js"));
-    const restarbeiten = await importEsmFromFile(path.join(process.cwd(), "src/renderer/modules/restarbeiten/index.js"));
-    const rechnung = await importEsmFromFile(path.join(process.cwd(), "src/renderer/modules/rechnungen/index.js"));
-    const entries = [
-      protokoll.getProtokollModuleEntry(),
-      restarbeiten.getRestarbeitenModuleEntry(),
-      rechnung.getRechnungModuleEntry(),
-    ];
+  await run("Modulvertrag: gemeinsame Renderer-Deskriptorstruktur validiert Typ, Routen und Screens", async () => {
+    const contract = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/app/modules/moduleDescriptorContract.js")
+    );
+    const TestScreen = class TestScreen {};
+    const descriptor = contract.createModuleDescriptor({
+      moduleId: "testmodul",
+      moduleLabel: "Testmodul",
+      moduleType: "hybrid",
+      licenseKey: "module:testmodul",
+      screens: { work: TestScreen },
+      routes: {
+        global: [{ screenId: "work" }],
+        project: [{ screenId: "work" }],
+      },
+      navigation: {
+        global: [{ key: "test", label: "Test", workScreenId: "work" }],
+      },
+      ipcRegistrar: "testmodul",
+      migrationRegistrar: "testmodul",
+      requiredCapabilities: ["pdf", "mail"],
+    });
 
-    for (const entry of entries) {
-      const definition = moduleRegistry.getModuleDefinition(entry.moduleId);
+    assert.equal(descriptor.moduleType, "hybrid");
+    assert.equal(descriptor.routes.global[0].screenId, "work");
+    assert.equal(descriptor.routes.project[0].screenId, "work");
+    assert.equal(descriptor.screens.work, TestScreen);
+    assert.deepEqual(descriptor.requiredCapabilities, ["pdf", "mail"]);
+    assert.throws(
+      () => contract.createModuleDescriptor({ ...descriptor, moduleType: "invalid" }),
+      /unbekannter moduleType/
+    );
+    assert.throws(
+      () => contract.createModuleDescriptor({
+        ...descriptor,
+        routes: { global: [{ screenId: "missing" }] },
+      }),
+      /hat keinen Screen/
+    );
+  });
+
+  await run("Modulvertrag: vorhandene Fachmodule deklarieren den gemeinsamen Vertrag ohne Runtime-Import", () => {
+    const moduleRegistry = require(path.join(process.cwd(), "src/main/moduleRegistry.js"));
+    const moduleFiles = {
+      protokoll: "src/renderer/modules/protokoll/index.js",
+      restarbeiten: "src/renderer/modules/restarbeiten/index.js",
+      rechnung: "src/renderer/modules/rechnungen/index.js",
+    };
+
+    for (const [moduleId, relativePath] of Object.entries(moduleFiles)) {
+      const source = fs.readFileSync(path.join(process.cwd(), relativePath), "utf8");
+      const definition = moduleRegistry.getModuleDefinition(moduleId);
       assert.ok(definition);
-      assert.equal(entry.moduleType, definition.kind);
-      assert.equal(entry.licenseKey, definition.licenseKey);
-      assert.equal(entry.ipcRegistrar, definition.ipcRegistrar);
-      assert.equal(entry.migrationRegistrar, definition.migrationRegistrar);
-      assert.deepEqual(entry.requiredCapabilities, definition.requiredCapabilities);
-      assert.ok(entry.routes && typeof entry.routes === "object");
-      assert.ok(entry.navigation && typeof entry.navigation === "object");
-      for (const scope of ["global", "project"]) {
-        for (const route of entry.routes[scope]) {
-          assert.ok(entry.screens[route.screenId]);
-        }
-      }
+      assert.match(source, /createModuleDescriptor/);
+      assert.ok(source.includes(`moduleType: "${definition.kind}"`));
+      assert.ok(source.includes(`licenseKey: "${definition.licenseKey}"`));
+      assert.ok(source.includes(`ipcRegistrar: "${definition.ipcRegistrar}"`));
+      assert.ok(source.includes(`migrationRegistrar: "${definition.migrationRegistrar}"`));
+      assert.match(source, /routes:/);
+      assert.match(source, /navigation:/);
+      definition.requiredCapabilities.forEach((capabilityId) => {
+        assert.ok(source.includes(`"${capabilityId}"`));
+      });
     }
   });
 

@@ -3,31 +3,37 @@ const {
   getCapabilityIds,
 } = require("../moduleRegistry");
 
-function requireCanonicalId(ids, id, kind) {
-  if (!ids.includes(id)) {
-    throw new Error(`Unbekannte kanonische ${kind}-ID: ${id}`);
+function assertCanonicalIds(actualIds, canonicalIds, kind) {
+  for (const id of actualIds) {
+    if (!canonicalIds.includes(id)) {
+      throw new Error(`Unbekannte kanonische ${kind}-ID: ${id}`);
+    }
   }
-  return id;
 }
 
 const CANONICAL_MODULE_IDS = getCanonicalModuleIds();
 const CANONICAL_CAPABILITY_IDS = getCapabilityIds();
 
+// Die Literale bleiben aus Kompatibilitaetsgruenden sichtbar; die Registry ist
+// dennoch die kanonische Quelle und wird beim Laden gegen diese Werte geprueft.
 const LICENSE_MODULES = Object.freeze({
-  PROTOKOLL: requireCanonicalId(CANONICAL_MODULE_IDS, "protokoll", "Modul"),
-  RESTARBEITEN: requireCanonicalId(CANONICAL_MODULE_IDS, "restarbeiten", "Modul"),
-  RECHNUNG: requireCanonicalId(CANONICAL_MODULE_IDS, "rechnung", "Modul"),
-  SIGEKO: requireCanonicalId(CANONICAL_MODULE_IDS, "sigeko", "Modul"),
+  PROTOKOLL: "protokoll",
+  RESTARBEITEN: "restarbeiten",
+  RECHNUNG: "rechnung",
+  SIGEKO: "sigeko",
 });
 
 const LICENSE_CAPABILITIES = Object.freeze({
-  PDF: requireCanonicalId(CANONICAL_CAPABILITY_IDS, "pdf", "Capability"),
-  MAIL: requireCanonicalId(CANONICAL_CAPABILITY_IDS, "mail", "Capability"),
-  EXPORT: requireCanonicalId(CANONICAL_CAPABILITY_IDS, "export", "Capability"),
-  FILE_STORAGE: requireCanonicalId(CANONICAL_CAPABILITY_IDS, "file-storage", "Capability"),
-  AUDIO: requireCanonicalId(CANONICAL_CAPABILITY_IDS, "audio", "Capability"),
-  UI_EDITOR: requireCanonicalId(CANONICAL_CAPABILITY_IDS, "ui-editor", "Capability"),
+  PDF: "pdf",
+  MAIL: "mail",
+  EXPORT: "export",
+  FILE_STORAGE: "file-storage",
+  AUDIO: "audio",
+  UI_EDITOR: "ui-editor",
 });
+
+assertCanonicalIds(Object.values(LICENSE_MODULES), CANONICAL_MODULE_IDS, "Modul");
+assertCanonicalIds(Object.values(LICENSE_CAPABILITIES), CANONICAL_CAPABILITY_IDS, "Capability");
 
 const LICENSE_FEATURES = Object.freeze({
   DIKTAT: "diktat",
@@ -107,9 +113,9 @@ function normalizeLicensedModules(modules, features) {
     normalized.push(mod);
   });
 
-  // Bestandslizenzen vor dem kanonischen Modulmodell führten app/pdf/export/mail
-  // als Feature-Kennungen. Diese Übersetzung bleibt ausschließlich hier als
-  // Kompatibilitätsschicht bestehen; die Begriffe sind keine Modul-IDs mehr.
+  // Bestandslizenzen vor dem kanonischen Modulmodell fuehrten app/pdf/export/mail
+  // als Feature-Kennungen. Diese Uebersetzung bleibt ausschliesslich hier als
+  // Kompatibilitaetsschicht bestehen; die Begriffe sind keine Modul-IDs mehr.
   if (!seen.has(LICENSE_MODULES.PROTOKOLL) && _hasLegacyProtokollFeature(features)) {
     normalized.push(LICENSE_MODULES.PROTOKOLL);
   }
