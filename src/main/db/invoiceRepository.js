@@ -4,6 +4,7 @@ const { randomUUID } = require("crypto");
 const { initDatabase } = require("./database");
 const { toInvoiceIssuerSnapshot } = require("../../shared/rechnung/invoiceIssuerProfile.cjs");
 const { ensureInvoiceIssuerProfile } = require("./invoiceMigrations");
+const { assertOrderSnapshotInput } = require("../domain/rechnung/invoiceOrderSnapshot");
 
 const HEADER_COLUMNS = Object.freeze([
   "source_type", "document_type", "installment_number", "invoice_date",
@@ -66,6 +67,8 @@ class InvoiceRepository {
 
   _db() { return this.dbProvider(); }
 
+  withTransaction(operation) { return this._db().transaction(operation).immediate(); }
+
   list() {
     const db = this._db();
     return db
@@ -112,17 +115,21 @@ class InvoiceRepository {
     );
   }
 
-  createDraft(header) {
+  createDraft(header, orderSnapshot = null) {
     const db = this._db();
     this._assertDraftCustomer(db, header);
     const id = randomUUID();
     const now = this.clock();
-    const params = { id, status: "DRAFT", ...headerParams(header), positions_json: JSON.stringify(header.positions || []), created_at: now, updated_at: now };
+    const params = { id, status: "DRAFT", ...headerParams(header), positions_json: JSON.stringify(header.positions || []), created_at: now, updated_at: now,
+      order_binding_state: orderSnapshot ? "BOUND" : header.source_type === "FROM_ORDER" ? "LEGACY_UNRESOLVED" : "NOT_APPLICABLE",
+      order_snapshot_at: orderSnapshot ? now : null, order_snapshot_json: orderSnapshot ? JSON.stringify(orderSnapshot) : null };
     db.prepare(`
       INSERT INTO invoices (
-        id, status, ${HEADER_COLUMNS.join(", ")}, positions_json, created_at, updated_at
+        id, status, ${HEADER_COLUMNS.join(", ")}, positions_json, created_at, updated_at,
+        order_binding_state, order_snapshot_at, order_snapshot_json
       ) VALUES (
-        @id, @status, ${HEADER_COLUMNS.map((column) => `@${column}`).join(", ")}, @positions_json, @created_at, @updated_at
+        @id, @status, ${HEADER_COLUMNS.map((column) => `@${column}`).join(", ")}, @positions_json, @created_at, @updated_at,
+        @order_binding_state, @order_snapshot_at, @order_snapshot_json
       )
     `).run(params);
     return this.get(id);
@@ -131,6 +138,7 @@ class InvoiceRepository {
   updateDraft(id, header) {
     const db = this._db();
     const currentRow = db.prepare("SELECT * FROM invoices WHERE id = ?").get(String(id || ""));
+    if (currentRow) assertOrderSnapshotInput(currentRow, header);
     this._assertDraftCustomer(db, header, currentRow);
     const now = this.clock();
     const params = { id: String(id || ""), ...headerParams(header), positions_json: JSON.stringify(header.positions || []), updated_at: now };
@@ -212,6 +220,7 @@ class InvoiceRepository {
       const current = db.prepare("SELECT * FROM invoices WHERE id = ?").get(String(id || ""));
       if (!current) throw new Error("Rechnung wurde nicht gefunden.");
       if (current.status !== "DRAFT") throw new Error("Nur Entwürfe können gebucht werden.");
+      assertOrderSnapshotInput(current, header);
       if (header.project_id && !db.prepare("SELECT 1 FROM projects WHERE id = ?").get(header.project_id)) throw new Error("Das gewählte Projekt wurde nicht gefunden.");
       const customerSnapshot = this._customerSnapshot(db, header);
       const issuerSnapshot = this._issuerSnapshot(db);

@@ -1,5 +1,14 @@
 # STATUS.md â€” BBM-Produktiv
 
+## 2026-09-06 – Rechnung #275 Paket 4c-fix
+
+- Historischen Snapshot-Migrationsfehler reproduziert und durch vier ergänzte
+  Spaltendefinitionszeilen behoben. Übrige lokale 4c-Logik unverändert geprüft.
+- Fix-Prüfungen 3/3, 4c-Tests 9/9 grün. Relevante Regression: 92 grün und eine
+  bekannte Baseline; Volltest ausschließlich mit bekannten Fehlern.
+- Integration enthält den zuvor uncommitteten 4c-Bestand plus Fix. Finaler
+  PR-/Main-Commit-/CI-Nachweis wird in #275 dokumentiert. 4d nicht begonnen.
+
 ## 2026-09-06 – Rechnung #275 Paket 4b
 
 - Auf Basis von Paket 4a / PR #313: minimale BillingOrder-Anwendungsgrenze mit

@@ -41,6 +41,7 @@ function registerRechnungIpc({
   handle("rechnung:list", () => service.list(), "list");
   handle("rechnung:get", (data) => service.get(data.id));
   handle("rechnung:createDraft", (data) => service.createDraft(data));
+  handle("rechnung:createDraftFromOrder", (data) => service.createDraftFromOrder(data));
   handle("rechnung:updateDraft", (data) => service.updateDraft(data.id, data.header));
   handle("rechnung:deleteDraft", (data) => service.deleteDraft(data.id));
   handle("rechnung:previewDraft", (data) => service.previewDraft(data.id, data.header));

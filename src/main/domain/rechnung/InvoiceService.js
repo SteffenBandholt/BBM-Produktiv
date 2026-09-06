@@ -4,6 +4,8 @@ const path = require("path");
 const { pathToFileURL } = require("url");
 const { InvoiceRepository } = require("../../db/invoiceRepository");
 const { appSettingsGetMany } = require("../../db/appSettingsRepo");
+const { getBillingOrderService } = require("./BillingOrderService");
+const { assertOrderSnapshotInput, createOrderSnapshot } = require("./invoiceOrderSnapshot");
 
 let rulesPromise;
 let positionsPromise;
@@ -21,10 +23,11 @@ function normalizeIntroText(value) {
 }
 
 class InvoiceService {
-  constructor({ repository = new InvoiceRepository(), settingsGetMany = appSettingsGetMany, today = () => new Date().toISOString().slice(0, 10) } = {}) {
+  constructor({ repository = new InvoiceRepository(), billingOrderService = getBillingOrderService(), settingsGetMany = appSettingsGetMany, today = () => new Date().toISOString().slice(0, 10) } = {}) {
     this.repository = repository;
     this.settingsGetMany = settingsGetMany;
     this.today = today;
+    this.billingOrderService = billingOrderService;
   }
 
   async defaults() {
@@ -44,10 +47,34 @@ class InvoiceService {
   get(id) { return this.repository.get(id); }
 
   async createDraft(input = {}) {
+    if (input.source_type === "FROM_ORDER") throw new Error("invoice_order_requires_snapshot_creation");
+    assertOrderSnapshotInput({ source_type: "FREE" }, input);
     const rules = await loadRules();
     const positions = await loadPositions();
     const defaults = await this.defaults();
     return this.repository.createDraft({ ...rules.normalizeInvoiceHeader({ ...defaults, ...input }), construction_project: String(input.construction_project || "").trim(), intro_text: normalizeIntroText(input.intro_text), positions: positions.normalizeInvoicePositions(input.positions || []) });
+  }
+
+  async createDraftFromOrder(input = {}) {
+    const allowed = ["source_order_id", "invoice_date", "service_period_type", "service_date", "service_month", "service_period_start", "service_period_end", "payment_term_days", "intro_text"];
+    if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("invoice_order_payload_invalid");
+    if (input.order_binding_state === "LEGACY_UNRESOLVED") throw new Error("invoice_order_binding_legacy_unresolved");
+    if (Object.keys(input).some(key => !allowed.includes(key))) throw new Error("invoice_order_field_not_allowed");
+    const rules = await loadRules();
+    const positionRules = await loadPositions();
+    const defaults = await this.defaults();
+    // No await inside SQLite's transaction: read source, copy and insert are atomic.
+    return this.repository.withTransaction(() => {
+      const order = this.billingOrderService.get({ id: input.source_order_id });
+      const snapshot = createOrderSnapshot(order, positionRules);
+      const header = rules.normalizeInvoiceHeader({
+        ...defaults, ...input, source_type: "FROM_ORDER", document_type: "INVOICE",
+        source_order_id: order.id, source_order_number: order.order_number, source_order_date: order.order_date,
+        customer_ref_kind: "global_firm", customer_firm_id: order.customer_firm_id,
+        customer_project_id: null, project_id: order.project_id, service_reference: order.service_reference,
+      });
+      return this.repository.createDraft({ ...header, positions: snapshot.positions, construction_project: "", intro_text: normalizeIntroText(input.intro_text) }, snapshot);
+    });
   }
 
   async updateDraft(id, input = {}) {
@@ -56,7 +83,8 @@ class InvoiceService {
     const current = this.repository.get(id);
     if (!current) throw new Error("Rechnung wurde nicht gefunden.");
     if (current.status !== "DRAFT") throw new Error("Gebuchte Rechnungen können nicht geändert werden.");
-    return this.repository.updateDraft(id, { ...rules.normalizeInvoiceHeader({ ...current, ...input }), construction_project: String(input.construction_project ?? current.construction_project ?? "").trim(), intro_text: normalizeIntroText(input.intro_text ?? current.intro_text), positions: positions.normalizeInvoicePositions(input.positions ?? current.positions ?? []) });
+    assertOrderSnapshotInput(current, input);
+    return this.repository.updateDraft(id, { ...rules.normalizeInvoiceHeader({ ...current, ...input }), construction_project: String(input.construction_project ?? current.construction_project ?? "").trim(), intro_text: normalizeIntroText(input.intro_text ?? current.intro_text), positions: current.order_binding_state === "BOUND" ? current.positions : positions.normalizeInvoicePositions(input.positions ?? current.positions ?? []) });
   }
 
   deleteDraft(id) { return this.repository.deleteDraft(id); }
@@ -67,7 +95,8 @@ class InvoiceService {
     const current = this.repository.get(id);
     if (!current) throw new Error("Rechnung wurde nicht gefunden.");
     if (current.status !== "DRAFT") return current;
-    const preview = { ...current, ...rules.normalizeInvoiceHeader({ ...current, ...(input || {}) }), construction_project: String(input?.construction_project ?? current.construction_project ?? "").trim(), intro_text: normalizeIntroText(input?.intro_text ?? current.intro_text), positions: positions.normalizeInvoicePositions(input?.positions ?? current.positions ?? []), invoice_number: null, status: "DRAFT", preview: true, preview_identifier: rules.draftPreviewIdentifier(current.id) };
+    assertOrderSnapshotInput(current, input || {});
+    const preview = { ...current, ...rules.normalizeInvoiceHeader({ ...current, ...(input || {}) }), construction_project: String(input?.construction_project ?? current.construction_project ?? "").trim(), intro_text: normalizeIntroText(input?.intro_text ?? current.intro_text), positions: current.order_binding_state === "BOUND" ? current.positions : positions.normalizeInvoicePositions(input?.positions ?? current.positions ?? []), invoice_number: null, status: "DRAFT", preview: true, preview_identifier: rules.draftPreviewIdentifier(current.id) };
     return { ...preview, ...this.repository.buildPreviewSnapshots(preview) };
   }
 
@@ -77,7 +106,8 @@ class InvoiceService {
     const current = this.repository.get(id);
     if (!current) throw new Error("Rechnung wurde nicht gefunden.");
     if (current.status !== "DRAFT") throw new Error("Nur Entwürfe können gebucht werden.");
-    const header = { ...rules.normalizeInvoiceHeader({ ...current, ...input }, { requireBookingFields: true }), construction_project: String(input.construction_project ?? current.construction_project ?? "").trim(), intro_text: normalizeIntroText(input.intro_text ?? current.intro_text), positions: positions.normalizeInvoicePositions(input.positions ?? current.positions ?? []) };
+    assertOrderSnapshotInput(current, input);
+    const header = { ...rules.normalizeInvoiceHeader({ ...current, ...input }, { requireBookingFields: true }), construction_project: String(input.construction_project ?? current.construction_project ?? "").trim(), intro_text: normalizeIntroText(input.intro_text ?? current.intro_text), positions: current.order_binding_state === "BOUND" ? current.positions : positions.normalizeInvoicePositions(input.positions ?? current.positions ?? []) };
     return this.repository.bookDraft(id, header);
   }
 }
