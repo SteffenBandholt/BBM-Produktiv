@@ -36,6 +36,8 @@ async function runModuleMigrationRegistrationTests(run) {
     assert.equal(tables.includes("meetings"), false);
     assert.equal(tables.includes("tops"), false);
     assert.equal(tables.includes("meeting_tops"), false);
+    assert.equal(tables.includes("project_candidates"), true);
+    assert.equal(tables.includes("meeting_participants"), false);
     assert.equal(tables.includes("restarbeiten_items"), false);
     assert.equal(tables.includes("invoices"), false);
     db.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("core-1", "Core ohne Protokoll");
@@ -61,6 +63,8 @@ async function runModuleMigrationRegistrationTests(run) {
     assert.deepEqual(migrated, ["protokoll", "restarbeiten", "rechnung"]);
     assert.ok(tables.includes("meetings"));
     assert.ok(tables.includes("tops"));
+    assert.ok(tables.includes("project_candidates"));
+    assert.ok(tables.includes("meeting_participants"));
     assert.ok(tables.includes("restarbeiten_items"));
     assert.ok(tables.includes("invoices"));
   }));

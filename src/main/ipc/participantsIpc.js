@@ -1,5 +1,5 @@
 // src/main/ipc/participantsIpc.js
-const { ipcMain } = require("electron");
+const { ipcMain: electronIpcMain } = require("electron");
 const { initDatabase } = require("../db/database");
 
 function normalizeKind(kind) {
@@ -22,8 +22,15 @@ function normalizeActive(value, fallback = 1) {
   return Number(fallback) ? 1 : 0;
 }
 
+function tableExists(dbConn, tableName) {
+  return !!dbConn
+    .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?")
+    .get(tableName);
+}
+
 function removePersonFromOpenMeetings(dbConn, { projectId, kind, personId }) {
   if (!projectId || !kind || !personId) return 0;
+  if (!tableExists(dbConn, "meetings") || !tableExists(dbConn, "meeting_participants")) return 0;
   const info = dbConn
     .prepare(
       `
@@ -145,6 +152,21 @@ function ensureMeetingParticipantsDefaults(dbConn, meetingId) {
 }
 
 function listProjectCandidatesEnriched(dbConn, projectId) {
+  const removalBlockedSelect =
+    tableExists(dbConn, "meetings") && tableExists(dbConn, "meeting_participants")
+      ? `CASE
+          WHEN EXISTS (
+            SELECT 1
+            FROM meetings m
+            INNER JOIN meeting_participants mp ON mp.meeting_id = m.id
+            WHERE m.project_id = pc.project_id
+              AND m.is_closed = 0
+              AND mp.kind = pc.kind
+              AND mp.person_id = pc.person_id
+          ) THEN 1
+          ELSE 0
+        END AS isRemovalBlocked`
+      : "0 AS isRemovalBlocked";
   return dbConn
     .prepare(
       `
@@ -168,18 +190,7 @@ function listProjectCandidatesEnriched(dbConn, projectId) {
           ELSE COALESCE(f.short, f.name, '')
         END AS firm,
 
-        CASE
-          WHEN EXISTS (
-            SELECT 1
-            FROM meetings m
-            INNER JOIN meeting_participants mp ON mp.meeting_id = m.id
-            WHERE m.project_id = pc.project_id
-              AND m.is_closed = 0
-              AND mp.kind = pc.kind
-              AND mp.person_id = pc.person_id
-          ) THEN 1
-          ELSE 0
-        END AS isRemovalBlocked
+        ${removalBlockedSelect}
 
       FROM project_candidates pc
       LEFT JOIN project_persons pp
@@ -353,7 +364,12 @@ function listProjectParticipantsPool(dbConn, projectId) {
     .all(projectId, projectId);
 }
 
-function registerParticipantsIpc() {
+function registerParticipantsIpc({
+  ipcMain = electronIpcMain,
+  includeProject = true,
+  includeMeeting = true,
+} = {}) {
+  if (includeProject) {
   // ============================================================
   // Pool / Lookup
   // ============================================================
@@ -430,8 +446,9 @@ function registerParticipantsIpc() {
       const removed = existing.filter((x) => !newKeys.has(keyOf(x.kind, x.personId)));
 
       // KRITISCHE REGEL: Entfernen blockiert, wenn Person Teilnehmer in irgendeiner offenen Besprechung ist.
-      const checkOpen = db.prepare(
-        `
+      const checkOpen =
+        tableExists(db, "meetings") && tableExists(db, "meeting_participants")
+          ? db.prepare(`
         SELECT m.id, m.meeting_index
         FROM meetings m
         INNER JOIN meeting_participants mp ON mp.meeting_id = m.id
@@ -440,11 +457,11 @@ function registerParticipantsIpc() {
           AND mp.kind = ?
           AND mp.person_id = ?
         LIMIT 1
-      `
-      );
+      `)
+          : null;
 
       for (const r of removed) {
-        const hit = checkOpen.get(projectId, r.kind, r.personId);
+        const hit = checkOpen?.get(projectId, r.kind, r.personId);
         if (hit) {
           return {
             ok: false,
@@ -565,9 +582,12 @@ function registerParticipantsIpc() {
     }
   });
 
+  }
+
   // ============================================================
   // Teilnehmer (Meeting)
   // ============================================================
+  if (includeMeeting) {
   ipcMain.handle("meetingParticipants:list", (event, data) => {
     try {
       const meetingId = data?.meetingId;
@@ -659,6 +679,19 @@ function registerParticipantsIpc() {
       return { ok: false, error: err?.message || String(err) };
     }
   });
+  }
 }
 
-module.exports = { registerParticipantsIpc };
+function registerProjectParticipantsIpc(options = {}) {
+  return registerParticipantsIpc({ ...options, includeProject: true, includeMeeting: false });
+}
+
+function registerMeetingParticipantsIpc(options = {}) {
+  return registerParticipantsIpc({ ...options, includeProject: false, includeMeeting: true });
+}
+
+module.exports = {
+  registerParticipantsIpc,
+  registerProjectParticipantsIpc,
+  registerMeetingParticipantsIpc,
+};

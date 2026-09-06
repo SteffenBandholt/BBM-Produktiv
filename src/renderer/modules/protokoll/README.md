@@ -59,6 +59,16 @@ Empfaenger aus dem fachlichen Verteiler, Protokoll-Betreff/-Text, Anhangsliste u
 dem gespeicherten Protokoll-PDF. `MainHeader` behaelt seine bisherigen Methodennamen nur als
 Delegationspunkte fuer bestehende Aufrufer.
 
+## Teilnehmer-/Stammdatengrenze
+
+Globale `firms`/`persons`, allgemeine Projektzuordnungen und `project_candidates` bleiben
+Core-Stammdaten bzw. Core-Projektbeziehungen. Das Protokoll referenziert diese Identitaeten nur.
+`meeting_participants` besitzt Teilnahme, Anwesenheit und Verteiler einer konkreten Besprechung
+und wird ausschließlich mit der Protokollmigration erzeugt. Der bisher kombinierte IPC-Bestand
+ist entlang derselben Grenze registriert: Projektpool/-kandidaten im Core,
+`meetingParticipants:*` ausschließlich über den guarded Protokoll-Registrar. Die statischen
+Preload-Funktionen bleiben kompatibel.
+
 Die Ordner `components/`, `domain/`, `data/`, `state/`, `viewmodel/`, `dialogs/` und `rules/`
 sind absichtlich schon angelegt, damit spaetere Umzuege dort sauber anschliessen koennen.
 
