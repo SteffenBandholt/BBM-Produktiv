@@ -2,6 +2,8 @@
 
 const { randomUUID } = require("crypto");
 const { initDatabase } = require("./database");
+const { toInvoiceIssuerSnapshot } = require("../../shared/rechnung/invoiceIssuerProfile.cjs");
+const { ensureInvoiceIssuerProfile } = require("./invoiceMigrations");
 
 const HEADER_COLUMNS = Object.freeze([
   "source_type", "document_type", "installment_number", "invoice_date",
@@ -188,25 +190,12 @@ class InvoiceRepository {
   }
 
   _issuerSnapshot(db) {
-    const row = db.prepare("SELECT * FROM user_profile WHERE id = 1").get();
-    if (!row || !String(row.name1 || "").trim() || !String(row.street || "").trim() || !String(row.zip || "").trim() || !String(row.city || "").trim()) {
-      throw new Error("Eigene Unternehmensdaten sind für die Buchung unvollständig.");
+    ensureInvoiceIssuerProfile(db);
+    const row = db.prepare("SELECT * FROM invoice_issuer_profiles WHERE id = 'default'").get();
+    if (!row || !String(row.legal_name || "").trim() || !String(row.street || "").trim() || !String(row.zip || "").trim() || !String(row.city || "").trim()) {
+      throw new Error("Das Rechnungstellerprofil ist für die Buchung unvollständig.");
     }
-    return {
-      companyName: row.name1 || null,
-      companyName2: row.name2 || null,
-      street: row.street || null,
-      zip: row.zip || null,
-      city: row.city || null,
-      country: row.country || null,
-      phone: row.phone || null,
-      email: row.email || null,
-      taxNumber: row.tax_number || null,
-      vatId: row.vat_id || null,
-      iban: row.iban || null,
-      bic: row.bic || null,
-      bankName: row.bank_name || null,
-    };
+    return toInvoiceIssuerSnapshot(row);
   }
 
   buildPreviewSnapshots(header) {

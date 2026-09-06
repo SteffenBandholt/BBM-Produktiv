@@ -192,10 +192,12 @@ async function runRechnungBookingTests(run) {
       assert.equal(booked.status, "BOOKED"); assert.equal(booked.invoice_number, "2026-0001"); assert.ok(booked.booked_at);
       assert.equal(booked.customer_snapshot.companyName, "Kunde Alt"); assert.equal(booked.issuer_snapshot.companyName, "BBM Betrieb");
       env.db.prepare("UPDATE firms SET name='Kunde Neu', street='Neuweg 9' WHERE id='f1'").run();
-      env.db.prepare("UPDATE user_profile SET name1='Betrieb Neu', iban='DE999' WHERE id=1").run();
+      env.db.prepare("UPDATE user_profile SET name1='Betreiber Neu', iban='DE998' WHERE id=1").run();
+      env.db.prepare("UPDATE invoice_issuer_profiles SET legal_name='Betrieb Neu', iban='DE999' WHERE id='default'").run();
       const restored = env.service.get(draft.id);
       assert.equal(restored.customer_snapshot.companyName, "Kunde Alt"); assert.equal(restored.customer_snapshot.street, "Altweg 1");
       assert.equal(restored.issuer_snapshot.companyName, "BBM Betrieb"); assert.equal(restored.issuer_snapshot.iban, "DE001");
+      assert.equal(restored.issuer_snapshot.profileId, "default");
       assert.equal(restored.positions[0].short_text, "Montage");
       await assert.rejects(() => env.service.updateDraft(draft.id, { invoice_date: "2026-08-16" }), /nicht geändert/);
       assert.throws(() => env.service.deleteDraft(draft.id), /nicht gelöscht/);

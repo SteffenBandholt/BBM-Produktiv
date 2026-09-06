@@ -221,7 +221,8 @@ async function runRechnungCentralCustomersTests(run) {
         env.db.prepare("SELECT use_customer FROM firms WHERE id = 'customer'").get().use_customer,
         0
       );
-      env.db.prepare("UPDATE user_profile SET name1 = 'BBM Neu' WHERE id = 1").run();
+      env.db.prepare("UPDATE user_profile SET name1 = 'Betreiber Neu' WHERE id = 1").run();
+      env.db.prepare("UPDATE invoice_issuer_profiles SET legal_name = 'BBM Neu' WHERE id = 'default'").run();
 
       const restored = env.service.get(draft.id);
       assert.equal(restored.customer_snapshot.companyName, "Kunde Vorher");

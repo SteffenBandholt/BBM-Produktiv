@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 async function runRechnungStammdatenTests(run) {
-  await run("Rechnung Stammdaten: user_profile bleibt einzige Rechnungsstellerquelle", () => {
+  await run("Rechnung Stammdaten: OwnOrganization und Rechnungstellerprofil bleiben getrennt", () => {
     const database = fs.readFileSync(path.join(process.cwd(), "src/main/db/database.js"), "utf8");
     const repository = fs.readFileSync(path.join(process.cwd(), "src/main/db/userProfileRepo.js"), "utf8");
     const invoiceRepository = fs.readFileSync(path.join(process.cwd(), "src/main/db/invoiceRepository.js"), "utf8");
@@ -11,8 +11,9 @@ async function runRechnungStammdatenTests(run) {
       assert.equal(database.includes(`\"${field}\"`) || database.includes(`${field} TEXT`), true, field);
       assert.equal(repository.includes(`\"${field}\"`), true, field);
     }
-    assert.equal(invoiceRepository.includes("FROM user_profile WHERE id = 1"), true);
-    assert.equal(fs.existsSync(path.join(process.cwd(), "src/main/db/invoiceIssuerProfileRepo.js")), false);
+    assert.equal(invoiceRepository.includes("FROM user_profile WHERE id = 1"), false);
+    assert.equal(invoiceRepository.includes("FROM invoice_issuer_profiles WHERE id = 'default'"), true);
+    assert.equal(fs.existsSync(path.join(process.cwd(), "src/main/db/invoiceIssuerProfileRepo.js")), true);
   });
   await run("Rechnung Stammdaten: gemeinsamer Firmeneditor bietet Pflichtangaben", () => {
     const settings = fs.readFileSync(path.join(process.cwd(), "src/renderer/views/SettingsView.js"), "utf8");

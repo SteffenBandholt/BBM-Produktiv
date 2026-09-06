@@ -33,4 +33,30 @@ function createInvoiceIssuerProfile(source = {}) {
   });
 }
 
-module.exports = Object.freeze({ INVOICE_ISSUER_PROFILE_ID, createInvoiceIssuerProfile });
+function toInvoiceIssuerSnapshot(source = {}) {
+  const profile = createInvoiceIssuerProfile(source);
+  return Object.freeze({
+    profileId: profile.id,
+    companyName: profile.legalName || null,
+    companyName2: profile.additionalName || null,
+    street: profile.street || null,
+    zip: profile.zip || null,
+    city: profile.city || null,
+    country: profile.country || null,
+    phone: profile.phone || null,
+    email: profile.email || null,
+    website: profile.website || null,
+    logoPath: profile.logoPath || null,
+    taxNumber: profile.taxNumber || null,
+    vatId: profile.vatId || null,
+    iban: profile.iban || null,
+    bic: profile.bic || null,
+    bankName: profile.bankName || null,
+    commercialRegister: profile.commercialRegister || null,
+    registerNumber: profile.registerNumber || null,
+    managingDirector: profile.managingDirector || null,
+    legalNotice: profile.legalNotice || null,
+  });
+}
+
+module.exports = Object.freeze({ INVOICE_ISSUER_PROFILE_ID, createInvoiceIssuerProfile, toInvoiceIssuerSnapshot });

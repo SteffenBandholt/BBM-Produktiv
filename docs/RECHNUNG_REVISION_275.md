@@ -78,3 +78,13 @@ Lizenzidentität wird weder gelesen noch als Rechnungsteller interpretiert.
 Die Buchung verwendet bis zum getrennten Snapshot-Paket weiterhin den
 bestehenden Pfad. Damit werden Einführung der Identität und Umstellung der
 rechtlich wirksamen Buchung nicht in einem unprüfbaren Mischpaket verbunden.
+
+## Paket 3 / R3 – Snapshots und Buchungsimmutabilität
+
+Vorschau und Buchung bilden den Aussteller ausschließlich aus dem
+`InvoiceIssuerProfile`; `user_profile`, `OwnOrganization` und Lizenzdaten sind
+keine Live-Quelle des Rechnungsbelegs mehr. Der Snapshot enthält die
+rechtlich relevanten Adress-, Steuer-, Bank-, Register- und Kontaktdaten sowie
+die Profil-ID. Der Empfänger wird weiterhin aus der zentralen Firmenbasis
+gesnapshottet. Nach der Buchung verändern weder Firmenstamm, Betreiberprofil
+noch Rechnungstellerprofil den gespeicherten Beleg.

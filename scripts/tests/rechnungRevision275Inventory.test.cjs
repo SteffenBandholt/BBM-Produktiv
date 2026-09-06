@@ -53,7 +53,7 @@ async function runRechnungRevision275InventoryTests(run) {
     assert.match(report, /`main` bleibt die einzige Integrationsbasis/);
     assert.match(report, /Nicht übernehmen/);
     assert.match(report, /eigenständige[s\n ]+`InvoiceIssuerProfile`/);
-    assert.match(read("src/main/db/invoiceRepository.js"), /SELECT \* FROM user_profile WHERE id = 1/);
+    assert.match(read("src/main/db/invoiceRepository.js"), /invoice_issuer_profiles/);
   });
 }
 

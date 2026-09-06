@@ -386,6 +386,7 @@ function ensureInvoiceIssuerProfile(db) {
   const source = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'user_profile'").get()
     ? db.prepare("SELECT * FROM user_profile WHERE id = 1").get()
     : null;
+  if (!source) return { initialized: false };
   const now = new Date().toISOString();
   db.prepare(`
     INSERT INTO invoice_issuer_profiles (
