@@ -5,6 +5,10 @@
 //
 import { HEADER, POPOVER_MENU } from "./zIndex.js";
 import { sendMailPayload } from "../services/mail/sendMailPayload.js";
+import {
+  MailTransportService,
+  normalizeMailTransportPayload,
+} from "../features/mail/MailTransportService.js";
 import { openClosedProtocolSelector } from "./react/ClosedProtocolSelector.js";
 import { resolveProtocolsDir } from "../utils/pdfProtocolsDir.js";
 import { PROTOKOLL_MODULE_ID } from "../app/modules/index.js";
@@ -2114,24 +2118,7 @@ _buildFallbackEmailSubject({ projectNumber, projectShortName, mailType } = {}) {
   // Technischer Versanddienst:
   // Transport vorbereiten, Anhaenge normieren und an Outlook/mailto uebergeben.
   _normalizeMailTransportPayload(payload = {}) {
-    const recipients = Array.isArray(payload?.recipients) ? payload.recipients.filter(Boolean) : [];
-    const attachments = Array.isArray(payload?.attachments) ? payload.attachments.filter(Boolean) : [];
-    const uniqueAttachments = [];
-    const seenAttachments = new Set();
-    for (const attachment of attachments) {
-      const value = String(attachment || "").trim();
-      const key = value.toLowerCase();
-      if (!value || seenAttachments.has(key)) continue;
-      seenAttachments.add(key);
-      uniqueAttachments.push(value);
-    }
-    return {
-      recipients,
-      subject: String(payload?.subject || "").trim(),
-      body: typeof payload?.body === "string" ? payload.body : String(payload?.body || ""),
-      attachments: uniqueAttachments,
-      forceMailto: !!payload?.forceMailto,
-    };
+    return normalizeMailTransportPayload(payload);
   }
 
   _sendMailtoFallback(payload = {}) {
@@ -2171,32 +2158,14 @@ _buildFallbackEmailSubject({ projectNumber, projectShortName, mailType } = {}) {
   }
 
   async _dispatchMailTransport(payload = {}) {
-    const mailPayload = this._normalizeMailTransportPayload(payload);
-    if (!mailPayload.forceMailto) {
-      const opened = await this._tryOpenOutlookDraft(mailPayload);
-      if (opened?.ok) return opened;
-      if (opened?.blocked) {
-        alert(getBlockedTransportMessage(opened.result || opened));
-        return opened;
-      }
-      if (mailPayload.attachments.length) {
-        const detail = String(opened?.result?.error || "").trim();
-        alert(
-          `Outlook-Entwurf mit PDF-Anhängen konnte nicht geöffnet werden.${
-            detail ? `\n\n${detail}` : ""
-          }`
-        );
-        return { ok: false, attachmentError: true, result: opened?.result || opened };
-      }
-    }
-    try {
-      this._sendMailtoFallback(mailPayload);
-      return { ok: true, transport: "mailto" };
-    } catch (err) {
-      console.error("[header] mailto fallback failed:", err);
-      alert("E-Mail konnte nicht geöffnet werden.");
-      return { ok: false, error: err?.message || String(err) };
-    }
+    const service = new MailTransportService({
+      openOutlookDraft: (mailPayload) => this._tryOpenOutlookDraft(mailPayload),
+      sendMailto: (mailPayload) => this._sendMailtoFallback(mailPayload),
+      notify: (message) => alert(message),
+      getBlockedMessage: (result) => getBlockedTransportMessage(result),
+      logger: console,
+    });
+    return await service.send(payload);
   }
 
   async _getMeetingRecipientOptions(meetingId = null) {

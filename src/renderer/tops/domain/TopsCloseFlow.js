@@ -1,4 +1,4 @@
-import { MailFlow } from "../../features/mail/MailFlow.js";
+import { ProtokollMailFlow } from "../../modules/protokoll/mail/ProtokollMailFlow.js";
 import { PdfDocumentService } from "../../features/output/PdfDocumentService.js";
 
 const CLOSE_PDF_OUTPUTS = Object.freeze([
@@ -43,9 +43,8 @@ export class TopsCloseFlow {
       _owner: this,
     };
 
-    // Gemeinsamer Dienst / Addon:
-    // MailFlow bleibt ausserhalb des Moduls und wird hier nur fachlich angestossen.
-    this.mailFlow = new MailFlow({
+    // Fachlicher Protokoll-Mailworkflow; der technische Transport bleibt gemeinsam.
+    this.mailFlow = new ProtokollMailFlow({
       view: this._mailViewAdapter,
       router: this.router,
     });
