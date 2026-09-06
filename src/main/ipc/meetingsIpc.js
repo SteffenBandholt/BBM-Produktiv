@@ -2,13 +2,13 @@
 // CONTRACT-VERSION: 1.0.0
 // src/main/ipc/meetingsIpc.js
 
-const { ipcMain } = require("electron");
+const { ipcMain: electronIpcMain } = require("electron");
 
 const meetingsRepo = require("../db/meetingsRepo");
 const meetingTopsRepo = require("../db/meetingTopsRepo");
 const { createMeetingService } = require("../domain/MeetingService");
 
-function registerMeetingsIpc() {
+function registerMeetingsIpc({ ipcMain = electronIpcMain } = {}) {
   const meetingService = createMeetingService({ meetingsRepo, meetingTopsRepo });
 
   ipcMain.handle("meetings:listByProject", (_e, projectId) => {
