@@ -1,20 +1,20 @@
 // src/renderer/app/Router.js
 
 import {
-  findActiveModuleEntry,
-  getActiveGlobalModuleNavigation,
   getActiveProjectModuleNavigation,
   PROTOKOLL_MODULE_ID,
   resolveActiveModuleScreen,
 } from "./modules/index.js";
 import {
+  findCachedActiveModuleEntry,
   isModuleActive,
   refreshCachedActiveModuleAccess,
 } from "./modules/moduleAccessState.js";
+import { openModuleEntry } from "./modules/moduleRouteRuntime.js";
 import { resolveProjectProtocolEntry } from "./projectProtocolRouting.js";
 import { createEditorLabScreen } from "../uiV2/editorLab/EditorLabScreen.js";
 import { createEditorLabRegistry } from "../uiV2/editorLab/editorLabRegistry.js";
-import { createEditorV2Core } from "../uiV2/editorV2/editorV2Core.js";
+import { createEditorV2Core } from "../uiV2/editorLab/editorV2/editorV2Core.js";
 import { createBbmUiEditorDemoScreen } from "../uiEditor/demo/BbmUiEditorDemoScreen.js";
 import { createBbmUiEditorStatusPanel } from "../ui-editor/BbmUiEditorStatusPanel.js";
 import { injectBbmUiEditorStatusPanelStyles } from "../ui-editor/bbmUiEditorStatusPanel.css.js";
@@ -87,40 +87,26 @@ function _pickAppKernelSettings(raw = {}) {
 
 export default class Router {
   constructor({ contentRoot, onSectionChange } = {}) {
-    // App-Kernzustand: Router als Screen-Host und Integrationspunkt.
     this.contentRoot = contentRoot;
     this.onSectionChange = onSectionChange;
-
-    // Fachlich verdrahteter Laufzeitkontext: heute noch stark protokollzentriert.
     this.currentProjectId = null;
     this.currentMeetingId = null;
     this.lastTopsProjectId = null;
     this.lastTopsMeetingId = null;
-
     this.refreshHeader = null;
-
     this.context = this.context || {};
     this.context.settings = this.context.settings || {};
     this.context.projectLabel = this.context.projectLabel || null;
-
-    // UI flags for header
     this.context.ui = this.context.ui || {};
     this.context.ui.isTopsView = !!this.context.ui.isTopsView;
     this.context.ui.pageTitle = this.context.ui.pageTitle || null;
-
     this._appSettingsLoaded = false;
     this._appSettingsLoading = null;
-
     this._projectLabelLoading = null;
     this._projectLabelForId = null;
-
     this.activeSection = null;
-
-    // Kandidaten/Teilnehmer Modals (lazy)
     this._participantsModals = null;
     this._participantsModalsLoading = null;
-
-    // Print Modal (lazy)
     this._printModal = null;
     this._printModalLoading = null;
     this._helpModal = null;
@@ -130,16 +116,13 @@ export default class Router {
     this._projectFormModal = null;
     this.currentView = null;
     this.activeView = null;
-
     this._setupStatusRefreshTimer = null;
     this._printSelectionState = null;
-
     Promise.resolve().then(() => {
       this._ensureProjectContextQuicklane().catch(() => {});
     });
   }
 
-  // App-Kern: Router-Kontext nach außen melden, ohne Fachabläufe zu verschieben.
   _emitContextChange() {
     try {
       window.dispatchEvent(
@@ -150,16 +133,12 @@ export default class Router {
           },
         })
       );
-    } catch (_e) {
-      // ignore
-    }
+    } catch (_e) {}
   }
 
   _refreshHeaderSafe() {
     try {
-      if (typeof this.refreshHeader === "function") {
-        this.refreshHeader();
-      }
+      if (typeof this.refreshHeader === "function") this.refreshHeader();
     } catch (e) {
       console.warn("[header] refresh failed:", e);
     }
@@ -176,12 +155,10 @@ export default class Router {
 
   requestSetupStatusRefresh() {
     if (this._readUiMode() !== "new") return;
-
     if (this._setupStatusRefreshTimer) {
       clearTimeout(this._setupStatusRefreshTimer);
       this._setupStatusRefreshTimer = null;
     }
-
     this._setupStatusRefreshTimer = setTimeout(() => {
       this._setupStatusRefreshTimer = null;
       this._refreshHeaderSafe();
@@ -194,95 +171,54 @@ export default class Router {
       const vw = Number(window.innerWidth || 0);
       const vh = Number(window.innerHeight || 0);
       let removed = 0;
-
       for (const el of nodes) {
         if (!el || !el.style) continue;
         if (el === document.body || el === document.documentElement) continue;
         const overlayKind = String(el?.getAttribute?.("data-bbm-print-overlay") || "").toLowerCase();
         if (overlayKind === "preview") continue;
-
         const cs = window.getComputedStyle ? window.getComputedStyle(el) : null;
         const position = (cs?.position || el.style.position || "").toLowerCase();
         const display = (cs?.display || el.style.display || "").toLowerCase();
         const visibility = (cs?.visibility || "").toLowerCase();
         const pointerEvents = (cs?.pointerEvents || "").toLowerCase();
-        if (position !== "fixed") continue;
-        if (display === "none") continue;
-        if (visibility === "hidden") continue;
-        if (pointerEvents === "none") continue;
-
-        const zRaw = cs?.zIndex || el.style.zIndex || "0";
-        const z = Number(zRaw);
+        if (position !== "fixed" || display === "none" || visibility === "hidden" || pointerEvents === "none") continue;
+        const z = Number(cs?.zIndex || el.style.zIndex || "0");
         if (!Number.isFinite(z) || z < 999) continue;
-
         const r = typeof el.getBoundingClientRect === "function" ? el.getBoundingClientRect() : null;
-        const coversViewport =
-          !!r &&
-          r.width >= Math.max(1, vw * 0.95) &&
-          r.height >= Math.max(1, vh * 0.95);
+        const coversViewport = !!r && r.width >= Math.max(1, vw * 0.95) && r.height >= Math.max(1, vh * 0.95);
         if (!coversViewport) continue;
-
         const bg = (cs?.backgroundColor || el.style.backgroundColor || "").toString();
         const hasBackdrop = bg.includes("rgba(") || bg.includes("hsla(");
         if (!hasBackdrop && (!el.children || el.children.length === 0)) continue;
-
-        try {
-          el.remove();
-          removed += 1;
-        } catch (_e) {
-          // ignore
-        }
+        try { el.remove(); removed += 1; } catch (_e) {}
       }
-
       if (removed > 0) {
-        // defensiv: bei haengenden Overlays koennen globale Locks aktiv bleiben
         try {
-          if (document.body?.style?.pointerEvents === "none") {
-            document.body.style.pointerEvents = "";
-          }
-          if (document.documentElement?.style?.pointerEvents === "none") {
-            document.documentElement.style.pointerEvents = "";
-          }
-          if (document.body?.hasAttribute("inert")) {
-            document.body.removeAttribute("inert");
-          }
-          if (document.documentElement?.hasAttribute("inert")) {
-            document.documentElement.removeAttribute("inert");
-          }
-        } catch (_e) {
-          // ignore
-        }
+          if (document.body?.style?.pointerEvents === "none") document.body.style.pointerEvents = "";
+          if (document.documentElement?.style?.pointerEvents === "none") document.documentElement.style.pointerEvents = "";
+          if (document.body?.hasAttribute("inert")) document.body.removeAttribute("inert");
+          if (document.documentElement?.hasAttribute("inert")) document.documentElement.removeAttribute("inert");
+        } catch (_e) {}
       }
-    } catch (_e) {
-      // ignore
-    }
+    } catch (_e) {}
   }
 
-  // Gemeinsame Dienste / service-nahe Integrationen: Settings- und Kontext-Vorladen.
   async ensureAppSettingsLoaded({ force = false } = {}) {
     if (!force && this._appSettingsLoaded) return this.context.settings || {};
     if (this._appSettingsLoading) return await this._appSettingsLoading;
-
     const api = window.bbmDb || {};
     const hasApi = typeof api.appSettingsGetMany === "function";
-
-    // Fallback: keine Settings-API vorhanden -> placeholders bleiben leer
     if (!hasApi) {
       this._appSettingsLoaded = true;
       this.context.settings = this.context.settings || {};
       this._refreshHeaderSafe();
       return this.context.settings;
     }
-
     this._appSettingsLoading = (async () => {
       try {
         const res = await api.appSettingsGetMany(APP_KERNEL_SETTINGS_KEYS);
-
         if (res && res.ok) {
-          this.context.settings = {
-            ...(this.context.settings || {}),
-            ..._pickAppKernelSettings(res.data || {}),
-          };
+          this.context.settings = { ...(this.context.settings || {}), ..._pickAppKernelSettings(res.data || {}) };
         } else {
           this.context.settings = this.context.settings || {};
         }
@@ -292,15 +228,9 @@ export default class Router {
         this._appSettingsLoaded = true;
         this._refreshHeaderSafe();
       }
-
       return this.context.settings;
     })();
-
-    try {
-      return await this._appSettingsLoading;
-    } finally {
-      this._appSettingsLoading = null;
-    }
+    try { return await this._appSettingsLoading; } finally { this._appSettingsLoading = null; }
   }
 
   async ensureCurrentProjectLabelLoaded({ force = false } = {}) {
@@ -311,13 +241,8 @@ export default class Router {
       this._refreshHeaderSafe();
       return null;
     }
-
-    if (!force && this._projectLabelForId === projectId && this.context.projectLabel) {
-      return this.context.projectLabel;
-    }
-
+    if (!force && this._projectLabelForId === projectId && this.context.projectLabel) return this.context.projectLabel;
     if (this._projectLabelLoading) return await this._projectLabelLoading;
-
     const api = window.bbmDb || {};
     if (typeof api.projectsList !== "function") {
       this.context.projectLabel = `#${projectId}`;
@@ -325,27 +250,20 @@ export default class Router {
       this._refreshHeaderSafe();
       return this.context.projectLabel;
     }
-
     this._projectLabelLoading = (async () => {
       try {
         const res = await api.projectsList();
         if (res && res.ok) {
-          const list = res.list || [];
-          const p = list.find((x) => x.id === projectId) || null;
-
-          const pn =
-            (p && (p.project_number ?? p.projectNumber ?? "").toString().trim()) || "";
+          const p = (res.list || []).find((x) => x.id === projectId) || null;
+          const pn = (p && (p.project_number ?? p.projectNumber ?? "").toString().trim()) || "";
           const sh = (p && (p.short || "").toString().trim()) || "";
           const nm = (p && (p.name || "").toString().trim()) || "";
-
-          // ✅ Spec: pn–sh | sh | pn | name | #id
           let label = "";
           if (pn && sh) label = `${pn} – ${sh}`;
           else if (!pn && sh) label = `${sh}`;
           else if (pn && !sh) label = `${pn}`;
           else if (nm) label = `${nm}`;
           else label = `#${projectId}`;
-
           this.context.projectLabel = label;
           this._projectLabelForId = projectId;
         } else {
@@ -358,28 +276,17 @@ export default class Router {
       } finally {
         this._refreshHeaderSafe();
       }
-
       return this.context.projectLabel;
     })();
-
-    try {
-      return await this._projectLabelLoading;
-    } finally {
-      this._projectLabelLoading = null;
-    }
+    try { return await this._projectLabelLoading; } finally { this._projectLabelLoading = null; }
   }
 
   _setActiveSection(section) {
     this.activeSection = section || null;
-    if (typeof this.onSectionChange === "function") {
-      this.onSectionChange(this.activeSection);
-    }
+    if (typeof this.onSectionChange === "function") this.onSectionChange(this.activeSection);
     this._refreshHeaderSafe();
   }
 
-  // Gemeinsamer Projekt-/Projektkontext im Renderer:
-  // Der Router traegt heute noch den laufenden Projektkontext, auch wenn viele
-  // fachnahe Nutzungen ihn direkt verbrauchen.
   _getProjectContextState() {
     return {
       projectId: this.currentProjectId || this.lastTopsProjectId || null,
@@ -389,21 +296,15 @@ export default class Router {
   }
 
   _setProjectRuntimeContext({ projectId, meetingId } = {}) {
-    if (projectId !== undefined) {
-      this.currentProjectId = projectId || null;
-    }
-    if (meetingId !== undefined) {
-      this.currentMeetingId = meetingId || null;
-    }
+    if (projectId !== undefined) this.currentProjectId = projectId || null;
+    if (meetingId !== undefined) this.currentMeetingId = meetingId || null;
   }
 
   async ensureActiveModuleAccess({ force = false } = {}) {
     return await refreshCachedActiveModuleAccess({ force });
   }
 
-  _isModuleActive(moduleId) {
-    return isModuleActive(moduleId);
-  }
+  _isModuleActive(moduleId) { return isModuleActive(moduleId); }
 
   _buildModuleDisabledPayload(projectId, meetingId = null) {
     return {
@@ -419,52 +320,34 @@ export default class Router {
 
   async _syncProjectContextUi() {
     await this.ensureCurrentProjectLabelLoaded({ force: false });
-
     try {
       const lane = await this._ensureProjectContextQuicklane();
       lane?.setEnabled?.(this.context?.ui?.isTopsView === true);
       lane?.setContext?.(this._getProjectContextState());
-    } catch (_e) {
-      // ignore
-    }
+    } catch (_e) {}
   }
 
-  _resolveProjectId(projectId) {
-    return projectId || this.currentProjectId || null;
-  }
-
-  _resolveMeetingId(meetingId) {
-    return meetingId || this.currentMeetingId || null;
-  }
+  _resolveProjectId(projectId) { return projectId || this.currentProjectId || null; }
+  _resolveMeetingId(meetingId) { return meetingId || this.currentMeetingId || null; }
 
   _requireProjectContext(projectId, message = "Bitte zuerst ein Projekt auswählen.") {
     const effectiveProjectId = this._resolveProjectId(projectId);
-    if (!effectiveProjectId) {
-      alert(message);
-      return null;
-    }
+    if (!effectiveProjectId) { alert(message); return null; }
     return effectiveProjectId;
   }
 
   _requireMeetingContext(meetingId, message = "Bitte zuerst eine Besprechung öffnen.") {
     const effectiveMeetingId = this._resolveMeetingId(meetingId);
-    if (!effectiveMeetingId) {
-      alert(message);
-      return null;
-    }
+    if (!effectiveMeetingId) { alert(message); return null; }
     return effectiveMeetingId;
   }
 
-  // App-Kern: einheitlicher View-Host. Fachspezifische Pfade landen derzeit noch hier.
   async show(v, { section, isTopsView = false, pageTitle = null, hideSidebar = false } = {}) {
     const prevView = this.currentView;
     if (prevView && prevView !== v) {
       try {
-        if (typeof prevView.destroy === "function") {
-          await prevView.destroy();
-        } else if (typeof prevView.dispose === "function") {
-          await prevView.dispose();
-        }
+        if (typeof prevView.destroy === "function") await prevView.destroy();
+        else if (typeof prevView.dispose === "function") await prevView.dispose();
       } catch (e) {
         console.warn("[router] previous view cleanup failed:", e);
       } finally {
@@ -472,10 +355,7 @@ export default class Router {
         this.activeView = null;
       }
     }
-
     this._cleanupTransientOverlays();
-
-    // update header-context BEFORE header refresh
     this.context.ui = this.context.ui || {};
     this.context.ui.isTopsView = !!isTopsView;
     this.context.ui.pageTitle = pageTitle;
@@ -485,21 +365,14 @@ export default class Router {
       this.context.ui.onAmpelToggle = null;
       this.context.ui.onLongtextToggle = null;
     }
-
     this._setActiveSection(section);
-
     try {
       const lane = await this._ensureProjectContextQuicklane();
       lane?.setEnabled?.(!!isTopsView);
-    } catch (_e) {
-      // ignore
-    }
-
+    } catch (_e) {}
     this._setSidebarVisibility(!hideSidebar);
-
     await this.ensureAppSettingsLoaded({ force: false });
     await this._syncProjectContextUi();
-
     this.contentRoot.innerHTML = "";
     const e = v.render();
     this.contentRoot.appendChild(e);
@@ -507,7 +380,6 @@ export default class Router {
     this.currentView = v;
     this.activeView = v;
     await this._syncProjectContextUi();
-
     this._refreshHeaderSafe();
     this._emitContextChange();
   }
@@ -517,13 +389,11 @@ export default class Router {
     const sidebar = shellLayout?.sidebar || null;
     const bodyRow = shellLayout?.bodyRow || null;
     if (!sidebar) return;
-
     const isVisible = visible !== false;
     sidebar.style.display = isVisible ? "flex" : "none";
     if (bodyRow?.dataset) bodyRow.dataset.sidebarHidden = isVisible ? "0" : "1";
   }
 
-  // Kern-Routing / UI-Rahmenlogik: allgemeine Screen-Wechsel bleiben im Router gebuendelt.
   async showProjects() {
     await this.ensureActiveModuleAccess({ force: true });
     const mod = await import("../modules/projektverwaltung/index.js");
@@ -538,27 +408,14 @@ export default class Router {
     const V = mod.ProjectWorkspaceScreen;
     const opts = options && typeof options === "object" ? options : {};
     const effectiveProjectId = projectId || this.currentProjectId || null;
-
     if (!effectiveProjectId) {
       alert("Bitte zuerst ein Projekt auswählen.");
       return;
     }
-
     this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: null });
     await this.show(
-      new V({
-        router: this,
-        projectId: effectiveProjectId,
-        project: opts.project || null,
-        projectModules: this._getProjectWorkspaceModules(),
-      }),
-      {
-        section: "projectWorkspace",
-        isTopsView: false,
-        pageTitle: null,
-        activeModuleLabel: this._getProjectWorkspaceModules()?.[0]?.label || "Protokoll",
-        hideSidebar: false,
-      }
+      new V({ router: this, projectId: effectiveProjectId, project: opts.project || null, projectModules: this._getProjectWorkspaceModules() }),
+      { section: "projectWorkspace", isTopsView: false, pageTitle: null, activeModuleLabel: this._getProjectWorkspaceModules()?.[0]?.label || "Protokoll", hideSidebar: false }
     );
   }
 
@@ -566,105 +423,53 @@ export default class Router {
     await this.ensureActiveModuleAccess({ force: true });
     const effectiveProjectId = this._resolveProjectId(projectId);
     const normalizedModuleId = String(moduleId || "").trim();
-    const normalizedNavigationKey = String(options?.navigationKey || "").trim();
     if (!effectiveProjectId || !normalizedModuleId) return false;
-
-    if (normalizedModuleId === PROTOKOLL_MODULE_ID) {
-      return await this.openProjectProtocol(effectiveProjectId, options || {});
-    }
-
-    const moduleNavigationEntries = getActiveProjectModuleNavigation().filter(
-      (entry) => String(entry?.moduleId || "").trim() === normalizedModuleId
-    );
-    const navEntry = normalizedNavigationKey
-      ? moduleNavigationEntries.find(
-          (entry) => String(entry?.key || "").trim() === normalizedNavigationKey
-        ) || null
-      : moduleNavigationEntries[0] || null;
-    if (!navEntry) return false;
-
-    const moduleScreen =
-      resolveActiveModuleScreen(normalizedModuleId, navEntry.workScreenId) || null;
-    if (typeof moduleScreen !== "function") return false;
-
+    const moduleEntry = findCachedActiveModuleEntry(normalizedModuleId);
+    if (!moduleEntry) return false;
     const project = options && typeof options === "object" ? options.project || null : null;
-    const pageTitle = String(options?.pageTitle || navEntry?.label || "").trim() || null;
-    const activeModuleLabel =
-      String(options?.activeModuleLabel || navEntry?.label || "").trim() || null;
-    const moduleEntry = findActiveModuleEntry(normalizedModuleId);
-    const hideSidebar =
-      options?.hideSidebar === true ||
-      navEntry?.hideSidebar === true ||
-      moduleEntry?.shell?.hideSidebar === true;
-
-    this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: null });
-    await this.show(
-      new moduleScreen({
-        router: this,
-        projectId: effectiveProjectId,
-        project,
-        moduleId: normalizedModuleId,
-      }),
-      {
-        section: navEntry.section || normalizedModuleId,
-        isTopsView: false,
-        pageTitle,
-        activeModuleLabel,
-        hideSidebar,
-      }
-    );
-
-    return true;
+    return await openModuleEntry({
+      moduleEntry,
+      scope: "project",
+      navigationKey: String(options?.navigationKey || "").trim(),
+      projectId: effectiveProjectId,
+      project,
+      router: this,
+      options,
+      show: this.show.bind(this),
+    });
   }
 
   async openGlobalModule(moduleId, options = {}) {
     await this.ensureActiveModuleAccess({ force: true });
     const normalizedModuleId = String(moduleId || "").trim();
-    const normalizedNavigationKey = String(options?.navigationKey || "").trim();
-    if (!normalizedModuleId || !this._isModuleActive(normalizedModuleId)) return false;
-
-    const moduleNavigationEntries = getActiveGlobalModuleNavigation().filter(
-      (entry) => String(entry?.moduleId || "").trim() === normalizedModuleId
-    );
-    const navEntry = normalizedNavigationKey
-      ? moduleNavigationEntries.find((entry) => String(entry?.key || "").trim() === normalizedNavigationKey) || null
-      : moduleNavigationEntries[0] || null;
-    if (!navEntry) return false;
-
-    const moduleScreen = resolveActiveModuleScreen(normalizedModuleId, navEntry.workScreenId);
-    if (typeof moduleScreen !== "function") return false;
-    const moduleEntry = findActiveModuleEntry(normalizedModuleId);
-    await this.show(new moduleScreen({ router: this, moduleId: normalizedModuleId }), {
-      section: navEntry.section || normalizedModuleId,
-      isTopsView: false,
-      pageTitle: String(navEntry.label || "").trim() || null,
-      activeModuleLabel: String(navEntry.label || "").trim() || null,
-      hideSidebar: navEntry.hideSidebar === true || moduleEntry?.shell?.hideSidebar === true,
+    if (!normalizedModuleId) return false;
+    const moduleEntry = findCachedActiveModuleEntry(normalizedModuleId);
+    if (!moduleEntry) return false;
+    return await openModuleEntry({
+      moduleEntry,
+      scope: "global",
+      navigationKey: String(options?.navigationKey || "").trim(),
+      router: this,
+      options,
+      show: this.show.bind(this),
     });
-    return true;
   }
 
   _getProjectWorkspaceModules() {
     const uniqueNavigationKeys = [];
     const activeModules = getActiveProjectModuleNavigation()
-      .filter((entry) => this._isModuleActive(entry?.moduleId))
-      .map((entry) =>
-        Object.freeze({
-          moduleId: String(entry?.moduleId || "").trim(),
-          navigationKey: String(entry?.key || "").trim(),
-          label: String(entry?.label || "Arbeitsbereich öffnen").trim(),
-          description: String(
-            entry?.description || "Arbeitsbereich im aktuellen Projektkontext öffnen."
-          ).trim(),
-        })
-      )
+      .map((entry) => Object.freeze({
+        moduleId: String(entry?.moduleId || "").trim(),
+        navigationKey: String(entry?.key || "").trim(),
+        label: String(entry?.label || "Arbeitsbereich öffnen").trim(),
+        description: String(entry?.description || "Arbeitsbereich im aktuellen Projektkontext öffnen.").trim(),
+      }))
       .filter((entry) => {
         const navigationKey = String(entry?.navigationKey || "").trim();
         if (!navigationKey || uniqueNavigationKeys.includes(navigationKey)) return false;
         uniqueNavigationKeys.push(navigationKey);
         return true;
       });
-
     return [
       ...activeModules,
       Object.freeze({
@@ -679,17 +484,10 @@ export default class Router {
   async showFirmsPool(projectId) {
     const mod = await import("../views/FirmsPoolView.js");
     const V = mod.default;
-    this._setProjectRuntimeContext({
-      projectId: projectId || this.currentProjectId || null,
-      meetingId: null,
-    });
-    await this.show(new V({ router: this, projectId: this.currentProjectId }), {
-      section: "firmsPool",
-      isTopsView: false,
-    });
+    this._setProjectRuntimeContext({ projectId: projectId || this.currentProjectId || null, meetingId: null });
+    await this.show(new V({ router: this, projectId: this.currentProjectId }), { section: "firmsPool", isTopsView: false });
   }
 
-  // Kern-Routing / Screen-Host-Grundpfad: Start ohne Projekt- oder Protokollkontext.
   async showHome() {
     await this.ensureActiveModuleAccess({ force: true });
     const mod = await import("../views/HomeView.js");
@@ -698,9 +496,7 @@ export default class Router {
     await this.show(new V({ router: this }), { section: "home", isTopsView: false });
   }
 
-  _isEditorLabV2Enabled() {
-    return this._readUiMode() === "new";
-  }
+  _isEditorLabV2Enabled() { return this._readUiMode() === "new"; }
 
   async showEditorLabV2() {
     await this.ensureAppSettingsLoaded({ force: false });
@@ -711,7 +507,6 @@ export default class Router {
     const registry = createEditorLabRegistry();
     const core = createEditorV2Core({ registry, mode: "frame" });
     const screen = createEditorLabScreen({ registry, editorV2Core: core });
-
     const view = {
       render: () => {
         const host = document.createElement("div");
@@ -720,137 +515,53 @@ export default class Router {
         host.style.gap = "12px";
         host.style.padding = "12px";
         const root = screen.render(host);
-        if (root) {
-          core.mount(root, registry);
-        }
+        if (root) core.mount(root, registry);
         return host;
       },
       async destroy() {
-        try {
-          core.unmount?.();
-        } catch (_e) {
-          // ignore
-        }
-        try {
-          screen.panel?.unmount?.();
-        } catch (_e) {
-          // ignore
-        }
+        try { core.unmount?.(); } catch (_e) {}
+        try { screen.panel?.unmount?.(); } catch (_e) {}
       },
     };
-
     this._setProjectRuntimeContext({ projectId: null, meetingId: null });
-    await this.show(view, {
-      section: "editorLabV2",
-      isTopsView: false,
-      pageTitle: "EditorLab V2",
-      hideSidebar: false,
-    });
+    await this.show(view, { section: "editorLabV2", isTopsView: false, pageTitle: "EditorLab V2", hideSidebar: false });
     return true;
   }
 
-  // Kern-Routing mit Projektkontext: allgemeine Fachscreens ohne direkten Protokollmodus.
   async showProjectForm({ projectId } = {}) {
     const mod = await import("../modules/projektverwaltung/index.js");
     const V = mod.ProjectFormScreen;
-
     this._setProjectRuntimeContext({ meetingId: null });
-
-    const effectiveProjectId =
-      projectId === undefined ? this.currentProjectId || null : projectId || null;
-
+    const effectiveProjectId = projectId === undefined ? this.currentProjectId || null : projectId || null;
     this._setProjectRuntimeContext({ projectId: effectiveProjectId });
-
-    await this.show(new V({ router: this, projectId: effectiveProjectId }), {
-      section: "projects",
-      isTopsView: false,
-    });
+    await this.show(new V({ router: this, projectId: effectiveProjectId }), { section: "projects", isTopsView: false });
   }
 
-  // Fachlich/protokollzentrierte Pfade: Besprechungen und Tops bleiben noch direkt verdrahtet.
-  async showMeetings(
-    projectId,
-    {
-      printSelectionMode = false,
-      printKind = null,
-      startMode = false,
-      startReason = null,
-      integrityError = false,
-      projectProtocolContext = null,
-    } = {}
-  ) {
+  async showMeetings(projectId, { printSelectionMode = false, printKind = null, startMode = false, startReason = null, integrityError = false, projectProtocolContext = null } = {}) {
     const mod = await import("../views/MeetingsView.js");
     const V = mod.default;
-
     this._setProjectRuntimeContext({ projectId: projectId || null, meetingId: null });
-    await this.show(
-      new V({
-        router: this,
-        projectId,
-        printSelectionMode: !!printSelectionMode,
-        printKind: printKind || null,
-        startMode: !!startMode,
-        startReason: startReason || null,
-        integrityError: !!integrityError,
-        projectProtocolContext: projectProtocolContext || null,
-      }),
-      { section: "meetings", isTopsView: false }
-    );
+    await this.show(new V({ router: this, projectId, printSelectionMode: !!printSelectionMode, printKind: printKind || null, startMode: !!startMode, startReason: startReason || null, integrityError: !!integrityError, projectProtocolContext: projectProtocolContext || null }), { section: "meetings", isTopsView: false });
   }
 
   async showTops(meetingId, projectId, options = {}) {
     await this.ensureActiveModuleAccess({ force: true });
     const effectiveMeetingId = meetingId || null;
-    if (!effectiveMeetingId) {
-      alert("Bitte zuerst eine Besprechung oeffnen.");
-      return false;
-    }
-
+    if (!effectiveMeetingId) { alert("Bitte zuerst eine Besprechung oeffnen."); return false; }
     const effectiveProjectId = projectId || this.currentProjectId || null;
-    if (!effectiveProjectId) {
-      alert("Bitte zuerst ein Projekt auswaehlen.");
-      return false;
-    }
-
-    // App-Kern / Screen-Host:
-    // Tops laeuft nur, wenn das Protokoll-Modul im aktiven Modulumfang liegt.
-    // Der Router umgeht diese Entscheidung an dieser Stelle nicht mehr stillschweigend.
+    if (!effectiveProjectId) { alert("Bitte zuerst ein Projekt auswaehlen."); return false; }
     if (!this._isModuleActive(PROTOKOLL_MODULE_ID)) {
       alert("Das Protokoll-Modul ist im aktiven Modulumfang nicht freigegeben.");
       return this._buildModuleDisabledPayload(effectiveProjectId, effectiveMeetingId);
     }
-
-    // Modulinterner Unterbau und Workbench-Anbindung bleiben ausdruecklich im Fachmodul.
-    const V =
-      resolveActiveModuleScreen(PROTOKOLL_MODULE_ID, PROTOKOLL_WORK_SCREEN_ID) ||
-      ProtokollTopsScreen;
-
+    const V = resolveActiveModuleScreen(PROTOKOLL_MODULE_ID, PROTOKOLL_WORK_SCREEN_ID) || ProtokollTopsScreen;
     const opts = options && typeof options === "object" ? options : {};
     const readOnly = !!opts.readOnly;
     const returnContext = opts.returnContext || null;
-
-    this._setProjectRuntimeContext({
-      projectId: effectiveProjectId,
-      meetingId: effectiveMeetingId,
-    });
+    this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: effectiveMeetingId });
     this.lastTopsProjectId = this.currentProjectId || null;
     this.lastTopsMeetingId = this.currentMeetingId || null;
-
-    await this.show(
-      new V({
-        router: this,
-        meetingId: effectiveMeetingId,
-        projectId: effectiveProjectId,
-        readOnly,
-        returnContext,
-      }),
-      {
-        section: "meetings",
-        isTopsView: true,
-        pageTitle: "Protokoll",
-      }
-    );
-
+    await this.show(new V({ router: this, meetingId: effectiveMeetingId, projectId: effectiveProjectId, readOnly, returnContext }), { section: "meetings", isTopsView: true, pageTitle: "Protokoll" });
     return true;
   }
 
@@ -859,74 +570,29 @@ export default class Router {
     const effectiveProjectId = this._resolveProjectId(projectId);
     if (!effectiveProjectId) {
       alert("Bitte zuerst ein Projekt auswaehlen.");
-      return {
-        ok: false,
-        reason: "missing-project",
-        target: "blocked",
-        projectId: null,
-        meetingId: null,
-      };
+      return { ok: false, reason: "missing-project", target: "blocked", projectId: null, meetingId: null };
     }
-
     if (!this._isModuleActive(PROTOKOLL_MODULE_ID)) {
       alert("Das Protokoll-Modul ist im aktiven Modulumfang nicht freigegeben.");
       return this._buildModuleDisabledPayload(effectiveProjectId, null);
     }
-
     const api = window.bbmDb || {};
-    const meetingsRes =
-      typeof api.meetingsListByProject === "function"
-        ? await api.meetingsListByProject(effectiveProjectId)
-        : { ok: false, error: "meetingsListByProject unavailable", list: [] };
+    const meetingsRes = typeof api.meetingsListByProject === "function" ? await api.meetingsListByProject(effectiveProjectId) : { ok: false, error: "meetingsListByProject unavailable", list: [] };
     const meetings = meetingsRes?.ok ? meetingsRes.list || [] : [];
-    const decision = resolveProjectProtocolEntry({
-      projectId: effectiveProjectId,
-      meetings,
-    });
-
+    const decision = resolveProjectProtocolEntry({ projectId: effectiveProjectId, meetings });
     if (decision.target === "tops" && decision.meetingId) {
-      const returnContext =
-        options?.returnContext ||
-        {
-          section: "projects",
-          projectId: effectiveProjectId,
-          project: options?.project || null,
-        };
-      const opened = await this.showTops(decision.meetingId, effectiveProjectId, {
-        ...options,
-        returnContext,
-      });
-      if (opened === false || opened?.blocked) {
-        return this._buildModuleDisabledPayload(effectiveProjectId, decision.meetingId || null);
-      }
-      return {
-        ...decision,
-        ok: true,
-      };
+      const returnContext = options?.returnContext || { section: "projects", projectId: effectiveProjectId, project: options?.project || null };
+      const opened = await this.showTops(decision.meetingId, effectiveProjectId, { ...options, returnContext });
+      if (opened === false || opened?.blocked) return this._buildModuleDisabledPayload(effectiveProjectId, decision.meetingId || null);
+      return { ...decision, ok: true };
     }
-
-    await this.showMeetings(effectiveProjectId, {
-      printSelectionMode: false,
-      printKind: null,
-      startMode: true,
-      startReason: decision.reason,
-      integrityError: decision.reason === "multiple-open-meetings",
-      projectProtocolContext: {
-        projectId: effectiveProjectId,
-        openMeetingCount: decision.openMeetingCount,
-      },
-    });
-
-    return {
-      ...decision,
-      ok: !!decision.ok,
-    };
+    await this.showMeetings(effectiveProjectId, { printSelectionMode: false, printKind: null, startMode: true, startReason: decision.reason, integrityError: decision.reason === "multiple-open-meetings", projectProtocolContext: { projectId: effectiveProjectId, openMeetingCount: decision.openMeetingCount } });
+    return { ...decision, ok: !!decision.ok };
   }
 
   async showFirms() {
     const mod = await import("../views/FirmsView.js");
     const V = mod.default;
-
     this.currentMeetingId = null;
     await this.show(new V({ router: this }), { section: "firms", isTopsView: false });
   }
@@ -934,27 +600,14 @@ export default class Router {
   async showProjectFirms(projectId, options = {}) {
     const mod = await import("../views/ProjectFirmsView.js");
     const V = mod.default;
-
     const opts = options && typeof options === "object" ? options : {};
     this._setProjectRuntimeContext({ projectId: projectId || this.currentProjectId || null });
-    await this.show(
-      new V({
-        router: this,
-        projectId: this.currentProjectId,
-        returnContext: opts.returnContext || null,
-      }),
-      {
-      section: "projectFirms",
-      isTopsView: false,
-      pageTitle: null,
-      }
-    );
+    await this.show(new V({ router: this, projectId: this.currentProjectId, returnContext: opts.returnContext || null }), { section: "projectFirms", isTopsView: false, pageTitle: null });
   }
 
   async showSettings() {
     const mod = await import("../views/SettingsView.js");
     const V = mod.default;
-
     await this.show(new V({ router: this }), { section: "settings", isTopsView: false });
   }
 
@@ -967,67 +620,38 @@ export default class Router {
     const mod = await import("../modules/rechnungen/index.js");
     const available = await mod.isRechnungenDesignAvailable({ api: globalThis.window?.bbmDb });
     if (!available) return { ok: false, reason: "DEV_ONLY" };
-
-    await this.show(new mod.RechnungScreen({ router: this }), {
-      section: "rechnungenDesign",
-      isTopsView: false,
-      pageTitle: "Rechnungen",
-      hideSidebar: true,
-    });
+    await this.show(new mod.RechnungScreen({ router: this }), { section: "rechnungenDesign", isTopsView: false, pageTitle: "Rechnungen", hideSidebar: true });
     return { ok: true };
   }
 
   async showBbmUiEditorDemo() {
-    const ui = {
-      node(tag) {
-        return document.createElement(tag);
-      },
-    };
-    await this.show(createBbmUiEditorDemoScreen({ ui }), {
-      section: "uiEditorDemo",
-      isTopsView: false,
-      pageTitle: "UI-Editor Demo",
-      hideSidebar: false,
-    });
+    const ui = { node(tag) { return document.createElement(tag); } };
+    await this.show(createBbmUiEditorDemoScreen({ ui }), { section: "uiEditorDemo", isTopsView: false, pageTitle: "UI-Editor Demo", hideSidebar: false });
   }
 
   async showUiEditor() {
     injectBbmUiEditorStatusPanelStyles();
     const panel = createBbmUiEditorStatusPanel({ router: this });
-    await this.show(panel, {
-      section: "uiEditor",
-      isTopsView: false,
-      pageTitle: "UI-Editor",
-      hideSidebar: false,
-    });
+    await this.show(panel, { section: "uiEditor", isTopsView: false, pageTitle: "UI-Editor", hideSidebar: false });
   }
 
   async showArchive() {
     const mod = await import("../modules/projektverwaltung/index.js");
     const V = mod.ArchiveScreen;
-
     this._setProjectRuntimeContext({ meetingId: null });
     await this.show(new V({ router: this }), { section: "archive", isTopsView: false });
   }
 
-  // Uebergangsbestand: die folgenden Integrationen bleiben in Phase 2 noch im Router.
-  // Service-nahe Integrationen: lazy geladene Modals und UI-Bridges bleiben vorerst im Router.
   async _ensureParticipantsModals() {
     if (this._participantsModals) return this._participantsModals;
     if (this._participantsModalsLoading) return await this._participantsModalsLoading;
-
     this._participantsModalsLoading = (async () => {
       const mod = await import("../ui/ParticipantsModals.js");
       const C = mod.default;
       this._participantsModals = new C({ router: this });
       return this._participantsModals;
     })();
-
-    try {
-      return await this._participantsModalsLoading;
-    } finally {
-      this._participantsModalsLoading = null;
-    }
+    try { return await this._participantsModalsLoading; } finally { this._participantsModalsLoading = null; }
   }
 
   async openCandidatesModal({ projectId } = {}) {
@@ -1041,199 +665,90 @@ export default class Router {
   async openParticipantsModal({ projectId, meetingId } = {}) {
     const effectiveProjectId = projectId || this.currentProjectId || null;
     const effectiveMeetingId = meetingId || this.currentMeetingId || null;
-    if (!effectiveProjectId) {
-      alert("Bitte zuerst ein Projekt auswählen.");
-      return;
-    }
-    if (!effectiveMeetingId) {
-      alert("Bitte zuerst eine Besprechung öffnen.");
-      return;
-    }
-    this._setProjectRuntimeContext({
-      projectId: effectiveProjectId,
-      meetingId: effectiveMeetingId,
-    });
+    if (!effectiveProjectId) { alert("Bitte zuerst ein Projekt auswählen."); return; }
+    if (!effectiveMeetingId) { alert("Bitte zuerst eine Besprechung öffnen."); return; }
+    this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: effectiveMeetingId });
     const pm = await this._ensureParticipantsModals();
     await pm.openParticipants({ projectId: effectiveProjectId, meetingId: effectiveMeetingId });
   }
 
-  // Service-nahe Integrationen mit fachlichem Kontext: Druck-UI und Rueckkehr in bestehende Screens.
   async _ensurePrintModal() {
     if (this._printModal) return this._printModal;
     if (this._printModalLoading) return await this._printModalLoading;
-
     this._printModalLoading = (async () => {
       const mod = await import("../ui/PrintModal.js");
       const PrintModal = mod.default;
       this._printModal = new PrintModal({ router: this });
       return this._printModal;
     })();
-
-    try {
-      return await this._printModalLoading;
-    } finally {
-      this._printModalLoading = null;
-    }
+    try { return await this._printModalLoading; } finally { this._printModalLoading = null; }
   }
 
   _cleanupStalePrintModalOverlays({ keepPreview = false } = {}) {
     try {
-      const nodes = Array.from(
-        document.querySelectorAll('[data-bbm-print-overlay], .bbm-print-overlay')
-      );
+      const nodes = Array.from(document.querySelectorAll('[data-bbm-print-overlay], .bbm-print-overlay'));
       for (const el of nodes) {
         const kind = String(el?.getAttribute?.("data-bbm-print-overlay") || "").toLowerCase();
         if (keepPreview && kind === "preview") continue;
-        try {
-          el.remove();
-        } catch (_e) {
-          // ignore
-        }
+        try { el.remove(); } catch (_e) {}
       }
-    } catch (_e) {
-      // ignore
-    }
+    } catch (_e) {}
   }
 
   async closePrintModal({ keepPreview = false } = {}) {
     const pm = this._printModal;
-    if (!pm) {
-      this._cleanupStalePrintModalOverlays({ keepPreview });
-      return;
-    }
-    try {
-      if (typeof pm.close === "function") {
-        pm.close({ keepPreview });
-      }
-    } catch (_e) {
-      // ignore
-    } finally {
-      this._cleanupStalePrintModalOverlays({ keepPreview });
-    }
+    if (!pm) { this._cleanupStalePrintModalOverlays({ keepPreview }); return; }
+    try { if (typeof pm.close === "function") pm.close({ keepPreview }); } catch (_e) {} finally { this._cleanupStalePrintModalOverlays({ keepPreview }); }
   }
 
   _captureContextForPrintReturn() {
-    return {
-      section: this.activeSection || null,
-      isTopsView: !!this.context?.ui?.isTopsView,
-      projectId: this.currentProjectId || null,
-      meetingId: this.currentMeetingId || null,
-    };
+    return { section: this.activeSection || null, isTopsView: !!this.context?.ui?.isTopsView, projectId: this.currentProjectId || null, meetingId: this.currentMeetingId || null };
   }
 
   async _restoreContextAfterPrintSelection(context, fallbackProjectId) {
     const c = context || {};
     const fallbackProject = fallbackProjectId || this.currentProjectId || null;
-
     try {
-      if (c.isTopsView && c.projectId && c.meetingId) {
-        await this.showTops(c.meetingId, c.projectId);
-        return;
-      }
-      if (c.section === "home") {
-        await this.showHome();
-        return;
-      }
-      if (c.section === "projects") {
-        await this.showProjects();
-        return;
-      }
-      if (c.section === "settings") {
-        await this.showSettings();
-        return;
-      }
-      if (c.section === "uiEditor") {
-        await this.showUiEditor();
-        return;
-      }
-      if (c.section === "firms") {
-        await this.showFirms();
-        return;
-      }
-      if (c.section === "archive") {
-        await this.showArchive();
-        return;
-      }
-      if (c.section === "projectFirms") {
-        await this.showProjectFirms(c.projectId || fallbackProject);
-        return;
-      }
-      if (c.section === "firmsPool") {
-        await this.showProjectFirms(c.projectId || fallbackProject);
-        return;
-      }
-      if (c.section === "meetings") {
-        await this.showMeetings(c.projectId || fallbackProject);
-        return;
-      }
-      if (fallbackProject) {
-        await this.showMeetings(fallbackProject);
-      } else {
-        await this.showProjects();
-      }
+      if (c.isTopsView && c.projectId && c.meetingId) { await this.showTops(c.meetingId, c.projectId); return; }
+      if (c.section === "home") { await this.showHome(); return; }
+      if (c.section === "projects") { await this.showProjects(); return; }
+      if (c.section === "settings") { await this.showSettings(); return; }
+      if (c.section === "uiEditor") { await this.showUiEditor(); return; }
+      if (c.section === "firms") { await this.showFirms(); return; }
+      if (c.section === "archive") { await this.showArchive(); return; }
+      if (c.section === "projectFirms") { await this.showProjectFirms(c.projectId || fallbackProject); return; }
+      if (c.section === "firmsPool") { await this.showProjectFirms(c.projectId || fallbackProject); return; }
+      if (c.section === "meetings") { await this.showMeetings(c.projectId || fallbackProject); return; }
+      if (fallbackProject) await this.showMeetings(fallbackProject); else await this.showProjects();
     } catch (_e) {
-      if (fallbackProject) {
-        await this.showMeetings(fallbackProject);
-      } else {
-        await this.showProjects();
-      }
+      if (fallbackProject) await this.showMeetings(fallbackProject); else await this.showProjects();
     }
   }
 
-  // Fachlich verdrahtete Altlogik: Druck-/Protokollflüsse laufen noch direkt über den Router.
   async openMeetingsForPrintSelection({ projectId, printKind } = {}) {
     const effectiveProjectId = projectId || this.currentProjectId || null;
-    if (!effectiveProjectId) {
-      alert("Bitte zuerst ein Projekt auswählen.");
-      return;
-    }
-
+    if (!effectiveProjectId) { alert("Bitte zuerst ein Projekt auswählen."); return; }
     const kind = printKind === "todo" ? "todo" : "firms";
-    this._printSelectionState = {
-      active: true,
-      projectId: effectiveProjectId,
-      printKind: kind,
-      returnContext: this._captureContextForPrintReturn(),
-    };
-
-    await this.showMeetings(effectiveProjectId, {
-      printSelectionMode: true,
-      printKind: kind,
-    });
+    this._printSelectionState = { active: true, projectId: effectiveProjectId, printKind: kind, returnContext: this._captureContextForPrintReturn() };
+    await this.showMeetings(effectiveProjectId, { printSelectionMode: true, printKind: kind });
   }
 
   async cancelPrintSelection({ restore = true } = {}) {
     const state = this._printSelectionState || null;
     if (!state) return;
-
     this._printSelectionState = null;
     if (!restore) return;
-    await this._restoreContextAfterPrintSelection(
-      state.returnContext,
-      state.projectId || this.currentProjectId || null
-    );
+    await this._restoreContextAfterPrintSelection(state.returnContext, state.projectId || this.currentProjectId || null);
   }
 
   async completePrintSelection({ meetingId, projectId } = {}) {
     const state = this._printSelectionState || null;
     const selectedMeetingId = meetingId || null;
     const effectiveProjectId = projectId || state?.projectId || this.currentProjectId || null;
-    if (!state || !state.active || !effectiveProjectId || !selectedMeetingId) {
-      return false;
-    }
-
+    if (!state || !state.active || !effectiveProjectId || !selectedMeetingId) return false;
     try {
-      if (state.printKind === "todo") {
-        await this.openTodoPrintPreview({
-          projectId: effectiveProjectId,
-          meetingId: selectedMeetingId,
-        });
-      } else {
-        await this.printFirmsDirect({
-          projectId: effectiveProjectId,
-          meetingId: selectedMeetingId,
-        });
-      }
+      if (state.printKind === "todo") await this.openTodoPrintPreview({ projectId: effectiveProjectId, meetingId: selectedMeetingId });
+      else await this.printFirmsDirect({ projectId: effectiveProjectId, meetingId: selectedMeetingId });
     } finally {
       const returnContext = state.returnContext || null;
       this._printSelectionState = null;
@@ -1244,256 +759,114 @@ export default class Router {
 
   async openPrintModal({ projectId } = {}) {
     const effectiveProjectId = projectId || this.currentProjectId || null;
-    if (!effectiveProjectId) {
-      alert("Bitte zuerst ein Projekt auswählen.");
-      return;
-    }
+    if (!effectiveProjectId) { alert("Bitte zuerst ein Projekt auswählen."); return; }
     this._setProjectRuntimeContext({ projectId: effectiveProjectId });
     const pm = await this._ensurePrintModal();
-    try {
-      if (typeof pm.close === "function") {
-        pm.close();
-      }
-    } catch (_e) {
-      // ignore
-    } finally {
-      this._cleanupStalePrintModalOverlays();
-    }
+    try { if (typeof pm.close === "function") pm.close(); } catch (_e) {} finally { this._cleanupStalePrintModalOverlays(); }
     await pm.openPrint({ projectId: effectiveProjectId });
   }
 
   async promptNextMeetingSettings({ defaultDateIso } = {}) {
     const pm = await this._ensurePrintModal();
-    try {
-      if (typeof pm.close === "function") {
-        pm.close();
-      }
-    } catch (_e) {
-      // ignore
-    } finally {
-      this._cleanupStalePrintModalOverlays();
-    }
-    if (typeof pm?.promptNextMeetingSettings !== "function") {
-      return { ok: false, cancelled: true };
-    }
+    try { if (typeof pm.close === "function") pm.close(); } catch (_e) {} finally { this._cleanupStalePrintModalOverlays(); }
+    if (typeof pm?.promptNextMeetingSettings !== "function") return { ok: false, cancelled: true };
     return await pm.promptNextMeetingSettings({ defaultDateIso });
   }
 
   async openMeetingPrintPreview({ projectId, meetingId, mode } = {}) {
     const pm = await this._ensurePrintModal();
-    if (typeof pm?.printMeetingPreview !== "function") {
-      alert("PrintModal unterstützt keine Protokoll-Vorschau (printMeetingPreview fehlt).");
-      return;
-    }
-    try {
-      await pm.printMeetingPreview({ projectId, meetingId, mode });
-    } finally {
-      await this.closePrintModal({ keepPreview: true });
-    }
+    if (typeof pm?.printMeetingPreview !== "function") { alert("PrintModal unterstützt keine Protokoll-Vorschau (printMeetingPreview fehlt)."); return; }
+    try { await pm.printMeetingPreview({ projectId, meetingId, mode }); } finally { await this.closePrintModal({ keepPreview: true }); }
   }
 
   async openStoredProtocolPreview({ filePath, title } = {}) {
     const pm = await this._ensurePrintModal();
-    if (typeof pm?.openExistingPdfPreview !== "function") {
-      alert("PrintModal unterstützt keine gespeicherte PDF-Vorschau.");
-      return false;
-    }
-    try {
-      await pm.openExistingPdfPreview({ filePath, title: title || "Protokoll (Vorschau)" });
-      return true;
-    } finally {
-      await this.closePrintModal({ keepPreview: true });
-    }
+    if (typeof pm?.openExistingPdfPreview !== "function") { alert("PrintModal unterstützt keine gespeicherte PDF-Vorschau."); return false; }
+    try { await pm.openExistingPdfPreview({ filePath, title: title || "Protokoll (Vorschau)" }); return true; } finally { await this.closePrintModal({ keepPreview: true }); }
   }
 
   async openPrintVorabzug({ projectId, meetingId } = {}) {
     const pm = await this._ensurePrintModal();
-    if (typeof pm?.printVorabzug !== "function") {
-      alert("PrintModal unterstützt keinen Vorabzug (printVorabzug fehlt).");
-      return;
-    }
-    try {
-      await pm.printVorabzug({ projectId, meetingId });
-    } finally {
-      await this.closePrintModal({ keepPreview: true });
-    }
+    if (typeof pm?.printVorabzug !== "function") { alert("PrintModal unterstützt keinen Vorabzug (printVorabzug fehlt)."); return; }
+    try { await pm.printVorabzug({ projectId, meetingId }); } finally { await this.closePrintModal({ keepPreview: true }); }
   }
 
   async openTodoPrintPreview({ projectId, meetingId } = {}) {
     const pm = await this._ensurePrintModal();
-    if (typeof pm?.openTodoPrintPreview !== "function") {
-      alert("PrintModal unterstützt kein ToDo-PDF.");
-      return;
-    }
-    try {
-      await pm.openTodoPrintPreview({ projectId });
-    } finally {
-      await this.closePrintModal({ keepPreview: true });
-    }
+    if (typeof pm?.openTodoPrintPreview !== "function") { alert("PrintModal unterstützt kein ToDo-PDF."); return; }
+    try { await pm.openTodoPrintPreview({ projectId }); } finally { await this.closePrintModal({ keepPreview: true }); }
   }
 
   async openTopListAllPrintPreview({ projectId, meetingId } = {}) {
     const pm = await this._ensurePrintModal();
-    if (typeof pm?.openTopListAllPreview !== "function") {
-      alert("PrintModal unterstützt keine Top-Liste(alle)-Vorschau.");
-      return;
-    }
-    try {
-      await pm.openTopListAllPreview({ projectId });
-    } finally {
-      await this.closePrintModal({ keepPreview: true });
-    }
+    if (typeof pm?.openTopListAllPreview !== "function") { alert("PrintModal unterstützt keine Top-Liste(alle)-Vorschau."); return; }
+    try { await pm.openTopListAllPreview({ projectId }); } finally { await this.closePrintModal({ keepPreview: true }); }
   }
 
   async openFirmsPrintPreview({ projectId, meetingId } = {}) {
     const effectiveProjectId = projectId || this.currentProjectId || null;
-    if (!effectiveProjectId) {
-      alert("Bitte zuerst ein Projekt ausw\u00e4hlen.");
-      return;
-    }
-    this._setProjectRuntimeContext({
-      projectId: effectiveProjectId,
-    });
+    if (!effectiveProjectId) { alert("Bitte zuerst ein Projekt ausw\u00e4hlen."); return; }
+    this._setProjectRuntimeContext({ projectId: effectiveProjectId });
     const pm = await this._ensurePrintModal();
-    if (typeof pm?.openFirmsPrintPreview !== "function") {
-      alert("PrintModal unterst\u00fctzt keine Firmenliste.");
-      return;
-    }
-    try {
-      await pm.openFirmsPrintPreview({ projectId: effectiveProjectId });
-    } finally {
-      await this.closePrintModal({ keepPreview: true });
-    }
+    if (typeof pm?.openFirmsPrintPreview !== "function") { alert("PrintModal unterst\u00fctzt keine Firmenliste."); return; }
+    try { await pm.openFirmsPrintPreview({ projectId: effectiveProjectId }); } finally { await this.closePrintModal({ keepPreview: true }); }
   }
 
   async openStoredFirmsPdfSelection({ projectId } = {}) {
     const effectiveProjectId = projectId || this.currentProjectId || null;
-    if (!effectiveProjectId) {
-      alert("Bitte zuerst ein Projekt ausw\u00e4hlen.");
-      return;
-    }
+    if (!effectiveProjectId) { alert("Bitte zuerst ein Projekt ausw\u00e4hlen."); return; }
     this._setProjectRuntimeContext({ projectId: effectiveProjectId });
     const pm = await this._ensurePrintModal();
-    if (typeof pm?.openStoredFirmsPdfSelection !== "function") {
-      alert("PrintModal unterst\u00fctzt keine gespeicherten Firmenlisten.");
-      return;
-    }
-    try {
-      await pm.openStoredFirmsPdfSelection({ projectId: effectiveProjectId });
-    } finally {
-      await this.closePrintModal({ keepPreview: false });
-    }
+    if (typeof pm?.openStoredFirmsPdfSelection !== "function") { alert("PrintModal unterst\u00fctzt keine gespeicherten Firmenlisten."); return; }
+    try { await pm.openStoredFirmsPdfSelection({ projectId: effectiveProjectId }); } finally { await this.closePrintModal({ keepPreview: false }); }
   }
 
   async printClosedMeetingDirect({ projectId, meetingId } = {}) {
     const effectiveProjectId = projectId || this.currentProjectId || null;
-    if (!effectiveProjectId) {
-      alert("Bitte zuerst ein Projekt auswählen.");
-      return;
-    }
-    this._setProjectRuntimeContext({
-      projectId: effectiveProjectId,
-      meetingId: meetingId || this.currentMeetingId || null,
-    });
+    if (!effectiveProjectId) { alert("Bitte zuerst ein Projekt auswählen."); return; }
+    this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: meetingId || this.currentMeetingId || null });
     const pm = await this._ensurePrintModal();
-    if (typeof pm?.printClosedMeetingDirect !== "function") {
-      alert("PrintModal unterstützt keinen Protokoll-Direktdruck.");
-      return;
-    }
-    try {
-      const res = await pm.printClosedMeetingDirect({ projectId: effectiveProjectId, meetingId: meetingId || null });
-      return res;
-    } finally {
-      await this.closePrintModal({ keepPreview: false });
-    }
+    if (typeof pm?.printClosedMeetingDirect !== "function") { alert("PrintModal unterstützt keinen Protokoll-Direktdruck."); return; }
+    try { return await pm.printClosedMeetingDirect({ projectId: effectiveProjectId, meetingId: meetingId || null }); } finally { await this.closePrintModal({ keepPreview: false }); }
   }
 
   async printFirmsDirect({ projectId, meetingId } = {}) {
     const effectiveProjectId = projectId || this.currentProjectId || null;
-    if (!effectiveProjectId) {
-      alert("Bitte zuerst ein Projekt ausw\u00e4hlen.");
-      return;
-    }
-    this._setProjectRuntimeContext({
-      projectId: effectiveProjectId,
-      meetingId: meetingId || this.currentMeetingId || null,
-    });
+    if (!effectiveProjectId) { alert("Bitte zuerst ein Projekt ausw\u00e4hlen."); return; }
+    this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: meetingId || this.currentMeetingId || null });
     const pm = await this._ensurePrintModal();
-    if (typeof pm?.printFirmsDirect !== "function") {
-      alert("PrintModal unterst\u00fctzt keine Firmenliste.");
-      return;
-    }
-    try {
-      const res = await pm.printFirmsDirect({ projectId: effectiveProjectId, meetingId: meetingId || this.currentMeetingId || null });
-      return res;
-    } finally {
-      await this.closePrintModal({ keepPreview: false });
-    }
+    if (typeof pm?.printFirmsDirect !== "function") { alert("PrintModal unterst\u00fctzt keine Firmenliste."); return; }
+    try { return await pm.printFirmsDirect({ projectId: effectiveProjectId, meetingId: meetingId || this.currentMeetingId || null }); } finally { await this.closePrintModal({ keepPreview: false }); }
   }
 
   async printTodoDirect({ projectId, meetingId } = {}) {
     const effectiveProjectId = projectId || this.currentProjectId || null;
-    if (!effectiveProjectId) {
-      alert("Bitte zuerst ein Projekt ausw\u00e4hlen.");
-      return;
-    }
-    this._setProjectRuntimeContext({
-      projectId: effectiveProjectId,
-      meetingId: meetingId || this.currentMeetingId || null,
-    });
+    if (!effectiveProjectId) { alert("Bitte zuerst ein Projekt ausw\u00e4hlen."); return; }
+    this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: meetingId || this.currentMeetingId || null });
     const pm = await this._ensurePrintModal();
-    if (typeof pm?.printTodoDirect !== "function") {
-      alert("PrintModal unterst\u00fctzt keine ToDo-Liste.");
-      return;
-    }
-    try {
-      const res = await pm.printTodoDirect({ projectId: effectiveProjectId, meetingId: meetingId || this.currentMeetingId || null });
-      return res;
-    } finally {
-      await this.closePrintModal({ keepPreview: false });
-    }
+    if (typeof pm?.printTodoDirect !== "function") { alert("PrintModal unterst\u00fctzt keine ToDo-Liste."); return; }
+    try { return await pm.printTodoDirect({ projectId: effectiveProjectId, meetingId: meetingId || this.currentMeetingId || null }); } finally { await this.closePrintModal({ keepPreview: false }); }
   }
 
   async printTopListAllDirect({ projectId, meetingId } = {}) {
     const effectiveProjectId = projectId || this.currentProjectId || null;
-    if (!effectiveProjectId) {
-      alert("Bitte zuerst ein Projekt ausw\u00e4hlen.");
-      return;
-    }
-    this._setProjectRuntimeContext({
-      projectId: effectiveProjectId,
-      meetingId: meetingId || this.currentMeetingId || null,
-    });
+    if (!effectiveProjectId) { alert("Bitte zuerst ein Projekt ausw\u00e4hlen."); return; }
+    this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: meetingId || this.currentMeetingId || null });
     const pm = await this._ensurePrintModal();
-    if (typeof pm?.printTopListAllDirect !== "function") {
-      alert("PrintModal unterst\u00fctzt keine Top-Liste.");
-      return;
-    }
-    try {
-      const res = await pm.printTopListAllDirect({ projectId: effectiveProjectId, meetingId: meetingId || this.currentMeetingId || null });
-      return res;
-    } finally {
-      await this.closePrintModal({ keepPreview: false });
-    }
+    if (typeof pm?.printTopListAllDirect !== "function") { alert("PrintModal unterst\u00fctzt keine Top-Liste."); return; }
+    try { return await pm.printTopListAllDirect({ projectId: effectiveProjectId, meetingId: meetingId || this.currentMeetingId || null }); } finally { await this.closePrintModal({ keepPreview: false }); }
   }
 
-  // Service-nahe Integrationen fuer Projektkontext-Quicklane und modale Kontextbearbeitung.
   async _ensureProjectContextQuicklane() {
     if (this._projectContextLane) return this._projectContextLane;
     if (this._projectContextLaneLoading) return await this._projectContextLaneLoading;
-
     this._projectContextLaneLoading = (async () => {
       const mod = await import("../ui/ProjectContextQuicklane.js");
       const Lane = mod.default;
       this._projectContextLane = new Lane({ router: this });
       return this._projectContextLane;
     })();
-
-    try {
-      return await this._projectContextLaneLoading;
-    } finally {
-      this._projectContextLaneLoading = null;
-    }
+    try { return await this._projectContextLaneLoading; } finally { this._projectContextLaneLoading = null; }
   }
 
   async openProjectContextQuicklane(opts = {}) {
@@ -1505,15 +878,10 @@ export default class Router {
     const effectiveProjectId = this._resolveProjectId(projectId);
     if (!effectiveProjectId) return;
     if (this._projectFormModal) return;
-
-    const cleanup = () => {
-      this._projectFormModal = null;
-    };
-
+    const cleanup = () => { this._projectFormModal = null; };
     try {
       const mod = await import("../modules/projektverwaltung/index.js");
       const ProjectFormScreen = mod.ProjectFormScreen;
-
       const view = new ProjectFormScreen({
         router: this,
         projectId: effectiveProjectId,
@@ -1526,7 +894,6 @@ export default class Router {
           cleanup();
         },
       });
-
       this._projectFormModal = view;
       view.render();
       await view.load();
@@ -1540,19 +907,13 @@ export default class Router {
   async _ensureHelpModal() {
     if (this._helpModal) return this._helpModal;
     if (this._helpModalLoading) return await this._helpModalLoading;
-
     this._helpModalLoading = (async () => {
       const mod = await import("../ui/HelpModal.js");
       const HelpModal = mod.default;
       this._helpModal = new HelpModal();
       return this._helpModal;
     })();
-
-    try {
-      return await this._helpModalLoading;
-    } finally {
-      this._helpModalLoading = null;
-    }
+    try { return await this._helpModalLoading; } finally { this._helpModalLoading = null; }
   }
 
   async openHelpModal() {
