@@ -46,6 +46,15 @@ technische Dienst fuehrt die bereits vorhandenen Router-/`PrintModal`-Operatione
 keine Protokoll-Dokumentart, kein Fach-ViewModel, keine Layoutregel und keinen Dateinamen.
 Renderer, Satzweg, Preview, Speicherung und Druck bleiben unveraendert.
 
+## Mail-Grenze
+
+Der produktive Abschlussdialog liegt als `mail/ProtokollMailFlow.js` im Fachmodul. Er besitzt
+Empfaengerauswahl, Protokollanhaenge, Betreff/Text und den Abschlussbezug. Den fertig aufgebauten
+Payload uebergibt der bestehende Header-Adapter an `features/mail/MailTransportService.js`;
+dort bleiben Outlook/mailto, Attachment-Fehlerbehandlung und technische Transportnormalisierung
+fachneutral gemeinsam. Der
+historische Pfad `features/mail/MailFlow.js` ist nur noch ein Kompatibilitaets-Re-Export.
+
 Die Ordner `components/`, `domain/`, `data/`, `state/`, `viewmodel/`, `dialogs/` und `rules/`
 sind absichtlich schon angelegt, damit spaetere Umzuege dort sauber anschliessen koennen.
 

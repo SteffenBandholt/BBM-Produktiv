@@ -33,7 +33,7 @@ async function runAusgabeModuleTests(run) {
   const legacySendMailSource = read("src/renderer/services/mail/sendMailPayload.js");
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
   const mainHeaderSource = read("src/renderer/ui/MainHeader.js");
-  const mailFlowSource = read("src/renderer/features/mail/MailFlow.js");
+  const mailFlowSource = read("src/renderer/modules/protokoll/mail/ProtokollMailFlow.js");
   const mainSource = read("src/main/main.js");
 
   await run("Ausgabe: Modul exportiert PrintModal und sendMailPayload", () => {

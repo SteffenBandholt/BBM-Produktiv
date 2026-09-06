@@ -151,7 +151,7 @@ async function runPopupFormStandardTests(run) {
     const projects = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
     const firms = read("src/renderer/views/FirmsView.js");
     const editbox = read("src/renderer/modules/protokoll/SharedEditboxCore.js");
-    const mailFlow = read("src/renderer/features/mail/MailFlow.js");
+    const mailFlow = read("src/renderer/modules/protokoll/mail/ProtokollMailFlow.js");
     const mainHeader = read("src/renderer/ui/MainHeader.js");
     const popupCommon = read("src/renderer/ui/popupCommon.js");
 
