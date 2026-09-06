@@ -234,6 +234,11 @@ export default class RestarbeitenScreen {
         this.draft = prepareDraft();
       }
       this.error = null;
+    } catch (error) {
+      const detail = normalizeText(error?.message || error);
+      this.error = detail
+        ? `Restarbeiten konnten nicht geladen werden: ${detail}`
+        : "Restarbeiten konnten nicht geladen werden.";
     } finally {
       this.isLoading = false;
       this._renderShell();
