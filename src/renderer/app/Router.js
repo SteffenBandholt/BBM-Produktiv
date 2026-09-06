@@ -1,16 +1,16 @@
 // src/renderer/app/Router.js
 
 import {
-  findActiveModuleEntry,
-  getActiveGlobalModuleNavigation,
   getActiveProjectModuleNavigation,
   PROTOKOLL_MODULE_ID,
   resolveActiveModuleScreen,
 } from "./modules/index.js";
 import {
+  findCachedActiveModuleEntry,
   isModuleActive,
   refreshCachedActiveModuleAccess,
 } from "./modules/moduleAccessState.js";
+import { openModuleEntry } from "./modules/moduleRouteRuntime.js";
 import { resolveProjectProtocolEntry } from "./projectProtocolRouting.js";
 import { createEditorLabScreen } from "../uiV2/editorLab/EditorLabScreen.js";
 import { createEditorLabRegistry } from "../uiV2/editorLab/editorLabRegistry.js";
@@ -566,88 +566,45 @@ export default class Router {
     await this.ensureActiveModuleAccess({ force: true });
     const effectiveProjectId = this._resolveProjectId(projectId);
     const normalizedModuleId = String(moduleId || "").trim();
-    const normalizedNavigationKey = String(options?.navigationKey || "").trim();
     if (!effectiveProjectId || !normalizedModuleId) return false;
 
-    if (normalizedModuleId === PROTOKOLL_MODULE_ID) {
-      return await this.openProjectProtocol(effectiveProjectId, options || {});
-    }
-
-    const moduleNavigationEntries = getActiveProjectModuleNavigation().filter(
-      (entry) => String(entry?.moduleId || "").trim() === normalizedModuleId
-    );
-    const navEntry = normalizedNavigationKey
-      ? moduleNavigationEntries.find(
-          (entry) => String(entry?.key || "").trim() === normalizedNavigationKey
-        ) || null
-      : moduleNavigationEntries[0] || null;
-    if (!navEntry) return false;
-
-    const moduleScreen =
-      resolveActiveModuleScreen(normalizedModuleId, navEntry.workScreenId) || null;
-    if (typeof moduleScreen !== "function") return false;
+    const moduleEntry = findCachedActiveModuleEntry(normalizedModuleId);
+    if (!moduleEntry) return false;
 
     const project = options && typeof options === "object" ? options.project || null : null;
-    const pageTitle = String(options?.pageTitle || navEntry?.label || "").trim() || null;
-    const activeModuleLabel =
-      String(options?.activeModuleLabel || navEntry?.label || "").trim() || null;
-    const moduleEntry = findActiveModuleEntry(normalizedModuleId);
-    const hideSidebar =
-      options?.hideSidebar === true ||
-      navEntry?.hideSidebar === true ||
-      moduleEntry?.shell?.hideSidebar === true;
-
-    this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: null });
-    await this.show(
-      new moduleScreen({
-        router: this,
-        projectId: effectiveProjectId,
-        project,
-        moduleId: normalizedModuleId,
-      }),
-      {
-        section: navEntry.section || normalizedModuleId,
-        isTopsView: false,
-        pageTitle,
-        activeModuleLabel,
-        hideSidebar,
-      }
-    );
-
-    return true;
+    return await openModuleEntry({
+      moduleEntry,
+      scope: "project",
+      navigationKey: String(options?.navigationKey || "").trim(),
+      projectId: effectiveProjectId,
+      project,
+      router: this,
+      options,
+      show: this.show.bind(this),
+    });
   }
 
   async openGlobalModule(moduleId, options = {}) {
     await this.ensureActiveModuleAccess({ force: true });
     const normalizedModuleId = String(moduleId || "").trim();
-    const normalizedNavigationKey = String(options?.navigationKey || "").trim();
-    if (!normalizedModuleId || !this._isModuleActive(normalizedModuleId)) return false;
+    if (!normalizedModuleId) return false;
 
-    const moduleNavigationEntries = getActiveGlobalModuleNavigation().filter(
-      (entry) => String(entry?.moduleId || "").trim() === normalizedModuleId
-    );
-    const navEntry = normalizedNavigationKey
-      ? moduleNavigationEntries.find((entry) => String(entry?.key || "").trim() === normalizedNavigationKey) || null
-      : moduleNavigationEntries[0] || null;
-    if (!navEntry) return false;
+    const moduleEntry = findCachedActiveModuleEntry(normalizedModuleId);
+    if (!moduleEntry) return false;
 
-    const moduleScreen = resolveActiveModuleScreen(normalizedModuleId, navEntry.workScreenId);
-    if (typeof moduleScreen !== "function") return false;
-    const moduleEntry = findActiveModuleEntry(normalizedModuleId);
-    await this.show(new moduleScreen({ router: this, moduleId: normalizedModuleId }), {
-      section: navEntry.section || normalizedModuleId,
-      isTopsView: false,
-      pageTitle: String(navEntry.label || "").trim() || null,
-      activeModuleLabel: String(navEntry.label || "").trim() || null,
-      hideSidebar: navEntry.hideSidebar === true || moduleEntry?.shell?.hideSidebar === true,
+    return await openModuleEntry({
+      moduleEntry,
+      scope: "global",
+      navigationKey: String(options?.navigationKey || "").trim(),
+      router: this,
+      options,
+      show: this.show.bind(this),
     });
-    return true;
   }
 
   _getProjectWorkspaceModules() {
     const uniqueNavigationKeys = [];
     const activeModules = getActiveProjectModuleNavigation()
-      .filter((entry) => this._isModuleActive(entry?.moduleId))
       .map((entry) =>
         Object.freeze({
           moduleId: String(entry?.moduleId || "").trim(),

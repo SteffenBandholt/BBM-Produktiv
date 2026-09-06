@@ -1,4 +1,4 @@
-import { findActiveModuleEntry } from "./moduleCatalog.js";
+import { findCachedActiveModuleEntry } from "./moduleAccessState.js";
 import {
   resolveModuleScreenFromEntry,
   resolveModuleWorkScreenFromEntry,
@@ -12,11 +12,11 @@ function findResolvedActiveModuleEntry(moduleId) {
   const normalizedModuleId = normalizeKey(moduleId);
   if (!normalizedModuleId) return null;
 
-  return findActiveModuleEntry(normalizedModuleId);
+  return findCachedActiveModuleEntry(normalizedModuleId);
 }
 
-// App-Kern: kleine modulbezogene Screen-Aufloesung.
-// Keine Navigation, keine Discovery und keine allgemeine Plattformmechanik.
+// App-Kern: kleine modulbezogene Screen-Aufloesung aus dem aktuell aktiven
+// Modulset. Keine Navigation, keine Discovery und keine fachliche Sonderlogik.
 export function resolveActiveModuleScreen(moduleId, screenId) {
   const normalizedScreenId = normalizeKey(screenId);
   if (!normalizedScreenId) return null;

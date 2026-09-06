@@ -15,6 +15,16 @@ class RechnungEditorScreen extends RechnungScreen {
   }
 }
 
+function buildRechnungNavigationEntry() {
+  return Object.freeze({
+    key: RECHNUNG_NAV_ENTRY_KEY,
+    label: RECHNUNG_MODULE_LABEL,
+    moduleId: RECHNUNG_MODULE_ID,
+    workScreenId: RECHNUNG_WORK_SCREEN_ID,
+    section: "rechnungen",
+  });
+}
+
 export function getRechnungModuleEntry() {
   return createModuleDescriptor({
     moduleId: RECHNUNG_MODULE_ID,
@@ -34,15 +44,8 @@ export function getRechnungModuleEntry() {
       ]),
     }),
     navigation: Object.freeze({
-      global: Object.freeze([
-        Object.freeze({
-          key: RECHNUNG_NAV_ENTRY_KEY,
-          label: RECHNUNG_MODULE_LABEL,
-          moduleId: RECHNUNG_MODULE_ID,
-          workScreenId: RECHNUNG_WORK_SCREEN_ID,
-          section: "rechnungen",
-        }),
-      ]),
+      global: Object.freeze([buildRechnungNavigationEntry()]),
+      project: Object.freeze([buildRechnungNavigationEntry()]),
     }),
     ipcRegistrar: "rechnung",
     migrationRegistrar: "rechnung",
