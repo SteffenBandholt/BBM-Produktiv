@@ -622,15 +622,7 @@ export default class Router {
         return true;
       });
 
-    return [
-      ...activeModules,
-      Object.freeze({
-        moduleId: "projectFirms",
-        navigationKey: "projectFirms",
-        label: "Firmen im Projekt",
-        description: "Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen.",
-      }),
-    ];
+    return activeModules;
   }
 
   async showFirmsPool(projectId) {

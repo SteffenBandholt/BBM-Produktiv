@@ -14,6 +14,7 @@ const TEST_GROUPS = Object.freeze([
       ["topsActionPolicy.test.cjs", "runTopsActionPolicyTests"],
       ["topsScreen.integration.test.cjs", "runTopsScreenIntegrationTests"],
       ["projectFirmsActiveFlow.test.cjs", "runProjectFirmsActiveFlowTests"],
+      ["projectFirmsCoreOwnership.test.cjs", "runProjectFirmsCoreOwnershipTests"],
       ["firmDirectory.test.cjs", "runFirmDirectoryTests"],
       ["firmDirectoryIpc.test.cjs", "runFirmDirectoryIpcTests"],
       ["projectTransferFirmLogic.test.cjs", "runProjectTransferFirmLogicTests"],
