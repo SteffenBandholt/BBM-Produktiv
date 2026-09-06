@@ -1,0 +1,32 @@
+name: Paket 3 Core Patch
+
+on:
+  push:
+    branches:
+      - core-271-paket3-projektfirmen-core
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[paket3-patched]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: core-271-paket3-projektfirmen-core
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Apply Paket 3 patches
+        run: node scripts/paket3CorePatch.cjs
+      - name: Commit patched sources
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/main/main.js src/renderer/app/Router.js src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js scripts/testGroups.cjs
+          git diff --cached --quiet && exit 0
+          git commit -m "Core #271 Paket 3: Projektfirmen aus Pseudo-Modulrolle loesen [paket3-patched]"
+          git push origin HEAD:core-271-paket3-projektfirmen-core
