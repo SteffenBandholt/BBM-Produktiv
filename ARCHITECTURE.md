@@ -11,6 +11,8 @@ Sie haelt fest:
 
 Diese Datei ist **kein** Tagesstatus, **kein** Detailplan und **kein** Git- oder Arbeitsmodus-Handbuch.
 
+Der aktuelle technische Ist-Stand und die verbindliche Ausgangsbasis der BBM-Revision sind in [docs/revision/01_REPOSITORY_BESTANDSAUFNAHME.md](docs/revision/01_REPOSITORY_BESTANDSAUFNAHME.md) dokumentiert. Bei Aussagen zum aktuellen Implementierungsstand geht diese Bestandsaufnahme aelteren Meilenstein-/Pilotformulierungen vor.
+
 ---
 
 ## 1. Architekturziel
@@ -19,7 +21,7 @@ BBM wird schrittweise zu einer **modularen App** umgebaut.
 
 Das Ziel ist:
 - die App kann mit einem, mehreren oder spaeter anderen Fachmodulen laufen
-- `Protokoll` ist ein Fachmodul
+- `Protokoll`, `Restarbeiten` und `Rechnung` sind im aktuellen technischen Modulregister bereits als Module gefuehrt; ihre fachliche und technische Bereinigung ist unterschiedlich weit fortgeschritten
 - der App-Kern bleibt fuer Host-, Navigations- und Aktivierungsaufgaben zustaendig
 - gemeinsame Kernbausteine, gemeinsame Domaenen und gemeinsame Dienste bleiben ausserhalb der Fachmodule
 
@@ -32,32 +34,28 @@ Die gesamte App folgt dabei verbindlich dem **Mutter-/Kind-Prinzip**:
 - Kinder-Apps pruefen nur ihre Lizenz, freigeschaltete Module, Laufzeit und Updateberechtigung.
 - Dieses Prinzip gilt fuer die gesamte App, nicht nur fuer die Lizenzierung.
 
-Nicht jedes Modul ist ein auswählbares Projektmodul:
-- Auswählbare Projektmodule sind nur fachliche Arbeitsbereiche innerhalb eines Projekts.
-- Aktuell auswählbar ist `Protokoll`.
-- Spaeter moeglich ist `Restarbeiten`.
-- M21-Klarstellung: `Restarbeiten` ist in BBM bereits erreichbar, bleibt aber fachlich/funktional unfertig und ist fuer den UI-Editor nur Pilot-Scope.
-- M21-Klarstellung: `Protokoll` ist noch nicht fertig bereinigt und wird fuer UI-Editor-Themen defensiv/read-only eingeordnet.
-- `Ausgabe / Drucken / E-Mail` ist kein auswählbares Projektmodul, sondern ein Maschinenraum-Dienst.
-- `Audio / Diktat` ist kein auswählbares Projektmodul, sondern ein Maschinenraum-Dienst.
+Nicht jedes Modul ist ein auswaehlbares Projektmodul:
+- Auswaehlbare Projektmodule sind nur fachliche Arbeitsbereiche innerhalb eines Projekts.
+- `Protokoll` und `Restarbeiten` sind im aktuellen technischen Modulregister als `project` gefuehrt.
+- `Rechnung` ist im aktuellen technischen Modulregister als `hybrid` gefuehrt und darf deshalb nicht pauschal wie ein reines Projektmodul behandelt werden.
+- Der konkrete sichtbare Modulzugang richtet sich nach Modulrahmen, Projektkontext und Freigabelogik; aeltere Pilotformulierungen duerfen den aktuellen technischen Registry-Stand nicht ueberschreiben.
+- `Ausgabe / Drucken / E-Mail` ist kein auswaehlbares Projektmodul, sondern ein Maschinenraum-Dienst.
+- `Audio / Diktat` ist kein auswaehlbares Projektmodul, sondern ein Maschinenraum-Dienst.
 - `Dictate` ist das Lizenz-/Produktfeature hinter dem sichtbaren Feature `audio`.
 - `Diktieren` ist der Entwicklungs-/Technikbereich in `Einstellungen -> Entwicklung`.
 - `Diktierprodukt` ist die fachliche Einheit unter `Diktieren`.
 - `Whisper` ist aktuell nur die technische Engine unter dem `Diktierprodukt`; die Whisper-Modelle haengen deshalb unter `Diktierprodukt / Engine Whisper`.
 - `Woerterbuch` ist ein vorbereiteter Baustein innerhalb von `Diktieren`.
 - `Lizenzierung` ist in der Mutter-App ein Verwaltungs-/Maschinenraum-Bereich, in Kinder-Apps nur Lizenzpruefung und Status.
-- Die geplante Lizenzverwaltung wird als eigenes Adminmodul beschrieben: [docs/modules/lizenzverwaltung.md](docs/modules/lizenzverwaltung.md).
-- Das geplante Fachmodul `SiGeKo` wird im fuehrenden Fachkonzept beschrieben: [docs/modules/sigeko.md](docs/modules/sigeko.md).
+- Die Lizenzverwaltung wird als eigenes Adminmodul beschrieben: [docs/modules/lizenzverwaltung.md](docs/modules/lizenzverwaltung.md).
+- Das geplante Fachmodul `SiGeKo` wird im fuehrenden Fachkonzept beschrieben: [docs/modules/sigeko.md](docs/modules/sigeko.md). Fachlich ist es umfangreich geplant, im produktiven Modulordner aber noch nicht implementiert.
 - `Settings`, `Updates`, `Backup` und `Diagnose` sind Maschinenraum oder Verwaltung, keine Projektmodule.
 - Die Projektverwaltung setzt den Projektkontext und oeffnet den Projekt-Arbeitsbereich.
-- Die Projektverwaltung ist nicht fachlicher Besitzer des `Protokoll`-Moduls.
+- Die Projektverwaltung ist nicht fachlicher Besitzer einzelner Fachmodule.
 - Die Projektverwaltung kann Projekte anlegen, bearbeiten, archivieren, wiederherstellen und auswaehlen.
-- Ein Projektklick startet nicht direkt `Protokoll`; er oeffnet den Projekt-Arbeitsbereich.
-- Der Projekt-Arbeitsbereich zeigt das aktive Projekt und bietet nur auswaehlbare Projektmodule an.
-- Aktuell ist `Protokoll` auswaehlbar; spaeter kann `Restarbeiten` hinzukommen.
-- Der UI-Editor-Status aendert diese Modulfreigabe nicht: `Restarbeiten` bleibt Pilot-Scope, `Protokoll` bleibt defensiv/read-only.
+- Ein Projektklick startet nicht zwingend direkt ein einzelnes Fachmodul; er kann den neutralen Projekt-Arbeitsbereich oeffnen.
+- Der Projekt-Arbeitsbereich zeigt das aktive Projekt und bietet nur im jeweiligen Stand freigegebene/aktivierte Projektmodule an.
 - Maschinenraum-Dienste werden von Fachmodulen genutzt, aber nicht als gleichberechtigte Projektmodule angeboten.
-- Der Projekt-Arbeitsbereich ist technisch umgesetzt; der Projektklick fuehrt jetzt zuerst dort hin.
 
 Der Umbau erfolgt:
 - konservativ
@@ -114,14 +112,20 @@ Dazu koennen insbesondere gehoeren:
 - wiederverwendbare Bearbeitungskerne und neutrale Feldbausteine
 
 ### 3.3 Fachmodule
-Aktuell relevante Fachmodule:
-- `Protokoll`
-- `Restarbeiten` als erreichbarer, aber fachlich/funktional unfertiger Pilot-Scope fuer den UI-Editor
+Im aktuellen technischen Modulregister gefuehrt:
+- `Protokoll` (`project`)
+- `Restarbeiten` (`project`)
+- `Rechnung` (`hybrid`)
+
+Dabei gilt:
+- `Protokoll` ist produktiv, besitzt aber noch historischen Modularisierungs-/Kompatibilitaetsbestand.
+- `Restarbeiten` ist implementiert; parallel existiert eine V2-/Read-only-/Migrationsschicht, deren verbleibende Aufgabe in der Revision geklaert werden muss.
+- `Rechnung` besitzt bereits einen substanziellen Implementierungsstand und wird nicht mehr als reiner Entwurf behandelt.
 
 Geplantes Fachmodul:
-- `SiGeKo`; fuehrendes Fachkonzept: [docs/modules/sigeko.md](docs/modules/sigeko.md)
+- `SiGeKo`; fuehrendes Fachkonzept: [docs/modules/sigeko.md](docs/modules/sigeko.md). Die fachliche Planung ist weit fortgeschritten, eine produktive Modulimplementierung unter `src/renderer/modules/` steht noch aus.
 
-Diese bleiben fachlich getrennt.
+Diese Fachmodule bleiben fachlich getrennt.
 
 `TopsScreen` ist **nicht** das Modul `Protokoll`, sondern nur der Arbeitsscreen fuer die Protokollerstellung innerhalb des Moduls `Protokoll`.
 
@@ -129,12 +133,13 @@ Die heutige TOP-Workbench ist **nicht automatisch** der globale Standard fuer an
 
 ### 3.4 UI-Editor-kit und Ziel-App-Prinzip
 
-BBM-Produktiv ist fuer das generische UI-Editor-kit nur Beispiel-/Pilot-Zielapp.
+BBM-Produktiv ist fuer das generische UI-Editor-kit Ziel-App/Integrationspartner, der Editor selbst bleibt generisch.
 
 Der UI-Editor bleibt generisch:
 - keine BBM-Fachlogik im Editor
 - keine Restarbeiten-Fachlogik im Editor
 - keine Protokoll-Fachlogik im Editor
+- keine Rechnungs- oder SiGeKo-Fachlogik im Editor
 - keine Datenbank-, IPC- oder Speicherlogik als Editor-Fachlogik
 
 Das verbindliche Registry-Prinzip lautet:
@@ -143,6 +148,8 @@ Das verbindliche Registry-Prinzip lautet:
 - Nicht registrierte Elemente existieren fuer den Editor nicht.
 - Der Editor darf die Ziel-App-Oberflaeche nicht selbst untersuchen.
 - Keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung.
+
+Die BBM-Revision muss den aktuellen produktfuehrenden Integrationsweg von historischen Editor-, Inspector-, Pilot- und V2-Pfaden trennen; sie darf daraus keinen zweiten Editor-Core erzeugen.
 
 ---
 
@@ -159,6 +166,7 @@ Bei allen Umbauten gelten dauerhaft diese Leitplanken:
 - keine automatische UI-Erkennung, kein UI-Scanning und keine automatische Registry-Befuellung fuer den UI-Editor
 - bestehende Funktionalitaet bleibt erhalten
 - Uebergaenge duerfen voruebergehend bestehen, muessen aber bewusst und ehrlich benannt bleiben
+- Legacy- und Parallelbestand wird erst nach Import-, Runtime- und Abhaengigkeitspruefung entfernt
 
 ---
 
@@ -174,6 +182,7 @@ Ausdruecklich ausserhalb der Fachmodule bleiben:
 - Modul-/Screen-Aufloesung
 
 Fachlogik soll nicht aus Bequemlichkeit in diese Bereiche zurueckgezogen werden.
+Gemeinsame Infrastruktur soll umgekehrt nicht fachmodulspezifisch dupliziert werden.
 
 ---
 
@@ -187,6 +196,7 @@ Nicht ohne klares Paket und klare Begruendung:
 - aggressive Altpfadbereinigung
 - Massenmigration
 - Doku oder Struktur schoenreden, wenn der technische Stand das noch nicht traegt
+- einen vorhandenen tragfaehigen gemeinsamen Dienst in einem Fachmodul neu bauen
 
 ---
 
@@ -199,6 +209,8 @@ Ein tragfaehiger Zustand ist erst dann erreicht, wenn der Modulrahmen fachlich u
 2. weitere freigegebene Module gemeinsam betrieben werden koennen
 3. nicht freigegebene Module im Rahmen des aktuellen Ausbaustands sauber nicht aktiviert sind
 4. Router, Navigation, Modul-/Screen-Aufloesung und Moduleinstiege auf diesen aktiven Modulumfang korrekt reagieren
+5. gemeinsame Domaenen und Dienste nicht zwischen Fachmodulen dupliziert werden
+6. historische Uebergangspfade klar benannt und kontrolliert abgebaut werden koennen
 
 Die dafuer noetige Freigabelogik gehoert in den App-Kern und den Modulrahmen.
 Die Fachlogik bleibt in den Modulen.
@@ -214,7 +226,7 @@ Verbindlich gilt fuer jeden neuen groesseren Goal-Lauf, insbesondere fuer neue F
 1. **Vor Beginn Branch- und Integrationsstand pruefen.**
    - Relevante aktive Entwicklungsbranches muessen vor dem Start betrachtet werden.
    - Es ist festzulegen, welcher Stand fuer den aktuellen Goal-Lauf die fuehrende Ausgangsbasis ist.
-   - Ein neuer Fachmodul-Branch wird nicht automatisch von `main` abgeleitet, wenn relevante gemeinsame Infrastruktur auf anderen Branches weiterentwickelt wird.
+   - `main` ist die Produktivbasis; abweichende gemeinsame Entwicklungsstaende muessen ausdruecklich begruendet und benannt werden.
 
 2. **Gemeinsame Infrastruktur nicht duplizieren.**
    - Modulrahmen, Projekt- und Firmendomaenen, UI-Editor, PDF-/Layout-Editor, Persistenz, gemeinsame Dienste und Lizenz-/Freigabelogik duerfen nicht fachmodulspezifisch noch einmal aufgebaut werden, wenn dafuer bereits ein gemeinsamer Entwicklungsstrang existiert.
@@ -249,3 +261,17 @@ AUSGANGSBASIS / INTEGRATION
 ```
 
 Diese Regel gilt fachmoduluebergreifend und nicht nur fuer `SiGeKo`.
+
+---
+
+## 9. Revisionsregel ab September 2026
+
+Die Repository-Revision arbeitet fuer jeden relevanten Bereich mit vier verbindlichen Klassen:
+1. **BEHALTEN**
+2. **KONSOLIDIEREN**
+3. **LEGACY PRUEFEN**
+4. **SPAETER**
+
+Die vollstaendige Ausgangsbasis steht in [docs/revision/01_REPOSITORY_BESTANDSAUFNAHME.md](docs/revision/01_REPOSITORY_BESTANDSAUFNAHME.md).
+
+Vor strukturellen Loeschungen oder breiten Verschiebungen muss die Besitzgrenze im BBM-Core geklaert sein. Die Reihenfolge der Revision ist deshalb: Core zuerst, danach Protokoll und Restarbeiten, anschliessend SiGeKo/Rechnung sowie darauf aufbauende mobile Funktionen.
