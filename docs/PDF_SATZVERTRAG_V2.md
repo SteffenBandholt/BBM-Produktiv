@@ -87,7 +87,7 @@ keinen zweiten Renderer und keine zweite Paginierung.
 | `print:openHtmlPreview` | produktive Alternative | Zeigt denselben Print-Renderer sichtbar, erzeugt aber noch keine Datei. |
 | `print:toPdfAndPreviewInternal` | produktive Alternative | Erzeugt über den kanonischen Weg und öffnet Chromium-interne PDF-Vorschau. |
 | `print:toPdfAndOpen` | produktive Alternative | Erzeugt kanonisch und öffnet extern über `shell.openPath`. |
-| `src/renderer/modules/restarbeiten/RestarbeitenOutputPreview.js` | historische HTML-Alternative | Bleibt vorhanden, ist aber nicht mehr der Restarbeiten-Produktweg und keine PDF-Paginierungsquelle. |
+| `src/renderer/modules/restarbeiten/RestarbeitenOutputPreview.js` | entfernte historische HTML-Alternative | Nach negativem Import-/Export-/Runtime-Referenznachweis in Restarbeiten-Revision #273 entfernt; war kein Produktweg und keine PDF-Paginierungsquelle. |
 | `src/renderer/print/v2/pdfSatzvertragV2.js` | Testdescriptor, verhaltensneutral | Liest nur bei explizitem Fixture-Flag Seitenmodell und DOM-Metriken; verändert keine Ausgabe. |
 | `scripts/pdf-v2/**` | Test/Acceptance | Neutrale Fixture-Daten, isolierter Electron-Harness und Hashmanifest; keine Produktdaten. |
 | `src/renderer/print/printApp.js` Auto-Layout-/Dev-Bereich | nur Development/Diagnose | Nur bei expliziter Development-Layoutvorschau; nicht Satzquelle und nicht im Release aktivierbar. |
