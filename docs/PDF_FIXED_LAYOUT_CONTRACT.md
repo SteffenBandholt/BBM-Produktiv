@@ -55,12 +55,41 @@ Kein Print-Renderer und keine V2-Satzregel wird verändert.
 - Der erste während paralleler Änderungen gestartete BBM-Lauf wurde verworfen:
   bestehender unstaged-diff-Guard brach eine Gruppe ab. Maßgeblich sind getrennte
   saubere Basis/Kandidaten mit vollständigem Prüffallvergleich.
-- Native Windows/.NET-10-Vertragsprüfungen sind vorbereitet, lokal mangels .NET
-  nicht ausführbar. Dazu gehört ein CI-Job mit separater Basis-/Head-Prüfung im Kit.
-- Automatische Freigabeprüfung hat den Kit-Push wegen fehlender expliziter
-  Veröffentlichungsfreigabe abgelehnt. Kein Push/PR/Merge als erfolgt behauptet.
+- Native Windows/.NET-10-Vertragsprüfungen wurden nach Freigabe in CI ausgeführt;
+  lokal fehlt .NET. Ergebnis und Baseline stehen im CI-Abschluss unten.
+- Die erste Veröffentlichungsblockade wurde durch ausdrückliche Nutzerfreigabe
+  aufgelöst. Die beiden Prüf-PRs sind veröffentlicht; Nachweise folgen unten.
 
-S1.4/S1.4a bleiben bis zum bestandenen nativen Vertragsnachweis blockiert.
+Historischer Zwischenstand vor der Freigabe: S1.4/S1.4a waren bis zum nativen Vertragsnachweis blockiert.
 Gesicherter alter S1.4a-Arbeitsstand wurde nicht eingespielt. S1.5 nicht begonnen.
 Eine echte Overlay-PDF, Editorbedienung, Windows-Paketierung oder Druckpipeline
 sind kein in diesem Vertragspaket erbrachter Nachweis.
+
+## CI-Abschluss nach Veröffentlichungsfreigabe
+
+Die Veröffentlichung wurde ausdrücklich freigegeben. Über die GitHub-Anbindung
+wurden die lokal geprüften Trees bytegleich übertragen; der direkte Git-CLI-Push
+hatte keine Anmeldung. Prüf-PRs: UI-Editor-kit #93 / BBM-Produktiv #321.
+
+Nativer Nachweis: https://github.com/SteffenBandholt/UI-Editor-kit/actions/runs/34160014785
+- Basis 0240ef8: 34 bestanden / 1 fehlgeschlagen / 0 übersprungen.
+- Kit-Codehead 689ab1f0ba0be94094edeeccba8dc1cb8522c9ae:
+  42 bestanden / 1 fehlgeschlagen / 0 übersprungen, acht neue Tests bestanden.
+- Identischer Fehlername: VisibleUiPdfEndToEndUsesTwoRealProcessesAndCleansArtifacts.
+  In beiden Jobs derselbe Prozess-Exitcode -1073741811; kein neuer Vertragsfehler.
+- Der zunächst gefundene neue Analyzerfehler MSTEST0037 wurde ausschließlich
+  durch Assert.HasCount im Test korrigiert. Der Folgelauf kompiliert erfolgreich.
+- Der vollständige native Prüflauf ist wegen der genannten Baseline weiterhin rot.
+  Sichtbare Windows-Editorbedienung wird nicht als abgenommen behauptet.
+
+Kit-Standard-CI bleibt bei der schon lokal auf Basis reproduzierten M82.3-
+Quelltextassertion rot (erwartetes altes 860/1260-Dreispaltenlayout).
+BBM-Standard-CI #1041 bleibt bei den acht bekannten Popup-/Lizenzfehlern und
+fehlendem ui-editor-kit im vorhandenen CI-Aufbau rot. Maßgeblicher vollständiger
+BBM-Paketvergleich mit echtem Kit bleibt 1499/99 -> 1506/99 ohne neue Fehler und
+mit vollständigem bisherigen Fallinventar.
+
+Das fachneutrale Vertragspaket ist technisch geprüft. PR-/Mergezuordnung wird
+in BBM #274 dokumentiert. Danach kann S1.4a als eigenes Paket fortgesetzt werden.
+S1.4a ist durch dieses Vertragspaket noch nicht implementiert oder abgenommen;
+S1.5 nicht begonnen, Rechnung #275 bleibt eingefroren.

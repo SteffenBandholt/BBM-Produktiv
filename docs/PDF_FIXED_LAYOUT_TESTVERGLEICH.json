@@ -199,6 +199,28 @@
       ]
     }
   },
-  "nativeWindowsGate": "Not executed: no local .NET; push auto-review rejected; prepared CI must pass before integration",
-  "publication": "No push, PR or merge; approval pending"
+  "nativeWindowsGate": {
+    "run": "https://github.com/SteffenBandholt/UI-Editor-kit/actions/runs/34160014785",
+    "base": {
+      "passed": 34,
+      "failed": 1,
+      "skipped": 0
+    },
+    "candidate": {
+      "passed": 42,
+      "failed": 1,
+      "skipped": 0
+    },
+    "head": "689ab1f0ba0be94094edeeccba8dc1cb8522c9ae",
+    "sameFailure": "VisibleUiPdfEndToEndUsesTwoRealProcessesAndCleansArtifacts",
+    "sameProcessExitCode": -1073741811,
+    "newTestsPassed": 8,
+    "firstAttemptCorrection": "MSTEST0037: Assert.HasCount replaces count Assert.AreEqual"
+  },
+  "publication": {
+    "authorized": true,
+    "kitPr": "https://github.com/SteffenBandholt/UI-Editor-kit/pull/93",
+    "bbmPr": "https://github.com/SteffenBandholt/BBM-Produktiv/pull/321",
+    "mergeEvidence": "BBM issue #274"
+  }
 }
