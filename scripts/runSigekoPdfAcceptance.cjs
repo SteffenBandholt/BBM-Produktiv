@@ -128,6 +128,14 @@ async function runWorker() {
     assert.ok(regeneratedPdf.textItems.some((item) => stored.textItems.some((old) => old.text === item.text && item.fontSizePoints > old.fontSizePoints + 0.5)), "Schriftgroessen-Aenderung ist im erzeugten PDF nicht nachweisbar");
     assert.ok(isPathInside(profile.rootPath, generated.controlledOutputPath));
     assert.ok(Array.isArray(generated.renderBounds) && generated.renderBounds.some((entry) => entry.elementId === editable.id || entry.id === editable.id), "Bearbeitetes Element fehlt in echten Render-Bounds");
+    for (const definition of REGISTRY.elements.filter((entry) => entry.kind === "text")) {
+      const measured = generated.renderBounds.find((entry) => entry.elementId === definition.id)?.box;
+      assert.ok(measured, `Reale Bounds fehlen: ${definition.id}`);
+      for (const field of ["x", "y", "width", "height"]) {
+        assert.ok(Math.abs(measured[field] - definition.baseline[field]) < 0.3,
+          `Registry-/DOM-Abweichung ${definition.id}.${field}: ${measured[field]} statt ${definition.baseline[field]}`);
+      }
+    }
     report.checks.editorRegeneration = { elementId: editable.id, previousFontSize: before.fontSize, fontSize, metadata: generated, pdf: regeneratedPdf };
     report.ok = true;
   } catch (error) {

@@ -86,3 +86,36 @@ jobs:
             /tmp/bbm-ui-editor-acceptance-*/temp/**/*.pdf
             ${{ runner.temp }}/*-golden.json
             ${{ runner.temp }}/golden-comparison.json
+
+  windows-pdf:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: BBM-Produktiv
+      - uses: actions/checkout@v4
+        with:
+          repository: SteffenBandholt/UI-Editor-kit
+          ref: 5e0d551d93e97c32d169ea6d5107186a44ecd47f
+          path: UI-Editor-kit
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install candidate
+        working-directory: BBM-Produktiv
+        run: npm ci
+      - name: Real Windows PDF, storage, preview and editor regeneration
+        working-directory: BBM-Produktiv
+        run: npm run test:sigeko:s1.4a
+      - name: Preserve Windows acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sigeko-pdf-windows-evidence
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/bbm-ui-editor-acceptance-*/acceptance-result.json
+            ${{ runner.temp }}/bbm-ui-editor-acceptance-*/internal-preview.png
+            ${{ runner.temp }}/bbm-ui-editor-acceptance-*/Ablage/**/*.pdf
+            ${{ runner.temp }}/bbm-ui-editor-acceptance-*/temp/**/*.pdf
