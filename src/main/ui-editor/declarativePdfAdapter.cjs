@@ -23,7 +23,11 @@ function persistedRegistryFingerprint(registry) {
     if (operations.has("resize")) { operations.add("resizeWidth"); operations.add("resizeHeight"); }
     return [entry.id, entry.scopeId, entry.parentId || "", kindNames[entry.kind], roleNames[entry.role] || "Content", capabilityNames.filter(([operation]) => operations.has(operation)).map(([, name]) => name).join(","), pageAreaNames[entry.pageArea] || "Body", String(entry.order), entry.boundaryResizePolicy || ""].join("|");
   }).join("\n");
-  return crypto.createHash("sha256").update(canonical, "utf8").digest("hex");
+  // Native PdfRegistryFingerprint uses the same additive prefix. Legacy hashes stay byte-identical.
+  const page = registry.pageSettings;
+  const prefix = registry.layoutModel === "fixed-layout"
+    ? `fixed-layout|${page.format}|${page.orientation}|${page.width}|${page.height}\n` : "";
+  return crypto.createHash("sha256").update(prefix + canonical, "utf8").digest("hex");
 }
 
 function persistedFields(definition) {
@@ -155,6 +159,16 @@ function createDeclarativePdfAdapter({ applicationId = "bbm-produktiv", document
   }
 
   function reconcilePersistedProfile(previousRegistry) {
+    const previousModel = previousRegistry.layoutModel ?? "tabular";
+    const currentModel = normalizedRegistry.layoutModel ?? "tabular";
+    const pageIdentity = (registry) => {
+      const page = registry.pageSettings;
+      return JSON.stringify([page.format, page.orientation, page.width, page.height,
+        ...["top", "right", "bottom", "left"].map((side) => page.margins[side])]);
+    };
+    if (previousModel !== currentModel || currentModel === "fixed-layout" && pageIdentity(previousRegistry) !== pageIdentity(normalizedRegistry)) {
+      throw Object.assign(new Error("PDF-Modell oder Seitenvertrag darf nicht additiv migriert werden."), { code: "pdf_layout_incompatible" });
+    }
     const filePath = getPdfProfilePath();
     if (!filePath || !fs.existsSync(filePath)) return { migrated: false, addedElementIds: [] };
     const document = JSON.parse(fs.readFileSync(filePath, "utf8"));

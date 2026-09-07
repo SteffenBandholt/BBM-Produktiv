@@ -22,6 +22,18 @@ function elementSignature(element) {
   return JSON.stringify(stableValue(element));
 }
 
+function registryLayoutIdentityErrors(acceptedRegistry, candidateRegistry) {
+  const acceptedModel = acceptedRegistry?.layoutModel ?? "tabular";
+  const candidateModel = candidateRegistry?.layoutModel ?? "tabular";
+  const errors = [];
+  if (acceptedModel !== candidateModel) errors.push("layoutModel");
+  if (acceptedModel === "fixed-layout" && candidateModel === "fixed-layout" &&
+      elementSignature(acceptedRegistry?.pageSettings) !== elementSignature(candidateRegistry?.pageSettings)) {
+    errors.push("pageSettings");
+  }
+  return errors;
+}
+
 function identityFromRegistration(registration) {
   return Object.freeze({
     documentTypeId: registration.documentTypeId,
@@ -132,6 +144,7 @@ function analyzePdfDocumentType(registration, acceptedRecord = null) {
 
   const acceptedIdentity = ["documentTypeId", "moduleId", "scopeId", "profileStorageKey", "contractVersion"];
   const identityErrors = acceptedIdentity.filter((key) => acceptedRecord[key] !== identity[key]);
+  identityErrors.push(...registryLayoutIdentityErrors(acceptedRecord.registry, candidate.registry));
   const acceptedElements = new Map((acceptedRecord.registry?.elements || []).map((element) => [element.id, element]));
   const activeElementIds = new Set(activeElementIdsOf(acceptedRecord));
   const candidateElements = new Map((candidate.registry?.elements || []).map((element) => [element.id, element]));
@@ -180,6 +193,13 @@ function analyzePdfDocumentType(registration, acceptedRecord = null) {
 }
 
 function mergeAdditiveRegistry(acceptedRegistry, candidateRegistry, newElementIds) {
+  const identityErrors = registryLayoutIdentityErrors(acceptedRegistry, candidateRegistry);
+  if (identityErrors.length) {
+    throw Object.assign(new TypeError("PDF-Layoutmodell oder feste Seitendefinition ist nicht additiv kompatibel."), {
+      code: "pdf_registry_sync_invalid",
+      validationErrors: identityErrors.map((field) => ({ code: "pdf_registry_identity_incompatible", field })),
+    });
+  }
   const additions = new Set(newElementIds);
   const elements = [
     ...(acceptedRegistry?.elements || []).map(clone),

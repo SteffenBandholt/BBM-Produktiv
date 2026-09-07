@@ -1,3 +1,11 @@
+## 2026-09-07 – PDF fixed-layout Vertragspaket vor S1.4a
+
+Fachneutrale Kit-Erweiterung und BBM-Registry-/Profilanschluss vorbereitet.
+7/7 neue Integrationstests grün; main 1499/99, Kandidat 1506/99, exakt gleiche
+Fehlernamen und keine fehlenden Tests. Legacy-Descriptor-/Profilhashes bytegleich.
+Native Windows-CI und Veröffentlichung offen (Kit-Push automatisch abgelehnt).
+Details: docs/PDF_FIXED_LAYOUT_CONTRACT.md. Kein S1.4a-/S1.5-Fortgang.
+
 ## Rechnung #275 – Paket 4d (2026-09-06)
 
 Auf main-Basis 62bf2fb (PR #313–#315) Nachtragsanlage und atomare Bestätigung
