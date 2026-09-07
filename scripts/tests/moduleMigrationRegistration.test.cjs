@@ -104,7 +104,7 @@ async function runModuleMigrationRegistrationTests(run) {
   await run("Paket 5: Main konfiguriert Migrationen aus demselben Lizenzstatus wie Fach-IPCs", () => {
     const main = read("src/main/main.js");
     assert.match(main, /const licenseStatus = checkLicense\(\)/);
-    assert.match(main, /configureDatabaseMigrations\(licenseStatus\)/);
+    assert.match(main, /configureDatabaseMigrations\(licenseStatus, \{ allowLegacyImport: !uiEditorAcceptanceProfile.enabled \}\)/);
     assert.match(main, /registerActiveModuleIpcs\(\{\s*licenseStatus,/s);
   });
 

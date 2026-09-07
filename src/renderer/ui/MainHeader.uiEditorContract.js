@@ -63,7 +63,19 @@ export const rechnungMainHeaderLauncherUiEditorContract = launcherComponent({
   order: 9,
 });
 
+export const SIGEKO_MAIN_HEADER_LAUNCHER = Object.freeze({
+  componentId: "bbm.sigeko.mainHeaderLauncher",
+  scopeId: "sigeko.screen",
+  elementId: "sigeko.header.action.openUiEditor",
+});
+
+export const sigekoMainHeaderLauncherUiEditorContract = launcherComponent({
+  ...SIGEKO_MAIN_HEADER_LAUNCHER,
+  parentId: "sigeko.screen",
+  order: 12,
+});
+
 export function getMainHeaderLauncherContract(scopeId) {
-  return [RESTARBEITEN_MAIN_HEADER_LAUNCHER, PROTOKOLL_MAIN_HEADER_LAUNCHER, RECHNUNG_MAIN_HEADER_LAUNCHER]
+  return [RESTARBEITEN_MAIN_HEADER_LAUNCHER, PROTOKOLL_MAIN_HEADER_LAUNCHER, RECHNUNG_MAIN_HEADER_LAUNCHER, SIGEKO_MAIN_HEADER_LAUNCHER]
     .find((entry) => entry.scopeId === String(scopeId || "").trim()) || null;
 }

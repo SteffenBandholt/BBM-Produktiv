@@ -1,3 +1,4 @@
+import { sigekoScreenUiEditorContract } from "../modules/sigeko/SigekoScreen.uiEditorContract.js";
 import { restarbeitenFilterbarUiEditorContract } from "../modules/restarbeiten/RestarbeitenFilterbar.uiEditorContract.js";
 import { restarbeitenQuicklaneUiEditorContract } from "../modules/restarbeiten/RestarbeitenQuicklane.uiEditorContract.js";
 import { restarbeitenListUiEditorContract } from "../modules/restarbeiten/RestarbeitenList.uiEditorContract.js";
@@ -7,15 +8,18 @@ import { protokollListColumnsUiEditorContract, protokollListUiEditorContract } f
 import { protokollEditUiEditorContract } from "../modules/protokoll/TopsWorkbench.uiEditorContract.js";
 import { rechnungUiEditorContract } from "../modules/rechnungen/RechnungScreen.uiEditorContract.js";
 import {
+  sigekoMainHeaderLauncherUiEditorContract,
   protokollMainHeaderLauncherUiEditorContract,
   restarbeitenMainHeaderLauncherUiEditorContract,
 } from "../ui/MainHeader.uiEditorContract.js";
 import { aggregateBbmM83Components } from "./m83ComponentContract.js";
 
-export const BBM_M80_REGISTRY_VERSION = 28;
+export const BBM_M80_REGISTRY_VERSION = 29;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
+  sigekoScreenUiEditorContract,
+  sigekoMainHeaderLauncherUiEditorContract,
   restarbeitenFilterbarUiEditorContract,
   restarbeitenQuicklaneUiEditorContract,
   restarbeitenListUiEditorContract,
@@ -52,13 +56,14 @@ function blockedScope(scopeId, name, reason = "registration_inventory_pending") 
 export const BBM_M80_ACTIVE_SCOPES = Object.freeze([
   "restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root",
   "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root",
-  "rechnung.screen",
+  "rechnung.screen", "sigeko.screen",
 ]);
 
 export const BBM_M80_ACTIVE_SCOPE_GROUPS = Object.freeze([
   Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]),
   Object.freeze(["protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root"]),
   Object.freeze(["rechnung.screen"]),
+  Object.freeze(["sigeko.screen"]),
 ]);
 
 export const BBM_M80_REGISTRY_SCOPES = Object.freeze([

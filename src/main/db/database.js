@@ -12,6 +12,7 @@ const { runModuleMigrations } = require("../moduleMigrationRegistry");
 
 let db;
 let configuredModuleIds = null;
+let allowLegacyImport = true;
 
 function getDbPaths() {
   const userDataPath = app.getPath("userData");
@@ -36,6 +37,7 @@ function getFileStatOrEmpty(filePath) {
 }
 
 function resolveLegacySourcePath(paths = getDbPaths()) {
+  if (!allowLegacyImport) return null;
   if (fs.existsSync(paths.legacyImportPath)) return paths.legacyImportPath;
   if (fs.existsSync(paths.legacyDbPath)) return paths.legacyDbPath;
   return null;
@@ -85,6 +87,7 @@ function isDbLikelyEmpty(dbPath, compareLegacyPath = null) {
 }
 
 function ensureLegacyImportCopy(paths = getDbPaths()) {
+  if (!allowLegacyImport) return;
   if (app.isPackaged || process.env.NODE_ENV === "production") return;
   if (!fs.existsSync(paths.legacyDbPath)) return;
   fs.mkdirSync(paths.legacyImportDir, { recursive: true });
@@ -1915,7 +1918,8 @@ function ensureProtokollSchema(dbConn) {
   ensureAudioTermCorrectionsSchema(dbConn);
 }
 
-function configureDatabaseMigrations(licenseStatus) {
+function configureDatabaseMigrations(licenseStatus, options = {}) {
+  allowLegacyImport = options.allowLegacyImport !== false;
   configuredModuleIds = [...resolveActiveModuleIds(licenseStatus)];
   return Object.freeze([...configuredModuleIds]);
 }

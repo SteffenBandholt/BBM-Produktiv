@@ -4537,3 +4537,25 @@ Wichtig:
   Volltest 473 grün / dieselben 9 Baselinefehler gegenüber 463/9 auf Ausgangs-main.
 - Nachweis: `docs/SIGEKO_S1_1.md`; PR/Integration und Commit werden in #274 dokumentiert.
 - Nächster offener Schritt: S1.2 einschließlich isolierter Windows-Abnahme, nicht begonnen.
+
+
+## SiGeKo S1.2 – 2026-09-07: nach neuer Editor-Manifest-Regression gestoppt
+
+Lokaler Arbeitsbranch `codex/sigeko-s1-2-entry-acceptance`, Basis `d7fb63a`.
+12/12 Pakettests und 10/10 S1.1 gruen; Gesamtvergleich mit echtem Kit zeigt
+97 unveraenderte Baselinefehler plus 11 neue Prueffehler. Zielmanifest noch nicht
+an neuen Scope/Registryversion/Fingerprint angepasst; bestehender Profilrestore
+schlaegt neu fehl. Kein Commit, kein PR, kein Merge. Windows-Abnahme offen.
+Ursache, Testversionen und notwendige Fortsetzung: `docs/SIGEKO_S1_2_BLOCKER.md`.
+S1.3 nicht begonnen. Rechnung unangetastet.
+
+
+## SiGeKo S1.2-Fix – Manifest behoben, Windows-Abnahme offen
+
+Das kanonische Zielmanifest enthaelt SiGeKo; bestehende Scope-Fingerprints und
+Profil-Restore bleiben erhalten. 6/6 Fix-, 12/12 S1.2-, 10/10 S1.1-Tests gruen.
+Alle elf zuvor neuen Prueffehler beseitigt. Frischer main-Vergleich: 1464/99,
+Paket: 1482/99; exakt gleiche 99 Baselinefehler. Keine neue Regression.
+Voriger S1.2-Blocker damit aufgehoben. Draft-PR fuer Windows-/Editor-Abnahme,
+kein Merge und kein S1.3. Nachweise: `docs/SIGEKO_S1_2.md` und
+`docs/SIGEKO_S1_2_TESTVERGLEICH.json`; PR/Commit in #274.

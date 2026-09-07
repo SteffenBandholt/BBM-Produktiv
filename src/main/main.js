@@ -11,7 +11,7 @@ const { configureUiEditorAcceptanceProfile } = require("./startup/uiEditorAccept
 
 const uiEditorAcceptanceProfile = configureUiEditorAcceptanceProfile({ electronApp: app });
 const UI_EDITOR_ACCEPTANCE_MODULE_SWITCH = "--bbm-ui-editor-acceptance-module=";
-const UI_EDITOR_ACCEPTANCE_MODULES = new Set(["restarbeiten", "protokoll", "rechnung"]);
+const UI_EDITOR_ACCEPTANCE_MODULES = new Set(["restarbeiten", "protokoll", "rechnung", "sigeko"]);
 const RECHNUNG_BUTTON_ACCEPTANCE_SWITCH = "--bbm-rechnung-button-geometry-acceptance=";
 const RECHNUNG_BUTTON_ACCEPTANCE_ACTIONS = new Set(["Run", "RestoreOnly"]);
 
@@ -574,7 +574,7 @@ async function maybePromptLegacyMigration(win) {
 app.whenReady().then(async () => {
   // ✅ IPCs zuerst registrieren (verhindert "No handler registered" beim invoke)
   const licenseStatus = checkLicense();
-  configureDatabaseMigrations(licenseStatus);
+  configureDatabaseMigrations(licenseStatus, { allowLegacyImport: !uiEditorAcceptanceProfile.enabled });
   registerProjectsIpc();
   registerCoreProjectFirmsIpc();
   registerFirmDirectoryIpc();
