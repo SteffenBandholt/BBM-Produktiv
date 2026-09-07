@@ -45,6 +45,10 @@ jobs:
       - name: Install baseline
         working-directory: BBM-base
         run: npm ci
+      - name: Configure Electron sandbox helpers
+        run: |
+          sudo chown root:root BBM-Produktiv/node_modules/electron/dist/chrome-sandbox BBM-base/node_modules/electron/dist/chrome-sandbox
+          sudo chmod 4755 BBM-Produktiv/node_modules/electron/dist/chrome-sandbox BBM-base/node_modules/electron/dist/chrome-sandbox
       - name: Real PDF, storage, internal preview and editor regeneration
         working-directory: BBM-Produktiv
         run: xvfb-run -a npm run test:sigeko:s1.4a
