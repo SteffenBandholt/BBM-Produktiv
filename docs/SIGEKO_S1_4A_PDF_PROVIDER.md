@@ -77,3 +77,39 @@ Der fokussierte GitHub-Workflow erzeugt zusätzlich alle 49 bestehenden Golden-
 Fixtures auf Basis und Kandidat in derselben Umgebung und vergleicht die kompletten
 Strukturhashes und Seitenzahlen. Ergebnisse und Einschränkungen werden nach dem
 Lauf hier ergänzt; bisherige Baselinefehler sind keine bestandenen Tests.
+
+## Ausgeführte Abnahme / Grenzen (2026-09-07)
+
+- Vollständiger sauberer Electron-ABI-Lauf mit echtem Kit: Basis 1506 grün /
+  99 rot; Kandidat 1514 grün / exakt dieselben 99 Fehlernamen. Kein
+  Bestandsprüffall fehlt. Alle acht neuen Vertragstests bestanden. Namen und
+  Loghashes: `SIGEKO_S1_4A_TESTVERGLEICH.json`.
+- GitHub-Lauf [34162498993](https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34162498993):
+  echte PDF-/Ablage-/Preview-/Regenerationsabnahme auf Windows und Linux grün.
+  Titelgröße tatsächlich im PDF von rund 14 auf 15 pt geändert; Text unverändert.
+  Registry-/DOM-Bounds innerhalb 0,3 mm. Alle 49 Bestands-Struktursnapshots und
+  Seitenzahlen exakt gleich zwischen Basis und Kandidat.
+- Die Produkt-PDF wurde zusätzlich mit Poppler gerendert und visuell geprüft:
+  Titel und Text lesbar, keine Überlagerung oder abgeschnittenen Inhalte.
+  Die zunächst zu früh aufgenommene dunkle Vorschauaufnahme wurde korrigiert:
+  Der abschließende Lauf wartet auf zwei stabile Bilder der sichtbaren PDF-Seite.
+  Die Windows-Vorschauaufnahme wurde visuell geprüft; Titel und Text sind sichtbar.
+  Vier gemountete explizite Editor-Refs entsprechen vollständig der Registry.
+  Ein realer 400-mm-Body wird als Overflow abgewiesen; Restore funktioniert und
+  der Test lässt sämtliche erzeugten PDF-Dateien bytegleich.
+- Lokaler GUI-Lauf kann kein BrowserWindow erzeugen; er bleibt ausdrücklich
+  fehlgeschlagen. GitHub-Prüfungen ersetzen hier den fehlenden Display-Runtime.
+  Erste CI-Anläufe scheiterten an einer unnötigen Kit-Installation und nicht
+  eingerichteten Linux-Sandbox-Helpern; die Runner-Konfiguration wurde korrigiert.
+- Vorhandene NotoSans-Fontladewarnungen bleiben sichtbar. Die Fontdateien sind
+  unverändert; der Strukturvergleich verwendet auf beiden Ständen denselben Bestand.
+- Standard-BBM-CI bleibt wegen vorhandener Baselinefehler und fehlender
+  UI-Editor-kit-Installation rot. Keine Baselineassertion wurde abgeschwächt.
+- Kein manueller Bediennachweis der nativen Windows-Editoroberfläche: geprüft
+  sind die echte PDF-Erzeugung, interne Electron-Vorschau, bestehende Registry,
+  Adapteroperation und tatsächliche Editor-Regeneration.
+
+PR: [#322](https://github.com/SteffenBandholt/BBM-Produktiv/pull/322), Basis `main`,
+Arbeitsbranch `codex/sigeko-s1-4a-provider`. Nächster Meilenstein nach technischer
+Abnahme ist S1.4; S1.5 wird nicht vorgezogen. A2-SiGePlan- und Vorankündigungsvorlagen
+bleiben unverändert.

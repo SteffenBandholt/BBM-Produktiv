@@ -1,0 +1,264 @@
+{
+  "baseCommit": "db0ca2fe94a51e9c27ba163a1571bc3bebe6a655",
+  "kitCommit": "5e0d551d93e97c32d169ea6d5107186a44ecd47f",
+  "baseline": {
+    "passed": 1506,
+    "failed": 99
+  },
+  "candidate": {
+    "passed": 1514,
+    "failed": 99
+  },
+  "newFailures": [],
+  "missingTests": [],
+  "newPassingTests": [
+    "S1.4a: bounded technical data rejects missing text and excess single-page input",
+    "S1.4a: common profile restore preserves font size and rejects invalid persisted values",
+    "S1.4a: denied license, missing project and invalid storage reject before provider execution",
+    "S1.4a: explicit provider identity and module guard precede content production",
+    "S1.4a: fixed-layout text operations enforce limits atomically and lock domain changes",
+    "S1.4a: malformed and mismatched provider contexts never fall back to protocol",
+    "S1.4a: print bridge contains no module implementation or second PDF engine",
+    "S1.4a: registered regeneration keeps explicit project, document, provider and storage context"
+  ],
+  "unchangedBaselineFailures": [
+    "#272 Mail 4b: Protokoll-PDF-Suche behaelt bestehende Dateinamenskandidaten",
+    "meetingTopsRepo: erledigte TOPs werden nur im direkten Folgeprotokoll uebernommen",
+    "ProjectFirmsView: laedt project_firms per IPC und wendet gespeicherte UI-Breiten an",
+    "ProjectFirmsView: fehlender Layout-Payload faellt auf Standardlayout zurueck",
+    "Protokoll Quicklane-Filter sitzt in der screen-eigenen rechten Toolbox",
+    "Protokoll-Projektpfad: Projekt-Einstiege nutzen die Projekt-Protokollauflosung",
+    "Protokoll-Projektpfad: openProjectModule reicht blocked-Payload durch",
+    "Projektverwaltung: Router importiert die Screen-Klassen aus dem Modulpfad",
+    "Projektverwaltung: Legacy-Projekt-Arbeitsbereich bleibt isoliert",
+    "Projektverwaltung: sichtbare Firmenbegriffe sind klarer benannt",
+    "Projektverwaltung: Projektklick startet direkt den Protokollpfad",
+    "Projektverwaltung: blockiertes Protokoll wird beim Hauptklick nicht als Erfolg behandelt",
+    "Projektverwaltung: DEV-Version schaltet Modulfreigabe auf alle aktiven Module frei",
+    "Projektverwaltung: Projektkarte rendert rechte Modul-Aktionsleiste und stoppt Bubble",
+    "Projektverwaltung: coreShellHeaderBridge kapselt die Header-/Router-Bridges",
+    "Projektverwaltung: MainHeader source nutzt den textbasierten Kopfbereich",
+    "M86.13: Protokoll und Restarbeiten erhalten den einen zweizeiligen MainHeader",
+    "Projektverwaltung: MainHeader rendert zwei gemeinsame Zeilen mit Plan und DEV-Marker",
+    "Projektverwaltung: Legacy-Projekt-Arbeitsbereich bleibt isoliert",
+    "Projektverwaltung: Router haelt den Legacy-Projekt-Arbeitsbereich getrennt",
+    "Restarbeiten: generischer UI-Editor-Target-Contract ist erfuellt",
+    "Restarbeiten: Quicklane besitzt echte UI-Editor-Gruppen im DOM",
+    "Restarbeiten: Quicklane-Ampel schaltet auch das Editbox-Ampelsymbol",
+    "Restarbeiten M85.2: Produktvorschau nutzt gefilterte Reihenfolge und internen V2-PDF-Weg",
+    "Restarbeiten: Notiz-Popup bleibt offen und kennzeichnet nicht verfügbaren Druck ehrlich",
+    "Rechnung Step 1.4/2: echter Screen verbindet Belegkopf und Positionsarbeit",
+    "Rechnung Navigation: kanonischer globaler Moduldeskriptor loest den echten Screen auf",
+    "Rechnung Navigation: DRAFT-Eingaben speichern seriell ohne Positionsverlust",
+    "Rechnung Editbox: Inhalt wird nur beim Fokuswechsel vollstaendig markiert",
+    "Rechnung Editbox: Menge bleibt dezimalfaehig, rechtsbuendig und wird durch den 0-bis-4-Stepper begrenzt",
+    "Rechnung Editbox: Gesamtbetrag nutzt die vorhandenen Rechnungssummen dynamisch und formatiert Euro",
+    "Rechnung Preisbedienung: Brutto-Haken rechnet den sichtbaren EP wirtschaftlich gleich um",
+    "Rechnung Briefkopf: Ausstellerdaten bleiben im Kopf schlank, Finanzdaten stehen im Blattfuß",
+    "Rechnung Textlimits: nutzt zentrale Protokoll-Limits, Counter und Settings-Aktualisierung",
+    "Rechnung UI: vertikale Rahmen- und Grenzabstaende sind null",
+    "Rechnung Navigation: normaler Start wartet auf Modulzugriff und nutzt keinen DEV-Pfad",
+    "Rechnung Hierarchie-UI: Anlegekontext, Tiefensperre, Schieben und FROM_ORDER-Sperre folgen dem Protokollprinzip",
+    "Rechnung Navigation: normaler Arbeitsweg rendert das Rechnungsblatt mit Bau-LV und getrennten Anwendungsaktionen",
+    "Rechnungsbuttons: reale Chromium-BoundingBox folgt fuer alle 16 Ziele der angeforderten Breite und Hoehe",
+    "Popup-Standard: aktiviert die freigegebenen Rechnungen- und Produktdialoge",
+    "Popup-Standard: Protokoll-, Firmen- und Teilnehmerdialoge nutzen die zentrale Opt-in-Basis",
+    "Popup-Standard: Import-, Textkorrektur- und Maildialoge nutzen die Opt-in-Basis",
+    "HomeView: zentrales Icon ist sichtbar verkleinert",
+    "HomeView: letzter Projektstart fragt zuerst den Modulstatus ab",
+    "M85 Satzvertrag: alle strukturellen Golden-Snapshots sind reproduzierbar",
+    "M85 Satzvertrag: Tabellenkopf, Reihenfolge, Grenzfall und TOP-Fortsetzung bleiben stabil",
+    "M85 Satzvertrag: Level-1 bleibt mit erstem Inhalt zusammen und Abschluss bleibt als Block zusammen",
+    "M85.2 Restarbeiten: Querformat, 13 Spalten, Filterfolge, Tabellenkopf und Fortsetzungen sind verriegelt",
+    "PDF-V2-INVOICE-002 bis -010: Kopf, Bau-LV, Abschluss und Seitenfooter sind golden verriegelt",
+    "M85 Satzvertrag: Teilnehmerzeilen werden vollständig und mit wiederholtem Tabellenkopf segmentiert",
+    "M85 Satzvertrag: Vorbemerkungen werden wortgenau und sichtbar fortgesetzt",
+    "M85 Satzvertrag: Editor darf Satz- und Fachoperationen nicht freigeben",
+    "M85 Satzvertrag: Editor-Overlay bleibt vor der bestehenden Paginierung",
+    "M85 PDF-Bedienung: Position, Schrift und Seitenwert-Sichtbarkeit wirken im echten Print-DOM",
+    "M85 PDF-Bedienung: innere Spaltengrenze bleibt in Track, Kopf und Daten lueckenlos",
+    "M85 PDF-Readback: Tabellenspalten liefern reale seitenbezogene Track-Geometrie",
+    "M85 PDF-Bedienung: Teilnehmer-Tabelle bleibt bis zur Nutzflaechenkante lueckenlos",
+    "M85 PDF-Meta: Body-Zeilen nutzen die gemeinsame innere Spaltenbreite",
+    "M85 PDF-Bedienung: Tabellenkopf-Text bewegt sich innerhalb der unveraenderten Spalte",
+    "M85 Satzvertrag: Renderer, Paginierung, Profilweg und Altpfade bleiben eindeutig",
+    "Ausgabe: Level-1-Titel reicht vorhandene ToDo- und Beschlusskennzeichnungen in das PDF durch",
+    "Ausgabe: bestehender Outlook-COM-Weg fuegt alle ausgewaehlten Dateien als echte Anhaenge an",
+    "Ausgabe: Abschlusslisten werden pro Protokollstand eindeutig benannt und gespeichert",
+    "Lizenzmodell: APP/PDF/MAIL/EXPORT bleiben als Alias auf Modul Protokoll erlaubt",
+    "FeatureGuard: Standardfeatures mit gueltiger Lizenz erlaubt",
+    "Development-Lizenz: paketierter Diagnostic-Build erhaelt gueltigen internen Status",
+    "Development-Lizenz: sichtbare Kennzeichnung und zentraler Print-Buildkanal sind verdrahtet",
+    "M52/M80 Startpunkt: Navigation enthaelt die separate UI-Editor-Aktion",
+    "M52/M80 echte Navigationskette: UI-Editor-Aktion startet keinen Screen",
+    "M54 Legacy-Isolation: CoreShell startet den alten RuntimeLauncher nicht automatisch parallel",
+    "M80.1 BBM: führende Registry, vollständige Restarbeiten-Refs und gesperrte Restscopes",
+    "M80.2 Registry: Header, Liste und Editbox sind direkt aktiv; Split ist gesperrt",
+    "M80/M83 Registry: nativer ElectronPipeHostAdapter bildet alle Rechnungstypen oeffentlich ab",
+    "M81 BBM-PDF-Registry ist explizit, vollstaendig und deterministisch",
+    "M81 nutzt echten BBM-printToPDF-Pfad und kein ReferenceOrder-Modell",
+    "M82 BBM: Target-Manifest leitet alle aktiven Scope-Zahlen exakt aus Komponentenvertrag und Registry ab",
+    "M82.1 BBM 01: Registryversion bleibt konsistent",
+    "M82.2 BBM 33: docs/licensing.md bleibt hashgleich",
+    "M82.3 BBM 01: Registryversion bleibt konsistent",
+    "M82.3 BBM 24: kompakter UI-Workspace hat Ein-Zwei-Drei-Modus",
+    "M82.3 BBM 31: docs/licensing.md bleibt hashgleich",
+    "M82.6 BBM 44: Protokoll-Feld erlaubt direkte Breite",
+    "M82.7.1 BBM 34: die allgemeine technische Speichergrenze bleibt erhalten",
+    "M82.7.1 BBM 39: mehrere Schritte lassen sich exakt rueckgaengig machen",
+    "M82.7.2/M83.0 BBM: Inventar umfasst alle 187 textResize-Ziele in sieben produktiven Scopes",
+    "M86.6 BBM 28: generische content-box-Breite verwendet die sichtbare aktuelle Breite ohne Richtungsumkehr",
+    "M82.7.4 BBM 28: licensing-Dokumentation hat weiterhin den Schutz-Hash",
+    "M82.7.5 BBM 01: Registryversion kennzeichnet den erweiterten Vertrag",
+    "M82.7.5 BBM 34: licensing-Dokumentation behaelt den Schutz-Hash",
+    "M83.0 BBM 05: Restarbeiten, Protokoll und Rechnung sind vollstaendig gebuendelt",
+    "M83.0 Rechnung 01: echter Rechnungsscreen mountet alle 131 Einzel-Refs mit vollstaendigem DOM-Vertrag",
+    "M83.0 BBM 16: Schutzdatei licensing bleibt bytegenau unveraendert",
+    "M86.12 03: Chromium berechnet im normalen Profil drei getrennte Header- und Zeilenspalten",
+    "M86.15 Rechnung 07: Rechnungs-Textareas unterschreiten 24 und ueberschreiten 720 ohne Ersatzgrenze",
+    "M86.16: vollständige sichtbare Registry reagiert je Modulzyklus im echten Chromium-Renderer",
+    "M86.21: Restarbeiten bleibt im Hauptviewport ohne horizontale Ueberbreite",
+    "M86.23 04: Restarbeiten und Protokoll behalten bestätigte Layouts nach Close und Neustart",
+    "M86.24: echte Minus-Bounds und sichtbarer Save-and-continue-Pfad bleiben nach Close und Neustart erhalten",
+    "Testharness: alle bisherigen Suite-Einstiege sind genau einmal gruppiert"
+  ],
+  "logsSha256": {
+    "bbm-candidate.log": "147a78328242c6b853c50df9abc5aea9d853667cb3db067766769d5c3504ec69",
+    "bbm-s14a-final.log": "d81d076246a2673be3894add96a02dda140294d20cc2eb72ec93b07eb36632e5"
+  },
+  "candidateVerifiedCommit": "f1f86f3d0fe456b467b9c78c2a7bd281119b392f",
+  "ci": {
+    "workflowRun": 34162498993,
+    "url": "https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34162498993",
+    "testedCommit": "f1f86f3d0fe456b467b9c78c2a7bd281119b392f",
+    "windows": "success",
+    "linux": "success",
+    "fixtureCount": 49,
+    "identicalPageCounts": true,
+    "identicalStructuralSnapshots": true,
+    "nativeWpfEditorUiVerified": false,
+    "standardWorkflow": "known baseline failures plus absent ui-editor-kit installation"
+  },
+  "windowsAcceptance": {
+    "savedPdf": {
+      "bytes": 26931,
+      "sha256": "86172464ba61e4254dfcc60b8493503fe9eb53470b12514dd91cf31f6f744be5",
+      "pageCount": 1,
+      "pageBox": [
+        0,
+        0,
+        595.91998,
+        842.88
+      ]
+    },
+    "previewPaint": {
+      "visible": true,
+      "width": 1008,
+      "height": 681,
+      "whiteFraction": 0.633853151397011,
+      "pageLeft": 305,
+      "pageRight": 986,
+      "inkSamples": 407,
+      "stableFrames": 2,
+      "screenshotSha256": "0c4ec14f1e23f305c2e7a181ddb6dcff3ead834df97fe8176b613d7a0d520606"
+    },
+    "reopenedUnchanged": true,
+    "rendererOverflow": {
+      "errorCode": "PDF_PROVIDER_LAYOUT_OVERFLOW",
+      "beforeHeight": 566.921875,
+      "restoredHeight": 566.921875,
+      "mountedRefs": [
+        {
+          "id": "pdf.bbm.technical-neutral",
+          "kind": "document",
+          "label": "Technisches Dokument",
+          "parent": "",
+          "editable": "false",
+          "ops": "",
+          "connected": true,
+          "matches": 1,
+          "parentContains": true
+        },
+        {
+          "id": "pdf.bbm.technical-neutral.page",
+          "kind": "page",
+          "label": "Seite",
+          "parent": "pdf.bbm.technical-neutral",
+          "editable": "false",
+          "ops": "",
+          "connected": true,
+          "matches": 1,
+          "parentContains": true
+        },
+        {
+          "id": "pdf.bbm.technical-neutral.title",
+          "kind": "text",
+          "label": "Titel",
+          "parent": "pdf.bbm.technical-neutral.page",
+          "editable": "true",
+          "ops": "textResize",
+          "connected": true,
+          "matches": 1,
+          "parentContains": true
+        },
+        {
+          "id": "pdf.bbm.technical-neutral.body",
+          "kind": "text",
+          "label": "Text",
+          "parent": "pdf.bbm.technical-neutral.page",
+          "editable": "true",
+          "ops": "textResize",
+          "connected": true,
+          "matches": 1,
+          "parentContains": true
+        }
+      ],
+      "pdfFilesUnchanged": true
+    },
+    "regeneratedRenderBounds": [
+      {
+        "elementId": "pdf.bbm.technical-neutral",
+        "pageNumber": 1,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 210,
+          "height": 297
+        }
+      },
+      {
+        "elementId": "pdf.bbm.technical-neutral.page",
+        "pageNumber": 1,
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 210,
+          "height": 297
+        }
+      },
+      {
+        "elementId": "pdf.bbm.technical-neutral.title",
+        "pageNumber": 1,
+        "box": {
+          "x": 11.997,
+          "y": 17.996,
+          "width": 186.005,
+          "height": 19.997,
+          "fontSize": 15
+        }
+      },
+      {
+        "elementId": "pdf.bbm.technical-neutral.body",
+        "pageNumber": 1,
+        "box": {
+          "x": 11.997,
+          "y": 60.991,
+          "width": 186.005,
+          "height": 149.999,
+          "fontSize": 11
+        }
+      }
+    ],
+    "regeneratedPdfSha256": "449c46571b9c63420e165ca469e9defd54e9a022cf87e8bbad4088ce92e944b5"
+  }
+}

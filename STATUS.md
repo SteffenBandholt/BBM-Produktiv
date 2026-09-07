@@ -1,3 +1,22 @@
+## 2026-09-07 – SiGeKo S1.4a: technische PDF-Providerbrücke
+
+S1.4a technisch abgeschlossen, Übergabe über PR #322 gegen main db0ca2f.
+Explizite fachneutrale Providerbrücke, vorhandene PrintShell-Inhaltsslots,
+S1.3-Modulablage und bestehender fixed-layout-Editor-/Regenerationsweg verbunden.
+Kein zweiter PDF-/Editorweg. Technischer A4-Textbeleg; keine SiGeKo-Fachfelder.
+
+Volltest mit echtem Kit: 1506/99 -> 1514/99, exakt gleiche 99 Baselinefehler,
+keine fehlenden Bestandsprüfungen, acht neue Vertragstests grün. GitHub-Lauf
+34162498993 bestätigt Windows/Linux: reale PDF, Speicherung, sichtbare interne
+Vorschau, Wiederöffnen, Schriftwechsel 14->15pt im regenerierten PDF, korrekte
+DOM-Bounds/Refs und Overflow-Abweisung mit Restore. Alle 49 bestehenden
+PDF-Struktursnapshots samt Seitenzahlen auf Basis/Kandidat identisch.
+
+Details und Fehlernamen: docs/SIGEKO_S1_4A_PDF_PROVIDER.md sowie
+docs/SIGEKO_S1_4A_TESTVERGLEICH.json. Native WPF-Editorbedienung nicht manuell
+geprüft; bekannte Standard-CI-/Font-Baseline bleibt dokumentiert. Rechnung #275
+und beide Blankovorlagen unverändert. Nächster Meilenstein S1.4; S1.5 nicht begonnen.
+
 ## 2026-09-07 – PDF fixed-layout Vertragspaket vor S1.4a
 
 Fachneutrale Kit-Erweiterung und BBM-Registry-/Profilanschluss technisch geprüft.
