@@ -5,6 +5,7 @@ import {
 } from "../ui-editor/m80HostAdapter.js";
 import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../ui-editor/m80Refs.js";
 import {
+  SIGEKO_MAIN_HEADER_LAUNCHER,
   PROTOKOLL_MAIN_HEADER_LAUNCHER,
   RESTARBEITEN_MAIN_HEADER_LAUNCHER,
   getMainHeaderLauncherContract,
@@ -47,6 +48,7 @@ export const DEVELOPMENT_UI_EDITOR_BUTTON_LABEL = "UI-Editor öffnen";
 const MAIN_HEADER_LAUNCHER_COMPONENT_IDS = Object.freeze([
   RESTARBEITEN_MAIN_HEADER_LAUNCHER.componentId,
   PROTOKOLL_MAIN_HEADER_LAUNCHER.componentId,
+  SIGEKO_MAIN_HEADER_LAUNCHER.componentId,
 ]);
 
 function isRegisteredMainHeaderLauncher(scopeId) {

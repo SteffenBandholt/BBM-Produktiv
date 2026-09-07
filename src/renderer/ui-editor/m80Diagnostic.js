@@ -1,3 +1,4 @@
+import { installSigekoAcceptancePilot } from "./sigekoAcceptancePilot.js";
 import RestarbeitenScreen from "../modules/restarbeiten/screens/RestarbeitenScreen.js";
 import { bindDevelopmentUiEditorOpenButtonRef } from "../app/coreShellNavigation.js";
 import { getM80Ref } from "./m80Refs.js";
@@ -37,6 +38,7 @@ export async function installBbmM80DiagnosticPilot({ router, module = "restarbei
 }
 
 export async function installBbmM80DiagnosticModule({ router, module = "restarbeiten", isolatedAcceptance = false } = {}) {
+  if (module === "sigeko") return installSigekoAcceptancePilot({ router, isolatedAcceptance });
   if (module === "protokoll") return installProtokollAcceptancePilot({ router, isolatedAcceptance });
   if (module === "rechnung") return installRechnungAcceptancePilot({ router, isolatedAcceptance });
   console.info(`[ui-editor] restarbeiten diagnostic start: isolated=${isolatedAcceptance === true}`);

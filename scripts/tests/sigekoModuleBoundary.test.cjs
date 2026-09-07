@@ -40,20 +40,20 @@ async function runSigekoModuleBoundaryTests(run) {
       assert.equal(registry.getCapabilityLicenseKey(capability), `service:${capability}`);
     }
     assert.ok(Object.isFrozen(renderer));
-    assert.deepEqual(Object.keys(renderer.screens), []);
-    assert.deepEqual(renderer.routes.project, []);
-    assert.deepEqual(renderer.navigation.project, []);
+    assert.equal(typeof renderer.screens.sigeko, "function");
+    assert.deepEqual(renderer.routes.project, [{ screenId: "sigeko" }]);
+    assert.equal(renderer.navigation.project[0].moduleId, "sigeko");
   });
 
-  await run("S1.1: Katalog kennt SiGeKo ohne produktive UI-Freigabe oder neue Routerroute", async () => {
+  await run("S1.1: Katalog kennt SiGeKo mit S1.2-Einstieg ohne neue Routerroute", async () => {
     const catalog = read("src/renderer/app/modules/moduleCatalog.js");
     assert.match(catalog, /getSigekoModuleEntry[\s\S]*from "\.\.\/\.\.\/modules\/sigeko\/index.js"/);
     assert.match(catalog, /moduleId: SIGEKO_MODULE_ID,\s*entry: getSigekoModuleEntry\(\)/);
     const defaults = catalog.split("const DEFAULT_ACTIVE_MODULE_IDS = Object.freeze([")[1].split("]);", 1)[0];
-    assert.doesNotMatch(defaults, /SIGEKO_MODULE_ID/);
+    assert.match(defaults, /SIGEKO_MODULE_ID/);
     const { getSigekoModuleEntry } = await importEsmFromFile(path.join(root, "src/renderer/modules/sigeko/index.js"));
     const runtime = await importEsmFromFile(path.join(root, "src/renderer/app/modules/moduleRouteRuntime.js"));
-    assert.equal(await runtime.openModuleEntry({ moduleEntry: getSigekoModuleEntry(), scope: "project", projectId: "p", show() { assert.fail("S1.2 vorgezogen"); } }), false);
+    assert.equal(await runtime.openModuleEntry({ moduleEntry: getSigekoModuleEntry(), scope: "project", projectId: "p", show(view) { assert.equal(view.projectId, "p"); } }), true);
   });
 
   await run("S1.1: produktiver IPC-Registrar erreicht SiGeKo-Service ohne Protokoll", () => {

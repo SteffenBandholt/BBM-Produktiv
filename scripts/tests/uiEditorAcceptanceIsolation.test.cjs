@@ -96,7 +96,7 @@ async function runUiEditorAcceptanceIsolationTests(run) {
     const main = fs.readFileSync(path.join(process.cwd(), "src/main/main.js"), "utf8");
     const diagnostic = fs.readFileSync(path.join(process.cwd(), "src/renderer/ui-editor/m80Diagnostic.js"), "utf8");
     const invoicePilot = fs.readFileSync(path.join(process.cwd(), "src/renderer/ui-editor/rechnungAcceptancePilot.js"), "utf8");
-    assert.match(main, /new Set\(\["restarbeiten", "protokoll", "rechnung"\]\)/);
+    assert.match(main, /new Set\(\["restarbeiten", "protokoll", "rechnung", "sigeko"\]\)/);
     assert.match(diagnostic, /module === "rechnung"\) return installRechnungAcceptancePilot/);
     assert.match(invoicePilot, /router\.openGlobalModule\("rechnung"\)/);
     assert.match(invoicePilot, /openNativeUiEditor\(\{ scopeId: RECHNUNG_ACCEPTANCE_SCOPE_ID \}\)/);
