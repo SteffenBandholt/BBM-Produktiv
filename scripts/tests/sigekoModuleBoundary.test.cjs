@@ -59,7 +59,7 @@ async function runSigekoModuleBoundaryTests(run) {
   await run("S1.1: produktiver IPC-Registrar erreicht SiGeKo-Service ohne Protokoll", () => {
     const harness = register(status(["sigeko"]));
     assert.deepEqual(harness.result.registeredModuleIds, ["sigeko"]);
-    assert.deepEqual([...harness.handlers.keys()], ["sigeko:getModuleInfo"]);
+    assert.deepEqual([...harness.handlers.keys()], ["sigeko:getStoragePaths", "sigeko:ensureStorageDirectories", "sigeko:openStorageDirectory", "sigeko:getModuleInfo"]);
     assert.deepEqual(harness.handlers.get("sigeko:getModuleInfo")({}), {
       ok: true, module: { moduleId: "sigeko", moduleType: "project" },
     });
@@ -109,7 +109,7 @@ async function runSigekoModuleBoundaryTests(run) {
         };
       },
     });
-    assert.deepEqual(Object.keys(exposed.bbmDb).filter((key) => key.startsWith("sigeko")), ["sigekoGetModuleInfo"]);
+    assert.deepEqual(Object.keys(exposed.bbmDb).filter((key) => key.startsWith("sigeko")), ["sigekoGetStoragePaths", "sigekoEnsureStorageDirectories", "sigekoOpenStorageDirectory", "sigekoGetModuleInfo"]);
     assert.deepEqual(await exposed.bbmDb.sigekoGetModuleInfo(), { ok: true, module: { moduleId: "sigeko", moduleType: "project" } });
     harness.setStatus(status([]));
     await assert.rejects(exposed.bbmDb.sigekoGetModuleInfo(), { code: "MODULE_NOT_ACTIVE" });
@@ -157,7 +157,7 @@ async function runSigekoModuleBoundaryTests(run) {
     }
     const { createSigekoService } = require("../../src/main/domain/sigeko/SigekoService");
     const service = createSigekoService();
-    assert.deepEqual(Object.keys(service), ["getModuleInfo"]);
+    assert.deepEqual(Object.keys(service), ["getStoragePaths", "ensureStorageDirectories", "openStorageDirectory", "getModuleInfo"]);
     assert.ok(Object.isFrozen(service));
     assert.ok(Object.isFrozen(service.getModuleInfo()));
   });

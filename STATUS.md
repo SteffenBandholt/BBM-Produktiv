@@ -4559,3 +4559,30 @@ Paket: 1482/99; exakt gleiche 99 Baselinefehler. Keine neue Regression.
 Voriger S1.2-Blocker damit aufgehoben. Draft-PR fuer Windows-/Editor-Abnahme,
 kein Merge und kein S1.3. Nachweise: `docs/SIGEKO_S1_2.md` und
 `docs/SIGEKO_S1_2_TESTVERGLEICH.json`; PR/Commit in #274.
+
+
+## 2026-09-07 – SiGeKo S1.3: gemeinsame Speicherziele, Windows-Abnahme offen
+
+- Basis main dd79f4f65323f9919b385863cfd6b6095b9aa0dd; S1.1/S1.2 integriert.
+- Branch codex/sigeko-s1-3-storage-targets; PR und veröffentlichter Commit werden in #274 nachgewiesen.
+- Additiv in projectStoragePaths: SiGeKo/Unterlagen, SiGePläne, Zeichnungen, Berichte.
+- Einheitliche Auflösung/Anlage/Öffnen über zentrale Projekt-/Basispfade, begrenzten Service und modularen IPC/Preload.
+- Vorhandener aufrufbezogener baseDir-Override; kein erfundener persistierter Projektpfad und keine SiGeKo-Pfadsettings.
+- S1.3 11/11, S1.1 10/10, S1.2 12/12, Manifest/Restore 6/6 grün.
+- Frische Baseline 1482/99; S1.3 1493/99, exakt dieselben Fehlernamen und alle bisherigen Fälle erreicht.
+- Alter ungestagter V2-Diffguard separat abgegrenzt; keine Assertions abgeschwächt.
+- Nachweise: docs/SIGEKO_S1_3.md und docs/SIGEKO_S1_3_TESTVERGLEICH.json.
+- Windows-/Explorer-Abnahme offen, Draft-PR, kein Merge. Keine UI/PDF/Rechnung geändert.
+- Nächster Schritt ausschließlich lokale S1.3-Abnahme; S1.4 nicht begonnen.
+
+
+## 2026-09-07 – S1.3-Abnahmehilfe ohne DevTools (PR #320)
+
+- Ein Windows-Befehl: npm run test:sigeko:s1.3:windows.
+- Vorhandenes validiertes Acceptance-Temp-Profil, isolierte SQLite-DB und neutrales S13-Projekt.
+- Prüft Vorschau, genau vier Zielordner, Bestandserhalt, Standard/Override und öffnet SiGePläne im Explorer.
+- PASS/FAIL und Temp-Pfad; keine automatische Löschung, konkreter PowerShell-Löschbefehl.
+- Nur Skript/Tests/Paketbefehl/Doku geändert; S1.3-Produktcode bleibt unverändert.
+- 6/6 neue und 11/11 bisherige S1.3-Prüfungen grün. Volltest 1499/99 gegenüber 1493/99, identische Fehlernamen und keine fehlenden Fälle.
+- Branch und PR #320 werden weiterverwendet; Commit-Nachweis in #274.
+- Windows-/Explorer-Abnahme bleibt offen; kein Merge, kein S1.4, keine Rechnung.
