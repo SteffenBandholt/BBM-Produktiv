@@ -394,5 +394,25 @@
     ]
   },
   "unstagedLimitation": "Historischer Restarbeiten-V2-Guard auf git diff --name-only bricht vor 18 weiteren main-Faellen ab; Vergleich nur mit separat vollstaendig geprueftem gestagtem Paketdiff. Keine Assertion geaendert.",
-  "windowsAcceptance": "OFFEN; kein Merge"
+  "windowsAcceptance": "OFFEN; kein Merge",
+  "acceptanceHelper": {
+    "baseCommit": "16fbd82c5b8042a32efd7c31b9f974b64901ce61",
+    "command": "npm test",
+    "logSha256": "0db3d4140dcb706901315bafa1be2e3ceb27ea77fac2322df592792b1564aa46",
+    "passed": 1499,
+    "failed": 99,
+    "newFailures": [],
+    "missingPreviousCases": [],
+    "helperTests": [
+      "S1.3 Abnahmehilfe: echter Service prueft Temp-Standard und Override ohne Loeschung",
+      "S1.3 Abnahmehilfe: unerwartete Ordner und fehlgeschlagener Explorer ergeben Fehler",
+      "S1.3 Abnahmehilfe: ein Befehl startet isolierten Electron-Prozess und meldet PASS mit Loeschhinweis",
+      "S1.3 Abnahmehilfe: Prozessabbruch und Startfehler ergeben FAIL statt PASS",
+      "S1.3 Abnahmehilfe: anderer Rechner startet keine vermeintliche Windows-Abnahme",
+      "S1.3 Abnahmehilfe: echter DB-Neuaufbau bleibt im validierten Temp-Profil"
+    ],
+    "existingS13TestsPassed": 11,
+    "productCodeChanged": false,
+    "windowsExplorerAcceptance": "OFFEN; echte SQLite-Workerprobe mit simuliertem Explorer ist keine Windows-Abnahme"
+  }
 }

@@ -101,50 +101,55 @@ Wiederholen (eingerichtetes echtes UI-Editor-kit und Electron-Abhängigkeiten):
 npm test
 ```
 
-## Lokale Windows-Abnahme – offen
+## Lokale Windows-Abnahme – ein Befehl, noch offen
 
-Nur den vorhandenen isolierten Starter verwenden, mit echtem Kit unter
-`C:\01_Projekte\UI-Editor-kit`. Keine Produktiv-DB und keine Produktivablage.
+Auf dem aktuellen PR-Branch `codex/sigeko-s1-3-storage-targets` im BBM-Verzeichnis:
 
 ```powershell
-Set-Location C:\01_Projekte\BBM-Produktiv
-git fetch origin
-git switch codex/sigeko-s1-3-storage-targets
-$S13TestRoot = Join-Path $env:TEMP ('BBM-S1-3-' + [guid]::NewGuid())
-New-Item -ItemType Directory -Path $S13TestRoot
-$S13TestRoot
-npm run start:ui-editor:acceptance -- --module=sigeko
+npm run test:sigeko:s1.3:windows
 ```
 
-Im isolierten SiGeKo-Testprojekt die Entwicklerkonsole öffnen (Strg+Umschalt+I).
-Ausschließlich den oben erzeugten temporären Pfad einsetzen; im JS forward slashes
-verwenden oder Backslashes verdoppeln. In der Konsole:
+Dies ersetzt den bisherigen DevTools-/JavaScript-Abnahmeweg vollständig.
+Der Befehl verwendet die vorhandene Acceptance-Profilanlage und die vorhandene
+Electron-/ABI-Vorbereitung. Er startet keinen Editor und keine Produkt-UI.
+Das echte Kit muss für diese reine Speicherabnahme nicht gestartet werden.
 
-```js
-const s13Projects = await window.bbmDb.projectsList();
-if (!s13Projects.ok) throw new Error(s13Projects.error);
-const s13Project = s13Projects.list.find(p => p.project_number === 'S12-A');
-if (!s13Project) throw new Error('Isoliertes S12-A-Testprojekt fehlt – stoppen');
-const s13Base = 'HIER_DEN_OBEN_ERZEUGTEN_TEMP_PFAD_EINSETZEN';
-const s13Input = { projectId: s13Project.id, baseDir: s13Base };
-const s13Preview = await window.bbmDb.sigekoGetStoragePaths(s13Input);
-s13Preview;
-await window.bbmDb.sigekoEnsureStorageDirectories(s13Input);
-await window.bbmDb.sigekoOpenStorageDirectory({ ...s13Input, target: 'SiGePläne' });
+Automatisch:
+
+1. Eindeutiges validiertes Temp-Profil unter Windows erzeugen.
+2. Electron auf dieses userData/sessionData setzen, bevor DB-Code geladen wird.
+3. Legacy-Import abschalten, isolierte Core-/SiGeKo-DB und ein neutrales
+   S13-Testprojekt erzeugen. Keine Produktiv-DB oder vorhandenen Projekte verwenden.
+4. Zentrale Ablagebasis ausschließlich in dieser Test-DB auf den Temp-Ordner setzen.
+5. Vorschau ohne Ordneranlage und anschließend exakt Unterlagen, SiGePläne,
+   Zeichnungen, Berichte prüfen. Pfade mit der Vorschau vergleichen.
+6. Erneute Anlage und Erhalt einer temporären Testdatei prüfen.
+7. SiGePläne über den unveränderten Service und Electron shell.openPath öffnen.
+8. Dieselben Prüfungen mit einem abweichenden temporären baseDir wiederholen.
+9. PASS oder FAIL, konkrete Zielpfade und den erhaltenen Temp-Ordner ausgeben.
+
+Bei PASS wurden die automatischen Prüfungen und beide Explorer-Aufrufe erfolgreich
+beendet. Die sichtbaren Ordner bitte noch im geöffneten Explorer kontrollieren.
+Bei FAIL stehen Fehlermeldung und Temp-Pfad in der Konsole; ein Explorer-Fehler
+wird nicht als PASS gemeldet. Ein fehlgeschlagener Electron-Start ist ebenfalls FAIL.
+
+**Keine automatische Löschung:** Die Daten bleiben nach Erfolg und Fehler erhalten.
+Nach der Kontrolle Explorer schließen. Die Konsole gibt den fertigen PowerShell-
+Löschbefehl mit dem konkreten Pfad aus:
+
+```powershell
+Remove-Item -LiteralPath '<ausgegebener Temp-Ordner>' -Recurse -Force
 ```
 
-1. Richtiges isoliertes Projekt und zentrale Projektbenennung prüfen.
-2. Reine Vorschau legt noch keine Ordner an; Anlage erzeugt genau Unterlagen,
-   SiGePläne, Zeichnungen und Berichte unter SiGeKo.
-3. Explorer öffnet den exakt zuvor aufgelösten SiGePläne-Pfad; Unicode stimmt.
-4. Mit `baseDir: s13Base + '/Projekt-Override'` dieselben drei Aufrufe wiederholen.
-   Alle zeigen dieselbe abweichende Basis; ursprüngliche Ordner bleiben erhalten.
-5. Testweise Datei in Unterlagen ablegen; erneute Anlage erhält sie unverändert.
-6. Im isolierten Profil den globalen `pdf.protocolsDir` auf `s13Base` setzen
-   (`await window.bbmDb.appSettingsSetMany({'pdf.protocolsDir': s13Base})`) und
-   `sigekoGetStoragePaths({projectId:s13Project.id})` ohne Override prüfen.
-7. Ungültiger Pfad und ein tatsächlich schreibgeschützter Testordner liefern einen
-   verständlichen Fehler. Keine produktiven Ordner für diesen Versuch verwenden.
+Die zusätzliche Suite `sigekoStorageAcceptance.test.cjs` prüft sechs Fälle:
+realer Service mit Standard/Override, negative Ordner-/Explorer-Fälle,
+Prozessstart/Umgebungsisolation/PASS, Prozessfehler/FAIL, Windows-Beschränkung und
+den tatsächlichen Worker mit realer isolierter SQLite-DB und simuliertem Explorer.
+Ergebnis: **6/6 Abnahmehilfe, 11/11 bestehende S1.3-Tests grün**.
+Vollvergleich: vorher 1493/99, jetzt 1499/99; exakt dieselben Fehlernamen,
+keine fehlenden bisherigen Fälle. S1.1/S1.2/Gate B bleiben grün.
+Die Simulation ist keine behauptete praktische Windows-Abnahme.
+S1.3-Produktcode ist gegenüber Commit 16fbd82 unverändert.
 
-Ergebnisse/Windows-Version/geprüften PR-Commit in #274 festhalten. Keine praktische
-Abnahme in Work behauptet. S1.4 wurde nicht begonnen; Rechnung bleibt eingefroren.
+Praktisches Windows-Ergebnis in #274 melden. PR #320 bleibt Draft und ungemergt;
+S1.4 nicht begonnen, Rechnung unverändert.
