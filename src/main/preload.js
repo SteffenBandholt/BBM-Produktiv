@@ -14,6 +14,9 @@ function _wrapIdArg(name, objKey) {
 
 contextBridge.exposeInMainWorld("bbmDb", {
   // SiGeKo: technische Anwendungsgrenze, noch keine Fachoperationen.
+  sigekoGetStoragePaths: (payload) => ipcRenderer.invoke("sigeko:getStoragePaths", payload),
+  sigekoEnsureStorageDirectories: (payload) => ipcRenderer.invoke("sigeko:ensureStorageDirectories", payload),
+  sigekoOpenStorageDirectory: (payload) => ipcRenderer.invoke("sigeko:openStorageDirectory", payload),
   sigekoGetModuleInfo: () => ipcRenderer.invoke("sigeko:getModuleInfo"),
 
   // ============================================================
