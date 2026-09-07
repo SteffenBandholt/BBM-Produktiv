@@ -36,6 +36,11 @@ require("../ui-editor/restarbeitenPdfAdapter.cjs");
 require("../ui-editor/invoicePdfAdapter.cjs");
 const { createPdfEditorAdapterResolver } = require("../ui-editor/pdfAdapterRegistry.cjs");
 
+const { isProviderRequest, createPdfProviderBridge } = require("../print/pdfProviderBridge");
+require("../ui-editor/technicalPdfAdapter.cjs");
+let _providerBridge;
+function providerBridge() { return _providerBridge || (_providerBridge = createPdfProviderBridge()); }
+
 let _pdfEditorAdapterResolver = null;
 
 function _getPdfEditorAdapterResolver() {
@@ -414,17 +419,18 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
   if (!mode) {
     throw new Error(`Unbekannter Druckmodus: ${String(payload.mode || "").trim() || "-"}`);
   }
-  const projectId = payload.projectId || null;
+  const providerContext = isProviderRequest(payload) ? providerBridge().resolve(payload).request : null;
+  const projectId = providerContext?.projectId || payload.projectId || null;
   const meetingId = payload.meetingId || null;
   const invoiceId = payload.invoiceId || null;
   const invoicePreview = payload.invoicePreview === true;
-  const orientation = _resolveRequestedOrientation(payload);
+  const orientation = isProviderRequest(payload) ? "portrait" : _resolveRequestedOrientation(payload);
 
   console.log(
     `[print:${jobId}] start mode=${mode} projectId=${projectId} meetingId=${meetingId} invoiceId=${invoiceId} orientation=${orientation}`
   );
 
-  const data = await getPrintData({
+  const data = isProviderRequest(payload) ? await providerBridge().provide(payload) : await getPrintData({
     mode,
     projectId,
     meetingId,
@@ -439,7 +445,13 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
   });
   const projectNumber = data?.project?.project_number || data?.project?.projectNumber || null;
 
-  const outPath = await _buildOutputPath({
+  let providerOutputPath;
+  if (isProviderRequest(payload)) {
+    const dir = payload.targetDir === "temp" ? app.getPath("temp") : providerBridge().outputDirectory(payload);
+    fs.mkdirSync(dir, { recursive: true });
+    providerOutputPath = uniquePath(dir, payload.fileName || "Technisches-Dokument.pdf");
+  }
+  const outPath = providerOutputPath || await _buildOutputPath({
     fileName: payload.fileName || null,
     targetDir: payload.targetDir,
     baseDir: payload.baseDir,
@@ -515,6 +527,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
         if (msg?.ok === false) {
           throw new Error(String(msg?.error || "Print-Renderer hat die PDF-Erzeugung abgewiesen."));
         }
+        if (isProviderRequest(payload)) providerBridge().resolve(payload);
         const pdfBuffer = await win.webContents.printToPDF(options);
         fs.writeFileSync(outPath, pdfBuffer);
         console.log(`[print:${jobId}] PDF written -> ${outPath}`);
@@ -541,6 +554,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
       console.log(`[print:${jobId}] sending print:init (debug=${debug})`);
       win.webContents.send("print:init", {
         jobId,
+        ...(isProviderRequest(payload) ? { providerRequest: structuredClone(payload.providerRequest), documentId: providerContext.documentId } : {}),
         mode,
         documentTypeId: payload.documentTypeId || null,
         projectId,
@@ -581,9 +595,10 @@ function registerPrintIpc() {
   ipcMain.handle("print:getData", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      _enforceFeature(_featureForPrintMode(p.mode));
+      if (isProviderRequest(p)) providerBridge().resolve(p);
+      else _enforceFeature(_featureForPrintMode(p.mode));
       const orientation = _resolveRequestedOrientation(p);
-      const data = await getPrintData({
+      const data = isProviderRequest(p) ? await providerBridge().provide(p) : await getPrintData({
         mode: p.mode,
         projectId: p.projectId,
         meetingId: p.meetingId,
@@ -596,9 +611,16 @@ function registerPrintIpc() {
         restarbeitenLocationLabels: p.restarbeitenLocationLabels || null,
         showAmpelInList: typeof p.showAmpelInList === "boolean" ? p.showAmpelInList : null,
       });
-      const pdfResolution = _getPdfEditorAdapterResolver().resolvePrintRegistration({ documentTypeId: p.documentTypeId, mode: data.mode });
+      const pdfResolution = _getPdfEditorAdapterResolver().resolvePrintRegistration({ documentTypeId: p.documentTypeId, mode: isProviderRequest(p) ? undefined : data.mode });
       if (pdfResolution) {
         const pdfAdapter = pdfResolution.adapter;
+        if (isProviderRequest(p)) {
+          data.pdfEditorRegistry = pdfAdapter.getPdfRegistry();
+          data.pdfEditorLayoutState = {
+            scopeId: data.pdfEditorRegistry.scopeId,
+            elements: data.pdfEditorRegistry.elements.map((entry) => ({ elementId: entry.id, scopeId: entry.scopeId, ...entry.baseline })),
+          };
+        }
         if (p.pdfEditorPreview === true) {
           data.pdfEditorLayoutState = pdfAdapter.getCurrentPdfLayoutState();
           data.pdfEditorRegistry = pdfAdapter.getPdfRegistry();
@@ -629,7 +651,8 @@ function registerPrintIpc() {
   ipcMain.handle("print:openHtmlPreview", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      _enforceFeature(_featureForPrintMode(p.mode));
+      if (isProviderRequest(p)) providerBridge().resolve(p);
+      else _enforceFeature(_featureForPrintMode(p.mode));
       const orientation = _resolveRequestedOrientation(p);
       const jobId = _randId();
       const win = createPrintWindow({ show: true, devTools: false });
@@ -639,9 +662,10 @@ function registerPrintIpc() {
       win.webContents.once("did-finish-load", () => {
         win.webContents.send("print:init", {
           jobId,
+          ...(isProviderRequest(p) ? { providerRequest: structuredClone(p.providerRequest), documentId: p.providerRequest.documentId } : {}),
           mode: p.mode || "topsAll",
           documentTypeId: p.documentTypeId || null,
-          projectId: p.projectId || null,
+          projectId: p.providerRequest?.projectId || p.projectId || null,
           meetingId: p.meetingId || null,
           invoiceId: p.invoiceId || null,
           invoicePreview: p.invoicePreview === true,
@@ -674,7 +698,8 @@ function registerPrintIpc() {
   ipcMain.handle("print:toPdfAndOpen", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      _enforceFeature(_featureForPrintMode(p.mode));
+      if (isProviderRequest(p)) providerBridge().resolve(p);
+      else _enforceFeature(_featureForPrintMode(p.mode));
       const outPath = await printToPdf(p);
       const openError = await shell.openPath(outPath);
       if (String(openError || "").trim()) {
@@ -688,7 +713,8 @@ function registerPrintIpc() {
   ipcMain.handle("print:toPdfAndPreviewInternal", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      _enforceFeature(_featureForPrintMode(p.mode));
+      if (isProviderRequest(p)) providerBridge().resolve(p);
+      else _enforceFeature(_featureForPrintMode(p.mode));
       const outPath = await printToPdf(p);
       const previewResult = await openInternalPdfPreview({
         filePath: outPath,
@@ -704,7 +730,8 @@ function registerPrintIpc() {
   ipcMain.handle("print:toPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      _enforceFeature(_featureForPrintMode(p.mode));
+      if (isProviderRequest(p)) providerBridge().resolve(p);
+      else _enforceFeature(_featureForPrintMode(p.mode));
       console.log(
         `[PRINT_ACTIVE] handler=print:toPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""
@@ -755,7 +782,8 @@ function registerPrintIpc() {
   ipcMain.handle("print:htmlToPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      _enforceFeature(_featureForPrintMode(p.mode));
+      if (isProviderRequest(p)) providerBridge().resolve(p);
+      else _enforceFeature(_featureForPrintMode(p.mode));
       console.log(
         `[PRINT_ACTIVE] handler=print:htmlToPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""

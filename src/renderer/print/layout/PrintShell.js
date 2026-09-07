@@ -749,11 +749,15 @@ function _buildSpineNote(data = {}) {
   return wrap;
 }
 
-export function renderPrint({ pages, data } = {}) {
+export function renderPrint({ pages, data, contentSlots = null } = {}) {
   const normalizedMode = normalizePrintMode(data?.mode || "protocol");
   if (!normalizedMode) {
     throw new Error(`Unbekannter Druckmodus: ${String(data?.mode || "").trim() || "-"}`);
   }
+  if (contentSlots && (!contentSlots.fullHeader || !contentSlots.body || !Array.isArray(pages) || pages.length !== 1)) {
+    throw new Error("PDF-Inhaltsslots benötigen genau eine vollständig deklarierte Seite.");
+  }
+  if (normalizedMode === "provider" && !contentSlots) throw new Error("PDF-Provider-Inhaltsslots fehlen.");
   const runtimeData = { ...(data || {}), mode: normalizedMode };
   globalThis.__bbmRestarbeitenLocationLabels = runtimeData?.restarbeitenLocationLabels || null;
   const root = _el("div", "printRoot printV2Root");
@@ -765,7 +769,7 @@ export function renderPrint({ pages, data } = {}) {
     });
   }
   root.dataset.orientation = _normalizeOrientation(runtimeData?.orientation);
-  root.dataset.tableLayout = _getTopLayout(runtimeData).tableKey || "protokoll_tops";
+  if (!contentSlots) root.dataset.tableLayout = _getTopLayout(runtimeData).tableKey || "protokoll_tops";
 
   // Force colors into PDF output (Chromium/Electron)
   root.style.webkitPrintColorAdjust = "exact";
@@ -810,7 +814,9 @@ export function renderPrint({ pages, data } = {}) {
     }
     if (pageNo === 1) {
       pageEl.appendChild(renderV2GlobalHeader({ data: runtimeData }));
-      pageEl.appendChild(normalizedMode === "invoice"
+      pageEl.appendChild(contentSlots
+        ? renderV2FullHeader({ data: runtimeData, pageNo, totalPages, modeLabel, content: contentSlots.fullHeader })
+        : normalizedMode === "invoice"
         ? renderV2FullHeader({
             data: runtimeData,
             pageNo,
@@ -830,6 +836,7 @@ export function renderPrint({ pages, data } = {}) {
       }));
     }
     const pageBody = _el("div", "v2PageBody");
+    if (contentSlots) pageBody.appendChild(contentSlots.body);
     if (normalizedMode === "invoice") {
       markInvoiceEditorElement(pageBody, {
         id: `${INVOICE_SCOPE_ID}.body`,
@@ -842,15 +849,15 @@ export function renderPrint({ pages, data } = {}) {
         if (invoiceIntro) pageBody.appendChild(invoiceIntro);
       }
     }
-    const intro = _buildIntro(page);
+    const intro = contentSlots ? null : _buildIntro(page);
     if (intro) pageBody.appendChild(intro);
-    const preRemarks = _buildPreRemarks(page);
+    const preRemarks = contentSlots ? null : _buildPreRemarks(page);
     if (preRemarks) pageBody.appendChild(preRemarks);
     const isTops = String(page?.table?.type || "") === "tops";
     const isInvoice = String(page?.table?.type || "") === "invoice";
     const hasRows = (page?.table?.rows || []).length > 0;
     // Tops-Tabelle ohne Zeilen nicht rendern (sonst Tabellenkopf allein).
-    const renderTable = !(isTops && !hasRows) && !(isInvoice && page?.suppressTable);
+    const renderTable = !contentSlots && !(isTops && !hasRows) && !(isInvoice && page?.suppressTable);
     if (renderTable) {
       pageBody.appendChild(_buildTable(page, runtimeData));
     }

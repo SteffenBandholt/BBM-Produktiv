@@ -199,6 +199,10 @@ export function collectBbmPdfPreviewMetadata(root, data) {
         width: round(rect.width * pageWidthMm / pageRect.width),
         height: round(rect.height * pageHeightMm / pageRect.height),
       };
+      if (entry.capabilities?.includes("textResize")) {
+        const fontSizePx = Number.parseFloat(computed.fontSize);
+        if (Number.isFinite(fontSizePx)) measuredBox.fontSize = round(fontSizePx * 72 / 96);
+      }
       if (part === "track" && canMove) {
         measuredBox.x = round(Number(current.x));
         measuredBox.y = round(Number(current.y));

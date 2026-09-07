@@ -1,3 +1,4 @@
+import { buildProviderDocumentContent, validateProviderDocumentLayout } from "./layout/ProviderDocument.js";
 import {
   appendProtocolTitleMarker,
   buildRestarbeitenColGroup,
@@ -2255,7 +2256,6 @@ async function handleInit(payload) {
 
     const data = res.data || {};
     prepareBbmPdfEditorLayout(data);
-    const topsLayout = _getTopLayout(data);
     // Version/Channel für PDF-Fußnote bereitstellen (falls nicht im Payload enthalten)
     if (!data.appVersion && window.bbmDb?.appGetVersion) {
       try {
@@ -2269,7 +2269,7 @@ async function handleInit(payload) {
         if (chRes?.ok) data.buildChannel = chRes.channel || "";
       } catch (_e) {}
     }
-    if (["protocol", "preview", "vorabzug", "restarbeiten", "invoice"].includes(String(data.mode || "").trim().toLowerCase()) && document.fonts?.load) {
+    if (["protocol", "preview", "vorabzug", "restarbeiten", "invoice", "provider"].includes(String(data.mode || "").trim().toLowerCase()) && document.fonts?.load) {
       try {
         await Promise.all([
           document.fonts.load('400 11pt "Noto Sans"'),
@@ -2295,6 +2295,28 @@ async function handleInit(payload) {
 
     const orientation = _applyPageOrientationStyle(data.orientation);
 
+    if (data.mode === "provider") {
+      const margins = data.pdfEditorRegistry?.pageSettings?.margins;
+      if (!margins) throw new Error("PDF-Provider-Seitenränder fehlen.");
+      data.v2Layout = {
+        ...(data.v2Layout || {}),
+        pagePadTopMm: margins.top,
+        pagePadRightMm: margins.right,
+        pagePadBottomMm: margins.bottom,
+        pagePadLeftMm: margins.left,
+      };
+      const contentSlots = buildProviderDocumentContent(data);
+      const pages = [{ header: { pageNo: 1, totalPages: 1 } }];
+      const root = applyBbmPdfEditorLayout(renderPrint({ pages, data, contentSlots }), data);
+      root._bbmRuntimeData = data;
+      app.innerHTML = "";
+      app.appendChild(root);
+      validateProviderDocumentLayout(root);
+      window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: true, previewMetadata: collectBbmPdfPreviewMetadata(root, data) });
+      return;
+    }
+
+    const topsLayout = _getTopLayout(data);
     if (data.mode === "headerTest") {
       const root = renderHeaderTestPages({ data, debug: !!payload?.debug });
       if (root?.dataset) root.dataset.orientation = orientation;
