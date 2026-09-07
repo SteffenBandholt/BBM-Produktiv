@@ -38,8 +38,9 @@ const { createPdfEditorAdapterResolver } = require("../ui-editor/pdfAdapterRegis
 
 const { isProviderRequest, createPdfProviderBridge } = require("../print/pdfProviderBridge");
 require("../ui-editor/technicalPdfAdapter.cjs");
+const { createProductivePdfProviderRegistry } = require("../modulePdfProviders");
 let _providerBridge;
-function providerBridge() { return _providerBridge || (_providerBridge = createPdfProviderBridge()); }
+function providerBridge() { return _providerBridge || (_providerBridge = createPdfProviderBridge({ registry: createProductivePdfProviderRegistry() })); }
 
 let _pdfEditorAdapterResolver = null;
 

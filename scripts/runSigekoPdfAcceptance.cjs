@@ -39,9 +39,76 @@ async function inspectPdf(filePath) {
   } finally { await document.destroy(); }
 }
 
+function pdfPagePaintEvidence(bitmap, width, height) {
+  const white = (x, y) => {
+    const offset = (y * width + x) * 4;
+    return bitmap[offset] > 240 && bitmap[offset + 1] > 240 && bitmap[offset + 2] > 240;
+  };
+  let whiteSamples = 0;
+  let samples = 0;
+  for (let y = 0; y < height; y += 4) for (let x = 0; x < width; x += 4) {
+    samples += 1;
+    if (white(x, y)) whiteSamples += 1;
+  }
+  const scanY = Math.floor(height * 0.65);
+  let start = 0;
+  let pageLeft = 0;
+  let pageRight = 0;
+  for (let x = 0; x <= width; x += 1) {
+    if (x < width && white(x, scanY)) continue;
+    if (x - start > pageRight - pageLeft) { pageLeft = start; pageRight = x; }
+    start = x + 1;
+  }
+  let inkSamples = 0;
+  for (let y = Math.max(15, Math.floor(height * 0.1)); y < Math.min(height - 15, height * 0.75); y += 2) {
+    for (let x = pageLeft + 12; x < pageRight - 12; x += 2) {
+      const offset = (y * width + x) * 4;
+      if (bitmap[offset] < 100 && bitmap[offset + 1] < 100 && bitmap[offset + 2] < 100 &&
+          white(x, y - 14) && white(x, y + 14)) inkSamples += 1;
+    }
+  }
+  const whiteFraction = whiteSamples / Math.max(samples, 1);
+  return { visible: width > 0 && height > 0 && whiteFraction > 0.2 && whiteFraction < 0.98 &&
+    pageRight - pageLeft > width * 0.3 && inkSamples >= 10, width, height, whiteFraction, pageLeft, pageRight, inkSamples };
+}
+
+async function capturePaintedPdfPreview(window, screenshotPath) {
+  const deadline = Date.now() + 15000;
+  let previousHash = "";
+  let lastImage;
+  let evidence;
+  while (Date.now() < deadline) {
+    lastImage = await window.webContents.capturePage();
+    const { width, height } = lastImage.getSize();
+    evidence = pdfPagePaintEvidence(lastImage.toBitmap(), width, height);
+    const hash = crypto.createHash("sha256").update(lastImage.toPNG()).digest("hex");
+    if (evidence.visible && hash === previousHash) {
+      fs.writeFileSync(screenshotPath, lastImage.toPNG());
+      return { ...evidence, stableFrames: 2, screenshotSha256: hash };
+    }
+    previousHash = evidence.visible ? hash : "";
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
+  if (lastImage) fs.writeFileSync(screenshotPath, lastImage.toPNG());
+  throw Object.assign(new Error(`Interne PDF-Vorschau zeigt keine stabil gezeichnete Seite mit Text: ${JSON.stringify(evidence)}`), { code: "PDF_PREVIEW_PAINT_TIMEOUT" });
+}
+
+function pdfInventory(directories) {
+  const files = [];
+  const visit = (directory) => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const filePath = path.join(directory, entry.name);
+      if (entry.isDirectory()) visit(filePath);
+      else if (entry.isFile() && /\.pdf$/i.test(entry.name)) files.push({ filePath, sha256: crypto.createHash("sha256").update(fs.readFileSync(filePath)).digest("hex") });
+    }
+  };
+  directories.forEach(visit);
+  return files.sort((left, right) => left.filePath.localeCompare(right.filePath));
+}
+
 async function runWorker() {
   console.log("[S1.4a] Electron worker gestartet");
-  const { app, BrowserWindow } = require("electron");
+  const { app, BrowserWindow, ipcMain } = require("electron");
   let profile;
   let db;
   const report = { schemaVersion: 1, package: "S1.4a", ok: false, nativeEditorUiVerified: false, checks: {} };
@@ -107,8 +174,61 @@ async function runWorker() {
     const reopened = await inspectPdf(preview.filePath);
     assert.equal(reopened.sha256, previewPdf.sha256, "Wiederoeffnen hat gespeicherten PDF-Inhalt veraendert");
     const screenshotPath = path.join(profile.rootPath, "internal-preview.png");
-    fs.writeFileSync(screenshotPath, (await previewWindow.webContents.capturePage()).toPNG());
-    report.checks.internalPreview = { filePath: preview.filePath, screenshotPath, reopenedUnchanged: true, pageCount: reopened.pageCount };
+    const paint = await capturePaintedPdfPreview(previewWindow, screenshotPath);
+    report.checks.internalPreview = { filePath: preview.filePath, screenshotPath, reopenedUnchanged: true, pageCount: reopened.pageCount, paint };
+
+    const beforeOverflowPdfs = pdfInventory([baseDir, tempPath]);
+    const readyMessages = new Map();
+    const onHtmlReady = (event, message) => readyMessages.set(message?.jobId, { sender: event.sender, message });
+    ipcMain.on("print:ready", onHtmlReady);
+    try {
+      const htmlPreview = await invoke("bbmDb.printOpenHtmlPreview");
+      assert.equal(htmlPreview.ok, true, JSON.stringify(htmlPreview));
+      const deadline = Date.now() + 15000;
+      while (!readyMessages.has(htmlPreview.jobId) && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 100));
+      const ready = readyMessages.get(htmlPreview.jobId);
+      assert.ok(ready, "Echte HTML-Vorschau meldet kein print:ready");
+      assert.equal(ready.message.ok, true, JSON.stringify(ready.message));
+      const guardUrl = pathToFileURL(path.join(ROOT, "src/renderer/print/layout/ProviderDocument.js")).href;
+      const overflow = await ready.sender.executeJavaScript(`(async () => {
+        const { validateProviderDocumentLayout } = await import(${JSON.stringify(guardUrl)});
+        const definitions = ${JSON.stringify(REGISTRY.elements)};
+        const declaredNodes = new Map(definitions.map((definition) => [definition.id, document.querySelector(definition.rendererKey)]));
+        const mountedRefs = definitions.map((definition) => {
+          const node = declaredNodes.get(definition.id);
+          const parent = declaredNodes.get(definition.parentId);
+          return { id: node?.getAttribute("data-ui-inspector-id"), kind: node?.getAttribute("data-ui-editor-kind"),
+            label: node?.getAttribute("data-ui-editor-label"), parent: node?.getAttribute("data-ui-editor-parent"),
+            editable: node?.getAttribute("data-ui-editor-editable"), ops: node?.getAttribute("data-ui-editor-ops"),
+            connected: node?.isConnected === true, matches: document.querySelectorAll(definition.rendererKey).length,
+            parentContains: definition.parentId === null || Boolean(parent?.contains(node)) };
+        });
+        const root = document.querySelector(".printRoot");
+        const body = root.querySelector(".providerBody");
+        validateProviderDocumentLayout(root);
+        const originalHeight = body.style.height;
+        const beforeHeight = body.getBoundingClientRect().height;
+        let errorCode = null;
+        try {
+          body.style.height = "400mm";
+          try { validateProviderDocumentLayout(root); }
+          catch (error) { errorCode = error.code || error.message; }
+        } finally { body.style.height = originalHeight; }
+        validateProviderDocumentLayout(root);
+        return { errorCode, beforeHeight, restoredHeight: body.getBoundingClientRect().height, mountedRefs };
+      })()`, true);
+      assert.equal(overflow.mountedRefs.length, 4, "Vier explizit deklarierte PDF-Refs erwartet");
+      assert.deepEqual(overflow.mountedRefs, REGISTRY.elements.map((definition) => ({
+        id: definition.id, kind: definition.kind, label: definition.name, parent: definition.parentId || "",
+        editable: String(definition.editable === true), ops: (definition.allowedOps || definition.capabilities || []).join(","),
+        connected: true, matches: 1, parentContains: true,
+      })), "Gemountete explizite PDF-Refs weichen vom Editorvertrag ab");
+      assert.equal(overflow.errorCode, "PDF_PROVIDER_LAYOUT_OVERFLOW");
+      assert.equal(overflow.restoredHeight, overflow.beforeHeight);
+      assert.deepEqual(pdfInventory([baseDir, tempPath]), beforeOverflowPdfs, "HTML-Overflowpruefung hat PDF-Dateien angelegt oder veraendert");
+      report.checks.rendererOverflow = { ...overflow, pdfFilesUnchanged: true };
+      BrowserWindow.fromWebContents(ready.sender)?.close();
+    } finally { ipcMain.removeListener("print:ready", onHtmlReady); }
 
     const context = { projectId: project.id, documentId: payload.documentId, documentTypeId: DOCUMENT_TYPE_ID, providerRequest: payload.providerRequest };
     assert.equal(resolver.setActiveDocumentContext(context).ok, true);
@@ -177,4 +297,4 @@ else if (require.main === module) {
   else launch().catch((error) => { console.error(`[S1.4a] FAIL: ${error.stack || error}`); process.exitCode = 1; });
 }
 
-module.exports = { inspectPdf, runWorker, launch };
+module.exports = { inspectPdf, pdfPagePaintEvidence, runWorker, launch };

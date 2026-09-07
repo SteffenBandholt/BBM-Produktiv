@@ -1,5 +1,4 @@
-const { PROVIDER_KINDS } = require("../moduleServiceProviders");
-const { createProductivePdfProviderRegistry } = require("../modulePdfProviders");
+const { PROVIDER_KINDS, createModuleServiceProviderRegistry } = require("../moduleServiceProviders");
 const { getModuleDefinition } = require("../moduleRegistry");
 const { enforceLicensedFeature } = require("../licensing/featureGuard");
 const { createProjectStorageAccess } = require("../ipc/projectStoragePaths");
@@ -9,7 +8,7 @@ function isProviderRequest(payload) {
   return payload?.mode === "provider" || Object.hasOwn(payload || {}, "providerRequest");
 }
 function createPdfProviderBridge({ registry, enforce = enforceLicensedFeature, storage = createProjectStorageAccess() } = {}) {
-  registry ||= createProductivePdfProviderRegistry();
+  registry ||= createModuleServiceProviderRegistry();
   function resolve(payload = {}) {
     const request = payload.providerRequest;
     if (payload.mode !== "provider" || !request || typeof request !== "object" || Array.isArray(request)) {

@@ -6,6 +6,7 @@ const path = require("node:path");
 
 async function runSigekoPdfProviderTests(run) {
   const { createPdfProviderBridge, isProviderRequest } = require("../../src/main/print/pdfProviderBridge");
+  const { createProductivePdfProviderRegistry } = require("../../src/main/modulePdfProviders");
   const { createModuleServiceProviderRegistry, PdfDocumentProvider } = require("../../src/main/moduleServiceProviders");
   const { createDeclarativePdfAdapter, persistedRegistryFingerprint } = require("../../src/main/ui-editor/declarativePdfAdapter.cjs");
   const { REGISTRY, DOCUMENT_TYPE_ID, SCOPE_ID } = require("../../src/main/ui-editor/technicalPdfAdapter.cjs");
@@ -20,7 +21,7 @@ async function runSigekoPdfProviderTests(run) {
   const adapterFor = () => createDeclarativePdfAdapter({ documentTypeId: DOCUMENT_TYPE_ID, displayName: REGISTRY.displayName, registry: REGISTRY, documentIdentityFields: ["projectId", "documentId"] });
   await run("S1.4a: explicit provider identity and module guard precede content production", async () => {
     const guards = [];
-    const bridge = createPdfProviderBridge({ storage, enforce: (moduleId) => guards.push(moduleId) });
+    const bridge = createPdfProviderBridge({ registry: createProductivePdfProviderRegistry(), storage, enforce: (moduleId) => guards.push(moduleId) });
     const source = payload();
     const result = await bridge.provide(source);
     assert.deepEqual(guards, ["sigeko"]);
@@ -35,7 +36,7 @@ async function runSigekoPdfProviderTests(run) {
     assert.equal(bridge.outputDirectory(source), "/fixture/SiGeKo/Unterlagen");
   });
   await run("S1.4a: malformed and mismatched provider contexts never fall back to protocol", () => {
-    const bridge = createPdfProviderBridge({ storage, enforce: () => {} });
+    const bridge = createPdfProviderBridge({ registry: createProductivePdfProviderRegistry(), storage, enforce: () => {} });
     const invalid = [ {}, { ...payload(), mode: "protocol" }, { ...payload(), documentTypeId: "protocol" },
       { ...payload(), projectId: "other" }, { ...payload(), documentId: "other" } ];
     for (const field of ["moduleId", "providerId", "projectId", "documentId"]) {
@@ -62,7 +63,7 @@ async function runSigekoPdfProviderTests(run) {
     await bridge.provide(payload()); assert.equal(calls, 1);
   });
   await run("S1.4a: bounded technical data rejects missing text and excess single-page input", async () => {
-    const bridge = createPdfProviderBridge({ storage, enforce: () => {} });
+    const bridge = createPdfProviderBridge({ registry: createProductivePdfProviderRegistry(), storage, enforce: () => {} });
     for (const data of [{}, { title: "a\nb", body: "Text" }, { title: "a".repeat(81), body: "Text" },
       { title: "Titel", body: "x".repeat(601) }, { title: "Titel", body: Array(11).fill("x").join("\n") }]) {
       const source = payload(); source.providerRequest.data = data;
@@ -126,7 +127,7 @@ async function runSigekoPdfProviderTests(run) {
   });
   await run("S1.4a: print bridge contains no module implementation or second PDF engine", () => {
     const bridge = fs.readFileSync(path.join(__dirname, "../../src/main/print/pdfProviderBridge.js"), "utf8");
-    assert.doesNotMatch(bridge, /sigeko|technicalPdfProvider|printToPDF/);
+    assert.doesNotMatch(bridge, /sigeko|technicalPdfProvider|modulePdfProviders|printToPDF/);
     const print = fs.readFileSync(path.join(__dirname, "../../src/main/ipc/printIpc.js"), "utf8");
     assert.equal((print.match(/\.printToPDF\(/g) || []).length, 1);
   });
