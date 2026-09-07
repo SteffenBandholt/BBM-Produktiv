@@ -39,9 +39,6 @@ jobs:
           node-version: 20
       - name: Install display support
         run: sudo apt-get update && sudo apt-get install -y xvfb libgtk-3-0 libnss3 libasound2t64
-      - name: Install editor kit
-        working-directory: UI-Editor-kit
-        run: npm ci
       - name: Install candidate
         working-directory: BBM-Produktiv
         run: npm ci
@@ -67,7 +64,7 @@ jobs:
           const assert = require('node:assert/strict');
           const crypto = require('node:crypto');
           const read = name => JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/${name}-golden.json`, 'utf8'));
-          const summarize = run => run.results.map(({id, snapshot}) => ({id, pageCount: snapshot.pageCount,
+          const summarize = run => run.results.map(({id, snapshot}) => ({id, pageCount: snapshot.pages.length,
             sha256: crypto.createHash('sha256').update(JSON.stringify(snapshot)).digest('hex')})).sort((a,b) => a.id.localeCompare(b.id));
           const baseline = summarize(read('base'));
           const candidate = summarize(read('head'));
