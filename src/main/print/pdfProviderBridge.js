@@ -15,7 +15,8 @@ function createPdfProviderBridge({ registry, enforce = enforceLicensedFeature, s
     if (payload.mode !== "provider" || !request || typeof request !== "object" || Array.isArray(request)) {
       fail("PDF_PROVIDER_REQUEST_INVALID", "Expliziter PDF-Provider-Request erforderlich.");
     }
-    if (typeof request.moduleId !== "string" || typeof request.providerId !== "string" ||
+    if (typeof request.moduleId !== "string" || !request.moduleId.trim() ||
+        typeof request.providerId !== "string" || !request.providerId.trim() ||
         payload.documentTypeId !== request.providerId || typeof request.projectId !== "string" || !request.projectId.trim() ||
         typeof request.documentId !== "string" || !request.documentId.trim() ||
         (payload.projectId != null && payload.projectId !== request.projectId) ||

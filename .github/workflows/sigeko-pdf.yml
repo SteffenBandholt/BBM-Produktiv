@@ -111,6 +111,9 @@ jobs:
         run: npm ci
       - name: Real Windows PDF, storage, preview and editor regeneration
         working-directory: BBM-Produktiv
+        env:
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
         run: npm run test:sigeko:s1.4a
       - name: Preserve Windows acceptance evidence
         if: always()

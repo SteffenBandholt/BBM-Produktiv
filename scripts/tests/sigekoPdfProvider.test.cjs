@@ -40,6 +40,7 @@ async function runSigekoPdfProviderTests(run) {
       { ...payload(), projectId: "other" }, { ...payload(), documentId: "other" } ];
     for (const field of ["moduleId", "providerId", "projectId", "documentId"]) {
       const source = payload(); delete source.providerRequest[field]; invalid.push(source);
+      const empty = payload(); empty.providerRequest[field] = " "; invalid.push(empty);
     }
     for (const source of invalid) assert.throws(() => bridge.resolve(source), { code: "PDF_PROVIDER_REQUEST_INVALID" });
     const unknown = payload(); unknown.providerRequest.providerId = unknown.documentTypeId = "unknown";
