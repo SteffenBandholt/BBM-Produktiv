@@ -1,0 +1,128 @@
+name: SiGeKo PDF provider acceptance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/main/print/**'
+      - 'src/main/ipc/printIpc.js'
+      - 'src/main/modulePdfProviders.js'
+      - 'src/main/modules/sigeko/technicalPdfProvider.js'
+      - 'src/main/ui-editor/**'
+      - 'src/renderer/print/**'
+      - 'src/shared/print/**'
+      - 'scripts/runSigekoPdfAcceptance.cjs'
+      - '.github/workflows/sigeko-pdf.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  pdf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: BBM-Produktiv
+      - uses: actions/checkout@v4
+        with:
+          repository: SteffenBandholt/UI-Editor-kit
+          ref: 5e0d551d93e97c32d169ea6d5107186a44ecd47f
+          path: UI-Editor-kit
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: BBM-base
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install display support
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgtk-3-0 libnss3 libasound2t64
+      - name: Install candidate
+        working-directory: BBM-Produktiv
+        run: npm ci
+      - name: Install baseline
+        working-directory: BBM-base
+        run: npm ci
+      - name: Configure Electron sandbox helpers
+        run: |
+          sudo chown root:root BBM-Produktiv/node_modules/electron/dist/chrome-sandbox BBM-base/node_modules/electron/dist/chrome-sandbox
+          sudo chmod 4755 BBM-Produktiv/node_modules/electron/dist/chrome-sandbox BBM-base/node_modules/electron/dist/chrome-sandbox
+      - name: Real PDF, storage, internal preview and editor regeneration
+        working-directory: BBM-Produktiv
+        run: xvfb-run -a npm run test:sigeko:s1.4a
+      - name: Generate 49 baseline PDF snapshots
+        if: always()
+        working-directory: BBM-base
+        run: xvfb-run -a node scripts/pdf-v2/runM85PdfFixtures.cjs --output "$RUNNER_TEMP/base-golden.json"
+      - name: Generate 49 candidate PDF snapshots
+        if: always()
+        working-directory: BBM-Produktiv
+        run: xvfb-run -a node scripts/pdf-v2/runM85PdfFixtures.cjs --output "$RUNNER_TEMP/head-golden.json"
+      - name: Compare page counts and complete structural snapshots
+        if: always()
+        run: |
+          node <<'JS'
+          const fs = require('node:fs');
+          const assert = require('node:assert/strict');
+          const crypto = require('node:crypto');
+          const read = name => JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/${name}-golden.json`, 'utf8'));
+          const summarize = run => run.results.map(({id, snapshot}) => ({id, pageCount: snapshot.pages.length,
+            sha256: crypto.createHash('sha256').update(JSON.stringify(snapshot)).digest('hex')})).sort((a,b) => a.id.localeCompare(b.id));
+          const baseline = summarize(read('base'));
+          const candidate = summarize(read('head'));
+          assert.equal(baseline.length, 49);
+          assert.deepEqual(candidate, baseline);
+          fs.writeFileSync(`${process.env.RUNNER_TEMP}/golden-comparison.json`, JSON.stringify({ok:true, fixtures:candidate}, null, 2));
+          console.log('PASS: all 49 page counts and structural snapshots unchanged.');
+          JS
+      - name: Preserve technical acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sigeko-pdf-evidence
+          if-no-files-found: warn
+          path: |
+            /tmp/bbm-ui-editor-acceptance-*/acceptance-result.json
+            /tmp/bbm-ui-editor-acceptance-*/internal-preview.png
+            /tmp/bbm-ui-editor-acceptance-*/Ablage/**/*.pdf
+            /tmp/bbm-ui-editor-acceptance-*/temp/**/*.pdf
+            ${{ runner.temp }}/*-golden.json
+            ${{ runner.temp }}/golden-comparison.json
+
+  windows-pdf:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: BBM-Produktiv
+      - uses: actions/checkout@v4
+        with:
+          repository: SteffenBandholt/UI-Editor-kit
+          ref: 5e0d551d93e97c32d169ea6d5107186a44ecd47f
+          path: UI-Editor-kit
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install candidate
+        working-directory: BBM-Produktiv
+        run: npm ci
+      - name: Real Windows PDF, storage, preview and editor regeneration
+        working-directory: BBM-Produktiv
+        env:
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
+        run: npm run test:sigeko:s1.4a
+      - name: Preserve Windows acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sigeko-pdf-windows-evidence
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/bbm-ui-editor-acceptance-*/acceptance-result.json
+            ${{ runner.temp }}/bbm-ui-editor-acceptance-*/internal-preview.png
+            ${{ runner.temp }}/bbm-ui-editor-acceptance-*/Ablage/**/*.pdf
+            ${{ runner.temp }}/bbm-ui-editor-acceptance-*/temp/**/*.pdf

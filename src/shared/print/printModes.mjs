@@ -1,4 +1,5 @@
 const PRINT_MODE_DEFINITIONS = Object.freeze([
+  Object.freeze({ key: "provider", label: "Technisches Dokument", dialogLabel: "Technisches Dokument", hidden: true }),
   Object.freeze({
     key: "protocol",
     label: "Protokoll",

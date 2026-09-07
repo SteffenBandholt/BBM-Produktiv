@@ -205,6 +205,7 @@ const TEST_GROUPS = Object.freeze([
       ["m80-1RegistrationRefresh.test.cjs", "runM801RegistrationRefreshTests"],
       ["m80-2HeaderEditboxLayout.test.cjs", "runM802HeaderEditboxLayoutTests"],
       ["m81BbmPdfAdapter.test.cjs", "runM81BbmPdfAdapterTests"],
+      ["sigekoPdfProvider.test.cjs", "runSigekoPdfProviderTests"],
       ["fixedLayoutPdfRegistry.test.cjs", "runFixedLayoutPdfRegistryTests"],
       ["m81-1ProfileRestore.test.cjs", "runM811ProfileRestoreTests"],
       ["m82AppStarterPackage.test.cjs", "runM82AppStarterPackageTests"],

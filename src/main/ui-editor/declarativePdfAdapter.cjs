@@ -138,6 +138,7 @@ function createDeclarativePdfAdapter({ applicationId = "bbm-produktiv", document
       }),
     };
     validateTableColumnGeometry(normalized, "pdf_profile_invalid");
+    validateFontSizes(normalized, "pdf_profile_invalid");
     return normalized;
   }
 
@@ -236,6 +237,21 @@ function createDeclarativePdfAdapter({ applicationId = "bbm-produktiv", document
     }
   }
 
+  function validFontSize(definition, fontSize) {
+    return typeof fontSize === "number" && Number.isFinite(fontSize) && fontSize > 0 &&
+      fontSize >= (definition.layoutBounds?.minFontSize ?? 0) &&
+      fontSize <= (definition.layoutBounds?.maxFontSize ?? Number.POSITIVE_INFINITY);
+  }
+
+  function validateFontSizes(state, errorCode) {
+    for (const entry of state.elements) {
+      const definition = definitions.get(entry.elementId);
+      if (definition?.capabilities?.includes("textResize") && !validFontSize(definition, entry.fontSize)) {
+        throw Object.assign(new Error("PDF-Schriftgroesse liegt ausserhalb der registrierten Grenzen."), { code: errorCode });
+      }
+    }
+  }
+
   function submitPdfChangeRequest(request = {}) {
     const definition = definitions.get(String(request.elementId || ""));
     const previous = working.elements.find((entry) => entry.elementId === definition?.id) || null;
@@ -307,6 +323,14 @@ function createDeclarativePdfAdapter({ applicationId = "bbm-produktiv", document
             ? "PDF-Spaltenbreite wurde unabhaengig angewandt; der Wert liegt ausserhalb der registrierten Empfehlung."
             : "PDF-Spaltenbreite wurde unabhaengig angewandt und zurueckgelesen.",
           previousState: clone(previous), newState: clone(states.get(definition.id)), affectedStates: affected, rollbackSucceeded: true };
+      } else if (request.operation === "textResize") {
+        const fontSize = request.payload?.text?.fontSize;
+        if (!validFontSize(definition, fontSize)) {
+          return failure("pdf_invalid_font_size", "PDF-Schriftgroesse liegt ausserhalb der registrierten Grenzen.");
+        }
+        const next = { ...previous, fontSize };
+        states.set(definition.id, next);
+        affected.push(clone(next));
       } else if (request.operation === "setVisibility") {
         if (typeof request.payload?.visible !== "boolean") return failure("pdf_invalid_payload", "PDF-Sichtbarkeit ist ungueltig.");
         const next = { ...previous, visible: request.payload.visible };
@@ -363,6 +387,7 @@ function createDeclarativePdfAdapter({ applicationId = "bbm-produktiv", document
       if (state?.scopeId !== normalizedRegistry.scopeId || requested.size !== definitions.size) throw Object.assign(new Error("PDF-LayoutState ist ungueltig."), { code: "pdf_layout_incompatible" });
       const next = { scopeId: normalizedRegistry.scopeId, capturedAt: new Date().toISOString(), elements: normalizedRegistry.elements.map((definition) => ({ elementId: definition.id, scopeId: normalizedRegistry.scopeId, ...clone(definition.baseline), ...clone(requested.get(definition.id)) })) };
       validateTableColumnGeometry(next, "pdf_layout_incompatible");
+      validateFontSizes(next, "pdf_layout_incompatible");
       working = next;
       return clone(working);
     },
