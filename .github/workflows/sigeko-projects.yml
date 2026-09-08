@@ -67,3 +67,9 @@ jobs:
         with:
           name: planned-start-${{ matrix.os }}
           path: ${{ runner.temp }}/s22-results
+      - name: Reviewable isolated form screenshot and report
+        if: always()
+        env:
+          BBM_S22_OUTPUT: ${{ runner.temp }}/s22-results
+        run: >-
+          node -e "const fs=require('fs'),p=require('path'),d=process.env.BBM_S22_OUTPUT;for(const n of ['planned-start-result.json','planned-start-form.png']){const f=p.join(d,n);if(fs.existsSync(f))console.log(n+'='+fs.readFileSync(f,n.endsWith('.png')?'base64':'utf8'));}"

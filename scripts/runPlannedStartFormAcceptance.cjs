@@ -11,9 +11,10 @@ const SCOPE = "projektverwaltung.plannedStart";
 
 async function worker() {
   const { app, BrowserWindow, ipcMain, dialog } = require("electron");
-  let profile, database;
+  let profile, database, editor;
   const report = { package: "S2.2", ok: false, manualConfirmed: false, checks: [] };
   try {
+    app.setAppPath(ROOT);
     profile = configureUiEditorAcceptanceProfile({ electronApp: app }); assert.equal(profile.enabled, true);
     await app.whenReady();
     database = require("../src/main/db/database");
@@ -26,6 +27,9 @@ async function worker() {
     const repo = require("../src/main/db/projectsRepo");
     const old = repo.createProject({ name: "S2.2 Altprojekt", project_number: "S22-ALT", short: "Alt", street: "Testweg 1", zip: "12345", city: "Testort", project_lead: "Testleitung", project_lead_phone: "0123", start_date: "2001-02-03", end_date: "2030-04-05", notes: "Unveränderte Projektdaten" });
     const win = new BrowserWindow({ width: 1200, height: 850, show: true, webPreferences: { preload: path.join(ROOT, "src/main/preload.js"), contextIsolation: true, nodeIntegration: false, sandbox: false } });
+    const { ElectronUiEditorSessionController } = require("../src/main/ui-editor/electronUiEditorSession");
+    editor = new ElectronUiEditorSessionController({ app, ipcMain, getMainWindow: () => win });
+    editor.registerIpc();
     const evaluate = code => win.webContents.executeJavaScript(code, true);
     const waitFor = async (code, timeout = 10000) => {
       const start = Date.now();
@@ -80,6 +84,7 @@ async function worker() {
     report.ok = true;
   } catch (error) { report.error = { message: error.message, stack: error.stack }; }
   finally {
+    await editor?.close();
     database?.closeDatabase();
     for (const win of BrowserWindow.getAllWindows()) win.destroy();
     const output = process.env.BBM_S22_OUTPUT ? path.resolve(process.env.BBM_S22_OUTPUT) : profile?.rootPath;
