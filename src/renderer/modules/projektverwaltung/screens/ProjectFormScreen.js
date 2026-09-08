@@ -11,6 +11,9 @@ import {
 } from "../../../ui/popupButtonStyles.js";
 import { cleanupPopupHandlers, createPopupOverlay } from "../../../ui/popupCommon.js";
 import { openProtocolSettingsModal } from "../../protokoll/ProtocolSettingsModal.js";
+import { installDevelopmentUiEditorOpenButton } from "../../../app/coreShellNavigation.js";
+import { beginM83ComponentBinding, completeM80PilotRender, getM80Ref, registerM80MultiRef, registerM80Ref } from "../../../ui-editor/m80Refs.js";
+import { PLANNED_START_COMPONENT, PLANNED_START_SCOPE } from "./ProjectPlannedStart.uiEditorContract.js";
 
 export default class ProjectFormScreen {
   constructor({ router, projectId, mode = "page", onClose, onSaved } = {}) {
@@ -51,6 +54,8 @@ export default class ProjectFormScreen {
     this.inpLeadPhone = null;
 
     this.inpStart = null;
+    this.inpPlannedStart = null;
+    this.plannedStartEditorRefs = null;
     this.inpEnd = null;
 
     this.taNotes = null;
@@ -151,6 +156,7 @@ export default class ProjectFormScreen {
       this.inpLead,
       this.inpLeadPhone,
       this.inpStart,
+      this.inpPlannedStart,
       this.inpEnd,
       this.taNotes,
       this.btnSave,
@@ -213,6 +219,7 @@ export default class ProjectFormScreen {
     if (this.inpLeadPhone) this.inpLeadPhone.value = (proj.project_lead_phone || "").toString();
 
     if (this.inpStart) this.inpStart.value = (proj.start_date || "").toString().slice(0, 10);
+    if (this.inpPlannedStart) this.inpPlannedStart.value = (proj.geplanter_baubeginn || "").toString().slice(0, 10);
     if (this.inpEnd) this.inpEnd.value = (proj.end_date || "").toString().slice(0, 10);
 
     if (this.taNotes) this.taNotes.value = (proj.notes || "").toString();
@@ -236,6 +243,7 @@ export default class ProjectFormScreen {
       project_lead_phone: this._normText(this.inpLeadPhone?.value),
 
       start_date: this._normText(this.inpStart?.value),
+      geplanter_baubeginn: this._normText(this.inpPlannedStart?.value),
       end_date: this._normText(this.inpEnd?.value),
 
       notes: this._normText(this.taNotes?.value),
@@ -547,6 +555,9 @@ export default class ProjectFormScreen {
     applyWidthFromMaxLength(inpLeadPhone, { fallback: 20, min: 14, max: 24 });
 
     const inpStart = mkInp("date");
+    const inpPlannedStart = mkInp("date");
+    inpPlannedStart.setAttribute("aria-label", "Geplanter Baubeginn");
+    applyWidthFromMaxLength(inpPlannedStart, { fallback: 12, min: 12, max: 16 });
     const inpEnd = mkInp("date");
     applyWidthFromMaxLength(inpStart, { fallback: 12, min: 12, max: 16 });
     applyWidthFromMaxLength(inpEnd, { fallback: 12, min: 12, max: 16 });
@@ -657,6 +668,14 @@ export default class ProjectFormScreen {
     const fieldEnd = mkField("Enddatum", inpEnd, { grow: false });
     row5.append(mkField("Startdatum", inpStart, { grow: false }), fieldEnd);
 
+    const plannedStartRow = mkRow();
+    const plannedStartGroup = mkField("Geplanter Baubeginn", inpPlannedStart, { grow: false });
+    plannedStartRow.append(plannedStartGroup);
+    const plannedStartEditorRefs = {
+      "": plannedStartRow, ".group": plannedStartGroup,
+      ".label": plannedStartGroup.children[0], ".input": inpPlannedStart,
+    };
+
     const row6 = mkRow();
     row6.style.justifyContent = "flex-start";
     const fieldNotes = mkField("Notizen", taNotes, { grow: true });
@@ -681,7 +700,7 @@ export default class ProjectFormScreen {
     rightCol.style.flexDirection = "column";
     rightCol.style.gap = "var(--bbm-form-group-gap)";
     rightCol.style.paddingLeft = "4px";
-    rightCol.append(row4, row5, row6);
+    rightCol.append(row4, row5, plannedStartRow, row6);
 
     const separator = document.createElement("div");
     separator.style.width = "1px";
@@ -730,6 +749,7 @@ export default class ProjectFormScreen {
       inpLead,
       inpLeadPhone,
       inpStart,
+      inpPlannedStart,
       inpEnd,
     ]) {
       el.addEventListener("keydown", enterToSave);
@@ -752,6 +772,17 @@ export default class ProjectFormScreen {
     this.inpLeadPhone = inpLeadPhone;
 
     this.inpStart = inpStart;
+    this.inpPlannedStart = inpPlannedStart;
+    this.plannedStartEditorRefs = plannedStartEditorRefs;
+    this._bindPlannedStartEditor();
+    void installDevelopmentUiEditorOpenButton({ host: plannedStartRow, scopeId: PLANNED_START_SCOPE }).then(button => {
+      if (!button || this.plannedStartEditorRefs !== plannedStartEditorRefs) return;
+      plannedStartEditorRefs[".editor"] = button;
+      if (getM80Ref(PLANNED_START_SCOPE)?.element === plannedStartRow) {
+        registerM80MultiRef(`${PLANNED_START_SCOPE}.editor`, [button], plannedStartRow);
+        completeM80PilotRender();
+      }
+    });
     this.inpEnd = inpEnd;
 
     this.taNotes = taNotes;
@@ -781,6 +812,24 @@ export default class ProjectFormScreen {
     return root;
   }
 
+
+  _bindPlannedStartEditor() {
+    if (!this.plannedStartEditorRefs) return;
+    beginM83ComponentBinding(PLANNED_START_COMPONENT);
+    for (const [suffix, element] of Object.entries(this.plannedStartEditorRefs)) {
+      if (suffix !== ".editor") registerM80Ref(PLANNED_START_SCOPE + suffix, element);
+    }
+    const button = this.plannedStartEditorRefs[".editor"];
+    registerM80MultiRef(`${PLANNED_START_SCOPE}.editor`, button ? [button] : [], this.plannedStartEditorRefs[""]);
+    completeM80PilotRender();
+  }
+
+  _clearPlannedStartEditor() {
+    if (getM80Ref(PLANNED_START_SCOPE)?.element === this.plannedStartEditorRefs?.[""]) {
+      beginM83ComponentBinding(PLANNED_START_COMPONENT);
+      completeM80PilotRender();
+    }
+  }
 
   _todayDe() {
     const now = new Date();
@@ -1045,6 +1094,7 @@ export default class ProjectFormScreen {
 
   _closeModal() {
     if (!this.overlayEl) return;
+    this._clearPlannedStartEditor();
     const overlay = this.overlayEl;
     cleanupPopupHandlers(overlay);
     if (this.modalBodyEl) this.modalBodyEl.innerHTML = "";
@@ -1069,6 +1119,7 @@ export default class ProjectFormScreen {
   }
 
   destroy() {
+    this._clearPlannedStartEditor();
     try {
       this._closeModal();
     } catch (_e) {
@@ -1092,6 +1143,7 @@ export default class ProjectFormScreen {
       this.modalFooterEl.appendChild(this._buildModalFooter());
     }
     this.overlayEl.style.display = "flex";
+    this._bindPlannedStartEditor();
     this.overlayEl.focus();
     this._setBusy(this.busy);
   }

@@ -91,6 +91,7 @@ export default class ProjectFormHubScreen extends LegacyProjectFormScreen {
       leadField,
       phoneField,
       startField,
+      this.plannedStartEditorRefs?.[".group"],
       endField,
       notesField,
     ].forEach(makeFieldFluid);

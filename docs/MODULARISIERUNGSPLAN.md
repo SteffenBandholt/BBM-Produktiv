@@ -18,6 +18,19 @@ Diese Datei ist **kein** Architekturpapier und **kein** Codex-Ausfuehrungsmanual
 
 ## 1. Operative Arbeitsgrundsaetze
 
+### SiGeKo #274 – S2.2 Projektformular (2026-09-08)
+
+Container 3: zentrales Feld Geplanter Baubeginn auf S2.1 / main 5d67c6a.
+Eigenständige neue Datumskomponente im bestehenden produktiven Projektformular
+mit vollständigem lokalem Editorvertrag und bestehenden Speicherwegen.
+PR #326 technisch und manuell abgenommen; Volltest 1569 grün / dieselben
+97 Baselinefehler. Windows/Linux-Electron-Abnahme grün; Steffens manuelle
+Altprojekt-/Wiederöffnen-Prüfung mit PASS aus Profil ZBxktr bestätigt.
+Kurzfahrplan: S2.2 integrieren und abschließen; anschließend S2.3 Rollen-
+und SiGeKo-Projektzuordnung gemäß #274; danach nächstes freigegebenes S2-Paket.
+S2.3 noch nicht begonnen. Rechnung #275 bleibt eingefroren. Details:
+`docs/SIGEKO_S2_2_PROJEKTFORMULAR.md`.
+
 ### Rechnung #275 – Paket 4d (2026-09-06)
 
 Container 5: Nachtragsentwurf und Bestätigung über den bestehenden BillingOrderService.

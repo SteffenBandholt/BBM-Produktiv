@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<title>BBM S2.2 – isolierte Formularprüfung</title>
+<link rel="stylesheet" href="../../src/renderer/ui/styles/popupFormStandard.css">
+<body style="font-family:system-ui,sans-serif;background:#f3f5f8">
+<script type="module">
+  import ProjectForm from "../../src/renderer/modules/projektverwaltung/screens/ProjectFormHubScreen.js";
+  import * as refs from "../../src/renderer/ui-editor/m80Refs.js";
+  import { createM80RegistrationDescriptor } from "../../src/renderer/ui-editor/m80HostAdapter.js";
+  window.s22 = {
+    refs, descriptor: createM80RegistrationDescriptor,
+    async open(projectId = null) {
+      this.form?.destroy();
+      this.form = new ProjectForm({ projectId, mode: "modal", router: { async showProjects() {} } });
+      await this.form.openModal(); await this.form.load();
+    },
+    fill(values) {
+      for (const [key, value] of Object.entries(values)) {
+        this.form[key].value = value;
+        this.form[key].dispatchEvent(new Event("input", { bubbles: true }));
+        this.form[key].dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    },
+    bounds(key) {
+      const el = this.form[key]; el.scrollIntoView({ block: "nearest" });
+      const { x, y, width, height } = el.getBoundingClientRect(); return { x, y, width, height };
+    },
+  };
+</script>
+</body></html>
