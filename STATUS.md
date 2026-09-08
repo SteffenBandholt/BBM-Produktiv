@@ -9,12 +9,16 @@ Volltest in gleicher UTC-Umgebung mit echtem Kit: main 1516/97 -> Kandidat
 1527/97, exakt gleiche 97 Fehlernamen, keine fehlenden Tests, elf neue Tests grün.
 Zwei historische Datumsfehler aus 1514/99 treten bereits auf unverändertem main
 nicht auf; dies wird nicht als Paketverbesserung gezählt. Windows/Linux-Lauf
-34185714616 bestätigt reale PDF, Vorschau, Wiederöffnen, Regeneration, elf
+34186341786 bestätigt reale PDF, Vorschau, Wiederöffnen, Regeneration, elf
 Fehler-/Abbruchfälle ohne veränderte PDF-Dateien und erfolgreichen Wiederanlauf.
 Alle 49 Bestands-Snapshots und Seitenzahlen identisch. Berechtigungsnachweis mit
 isoliert simuliertem Status nur SiGeKo durch unveränderten zentralen Guard ohne
 DEV-Ausnahmen; keine kryptografische Kundenlizenz- oder native WPF-Abnahme.
 Standard-CI bleibt mit bekannter Kit-/Popup-/Lizenzbaseline rot.
+Sporadischer dunkler PDF-Viewer auf unverändertem main reproduziert: Lauf
+34186953879, Basis 2/3 bestanden, 1/3 gleicher PDF_PREVIEW_PAINT_TIMEOUT; danach
+vollständiger Kandidat grün. Allgemeiner Vorschaufehler bleibt offen, keine
+behobene Viewer-Langzeitstabilität behauptet.
 
 Details: docs/SIGEKO_S1_4_PDF_AUSFUEHRUNG.md und docs/SIGEKO_S1_4_TESTVERGLEICH.json.
 Rechnung #275 und beide Blankovorlagen unverändert. S1.5 nicht begonnen.

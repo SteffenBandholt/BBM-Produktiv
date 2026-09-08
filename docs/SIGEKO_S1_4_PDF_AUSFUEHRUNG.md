@@ -34,7 +34,10 @@ Load-/Ready-/Abbruchlistener und Timer werden beim Abschluss entfernt.
 
 Die bestehenden Druckoptionen, Dateinamensregeln, Zielauflösung, Layouts und
 Erfolgsmetadaten bleiben erhalten. Es gibt weiterhin genau einen produktiven
-`webContents.printToPDF`-Aufruf. Keine zusätzliche Infrastruktur oder Fachabfrage.
+`webContents.printToPDF`-Aufruf. Die vorhandene Funktion `openInternalPdfPreview`
+wird zusätzlich exportiert, damit die Abnahme dieselbe gespeicherte Datei nach
+echtem Fensterschluss durch diesen bestehenden Dienst wieder öffnen kann. Ihr
+Funktionskörper bleibt unverändert. Keine zusätzliche Infrastruktur oder Fachabfrage.
 
 ## Nachweis und Grenzen
 
@@ -71,8 +74,8 @@ Stand 1514/99 bestehen bereits im erneuten Basislauf nicht mehr; dies ist keine
 Verbesserung durch S1.4. Exakte Namen, Laufdaten und Loghashes stehen in
 `SIGEKO_S1_4_TESTVERGLEICH.json`.
 
-Reale Windows-/Linux-Abnahme **bestanden** auf Code-/Harness-Stand `895bc4d`:
-[GitHub-Lauf 34185714616](https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34185714616).
+Reale Windows-/Linux-Abnahme **bestanden** auf Code-/Harness-Stand `93321cc`:
+[GitHub-Lauf 34186341786](https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34186341786).
 Beide Betriebssysteme bestätigen alle elf realen Fehlerfälle ohne neue/veränderte
 PDFs und ohne verbliebene Druckfenster/Ready-Listener; anschließender echter Druck
 funktioniert. Speicherung, sichtbare Vorschau, bytegleiches Wiederöffnen, vier
@@ -81,12 +84,37 @@ Alle 49 Bestands-Snapshots sind strukturell und in den Seitenzahlen identisch.
 Die Screenshots beider Systeme wurden visuell geprüft; vollständige technische
 Berichte und Artefakt-IDs sind im JSON-Nachweis verzeichnet.
 
-Die Vorläufe `34185354299` und `34185520594` waren teilweise fehlgeschlagen und
-werden nicht als bestanden gewertet. Der Abnahmelauf wartet jetzt auf tatsächlich
-gezeichnete PDFs und asynchron geschlossene Druckfenster. Vor dem Wiederöffnen
-entlädt er die aktive PDF im selben Vorschaufenster; direktes erneutes `loadURL`
-auf die aktive PDF zeigte unter Linux einen dunklen Viewer. Diese Korrekturen
-betreffen ausschließlich den Testablauf, nicht die produktive Vorschau.
+Die Vorläufe `34185354299`, `34185520594`, `34185926740`, `34186095285`,
+`34186462651`, `34186582861` und `34186777729` waren teilweise fehlgeschlagen
+und werden nicht als bestanden gewertet. Der erste Fehler betraf die zu frühe
+Prüfung asynchron geschlossener Druckfenster. Die PDF-Wiederöffnung wurde danach
+vom unzuverlässigen Wiederladen einer aktiven PDF auf echtes Schließen und
+Öffnen durch die vorhandene Vorschaufunktion umgestellt. Auch damit blieb ein
+sporadischer dunkler Viewer bestehen, überwiegend Linux, einmal auch Windows.
+Ein einzelner grüner Zwischenlauf wurde nicht als Behebung gewertet.
+
+**Bestehender Viewerfehler auf main reproduziert:**
+[Vergleichslauf 34186953879](https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34186953879)
+verwendet denselben Harness und npm-Start auf Basis `bd5ab3d`. Zur Beobachtbarkeit
+wurde dort ausschließlich der Export der bereits vorhandenen Vorschaufunktion
+ergänzt; Funktionskörper und Druckauftrag blieben unverändert. Von drei isolierten
+Basisläufen bestanden zwei; einer zeigte exakt `PDF_PREVIEW_PAINT_TIMEOUT` mit
+dunkler Seite, sichtbarem/fokussiertem Fenster und nicht reagierender PDF-Extension.
+Der anschließende vollständige Linux-Kandidatenlauf bestand einschließlich aller elf
+Fehlerfälle und Wiederanlauf. Der Linux-Viewerfehler ist somit keine neue
+Testregression von S1.4. Die genaue Chromium-Ursache und eine dauerhafte Behebung
+sind damit ausdrücklich nicht nachgewiesen. Er bleibt ein offener allgemeiner
+PDF-Vorschaupunkt und wird nicht durch neue Infrastruktur umgangen.
+
+Der Windows-Job dieses Vergleichslaufs scheiterte bereits bei `npm ci` an der
+Visual-Studio-Erkennung für `better-sqlite3`; er startete keine PDF-Abnahme.
+Der vollständige Windows-Nachweis auf gleichem Produktcode steht in Lauf
+`34186341786`. Auch der Installationsfehler wird nicht als bestanden gewertet.
+
+Im Workflow bleiben die drei Basisdiagnosen transparent und nicht blockierend;
+ein Kandidatenfehler wird weiterhin rot. `--preview-only` prüft ausschließlich
+Speichern/Anzeigen/Wiederöffnen für diesen Vergleich, niemals die vollständige
+S1.4-Abnahme. Vollständige Berichte, Fehler und Hashes stehen im JSON-Nachweis.
 
 Der Standard-`npm test`-Workflow bleibt wegen des dort fehlenden UI-Editor-kit
 und der bekannten acht Popup-/Lizenzfehler rot (Lauf `34185714605`). Er wird

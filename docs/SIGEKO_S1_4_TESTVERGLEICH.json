@@ -2,7 +2,7 @@
   "package": "S1.4",
   "date": "2026-09-08",
   "baseCommit": "bd5ab3dbd2548177ce4433147b0ff0ae6f44b847",
-  "productCodeCommit": "d070ab2898c630541414267659d89dd400c6d206",
+  "productCodeCommit": "e730c9ec9957f5b94159428cbd5aba354228bf6b",
   "kitCommit": "5e0d551d93e97c32d169ea6d5107186a44ecd47f",
   "runtime": {
     "electron": "30.5.1",
@@ -17,8 +17,8 @@
     "failed": 97
   },
   "candidate": {
-    "log": "bbm-s14-full.log",
-    "sha256": "96d548ea780b9ba1046aa3ef1b95bd62896cdf0aac457971bf075fbba8a376cb",
+    "log": "bbm-s14-final-full.log",
+    "sha256": "fd4b7d86c8bae93d2ab7251afb39ff5b34fa675ae2f5fb911b723f2342c4af1d",
     "passed": 1527,
     "failed": 97
   },
@@ -151,22 +151,27 @@
     "explanation": "Zwei datumsabhaengige Fehler treten in der aktuellen UTC-Umgebung bereits auf unveraendertem main nicht auf; keine Fehlerreduktion durch dieses Paket."
   },
   "realAcceptance": {
-    "status": "passed",
+    "status": "passed-with-reproduced-viewer-baseline",
     "failedInitialRun": 34185354299,
     "initial49GoldenSnapshotsUnchanged": true,
     "licenseStatusSource": "isolated simulated status through real central licenseService/featureGuard; no development overrides in tested guard",
     "cryptographicCustomerLicenseVerified": false,
     "nativeWpfEditorUiVerified": false,
-    "workflowRun": 34185714616,
-    "headCommit": "895bc4df5d24ad87a13ae8e5310a9c37c8b841a0",
-    "workflowUrl": "https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34185714616",
+    "workflowRun": 34186341786,
+    "headCommit": "93321cccb2aec0b180f0af0c54817bc9162103f9",
+    "workflowUrl": "https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34186341786",
     "failedPreliminaryRuns": [
       34185354299,
-      34185520594
+      34185520594,
+      34185926740,
+      34186095285,
+      34186462651,
+      34186582861,
+      34186777729
     ],
     "windows": {
-      "artifactId": 10040428623,
-      "reportSha256": "5f4fa0e3bcf30bed03576cf20a37f444fe7aa51d5d889c0724d469b931c611ba",
+      "artifactId": 10040633030,
+      "reportSha256": "23c64887496401f33ed4ce26c0071134b22f51ef49dafe8458a926f4f55307fc",
       "checks": {
         "modulePermission": {
           "source": "simulated-development-license-status",
@@ -178,9 +183,9 @@
           "otherModulesDenied": true
         },
         "savedPdf": {
-          "filePath": "D:\\a\\_temp\\bbm-ui-editor-acceptance-wAi7wm\\Ablage\\bbm\\S14A - SiGeKo PDF Technikabnahme\\SiGeKo\\Unterlagen\\Technisches-Dokument.pdf",
+          "filePath": "D:\\a\\_temp\\bbm-ui-editor-acceptance-kltD1C\\Ablage\\bbm\\S14A - SiGeKo PDF Technikabnahme\\SiGeKo\\Unterlagen\\Technisches-Dokument.pdf",
           "bytes": 26931,
-          "sha256": "80361203dbb9706e141539638fe0a0466517d03d4b32d07c30e1c377c7099c62",
+          "sha256": "f65d37eb5419c12f3d42040f00eb595f8dda14c4b0040044be55e77534bc1290",
           "pageCount": 1,
           "pageBox": [
             0,
@@ -205,9 +210,11 @@
           ]
         },
         "internalPreview": {
-          "filePath": "D:\\a\\_temp\\bbm-ui-editor-acceptance-wAi7wm\\Ablage\\bbm\\S14A - SiGeKo PDF Technikabnahme\\SiGeKo\\Unterlagen\\Technisches-Dokument (2).pdf",
-          "screenshotPath": "D:\\a\\_temp\\bbm-ui-editor-acceptance-wAi7wm\\internal-preview.png",
+          "filePath": "D:\\a\\_temp\\bbm-ui-editor-acceptance-kltD1C\\Ablage\\bbm\\S14A - SiGeKo PDF Technikabnahme\\SiGeKo\\Unterlagen\\Technisches-Dokument (2).pdf",
+          "screenshotPath": "D:\\a\\_temp\\bbm-ui-editor-acceptance-kltD1C\\internal-preview.png",
           "reopenedUnchanged": true,
+          "reopenedThroughExistingPreviewService": true,
+          "previousWindowClosed": true,
           "pageCount": 1,
           "paint": {
             "visible": true,
@@ -282,9 +289,9 @@
             "stale": false,
             "generation": 1,
             "pageCount": 1,
-            "generatedAt": "2026-09-08T04:05:44.622Z",
-            "activeDocumentId": "bbm-produktiv-technical-neutral-3b8991475051b14a24fabdd7",
-            "controlledOutputPath": "D:\\a\\_temp\\bbm-ui-editor-acceptance-wAi7wm\\temp\\Technisches-Dokument-Editor.pdf",
+            "generatedAt": "2026-09-08T04:16:17.256Z",
+            "activeDocumentId": "bbm-produktiv-technical-neutral-2e5dfaf3c904cb8262fc9a9a",
+            "controlledOutputPath": "D:\\a\\_temp\\bbm-ui-editor-acceptance-kltD1C\\temp\\Technisches-Dokument-Editor.pdf",
             "renderBounds": [
               {
                 "elementId": "pdf.bbm.technical-neutral",
@@ -331,9 +338,9 @@
             ]
           },
           "pdf": {
-            "filePath": "D:\\a\\_temp\\bbm-ui-editor-acceptance-wAi7wm\\temp\\Technisches-Dokument-Editor.pdf",
+            "filePath": "D:\\a\\_temp\\bbm-ui-editor-acceptance-kltD1C\\temp\\Technisches-Dokument-Editor.pdf",
             "bytes": 26875,
-            "sha256": "90b41a7699b766db75e1c95e9117746d1035933e4bf40f235fb9a24813366da0",
+            "sha256": "87b605322abd086bd0c75196822bc0c1264861750cf3014485a52c4df2801e35",
             "pageCount": 1,
             "pageBox": [
               0,
@@ -425,7 +432,7 @@
           {
             "name": "Ablage kann nicht angelegt werden",
             "ok": false,
-            "error": "ENOTDIR: not a directory, mkdir 'D:\\a\\_temp\\bbm-ui-editor-acceptance-wAi7wm\\blocked-storage\\bbm\\S14A - SiGeKo PDF Technikabnahme\\SiGeKo\\Unterlagen'",
+            "error": "ENOTDIR: not a directory, mkdir 'D:\\a\\_temp\\bbm-ui-editor-acceptance-kltD1C\\blocked-storage\\bbm\\S14A - SiGeKo PDF Technikabnahme\\SiGeKo\\Unterlagen'",
             "code": null,
             "expectedFailureVerified": true,
             "pdfFilesUnchanged": true,
@@ -462,9 +469,9 @@
         "recoveryAfterFailures": {
           "ok": true,
           "pdf": {
-            "filePath": "D:\\a\\_temp\\bbm-ui-editor-acceptance-wAi7wm\\Ablage\\bbm\\S14A - SiGeKo PDF Technikabnahme\\SiGeKo\\Unterlagen\\Technisches-Dokument (3).pdf",
+            "filePath": "D:\\a\\_temp\\bbm-ui-editor-acceptance-kltD1C\\Ablage\\bbm\\S14A - SiGeKo PDF Technikabnahme\\SiGeKo\\Unterlagen\\Technisches-Dokument (3).pdf",
             "bytes": 26931,
-            "sha256": "04c1f32114152455dfccc900688190fc26282400500a137a0ae5f8e1a06d3a6a",
+            "sha256": "f85654888dfa2a7223d54277df52e3ae41c53ffa0493551016524f1c5a9efdc3",
             "pageCount": 1,
             "pageBox": [
               0,
@@ -492,8 +499,8 @@
       }
     },
     "linux": {
-      "artifactId": 10040427655,
-      "reportSha256": "f3ca8c98594ea0552ede20c07da6f61d18309c87b51b1e714698fcbf409718be",
+      "artifactId": 10040628021,
+      "reportSha256": "c55b08df958b39146cfb0ceac98cc5367130b08851bba2fdcd1185497e305c9f",
       "checks": {
         "modulePermission": {
           "source": "simulated-development-license-status",
@@ -505,9 +512,9 @@
           "otherModulesDenied": true
         },
         "savedPdf": {
-          "filePath": "/tmp/bbm-ui-editor-acceptance-7LTpIf/Ablage/bbm/S14A - SiGeKo PDF Technikabnahme/SiGeKo/Unterlagen/Technisches-Dokument.pdf",
+          "filePath": "/tmp/bbm-ui-editor-acceptance-A2g14D/Ablage/bbm/S14A - SiGeKo PDF Technikabnahme/SiGeKo/Unterlagen/Technisches-Dokument.pdf",
           "bytes": 12093,
-          "sha256": "ccac3d77191eb88ac081befd682736e4ba5b22d0a41a7f56a5c1de2236fb191c",
+          "sha256": "926cb5d06b98ed768a941f3cbca2cb0c94cb3395154743d55d380a66e1e40296",
           "pageCount": 1,
           "pageBox": [
             0,
@@ -532,9 +539,11 @@
           ]
         },
         "internalPreview": {
-          "filePath": "/tmp/bbm-ui-editor-acceptance-7LTpIf/Ablage/bbm/S14A - SiGeKo PDF Technikabnahme/SiGeKo/Unterlagen/Technisches-Dokument (2).pdf",
-          "screenshotPath": "/tmp/bbm-ui-editor-acceptance-7LTpIf/internal-preview.png",
+          "filePath": "/tmp/bbm-ui-editor-acceptance-A2g14D/Ablage/bbm/S14A - SiGeKo PDF Technikabnahme/SiGeKo/Unterlagen/Technisches-Dokument (2).pdf",
+          "screenshotPath": "/tmp/bbm-ui-editor-acceptance-A2g14D/internal-preview.png",
           "reopenedUnchanged": true,
+          "reopenedThroughExistingPreviewService": true,
+          "previousWindowClosed": true,
           "pageCount": 1,
           "paint": {
             "visible": true,
@@ -609,9 +618,9 @@
             "stale": false,
             "generation": 1,
             "pageCount": 1,
-            "generatedAt": "2026-09-08T04:05:38.064Z",
-            "activeDocumentId": "bbm-produktiv-technical-neutral-123161c3d744f6357961ad9d",
-            "controlledOutputPath": "/tmp/bbm-ui-editor-acceptance-7LTpIf/temp/Technisches-Dokument-Editor.pdf",
+            "generatedAt": "2026-09-08T04:15:57.211Z",
+            "activeDocumentId": "bbm-produktiv-technical-neutral-29afa40fafd8bc74e1f57037",
+            "controlledOutputPath": "/tmp/bbm-ui-editor-acceptance-A2g14D/temp/Technisches-Dokument-Editor.pdf",
             "renderBounds": [
               {
                 "elementId": "pdf.bbm.technical-neutral",
@@ -658,9 +667,9 @@
             ]
           },
           "pdf": {
-            "filePath": "/tmp/bbm-ui-editor-acceptance-7LTpIf/temp/Technisches-Dokument-Editor.pdf",
+            "filePath": "/tmp/bbm-ui-editor-acceptance-A2g14D/temp/Technisches-Dokument-Editor.pdf",
             "bytes": 12037,
-            "sha256": "50ed818e3157b2f4f4ed0d79fd1f1c3a4b1f47bfe997bd09f2e394c4f6b9f255",
+            "sha256": "fd54a9869a7d162694785391ec6edbbee020625505b2c91e494844b3d1176b01",
             "pageCount": 1,
             "pageBox": [
               0,
@@ -752,7 +761,7 @@
           {
             "name": "Ablage kann nicht angelegt werden",
             "ok": false,
-            "error": "ENOTDIR: not a directory, mkdir '/tmp/bbm-ui-editor-acceptance-7LTpIf/blocked-storage/bbm/S14A - SiGeKo PDF Technikabnahme/SiGeKo/Unterlagen'",
+            "error": "ENOTDIR: not a directory, mkdir '/tmp/bbm-ui-editor-acceptance-A2g14D/blocked-storage/bbm/S14A - SiGeKo PDF Technikabnahme/SiGeKo/Unterlagen'",
             "code": null,
             "expectedFailureVerified": true,
             "pdfFilesUnchanged": true,
@@ -789,9 +798,9 @@
         "recoveryAfterFailures": {
           "ok": true,
           "pdf": {
-            "filePath": "/tmp/bbm-ui-editor-acceptance-7LTpIf/Ablage/bbm/S14A - SiGeKo PDF Technikabnahme/SiGeKo/Unterlagen/Technisches-Dokument (3).pdf",
+            "filePath": "/tmp/bbm-ui-editor-acceptance-A2g14D/Ablage/bbm/S14A - SiGeKo PDF Technikabnahme/SiGeKo/Unterlagen/Technisches-Dokument (3).pdf",
             "bytes": 12093,
-            "sha256": "8964036451b756fd7af48f38f0683f635a21c6efa24c2272f639017b2ef3416b",
+            "sha256": "6679133faed90a74a7bb59d71c9c06d83f93f36cab8a355962e620d0420a0f5d",
             "pageCount": 1,
             "pageBox": [
               0,
@@ -1072,6 +1081,375 @@
       "status": "known baseline failure",
       "run": 34185714605,
       "detail": "Standardworkflow ohne UI-Editor-kit; bekannte acht Popup-/Lizenzfehler. Der vollstaendige lokale Vergleich verwendet echtes Kit und unveraenderte Fehlermengen."
+    },
+    "baselinePreviewComparison": {
+      "workflowRun": 34186953879,
+      "artifactId": 10040849187,
+      "baselineCommit": "bd5ab3dbd2548177ce4433147b0ff0ae6f44b847",
+      "instrumentation": "Identischer aktueller Harness und Lizenz-Fixture auf Basis; nur Export der vorhandenen openInternalPdfPreview ergaenzt, Funktionskoerper und Druckauftrag unveraendert. npm-Starteinstieg wie Kandidat. Drei isolierte Basislaeufe vor Kandidat.",
+      "baselineRuns": [
+        {
+          "ok": false,
+          "reportSha256": "ca13e639f274cac4c476e7894783a48bcb281ca2fc254781dbbad60f9a608e7c",
+          "error": {
+            "message": "Interne PDF-Vorschau zeigt keine stabil gezeichnete Seite mit Text: {\"visible\":false,\"width\":1100,\"height\":900,\"whiteFraction\":0,\"pageLeft\":0,\"pageRight\":0,\"inkSamples\":0}; Diagnose: {\"visible\":true,\"focused\":true,\"url\":\"file:///tmp/bbm-ui-editor-acceptance-CsnX1e/Ablage/bbm/S14A%20-%20SiGeKo%20PDF%20Technikabnahme/SiGeKo/Unterlagen/Technisches-Dokument%20(2).pdf\",\"frames\":[{\"url\":\"file:///tmp/bbm-ui-editor-acceptance-CsnX1e/Ablage/bbm/S14A%20-%20SiGeKo%20PDF%20Technikabnahme/SiGeKo/Unterlagen/Technisches-Dokument%20(2).pdf\",\"state\":{\"body\":\"<embed name=\\\"E3F5C22CDD854522FB504ED3311B7F5F\\\" style=\\\"position:absolute; left: 0; top: 0;\\\" width=\\\"100%\\\" height=\\\"100%\\\" src=\\\"about:blank\\\" type=\\\"application/pdf\\\" internalid=\\\"E3F5C22CDD854522FB504ED3311B7F5F\\\">\",\"ready\":\"complete\",\"visibility\":\"visible\"}},{\"url\":\"chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/index.html\",\"state\":{\"diagnosticTimeout\":true}}]}",
+            "code": "PDF_PREVIEW_PAINT_TIMEOUT",
+            "validationErrors": [],
+            "stack": "Error: Interne PDF-Vorschau zeigt keine stabil gezeichnete Seite mit Text: {\"visible\":false,\"width\":1100,\"height\":900,\"whiteFraction\":0,\"pageLeft\":0,\"pageRight\":0,\"inkSamples\":0}; Diagnose: {\"visible\":true,\"focused\":true,\"url\":\"file:///tmp/bbm-ui-editor-acceptance-CsnX1e/Ablage/bbm/S14A%20-%20SiGeKo%20PDF%20Technikabnahme/SiGeKo/Unterlagen/Technisches-Dokument%20(2).pdf\",\"frames\":[{\"url\":\"file:///tmp/bbm-ui-editor-acceptance-CsnX1e/Ablage/bbm/S14A%20-%20SiGeKo%20PDF%20Technikabnahme/SiGeKo/Unterlagen/Technisches-Dokument%20(2).pdf\",\"state\":{\"body\":\"<embed name=\\\"E3F5C22CDD854522FB504ED3311B7F5F\\\" style=\\\"position:absolute; left: 0; top: 0;\\\" width=\\\"100%\\\" height=\\\"100%\\\" src=\\\"about:blank\\\" type=\\\"application/pdf\\\" internalid=\\\"E3F5C22CDD854522FB504ED3311B7F5F\\\">\",\"ready\":\"complete\",\"visibility\":\"visible\"}},{\"url\":\"chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/index.html\",\"state\":{\"diagnosticTimeout\":true}}]}\n    at capturePaintedPdfPreview (/home/runner/work/BBM-Produktiv/BBM-Produktiv/BBM-base/scripts/runSigekoPdfAcceptance.cjs:105:23)\n    at async runWorker (/home/runner/work/BBM-Produktiv/BBM-Produktiv/BBM-base/scripts/runSigekoPdfAcceptance.cjs:207:19)"
+          },
+          "package": "S1.4"
+        },
+        {
+          "ok": true,
+          "reportSha256": "f10ab7e5945a4001034fe9ed79d889e1d14afd216df7486c4de585b037f13107",
+          "error": null,
+          "package": "S1.4-preview-only"
+        },
+        {
+          "ok": true,
+          "reportSha256": "2609ec7d95d9be310566f1b13875729615f554ffb808c1061801fd474b34b3eb",
+          "error": null,
+          "package": "S1.4-preview-only"
+        }
+      ],
+      "candidate": {
+        "ok": true,
+        "reportSha256": "1e41a224d9027f65b885548a1f503547b670cda82320c3c0ffb60c4372b5c852",
+        "completeChecks": {
+          "modulePermission": {
+            "source": "simulated-development-license-status",
+            "modules": [
+              "sigeko"
+            ],
+            "cryptographicLicenseVerified": false,
+            "developmentOverridesEnabled": false,
+            "otherModulesDenied": true
+          },
+          "savedPdf": {
+            "filePath": "/tmp/bbm-ui-editor-acceptance-i7AMnK/Ablage/bbm/S14A - SiGeKo PDF Technikabnahme/SiGeKo/Unterlagen/Technisches-Dokument.pdf",
+            "bytes": 12093,
+            "sha256": "acc29aa908b5c42b7be174eb37789db35f94e9830694298249a2c89007373a27",
+            "pageCount": 1,
+            "pageBox": [
+              0,
+              0,
+              595.91998,
+              842.88
+            ],
+            "text": "Neutraler PDF-Beleg aus dem bestehenden BBM-Druckweg.  © | v30.5.1 | BBM 2026 | erstellt mit Baubesprechungsmanager | DEV  S1.4a Techniknachweis",
+            "textItems": [
+              {
+                "text": "Neutraler PDF-Beleg aus dem bestehenden BBM-Druckweg.",
+                "fontSizePoints": 10.994999391875005
+              },
+              {
+                "text": "© | v30.5.1 | BBM 2026 | erstellt mit Baubesprechungsmanager | DEV",
+                "fontSizePoints": 5.99999975
+              },
+              {
+                "text": "S1.4a Techniknachweis",
+                "fontSizePoints": 13.994999416875
+              }
+            ]
+          },
+          "internalPreview": {
+            "filePath": "/tmp/bbm-ui-editor-acceptance-i7AMnK/Ablage/bbm/S14A - SiGeKo PDF Technikabnahme/SiGeKo/Unterlagen/Technisches-Dokument (2).pdf",
+            "screenshotPath": "/tmp/bbm-ui-editor-acceptance-i7AMnK/internal-preview.png",
+            "reopenedUnchanged": true,
+            "reopenedThroughExistingPreviewService": true,
+            "previousWindowClosed": true,
+            "pageCount": 1,
+            "paint": {
+              "visible": true,
+              "width": 1100,
+              "height": 900,
+              "whiteFraction": 0.6666989898989899,
+              "pageLeft": 305,
+              "pageRight": 1080,
+              "inkSamples": 239,
+              "stableFrames": 2,
+              "screenshotSha256": "9e1073fe4b4f42314d629c5adbe7d9c8ad0080781f532428191b06855be97b19"
+            }
+          },
+          "rendererOverflow": {
+            "errorCode": "PDF_PROVIDER_LAYOUT_OVERFLOW",
+            "beforeHeight": 566.921875,
+            "restoredHeight": 566.921875,
+            "mountedRefs": [
+              {
+                "id": "pdf.bbm.technical-neutral",
+                "kind": "document",
+                "label": "Technisches Dokument",
+                "parent": "",
+                "editable": "false",
+                "ops": "",
+                "connected": true,
+                "matches": 1,
+                "parentContains": true
+              },
+              {
+                "id": "pdf.bbm.technical-neutral.page",
+                "kind": "page",
+                "label": "Seite",
+                "parent": "pdf.bbm.technical-neutral",
+                "editable": "false",
+                "ops": "",
+                "connected": true,
+                "matches": 1,
+                "parentContains": true
+              },
+              {
+                "id": "pdf.bbm.technical-neutral.title",
+                "kind": "text",
+                "label": "Titel",
+                "parent": "pdf.bbm.technical-neutral.page",
+                "editable": "true",
+                "ops": "textResize",
+                "connected": true,
+                "matches": 1,
+                "parentContains": true
+              },
+              {
+                "id": "pdf.bbm.technical-neutral.body",
+                "kind": "text",
+                "label": "Text",
+                "parent": "pdf.bbm.technical-neutral.page",
+                "editable": "true",
+                "ops": "textResize",
+                "connected": true,
+                "matches": 1,
+                "parentContains": true
+              }
+            ],
+            "pdfFilesUnchanged": true
+          },
+          "editorRegeneration": {
+            "elementId": "pdf.bbm.technical-neutral.title",
+            "previousFontSize": 14,
+            "fontSize": 15,
+            "metadata": {
+              "state": "current",
+              "stale": false,
+              "generation": 1,
+              "pageCount": 1,
+              "generatedAt": "2026-09-08T04:26:51.483Z",
+              "activeDocumentId": "bbm-produktiv-technical-neutral-99db888a707ad07412913515",
+              "controlledOutputPath": "/tmp/bbm-ui-editor-acceptance-i7AMnK/temp/Technisches-Dokument-Editor.pdf",
+              "renderBounds": [
+                {
+                  "elementId": "pdf.bbm.technical-neutral",
+                  "pageNumber": 1,
+                  "box": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 210,
+                    "height": 297
+                  }
+                },
+                {
+                  "elementId": "pdf.bbm.technical-neutral.page",
+                  "pageNumber": 1,
+                  "box": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 210,
+                    "height": 297
+                  }
+                },
+                {
+                  "elementId": "pdf.bbm.technical-neutral.title",
+                  "pageNumber": 1,
+                  "box": {
+                    "x": 11.997,
+                    "y": 17.996,
+                    "width": 186.005,
+                    "height": 19.997,
+                    "fontSize": 15
+                  }
+                },
+                {
+                  "elementId": "pdf.bbm.technical-neutral.body",
+                  "pageNumber": 1,
+                  "box": {
+                    "x": 11.997,
+                    "y": 60.991,
+                    "width": 186.005,
+                    "height": 149.999,
+                    "fontSize": 11
+                  }
+                }
+              ]
+            },
+            "pdf": {
+              "filePath": "/tmp/bbm-ui-editor-acceptance-i7AMnK/temp/Technisches-Dokument-Editor.pdf",
+              "bytes": 12037,
+              "sha256": "dec490478c6bd5b27b330f441268f032910fa0234c17ccd2cf29dbbbf42fff76",
+              "pageCount": 1,
+              "pageBox": [
+                0,
+                0,
+                595.91998,
+                842.88
+              ],
+              "text": "Neutraler PDF-Beleg aus dem bestehenden BBM-Druckweg.  © | v30.5.1 | BBM 2026 | erstellt mit Baubesprechungsmanager | DEV  S1.4a Techniknachweis",
+              "textItems": [
+                {
+                  "text": "Neutraler PDF-Beleg aus dem bestehenden BBM-Druckweg.",
+                  "fontSizePoints": 10.994999391875005
+                },
+                {
+                  "text": "© | v30.5.1 | BBM 2026 | erstellt mit Baubesprechungsmanager | DEV",
+                  "fontSizePoints": 5.99999975
+                },
+                {
+                  "text": "S1.4a Techniknachweis",
+                  "fontSizePoints": 14.999999375
+                }
+              ]
+            }
+          },
+          "executionFailures": [
+            {
+              "name": "SiGeKo nicht freigeschaltet: bbmDb.printHtmlToPdf",
+              "ok": false,
+              "error": "Feature nicht freigeschaltet: sigeko",
+              "code": "FEATURE_NOT_ALLOWED",
+              "expectedFailureVerified": true,
+              "pdfFilesUnchanged": true,
+              "noWindowOrReadyListenerLeak": true
+            },
+            {
+              "name": "SiGeKo nicht freigeschaltet: bbmPrint.printPdfAndPreviewInternal",
+              "ok": false,
+              "error": "Feature nicht freigeschaltet: sigeko",
+              "code": "FEATURE_NOT_ALLOWED",
+              "expectedFailureVerified": true,
+              "pdfFilesUnchanged": true,
+              "noWindowOrReadyListenerLeak": true
+            },
+            {
+              "name": "SiGeKo nicht freigeschaltet: bbmDb.printOpenHtmlPreview",
+              "ok": false,
+              "error": "Feature nicht freigeschaltet: sigeko",
+              "code": "FEATURE_NOT_ALLOWED",
+              "expectedFailureVerified": true,
+              "pdfFilesUnchanged": true,
+              "noWindowOrReadyListenerLeak": true
+            },
+            {
+              "name": "Kein Protokoll-Fallback bei Providerkontext",
+              "ok": false,
+              "error": "Expliziter PDF-Provider-Request erforderlich.",
+              "code": null,
+              "expectedFailureVerified": true,
+              "pdfFilesUnchanged": true,
+              "noWindowOrReadyListenerLeak": true
+            },
+            {
+              "name": "Protokoll ohne Freigabe",
+              "ok": false,
+              "error": "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.",
+              "code": "FEATURE_NOT_ALLOWED",
+              "expectedFailureVerified": true,
+              "pdfFilesUnchanged": true,
+              "noWindowOrReadyListenerLeak": true
+            },
+            {
+              "name": "Ungueltiger Providerinhalt",
+              "ok": false,
+              "error": "Technischer PDF-Inhalt fehlt oder ueberschreitet den Einseitenvertrag.",
+              "code": null,
+              "expectedFailureVerified": true,
+              "pdfFilesUnchanged": true,
+              "noWindowOrReadyListenerLeak": true
+            },
+            {
+              "name": "Projekt fehlt",
+              "ok": false,
+              "error": "Projekt nicht gefunden.",
+              "code": null,
+              "expectedFailureVerified": true,
+              "pdfFilesUnchanged": true,
+              "noWindowOrReadyListenerLeak": true
+            },
+            {
+              "name": "Ablage kann nicht angelegt werden",
+              "ok": false,
+              "error": "ENOTDIR: not a directory, mkdir '/tmp/bbm-ui-editor-acceptance-i7AMnK/blocked-storage/bbm/S14A - SiGeKo PDF Technikabnahme/SiGeKo/Unterlagen'",
+              "code": null,
+              "expectedFailureVerified": true,
+              "pdfFilesUnchanged": true,
+              "noWindowOrReadyListenerLeak": true
+            },
+            {
+              "name": "Druckfenster geschlossen",
+              "ok": false,
+              "error": "Print-Window geschlossen",
+              "code": null,
+              "expectedFailureVerified": true,
+              "pdfFilesUnchanged": true,
+              "noWindowOrReadyListenerLeak": true
+            },
+            {
+              "name": "Druckauftrag Timeout",
+              "ok": false,
+              "error": "Print-Window Timeout",
+              "code": null,
+              "expectedFailureVerified": true,
+              "pdfFilesUnchanged": true,
+              "noWindowOrReadyListenerLeak": true
+            },
+            {
+              "name": "Freigabe waehrend Druck entzogen",
+              "ok": false,
+              "error": "Feature nicht freigeschaltet: sigeko",
+              "code": null,
+              "expectedFailureVerified": true,
+              "pdfFilesUnchanged": true,
+              "noWindowOrReadyListenerLeak": true
+            }
+          ],
+          "recoveryAfterFailures": {
+            "ok": true,
+            "pdf": {
+              "filePath": "/tmp/bbm-ui-editor-acceptance-i7AMnK/Ablage/bbm/S14A - SiGeKo PDF Technikabnahme/SiGeKo/Unterlagen/Technisches-Dokument (3).pdf",
+              "bytes": 12093,
+              "sha256": "a36571e44c22fc1a77e526751a26f6523113131a4830194ba52390948b2c9778",
+              "pageCount": 1,
+              "pageBox": [
+                0,
+                0,
+                595.91998,
+                842.88
+              ],
+              "text": "Neutraler PDF-Beleg aus dem bestehenden BBM-Druckweg.  © | v30.5.1 | BBM 2026 | erstellt mit Baubesprechungsmanager | DEV  S1.4a Techniknachweis",
+              "textItems": [
+                {
+                  "text": "Neutraler PDF-Beleg aus dem bestehenden BBM-Druckweg.",
+                  "fontSizePoints": 10.994999391875005
+                },
+                {
+                  "text": "© | v30.5.1 | BBM 2026 | erstellt mit Baubesprechungsmanager | DEV",
+                  "fontSizePoints": 5.99999975
+                },
+                {
+                  "text": "S1.4a Techniknachweis",
+                  "fontSizePoints": 13.994999416875
+                }
+              ]
+            }
+          }
+        }
+      },
+      "baselinePassed": 2,
+      "baselineFailed": 1,
+      "classification": "Sporadischer dunkler PDF-Viewer beim Wiederoeffnen auf funktional unveraendertem main reproduziert. Kein Beleg fuer genaue Chromium-Ursache oder behobene Viewer-Stabilitaet; sichtbar bleiben lassen. Kandidat vollstaendig bestanden.",
+      "windowsInfrastructureFailure": {
+        "jobId": 101937109936,
+        "stage": "npm ci / better-sqlite3 / node-gyp VisualStudio discovery",
+        "acceptanceStarted": false,
+        "classification": "Kein PDF-Lauf; nicht als Abnahme gewertet. Vollstaendiger Windows-Nachweis auf gleichem Produktcode in 34186341786 vorhanden."
+      }
     }
   }
 }
