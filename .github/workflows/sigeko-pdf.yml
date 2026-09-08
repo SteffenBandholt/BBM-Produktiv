@@ -63,7 +63,7 @@ jobs:
           cd BBM-base
           result=0
           for attempt in 1 2 3; do
-            if ! xvfb-run -a node scripts/runSigekoPdfAcceptance.cjs --preview-only; then result=1; fi
+            if ! xvfb-run -a npm run test:sigeko:s1.4a -- --preview-only; then result=1; fi
           done
           exit "$result"
       - name: Real PDF, storage, internal preview and editor regeneration
