@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<title>BBM S2.4 – isolierte Grunddatenabnahme</title>
+<body style="margin:0;font-family:system-ui,sans-serif;background:#f3f5f8">
+<script type="module">
+  import SigekoScreen from "../../src/renderer/modules/sigeko/SigekoScreen.js";
+  import * as refs from "../../src/renderer/ui-editor/m80Refs.js";
+  import { createM80RegistrationDescriptor } from "../../src/renderer/ui-editor/m80HostAdapter.js";
+  import { bindDevelopmentUiEditorOpenButtonRef, openNativeUiEditor } from "../../src/renderer/app/coreShellNavigation.js";
+  const host = document.createElement("main"); document.body.append(host);
+  window.s24 = {
+    refs, descriptor: createM80RegistrationDescriptor,
+    async open(projectId) {
+      this.screen?.destroy(); host.replaceChildren();
+      this.screen = new SigekoScreen({ projectId, router: { _setProjectRuntimeContext() {}, async showProjects() {}, async showProjectWorkspace() {} } });
+      host.append(this.screen.render());
+      const launcher = document.createElement("button"); launcher.type = "button"; launcher.textContent = "UI-Editor öffnen";
+      launcher.onclick = () => openNativeUiEditor({ scopeId: "sigeko.screen", launcherButton: launcher });
+      this.screen.root.append(launcher);
+      bindDevelopmentUiEditorOpenButtonRef({ scopeId: "sigeko.screen", button: launcher });
+      await this.screen.load();
+    },
+    element(key) { return refs.getM80Ref(`sigeko.screen.${key}`).element; },
+    fill(values) {
+      for (const [key, value] of Object.entries(values)) {
+        const el = this.element(key);
+        if (el.type === "checkbox") el.checked = value; else el.value = value;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    },
+    bounds(key) {
+      const el = this.element(key); el.scrollIntoView({ block: "center" });
+      const { x, y, width, height } = el.getBoundingClientRect(); return { x, y, width, height };
+    },
+    geometry() {
+      const keys = ["profile.name.input", "profile.email.input", "planning.source.input", "planning.free.name.input", "execution.source.input", "execution.free.name.input"];
+      return keys.map(key => {
+        const el = this.element(key), rect = el.getBoundingClientRect(), parent = el.parentElement.getBoundingClientRect();
+        const label = el.parentElement.querySelector("label"); const labelRect = label?.getBoundingClientRect();
+        return { key, width: rect.width, height: rect.height, inViewportWidth: rect.left >= -1 && rect.right <= innerWidth + 1,
+          inParent: rect.left >= parent.left - 1 && rect.right <= parent.right + 1,
+          labelAbove: !labelRect || labelRect.bottom <= rect.top + 1 };
+      });
+    },
+  };
+</script>
+</body></html>
