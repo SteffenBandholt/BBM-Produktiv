@@ -98,7 +98,7 @@ async function worker() {
       const geometry = await evaluate("s24.geometry()"); report.geometry[size] = geometry;
       for (const field of geometry) assert.ok(field.width > 60 && field.height > 15 && field.inViewportWidth && field.inParent && field.labelAbove, JSON.stringify(field));
       for (const [part, key] of [["profile", "profile.title"], ["roles", "planning.title"]]) {
-        await evaluate(`s24.element('${key}').scrollIntoView({block:'start'})`);
+        await evaluate(`s24.element('${key}').scrollIntoView({block:'start'}); new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))`);
         fs.writeFileSync(path.join(output, `sigeko-project-form-${size}-${part}.png`), (await win.webContents.capturePage()).toPNG());
       }
     }
