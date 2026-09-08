@@ -132,7 +132,19 @@
     "windows": 102157946287
   },
   "ciResult": "13 existing persistence tests, 9 form tests, real Electron form acceptance green on both OS",
-  "manualAcceptance": "pending: original S2.2 plan requires user review; do not mark complete or merge",
+  "manualAcceptance": {
+    "status": "passed",
+    "source": "user supplied terminal output of npm run test:sigeko:s2.2:form (--manual)",
+    "profile": "bbm-ui-editor-acceptance-ZBxktr",
+    "reportFile": "planned-start-result.json",
+    "reportFileTransferred": false,
+    "evidence": "PASS after expected start_date and geplanter_baubeginn checks and explicit manual review confirmation",
+    "previousAttempts": [
+      "4f4mFD: start_date 2001-02-01 instead of 2026-09-01",
+      "98JEjY: start_date 2001-09-01 instead of 2026-09-01"
+    ],
+    "codeChangeAfterFailedAttempts": false
+  },
   "nativeEditorWindowAcceptance": "not performed; explicit refs and real CSS operation tested",
   "finalHarnessCommit": "a3b2ae13c68da6ffa812516e1ddd639a93977935",
   "visualReview": "Windows and Linux CI screenshots inspected: planned start in own row, label and controls readable, no overlap, footer visible"

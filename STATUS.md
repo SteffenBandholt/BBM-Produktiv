@@ -1,4 +1,4 @@
-## 2026-09-08 – SiGeKo S2.2: Projektformular technisch umgesetzt, manuelle Abnahme offen
+## 2026-09-08 – SiGeKo S2.2: Projektformular technisch und manuell abgenommen
 
 PR #326 auf main 5d67c6a / S2.1. Geplanter Baubeginn als eigene Datumseingabe
 im gemeinsamen Anlage-/Bearbeitungsformular, unabhängig von Start-/Enddatum.
@@ -11,10 +11,11 @@ Bestandsprüfungen. CI 34254859948: Windows/Linux je 13 Persistenztests,
 9 Formularprüfungen und echter Electron-/Preload-/IPC-/SQLite-Ablauf grün.
 Beide CI-Screenshots gesichtet: lesbare Felder, keine Überlagerung.
 Details: docs/SIGEKO_S2_2_PROJEKTFORMULAR.md und TESTVERGLEICH.json.
-Native Editorfensterbedienung nicht nachgewiesen. Manuelle S2.2-Abnahme aus dem
-Detailplan noch offen: npm run test:sigeko:s2.2:form führt durch das isolierte
-Altprojekt, getrennte Beginndaten und Wiederöffnen. PR bleibt bis dahin Draft;
-kein Merge, kein S2.3. Rechnung #275, PDF, Mail, Protokollsettings und Vorlagen
+Native Editorfensterbedienung nicht nachgewiesen. Manuelle S2.2-Abnahme bestanden: Steffen hat für
+npm run test:sigeko:s2.2:form den PASS aus Profil ZBxktr übermittelt. Geprüft
+sind getrennte Beginndaten, Speichern und Wiederöffnen mit ausdrücklicher
+Bedienbestätigung. JSON-Datei nicht übertragen; Terminalausgabe ist der Nachweis.
+Integration über PR #326; S2.3 noch nicht begonnen. Rechnung #275, PDF, Mail, Protokollsettings und Vorlagen
 unverändert; bekannte Standard-CI-/PDF-Viewer-Baseline bleibt offen.
 
 ## 2026-09-08 – SiGeKo S2.1: geplanter Baubeginn zentral gespeichert

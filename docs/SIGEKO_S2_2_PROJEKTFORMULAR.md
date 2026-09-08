@@ -2,7 +2,7 @@
 
 Basis: main `5d67c6a` / S2.1 / PR #325. Übergabe: PR #326.
 Produktcommit: `22b91045f5e50b99cbfe2cd581e8ef909940f29c`.
-Status: technisch umgesetzt; manuelle S2.2-Abnahme noch offen. Nicht mergen.
+Status: technisch und manuell abgenommen; Integration über PR #326.
 
 ## Ziel und Paketgrenze
 
@@ -91,7 +91,7 @@ Kit-Aggregation/Validierung und `validateM83ComponentReferences`, beide grün.
 Eine native Editorfenster-/Profilbedienung wird durch den Formularharness
 nicht nachgewiesen. Standard-`npm test` bleibt mit dokumentierter Baseline rot.
 
-## Noch offene manuelle Abnahme
+## Manuelle Abnahme bestanden
 
 Der ursprüngliche S2.2-Detailplan verlangt eine enge manuelle UI-Prüfung.
 Auf dem Ergebnisbranch: `npm run test:sigeko:s2.2:form`.
@@ -101,4 +101,15 @@ eingeben, Speichern klicken, automatisch erneut öffnen, beide Werte und
 Bedienbarkeit prüfen. Erst die abschließende Benutzerbestätigung ergibt
 `manualConfirmed: true` im Bericht. Alle Testdaten bleiben im isolierten Profil.
 
-Vor dieser Rückmeldung bleibt S2.2 offen, PR #326 Draft und S2.3 unbegonnen.
+Steffen hat den Aufruf mit `--manual` und den abschließenden PASS aus dem
+isolierten Profil `bbm-ui-editor-acceptance-ZBxktr` übermittelt. Der gezeigte
+Programmablauf prüft beide erwarteten Daten nach dem Wiederöffnen und verlangt
+danach die ausdrückliche Bestätigung der sichtbaren Werte und Bedienbarkeit.
+Dieser Terminalnachweis wird als bestandene manuelle S2.2-Abnahme dokumentiert.
+Die JSON-Datei wurde nicht übertragen oder hier gelesen.
+
+Zwei vorherige Läufe meldeten abweichende Startdaten (`2001-02-01` bzw.
+`2001-09-01`). Nach Hinweis auf die getrennte Tag-/Monat-/Jahr-Eingabe bestand
+der erneute Lauf ohne Codeänderung. Die genaue Ursache der früheren Eingaben
+wird aus den Logs nicht als bewiesener Produktfehler oder bewiesener Bedienfehler
+abgeleitet. S2.2 ist damit abgenommen; S2.3 bleibt unbegonnen.
