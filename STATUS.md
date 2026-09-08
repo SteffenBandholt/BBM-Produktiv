@@ -1,3 +1,22 @@
+## 2026-09-08 – SiGeKo S2.3: Projekt und Rollen technisch geprüft
+
+Auf main 26ec98f / abgeschlossenem S2.2 umgesetzt: modulweiter SiGeKo-Standard
+und eindeutige Projekterweiterung in bestehender SQLite-Datei. Getrennte Rollen
+mit Modulreferenz, zentraler/Projektperson oder freier Angabe und „wie Planung“.
+Bestätigter Fall: Planung extern, Ausführung eigener SiGeKo. Zentraldaten readonly,
+kein Kontakt-/Projektduplikat, atomare Speicherung und vorhandener Lizenz-/IPC-Guard.
+ZIP-Rundlauf erhält Rollen/IDs; SiGeKo-Archive Version 4 schützen vor Altimportverlust.
+SiGeKo-only funktioniert ohne Protokoll-/Restarbeitentabellen.
+
+15 neue Tests grün; Volltest 1569/97 -> 1584/97, keine neue Regression oder fehlende
+Bestandsprüfung. Quellenreview und eigenes Nachprüfen durch Reviewer ohne Blocker.
+Keine UI/PDF-Änderung, keine manuelle Bedienabnahme für dieses Datenpaket erforderlich.
+PR-/Windows-/Linux-CI-Abschluss steht noch aus. Details und Baselineabgrenzung:
+`docs/SIGEKO_S2_3_PROJEKT_ROLLEN.md`, `docs/SIGEKO_S2_3_TESTVERGLEICH.json`.
+Nächster Schritt nach Integration: separates Grunddaten-Bedienpaket gemäß S2/S3.
+Rechnung #275 bleibt eingefroren; Behörden erst S4, Behörden-PDF Januar 2022 vor
+späterer Übernahme auf Aktualität prüfen. Bekannte PDF-Viewer-Baseline bleibt offen.
+
 ## 2026-09-08 – SiGeKo S2.2: Projektformular technisch und manuell abgenommen
 
 PR #326 auf main 5d67c6a / S2.1. Geplanter Baubeginn als eigene Datumseingabe
