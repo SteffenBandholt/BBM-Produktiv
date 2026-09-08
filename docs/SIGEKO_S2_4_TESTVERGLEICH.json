@@ -51,5 +51,17 @@
     "windows": "PASS",
     "manualConfirmed": false,
     "differenceFromFullTest": "Only screenshot capture waits for two animation frames; no product change."
+  },
+  "closureVerification": {
+    "commit": "6425677757cdbc6b389338b7b652597ce411edce",
+    "passed": 1601,
+    "failed": 97,
+    "passAndFailureMultisetsIdenticalToPreviousFullRun": true,
+    "workflowRun": 34267359455,
+    "linux": "PASS",
+    "windows": "PASS",
+    "userConfirmedOperability": true,
+    "remainingChecksDelegatedToCodex": true,
+    "userManualHarnessPassReceived": false
   }
 }

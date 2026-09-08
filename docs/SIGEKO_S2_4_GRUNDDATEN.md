@@ -1,6 +1,6 @@
 # SiGeKo S2.4 – Grunddaten-Bedienung
 
-Status: technisch umgesetzt; **manuelle Windows-Abnahme offen, nicht integriert**.
+Status: **Bedienbarkeit durch Steffen bestätigt; restliche Prüfung auf Nutzerauftrag automatisiert abgeschlossen.** Integration über PR #328.
 PR: https://github.com/SteffenBandholt/BBM-Produktiv/pull/328
 Base: main `741fa37366e07643c1257955cd119c89f1423050` (S2.3 / #327).
 Branch: `codex/sigeko-s24-grunddaten`.
@@ -106,10 +106,34 @@ werden nicht als praktische Abnahme gezählt. Das native Editorfenster und der n
 Logo-Dateidialog wurden nicht manuell bedient; keine gegenteilige Behauptung.
 
 Erfüllte Kriterien: Paketumfang, Daten-/Entwurfsisolation, gemeinsame Infrastruktur,
-vollständiger M83-Vertrag, Baselinevergleich, Review und veröffentlichter Draft-PR.
-Offen: manuelle fachliche Windows-Abnahme nach #274 B6 und anschließender Merge.
+vollständiger M83-Vertrag, Baselinevergleich, Review, Nutzerbestätigung der Bedienbarkeit
+und automatisierte Restprüfung. Der Nutzer hat die zuvor geforderte persönliche
+Restprüfung ausdrücklich an Codex übertragen; Abschlussgrundlage siehe unten.
 
-## Manuelle Windows-Abnahme
+## Abschluss nach aktueller Nutzeranweisung
+
+Steffen meldet: „aber ich kann sie bedienen. teste den rest selber“. Damit ist die
+Bedienbarkeit durch den Nutzer bestätigt; die restliche Prüfung übernimmt Codex
+auf ausdrücklichen Auftrag. Dies ersetzt für diesen Paketabschluss die vorherige
+Aufforderung, einen vollständigen persönlichen `--manual`-Durchlauf zurückzusenden.
+Es wurde **kein** Nutzer-PASS und keine Ergebnisdatei mit `manualConfirmed:true`
+übermittelt. Automatische Reports bleiben unverändert `manualConfirmed:false`.
+
+Abschlussvolltest auf sauberem Commit `6425677757cdbc6b389338b7b652597ce411edce`:
+1601 grün / 97 bekannte Fehler; exakter Multimengenvergleich aller PASS-/FAIL-Namen
+mit dem vorherigen Volltest unverändert. Keine neue Regression oder fehlende Prüfung.
+[CI 34267359455](https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34267359455)
+am selben Commit: Windows/Linux vollständig PASS, echte Daten-/Bedienabläufe und
+zusätzliche Fenster-/Close-Prüfung. Windows-Fenster innerhalb Arbeitsfläche 1024×720,
+X fordert Abschluss an, ohne Daten zu speichern oder selbst PASS zu bestätigen.
+Vor Merge folgen ausschließlich diese Dokumentationsaktualisierungen.
+
+Das Formular selbst wurde seit dem ersten technischen Abschluss nicht verändert;
+die Nachbesserungen betreffen Screenshot-Aufnahme, Testfenster und Abnahmeabschluss.
+Native Editor- und Dateiauswahldialoge sind weiterhin nicht als manuell geprüft
+nachgewiesen. Rechnung und Behörden bleiben unverändert außerhalb dieses Pakets.
+
+## Optionaler manueller Wiederholungslauf
 
 Im bestehenden BBM-Entwicklungscheckout auf den PR-Branch wechseln:
 
@@ -132,9 +156,9 @@ den automatischen Ablauf aus. Anschließend führen Dialoge durch:
    Monitor-Arbeitsfläche begrenzt; die Inhalte lassen sich vertikal scrollen.
 
 Nur danach steht im Ergebnis `manualConfirmed: true`. Der Starter nennt den absoluten
-Pfad zu `sigeko-project-form-result.json`. Diesen PASS samt Ergebnisdatei oder
-Terminalausgabe zurückmelden. Bis dahin bleibt #328 Draft; kein Merge und kein
-Beginn des folgenden Readiness-Pakets. Die native Logoauswahl kann zusätzlich im
+Pfad zu `sigeko-project-form-result.json`. Ein solcher vollständiger persönlicher
+Wiederholungslauf ist gemäß aktueller Nutzeranweisung keine noch offene
+Integrationsvoraussetzung für dieses Paket. Die native Logoauswahl kann zusätzlich im
 isolierten Formular geprüft werden; der automatische Lauf prüft keinen Dateidialog.
 
 ## Geänderte Dateien

@@ -1,4 +1,4 @@
-## 2026-09-08 – SiGeKo S2.4: Grunddaten technisch umgesetzt, Windows-Abnahme offen (PR #328)
+## 2026-09-08 – SiGeKo S2.4: Bedienbarkeit bestätigt, technische Restprüfung abgeschlossen (PR #328)
 
 Auf main 741fa373 / abgeschlossenem S2.3 ergänzt: eigenes modulweites SiGeKo-Profil
 mit lokaler Logo-Verknüpfung sowie getrennte Planung/Ausführung und „wie Planung“.
@@ -15,13 +15,16 @@ Dedizierte Windows-/Linux-CI mit echten Electron-/IPC-/SQLite-Bedienabläufen gr
 Screenshot-Neuzeichnen im Abnahmeskript nachgebessert. Allgemeine npm-CI weiterhin
 bekannt rot durch fehlendes UI-Editor-kit und Popup-/Lizenzbaseline.
 
-PR #328 bleibt Draft, **kein Merge vor manueller Windows-Abnahme gemäß #274 B6**.
-Abnahme auf codex/sigeko-s24-grunddaten: npm run test:sigeko:s2.4:form:manual.
-Details, Belege, Scope und geänderte Dateien: docs/SIGEKO_S2_4_GRUNDDATEN.md;
-UI-Entwurf und vollständiger Testvergleich in den zugehörigen S2_4-Dokumenten.
-Nächster Schritt: Windows-PASS dokumentieren, PR prüfen und integrieren; danach
-nächstes Paket gemäß #274/#277 festlegen. Rechnung #275 eingefroren; Behörden
-weiterhin erst S4, Behörden-PDF Stand Januar 2022 vor Übernahme aktualitätsprüfen.
+Steffen bestätigt „ich kann sie bedienen“ und beauftragt „teste den rest selber“.
+Abschluss damit auf Nutzerbestätigung der Bedienbarkeit plus automatisierter
+Restprüfung; kein übermittelter persönlicher --manual-PASS wird behauptet.
+Volltest auf 6425677757cdbc6b389338b7b652597ce411edce erneut 1601/97,
+exakt gleiche PASS-/FAIL-Namen. Windows/Linux-CI 34267359455 vollständig grün;
+Testfenster passt auf die verfügbare Arbeitsfläche, X fordert abschließende Prüfung
+an, ohne selbst zu speichern oder PASS zu bestätigen. Integration über PR #328.
+Details: docs/SIGEKO_S2_4_GRUNDDATEN.md und zugehöriger Testvergleich/UI-Entwurf.
+Nächstes Paket nach Integration gemäß #274/#277: S3 Übersicht/Readiness abgrenzen.
+Rechnung #275 eingefroren; Behörden erst S4, PDF Januar 2022 später aktualitätsprüfen.
 
 ## 2026-09-08 – SiGeKo S2.3: Projekt und Rollen technisch abgeschlossen (PR #327)
 
