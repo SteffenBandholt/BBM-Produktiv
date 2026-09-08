@@ -92,9 +92,15 @@ async function capturePaintedPdfPreview(window, screenshotPath) {
   if (lastImage) fs.writeFileSync(screenshotPath, lastImage.toPNG());
   const diagnostics = { visible: window.isVisible(), focused: window.isFocused(), url: window.webContents.getURL(), frames: [] };
   for (const frame of window.webContents.mainFrame.framesInSubtree) {
+    let timeout;
     try {
-      diagnostics.frames.push({ url: frame.url, state: await frame.executeJavaScript("({ready:document.readyState,visibility:document.visibilityState,body:document.body?.innerHTML.slice(0,1500)})") });
+      const state = await Promise.race([
+        frame.executeJavaScript("({ready:document.readyState,visibility:document.visibilityState,body:document.body?.innerHTML.slice(0,1500)})"),
+        new Promise((resolve) => { timeout = setTimeout(() => resolve({ diagnosticTimeout: true }), 1000); }),
+      ]);
+      diagnostics.frames.push({ url: frame.url, state });
     } catch (error) { diagnostics.frames.push({ url: frame.url, error: error.message }); }
+    finally { clearTimeout(timeout); }
   }
   throw Object.assign(new Error(`Interne PDF-Vorschau zeigt keine stabil gezeichnete Seite mit Text: ${JSON.stringify(evidence)}; Diagnose: ${JSON.stringify(diagnostics)}`), { code: "PDF_PREVIEW_PAINT_TIMEOUT" });
 }
