@@ -1,22 +1,27 @@
-## 2026-09-08 – SiGeKo S1.5: gemeinsame Mailgrenze, Outlook-Abnahme offen
+## 2026-09-08 – SiGeKo S1.5: gemeinsame Mailgrenze abgenommen
 
-Umgesetzt auf main-Basis 6e1f7f7: vorhandener Mail-IPC/COM-Adapter prüft das
-explizite Modul und dessen Mail-Capability über den zentralen Lizenzguard.
-SiGeKo benötigt keine Protokoll-Lizenz. Erfolg bezeichnet ausdrücklich nur
-`draft-opened`; Anhänge werden geprüft, Abbruch und fehlende Bestätigung bleiben
-Fehler. Eine JSON-Dateiübergabe erhält lange Unicode-Mailtexte ohne neues
-Windows-Argumentlimit. Legacy-Protokollweg bleibt unterstützt.
+S1.5 technisch und praktisch abgenommen; Integration über PR #324 auf
+main-Basis 6e1f7f7. Vorhandener Mail-IPC/COM-Adapter prüft Modul und Mail-Capability
+über den zentralen Lizenzguard. SiGeKo benötigt keine Protokoll-Lizenz; Erfolg
+bezeichnet ausschließlich `draft-opened`. Anhänge, Abbruch und Bestätigung sind
+abgesichert, lange Unicode-Mailtexte gehen über eine temporäre JSON-Datei.
+Legacy-Protokollweg bleibt unterstützt.
 
 Volltest: main 1527/97 -> Kandidat 1546/97, exakt dieselben 97 Fehlernamen;
-19 neue Tests grün. Details und Loghashes in docs/SIGEKO_S1_5_TESTVERGLEICH.json.
-Praktische Entwurfsöffnung, Anlagenprüfung und Verwerfen in Outlook sind noch
-nicht nachgewiesen. Vorbereitet: `npm run test:sigeko:s1.5:outlook` unter Windows
-mit klassischem Outlook. Daher kein S1.5-Abschluss und kein Merge vor Abnahme.
-Siehe docs/SIGEKO_S1_5_MAILGRENZE.md; Übergabe als Entwurfs-PR #324 auf
-`codex/sigeko-s1-5-mail-boundary`. CI 34188452956: Windows/Linux je 24 Tests
-grün, Windows-PowerShell-Syntax grün; keine reale Outlook-Abnahme. Standard-CI
-bleibt mit bekannter Baseline rot. Rechnung #275, PDF-Vorlagen, Fachprozesse und
-Reminder unverändert; kein Folgepaket begonnen.
+19 neue Tests grün. CI 34188452956 und 34188574208: Windows/Linux je 24 Tests
+und Windows-PowerShell-Syntax grün. Standard-CI bleibt mit bekannter Baseline rot.
+Steffen hat am 08.09.2026 die echte Outlook-Abnahme zweimal mit PASS übermittelt:
+Profile qM6wFq und lsvEOy. Screenshot zeigt korrekten Entwurf mit zwei Anhängen;
+PASS setzt die Nutzerbestätigung der Prüfung und des Verwerfens voraus.
+Die JSON-Berichte wurden nicht übertragen; Screenshot und Terminalausgabe sind
+der praktische Nachweis. Keine Versandbeobachtung oder kryptografische
+Kundenlizenzprüfung behauptet.
+
+Details: docs/SIGEKO_S1_5_MAILGRENZE.md und docs/SIGEKO_S1_5_TESTVERGLEICH.json.
+Der bisherige Outlook-Abnahmeblocker ist erledigt. Nächster Schritt: Gate-G1-
+Kriterien nach S1 gemäß #274/#277 prüfen, bevor Fachpakete beginnen. S2 nicht
+begonnen. Rechnung #275, PDF-Vorlagen, Fachprozesse und Reminder unverändert;
+sporadische PDF-Viewer-Baseline aus S1.4 bleibt separat offen.
 
 ## 2026-09-08 – SiGeKo S1.4: PDF-Ausführung und Abbruchnachweis
 

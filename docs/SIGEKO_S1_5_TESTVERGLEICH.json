@@ -154,9 +154,9 @@
   "newTests": 19,
   "coverageLimits": [
     "Process behavior injected in automated mail boundary tests; not Outlook COM execution.",
-    "Practical Windows/Outlook opening, attachment contents and discard remain unverified.",
     "Manual acceptance uses isolated simulated license status through real guard, not a cryptographic customer license.",
-    "Standard CI retains known failures; no passing full-suite claim."
+    "Standard CI retains known failures; no passing full-suite claim.",
+    "Practical acceptance evidenced by user-provided screenshot and two PASS terminal outputs; report JSON files were not transferred/read."
   ],
   "ci": {
     "run": 34188452956,
@@ -174,7 +174,51 @@
     "standardNpmRun": 34188452890,
     "standardNpmConclusion": "failure; known environment/baseline; not represented as success"
   },
-  "status": "implemented; practical Outlook acceptance pending",
+  "status": "technical and practical acceptance completed; integration via PR #324",
   "pr": 324,
-  "testedCodeCommit": "82013406991d486d31070e40cb7d61855b2f2f0b"
+  "testedCodeCommit": "82013406991d486d31070e40cb7d61855b2f2f0b",
+  "manualOutlookAcceptance": {
+    "date": "2026-09-08",
+    "platform": "Windows / installed Outlook COM",
+    "source": "user-provided screenshot and terminal transcript",
+    "branch": "codex/sigeko-s1-5-mail-boundary",
+    "command": "npm run test:sigeko:s1.5:outlook",
+    "runs": [
+      {
+        "profile": "bbm-ui-editor-acceptance-qM6wFq",
+        "report": "mail-acceptance-result.json",
+        "result": "PASS"
+      },
+      {
+        "profile": "bbm-ui-editor-acceptance-lsvEOy",
+        "report": "mail-acceptance-result.json",
+        "result": "PASS"
+      }
+    ],
+    "screenshotObserved": [
+      "Outlook draft window",
+      "recipient",
+      "subject",
+      "body",
+      "two attachment entries"
+    ],
+    "runnerPassRequires": [
+      "Protokoll denied with SiGeKo-only status",
+      "SiGeKo denied after permission withdrawal",
+      "missing attachment rejected",
+      "real IPC draft-opened response",
+      "user confirmation: checked and discarded"
+    ],
+    "jsonReportsRead": false,
+    "performedBy": "user",
+    "actualSendObserved": false,
+    "cryptographicLicenseVerified": false
+  },
+  "preAcceptanceHeadCi": {
+    "head": "0d9158d6d0db9c9ed2900b864e4dd8812ac03f29",
+    "mailRun": 34188574208,
+    "conclusion": "success",
+    "standardNpmRun": 34188574222,
+    "standardNpmConclusion": "known baseline failure"
+  }
 }

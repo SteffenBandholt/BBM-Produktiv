@@ -1,8 +1,8 @@
 # S1.5 – Gemeinsame Mailgrenze ohne Protokoll-Lizenzbindung
 
 Basis: main `6e1f7f7`, Gesamtplan #277, SiGeKo #274, S1.4 / PR #323.
-Status: technisch umgesetzt, praktische Windows-/Outlook-Abnahme offen.
-Entwurfs-PR: https://github.com/SteffenBandholt/BBM-Produktiv/pull/324.
+Status: technisch und praktisch abgenommen am 08.09.2026.
+Integration über PR: https://github.com/SteffenBandholt/BBM-Produktiv/pull/324.
 Die B3-Entscheidung aus #274 ist verbindlich: Entwurfsöffnung ist die Übergabe
 an den Nutzer; es gibt keinen Versandnachweis und keine Versandhistorie.
 
@@ -96,7 +96,7 @@ auf Code-Commit `8201340`: jeweils 24 Grenz-/Protokolltests auf Windows und Linu
 grün; Windows-PowerShell-Parser ebenfalls grün. Das ist kein Outlook-COM-Nachweis.
 Standard-npm-CI bleibt mit der bekannten Umgebungs-/Testbaseline rot.
 
-## Noch erforderliche praktische Abnahme
+## Praktische Abnahme – am 08.09.2026 bestanden
 
 `npm run test:sigeko:s1.5:outlook` auf Windows mit installiertem klassischem
 Outlook (COM) ausführen. Der Runner erzeugt ein eigenes temporäres Profil und
@@ -113,11 +113,30 @@ den Entwurf verwerfen und im Abnahmedialog bestätigen. Das Ergebnis steht in
 der beim Start angezeigten `mail-acceptance-result.json`. Der Dialogabschluss ist
 als manuelle Bestätigung gekennzeichnet, nicht als technische Versandbeobachtung.
 
-Dieser praktische Ablauf wurde hier mangels Windows/Outlook nicht ausgeführt.
-Nach AGENTS.md (Goal-Abschluss nur mit tatsächlich erfüllten Kriterien) bleibt
-S1.5 bis zu diesem Nachweis offen und der PR Entwurf. Kein Merge und kein
-Folgepaket vor der fehlenden Abnahme. Die bestehende sporadische PDF-Viewer-
-Baseline aus S1.4 bleibt ein separates offenes Thema.
+Steffen hat den Ablauf auf seinem Windows-Rechner vom Branch
+`codex/sigeko-s1-5-mail-boundary` zweimal ausgeführt und beide `PASS`-Ausgaben
+im Chat übermittelt. Die isolierten Profilnamen sind:
+
+- `bbm-ui-editor-acceptance-qM6wFq/mail-acceptance-result.json`: PASS
+- `bbm-ui-editor-acceptance-lsvEOy/mail-acceptance-result.json`: PASS
+
+Der zuvor gezeigte Screenshot belegt den geöffneten Outlook-Entwurf mit
+korrektem Empfänger, Betreff, Text und beiden Anhängen. Der unveränderte Runner
+meldet PASS ausschließlich nach erfolgreichen IPC-/Berechtigungsprüfungen,
+`draft-opened` und der Nutzerbestätigung „Geprüft und verworfen“. Damit liegt
+der praktische Nachweis einschließlich manuell bestätigter Anlagenprüfung und
+Verwerfen vor. Die JSON-Dateien selbst wurden nicht übertragen oder hier gelesen;
+Nachweisquelle sind der Nutzerscreenshot und die übermittelte Terminalausgabe.
+Die Windows-Abnahme fand beim Nutzer statt, nicht in dieser Linux-Umgebung.
+
+Die zuvor fehlende Abnahme ist damit erfüllt; S1.5 kann über PR #324 integriert
+werden. Nach der Abnahme wurden nur diese Nachweisdokumentation, Testvergleich
+und STATUS geändert. Der Produkt-/Testcode bleibt auf dem bereits geprüften
+Stand. CI 34188574208 auf `0d9158d` ebenfalls grün für Windows/Linux; die
+Standard-CI-Baseline bleibt unverändert rot. Nächster Schritt ist die Prüfung
+der nach S1 vorgesehenen Gate-G1-Kriterien gemäß #274/#277 vor Fachpaketen.
+S2 wurde nicht begonnen. Die sporadische PDF-Viewer-Baseline aus S1.4 bleibt
+separat offen; diese Abnahme ist weiterhin kein Versandnachweis.
 
 Bekannte ältere mailto-Rückgabeprobleme und das Schließen des älteren
 MainHeader-Maildialogs unabhängig vom Ergebnis wurden bei der Bestandsanalyse
