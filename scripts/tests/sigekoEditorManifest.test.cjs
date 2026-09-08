@@ -49,14 +49,15 @@ async function runSigekoEditorManifestTests(run) {
     assert.equal(manifest.schemaVersion, 2); assert.equal(manifest.contractVersion, '1.2');
     assert.equal(manifest.profileRoot, '.ui-editor-kit/profiles');
     assert.deepEqual(manifest.scopes.filter(s => s.scopeId === 'sigeko.screen'), [
-      { scopeId: 'sigeko.screen', status: 'complete', reason: null, elementCount: 12, missingReferenceCount: 0 },
+      { scopeId: 'sigeko.screen', status: 'complete', reason: null, elementCount: 108, missingReferenceCount: 0 },
     ]);
-    assert.equal(scopes.find(s => s.scopeId === 'sigeko.screen').elements.length, 12);
+    assert.equal(scopes.find(s => s.scopeId === 'sigeko.screen').elements.length, 108);
   });
   await run('S1.2-Fix: alle sieben bisherigen Scope-Fingerprints bleiben bytegleich', () => {
     for (const [scopeId, fingerprint] of Object.entries(EXISTING_SCOPE_FINGERPRINTS)) {
       assert.equal(createUiScopeFingerprint(scopes.find(s => s.scopeId === scopeId)), fingerprint, scopeId);
     }
+    assert.equal(createUiScopeFingerprint(scopes.find(s => s.scopeId === 'projektverwaltung.plannedStart')), 'sha256:a3959a7358504a1a26f6b303de8929e6dab722b5835aa586be573646c04485a5');
     assert.deepEqual(manifest.scopes.filter(s => !['sigeko.screen', 'projektverwaltung.plannedStart'].includes(s.scopeId)).map(s => [s.scopeId, s.status, s.elementCount]), [
       ['restarbeiten.header.root', 'complete', 44], ['restarbeiten.list.root', 'complete', 32], ['restarbeiten.edit.root', 'complete', 53],
       ['protokoll.screen.root', 'complete', 34], ['protokoll.list.root', 'complete', 32], ['protokoll.edit.root', 'complete', 38],

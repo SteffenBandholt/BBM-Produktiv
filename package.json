@@ -17,6 +17,8 @@
     "test:sigeko:s1.4a": "node scripts/runSigekoPdfAcceptance.cjs",
     "test:sigeko:s1.5:outlook": "node scripts/runSigekoMailAcceptance.cjs",
     "test:sigeko:s2.2:form": "node scripts/runPlannedStartFormAcceptance.cjs --manual",
+    "test:sigeko:s2.4:form": "node scripts/runSigekoProjectFormAcceptance.cjs",
+    "test:sigeko:s2.4:form:manual": "node scripts/runSigekoProjectFormAcceptance.cjs --manual",
     "test:sigeko:s1.4": "node scripts/runSigekoPdfAcceptance.cjs",
     "test:sigeko:s1.3:windows": "node scripts/runSigekoStorageAcceptance.cjs",
     "lint": "eslint \"src/**/*.js\"",

@@ -83,8 +83,8 @@ async function runSigekoEntryAcceptanceTests(run) {
       }
       license = { valid: true, license: { modules: ['sigeko'] } };
     });
-    await run('S1.2: alle elf sichtbaren Slots besitzen vollstaendige echte Kit-Vertraege und Einzel-Refs', () => {
-      assert.equal(contract.slots.length, 11);
+    await run('S1.2: alle sichtbaren Slots besitzen vollstaendige echte Kit-Vertraege und Einzel-Refs', () => {
+      assert.equal(contract.slots.length, 107);
       assert.deepEqual(contract.requiredSlots, contract.slots.map(slot => slot.slotId));
       assert.equal(refs.validateM83ComponentReferences([contract.componentId]).ok, true);
       for (const slot of contract.slots) {
@@ -106,8 +106,8 @@ async function runSigekoEntryAcceptanceTests(run) {
       assert.equal(bindDevelopmentUiEditorOpenButtonRef({ scopeId: 'sigeko.screen', button: new Element('button') }), true);
       assert.equal(refs.validateM83ComponentReferences(['bbm.sigeko.mainHeaderLauncher']).ok, true);
     });
-    await run('S1.2: genau zwei echte Rueckwege, keine Fachaktion und umbruchfaehiger Einstieg', async () => {
-      const buttons = contract.slots.filter(slot => slot.element.type === 'button');
+    await run('S1.2: genau zwei echte Rueckwege in der Navigation und umbruchfaehiger Einstieg', async () => {
+      const buttons = contract.slots.filter(slot => slot.element.type === 'button' && slot.element.parentId === 'sigeko.screen.navigation');
       assert.deepEqual(buttons.map(slot => slot.element.id), ['sigeko.screen.workspace', 'sigeko.screen.projects']);
       await refs.getM80Ref('sigeko.screen.workspace').element.onclick();
       assert.equal(router.lastNavigation, 'a');

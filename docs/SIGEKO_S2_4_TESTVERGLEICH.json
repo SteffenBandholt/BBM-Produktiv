@@ -1,0 +1,67 @@
+{
+  "package": "S2.4",
+  "base": "741fa37366e07643c1257955cd119c89f1423050",
+  "baseline": {
+    "passed": 1584,
+    "failed": 97
+  },
+  "candidate": {
+    "passed": 1601,
+    "failed": 97
+  },
+  "newFailures": [],
+  "missingBaselineFailures": [],
+  "removedPassNames": [
+    "S1.2: alle elf sichtbaren Slots besitzen vollstaendige echte Kit-Vertraege und Einzel-Refs",
+    "S1.2: genau zwei echte Rueckwege, keine Fachaktion und umbruchfaehiger Einstieg"
+  ],
+  "addedPassNames": [
+    "S2.4: opening an unassigned project loads defaults without any writes",
+    "S2.4: profile save sends only module data and preserves unsaved project roles",
+    "S2.4: free planning and own execution stay separate and do not save a profile draft",
+    "S2.4: execution like planning never sends stale execution fields",
+    "S2.4: central and project contacts send their distinct selected reference IDs",
+    "S2.4: rejected contact selection keeps the draft and enables retry",
+    "S2.4: unavailable saved contact remains visible and an unchanged reference is omitted",
+    "S2.4: a failed contact list is explicit while other sources remain usable",
+    "S2.4: failed profile save retains every draft including logo and restores controls",
+    "S2.4: each pending save blocks duplicate writes and navigation",
+    "S2.4: archived projects prohibit role writes while the shared profile remains editable",
+    "S2.4: failed loads cannot enable saves for unverified data",
+    "S2.4: dirty navigation requires discard and never performs an implicit save",
+    "S2.4: delayed load responses after project switch cannot mutate the current view or its refs",
+    "S2.4: delayed save after destroy leaves a replacement screen and its refs intact",
+    "S2.4: all 107 slots have exact mounted attributes, valid parents and domain locks",
+    "S2.4: editor font and geometry changes cannot alter role values or call either save",
+    "S1.2: alle sichtbaren Slots besitzen vollstaendige echte Kit-Vertraege und Einzel-Refs",
+    "S1.2: genau zwei echte Rueckwege in der Navigation und umbruchfaehiger Einstieg"
+  ],
+  "renamedTests": {
+    "S1.2: alle elf sichtbaren Slots besitzen vollstaendige echte Kit-Vertraege und Einzel-Refs": "S1.2: alle sichtbaren Slots besitzen vollstaendige echte Kit-Vertraege und Einzel-Refs",
+    "S1.2: genau zwei echte Rueckwege, keine Fachaktion und umbruchfaehiger Einstieg": "S1.2: genau zwei echte Rueckwege in der Navigation und umbruchfaehiger Einstieg"
+  },
+  "comparison": "Exact multiset comparison of all full-run passing/failing test names; 17 new passing tests and two intentional title updates; zero changed failure names or multiplicities.",
+  "candidateTree": "e558e771fce0b114305fba12b2956bcd74f57009",
+  "candidateCommit": "9c42f30f1b0361b76f9d1f09e3afd64e97619516",
+  "acceptance": {
+    "commit": "0b39500f5503fcac21c74db2329a5b6a1d7b7b65",
+    "tree": "5857a6be965369e41f7261629017a5a6eae20025",
+    "workflowRun": 34266138586,
+    "linux": "PASS",
+    "windows": "PASS",
+    "manualConfirmed": false,
+    "differenceFromFullTest": "Only screenshot capture waits for two animation frames; no product change."
+  },
+  "closureVerification": {
+    "commit": "6425677757cdbc6b389338b7b652597ce411edce",
+    "passed": 1601,
+    "failed": 97,
+    "passAndFailureMultisetsIdenticalToPreviousFullRun": true,
+    "workflowRun": 34267359455,
+    "linux": "PASS",
+    "windows": "PASS",
+    "userConfirmedOperability": true,
+    "remainingChecksDelegatedToCodex": true,
+    "userManualHarnessPassReceived": false
+  }
+}

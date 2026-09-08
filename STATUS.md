@@ -1,3 +1,31 @@
+## 2026-09-08 – SiGeKo S2.4: Bedienbarkeit bestätigt, technische Restprüfung abgeschlossen (PR #328)
+
+Auf main 741fa373 / abgeschlossenem S2.3 ergänzt: eigenes modulweites SiGeKo-Profil
+mit lokaler Logo-Verknüpfung sowie getrennte Planung/Ausführung und „wie Planung“.
+Vorhandene Projekt-/Profilservices unverändert; zentrale/Projektkontakte über den
+neutralen firmDirectory. Profil und Projektrollen separat speichern, Entwürfe bei
+Fehlern erhalten, Archiv-/Lizenzsperren und fehlende Quellen berücksichtigt.
+
+107 vollständig registrierte Screen-Slots; vorhandener M83-Scope und Headerstarter,
+keine Editor-Core-Änderung. Fremdscope-Fingerprints einschließlich S2.2 bytegleich.
+17 neue Tests grün; Volltest 1584/97 -> 1601/97, exakt dieselben Baselinefehler,
+keine neue Regression. Unabhängiges Review: Protokoll-Kontaktkopplung gefunden,
+auf gemeinsamen Corepfad korrigiert und ohne Restbefund nachgeprüft.
+Dedizierte Windows-/Linux-CI mit echten Electron-/IPC-/SQLite-Bedienabläufen grün;
+Screenshot-Neuzeichnen im Abnahmeskript nachgebessert. Allgemeine npm-CI weiterhin
+bekannt rot durch fehlendes UI-Editor-kit und Popup-/Lizenzbaseline.
+
+Steffen bestätigt „ich kann sie bedienen“ und beauftragt „teste den rest selber“.
+Abschluss damit auf Nutzerbestätigung der Bedienbarkeit plus automatisierter
+Restprüfung; kein übermittelter persönlicher --manual-PASS wird behauptet.
+Volltest auf 6425677757cdbc6b389338b7b652597ce411edce erneut 1601/97,
+exakt gleiche PASS-/FAIL-Namen. Windows/Linux-CI 34267359455 vollständig grün;
+Testfenster passt auf die verfügbare Arbeitsfläche, X fordert abschließende Prüfung
+an, ohne selbst zu speichern oder PASS zu bestätigen. Integration über PR #328.
+Details: docs/SIGEKO_S2_4_GRUNDDATEN.md und zugehöriger Testvergleich/UI-Entwurf.
+Nächstes Paket nach Integration gemäß #274/#277: S3 Übersicht/Readiness abgrenzen.
+Rechnung #275 eingefroren; Behörden erst S4, PDF Januar 2022 später aktualitätsprüfen.
+
 ## 2026-09-08 – SiGeKo S2.3: Projekt und Rollen technisch abgeschlossen (PR #327)
 
 Auf main 26ec98f / abgeschlossenem S2.2 umgesetzt: modulweiter SiGeKo-Standard
