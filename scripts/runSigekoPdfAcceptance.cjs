@@ -177,11 +177,14 @@ async function runWorker() {
     assert.ok(previewWindow, "Bestehende interne PDF-Vorschau wurde nicht geoeffnet");
     const previewPdf = await inspectPdf(preview.filePath);
     assert.equal(previewPdf.text, stored.text);
+    const screenshotPath = path.join(profile.rootPath, "internal-preview.png");
+    // PDF viewer initialization outlives loadURL; wait for the initial painted
+    // document before asking that same viewer to reopen its file.
+    await capturePaintedPdfPreview(previewWindow, screenshotPath);
     // Die bestehende Vorschau laedt dieselbe gespeicherte Datei erneut.
     await previewWindow.loadURL(pathToFileURL(preview.filePath).href);
     const reopened = await inspectPdf(preview.filePath);
     assert.equal(reopened.sha256, previewPdf.sha256, "Wiederoeffnen hat gespeicherten PDF-Inhalt veraendert");
-    const screenshotPath = path.join(profile.rootPath, "internal-preview.png");
     const paint = await capturePaintedPdfPreview(previewWindow, screenshotPath);
     report.checks.internalPreview = { filePath: preview.filePath, screenshotPath, reopenedUnchanged: true, pageCount: reopened.pageCount, paint };
 
@@ -267,7 +270,7 @@ async function runWorker() {
     report.checks.editorRegeneration = { elementId: editable.id, previousFontSize: before.fontSize, fontSize, metadata: generated, pdf: regeneratedPdf };
     const { verifyPdfExecutionFailures } = require("./helpers/pdfExecutionAcceptance.cjs");
     report.checks.executionFailures = await verifyPdfExecutionFailures({ app, BrowserWindow, ipcMain, invoke,
-      payload, profile, baseDir, tempPath, licenseFixture, pdfInventory });
+      payload, profile, baseDir, tempPath, licenseFixture, pdfInventory, persistentWindowIds: [caller.id, previewWindow.id] });
     const recovered = await invoke("bbmDb.printHtmlToPdf");
     assert.equal(recovered.ok, true, JSON.stringify(recovered));
     const recoveredPdf = await inspectPdf(recovered.filePath);

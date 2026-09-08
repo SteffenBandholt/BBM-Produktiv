@@ -7,20 +7,30 @@ const path = require("node:path");
 // Actual preload -> IPC -> print-window path. Faults are confined to this
 // isolated worker; printToPDF, storage and IPC results are never replaced.
 async function verifyPdfExecutionFailures({ app, BrowserWindow, ipcMain, invoke, payload,
-  profile, baseDir, tempPath, licenseFixture, pdfInventory }) {
+  profile, baseDir, tempPath, licenseFixture, pdfInventory, persistentWindowIds }) {
   const results = [];
   const inventory = () => pdfInventory([baseDir, tempPath]);
+  const expectedWindows = [...persistentWindowIds].sort();
+  async function waitForClosedPrintWindows(name) {
+    const deadline = Date.now() + 5000;
+    const current = () => BrowserWindow.getAllWindows().map((window) => window.id).sort();
+    while (JSON.stringify(current()) !== JSON.stringify(expectedWindows) && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    assert.deepEqual(current(), expectedWindows, `${name}: Druckfenster bleibt zurueck`);
+  }
+  // Electron acknowledges close asynchronously, after the print IPC resolves.
+  await waitForClosedPrintWindows("Vor Fehlerabnahme");
   async function rejected(name, request, expected, method = "bbmDb.printHtmlToPdf") {
     const before = inventory();
     const listeners = ipcMain.listenerCount("print:ready");
-    const windows = BrowserWindow.getAllWindows().map((window) => window.id).sort();
     const result = await invoke(method, request);
     assert.equal(result.ok, false, `${name}: ${JSON.stringify(result)}`);
     assert.equal(result.filePath, undefined, `${name}: Fehler darf keinen fertigen Dateipfad melden`);
     assert.match(JSON.stringify(result), expected, name);
     assert.deepEqual(inventory(), before, `${name}: PDF-Bestand veraendert`);
     assert.equal(ipcMain.listenerCount("print:ready"), listeners, `${name}: Ready-Listener bleibt zurueck`);
-    assert.deepEqual(BrowserWindow.getAllWindows().map((window) => window.id).sort(), windows, `${name}: Druckfenster bleibt zurueck`);
+    await waitForClosedPrintWindows(name);
     results.push({ name, ok: false, error: result.error, code: result.code || null, expectedFailureVerified: true,
       pdfFilesUnchanged: true, noWindowOrReadyListenerLeak: true });
   }
