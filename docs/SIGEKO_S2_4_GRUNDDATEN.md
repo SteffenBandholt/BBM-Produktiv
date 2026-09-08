@@ -126,8 +126,10 @@ den automatischen Ablauf aus. Anschließend führen Dialoge durch:
 2. Planung: `Freie Angaben`, Name `Manuelle Planung`.
 3. `Ausführung wie Planung` ausschalten; Ausführung `Eigenes SiGeKo-Profil` wählen.
 4. Projektrollen speichern. Das Projekt wird nach DB-Neuöffnung erneut angezeigt.
-5. Werte und Bedienbarkeit prüfen, nochmals Projektrollen speichern und ausdrücklich
-   `Geprüft – bestanden` wählen.
+5. Werte und Bedienbarkeit prüfen. Testfenster oben rechts mit **X** schließen.
+   Erst in der danach erscheinenden Abnahmefrage `Geprüft – bestanden` wählen.
+   Erneutes Speichern ist nicht erforderlich. Das Fenster wird auf die verfügbare
+   Monitor-Arbeitsfläche begrenzt; die Inhalte lassen sich vertikal scrollen.
 
 Nur danach steht im Ergebnis `manualConfirmed: true`. Der Starter nennt den absoluten
 Pfad zu `sigeko-project-form-result.json`. Diesen PASS samt Ergebnisdatei oder

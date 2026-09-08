@@ -133,3 +133,17 @@ Der alte HTML-Parser `scripts/ui-editor-contract-check.cjs` unterstützt nur das
 Maßgeblicher technischer Nachweis für diese bestehende M83-Anbindung: echte Kit-Funktionen `validateUiComponentContracts` (bei Registry-Aggregation) und `validateUiComponentReferenceBindings` (über `validateM83ComponentReferences`) sowie die neuen Formularprüfungen aller 107 tatsächlich gemounteten Slots, sechs Pflichtattribute, realer Parents und Datenaktionssperren. Manifest- und echte Profil-Restore-Prüfungen bleiben unverändert wirksam. Der Review hat die Abgrenzung bestätigt.
 
 Kontaktquellen werden ausschließlich über den vorhandenen neutralen `firmDirectory`-Dienst gelesen. Der isolierte Electronlauf registriert dessen echten IPC-Registrar unter reiner SiGeKo-Lizenz; keine ersatzweise registrierten Protokoll-Kontaktkanäle.
+
+## Nachbesserung der manuellen Abnahme – vor Umsetzung
+
+Nutzerbefund: Speichern/Ende nicht erkennbar, Testfenster möglicherweise größer als
+sichtbarer Bildschirm. A: UI, ausschließlich isolierte native Abnahmefenstersteuerung.
+B: keine neuen editorfähigen Ziele; alle 107 Produkt-Slots bleiben unverändert.
+C/E: IDs, Parents, Operationen und Produktformular werden nicht verändert. Native
+Fenstergrenzen verwenden die verfügbare Monitor-Arbeitsfläche. D: Der vorhandene
+native Fensterschließen-Button ist Teststeuerung außerhalb des DOM-/Layouteditors,
+keine Fachspeicherung. Nach der Wiederöffnungsprüfung öffnet X die ausdrückliche
+PASS/FAIL-Frage; X alleine gilt niemals als bestandene Abnahme. F: bestehender
+Windows-/Linux-Electron-Abnahmelauf; zusätzlicher tatsächlicher Close-Versuch prüft,
+dass das Fenster erhalten und lediglich die Abschlussanfrage gesetzt wird. Die
+abschließende manuelle Nutzerbestätigung bleibt zwingend offen.

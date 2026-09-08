@@ -9,7 +9,7 @@ const { ACCEPTANCE_SWITCH, configureUiEditorAcceptanceProfile } = require("../sr
 const ROOT = path.resolve(__dirname, "..");
 
 async function worker() {
-  const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+  const { app, BrowserWindow, ipcMain, dialog, screen } = require("electron");
   let profile, database, editor;
   const report = { package: "S2.4", ok: false, manualConfirmed: false, checks: [], rendererErrors: [] };
   try {
@@ -120,13 +120,36 @@ async function worker() {
     assert.equal(await evaluate("window.bbmDb.sigekoSaveCoordinatorProfile({patch:{name:'Verboten'}}).then(()=>false,e=>String(e).includes('MODULE_NOT_ACTIVE'))"), true);
     license = { valid: true, license: { modules: ["sigeko"] } };
     report.checks.push("already-open archived project rejects mouse save atomically; production IPC enforces archive and current module license");
+    // Native test-window controls: fit the usable monitor, and X requests review only.
+    const fitToWorkArea = () => {
+      const area = screen.getDisplayMatching(win.getBounds()).workArea;
+      const width = Math.min(1280, area.width), height = Math.min(950, area.height);
+      win.setBounds({ x: area.x + Math.floor((area.width - width) / 2), y: area.y + Math.floor((area.height - height) / 2), width, height });
+      return area;
+    };
+    let finishReview = null;
+    const onReviewClose = event => { event.preventDefault(); finishReview?.(); };
+    const reviewCloseRequested = () => new Promise(resolve => { finishReview = resolve; win.on("close", onReviewClose); });
+    const stopReviewClose = () => { win.removeListener("close", onReviewClose); finishReview = null; };
+    const area = fitToWorkArea();
+    const bounds = win.getBounds();
+    assert.ok(bounds.x >= area.x && bounds.y >= area.y && bounds.x + bounds.width <= area.x + area.width && bounds.y + bounds.height <= area.y + area.height, JSON.stringify({ bounds, area }));
+    const beforeClose = snapshot(), closeProbe = reviewCloseRequested();
+    win.close(); await closeProbe;
+    assert.equal(win.isDestroyed(), false); assert.equal(snapshot(), beforeClose); assert.equal(report.manualConfirmed, false);
+    stopReviewClose();
+    report.checks.push("test window fits monitor work area; native X requests review without closing, saving or confirming PASS");
+    report.manualWindow = { bounds, workArea: area };
     if (process.argv.includes("--manual")) {
-      await open(projects[0].id); await evaluate("s24.element('profile.title').scrollIntoView({block:'start'})");
-      await dialog.showMessageBox(win, { type: "info", title: "BBM S2.4 – manuelle Grunddatenabnahme", message: "Bitte Profil und beide Projektrollen selbst eingeben und jeweils speichern.", detail: "1. Eigenes SiGeKo-Profil: Name = Manueller SiGeKo; Profil speichern.\n2. Planung: Freie Angabe wählen, Name = Manuelle Planung.\n3. Ausführung wie Planung ausschalten; Ausführung = Eigenes SiGeKo-Profil.\n4. Projektrollen speichern.\nDanach öffnet sich das Projekt automatisch erneut. Alle Daten liegen in einem isolierten Testprofil." });
+      fitToWorkArea(); await open(projects[0].id); await evaluate("s24.element('profile.title').scrollIntoView({block:'start'})");
+      await dialog.showMessageBox(win, { type: "info", title: "BBM S2.4 – manuelle Grunddatenabnahme", message: "Bitte Profil und beide Projektrollen selbst eingeben und jeweils speichern.", detail: "1. Eigenes SiGeKo-Profil: Name = Manueller SiGeKo; Profil speichern.\n2. Planung: Freie Angabe wählen, Name = Manuelle Planung.\n3. Ausführung wie Planung ausschalten; Ausführung = Eigenes SiGeKo-Profil.\n4. Nach unten scrollen: Unter Planung/Ausführung auf Projektrollen speichern klicken.\nDanach öffnet sich das Projekt automatisch erneut. Alle Daten liegen in einem isolierten Testprofil." });
       await waitFor(`(async()=>{const p=await bbmDb.sigekoGetCoordinatorProfile();const r=await bbmDb.sigekoGetProjectData({projectId:${JSON.stringify(projects[0].id)}});return p.data?.name==='Manueller SiGeKo' && r.data?.planning?.values?.name==='Manuelle Planung' && r.data?.execution?.assignment?.source==='module' && r.data?.execution?.inheritedFromPlanning===false;})()`, 600000);
       database.closeDatabase(); database.initDatabase(); await open(projects[0].id);
-      await dialog.showMessageBox(win, { type: "info", title: "BBM S2.4 – gespeichert und erneut geöffnet", message: "Bitte prüfen: Eigenes Profil Manueller SiGeKo; Planung Manuelle Planung; Ausführung Eigenes SiGeKo-Profil.", detail: "Nach OK können Sie das Formular ansehen und scrollen. Klicken Sie danach nochmals Projektrollen speichern, um die abschließende Bestätigung zu öffnen." });
-      await evaluate("s24.element('roles.status').textContent = ''"); await waitFor("s24.element('roles.status').textContent === 'Projektrollen gespeichert.'", 600000);
+      await evaluate("s24.element('profile.title').scrollIntoView({block:'start'})");
+      const reviewFinished = reviewCloseRequested();
+      await dialog.showMessageBox(win, { type: "info", title: "BBM S2.4 – gespeichert und erneut geöffnet", message: "Bitte prüfen: Eigenes Profil Manueller SiGeKo; Planung Manuelle Planung; Ausführung Eigenes SiGeKo-Profil.", detail: "Nach OK können Sie das Formular ansehen und nach unten scrollen. Wenn Sie fertig sind, schließen Sie dieses Testfenster oben rechts mit X. Dann erscheint die Frage, ob die Abnahme bestanden ist. Erneutes Speichern ist nicht erforderlich." });
+      await reviewFinished;
+      stopReviewClose();
       const answer = await dialog.showMessageBox(win, { type: "question", title: "BBM S2.4 – manuelle Abnahme", message: "Sind Profil, getrennte Rollen und gespeicherte Werte korrekt sichtbar und gut bedienbar?", buttons: ["Nicht bestanden", "Geprüft – bestanden"], defaultId: 0, cancelId: 0 });
       assert.equal(answer.response, 1); report.manualConfirmed = true;
     }
