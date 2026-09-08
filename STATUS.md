@@ -1,3 +1,28 @@
+## 2026-09-08 – SiGeKo S2.4: Grunddaten technisch umgesetzt, Windows-Abnahme offen (PR #328)
+
+Auf main 741fa373 / abgeschlossenem S2.3 ergänzt: eigenes modulweites SiGeKo-Profil
+mit lokaler Logo-Verknüpfung sowie getrennte Planung/Ausführung und „wie Planung“.
+Vorhandene Projekt-/Profilservices unverändert; zentrale/Projektkontakte über den
+neutralen firmDirectory. Profil und Projektrollen separat speichern, Entwürfe bei
+Fehlern erhalten, Archiv-/Lizenzsperren und fehlende Quellen berücksichtigt.
+
+107 vollständig registrierte Screen-Slots; vorhandener M83-Scope und Headerstarter,
+keine Editor-Core-Änderung. Fremdscope-Fingerprints einschließlich S2.2 bytegleich.
+17 neue Tests grün; Volltest 1584/97 -> 1601/97, exakt dieselben Baselinefehler,
+keine neue Regression. Unabhängiges Review: Protokoll-Kontaktkopplung gefunden,
+auf gemeinsamen Corepfad korrigiert und ohne Restbefund nachgeprüft.
+Dedizierte Windows-/Linux-CI mit echten Electron-/IPC-/SQLite-Bedienabläufen grün;
+Screenshot-Neuzeichnen im Abnahmeskript nachgebessert. Allgemeine npm-CI weiterhin
+bekannt rot durch fehlendes UI-Editor-kit und Popup-/Lizenzbaseline.
+
+PR #328 bleibt Draft, **kein Merge vor manueller Windows-Abnahme gemäß #274 B6**.
+Abnahme auf codex/sigeko-s24-grunddaten: npm run test:sigeko:s2.4:form:manual.
+Details, Belege, Scope und geänderte Dateien: docs/SIGEKO_S2_4_GRUNDDATEN.md;
+UI-Entwurf und vollständiger Testvergleich in den zugehörigen S2_4-Dokumenten.
+Nächster Schritt: Windows-PASS dokumentieren, PR prüfen und integrieren; danach
+nächstes Paket gemäß #274/#277 festlegen. Rechnung #275 eingefroren; Behörden
+weiterhin erst S4, Behörden-PDF Stand Januar 2022 vor Übernahme aktualitätsprüfen.
+
 ## 2026-09-08 – SiGeKo S2.3: Projekt und Rollen technisch abgeschlossen (PR #327)
 
 Auf main 26ec98f / abgeschlossenem S2.2 umgesetzt: modulweiter SiGeKo-Standard
