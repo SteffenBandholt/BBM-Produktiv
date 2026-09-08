@@ -481,12 +481,16 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
 
   return new Promise((resolve, reject) => {
     let done = false;
+    let printing = false;
     const timeoutMsRaw = Number(payload?.timeoutMs);
     const timeoutMs = Number.isFinite(timeoutMsRaw) && timeoutMsRaw > 0 ? timeoutMsRaw : 120000;
 
     const cleanup = () => {
       try {
         ipcMain.removeListener("print:ready", onReady);
+        win.removeListener("closed", onClosed);
+        win.webContents.removeListener("render-process-gone", onRendererGone);
+        win.webContents.removeListener("did-finish-load", onDidFinishLoad);
       } catch (_e) {}
       try {
         clearTimeout(timeout);
@@ -496,17 +500,25 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
       } catch (_e) {}
     };
 
-    const timeout = setTimeout(() => {
+    const fail = (error) => {
       if (done) return;
       done = true;
-      console.log(`[print:${jobId}] TIMEOUT after ${timeoutMs}ms`);
       cleanup();
-      reject(new Error("Print-Window Timeout"));
+      reject(error);
+    };
+    const onClosed = () => fail(new Error("Print-Window geschlossen"));
+    const onRendererGone = (_event, details) => fail(new Error(`Print-Renderer beendet: ${details?.reason || "unknown"}`));
+
+    const timeout = setTimeout(() => {
+      console.log(`[print:${jobId}] TIMEOUT after ${timeoutMs}ms`);
+      fail(new Error("Print-Window Timeout"));
     }, timeoutMs);
 
     const onReady = async (evt, msg) => {
+      if (done || printing) return;
       if (evt.sender !== win.webContents) return;
       if (msg?.jobId && msg.jobId !== jobId) return;
+      printing = true;
 
       console.log(`[print:${jobId}] print:ready received`);
 
@@ -530,6 +542,9 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
         }
         if (isProviderRequest(payload)) providerBridge().resolve(payload);
         const pdfBuffer = await win.webContents.printToPDF(options);
+        // Ein Timeout oder Fensterabbruch bleibt auch bei spaeter PDF-Antwort erfolglos.
+        if (done) return;
+        if (isProviderRequest(payload)) providerBridge().resolve(payload);
         fs.writeFileSync(outPath, pdfBuffer);
         console.log(`[print:${jobId}] PDF written -> ${outPath}`);
         done = true;
@@ -543,15 +558,16 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
         } : outPath);
       } catch (err) {
         console.log(`[print:${jobId}] printToPDF ERROR: ${err?.message || err}`);
-        done = true;
-        cleanup();
-        reject(err);
+        fail(err);
       }
     };
 
     ipcMain.on("print:ready", onReady);
+    win.once("closed", onClosed);
+    win.webContents.once("render-process-gone", onRendererGone);
 
-    win.webContents.once("did-finish-load", () => {
+    const onDidFinishLoad = () => {
+      if (done) return;
       console.log(`[print:${jobId}] sending print:init (debug=${debug})`);
       win.webContents.send("print:init", {
         jobId,
@@ -571,14 +587,12 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
         layoutCalibrationEnabled: _readLayoutCalibrationEnabled(),
         pdfEditorPreview: payload.pdfEditorPreview === true,
       });
-    });
+    };
+    win.webContents.once("did-finish-load", onDidFinishLoad);
 
     win.loadURL(url).catch((err) => {
-      if (done) return;
-      done = true;
       console.log(`[print:${jobId}] loadURL ERROR: ${err?.message || err}`);
-      cleanup();
-      reject(err);
+      fail(err);
     });
   });
 }
@@ -796,4 +810,4 @@ function registerPrintIpc() {
   );
 }
 
-module.exports = { registerPrintIpc, generatePdfForUiEditor, printToPdf };
+module.exports = { registerPrintIpc, generatePdfForUiEditor, printToPdf, openInternalPdfPreview };
