@@ -137,5 +137,26 @@
   "notes": [
     "First unstaged run incomplete because historical Restarbeiten-V2 git-diff guards aborted outside reporter. Final run uses staged reviewed snapshot matching clean CI semantics.",
     "Known FakeDB transaction error now arises in SiGeKo migration before invoice migration; same mock limitation."
-  ]
+  ],
+  "productCommit": "028d444fd3e6074dfed3f9bd7bf63b832d10ff2a",
+  "ci": {
+    "runId": 34263318599,
+    "conclusion": "success",
+    "windows": {
+      "s23": 15,
+      "s21": 13,
+      "s22": 9,
+      "electronForm": "PASS"
+    },
+    "linux": {
+      "s23": 15,
+      "s21": 13,
+      "s22": 9,
+      "electronForm": "PASS"
+    },
+    "standardRunId": 34263318786,
+    "standardConclusion": "failure",
+    "standardAllS23Tests": "PASS",
+    "standardBaseline": "missing UI-Editor-kit files and known popup/license failures"
+  }
 }

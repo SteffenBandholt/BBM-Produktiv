@@ -25,7 +25,8 @@ Modulstandard einmalig, Planung/Ausführung getrennt, „wie Planung“ und expl
 Fremdkoordinatoren gemäß bestätigter Rollenklärung. Bestehende DB-/Kontakt-/IPC-
 und ZIP-Infrastruktur; keine UI, kein Readiness-/Behörden-/Rechnungsausbau.
 Technisch 15 neue Tests grün; Volltest 1584/97 bei identischen 97 Baselinefehlern.
-Review ohne Blocker. PR-/Windows-/Linux-CI und Integration noch abzuschließen.
+Review ohne Blocker. PR #327, Windows/Linux-CI 34263318599 vollständig grün;
+je 15 Pakettests plus bestehende S2.1/S2.2-Prüfungen. Integration über PR #327.
 Kurzfahrplan: S2.3 integrieren; danach Grunddaten-Bedienung gemäß S2/S3; S4 erst
 anschließend. Details: `docs/SIGEKO_S2_3_PROJEKT_ROLLEN.md`.
 

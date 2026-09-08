@@ -155,4 +155,23 @@ Volltest auf gleicher UTC-Laufzeit: main **1569 grün / 97 Fehler**, Kandidat
 **1584 grün / exakt dieselben 97 Fehlernamen**. Keine neuen Fehler, keine fehlenden
 Bestandsprüfungen; ein fachlich fortgeschriebener S1.1-Testname ist ausdrücklich
 zugeordnet. Details und Log-Hashes: `SIGEKO_S2_3_TESTVERGLEICH.json`.
-Git-Diff-/Syntaxprüfung grün. Windows-/Linux-CI und Integration folgen im PR.
+Git-Diff-/Syntaxprüfung grün. [PR #327](https://github.com/SteffenBandholt/BBM-Produktiv/pull/327),
+geprüfter Produktcommit `028d444fd3e6074dfed3f9bd7bf63b832d10ff2a`.
+Der Remote-Git-Baum `2713aea70bc962d48ec61b3c24bf02487ecc6616` ist exakt der
+lokal geprüfte Baum. Lokaler Git-Push hatte keine Anmeldung; Veröffentlichung
+über die verbundene GitHub-Schnittstelle, danach erfolgreicher Fetch und
+Baumvergleich. Arbeitsbranch auf diesen identischen Remote-Stand abgeglichen.
+
+[CI 34263318599](https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34263318599)
+ist vollständig grün: Windows und Linux jeweils 15 S2.3-Pakettests, 13 bestehende
+S2.1-Persistenztests, 9 S2.2-Formulartests und vorhandener realer Electron-Formularlauf.
+Die UI selbst wurde in diesem Paket nicht verändert; keine neue manuelle
+Windows-Abnahme beansprucht. Reviewer hat den zusätzlichen SiGeKo-only-Exportdelta
+separat geprüft und den dazugehörigen Test selbst erneut grün ausgeführt.
+
+Standard-CI 34263318786 bleibt rot: bekannte fehlende UI-Editor-kit-Dateien sowie
+Popup-/Lizenzfehler. Alle 15 neuen S2.3-Tests sind auch dort grün. Das ersetzt den
+vollständigen lokalen Vergleich nicht und wird nicht als grüne Standard-CI ausgegeben.
+Nach diesem geprüften Produktstand ausschließlich Dokumentationsänderungen.
+Technischer S2.3-Abschluss und Integration über PR #327; finaler Merge-Hash
+wird im GitHub-Abschluss in #274/#277 dokumentiert.
