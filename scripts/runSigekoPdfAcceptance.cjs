@@ -11,7 +11,7 @@ const { createAcceptanceProfile, createSanitizedEnvironment } = require("./runIs
 const { ACCEPTANCE_SWITCH, configureUiEditorAcceptanceProfile, isPathInside } = require("../src/main/startup/uiEditorAcceptanceProfile");
 
 const ROOT = path.resolve(__dirname, "..");
-const HELP = `SiGeKo S1.4a: realer bestehender Print-/Preview-/Editor-Regenerationsweg.
+const HELP = `SiGeKo S1.4 / S1.4a: bestehender Print-/Preview-/Editor-Regenerationsweg.
   node scripts/runSigekoPdfAcceptance.cjs
   node scripts/runSigekoPdfAcceptance.cjs --headless
   xvfb-run -a node scripts/runSigekoPdfAcceptance.cjs
@@ -111,7 +111,7 @@ async function runWorker() {
   const { app, BrowserWindow, ipcMain } = require("electron");
   let profile;
   let db;
-  const report = { schemaVersion: 1, package: "S1.4a", ok: false, nativeEditorUiVerified: false, checks: {} };
+  const report = { schemaVersion: 1, package: "S1.4", ok: false, nativeEditorUiVerified: false, checks: {} };
   try {
     app.setAppPath(ROOT);
     // Vor DB-/Lizenz-/Print-Import: vorhandenes validiertes Abnahmeprofil.
@@ -122,13 +122,21 @@ async function runWorker() {
     app.setPath("temp", tempPath);
     app.disableHardwareAcceleration();
     await app.whenReady();
-    console.log("[S1.4a] Electron bereit; isolierte Datenbank und Entwicklungs-Testlizenz");
-    const { getStatus } = require("../src/main/licensing/licenseService");
-    const license = getStatus({ fresh: true });
-    assert.equal(license.valid, true, "Bestehende Entwicklungs-Testlizenz fehlt");
-    assert.ok(license.license.modules.includes("sigeko"));
+    console.log("[S1.4] Electron bereit; isolierte Datenbank und kontrollierter SiGeKo-Lizenzstatus");
+    const { createPdfAcceptanceLicense } = require("./helpers/pdfAcceptanceLicense.cjs");
+    const licenseFixture = createPdfAcceptanceLicense({ electronApp: app, profile });
+    const license = licenseFixture.getStatus({ fresh: true });
+    assert.equal(license.valid, true);
+    assert.deepEqual(license.license.modules, ["sigeko"]);
+    licenseFixture.enforceLicensedFeature("sigeko");
+    for (const moduleId of ["protokoll", "restarbeiten", "rechnung"]) {
+      assert.throws(() => licenseFixture.enforceLicensedFeature(moduleId), new RegExp(`FEATURE_NOT_ALLOWED:${moduleId}`));
+    }
+    report.checks.modulePermission = { source: licenseFixture.source, modules: license.license.modules,
+      cryptographicLicenseVerified: licenseFixture.cryptographicLicenseVerified,
+      developmentOverridesEnabled: licenseFixture.developmentOverridesEnabled, otherModulesDenied: true };
     const { configureDatabaseMigrations, initDatabase } = require("../src/main/db/database");
-    configureDatabaseMigrations({ ...license, license: { ...license.license, modules: ["sigeko"] } }, { allowLegacyImport: false });
+    configureDatabaseMigrations(license, { allowLegacyImport: false });
     db = initDatabase();
     assert.ok(isPathInside(profile.rootPath, db.name), "DB muss im Abnahmeprofil liegen");
     const project = require("../src/main/db/projectsRepo").createProject({ project_number: "S14A", name: "SiGeKo PDF Technikabnahme" });
@@ -153,7 +161,7 @@ async function runWorker() {
     const caller = new BrowserWindow({ show: false, webPreferences: { contextIsolation: true, sandbox: false, nodeIntegration: false, preload: path.join(ROOT, "src/main/preload.js") } });
     console.log("[S1.4a] BrowserWindow erstellt; produktive Preload-/IPC-Bruecke wird geladen");
     await caller.loadURL("data:text/html;charset=utf-8,<title>S1.4a IPC Abnahme</title>");
-    const invoke = (method) => caller.webContents.executeJavaScript(`window.${method}(${JSON.stringify(payload)})`, true);
+    const invoke = (method, request = payload) => caller.webContents.executeJavaScript(`window.${method}(${JSON.stringify(request)})`, true);
     const saved = await invoke("bbmDb.printHtmlToPdf");
     assert.equal(saved.ok, true, JSON.stringify(saved));
     assert.ok(isPathInside(baseDir, saved.filePath), "PDF ausserhalb des festgelegten Test-Ablageziels");
@@ -257,6 +265,14 @@ async function runWorker() {
       }
     }
     report.checks.editorRegeneration = { elementId: editable.id, previousFontSize: before.fontSize, fontSize, metadata: generated, pdf: regeneratedPdf };
+    const { verifyPdfExecutionFailures } = require("./helpers/pdfExecutionAcceptance.cjs");
+    report.checks.executionFailures = await verifyPdfExecutionFailures({ app, BrowserWindow, ipcMain, invoke,
+      payload, profile, baseDir, tempPath, licenseFixture, pdfInventory });
+    const recovered = await invoke("bbmDb.printHtmlToPdf");
+    assert.equal(recovered.ok, true, JSON.stringify(recovered));
+    const recoveredPdf = await inspectPdf(recovered.filePath);
+    assert.equal(recoveredPdf.text, stored.text);
+    report.checks.recoveryAfterFailures = { ok: true, pdf: recoveredPdf };
     report.ok = true;
   } catch (error) {
     report.error = { message: error?.message || String(error), code: error?.code || null, validationErrors: error?.validationErrors || [], stack: error?.stack || "" };
@@ -285,7 +301,7 @@ async function launch() {
   const code = await new Promise((resolve, reject) => { child.once("error", reject); child.once("exit", (exitCode) => resolve(exitCode ?? 1)); }).finally(() => clearTimeout(timeout));
   const reportPath = path.join(profile.rootPath, "acceptance-result.json");
   if (!fs.existsSync(reportPath)) {
-    fs.writeFileSync(reportPath, JSON.stringify({ schemaVersion: 1, package: "S1.4a", ok: false, nativeEditorUiVerified: false, checks: {}, error: { code: "ACCEPTANCE_WORKER_ABORTED", message: `Electron endete ohne Abnahmebericht (Exit ${code}); PDF-/Vorschau-Nachweis nicht erbracht.` } }, null, 2));
+    fs.writeFileSync(reportPath, JSON.stringify({ schemaVersion: 1, package: "S1.4", ok: false, nativeEditorUiVerified: false, checks: {}, error: { code: "ACCEPTANCE_WORKER_ABORTED", message: `Electron endete ohne Abnahmebericht (Exit ${code}); PDF-/Vorschau-Nachweis nicht erbracht.` } }, null, 2));
     console.error(`[S1.4a] FAIL: ${reportPath}`);
   }
   process.exitCode = code || (JSON.parse(fs.readFileSync(reportPath, "utf8")).ok === true ? 0 : 1);

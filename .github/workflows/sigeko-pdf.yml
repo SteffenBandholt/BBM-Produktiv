@@ -12,6 +12,9 @@ on:
       - 'src/renderer/print/**'
       - 'src/shared/print/**'
       - 'scripts/runSigekoPdfAcceptance.cjs'
+      - 'scripts/helpers/pdfAcceptanceLicense.cjs'
+      - 'scripts/helpers/pdfExecutionAcceptance.cjs'
+      - 'scripts/tests/printJobLifecycle.test.cjs'
       - '.github/workflows/sigeko-pdf.yml'
 
 permissions:
@@ -51,7 +54,7 @@ jobs:
           sudo chmod 4755 BBM-Produktiv/node_modules/electron/dist/chrome-sandbox BBM-base/node_modules/electron/dist/chrome-sandbox
       - name: Real PDF, storage, internal preview and editor regeneration
         working-directory: BBM-Produktiv
-        run: xvfb-run -a npm run test:sigeko:s1.4a
+        run: xvfb-run -a npm run test:sigeko:s1.4
       - name: Generate 49 baseline PDF snapshots
         if: always()
         working-directory: BBM-base
@@ -114,7 +117,7 @@ jobs:
         env:
           TEMP: ${{ runner.temp }}
           TMP: ${{ runner.temp }}
-        run: npm run test:sigeko:s1.4a
+        run: npm run test:sigeko:s1.4
       - name: Preserve Windows acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4
