@@ -181,7 +181,10 @@ async function runWorker() {
     // PDF viewer initialization outlives loadURL; wait for the initial painted
     // document before asking that same viewer to reopen its file.
     await capturePaintedPdfPreview(previewWindow, screenshotPath);
-    // Die bestehende Vorschau laedt dieselbe gespeicherte Datei erneut.
+    // Dokument zuerst entladen: ein erneutes loadURL auf dieselbe aktive
+    // PDF-Plugininstanz ist kein verlaesslicher Wiederoeffnungsvorgang.
+    await previewWindow.loadURL("about:blank");
+    // Die bestehende Vorschau oeffnet dieselbe gespeicherte Datei erneut.
     await previewWindow.loadURL(pathToFileURL(preview.filePath).href);
     const reopened = await inspectPdf(preview.filePath);
     assert.equal(reopened.sha256, previewPdf.sha256, "Wiederoeffnen hat gespeicherten PDF-Inhalt veraendert");
