@@ -10,7 +10,8 @@ führen den Wert. Omission erhält ihn, null/leerer Text leert ihn.
 Volltest main 1546/97 -> Kandidat 1559/97, dieselben 97 Fehlernamen, kein fehlender
 Bestandsprüffall. Unabhängiger Quellenreview ohne Blocker. Technische Dokumentation:
 docs/SIGEKO_S2_1_GEPLANTER_BAUBEGINN.md und docs/SIGEKO_S2_1_TESTVERGLEICH.json.
-Übergabe auf codex/sigeko-s2-1-planned-start; Windows-/Linux-PR-Prüfung folgt.
+Integration über PR #325, Code 993eb05. CI 34248605251 bestätigt auf Windows
+und Linux jeweils 13/13 SQLite-/ZIP-Tests. Standard-CI behält die bekannte Baseline.
 Keine UI-Änderung oder manuelle Abnahme nötig. Rechnung #275, PDF, Editor,
 Mail und Blankovorlagen unverändert. Nächstes S2-Teilpaket noch nicht begonnen;
 PDF-Viewer-Baseline aus S1.4 bleibt separat offen.

@@ -1,7 +1,8 @@
 # S2.1 – Geplanter Baubeginn: zentrale Persistenz
 
 Grundlagen: Gesamtplan #277, SiGeKo #274, vollständig abgenommenes S1,
-main `b3faf6e` nach PR #324. Dieses Paket ergänzt ausschließlich die technische
+main `b3faf6e` nach PR #324. Integration: [PR #325](https://github.com/SteffenBandholt/BBM-Produktiv/pull/325).
+Dieses Paket ergänzt ausschließlich die technische
 Speicherung des geplanten Baubeginns. Primär Container 3 (zentrale
 Projektdomäne), Prüfung in Container 6. Keine editorrelevante Ausgabe, keine
 neue UI-/PDF-Struktur und keine manuelle UI-Abnahme erforderlich.
@@ -72,6 +73,11 @@ Syntax- und Diff-Prüfung grün. Der zusätzliche Windows-/Linux-Workflow führt
 dieselben SQLite-/ZIP-Tests unter der vorhandenen Electron-Laufzeit aus.
 Standard-CI mit fehlendem Kit und bekannten Popup-/Lizenzfehlern ist keine
 grüne Gesamtabnahme und wird nicht als solche dargestellt.
+
+CI-Lauf [34248605251](https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34248605251)
+auf Code-Commit `993eb05`: **Windows und Linux jeweils 13/13 grün**, mit echten
+SQLite-Dateien und ZIP-Export-/Import. Nach diesem Lauf nur Dokumentation ergänzt;
+Produkt- und Testcode bleiben unverändert.
 
 Nächster Schritt nach Integration: nächstes begrenztes S2-Teilpaket gemäß
 Detailplan, insbesondere die getrennte Anbindung der sichtbaren Projekteingabe.

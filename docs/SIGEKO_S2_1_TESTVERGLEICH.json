@@ -170,5 +170,22 @@
     "Known baseline failures remain; no green full-suite claim."
   ],
   "review": "Read-only independent source review found no blockers.",
-  "ci": "pending PR Windows/Linux persistence workflow"
+  "ci": {
+    "run": 34248605251,
+    "url": "https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34248605251",
+    "linux": {
+      "job": 102136928415,
+      "passed": 13
+    },
+    "windows": {
+      "job": 102136928720,
+      "passed": 13
+    },
+    "database": "real temporary SQLite files",
+    "zip": "real export/import archives",
+    "standardNpmRun": 34248605235,
+    "standardNpmConclusion": "failure; missing Kit and known popup/license baseline"
+  },
+  "pr": 325,
+  "testedCodeCommit": "993eb052a54b1897224955e23f90e4df60b6c51c"
 }
