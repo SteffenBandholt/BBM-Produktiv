@@ -39,6 +39,7 @@ const { registerProjectsIpc } = require("./ipc/projectsIpc");
 const { registerCoreProjectFirmsIpc } = require("./core/projectFirmsCore");
 const { registerFirmDirectoryIpc } = require("./ipc/firmDirectoryIpc");
 const { registerProjectParticipantsIpc } = require("./ipc/participantsIpc");
+const { registerMailIpc } = require("./ipc/mailIpc");
 const { registerPrintIpc } = require("./ipc/printIpc");
 const { registerTableLayoutsIpc } = require("./ipc/tableLayoutsIpc");
 const { registerSettingsIpc } = require("./ipc/settingsIpc");
@@ -52,10 +53,8 @@ const moduleIpcRegistrars = require("./moduleIpcRegistrars");
 const { checkLicense, getStatus: getLicenseStatus } = require("./licensing/licenseService");
 const { loadCustomerSetup } = require("./licensing/licenseStorage");
 const {
-  toLicenseErrorPayload,
   isDevAudioOverrideEnabled,
   isDevAudioSuggestionsEnabled,
-  enforceLicensedFeature,
 } = require("./licensing/featureGuard");
 const { appSettingsGetMany, appSettingsSetMany } = require("./db/appSettingsRepo");
 const { configureDatabaseMigrations, getDatabaseDiagnostics, importLegacyIntoActive } = require("./db/database");
@@ -265,71 +264,6 @@ async function _writeRepoBuildChannel(next) {
   const channel = _normalizeChannel(next);
   await _writeJsonAtomic(p, { channel });
   return channel;
-}
-
-function _normalizeMailRecipients(value) {
-  if (Array.isArray(value)) {
-    return value.map((entry) => String(entry || "").trim()).filter(Boolean);
-  }
-  return String(value || "")
-    .split(/[;,]/)
-    .map((entry) => String(entry || "").trim())
-    .filter(Boolean);
-}
-
-function _normalizeMailAttachmentPaths(payload) {
-  const attachmentPath = String(payload?.attachmentPath || "").trim();
-  const attachments = Array.isArray(payload?.attachments)
-    ? payload.attachments.map((entry) => String(entry || "").trim()).filter(Boolean)
-    : [];
-  const combined = [...attachments];
-  if (attachmentPath) combined.push(attachmentPath);
-
-  const deduped = [];
-  const seen = new Set();
-  for (const filePath of combined) {
-    const key = filePath.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    deduped.push(filePath);
-  }
-  return deduped;
-}
-
-function _buildOutlookDraftScript() {
-  return [
-    'param(',
-    '  [string]$To = "",',
-    '  [string]$Subject = "",',
-    '  [string]$Body = "",',
-    '  [string]$AttachmentsBase64 = ""',
-    ')',
-    '$ErrorActionPreference = "Stop"',
-    '$Attachments = @()',
-    'if ($AttachmentsBase64) {',
-    '  $attachmentsJson = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($AttachmentsBase64))',
-    '  $parsedAttachments = ConvertFrom-Json -InputObject $attachmentsJson',
-    '  if ($parsedAttachments -is [System.Array]) {',
-    '    $Attachments = @($parsedAttachments | ForEach-Object { [string]$_ })',
-    '  } elseif ($parsedAttachments) {',
-    '    $Attachments = @([string]$parsedAttachments)',
-    '  }',
-    '}',
-    '$outlook = New-Object -ComObject Outlook.Application',
-    '$mail = $outlook.CreateItem(0)',
-    'if ($To) { $mail.To = $To }',
-    'if ($Subject) { $mail.Subject = $Subject }',
-    'if ($Body) { $mail.Body = $Body }',
-    'if ($Attachments) {',
-    '  foreach ($att in $Attachments) {',
-    '    if ($att -and (Test-Path -LiteralPath $att)) {',
-    '      [void]$mail.Attachments.Add($att)',
-    '    }',
-    '  }',
-    '}',
-    '$mail.Display()',
-    '',
-  ].join("\r\n");
 }
 
 async function _openQuickAssistViaProtocol() {
@@ -657,96 +591,7 @@ app.whenReady().then(async () => {
     }
   });
 
-  // Gemeinsamer technischer Mailversand:
-  // Renderer liefert fachliche Inhalte und Auswahl,
-  // Main kapselt nur die Outlook-/Windows-spezifische Transporttechnik.
-  ipcMain.handle("mail:createOutlookDraft", async (_event, payload) => {
-  try {
-    enforceLicensedFeature("protokoll");
-    if (process.platform !== "win32") {
-      return { ok: false, error: "Outlook-Entwurf ist nur unter Windows verfügbar." };
-    }
-
-    const to = _normalizeMailRecipients(payload?.to);
-
-    const subject = String(payload?.subject || "").trim();
-    const body = String(payload?.body || "");
-    const attachments = _normalizeMailAttachmentPaths(payload);
-
-    if (!attachments.length) {
-      return { ok: false, error: "Anhangspfad fehlt." };
-    }
-    const missing = attachments.find((p) => !fs.existsSync(p));
-    if (missing) {
-      return { ok: false, error: "Anhang nicht gefunden." };
-    }
-
-    const tempDir = app.getPath("temp");
-    const scriptPath = path.join(tempDir, `bbm_outlook_draft_${Date.now()}.ps1`);
-    fs.writeFileSync(scriptPath, _buildOutlookDraftScript(), "utf8");
-
-    const args = [
-      "-NoProfile",
-      "-ExecutionPolicy",
-      "Bypass",
-      "-STA",
-      "-File",
-      scriptPath,
-      "-To",
-      to.join("; "),
-      "-Subject",
-      subject,
-      "-Body",
-      body,
-      "-AttachmentsBase64",
-      Buffer.from(JSON.stringify(attachments), "utf8").toString("base64"),
-    ];
-
-    const result = await new Promise((resolve) => {
-      let stderr = "";
-      let settled = false;
-      const child = spawn("powershell.exe", args, {
-        windowsHide: true,
-        stdio: ["ignore", "ignore", "pipe"],
-      });
-
-      child.on("error", (err) => {
-        if (settled) return;
-        settled = true;
-        resolve({ ok: false, error: err?.message || String(err) });
-      });
-
-      if (child.stderr) {
-        child.stderr.on("data", (chunk) => {
-          stderr += String(chunk || "");
-        });
-      }
-
-      child.on("close", (code) => {
-        if (settled) return;
-        settled = true;
-        if (Number(code) === 0) {
-          resolve({ ok: true });
-        } else {
-          resolve({ ok: false, error: stderr.trim() || `PowerShell exit ${code}` });
-        }
-      });
-    });
-
-    try {
-      fs.unlinkSync(scriptPath);
-    } catch (_err) {
-      // ignore
-    }
-
-    return result;
-  } catch (err) {
-    if (err?.licenseError || String(err?.message || "").startsWith("LICENSE_")) {
-      return toLicenseErrorPayload(err);
-    }
-    return { ok: false, error: err?.message || String(err) };
-  }
-  });
+  registerMailIpc();
 
   // ✅ App beenden (ohne Confirm) – über IPC
   ipcMain.handle("app:quit", () => {

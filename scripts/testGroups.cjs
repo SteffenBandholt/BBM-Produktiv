@@ -14,6 +14,7 @@ const TEST_GROUPS = Object.freeze([
       ["protokollSettingsOwnership.test.cjs", "runProtokollSettingsOwnershipTests"],
       ["protokollPdfServiceBoundary.test.cjs", "runProtokollPdfServiceBoundaryTests"],
       ["protokollMailTransportBoundary.test.cjs", "runProtokollMailTransportBoundaryTests"],
+      ["mailDraftBoundary.test.cjs", "runMailDraftBoundaryTests"],
       ["protokollMailPayloadOwnership.test.cjs", "runProtokollMailPayloadOwnershipTests"],
       ["protokollParticipantOwnership.test.cjs", "runProtokollParticipantOwnershipTests"],
       ["protokollLegacyProof.test.cjs", "runProtokollLegacyProofTests"],

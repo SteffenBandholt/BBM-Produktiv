@@ -33,6 +33,7 @@ async function runLicenseFeatureGuardTests(run) {
   const printIpc = read("src/main/ipc/printIpc.js");
   const audioIpc = read("src/main/ipc/audioIpc.js");
   const mainSource = read("src/main/main.js");
+  const mailIpc = read("src/main/ipc/mailIpc.js");
   const projectsIpc = read("src/main/ipc/projectsIpc.js");
   const featureGuardSource = read("src/main/licensing/featureGuard.js");
   const licenseFeaturesSource = read("src/main/licensing/licenseFeatures.js");
@@ -94,8 +95,12 @@ async function runLicenseFeatureGuardTests(run) {
     assert.equal(dictationControllerSource.includes("dictation-stop.svg"), true);
   });
 
-  await run("License-Guard: Mail-IPC prüft Protokoll-Modul", () => {
-    assert.equal(mainSource.includes('enforceLicensedFeature("protokoll");'), true);
+  await run("License-Guard: Mail-IPC prüft Modul und Capability mit Protokoll-Kompatibilität", () => {
+    assert.equal(mainSource.includes("registerMailIpc();"), true);
+    assert.equal(mailIpc.includes('payload.moduleId : "protokoll"'), true);
+    assert.equal(mailIpc.includes('requiredCapabilities?.includes("mail")'), true);
+    assert.equal(mailIpc.includes("enforce(moduleId);"), true);
+    assert.equal(mailIpc.includes("enforce: enforceLicensedFeature"), true);
   });
 
   await run("License-Guard: Projektzugriff ist nicht mehr pauschal an Protokoll gebunden", () => {
@@ -238,7 +243,8 @@ async function runLicenseFeatureGuardTests(run) {
 
   await run("License-Guard: Lizenzfehler werden payload-freundlich gemappt", () => {
     assert.equal(printIpc.includes("return toLicenseErrorPayload(err);"), true);
-    assert.equal(mainSource.includes("return toLicenseErrorPayload(err);"), true);
+    assert.equal(mailIpc.includes("licenseError: toLicenseErrorPayload"), true);
+    assert.equal(mailIpc.includes("return licenseError(err);"), true);
     assert.equal(audioIpc.includes("return toLicenseErrorPayload(err);"), true);
   });
 }

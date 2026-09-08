@@ -1,0 +1,37 @@
+name: S1.5 common mail boundary
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/main/ipc/mailIpc.js'
+      - 'src/main/main.js'
+      - 'src/renderer/features/mail/**'
+      - 'src/renderer/ui/MainHeader.js'
+      - 'scripts/tests/mailDraftBoundary.test.cjs'
+      - 'scripts/tests/protokollMailTransportBoundary.test.cjs'
+      - 'scripts/runSigekoMailAcceptance.cjs'
+      - '.github/workflows/sigeko-mail.yml'
+  workflow_dispatch:
+jobs:
+  boundary:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Common boundary and existing Protokoll transport (process simulated)
+        run: node -e "(async()=>{const run=async(n,f)=>{await f();console.log('PASS',n)};await require('./scripts/tests/mailDraftBoundary.test.cjs').runMailDraftBoundaryTests(run);await require('./scripts/tests/protokollMailTransportBoundary.test.cjs').runProtokollMailTransportBoundaryTests(run)})().catch(e=>{console.error(e);process.exitCode=1})"
+      - name: Parse actual adapter script with Windows PowerShell (no Outlook proof)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          node -e "require('fs').writeFileSync('mail-adapter-check.ps1', '\uFEFF' + require('./src/main/ipc/mailIpc').buildOutlookDraftScript())"
+          $mailTokens = $null
+          $mailErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'mail-adapter-check.ps1'), [ref]$mailTokens, [ref]$mailErrors) | Out-Null
+          if ($mailErrors.Count -gt 0) { $mailErrors | Format-List; exit 1 }
+          Remove-Item 'mail-adapter-check.ps1'
