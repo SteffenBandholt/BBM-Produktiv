@@ -1,0 +1,29 @@
+name: S2.1 central project persistence
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/main/db/database.js'
+      - 'src/main/db/projectsRepo.js'
+      - 'src/main/ipc/projectsIpc.js'
+      - 'src/main/ipc/projectTransferIpc.js'
+      - 'scripts/tests/plannedConstructionStart.test.cjs'
+      - '.github/workflows/sigeko-projects.yml'
+  workflow_dispatch:
+jobs:
+  persistence:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install existing dependencies and Electron SQLite ABI
+        run: npm ci
+      - name: Actual SQLite migration, CRUD and ZIP roundtrip
+        run: >-
+          node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/plannedConstructionStart.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
