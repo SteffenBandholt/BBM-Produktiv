@@ -810,4 +810,4 @@ function registerPrintIpc() {
   );
 }
 
-module.exports = { registerPrintIpc, generatePdfForUiEditor, printToPdf };
+module.exports = { registerPrintIpc, generatePdfForUiEditor, printToPdf, openInternalPdfPreview };

@@ -145,7 +145,7 @@ async function runWorker() {
     const { REGISTRY, DOCUMENT_TYPE_ID } = require("../src/main/ui-editor/technicalPdfAdapter.cjs");
     assert.equal(DOCUMENT_TYPE_ID, "technical-neutral");
     assert.equal(REGISTRY.layoutModel, "fixed-layout");
-    const { registerPrintIpc, generatePdfForUiEditor } = require("../src/main/ipc/printIpc");
+    const { registerPrintIpc, generatePdfForUiEditor, openInternalPdfPreview } = require("../src/main/ipc/printIpc");
     registerPrintIpc();
     const { createPdfEditorAdapterResolver } = require("../src/main/ui-editor/pdfAdapterRegistry.cjs");
     const uiEditorRoot = path.join(profile.userDataPath, "ui-editor");
@@ -173,23 +173,28 @@ async function runWorker() {
     const existingWindows = new Set(BrowserWindow.getAllWindows().map((win) => win.id));
     const preview = await invoke("bbmPrint.printPdfAndPreviewInternal");
     assert.equal(preview.ok, true, JSON.stringify(preview));
-    const previewWindow = BrowserWindow.getAllWindows().find((win) => !existingWindows.has(win.id) && win.webContents.getURL() === pathToFileURL(preview.filePath).href);
+    let previewWindow = BrowserWindow.getAllWindows().find((win) => !existingWindows.has(win.id) && win.webContents.getURL() === pathToFileURL(preview.filePath).href);
     assert.ok(previewWindow, "Bestehende interne PDF-Vorschau wurde nicht geoeffnet");
     const previewPdf = await inspectPdf(preview.filePath);
     assert.equal(previewPdf.text, stored.text);
     const screenshotPath = path.join(profile.rootPath, "internal-preview.png");
-    // PDF viewer initialization outlives loadURL; wait for the initial painted
-    // document before asking that same viewer to reopen its file.
+    // PDF viewer initialization outlives loadURL; verify the first display.
     await capturePaintedPdfPreview(previewWindow, screenshotPath);
-    // Dokument zuerst entladen: ein erneutes loadURL auf dieselbe aktive
-    // PDF-Plugininstanz ist kein verlaesslicher Wiederoeffnungsvorgang.
-    await previewWindow.loadURL("about:blank");
-    // Die bestehende Vorschau oeffnet dieselbe gespeicherte Datei erneut.
-    await previewWindow.loadURL(pathToFileURL(preview.filePath).href);
+    // Real reopen: close the viewer, then use the SAME existing preview service
+    // on the stored file. Reloading an active Chromium PDF plugin is not reopen.
+    const previousWindowId = previewWindow.id;
+    await new Promise((resolve) => { previewWindow.once("closed", resolve); previewWindow.close(); });
+    const beforeReopen = new Set(BrowserWindow.getAllWindows().map((window) => window.id));
+    const reopenResult = await openInternalPdfPreview({ filePath: preview.filePath, title: "PDF Vorschau" });
+    assert.equal(reopenResult.ok, true);
+    previewWindow = BrowserWindow.getAllWindows().find((window) => !beforeReopen.has(window.id) && window.webContents.getURL() === pathToFileURL(preview.filePath).href);
+    assert.ok(previewWindow, "Gespeicherte PDF wurde nicht in der bestehenden Vorschaufunktion geoeffnet");
+    assert.notEqual(previewWindow.id, previousWindowId);
     const reopened = await inspectPdf(preview.filePath);
     assert.equal(reopened.sha256, previewPdf.sha256, "Wiederoeffnen hat gespeicherten PDF-Inhalt veraendert");
     const paint = await capturePaintedPdfPreview(previewWindow, screenshotPath);
-    report.checks.internalPreview = { filePath: preview.filePath, screenshotPath, reopenedUnchanged: true, pageCount: reopened.pageCount, paint };
+    report.checks.internalPreview = { filePath: preview.filePath, screenshotPath, reopenedUnchanged: true,
+      reopenedThroughExistingPreviewService: true, previousWindowClosed: true, pageCount: reopened.pageCount, paint };
 
     const beforeOverflowPdfs = pdfInventory([baseDir, tempPath]);
     const readyMessages = new Map();
