@@ -2,6 +2,7 @@
 
 Basis: main `6e1f7f7`, Gesamtplan #277, SiGeKo #274, S1.4 / PR #323.
 Status: technisch umgesetzt, praktische Windows-/Outlook-Abnahme offen.
+Entwurfs-PR: https://github.com/SteffenBandholt/BBM-Produktiv/pull/324.
 Die B3-Entscheidung aus #274 ist verbindlich: Entwurfsöffnung ist die Übergabe
 an den Nutzer; es gibt keinen Versandnachweis und keine Versandhistorie.
 
@@ -89,6 +90,11 @@ Timeout nach 60 Sekunden meldet eine unbestätigte Öffnung, keinen Versand.
   Der Windows-Abnahmestarter weist Linux ausdrücklich ab; das ist kein
   bestandener Outlook-Test. Die gemeinsame CI prüft die Grenztests auf Linux
   und Windows sowie das erzeugte Skript mit dem Windows-PowerShell-Parser.
+
+CI-Lauf [34188452956](https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34188452956)
+auf Code-Commit `8201340`: jeweils 24 Grenz-/Protokolltests auf Windows und Linux
+grün; Windows-PowerShell-Parser ebenfalls grün. Das ist kein Outlook-COM-Nachweis.
+Standard-npm-CI bleibt mit der bekannten Umgebungs-/Testbaseline rot.
 
 ## Noch erforderliche praktische Abnahme
 

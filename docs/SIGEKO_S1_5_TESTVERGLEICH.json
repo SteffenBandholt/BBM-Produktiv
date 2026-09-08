@@ -158,6 +158,23 @@
     "Manual acceptance uses isolated simulated license status through real guard, not a cryptographic customer license.",
     "Standard CI retains known failures; no passing full-suite claim."
   ],
-  "ci": "Pending draft PR run",
-  "status": "implemented; practical Outlook acceptance pending"
+  "ci": {
+    "run": 34188452956,
+    "url": "https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34188452956",
+    "windows": {
+      "job": 101941423225,
+      "passed": 24,
+      "powershellSyntax": "passed",
+      "outlookCOM": "not executed"
+    },
+    "linux": {
+      "job": 101941423292,
+      "passed": 24
+    },
+    "standardNpmRun": 34188452890,
+    "standardNpmConclusion": "failure; known environment/baseline; not represented as success"
+  },
+  "status": "implemented; practical Outlook acceptance pending",
+  "pr": 324,
+  "testedCodeCommit": "82013406991d486d31070e40cb7d61855b2f2f0b"
 }

@@ -12,8 +12,10 @@ Volltest: main 1527/97 -> Kandidat 1546/97, exakt dieselben 97 Fehlernamen;
 Praktische Entwurfsöffnung, Anlagenprüfung und Verwerfen in Outlook sind noch
 nicht nachgewiesen. Vorbereitet: `npm run test:sigeko:s1.5:outlook` unter Windows
 mit klassischem Outlook. Daher kein S1.5-Abschluss und kein Merge vor Abnahme.
-Siehe docs/SIGEKO_S1_5_MAILGRENZE.md; Übergabe als Entwurfs-PR auf
-`codex/sigeko-s1-5-mail-boundary`. Rechnung #275, PDF-Vorlagen, Fachprozesse und
+Siehe docs/SIGEKO_S1_5_MAILGRENZE.md; Übergabe als Entwurfs-PR #324 auf
+`codex/sigeko-s1-5-mail-boundary`. CI 34188452956: Windows/Linux je 24 Tests
+grün, Windows-PowerShell-Syntax grün; keine reale Outlook-Abnahme. Standard-CI
+bleibt mit bekannter Baseline rot. Rechnung #275, PDF-Vorlagen, Fachprozesse und
 Reminder unverändert; kein Folgepaket begonnen.
 
 ## 2026-09-08 – SiGeKo S1.4: PDF-Ausführung und Abbruchnachweis
