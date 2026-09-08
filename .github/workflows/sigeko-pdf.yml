@@ -56,7 +56,7 @@ jobs:
         working-directory: BBM-Produktiv
         run: xvfb-run -a npm run test:sigeko:s1.4
       - name: Diagnose unchanged baseline preview with the same acceptance harness
-        if: failure()
+        if: always()
         continue-on-error: true
         run: |
           mkdir -p BBM-base/scripts/helpers
@@ -64,7 +64,11 @@ jobs:
           cp BBM-Produktiv/scripts/helpers/pdfAcceptanceLicense.cjs BBM-base/scripts/helpers/
           node -e 'require("fs").appendFileSync("BBM-base/src/main/ipc/printIpc.js", "\nmodule.exports.openInternalPdfPreview = openInternalPdfPreview;\n")'
           cd BBM-base
-          xvfb-run -a node scripts/runSigekoPdfAcceptance.cjs --preview-only
+          result=0
+          for attempt in 1 2 3; do
+            if ! xvfb-run -a node scripts/runSigekoPdfAcceptance.cjs --preview-only; then result=1; fi
+          done
+          exit "$result"
       - name: Generate 49 baseline PDF snapshots
         if: always()
         working-directory: BBM-base
