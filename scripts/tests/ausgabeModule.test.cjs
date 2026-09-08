@@ -538,8 +538,10 @@ async function runAusgabeModuleTests(run) {
   });
 
   await run("Ausgabe: bestehender Outlook-COM-Weg fuegt alle ausgewaehlten Dateien als echte Anhaenge an", () => {
-    assert.equal(mainSource.includes("$mail.Attachments.Add($att)"), true);
-    assert.equal(mainSource.includes('"-AttachmentsBase64"'), true);
+    const adapter = fs.readFileSync(path.join(process.cwd(), "src/main/ipc/mailIpc.js"), "utf8");
+    assert.equal(mainSource.includes("registerMailIpc();"), true);
+    assert.equal(adapter.includes("$mail.Attachments.Add([string]$att)"), true);
+    assert.equal(adapter.includes('"-PayloadPath"'), true);
     assert.equal(mainHeaderSource.includes("if (mailPayload.attachments.length)"), true);
     assert.equal(mailFlowSource.includes("if (!result?.ok) return;"), true);
     assert.equal(mailFlowSource.includes("closeOverlay();\n        await this.view._enterIdleAfterClose();"), true);

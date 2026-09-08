@@ -1979,13 +1979,14 @@ _buildFallbackEmailSubject({ projectNumber, projectShortName, mailType } = {}) {
     }
     try {
       const draftRes = await window.bbmMail.createOutlookDraft({
+        moduleId: "protokoll",
         to: payload.recipients,
         subject: payload.subject,
         body: payload.body,
         attachments: payload.attachments,
         attachmentPath: payload.attachments[0] || "",
       });
-      if (draftRes?.ok) return { ok: true, result: draftRes };
+      if (draftRes?.ok) return { ok: true, outcome: draftRes.outcome, transport: draftRes.transport, result: draftRes };
       if (isBlockedTransportPayload(draftRes)) {
         return { ok: false, blocked: true, result: draftRes };
       }
