@@ -42,7 +42,8 @@ async function runM8273TextResizeCurrentValueTests(run) {
   const registry = await importEsmFromFile(path.join(ROOT, "src/renderer/ui-editor/m80Registry.js"));
   const host = await importEsmFromFile(path.join(ROOT, "src/renderer/ui-editor/m80HostAdapter.js"));
   const previous = { document: global.document, window: global.window, Element: global.Element };
-  const scopes = registry.listM80RegistryScopes();
+  // This fixture tests Restarbeiten/Protokoll payloads, not an overlaid project form.
+  const scopes = registry.listM80RegistryScopes().filter(scope => scope.scopeId !== "projektverwaltung.plannedStart");
   const entries = scopes.flatMap((scope) => scope.elements);
   const nodes = new Map(entries.map((entry) => [entry.id, new FakeElement(entry.type === "field" ? "INPUT" : "SPAN", Number(entry.baseline?.fontSize) || 12)]));
   global.Element = FakeElement;

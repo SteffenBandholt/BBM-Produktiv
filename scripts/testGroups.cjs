@@ -5,6 +5,7 @@ const TEST_GROUPS = Object.freeze([
     includeStoragePathTests: true,
     suites: Object.freeze([
       ["plannedConstructionStart.test.cjs", "runPlannedConstructionStartTests"],
+      ["plannedStartForm.test.cjs", "runPlannedStartFormTests"],
       ["sigekoStorageAcceptance.test.cjs", "runSigekoStorageAcceptanceTests"],
       ["sigekoStorageTargets.test.cjs", "runSigekoStorageTargetsTests"],
       ["sigekoEditorManifest.test.cjs", "runSigekoEditorManifestTests"],

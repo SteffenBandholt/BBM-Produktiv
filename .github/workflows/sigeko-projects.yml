@@ -1,4 +1,4 @@
-name: S2.1 central project persistence
+name: SiGeKo central project persistence and form
 on:
   pull_request:
     branches: [main]
@@ -8,6 +8,12 @@ on:
       - 'src/main/ipc/projectsIpc.js'
       - 'src/main/ipc/projectTransferIpc.js'
       - 'scripts/tests/plannedConstructionStart.test.cjs'
+      - 'src/renderer/modules/projektverwaltung/screens/ProjectForm*.js'
+      - 'src/renderer/modules/projektverwaltung/screens/ProjectPlannedStart.uiEditorContract.js'
+      - 'src/renderer/ui-editor/m80Registry.js'
+      - 'ui-editor-target.json'
+      - 'scripts/tests/plannedStartForm*'
+      - 'scripts/runPlannedStartFormAcceptance.cjs'
       - '.github/workflows/sigeko-projects.yml'
   workflow_dispatch:
 jobs:
@@ -16,14 +22,48 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: BBM-Produktiv
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: BBM-Produktiv
+      - uses: actions/checkout@v4
+        with:
+          repository: SteffenBandholt/UI-Editor-kit
+          ref: 5e0d551d93e97c32d169ea6d5107186a44ecd47f
+          path: UI-Editor-kit
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
       - name: Install existing dependencies and Electron SQLite ABI
         run: npm ci
       - name: Actual SQLite migration, CRUD and ZIP roundtrip
         run: >-
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/plannedConstructionStart.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
+      - name: Form payload and mounted component contract
+        run: node scripts/tests/plannedStartForm.test.cjs
+      - name: Install Linux display support
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgtk-3-0 libnss3 libasound2t64
+          sudo chown root:root node_modules/electron/dist/chrome-sandbox
+          sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
+      - name: Real Electron form with SQLite on Linux
+        if: runner.os == 'Linux'
+        env:
+          BBM_S22_OUTPUT: ${{ runner.temp }}/s22-results
+        run: xvfb-run -a node scripts/runPlannedStartFormAcceptance.cjs
+      - name: Real Electron form with SQLite on Windows
+        if: runner.os == 'Windows'
+        env:
+          BBM_S22_OUTPUT: ${{ runner.temp }}/s22-results
+        run: node scripts/runPlannedStartFormAcceptance.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: planned-start-${{ matrix.os }}
+          path: ${{ runner.temp }}/s22-results
