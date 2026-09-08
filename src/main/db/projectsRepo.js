@@ -90,6 +90,7 @@ function _safeGetById(db, projectId) {
           project_lead,
           project_lead_phone,
           start_date,
+          geplanter_baubeginn,
           end_date,
           notes,
           archived_at
@@ -117,6 +118,7 @@ function _safeGetById(db, projectId) {
             project_lead,
             project_lead_phone,
             start_date,
+            geplanter_baubeginn,
             end_date,
             notes
           FROM projects
@@ -141,6 +143,7 @@ function _safeGetById(db, projectId) {
             project_lead,
             project_lead_phone,
             start_date,
+            geplanter_baubeginn,
             end_date,
             notes
           FROM projects
@@ -201,6 +204,7 @@ function listAll() {
           project_lead,
           project_lead_phone,
           start_date,
+          geplanter_baubeginn,
           end_date,
           notes,
           archived_at
@@ -229,6 +233,7 @@ function listAll() {
             project_lead,
             project_lead_phone,
             start_date,
+            geplanter_baubeginn,
             end_date,
             notes
           FROM projects
@@ -252,6 +257,7 @@ function listAll() {
             project_lead,
             project_lead_phone,
             start_date,
+            geplanter_baubeginn,
             end_date,
             notes
           FROM projects
@@ -287,6 +293,7 @@ function listArchived() {
           project_lead,
           project_lead_phone,
           start_date,
+          geplanter_baubeginn,
           end_date,
           notes,
           archived_at
@@ -333,6 +340,7 @@ function createProject(data) {
   const project_lead_phone = _normText(d.project_lead_phone ?? d.projectLeadPhone);
 
   const start_date = _normText(d.start_date ?? d.startDate);
+  const geplanter_baubeginn = _normText(d.geplanter_baubeginn);
   const end_date = _normText(d.end_date ?? d.endDate);
 
   const notes = _normText(d.notes);
@@ -355,11 +363,12 @@ function createProject(data) {
         project_lead,
         project_lead_phone,
         start_date,
+        geplanter_baubeginn,
         end_date,
         notes,
         archived_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     ).run(
       id,
@@ -372,6 +381,7 @@ function createProject(data) {
       project_lead,
       project_lead_phone,
       start_date,
+      geplanter_baubeginn,
       end_date,
       notes,
       archived_at
@@ -391,10 +401,11 @@ function createProject(data) {
           project_lead,
           project_lead_phone,
           start_date,
+          geplanter_baubeginn,
           end_date,
           notes
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
       ).run(
         id,
@@ -407,6 +418,7 @@ function createProject(data) {
         project_lead,
         project_lead_phone,
         start_date,
+        geplanter_baubeginn,
         end_date,
         notes
       );
@@ -423,10 +435,11 @@ function createProject(data) {
           project_lead,
           project_lead_phone,
           start_date,
+          geplanter_baubeginn,
           end_date,
           notes
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
       ).run(
         id,
@@ -438,6 +451,7 @@ function createProject(data) {
         project_lead,
         project_lead_phone,
         start_date,
+        geplanter_baubeginn,
         end_date,
         notes
       );
@@ -478,6 +492,7 @@ function updateProject(data) {
     project_lead_phone: rawPatch.project_lead_phone ?? rawPatch.projectLeadPhone,
 
     start_date: rawPatch.start_date ?? rawPatch.startDate,
+    geplanter_baubeginn: rawPatch.geplanter_baubeginn,
     end_date: rawPatch.end_date ?? rawPatch.endDate,
 
     notes: rawPatch.notes,
@@ -493,6 +508,7 @@ function updateProject(data) {
     "project_lead",
     "project_lead_phone",
     "start_date",
+    "geplanter_baubeginn",
     "end_date",
     "notes",
   ]);

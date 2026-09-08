@@ -422,6 +422,7 @@ function _sanitizeProjectRow(project) {
     project_lead: project.project_lead ?? project.projectLead ?? null,
     project_lead_phone: project.project_lead_phone ?? project.projectLeadPhone ?? null,
     start_date: project.start_date ?? project.startDate ?? null,
+    geplanter_baubeginn: project.geplanter_baubeginn ?? null,
     end_date: project.end_date ?? project.endDate ?? null,
     notes: project.notes ?? null,
     archived_at: project.archived_at ?? project.archivedAt ?? null,

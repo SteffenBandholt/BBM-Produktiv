@@ -1,3 +1,20 @@
+## 2026-09-08 – SiGeKo S2.1: geplanter Baubeginn zentral gespeichert
+
+Umgesetzt auf main-Basis b3faf6e / S1.5: nullable Feld
+`projects.geplanter_baubeginn` im zentralen Neuaufbau und in der idempotenten
+Bestandsmigration. Keine Ableitung aus start_date. Alle sieben SELECT- und drei
+INSERT-Varianten, Create-/Update-IPC und die bestehende ZIP-Import-Feldzuordnung
+führen den Wert. Omission erhält ihn, null/leerer Text leert ihn.
+
+13 neue Tests mit echten SQLite-Dateien und ZIP-Export-/Import-Rundlauf grün.
+Volltest main 1546/97 -> Kandidat 1559/97, dieselben 97 Fehlernamen, kein fehlender
+Bestandsprüffall. Unabhängiger Quellenreview ohne Blocker. Technische Dokumentation:
+docs/SIGEKO_S2_1_GEPLANTER_BAUBEGINN.md und docs/SIGEKO_S2_1_TESTVERGLEICH.json.
+Übergabe auf codex/sigeko-s2-1-planned-start; Windows-/Linux-PR-Prüfung folgt.
+Keine UI-Änderung oder manuelle Abnahme nötig. Rechnung #275, PDF, Editor,
+Mail und Blankovorlagen unverändert. Nächstes S2-Teilpaket noch nicht begonnen;
+PDF-Viewer-Baseline aus S1.4 bleibt separat offen.
+
 ## 2026-09-08 – SiGeKo S1.5: gemeinsame Mailgrenze abgenommen
 
 S1.5 technisch und praktisch abgenommen; Integration über PR #324 auf

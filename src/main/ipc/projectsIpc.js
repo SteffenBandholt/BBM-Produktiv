@@ -94,6 +94,7 @@ function registerProjectsIpc() {
         project_lead_phone: d.project_lead_phone ?? d.projectLeadPhone ?? null,
 
         start_date: d.start_date ?? d.startDate ?? null,
+        geplanter_baubeginn: d.geplanter_baubeginn ?? null,
         end_date: d.end_date ?? d.endDate ?? null,
 
         notes: d.notes ?? null,
