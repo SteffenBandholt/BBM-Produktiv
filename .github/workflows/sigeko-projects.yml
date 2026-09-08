@@ -3,6 +3,13 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'src/main/db/sigeko*.js'
+      - 'src/main/domain/sigeko/**'
+      - 'src/shared/sigeko/**'
+      - 'src/main/modules/sigeko/**'
+      - 'src/main/ipc/sigekoIpc.js'
+      - 'src/main/preload.js'
+      - 'scripts/tests/sigekoProjectRoles.test.cjs'
       - 'src/main/db/database.js'
       - 'src/main/db/projectsRepo.js'
       - 'src/main/ipc/projectsIpc.js'
@@ -43,6 +50,9 @@ jobs:
       - name: Actual SQLite migration, CRUD and ZIP roundtrip
         run: >-
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/plannedConstructionStart.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
+      - name: SiGeKo project roles, module profile and archive integrity
+        run: >-
+          node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoProjectRoles.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
       - name: Form payload and mounted component contract
         run: node scripts/tests/plannedStartForm.test.cjs
       - name: Install Linux display support

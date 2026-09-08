@@ -18,6 +18,10 @@ contextBridge.exposeInMainWorld("bbmDb", {
   sigekoEnsureStorageDirectories: (payload) => ipcRenderer.invoke("sigeko:ensureStorageDirectories", payload),
   sigekoOpenStorageDirectory: (payload) => ipcRenderer.invoke("sigeko:openStorageDirectory", payload),
   sigekoGetModuleInfo: () => ipcRenderer.invoke("sigeko:getModuleInfo"),
+  sigekoGetCoordinatorProfile: () => ipcRenderer.invoke("sigeko:getCoordinatorProfile"),
+  sigekoSaveCoordinatorProfile: (payload) => ipcRenderer.invoke("sigeko:saveCoordinatorProfile", payload),
+  sigekoGetProjectData: (payload) => ipcRenderer.invoke("sigeko:getProjectData", payload),
+  sigekoSaveProjectData: (payload) => ipcRenderer.invoke("sigeko:saveProjectData", payload),
 
   // ============================================================
   // Projekte

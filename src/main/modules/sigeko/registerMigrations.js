@@ -1,5 +1,7 @@
-function registerMigrations() {
-  // S1.1 registriert nur den Anschluss. Keine Fachtabellen vor S2.
+const { ensureSigekoSchema } = require("../../db/sigekoSchema");
+
+function registerMigrations({ db } = {}) {
+  ensureSigekoSchema(db);
 }
 
 module.exports = Object.freeze({ registerMigrations });

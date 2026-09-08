@@ -157,7 +157,7 @@ async function runPlannedConstructionStartTests(run) {
     assert.equal(repo.getById("oldzip").start_date, "2000-01-01");
   }));
 }
-module.exports = { runPlannedConstructionStartTests };
+module.exports = { runPlannedConstructionStartTests, fixture, load, writeZip };
 
 if (require.main === module) {
   runPlannedConstructionStartTests(async (name, check) => { await check(); console.log("PASS", name); })

@@ -18,6 +18,18 @@ Diese Datei ist **kein** Architekturpapier und **kein** Codex-Ausfuehrungsmanual
 
 ## 1. Operative Arbeitsgrundsaetze
 
+### SiGeKo #274 – S2.3 Projekt und Rollen (2026-09-08)
+
+Container 5: SiGeKo-Datenmodell und Anwendungsgrenze auf main 26ec98f / S2.2.
+Modulstandard einmalig, Planung/Ausführung getrennt, „wie Planung“ und explizite
+Fremdkoordinatoren gemäß bestätigter Rollenklärung. Bestehende DB-/Kontakt-/IPC-
+und ZIP-Infrastruktur; keine UI, kein Readiness-/Behörden-/Rechnungsausbau.
+Technisch 15 neue Tests grün; Volltest 1584/97 bei identischen 97 Baselinefehlern.
+Review ohne Blocker. PR #327, Windows/Linux-CI 34263318599 vollständig grün;
+je 15 Pakettests plus bestehende S2.1/S2.2-Prüfungen. Integration über PR #327.
+Kurzfahrplan: S2.3 integrieren; danach Grunddaten-Bedienung gemäß S2/S3; S4 erst
+anschließend. Details: `docs/SIGEKO_S2_3_PROJEKT_ROLLEN.md`.
+
 ### SiGeKo #274 – S2.2 Projektformular (2026-09-08)
 
 Container 3: zentrales Feld Geplanter Baubeginn auf S2.1 / main 5d67c6a.

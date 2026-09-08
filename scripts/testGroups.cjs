@@ -4,6 +4,7 @@ const TEST_GROUPS = Object.freeze([
     label: "Kern, Protokoll und Projektfirmen",
     includeStoragePathTests: true,
     suites: Object.freeze([
+      ["sigekoProjectRoles.test.cjs", "runSigekoProjectRolesTests"],
       ["plannedConstructionStart.test.cjs", "runPlannedConstructionStartTests"],
       ["plannedStartForm.test.cjs", "runPlannedStartFormTests"],
       ["sigekoStorageAcceptance.test.cjs", "runSigekoStorageAcceptanceTests"],

@@ -34,7 +34,7 @@ function _sanitizeFilePart(value, fallback = "Projekt") {
 
 function _buildProjectTransferManifest({ projectId, project, storage, data, exportedAt, filesCount }) {
   return {
-    formatVersion: 3,
+    formatVersion: data.sigekoProjects?.length ? 4 : 3,
     firmLogicSchemaVersion: 1,
     exportDate: exportedAt,
     appVersion: app.getVersion ? app.getVersion() : "",
@@ -57,6 +57,7 @@ function _buildProjectTransferManifest({ projectId, project, storage, data, expo
       projectGlobalFirms: data.projectGlobalFirms.length,
       projectSettings: data.projectSettings.length,
       restarbeitenItems: data.restarbeitenItems.length,
+      sigekoProjects: data.sigekoProjects?.length || 0,
       globalFirmDependencies: data.globalFirmDependencies.length,
       filesCount,
     },
@@ -66,6 +67,7 @@ function _buildProjectTransferManifest({ projectId, project, storage, data, expo
 function _buildProjectTransferPayloads({ project, data }) {
   return [
     { name: "data/project.json", data: { project } },
+    ...(data.sigekoProjects?.length ? [{ name: "data/sigeko_projects.json", data: { sigeko_projects: data.sigekoProjects } }] : []),
     { name: "data/settings.json", data: { projectSettings: data.projectSettings || [] } },
     { name: "data/meetings.json", data: { meetings: data.meetings || [] } },
     { name: "data/tops.json", data: { tops: data.tops || [] } },
@@ -91,10 +93,13 @@ function _buildProjectTransferPayloads({ project, data }) {
 function _fetchProjectData(projectId) {
   const db = initDatabase();
 
-  const meetings = db.prepare("SELECT * FROM meetings WHERE project_id = ?").all(projectId);
+  // Nicht aktivierte Fachmodule haben auf einer neuen Datenbank keine Tabellen.
+  const projectRows = (table) => db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table)
+    ? db.prepare(`SELECT * FROM ${table} WHERE project_id = ?`).all(projectId) : [];
+  const meetings = projectRows("meetings");
   const meetingIds = meetings.map((m) => m.id).filter(Boolean);
 
-  const tops = db.prepare("SELECT * FROM tops WHERE project_id = ?").all(projectId);
+  const tops = projectRows("tops");
 
   const meetingTops =
     meetingIds.length === 0
@@ -142,9 +147,7 @@ function _fetchProjectData(projectId) {
     .prepare("SELECT key, value FROM project_settings WHERE project_id = ?")
     .all(projectId);
 
-  const restarbeitenItems = db
-    .prepare("SELECT * FROM restarbeiten_items WHERE project_id = ?")
-    .all(projectId);
+  const restarbeitenItems = projectRows("restarbeiten_items");
   const restarbeitIds = restarbeitenItems.map((item) => item.id).filter(Boolean);
   const restarbeitenAttachments = restarbeitIds.length
     ? db
@@ -157,6 +160,7 @@ function _fetchProjectData(projectId) {
         .all(...restarbeitIds)
     : [];
 
+  const sigekoProjects = projectRows("sigeko_projects");
   const globalFirmIds = new Set(projectGlobalFirms.map((row) => String(row.firm_id || "")).filter(Boolean));
   for (const row of meetingTops) {
     if (row.responsible_kind === "global_firm" && row.responsible_id) globalFirmIds.add(String(row.responsible_id));
@@ -165,6 +169,9 @@ function _fetchProjectData(projectId) {
     if (row.responsible_global_firm_id) globalFirmIds.add(String(row.responsible_global_firm_id));
   }
   const referencedGlobalPersonIds = new Set();
+  for (const row of sigekoProjects) for (const role of ["planning", "execution"]) {
+    if (row[`${role}_person_id`]) referencedGlobalPersonIds.add(row[`${role}_person_id`]);
+  }
   for (const row of projectCandidates) {
     if (row.kind === "global_person" && row.person_id) referencedGlobalPersonIds.add(String(row.person_id));
   }
@@ -205,6 +212,7 @@ function _fetchProjectData(projectId) {
     restarbeitenNotes,
     globalFirmDependencies,
     globalPersonDependencies,
+    sigekoProjects,
   };
 }
 
@@ -235,6 +243,9 @@ function _validateGlobalDependencies(db, payload, { requireSnapshots = false } =
     }
   }
   const requiredPersonIds = new Set();
+  for (const row of payload.sigekoProjects || []) for (const role of ["planning", "execution"]) {
+    if (row[`${role}_person_id`]) requiredPersonIds.add(row[`${role}_person_id`]);
+  }
   for (const row of payload.projectCandidates || []) {
     if (row?.kind === "global_person" && row?.person_id) requiredPersonIds.add(String(row.person_id));
   }
@@ -460,7 +471,7 @@ async function _importProjectZip(filePath) {
     if (!manifestRes.ok) return { ok: false, error: manifestRes.error };
     const manifest = manifestRes.data || {};
     const formatVersion = Number(manifest.formatVersion || 1);
-    if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > 3) {
+    if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > 4) {
       return { ok: false, error: `Nicht unterstützte Projektarchiv-Version: ${manifest.formatVersion}` };
     }
     if (Number(manifest.firmLogicSchemaVersion || 0) > 1) {
@@ -509,6 +520,15 @@ async function _importProjectZip(filePath) {
     const restNotesJson = await _readJsonIfExists(path.join(dataDir, "restarbeiten_notes.json"), "restarbeiten_notes.json");
     if (restNotesJson.ok) payload.restarbeitenNotes = restNotesJson.data?.restarbeiten_notes || [];
 
+    const sigekoJson = await _readJsonIfExists(path.join(dataDir, "sigeko_projects.json"), "sigeko_projects.json");
+    if (!sigekoJson.ok) return { ok: false, error: sigekoJson.error };
+    if (formatVersion === 4 && !sigekoJson.data) return { ok: false, error: "SiGeKo-Projektdaten fehlen im Archiv." };
+    payload.sigekoProjects = sigekoJson.data?.sigeko_projects ?? [];
+    if (!Array.isArray(payload.sigekoProjects) || payload.sigekoProjects.length > 1 ||
+        (formatVersion === 4 && payload.sigekoProjects.length !== 1)) {
+      return { ok: false, error: "Ungültige SiGeKo-Projektzuordnung im Archiv." };
+    }
+
     const project = payload.project;
     if (!project?.id) return { ok: false, error: "Projekt-ID fehlt im Export." };
 
@@ -516,6 +536,20 @@ async function _importProjectZip(filePath) {
     const projectShortName = project.short ?? project.projectShortName ?? manifest.projectShortName ?? null;
 
     const db = initDatabase();
+    if (payload.sigekoProjects.length) {
+      const columns = db.prepare("PRAGMA table_info(sigeko_projects)").all().map(row => row.name);
+      if (!columns.length) return { ok: false, error: "SiGeKo muss vor diesem Import aktiviert und initialisiert sein." };
+      const row = payload.sigekoProjects[0];
+      if (!row || row.project_id !== project.id || columns.some(key => !Object.hasOwn(row, key)) ||
+          Object.keys(row).some(key => !columns.includes(key))) {
+        return { ok: false, error: "Ungültiges SiGeKo-Schema oder fremder Projektbezug im Archiv." };
+      }
+      for (const role of ["planning", "execution"]) if (row[`${role}_project_person_id`]) {
+        const person = (payload.projectPersons || []).find(p => p.id === row[`${role}_project_person_id`]);
+        const firm = person && (payload.projectFirms || []).find(f => f.id === person.project_firm_id);
+        if (!firm || firm.project_id !== project.id) return { ok: false, error: "SiGeKo-Projektperson gehört nicht zum importierten Projekt." };
+      }
+    }
     if (_rowExists(db, "projects", project.id)) {
       return { ok: false, error: "Projekt existiert bereits (ID)." };
     }
@@ -560,6 +594,7 @@ async function _importProjectZip(filePath) {
       const projectFirmRows = _withLegacyFirmUseDefaults(payload.projectFirms || []);
       _insertRows(db, "project_firms", withPid(projectFirmRows));
       _insertRows(db, "project_persons", payload.projectPersons || []);
+      _insertRows(db, "sigeko_projects", payload.sigekoProjects);
       _insertRows(db, "project_candidates", withPid(payload.projectCandidates || []));
       _insertRows(db, "project_global_firms", withPid(payload.projectGlobalFirms || []));
       _insertRows(db, "meetings", withPid(payload.meetings || []));
