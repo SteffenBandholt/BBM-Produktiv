@@ -55,6 +55,16 @@ jobs:
       - name: Real PDF, storage, internal preview and editor regeneration
         working-directory: BBM-Produktiv
         run: xvfb-run -a npm run test:sigeko:s1.4
+      - name: Diagnose unchanged baseline preview with the same acceptance harness
+        if: failure()
+        continue-on-error: true
+        run: |
+          mkdir -p BBM-base/scripts/helpers
+          cp BBM-Produktiv/scripts/runSigekoPdfAcceptance.cjs BBM-base/scripts/
+          cp BBM-Produktiv/scripts/helpers/pdfAcceptanceLicense.cjs BBM-base/scripts/helpers/
+          node -e 'require("fs").appendFileSync("BBM-base/src/main/ipc/printIpc.js", "\nmodule.exports.openInternalPdfPreview = openInternalPdfPreview;\n")'
+          cd BBM-base
+          xvfb-run -a node scripts/runSigekoPdfAcceptance.cjs --preview-only
       - name: Generate 49 baseline PDF snapshots
         if: always()
         working-directory: BBM-base

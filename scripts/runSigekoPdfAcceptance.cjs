@@ -90,7 +90,13 @@ async function capturePaintedPdfPreview(window, screenshotPath) {
     await new Promise((resolve) => setTimeout(resolve, 150));
   }
   if (lastImage) fs.writeFileSync(screenshotPath, lastImage.toPNG());
-  throw Object.assign(new Error(`Interne PDF-Vorschau zeigt keine stabil gezeichnete Seite mit Text: ${JSON.stringify(evidence)}`), { code: "PDF_PREVIEW_PAINT_TIMEOUT" });
+  const diagnostics = { visible: window.isVisible(), focused: window.isFocused(), url: window.webContents.getURL(), frames: [] };
+  for (const frame of window.webContents.mainFrame.framesInSubtree) {
+    try {
+      diagnostics.frames.push({ url: frame.url, state: await frame.executeJavaScript("({ready:document.readyState,visibility:document.visibilityState,body:document.body?.innerHTML.slice(0,1500)})") });
+    } catch (error) { diagnostics.frames.push({ url: frame.url, error: error.message }); }
+  }
+  throw Object.assign(new Error(`Interne PDF-Vorschau zeigt keine stabil gezeichnete Seite mit Text: ${JSON.stringify(evidence)}; Diagnose: ${JSON.stringify(diagnostics)}`), { code: "PDF_PREVIEW_PAINT_TIMEOUT" });
 }
 
 function pdfInventory(directories) {
@@ -195,6 +201,7 @@ async function runWorker() {
     const paint = await capturePaintedPdfPreview(previewWindow, screenshotPath);
     report.checks.internalPreview = { filePath: preview.filePath, screenshotPath, reopenedUnchanged: true,
       reopenedThroughExistingPreviewService: true, previousWindowClosed: true, pageCount: reopened.pageCount, paint };
+    if (process.argv.includes("--preview-only")) { report.package = "S1.4-preview-only"; report.ok = true; return; }
 
     const beforeOverflowPdfs = pdfInventory([baseDir, tempPath]);
     const readyMessages = new Map();
@@ -307,6 +314,7 @@ async function launch() {
   if (process.platform === "linux" && process.getuid?.() === 0) args.push("--no-sandbox");
   if (process.argv.includes("--headless")) args.push("--ozone-platform=headless");
   args.push(__filename, "--worker", `${ACCEPTANCE_SWITCH}${profile.rootPath}`);
+  if (process.argv.includes("--preview-only")) args.push("--preview-only");
   const child = spawn(require("electron"), args, { cwd: ROOT, env: createSanitizedEnvironment(), stdio: "inherit" });
   const timeout = setTimeout(() => { console.error("[S1.4a] FAIL: Abnahme-Timeout"); child.kill("SIGTERM"); }, 180000);
   const code = await new Promise((resolve, reject) => { child.once("error", reject); child.once("exit", (exitCode) => resolve(exitCode ?? 1)); }).finally(() => clearTimeout(timeout));
