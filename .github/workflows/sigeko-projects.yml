@@ -40,6 +40,7 @@ on:
 jobs:
   persistence:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -93,8 +94,10 @@ jobs:
       - name: Install Linux display support
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb libgtk-3-0 libnss3 libasound2t64
+          ubuntu_sources=/etc/apt/sources.list.d/ubuntu.sources
+          test -s "$ubuntu_sources"
+          sudo apt-get -o Dir::Etc::sourcelist="$ubuntu_sources" -o Dir::Etc::sourceparts="-" update
+          sudo apt-get -o Dir::Etc::sourcelist="$ubuntu_sources" -o Dir::Etc::sourceparts="-" install -y xvfb libgtk-3-0 libnss3 libasound2t64
           sudo chown root:root node_modules/electron/dist/chrome-sandbox
           sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
       - name: Real Electron form with SQLite on Linux
