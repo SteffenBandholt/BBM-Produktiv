@@ -59,7 +59,7 @@ async function runSigekoModuleBoundaryTests(run) {
   await run("S1.1: produktiver IPC-Registrar erreicht SiGeKo-Service ohne Protokoll", () => {
     const harness = register(status(["sigeko"]));
     assert.deepEqual(harness.result.registeredModuleIds, ["sigeko"]);
-    assert.deepEqual([...harness.handlers.keys()], ["sigeko:getStoragePaths", "sigeko:ensureStorageDirectories", "sigeko:openStorageDirectory", "sigeko:getCoordinatorProfile", "sigeko:saveCoordinatorProfile", "sigeko:getProjectData", "sigeko:saveProjectData", "sigeko:getReadiness", "sigeko:getModuleInfo"]);
+    assert.deepEqual([...harness.handlers.keys()], ["sigeko:getStoragePaths", "sigeko:ensureStorageDirectories", "sigeko:openStorageDirectory", "sigeko:getCoordinatorProfile", "sigeko:saveCoordinatorProfile", "sigeko:getProjectData", "sigeko:saveProjectData", "sigeko:getReadiness", "sigeko:listAuthorityRecords", "sigeko:getAuthorityRecord", "sigeko:saveAuthorityRecord", "sigeko:confirmAuthorityRecord", "sigeko:markAuthorityUncertain", "sigeko:getModuleInfo"]);
     assert.deepEqual(harness.handlers.get("sigeko:getModuleInfo")({}), {
       ok: true, module: { moduleId: "sigeko", moduleType: "project" },
     });
@@ -109,13 +109,13 @@ async function runSigekoModuleBoundaryTests(run) {
         };
       },
     });
-    assert.deepEqual(Object.keys(exposed.bbmDb).filter((key) => key.startsWith("sigeko")), ["sigekoGetStoragePaths", "sigekoEnsureStorageDirectories", "sigekoOpenStorageDirectory", "sigekoGetModuleInfo", "sigekoGetCoordinatorProfile", "sigekoSaveCoordinatorProfile", "sigekoGetProjectData", "sigekoGetReadiness", "sigekoSaveProjectData"]);
+    assert.deepEqual(Object.keys(exposed.bbmDb).filter((key) => key.startsWith("sigeko")), ["sigekoGetStoragePaths", "sigekoEnsureStorageDirectories", "sigekoOpenStorageDirectory", "sigekoGetModuleInfo", "sigekoGetCoordinatorProfile", "sigekoSaveCoordinatorProfile", "sigekoGetProjectData", "sigekoGetReadiness", "sigekoSaveProjectData", "sigekoListAuthorityRecords", "sigekoGetAuthorityRecord", "sigekoSaveAuthorityRecord", "sigekoConfirmAuthorityRecord", "sigekoMarkAuthorityUncertain"]);
     assert.deepEqual(await exposed.bbmDb.sigekoGetModuleInfo(), { ok: true, module: { moduleId: "sigeko", moduleType: "project" } });
     harness.setStatus(status([]));
     await assert.rejects(exposed.bbmDb.sigekoGetModuleInfo(), { code: "MODULE_NOT_ACTIVE" });
   });
 
-  await run("S1.1: Migrationsregistrar erhält Bestand und ergänzt ausschließlich S2.3-Fachtabellen", () => {
+  await run("SiGeKo: Migrationsregistrar erhält Bestand und ergänzt nur eigene Fachtabellen", () => {
     const db = new Database(":memory:");
     try {
       db.exec("CREATE TABLE projects (id TEXT PRIMARY KEY, name TEXT NOT NULL); INSERT INTO projects VALUES ('p1', 'Bestand');");
@@ -126,7 +126,7 @@ async function runSigekoModuleBoundaryTests(run) {
       assert.deepEqual(ensureSchema(db, { moduleIds: ["sigeko"] }), ["sigeko"]);
       assert.deepEqual(ensureSchema(db, { moduleIds: ["sigeko", "sigeko"] }), ["sigeko"]);
       const added = schema().filter(row => !before.some(old => old.name === row.name));
-      assert.deepEqual(added.filter(row => row.type === "table").map(row => row.name), ["sigeko_profiles", "sigeko_projects"]);
+      assert.deepEqual(added.filter(row => row.type === "table").map(row => row.name), ["sigeko_authority_records", "sigeko_profiles", "sigeko_projects"]);
       assert.deepEqual(schema().filter(row => before.some(old => old.name === row.name)), before);
       assert.equal(db.prepare("SELECT name FROM projects WHERE id = 'p1'").get().name, "Bestand");
       for (const table of ["meetings", "tops", "invoices", "restarbeiten_items"]) {

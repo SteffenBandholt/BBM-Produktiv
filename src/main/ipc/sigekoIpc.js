@@ -1,10 +1,11 @@
 const { createSigekoService } = require("../domain/sigeko/SigekoService");
 
 const { createSigekoProjectService } = require("../domain/sigeko/SigekoProjectService");
+const { createAuthorityService } = require("../domain/sigeko/AuthorityService");
 const { createReadinessService } = require("../domain/sigeko/ReadinessService");
 
 function registerSigekoIpc({ ipcMain, service = createSigekoService(), projectService = createSigekoProjectService(),
-  readinessService = createReadinessService({ projectService }) } = {}) {
+  readinessService = createReadinessService({ projectService }), authorityService = createAuthorityService() } = {}) {
   for (const operation of ["getStoragePaths", "ensureStorageDirectories", "openStorageDirectory"]) {
     ipcMain.handle(`sigeko:${operation}`, async (_event, payload) => {
       try { return { ok: true, data: await service[operation](payload) }; }
@@ -23,6 +24,12 @@ function registerSigekoIpc({ ipcMain, service = createSigekoService(), projectSe
     try { return { ok: true, data: await readinessService.getReadiness(payload) }; }
     catch (error) { return { ok: false, error: error?.message || String(error), code: error?.code || "SIGEKO_ERROR" }; }
   });
+  for (const operation of ["listAuthorityRecords", "getAuthorityRecord", "saveAuthorityRecord", "confirmAuthorityRecord", "markAuthorityUncertain"]) {
+    ipcMain.handle(`sigeko:${operation}`, async (_event, payload) => {
+      try { return { ok: true, data: await authorityService[operation](payload) }; }
+      catch (error) { return { ok: false, error: error?.message || String(error), code: error?.code || "SIGEKO_ERROR" }; }
+    });
+  }
   ipcMain.handle("sigeko:getModuleInfo", () => ({
     ok: true,
     module: service.getModuleInfo(),

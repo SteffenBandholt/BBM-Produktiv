@@ -11,6 +11,7 @@ on:
       - 'src/main/preload.js'
       - 'scripts/tests/sigekoProjectRoles.test.cjs'
       - 'scripts/tests/sigekoReadiness.test.cjs'
+      - 'scripts/tests/sigekoAuthorities.test.cjs'
       - 'src/renderer/modules/sigeko/**'
       - 'scripts/tests/sigekoProjectForm*'
       - 'scripts/tests/sigekoGrunddatenForm.test.cjs'
@@ -70,6 +71,9 @@ jobs:
       - name: SiGeKo calculated readiness and read-only IPC
         run: >-
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoReadiness.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
+      - name: SiGeKo authority stock migration and manual verification
+        run: >-
+          node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoAuthorities.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
       - name: Central project builder ZIP integrity
         run: >-
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/projectBuilderTransfer.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"

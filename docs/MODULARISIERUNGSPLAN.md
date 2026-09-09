@@ -18,6 +18,18 @@ Diese Datei ist **kein** Architekturpapier und **kein** Codex-Ausfuehrungsmanual
 
 ## 1. Operative Arbeitsgrundsaetze
 
+### SiGeKo #274 / #255 – S4.1 Behördenbestand (2026-09-09)
+
+PR #331: strukturierter wiederverwendbarer SiGeKo-Bestand und expliziter manueller
+Prüfabschluss auf bestehender SQLite-/Modul-/IPC-Infrastruktur. Bestätigung wird
+bei echten Änderungen entzogen; Revision schützt veraltete Eingaben. Keine
+Projektzuständigkeit aus PLZ/Kreis behauptet, keine UI-/Recherche-/Seed-Übernahme.
+Volltest 1693/97 bei exakt gleichen Baselinefehlern, 25 neue Tests; unabhängiger
+Review und Windows/Linux-CI 34379329083 vollständig grün. Integration über PR #331.
+Details: `docs/SIGEKO_S4_1_BESTAND.md` und Testvergleich. Nächstes Paket S4.2
+Projektzuordnungen/Snapshots/Bestandslookup, danach S4.3 Bedienung; S4 noch offen.
+Rechnung #275 bleibt eingefroren; Januar-2022-PDF vor Datenübernahme prüfen.
+
 ### SiGeKo #274 – S3 Übersicht / Readiness (2026-09-09)
 
 PR #330: getrennte berechnete Projektdaten-/Behördenbereitschaft, konkrete Fehlstellen

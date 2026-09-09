@@ -6,6 +6,7 @@ const TEST_GROUPS = Object.freeze([
     suites: Object.freeze([
       ["sigekoProjectRoles.test.cjs", "runSigekoProjectRolesTests"],
       ["sigekoReadiness.test.cjs", "runSigekoReadinessTests"],
+      ["sigekoAuthorities.test.cjs", "runSigekoAuthoritiesTests"],
       ["projectBuilder.test.cjs", "runProjectBuilderTests"],
       ["projectBuilderTransfer.test.cjs", "runProjectBuilderTransferTests"],
       ["projectBuilderForm.test.cjs", "runProjectBuilderFormTests"],

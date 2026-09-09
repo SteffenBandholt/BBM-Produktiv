@@ -13,7 +13,7 @@ function _wrapIdArg(name, objKey) {
 }
 
 contextBridge.exposeInMainWorld("bbmDb", {
-  // SiGeKo: technische Anwendungsgrenze, noch keine Fachoperationen.
+  // SiGeKo: modulbewachte technische und fachliche Anwendungsgrenzen.
   sigekoGetStoragePaths: (payload) => ipcRenderer.invoke("sigeko:getStoragePaths", payload),
   sigekoEnsureStorageDirectories: (payload) => ipcRenderer.invoke("sigeko:ensureStorageDirectories", payload),
   sigekoOpenStorageDirectory: (payload) => ipcRenderer.invoke("sigeko:openStorageDirectory", payload),
@@ -23,6 +23,12 @@ contextBridge.exposeInMainWorld("bbmDb", {
   sigekoGetProjectData: (payload) => ipcRenderer.invoke("sigeko:getProjectData", payload),
   sigekoGetReadiness: (payload) => ipcRenderer.invoke("sigeko:getReadiness", payload),
   sigekoSaveProjectData: (payload) => ipcRenderer.invoke("sigeko:saveProjectData", payload),
+  sigekoListAuthorityRecords: (payload) => ipcRenderer.invoke("sigeko:listAuthorityRecords", payload),
+  sigekoGetAuthorityRecord: (payload) => ipcRenderer.invoke("sigeko:getAuthorityRecord", payload),
+  sigekoSaveAuthorityRecord: (payload) => ipcRenderer.invoke("sigeko:saveAuthorityRecord", payload),
+  sigekoConfirmAuthorityRecord: (payload) => ipcRenderer.invoke("sigeko:confirmAuthorityRecord", payload),
+  sigekoMarkAuthorityUncertain: (payload) => ipcRenderer.invoke("sigeko:markAuthorityUncertain", payload),
+
 
   // ============================================================
   // Projekte
