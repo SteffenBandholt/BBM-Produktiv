@@ -11,6 +11,7 @@ const yauzl = require("yauzl");
 const extract = require("extract-zip");
 
 const { initDatabase } = require("../db/database");
+const { PROJECT_AUTHORITY_COLUMNS, validateProjectAuthorityRow } = require("../../shared/sigeko/projectAuthorities.cjs");
 const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const projectsRepo = require("../db/projectsRepo");
 const { buildStoragePreviewPaths, sanitizeDirName, resolveProjectFolderName } = require("./projectStoragePaths");
@@ -34,7 +35,9 @@ function _sanitizeFilePart(value, fallback = "Projekt") {
 
 function _buildProjectTransferManifest({ projectId, project, storage, data, exportedAt, filesCount }) {
   return {
-    formatVersion: project.bauherr_firm_kind != null || project.bauherr_firm_id != null ? 5 : data.sigekoProjects?.length ? 4 : 3,
+    formatVersion: data.sigekoProjectAuthorities?.length ? 6
+      : project.bauherr_firm_kind != null || project.bauherr_firm_id != null ? 5
+      : data.sigekoProjects?.length ? 4 : 3,
     firmLogicSchemaVersion: 1,
     exportDate: exportedAt,
     appVersion: app.getVersion ? app.getVersion() : "",
@@ -60,6 +63,12 @@ function _buildProjectTransferManifest({ projectId, project, storage, data, expo
       sigekoProjects: data.sigekoProjects?.length || 0,
       globalFirmDependencies: data.globalFirmDependencies.length,
       filesCount,
+      ...(data.sigekoProjectAuthorities?.length ? {
+        sigekoProjectAuthorities: data.sigekoProjectAuthorities.length,
+        restarbeitenAttachments: data.restarbeitenAttachments.length,
+        restarbeitenNotes: data.restarbeitenNotes.length,
+        globalPersonDependencies: data.globalPersonDependencies.length,
+      } : {}),
     },
   };
 }
@@ -68,6 +77,7 @@ function _buildProjectTransferPayloads({ project, data }) {
   return [
     { name: "data/project.json", data: { project } },
     ...(data.sigekoProjects?.length ? [{ name: "data/sigeko_projects.json", data: { sigeko_projects: data.sigekoProjects } }] : []),
+    ...(data.sigekoProjectAuthorities?.length ? [{ name: "data/sigeko_project_authorities.json", data: { sigeko_project_authorities: data.sigekoProjectAuthorities } }] : []),
     { name: "data/settings.json", data: { projectSettings: data.projectSettings || [] } },
     { name: "data/meetings.json", data: { meetings: data.meetings || [] } },
     { name: "data/tops.json", data: { tops: data.tops || [] } },
@@ -161,6 +171,8 @@ function _fetchProjectData(projectId, project) {
     : [];
 
   const sigekoProjects = projectRows("sigeko_projects");
+  const sigekoProjectAuthorities = projectRows("sigeko_project_authorities");
+  _validateProjectAuthorities(sigekoProjectAuthorities, projectId);
   const globalFirmIds = new Set(projectGlobalFirms.map((row) => String(row.firm_id || "")).filter(Boolean));
   if (project?.bauherr_firm_kind === "global_firm" && project.bauherr_firm_id) {
     globalFirmIds.add(project.bauherr_firm_id);
@@ -216,7 +228,22 @@ function _fetchProjectData(projectId, project) {
     globalFirmDependencies,
     globalPersonDependencies,
     sigekoProjects,
+    sigekoProjectAuthorities,
   };
+}
+
+// Keep the module's strict row contract at the shared transfer boundary, before
+// any project data can be deleted on export or inserted on import.
+function _validateProjectAuthorities(rows, projectId) {
+  if (!Array.isArray(rows) || rows.length > 7) throw new Error("Ungültige SiGeKo-Behördenzuordnungen im Archiv.");
+  const ids = new Set();
+  const categories = new Set();
+  for (const row of rows) {
+    validateProjectAuthorityRow(row, projectId);
+    if (ids.has(row.id) || categories.has(row.category)) throw new Error("Doppelte SiGeKo-Behördenzuordnung im Archiv.");
+    ids.add(row.id);
+    categories.add(row.category);
+  }
 }
 
 function _validateGlobalDependencies(db, payload, { requireSnapshots = false } = {}) {
@@ -505,38 +532,67 @@ async function _importProjectZip(filePath) {
     if (!manifestRes.ok) return { ok: false, error: manifestRes.error };
     const manifest = manifestRes.data || {};
     const formatVersion = Number(manifest.formatVersion || 1);
-    if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > 5) {
+    if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > 6) {
       return { ok: false, error: `Nicht unterstützte Projektarchiv-Version: ${manifest.formatVersion}` };
     }
     if (Number(manifest.firmLogicSchemaVersion || 0) > 1) {
       return { ok: false, error: "Projektarchiv verwendet eine neuere Firmenlogik-Version." };
     }
 
+    // V6 is written only by the current complete exporter. Do not interpret a
+    // corrupt/missing payload as an empty collection and silently drop it.
+    const v6PayloadKeys = {
+      "project.json": ["project"], "settings.json": ["projectSettings"],
+      "meetings.json": ["meetings"], "tops.json": ["tops"],
+      "meeting_tops.json": ["meeting_tops"], "meeting_participants.json": ["meeting_participants"],
+      "project_firms.json": ["project_firms"], "project_persons.json": ["project_persons"],
+      "project_candidates.json": ["project_candidates"], "project_global_firms.json": ["project_global_firms"],
+      "global_firm_dependencies.json": ["firms", "persons"], "restarbeiten_items.json": ["restarbeiten_items"],
+      "restarbeiten_attachments.json": ["restarbeiten_attachments"], "restarbeiten_notes.json": ["restarbeiten_notes"],
+      "sigeko_project_authorities.json": ["sigeko_project_authorities"],
+    };
+    const readPayload = async (file, label) => {
+      const result = await _readJsonIfExists(file, label);
+      if (formatVersion === 6) {
+        if (!result.ok) throw new Error(result.error);
+        const keys = v6PayloadKeys[label] ||
+          (label === "sigeko_projects.json" && fs.existsSync(file) ? ["sigeko_projects"] : null);
+        if (keys && (!result.data || typeof result.data !== "object" || Array.isArray(result.data) ||
+            Object.keys(result.data).length !== keys.length || keys.some(key => !Object.hasOwn(result.data, key)) ||
+            keys.some(key => key === "project"
+              ? !result.data[key] || typeof result.data[key] !== "object" || Array.isArray(result.data[key])
+              : !Array.isArray(result.data[key])))) {
+          throw new Error(`Ungültige oder fehlende V6-Daten: ${label}`);
+        }
+      }
+      return result;
+    };
+
     // Neue Exportstruktur: getrennte JSON-Dateien unter data/
     const payload = {};
-    const projectJson = await _readJsonIfExists(path.join(dataDir, "project.json"), "project.json");
+    const projectJson = await readPayload(path.join(dataDir, "project.json"), "project.json");
     if (projectJson.ok && projectJson.data?.project) {
       payload.project = projectJson.data.project;
     }
-    const settingsJson = await _readJsonIfExists(path.join(dataDir, "settings.json"), "settings.json");
+    const settingsJson = await readPayload(path.join(dataDir, "settings.json"), "settings.json");
     if (settingsJson.ok) payload.projectSettings = settingsJson.data?.projectSettings || [];
-    const meetingsJson = await _readJsonIfExists(path.join(dataDir, "meetings.json"), "meetings.json");
+    const meetingsJson = await readPayload(path.join(dataDir, "meetings.json"), "meetings.json");
     if (meetingsJson.ok) payload.meetings = meetingsJson.data?.meetings || [];
-    const topsJson = await _readJsonIfExists(path.join(dataDir, "tops.json"), "tops.json");
+    const topsJson = await readPayload(path.join(dataDir, "tops.json"), "tops.json");
     if (topsJson.ok) payload.tops = topsJson.data?.tops || [];
-    const mtJson = await _readJsonIfExists(path.join(dataDir, "meeting_tops.json"), "meeting_tops.json");
+    const mtJson = await readPayload(path.join(dataDir, "meeting_tops.json"), "meeting_tops.json");
     if (mtJson.ok) payload.meetingTops = mtJson.data?.meeting_tops || [];
-    const mpJson = await _readJsonIfExists(path.join(dataDir, "meeting_participants.json"), "meeting_participants.json");
+    const mpJson = await readPayload(path.join(dataDir, "meeting_participants.json"), "meeting_participants.json");
     if (mpJson.ok) payload.meetingParticipants = mpJson.data?.meeting_participants || [];
-    const pfJson = await _readJsonIfExists(path.join(dataDir, "project_firms.json"), "project_firms.json");
+    const pfJson = await readPayload(path.join(dataDir, "project_firms.json"), "project_firms.json");
     if (pfJson.ok) payload.projectFirms = pfJson.data?.project_firms || [];
-    const ppJson = await _readJsonIfExists(path.join(dataDir, "project_persons.json"), "project_persons.json");
+    const ppJson = await readPayload(path.join(dataDir, "project_persons.json"), "project_persons.json");
     if (ppJson.ok) payload.projectPersons = ppJson.data?.project_persons || [];
-    const pcJson = await _readJsonIfExists(path.join(dataDir, "project_candidates.json"), "project_candidates.json");
+    const pcJson = await readPayload(path.join(dataDir, "project_candidates.json"), "project_candidates.json");
     if (pcJson.ok) payload.projectCandidates = pcJson.data?.project_candidates || [];
-    const pgfJson = await _readJsonIfExists(path.join(dataDir, "project_global_firms.json"), "project_global_firms.json");
+    const pgfJson = await readPayload(path.join(dataDir, "project_global_firms.json"), "project_global_firms.json");
     if (pgfJson.ok) payload.projectGlobalFirms = pgfJson.data?.project_global_firms || [];
-    const dependencyJson = await _readJsonIfExists(
+    const dependencyJson = await readPayload(
       path.join(dataDir, "global_firm_dependencies.json"),
       "global_firm_dependencies.json"
     );
@@ -544,17 +600,17 @@ async function _importProjectZip(filePath) {
       payload.globalFirmDependencies = dependencyJson.data?.firms || [];
       payload.globalPersonDependencies = dependencyJson.data?.persons || [];
     }
-    const restJson = await _readJsonIfExists(path.join(dataDir, "restarbeiten_items.json"), "restarbeiten_items.json");
+    const restJson = await readPayload(path.join(dataDir, "restarbeiten_items.json"), "restarbeiten_items.json");
     if (restJson.ok) payload.restarbeitenItems = restJson.data?.restarbeiten_items || [];
-    const restAttachmentsJson = await _readJsonIfExists(
+    const restAttachmentsJson = await readPayload(
       path.join(dataDir, "restarbeiten_attachments.json"),
       "restarbeiten_attachments.json"
     );
     if (restAttachmentsJson.ok) payload.restarbeitenAttachments = restAttachmentsJson.data?.restarbeiten_attachments || [];
-    const restNotesJson = await _readJsonIfExists(path.join(dataDir, "restarbeiten_notes.json"), "restarbeiten_notes.json");
+    const restNotesJson = await readPayload(path.join(dataDir, "restarbeiten_notes.json"), "restarbeiten_notes.json");
     if (restNotesJson.ok) payload.restarbeitenNotes = restNotesJson.data?.restarbeiten_notes || [];
 
-    const sigekoJson = await _readJsonIfExists(path.join(dataDir, "sigeko_projects.json"), "sigeko_projects.json");
+    const sigekoJson = await readPayload(path.join(dataDir, "sigeko_projects.json"), "sigeko_projects.json");
     if (!sigekoJson.ok) return { ok: false, error: sigekoJson.error };
     if (formatVersion === 4 && !sigekoJson.data) return { ok: false, error: "SiGeKo-Projektdaten fehlen im Archiv." };
     payload.sigekoProjects = sigekoJson.data?.sigeko_projects ?? [];
@@ -567,8 +623,32 @@ async function _importProjectZip(filePath) {
       return { ok: false, error: "SiGeKo-Projektanzahl stimmt nicht mit dem V5-Manifest überein." };
     }
 
+    const authorityJson = await readPayload(path.join(dataDir, "sigeko_project_authorities.json"), "sigeko_project_authorities.json");
+    if (!authorityJson.ok) return { ok: false, error: authorityJson.error };
+    if (formatVersion !== 6 && fs.existsSync(path.join(dataDir, "sigeko_project_authorities.json"))) {
+      return { ok: false, error: "SiGeKo-Behördenzuordnungen erfordern Projektarchiv-Version 6." };
+    }
+    payload.sigekoProjectAuthorities = authorityJson.data?.sigeko_project_authorities ?? [];
+    if (formatVersion === 6 && !payload.sigekoProjectAuthorities.length) {
+      return { ok: false, error: "SiGeKo-Behördenzuordnungen fehlen im V6-Archiv." };
+    }
+
     const project = payload.project;
     if (!project?.id) return { ok: false, error: "Projekt-ID fehlt im Export." };
+
+    _validateProjectAuthorities(payload.sigekoProjectAuthorities, project.id);
+    if (formatVersion === 6) {
+      if (manifest.projectId !== project.id) return { ok: false, error: "Fremder Projektbezug im V6-Manifest." };
+      const expectedCounts = Object.fromEntries(Object.entries(payload).filter(([key]) => key !== "project")
+        .map(([key, rows]) => [key, Array.isArray(rows) ? rows.length : -1]));
+      expectedCounts.filesCount = await _countFilesRecursive(path.join(tempDir, "project-folder"));
+      const counts = manifest.counts;
+      if (!counts || typeof counts !== "object" || Array.isArray(counts) ||
+          Object.keys(counts).length !== Object.keys(expectedCounts).length ||
+          Object.entries(expectedCounts).some(([key, count]) => !Number.isSafeInteger(counts[key]) || counts[key] !== count)) {
+        return { ok: false, error: "Projektanzahlen stimmen nicht mit dem vollständigen V6-Manifest überein." };
+      }
+    }
 
     const builder = _validateProjectBuilderReference(payload, { formatVersion });
 
@@ -576,6 +656,12 @@ async function _importProjectZip(filePath) {
     const projectShortName = project.short ?? project.projectShortName ?? manifest.projectShortName ?? null;
 
     const db = initDatabase();
+    if (payload.sigekoProjectAuthorities.length) {
+      const columns = db.prepare("PRAGMA table_info(sigeko_project_authorities)").all().map(row => row.name);
+      if (columns.length !== PROJECT_AUTHORITY_COLUMNS.length || PROJECT_AUTHORITY_COLUMNS.some(key => !columns.includes(key))) {
+        return { ok: false, error: "SiGeKo muss vor diesem Import aktiviert und initialisiert sein." };
+      }
+    }
     if (payload.sigekoProjects.length) {
       const columns = db.prepare("PRAGMA table_info(sigeko_projects)").all().map(row => row.name);
       if (!columns.length) return { ok: false, error: "SiGeKo muss vor diesem Import aktiviert und initialisiert sein." };
@@ -642,6 +728,7 @@ async function _importProjectZip(filePath) {
       }
       _insertRows(db, "project_persons", payload.projectPersons || []);
       _insertRows(db, "sigeko_projects", payload.sigekoProjects);
+      _insertRows(db, "sigeko_project_authorities", payload.sigekoProjectAuthorities);
       _insertRows(db, "project_candidates", withPid(payload.projectCandidates || []));
       _insertRows(db, "project_global_firms", withPid(payload.projectGlobalFirms || []));
       _insertRows(db, "meetings", withPid(payload.meetings || []));

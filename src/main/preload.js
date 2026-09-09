@@ -28,6 +28,9 @@ contextBridge.exposeInMainWorld("bbmDb", {
   sigekoSaveAuthorityRecord: (payload) => ipcRenderer.invoke("sigeko:saveAuthorityRecord", payload),
   sigekoConfirmAuthorityRecord: (payload) => ipcRenderer.invoke("sigeko:confirmAuthorityRecord", payload),
   sigekoMarkAuthorityUncertain: (payload) => ipcRenderer.invoke("sigeko:markAuthorityUncertain", payload),
+  sigekoGetProjectAuthorities: (payload) => ipcRenderer.invoke("sigeko:getProjectAuthorities", payload),
+  sigekoAssignProjectAuthority: (payload) => ipcRenderer.invoke("sigeko:assignProjectAuthority", payload),
+  sigekoApplyKnownProjectAuthorities: (payload) => ipcRenderer.invoke("sigeko:applyKnownProjectAuthorities", payload),
 
 
   // ============================================================

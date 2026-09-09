@@ -51,6 +51,31 @@ function ensureSigekoSchema(db) {
         (verification_status = 'uncertain' AND uncertainty_reason IS NOT NULL AND length(trim(uncertainty_reason)) > 0)
       )
     );
+    CREATE TABLE IF NOT EXISTS sigeko_project_authorities (
+      id TEXT PRIMARY KEY NOT NULL,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      category TEXT NOT NULL CHECK (category IN (${MUTABLE_AUTHORITY_CATEGORIES.map(category => `'${category}'`).join(",")})),
+      source_id TEXT NOT NULL CHECK (length(trim(source_id)) > 0),
+      source_revision INTEGER NOT NULL CHECK (typeof(source_revision) = 'integer' AND source_revision BETWEEN 1 AND 9007199254740991),
+      snapshot_json TEXT NOT NULL CHECK (json_valid(snapshot_json)),
+      address_street TEXT,
+      address_zip TEXT,
+      address_city TEXT,
+      assessment_status TEXT NOT NULL CHECK (assessment_status IN ('confirmed','uncertain')),
+      assessment_method TEXT NOT NULL CHECK (assessment_method IN ('manual','known_stock')),
+      assessment_note TEXT NOT NULL CHECK (length(trim(assessment_note)) > 0),
+      match_context_hash TEXT NOT NULL CHECK (typeof(match_context_hash) = 'text' AND length(match_context_hash) = 64
+        AND length(CAST(match_context_hash AS BLOB)) = 64 AND match_context_hash NOT GLOB '*[^0-9a-f]*'),
+      revision INTEGER NOT NULL CHECK (typeof(revision) = 'integer' AND revision BETWEEN 1 AND 9007199254740991),
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      UNIQUE (project_id, category),
+      CHECK (COALESCE(json_type(snapshot_json) = 'object'
+        AND json_extract(snapshot_json, '$.id') = source_id
+        AND json_extract(snapshot_json, '$.category') = category
+        AND json_type(snapshot_json, '$.revision') = 'integer'
+        AND json_extract(snapshot_json, '$.revision') = source_revision, 0))
+    );
   `))();
 }
 module.exports = Object.freeze({ ensureSigekoSchema });
