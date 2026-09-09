@@ -352,8 +352,19 @@ async function worker() {
     const vaSave = async () => {
       await evaluate("s24.vaElement('status').textContent = ''");
       await vaClick("actions.save");
-      await waitFor("!s24.screen.busy && !s24.screen.isDirty() && /gespeichert/i.test(s24.vaElement('status').textContent)");
+      try {
+        await waitFor("!s24.screen.busy && !s24.screen.isDirty() && s24.vaElement('status').textContent === 'Vorankündigung gespeichert.'");
+      } catch (error) {
+        const state = await evaluate("({status:s24.vaElement('status').textContent, ready:s24.screen.ready, loading:s24.screen.loading, busy:s24.screen.busy, dirty:s24.screen.isDirty(), saveDisabled:s24.screen.saveButton.disabled, revision:s24.screen.data?.record?.revision, firms:s24.screen.data?.effective?.firms?.length, draft:Object.fromEntries(Object.entries(s24.screen.inputs).map(([key,input])=>[key,input.value]))})");
+        error.message += "\nActual Vorankündigung save state: " + JSON.stringify(state);
+        throw error;
+      }
     };
+    // The earlier contact fixtures deliberately have no project-participant use.
+    // A firms-list attachment requires an explicitly active project participant.
+    database.initDatabase().prepare("INSERT INTO project_firms (id,project_id,name,street,zip,city,use_project_participant,is_active) VALUES ('s52-contractor',?,'S5.2 Nachunternehmer','Gewerkweg 4','12345','Testort',1,1)").run(projects[0].id);
+    assert.ok(require("../src/main/domain/firms/FirmDirectoryService").getFirmDirectoryService()
+      .listProjectParticipants({ projectId: projects[0].id, includeInactive: false }).some(firm => firm.id === "s52-contractor"));
     repo.updateProject({ id: projects[0].id, patch: { geplanter_baubeginn: null, end_date: "2030-12-31" } });
     await open(projects[0].id); await waitFor("!s24.screen.readinessBusy");
     const beforeVaEntry = vaSnapshot();
@@ -375,6 +386,8 @@ async function worker() {
     report.checks.push("S5.2: actual module route checks readiness, cancellation preserves the overview and database, confirmation opens the document form with save and back actions disabled while the first actual IPC read is pending; incomplete draft saves without inventing start or duration");
 
     const centralBeforeVa = snapshot();
+    const attachmentData = await evaluate(`window.bbmDb.sigekoGetPreNotification({projectId:${JSON.stringify(projects[0].id)}})`);
+    assert.equal(attachmentData.ok, true); assert.ok(attachmentData.data.effective.firms.some(firm => firm.id === "s52-contractor"));
     for (const key of ["p1.value", "p2.value", "p5.planning.value", "p5.execution.value", "authority.value"]) {
       assert.equal(await evaluate(`s24.vaElement(${JSON.stringify(key)}).matches('input,select,textarea')`), false, key);
     }
