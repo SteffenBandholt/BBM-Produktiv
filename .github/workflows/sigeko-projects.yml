@@ -10,6 +10,7 @@ on:
       - 'src/main/ipc/sigekoIpc.js'
       - 'src/main/preload.js'
       - 'scripts/tests/sigekoProjectRoles.test.cjs'
+      - 'scripts/tests/sigekoReadiness.test.cjs'
       - 'src/renderer/modules/sigeko/**'
       - 'scripts/tests/sigekoProjectForm*'
       - 'scripts/tests/sigekoGrunddatenForm.test.cjs'
@@ -66,6 +67,9 @@ jobs:
       - name: Central project builder reference
         run: >-
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/projectBuilder.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
+      - name: SiGeKo calculated readiness and read-only IPC
+        run: >-
+          node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoReadiness.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
       - name: Central project builder ZIP integrity
         run: >-
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/projectBuilderTransfer.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
@@ -112,7 +116,7 @@ jobs:
         env:
           BBM_S24_OUTPUT: ${{ runner.temp }}/s24-results
         run: >-
-          node -e "const fs=require('fs'),p=require('path'),d=process.env.BBM_S24_OUTPUT;for(const n of ['sigeko-project-form-result.json','sigeko-project-form-wide-profile.png','sigeko-project-form-wide-roles.png','sigeko-project-form-narrow-profile.png','sigeko-project-form-narrow-roles.png']){const f=p.join(d,n);if(fs.existsSync(f))console.log(n+'='+fs.readFileSync(f,n.endsWith('.png')?'base64':'utf8'));}"
+          node -e "const fs=require('fs'),p=require('path'),d=process.env.BBM_S24_OUTPUT;for(const n of ['sigeko-project-form-result.json','sigeko-project-form-wide-profile.png','sigeko-project-form-wide-roles.png','sigeko-project-form-narrow-profile.png','sigeko-project-form-narrow-roles.png','sigeko-readiness-wide.png','sigeko-readiness-narrow.png']){const f=p.join(d,n);if(fs.existsSync(f))console.log(n+'='+fs.readFileSync(f,n.endsWith('.png')?'base64':'utf8'));}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

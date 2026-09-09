@@ -49,9 +49,9 @@ async function runSigekoEditorManifestTests(run) {
     assert.equal(manifest.schemaVersion, 2); assert.equal(manifest.contractVersion, '1.2');
     assert.equal(manifest.profileRoot, '.ui-editor-kit/profiles');
     assert.deepEqual(manifest.scopes.filter(s => s.scopeId === 'sigeko.screen'), [
-      { scopeId: 'sigeko.screen', status: 'complete', reason: null, elementCount: 108, missingReferenceCount: 0 },
+      { scopeId: 'sigeko.screen', status: 'complete', reason: null, elementCount: 122, missingReferenceCount: 0 },
     ]);
-    assert.equal(scopes.find(s => s.scopeId === 'sigeko.screen').elements.length, 108);
+    assert.equal(scopes.find(s => s.scopeId === 'sigeko.screen').elements.length, 122);
   });
   await run('S1.2-Fix: alle sieben bisherigen Scope-Fingerprints bleiben bytegleich', () => {
     for (const [scopeId, fingerprint] of Object.entries(EXISTING_SCOPE_FINGERPRINTS)) {

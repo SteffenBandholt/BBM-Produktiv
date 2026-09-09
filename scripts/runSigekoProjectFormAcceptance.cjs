@@ -11,7 +11,7 @@ const ROOT = path.resolve(__dirname, "..");
 async function worker() {
   const { app, BrowserWindow, ipcMain, dialog, screen } = require("electron");
   let profile, database, editor;
-  const report = { package: "S2.4", ok: false, manualConfirmed: false, checks: [], rendererErrors: [] };
+  const report = { package: "S2.4 / S3", ok: false, manualConfirmed: false, checks: [], rendererErrors: [] };
   try {
     app.setAppPath(ROOT);
     profile = configureUiEditorAcceptanceProfile({ electronApp: app }); assert.equal(profile.enabled, true);
@@ -58,13 +58,27 @@ async function worker() {
     const save = async group => {
       await evaluate(`s24.element('${group}.status').textContent = ''`);
       await click(`${group}.save`);
-      await waitFor(`s24.element('${group}.status').textContent === '${group === "profile" ? "Profil gespeichert." : "Projektrollen gespeichert."}'`);
+      await waitFor(`!s24.screen.${group}Busy && !s24.screen.readinessBusy && s24.element('${group}.status').textContent === '${group === "profile" ? "Profil gespeichert." : "Projektrollen gespeichert."}'`);
     };
     const readProject = id => evaluate(`window.bbmDb.sigekoGetProjectData({projectId:${JSON.stringify(id)}})`);
+    const readiness = async (id, status) => {
+      await waitFor(`!s24.screen.readinessBusy && s24.screen.readinessData?.projectId === ${JSON.stringify(id)} && s24.screen.readinessData.projectData.status === ${JSON.stringify(status)}`);
+      const result = await evaluate("s24.screen.readinessData");
+      assert.equal(await evaluate("s24.element('readiness.project.status').textContent"), status === "green" ? "Grün – Angaben vollständig." : "Rot – Angaben fehlen.");
+      assert.equal(result.authorities.status, "red"); assert.equal(result.authorities.available, false);
+      assert.equal(await evaluate("s24.element('readiness.authorities.status').textContent"), "Rot – noch nicht erfasst.");
+      assert.match(await evaluate("s24.element('readiness.authorities.issues').textContent"), /folgt mit S4/);
+      return result;
+    };
     const snapshot = () => JSON.stringify(["sigeko_profiles", "sigeko_projects", "projects", "firms", "persons", "project_firms", "project_persons"].map(table => [table, database.initDatabase().prepare(`SELECT * FROM ${table} ORDER BY id`).all()]));
     const output = process.env.BBM_S24_OUTPUT ? path.resolve(process.env.BBM_S24_OUTPUT) : profile.rootPath; fs.mkdirSync(output, { recursive: true });
     await win.loadFile(path.join(__dirname, "tests/sigekoProjectFormAcceptance.html")); await waitFor("!!window.s24");
     await open(projects[0].id);
+    const initialReadiness = await readiness(projects[0].id, "red");
+    assert.ok(initialReadiness.projectData.issues.length > 0);
+    assert.match(await evaluate("s24.element('readiness.project.issues').textContent"), /Bauherr/);
+    assert.equal(await evaluate("s24.element('profile.save').disabled || s24.element('roles.save').disabled"), false);
+    report.checks.push("S3: incomplete project reports concrete missing builder data and explicit unimplemented S4 authority status; profile and role saves remain enabled");
     await fill({ "profile.name.input": "S2.4 Eigenes Büro", "profile.street.input": "Profilweg 7", "profile.email.input": "sigeko@example.invalid" });
     await save("profile");
     await fill({ "planning.source.input": "free", "planning.free.name.input": "Andere Planung", "execution.same.input": false, "execution.source.input": "module" });
@@ -90,13 +104,66 @@ async function worker() {
     assert.equal(await value("planning.free.name.input"), "Andere Planung");
     assert.equal(await evaluate("s24.element('execution.same.input').checked"), true);
     report.checks.push("global/project contacts resolved with project boundary; like-planning persists through SQLite restart and screen reopen");
+    // S3 uses the same real IPC, database and screen as S2.4. Complete fixtures through
+    // the central project repository, then operate the existing screen with real clicks.
+    repo.updateProject({ id: projects[0].id, geplanter_baubeginn: "2026-10-01", end_date: "2026-12-31", bauherr: { kind: "global_firm", id: "s24-firm" } });
+    await fill({ "planning.free.street.input": "Planungsweg 8", "planning.free.zip.input": "12345", "planning.free.city.input": "Testort" });
+    await save("roles");
+    assert.deepEqual((await readiness(projects[0].id, "green")).projectData.issues, []);
+    report.checks.push("S3: saving complete planning and inherited execution automatically refreshes project readiness to green without mandatory phone, email or logo");
+    await fill({ "planning.free.name.input": "Ungespeicherter Rollenentwurf", "profile.name.input": "Ungespeicherter Profilentwurf" });
+    const beforeRefresh = snapshot();
+    await click("readiness.refresh"); await readiness(projects[0].id, "green");
+    assert.equal(snapshot(), beforeRefresh);
+    assert.equal(await value("planning.free.name.input"), "Ungespeicherter Rollenentwurf");
+    assert.equal(await value("profile.name.input"), "Ungespeicherter Profilentwurf");
+    assert.equal((await readProject(projects[0].id)).data.planning.values.name, "Andere Planung");
+    report.checks.push("S3: real refresh reads persisted data only, preserves both unsaved drafts and leaves all seven domain tables unchanged");
+    await open(projects[0].id);
+    repo.updateProject({ id: projects[0].id, bauherr: null });
+    await click("readiness.refresh"); await readiness(projects[0].id, "red");
+    assert.match(await evaluate("s24.element('readiness.project.issues').textContent"), /Bauherr/);
+    repo.updateProject({ id: projects[0].id, bauherr: { kind: "global_firm", id: "s24-firm" } });
+    await click("readiness.refresh"); await readiness(projects[0].id, "green");
+    // A vanished central source must invalidate an existing assignment without writing it.
+    database.initDatabase().prepare("UPDATE firms SET removed_at='2026-09-09' WHERE id='s24-firm'").run();
+    const beforeMissingSourceRead = snapshot();
+    await click("readiness.refresh"); await readiness(projects[0].id, "red");
+    assert.equal(snapshot(), beforeMissingSourceRead);
+    assert.match(await evaluate("s24.element('readiness.project.issues').textContent"), /Bauherr/);
+    database.initDatabase().prepare("UPDATE firms SET removed_at=NULL WHERE id='s24-firm'").run();
+    await click("readiness.refresh"); await readiness(projects[0].id, "green");
+    await click("readiness.editProject");
+    await waitFor(`s24.projectFormRequest?.projectId === ${JSON.stringify(projects[0].id)}`);
+    await click("readiness.editRoles");
+    assert.equal(await evaluate("s24.element('profile.save').disabled || s24.element('roles.save').disabled"), false);
+    report.checks.push("S3: real refresh changes green/red/green for cleared and missing builder sources; central edit action routes the current project and local editing remains reachable");
+    await open(projects[1].id); await readiness(projects[1].id, "red");
+    repo.updateProject({ id: projects[1].id, geplanter_baubeginn: "2026-10-02", end_date: "2026-12-31", bauherr: { kind: "global_firm", id: "s24-firm" } });
+    await fill({ "profile.zip.input": "12345", "profile.city.input": "Testort" }); await save("profile");
+    await readiness(projects[1].id, "green");
+    await fill({ "profile.city.input": "" }); await save("profile");
+    await readiness(projects[1].id, "red");
+    await open(projects[0].id); await readiness(projects[0].id, "green");
+    assert.equal(await value("planning.free.name.input"), "Andere Planung");
+    report.checks.push("S3: profile saves automatically update the module-based project's readiness; switching to independently assigned free roles yields that project's own green state");
     assert.equal(await evaluate("s24.refs.validateM83ComponentReferences(['bbm.sigeko.screen']).ok"), true);
     assert.deepEqual((await evaluate("s24.descriptor()")).activeScopes, ["sigeko.screen"]);
     report.geometry = {};
+    report.readinessGeometry = {};
     for (const [size, width] of [["wide", 1280], ["narrow", 560]]) {
       win.setSize(width, 950); await waitFor(`innerWidth <= ${width} && innerWidth >= ${width - 80}`);
       const geometry = await evaluate("s24.geometry()"); report.geometry[size] = geometry;
       for (const field of geometry) assert.ok(field.width > 60 && field.height > 15 && field.inViewportWidth && field.inParent && field.labelAbove, JSON.stringify(field));
+      const panelGeometry = await evaluate("s24.readinessGeometry()"); report.readinessGeometry[size] = panelGeometry;
+      for (const element of panelGeometry) assert.ok(element.width > 15 && element.height > 10 && element.inViewportWidth && element.inParent, JSON.stringify(element));
+      for (const key of ["readiness.refresh", "readiness.editProject", "readiness.editRoles"]) {
+        const rect = await evaluate(`s24.bounds(${JSON.stringify(key)})`);
+        const viewport = await evaluate("({width:innerWidth,height:innerHeight})");
+        assert.ok(rect.x >= -1 && rect.y >= -1 && rect.x + rect.width <= viewport.width + 1 && rect.y + rect.height <= viewport.height + 1, JSON.stringify({ key, rect, viewport }));
+      }
+      await evaluate("s24.element('readiness.title').scrollIntoView({block:'start'}); new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+      fs.writeFileSync(path.join(output, `sigeko-readiness-${size}.png`), (await win.webContents.capturePage()).toPNG());
       for (const [part, key] of [["profile", "profile.title"], ["roles", "planning.title"]]) {
         await evaluate(`s24.element('${key}').scrollIntoView({block:'start'}); new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))`);
         fs.writeFileSync(path.join(output, `sigeko-project-form-${size}-${part}.png`), (await win.webContents.capturePage()).toPNG());
@@ -106,7 +173,7 @@ async function worker() {
     await evaluate("s24.refs.applyM80State('sigeko.screen.profile.name.input', {fontSize:15}, 'textResize')");
     assert.equal(await evaluate("getComputedStyle(s24.element('profile.name.input')).fontSize"), "15px");
     assert.equal(await value("profile.name.input"), "S2.4 Eigenes Büro"); assert.equal(snapshot(), beforeLayout);
-    report.checks.push("complete component refs and active scope; wide/narrow field geometry; real editor CSS operation leaves all domain tables unchanged");
+    report.checks.push("complete component refs and active scope; wide/narrow field and readiness panel geometry with all three actions reachable by scrolling; real editor CSS operation leaves all domain tables unchanged");
     win.setSize(1280, 950); await open(projects[0].id);
     repo.archiveProject(projects[0].id);
     const beforeArchiveSave = snapshot();
@@ -118,6 +185,7 @@ async function worker() {
     repo.unarchiveProject(projects[0].id); await open(projects[0].id);
     license = { valid: true, license: { modules: [] } };
     assert.equal(await evaluate("window.bbmDb.sigekoSaveCoordinatorProfile({patch:{name:'Verboten'}}).then(()=>false,e=>String(e).includes('MODULE_NOT_ACTIVE'))"), true);
+    assert.equal(await evaluate(`window.bbmDb.sigekoGetReadiness({projectId:${JSON.stringify(projects[0].id)}}).then(()=>false,e=>String(e).includes('MODULE_NOT_ACTIVE'))`), true);
     license = { valid: true, license: { modules: ["sigeko"] } };
     report.checks.push("already-open archived project rejects mouse save atomically; production IPC enforces archive and current module license");
     // Native test-window controls: fit the usable monitor, and X requests review only.

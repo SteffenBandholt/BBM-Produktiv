@@ -59,7 +59,7 @@ async function runSigekoModuleBoundaryTests(run) {
   await run("S1.1: produktiver IPC-Registrar erreicht SiGeKo-Service ohne Protokoll", () => {
     const harness = register(status(["sigeko"]));
     assert.deepEqual(harness.result.registeredModuleIds, ["sigeko"]);
-    assert.deepEqual([...harness.handlers.keys()], ["sigeko:getStoragePaths", "sigeko:ensureStorageDirectories", "sigeko:openStorageDirectory", "sigeko:getCoordinatorProfile", "sigeko:saveCoordinatorProfile", "sigeko:getProjectData", "sigeko:saveProjectData", "sigeko:getModuleInfo"]);
+    assert.deepEqual([...harness.handlers.keys()], ["sigeko:getStoragePaths", "sigeko:ensureStorageDirectories", "sigeko:openStorageDirectory", "sigeko:getCoordinatorProfile", "sigeko:saveCoordinatorProfile", "sigeko:getProjectData", "sigeko:saveProjectData", "sigeko:getReadiness", "sigeko:getModuleInfo"]);
     assert.deepEqual(harness.handlers.get("sigeko:getModuleInfo")({}), {
       ok: true, module: { moduleId: "sigeko", moduleType: "project" },
     });

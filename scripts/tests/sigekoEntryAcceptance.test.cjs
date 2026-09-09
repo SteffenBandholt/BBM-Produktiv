@@ -84,7 +84,7 @@ async function runSigekoEntryAcceptanceTests(run) {
       license = { valid: true, license: { modules: ['sigeko'] } };
     });
     await run('S1.2: alle sichtbaren Slots besitzen vollstaendige echte Kit-Vertraege und Einzel-Refs', () => {
-      assert.equal(contract.slots.length, 107);
+      assert.equal(contract.slots.length, 121);
       assert.deepEqual(contract.requiredSlots, contract.slots.map(slot => slot.slotId));
       assert.equal(refs.validateM83ComponentReferences([contract.componentId]).ok, true);
       for (const slot of contract.slots) {

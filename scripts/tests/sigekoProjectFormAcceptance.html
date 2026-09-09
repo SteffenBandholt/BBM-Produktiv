@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="de">
 <meta charset="utf-8">
-<title>BBM S2.4 – isolierte Grunddatenabnahme</title>
+<title>BBM S2.4 / S3 – isolierte Grunddaten- und Readiness-Abnahme</title>
 <body style="margin:0;font-family:system-ui,sans-serif;background:#f3f5f8">
 <script type="module">
   import SigekoScreen from "../../src/renderer/modules/sigeko/SigekoScreen.js";
@@ -13,7 +13,9 @@
     refs, descriptor: createM80RegistrationDescriptor,
     async open(projectId) {
       this.screen?.destroy(); host.replaceChildren();
-      this.screen = new SigekoScreen({ projectId, router: { _setProjectRuntimeContext() {}, async showProjects() {}, async showProjectWorkspace() {} } });
+      this.projectFormRequest = null;
+      this.screen = new SigekoScreen({ projectId, router: { _setProjectRuntimeContext() {}, async showProjects() {}, async showProjectWorkspace() {},
+        showProjectForm: async payload => { this.projectFormRequest = payload; } } });
       host.append(this.screen.render());
       const launcher = document.createElement("button"); launcher.type = "button"; launcher.textContent = "UI-Editor öffnen";
       launcher.onclick = () => openNativeUiEditor({ scopeId: "sigeko.screen", launcherButton: launcher });
@@ -42,6 +44,15 @@
         return { key, width: rect.width, height: rect.height, inViewportWidth: rect.left >= -1 && rect.right <= innerWidth + 1,
           inParent: rect.left >= parent.left - 1 && rect.right <= parent.right + 1,
           labelAbove: !labelRect || labelRect.bottom <= rect.top + 1 };
+      });
+    },
+    readinessGeometry() {
+      const keys = ["readiness", "readiness.project.status", "readiness.project.issues", "readiness.authorities.status", "readiness.authorities.issues",
+        "readiness.warning", "readiness.refresh", "readiness.editProject", "readiness.editRoles"];
+      return keys.map(key => {
+        const el = this.element(key), rect = el.getBoundingClientRect(), parent = el.parentElement.getBoundingClientRect();
+        return { key, width: rect.width, height: rect.height, inViewportWidth: rect.left >= -1 && rect.right <= innerWidth + 1,
+          inParent: rect.left >= parent.left - 1 && rect.right <= parent.right + 1 };
       });
     },
   };
