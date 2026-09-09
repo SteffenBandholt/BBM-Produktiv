@@ -1,0 +1,34 @@
+{
+  "baseline": {
+    "pass": 1822,
+    "fail": 97
+  },
+  "candidate": {
+    "pass": 1841,
+    "fail": 97
+  },
+  "newFailures": [],
+  "removedFailures": [],
+  "lostPass": [],
+  "addedPass": [
+    "S5.3a: explicit module identity selects shared firms access without claiming legacy requests",
+    "S5.3a: SiGeKo-only license resolves the canonical central project storage without creating files",
+    "S5.3a: current license revocation is checked on every resolution before any project lookup",
+    "S5.3a: malformed explicit identities and foreign modes never fall back to Protokoll",
+    "S5.3a: module PDF capability is required before licensing or storage access",
+    "S5.3a: missing central project and invalid target fail without creating storage",
+    "S5.3a: renderer project copies foreign document context and direct path bypasses are rejected",
+    "S5.3a: temp preview and explicit nested base directory retain the same verified module target",
+    "S5.3a: shared print runtime context equals the existing firms output common header data",
+    "S5.3a: runtime-only context reads no TOP invoice or participant content for any known document family",
+    "S5.3a: runtime context refreshes shared project settings and profile without mutating persisted records",
+    "S5.3a: shared firms HTML preview preserves module and storage identity into print:getData",
+    "S5.3a: shared firms PDF preserves init/getData identity and rechecks license before writing controlled output",
+    "S5.3a: missing module license rejects shared firms data, preview and PDF before any read or window",
+    "S5.3a: module revocation after init blocks renderer data and prevents starting PDF generation",
+    "S5.3a: module revocation during shared firms PDF generation discards the late buffer",
+    "S5.3a: revocation during asynchronous mode loading prevents every document data read",
+    "S5.3a: a concurrent document at the chosen shared output path is never overwritten",
+    "S5.3a: changed project storage during shared firms PDF generation cannot write to either destination"
+  ]
+}
