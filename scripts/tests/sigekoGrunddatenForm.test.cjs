@@ -244,8 +244,8 @@ async function runSigekoGrunddatenFormTests(run) {
       assert.equal(form.inputs.name.value, "Steffen"); assert.equal(old.inputs.name.value, "Alter Entwurf");
       assert.equal(refs.getM80Ref("sigeko.screen.profile.name.input").element, form.inputs.name);
     });
-    await run("SiGeKo: all 206 slots have exact mounted attributes, valid parents and domain locks", async () => {
-      await reset(); assert.equal(contract.slots.length, 206); assert.deepEqual(contract.requiredSlots, contract.slots.map(slot => slot.slotId));
+    await run("SiGeKo: all 207 slots have exact mounted attributes, valid parents and domain locks", async () => {
+      await reset(); assert.equal(contract.slots.length, 207); assert.deepEqual(contract.requiredSlots, contract.slots.map(slot => slot.slotId));
       assert.equal(refs.validateM83ComponentReferences([contract.componentId]).ok, true);
       for (const slot of contract.slots) {
         const entry = slot.element, ref = refs.getM80Ref(entry.id); assert.equal(ref.contractTargets.length, 1);

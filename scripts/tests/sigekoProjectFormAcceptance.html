@@ -1,27 +1,83 @@
 <!doctype html>
 <html lang="de">
 <meta charset="utf-8">
-<title>BBM S2.4 / S3 / S4 – isolierte SiGeKo-Abnahme</title>
+<title>BBM S2.4 / S3 / S4 / S5.2 – isolierte SiGeKo-Abnahme</title>
 <body style="margin:0;font-family:system-ui,sans-serif;background:#f3f5f8">
 <script type="module">
-  import SigekoScreen from "../../src/renderer/modules/sigeko/SigekoScreen.js";
+  import { getSigekoModuleEntry } from "../../src/renderer/modules/sigeko/index.js";
+  import { openModuleEntry } from "../../src/renderer/app/modules/moduleRouteRuntime.js";
   import * as refs from "../../src/renderer/ui-editor/m80Refs.js";
   import { createM80RegistrationDescriptor } from "../../src/renderer/ui-editor/m80HostAdapter.js";
   import { bindDevelopmentUiEditorOpenButtonRef, openNativeUiEditor } from "../../src/renderer/app/coreShellNavigation.js";
   const host = document.createElement("main"); document.body.append(host);
   window.s24 = {
     refs, descriptor: createM80RegistrationDescriptor,
-    async open(projectId) {
-      this.screen?.destroy(); host.replaceChildren();
-      this.projectFormRequest = null;
-      this.screen = new SigekoScreen({ projectId, router: { _setProjectRuntimeContext() {}, async showProjects() {}, async showProjectWorkspace() {},
-        showProjectForm: async payload => { this.projectFormRequest = payload; } } });
-      host.append(this.screen.render());
+    async show(next, options = {}) {
+      this.screen?.destroy(); this.getRouter().currentView = null;
+      host.replaceChildren(); this.screen = next;
+      host.append(next.render()); this.viewOptions = options;
+      const scopeId = next.roleInputs ? "sigeko.screen" : "sigeko.preNotification";
       const launcher = document.createElement("button"); launcher.type = "button"; launcher.textContent = "UI-Editor öffnen";
-      launcher.onclick = () => openNativeUiEditor({ scopeId: "sigeko.screen", launcherButton: launcher });
-      this.screen.root.append(launcher);
-      bindDevelopmentUiEditorOpenButtonRef({ scopeId: "sigeko.screen", button: launcher });
-      await this.screen.load();
+      launcher.onclick = () => openNativeUiEditor({ scopeId, launcherButton: launcher });
+      next.root.append(launcher);
+      bindDevelopmentUiEditorOpenButtonRef({ scopeId, button: launcher });
+      const pendingLoad = next.load();
+      if (!next.roleInputs) this.pendingVaRead = { loading: next.loading, ready: next.ready,
+        saveDisabled: next.saveButton.disabled, backDisabled: next.backButton.disabled,
+        saveBackDisabled: next.saveBackButton.disabled, reloadDisabled: next.reloadButton.disabled };
+      await pendingLoad;
+      this.router.currentView = next;
+    },
+    getRouter() {
+      if (!this.router) this.router = {
+        currentView: null, currentProjectId: null,
+        _setProjectRuntimeContext: ({ projectId }) => { this.router.currentProjectId = projectId; },
+        async showProjects() {}, async showProjectWorkspace() {},
+        show: (next, options) => this.show(next, options),
+        showProjectForm: async payload => { this.projectFormRequest = payload; },
+        showFirms: async (...args) => { this.firmsRequest = args; },
+        showProjectFirms: async (...args) => { this.firmsRequest = args; },
+        openProjectModule: (projectId, moduleId, options = {}) => {
+          if (moduleId !== "sigeko") throw new Error("Unexpected module route");
+          return openModuleEntry({ moduleEntry: getSigekoModuleEntry(), scope: "project", projectId,
+            router: this.router, options, show: (next, viewOptions) => this.show(next, viewOptions) });
+        },
+      };
+      return this.router;
+    },
+    async open(projectId) {
+      this.projectFormRequest = null;
+      return this.getRouter().openProjectModule(projectId, "sigeko");
+    },
+    async openVa(projectId) { return this.getRouter().openProjectModule(projectId, "sigeko", { screen: "preNotification" }); },
+    confirmWith(...answers) {
+      this.confirmations = []; this.confirmAnswers = [...answers];
+      window.confirm = message => {
+        this.confirmations.push(String(message));
+        if (!this.confirmAnswers.length) throw new Error("Unexpected confirmation: " + message);
+        return this.confirmAnswers.shift();
+      };
+    },
+    vaElement(key) { return refs.getM80Ref(`sigeko.preNotification.${key}`).element; },
+    vaFill(values) {
+      for (const [key, value] of Object.entries(values)) {
+        const el = this.screen.inputs[key]; el.value = value;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    },
+    vaBounds(key) {
+      const el = this.vaElement(key); el.scrollIntoView({ block: "center" });
+      const { x, y, width, height } = el.getBoundingClientRect(); return { x, y, width, height };
+    },
+    vaGeometry() {
+      const fields = Object.entries(this.screen.inputs).filter(([, el]) => el.getClientRects().length);
+      return fields.map(([key, el]) => {
+        const rect = el.getBoundingClientRect(), parent = el.parentElement.getBoundingClientRect();
+        const labelRect = el.parentElement.querySelector("label")?.getBoundingClientRect();
+        return { key, width: rect.width, height: rect.height, inViewportWidth: rect.left >= -1 && rect.right <= innerWidth + 1,
+          inParent: rect.left >= parent.left - 1 && rect.right <= parent.right + 1, labelAbove: !labelRect || labelRect.bottom <= rect.top + 1 };
+      });
     },
     element(key) { return refs.getM80Ref(`sigeko.screen.${key}`).element; },
     fill(values) {

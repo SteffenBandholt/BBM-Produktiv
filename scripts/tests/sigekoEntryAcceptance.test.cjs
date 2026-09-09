@@ -56,6 +56,16 @@ async function runSigekoEntryAcceptanceTests(run) {
     async showProjects() { this.lastNavigation = 'projects'; },
     async showProjectWorkspace(id) { this.lastNavigation = id; },
   };
+  const routeReadiness = (projectId = 'a', projectStatus = 'green', authorityStatus = 'green') => ({ projectId,
+    projectData: { status: projectStatus, issues: projectStatus === 'green' ? [] : [{ code: 'BUILDER_MISSING', message: 'Bauherr fehlt.' }] },
+    authorities: { status: authorityStatus, issues: authorityStatus === 'green' ? [] : [{ code: 'AUTHORITY_UNCERTAIN', message: 'Behörde prüfen.' }] } });
+  const gate = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { resolve, promise }; };
+  const routeHost = () => ({
+    ...router, currentView: { marker: 'previous-view' }, currentProjectId: 'a', shown: [],
+    async show(view, options) { this.currentView = view; this.currentProjectId = view.projectId; this.shown.push({ view, options }); },
+  });
+  const openAdapter = (host, projectId = 'a', screen = 'preNotification') => getSigekoModuleEntry().routing.project({
+    router: host, projectId, project: projects.find(project => project.id === projectId), options: { screen } });
   try {
     await run('S1.2: vorhandener Router oeffnet lizenziertes SiGeKo ohne Protokoll', async () => {
       assert.equal(await router.openProjectModule('a', 'sigeko', { project: projects[0] }), true);
@@ -64,7 +74,8 @@ async function runSigekoEntryAcceptanceTests(run) {
       assert.equal(router.currentMeetingId, null);
       assert.equal(router.currentView.uiEditorScopeId, 'sigeko.screen');
       assert.equal(router.currentView.projectLabel.textContent, 'Aktives Projekt: 25 – Projekt A');
-      assert.equal(getSigekoModuleEntry().routing, undefined);
+      assert.equal(typeof getSigekoModuleEntry().routing.project, 'function');
+      assert.equal(getSigekoModuleEntry().navigation.project.length, 1);
       assert.equal(await router.openGlobalModule('sigeko'), false);
     });
     await run('S1.2: echte Projektkachel wechselt Projekt und erneutes Oeffnen ersetzt die Referenzen', async () => {
@@ -89,7 +100,7 @@ async function runSigekoEntryAcceptanceTests(run) {
       license = { valid: true, license: { modules: ['sigeko'] } };
     });
     await run('S1.2: alle sichtbaren Slots besitzen vollstaendige echte Kit-Vertraege und Einzel-Refs', () => {
-      assert.equal(contract.slots.length, 206);
+      assert.equal(contract.slots.length, 207);
       assert.deepEqual(contract.requiredSlots, contract.slots.map(slot => slot.slotId));
       assert.equal(refs.validateM83ComponentReferences([contract.componentId]).ok, true);
       for (const slot of contract.slots) {
@@ -105,15 +116,18 @@ async function runSigekoEntryAcceptanceTests(run) {
       }
       const scope = registry.listM80RegistryScopes().find(entry => entry.scopeId === 'sigeko.screen');
       assert.equal(scope.status, 'complete');
-      assert.deepEqual(registry.BBM_M80_ACTIVE_SCOPE_GROUPS.at(-1), ['sigeko.screen']);
+      assert.ok(registry.BBM_M80_ACTIVE_SCOPE_GROUPS.some(group => group.length === 1 && group[0] === 'sigeko.screen'));
+      assert.deepEqual(registry.BBM_M80_ACTIVE_SCOPE_GROUPS.at(-1), ['sigeko.preNotification']);
     });
     await run('S1.2: bestehender Header-Editorstart bindet den SiGeKo-Scope', () => {
       assert.equal(bindDevelopmentUiEditorOpenButtonRef({ scopeId: 'sigeko.screen', button: new Element('button') }), true);
       assert.equal(refs.validateM83ComponentReferences(['bbm.sigeko.mainHeaderLauncher']).ok, true);
+      assert.equal(bindDevelopmentUiEditorOpenButtonRef({ scopeId: 'sigeko.preNotification', button: new Element('button') }), true);
+      assert.equal(refs.validateM83ComponentReferences(['bbm.sigeko.preNotification.mainHeaderLauncher']).ok, true);
     });
     await run('S1.2: genau zwei echte Rueckwege in der Navigation und umbruchfaehiger Einstieg', async () => {
       const buttons = contract.slots.filter(slot => slot.element.type === 'button' && slot.element.parentId === 'sigeko.screen.navigation');
-      assert.deepEqual(buttons.map(slot => slot.element.id), ['sigeko.screen.workspace', 'sigeko.screen.projects']);
+      assert.deepEqual(buttons.map(slot => slot.element.id), ['sigeko.screen.workspace', 'sigeko.screen.projects', 'sigeko.screen.preNotification']);
       await refs.getM80Ref('sigeko.screen.workspace').element.onclick();
       assert.equal(router.lastNavigation, 'a');
       await refs.getM80Ref('sigeko.screen.projects').element.onclick();
@@ -176,6 +190,82 @@ async function runSigekoEntryAcceptanceTests(run) {
         assert.doesNotMatch(read(file), /from\s+["'][^"']*(?:protokoll|\/tops|restarbeiten|rechnung|sqlite|\/db\/)/i);
         assert.doesNotMatch(read(file), /CREATE TABLE|ALTER TABLE|requireFeature|enforceLicensedFeature/);
       }
+    });
+    await run('S5.2: generic licensed entry reads fresh readiness and opens the known document through router.show', async () => {
+      const host = routeHost(), calls = []; let confirms = 0;
+      window.confirm = () => { confirms++; return false; };
+      window.bbmDb.sigekoGetReadiness = async payload => { calls.push(payload); return { ok: true, data: routeReadiness(payload.projectId) }; };
+      for (const project of projects) {
+        assert.equal(await host.openProjectModule(project.id, 'sigeko', { project, screen: 'preNotification' }), true);
+        assert.equal(host.currentView.projectId, project.id); assert.equal(host.currentView.uiEditorScopeId, 'sigeko.preNotification');
+      }
+      assert.deepEqual(calls, [{ projectId: 'a' }, { projectId: 'b' }]); assert.equal(confirms, 0);
+      assert.equal(host.shown.length, 2); assert.deepEqual(host.shown[1].options, {
+        section: 'sigeko', isTopsView: false, hideSidebar: true, pageTitle: 'Vorankündigung', activeModuleLabel: 'SiGeKo',
+      });
+      const previousView = host.currentView; license = { valid: true, license: { modules: ['protokoll'] } };
+      assert.equal(await host.openProjectModule('a', 'sigeko', { screen: 'preNotification' }), false);
+      assert.equal(host.currentView, previousView); assert.equal(calls.length, 2);
+      license = { valid: true, license: { modules: ['sigeko'] } };
+    });
+    await run('S5.2: red and orange document entry each require exactly one fresh explicit confirmation', async () => {
+      for (const [projectStatus, authorityStatus] of [['red', 'green'], ['green', 'orange'], ['green', 'red']]) {
+        const host = routeHost(), previousView = host.currentView, messages = []; let accept = false, reads = 0;
+        window.bbmDb.sigekoGetReadiness = async () => { reads++; return { ok: true, data: routeReadiness('a', projectStatus, authorityStatus) }; };
+        window.confirm = message => { messages.push(message); return accept; };
+        assert.equal(await openAdapter(host), false); assert.equal(host.currentView, previousView); assert.equal(host.shown.length, 0);
+        assert.equal(messages.length, 1); assert.match(messages[0], /Bauherr fehlt|Behörde prüfen/);
+        accept = true; assert.equal(await openAdapter(host), true); assert.equal(messages.length, 2); assert.equal(reads, 2);
+        assert.equal(host.shown.length, 1); assert.equal(host.currentView.uiEditorScopeId, 'sigeko.preNotification');
+      }
+    });
+    await run('S5.2: failed malformed and foreign readiness never replace the current view and remain retryable', async () => {
+      const wrong = routeReadiness('b'), malformed = routeReadiness(); malformed.authorities.issues = null;
+      for (const outcome of [{ ok: false, error: 'SQLite offline' }, { ok: true, data: null }, { ok: true, data: wrong }, { ok: true, data: malformed }, new Error('Transportfehler')]) {
+        const host = routeHost(), previousView = host.currentView, errors = [];
+        window.alert = message => errors.push(message); window.confirm = () => assert.fail('Technical errors must not ask to override readiness');
+        window.bbmDb.sigekoGetReadiness = async () => { if (outcome instanceof Error) throw outcome; return outcome; };
+        assert.equal(await openAdapter(host), false); assert.equal(host.currentView, previousView); assert.equal(host.shown.length, 0);
+        assert.equal(errors.length, 1); assert.match(errors[0], /nicht geöffnet/);
+        window.bbmDb.sigekoGetReadiness = async () => ({ ok: true, data: routeReadiness() });
+        assert.equal(await openAdapter(host), true); assert.equal(host.shown.length, 1);
+      }
+    });
+    await run('S5.2: unknown screen selectors are rejected without readiness calls or view replacement', async () => {
+      const host = routeHost(), previousView = host.currentView;
+      window.bbmDb.sigekoGetReadiness = () => assert.fail('Unknown selector must not read readiness');
+      for (const screen of ['unknown', '../rechnung', 'PRENOTIFICATION', 0, false, null, {}, []]) {
+        assert.equal(await openAdapter(host, 'a', screen), false); assert.equal(host.currentView, previousView);
+      }
+      assert.equal(await openAdapter(host, 'a', ''), true); assert.equal(host.currentView.uiEditorScopeId, 'sigeko.screen');
+      assert.equal(host.shown.length, 1);
+    });
+    await run('S5.2: later module navigation supersedes pending readiness without a stale warning or reopened document', async () => {
+      for (const outcome of [{ ok: true, data: routeReadiness('a', 'red', 'orange') }, { ok: false, error: 'Late error' }]) {
+        const host = routeHost(), pendingResult = gate();
+        window.bbmDb.sigekoGetReadiness = () => pendingResult.promise;
+        window.confirm = () => assert.fail('Superseded route cannot ask'); window.alert = () => assert.fail('Superseded route cannot alert');
+        const pending = openAdapter(host); assert.equal(await openAdapter(host, 'b', 'sigeko'), true);
+        const current = host.currentView; pendingResult.resolve(outcome); assert.equal(await pending, false);
+        assert.equal(host.currentView, current); assert.equal(host.currentView.projectId, 'b'); assert.equal(host.shown.length, 1);
+      }
+    });
+    await run('S5.2: readiness cannot replace an independently changed host view or project context', async () => {
+      for (const change of ['view', 'project']) {
+        const host = routeHost(), pendingResult = gate(); window.bbmDb.sigekoGetReadiness = () => pendingResult.promise;
+        window.confirm = () => assert.fail('Departed host cannot ask');
+        const pending = openAdapter(host);
+        if (change === 'view') host.currentView = { marker: 'another-screen' }; else host.currentProjectId = 'b';
+        const current = host.currentView; pendingResult.resolve({ ok: true, data: routeReadiness('a', 'red', 'orange') });
+        assert.equal(await pending, false); assert.equal(host.currentView, current); assert.equal(host.shown.length, 0);
+      }
+    });
+    await run('S5.2: newer pre-notification entry wins even when the earlier readiness response arrives last', async () => {
+      const host = routeHost(), older = gate(); let count = 0;
+      window.bbmDb.sigekoGetReadiness = async ({ projectId }) => ++count === 1 ? older.promise : { ok: true, data: routeReadiness(projectId) };
+      const first = openAdapter(host); assert.equal(await openAdapter(host, 'b'), true);
+      older.resolve({ ok: true, data: routeReadiness('a') }); assert.equal(await first, false);
+      assert.equal(host.currentView.projectId, 'b'); assert.equal(host.shown.length, 1);
     });
   } finally {
     refs.resetM80PilotWorkingStatesForDiagnostic();

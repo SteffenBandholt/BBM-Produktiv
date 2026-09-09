@@ -132,6 +132,7 @@ field(".authorities.assignment.note", "Projektbezogene Prüfung / Begründung", 
 button(".authorities.assignment.confirm", "Zuständigkeit bestätigen und zuordnen", ".authorities.assignment", "assignConfirmedProjectAuthority");
 button(".authorities.assignment.uncertain", "Mit Prüfbedarf zuordnen", ".authorities.assignment", "assignUncertainProjectAuthority");
 button(".readiness.editAuthorities", "Behördenkontakte bearbeiten", ".readiness", "navigateSigekoAuthorities");
+button(".preNotification", "Vorankündigung öffnen", ".navigation", "navigatePreNotification");
 Object.freeze(elements);
 
 export const sigekoScreenUiEditorContract = m83Component({

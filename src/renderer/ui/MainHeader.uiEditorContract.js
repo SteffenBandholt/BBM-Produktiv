@@ -76,6 +76,18 @@ export const sigekoMainHeaderLauncherUiEditorContract = launcherComponent({
 });
 
 export function getMainHeaderLauncherContract(scopeId) {
-  return [RESTARBEITEN_MAIN_HEADER_LAUNCHER, PROTOKOLL_MAIN_HEADER_LAUNCHER, RECHNUNG_MAIN_HEADER_LAUNCHER, SIGEKO_MAIN_HEADER_LAUNCHER]
+  return [RESTARBEITEN_MAIN_HEADER_LAUNCHER, PROTOKOLL_MAIN_HEADER_LAUNCHER, RECHNUNG_MAIN_HEADER_LAUNCHER, SIGEKO_MAIN_HEADER_LAUNCHER, SIGEKO_PRE_NOTIFICATION_MAIN_HEADER_LAUNCHER]
     .find((entry) => entry.scopeId === String(scopeId || "").trim()) || null;
 }
+
+export const SIGEKO_PRE_NOTIFICATION_MAIN_HEADER_LAUNCHER = Object.freeze({
+  componentId: "bbm.sigeko.preNotification.mainHeaderLauncher",
+  scopeId: "sigeko.preNotification",
+  elementId: "sigeko.preNotification.header.action.openUiEditor",
+});
+
+export const sigekoPreNotificationMainHeaderLauncherUiEditorContract = launcherComponent({
+  ...SIGEKO_PRE_NOTIFICATION_MAIN_HEADER_LAUNCHER,
+  parentId: "sigeko.preNotification",
+  order: 98,
+});
