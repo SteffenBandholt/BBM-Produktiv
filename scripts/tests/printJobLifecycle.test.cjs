@@ -87,7 +87,7 @@ async function withPrintHarness(test) {
     : name === "../ipc/projectStoragePaths" ? { createProjectStorageAccess: () => storageBoundary } : sharedRequire(name);
   sharedModule._compile(fs.readFileSync(sharedPath, "utf8"), sharedPath);
   stubs["../print/sharedFirmsPrintAccess"] = sharedModule.exports;
-  for (const name of ["bbmPdfAdapter", "restarbeitenPdfAdapter", "invoicePdfAdapter", "technicalPdfAdapter"]) {
+  for (const name of ["bbmPdfAdapter", "restarbeitenPdfAdapter", "invoicePdfAdapter", "technicalPdfAdapter", "sigekoPreNotificationPdfAdapter"]) {
     stubs[`../ui-editor/${name}.cjs`] = {};
   }
   Module._load = function (request, parent, isMain) {
@@ -439,6 +439,26 @@ async function runPrintJobLifecycleTests(run) {
       assert.ok((await h.outcome).error);
       assert.equal((await h.handlers.get("print:getData")({ sender: h.win.webContents }, init)).ok, false);
       assert.equal(h.dataCalls, 0); assert.equal(h.providerCalls, 0); h.assertClean();
+    }));
+  }
+  for (const prepared of [false, true]) {
+    await run(`S5.3b2: destroyed window getters cannot interrupt ${prepared ? "prepared" : "legacy"} job cleanup or rejection`, () => withPrintHarness(async h => {
+      h.service.registerPrintIpc();
+      await h.start(prepared ? { shared: true, options: { preparedData: preparedFirms() } } : {});
+      const sender = h.win.webContents, init = h.load();
+      Object.defineProperty(h.win, "webContents", { configurable: true, get() {
+        if (h.closed) throw new Error("Object has been destroyed");
+        return sender;
+      } });
+      h.ready({ jobId: init.jobId }); assert.equal(h.calls.length, 1);
+      assert.doesNotThrow(() => h.win.close());
+      const { error } = await h.outcome; assert.match(error.message, /Print-Window geschlossen/);
+      h.pdf.resolve(Buffer.from("Late PDF after native destruction")); await Promise.resolve();
+      assert.equal(h.writes, 0); h.assertClean();
+      if (prepared) {
+        const stale = await h.handlers.get("print:getData")({ sender }, init);
+        assert.equal(stale.ok, false); assert.equal(h.dataCalls, 0);
+      } else h.assertNoOutput();
     }));
   }
   await run("S5.3b2: prepared provider data keep the validated identity without a second provider execution", () => withPrintHarness(async h => {

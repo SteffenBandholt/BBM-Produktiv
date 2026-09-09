@@ -536,6 +536,9 @@ async function _printToPdf(payload = {}, includeMetadata = false, options) {
   const debug = !silent && !!payload.debug;
 
   const win = createPrintWindow({ show: debug, devTools: debug });
+  // BrowserWindow.webContents may no longer be readable in its closed event.
+  // Retain the sender while the window is alive for unconditional job cleanup.
+  const printContents = win.webContents;
   if (hasPreparedData) {
     const identity = { mode, projectId, documentTypeId: payload.documentTypeId || null,
       documentId: providerContext?.documentId || null, moduleId: sharedFirmsContext?.moduleId || null,
@@ -563,12 +566,12 @@ async function _printToPdf(payload = {}, includeMetadata = false, options) {
 
     const cleanup = () => {
       preparedPrintJobs.delete(jobId);
-      preparedPrintSenders.delete(win.webContents);
+      preparedPrintSenders.delete(printContents);
       try {
         ipcMain.removeListener("print:ready", onReady);
         win.removeListener("closed", onClosed);
-        win.webContents.removeListener("render-process-gone", onRendererGone);
-        win.webContents.removeListener("did-finish-load", onDidFinishLoad);
+        printContents.removeListener("render-process-gone", onRendererGone);
+        printContents.removeListener("did-finish-load", onDidFinishLoad);
       } catch (_e) {}
       try {
         clearTimeout(timeout);
