@@ -1,3 +1,21 @@
+## 2026-09-09 – SiGeKo S5.3a: gemeinsamer Druckzugang (PR #336)
+
+Bestehende Firmenlisten-Ausgabe erhält einen expliziten Modul-/Projekt-/Storagezugang;
+getPrintRuntimeContext verwendet dieselbe gemeinsame Kopfaufbereitung. Lizenz und
+Projektpfad werden vor Datenzugriff sowie an der PDF-Dateigrenze erneut geprüft.
+Ein zwischenzeitlich entstandenes Dokument wird nicht überschrieben. Legacy-/Provider-
+Ausgabe, PrintShell, Pager und Rechnung bleiben unverändert.
+1841 PASS / exakt dieselben 97 Baselinefehler (+19), keine verlorenen Prüfungen.
+Unabhängiges Review nach zwei reparierten Randfällen ohne Restblocker.
+Windows/Linux-Formularlauf 34398518851 vollständig PASS, je 22 Bedienprüfungen,
+keine Rendererfehler. PDF-Lauf 34398518866 auf beiden Plattformen PASS;
+49 bestehende Golden-Seitenzahlen und Struktur-Snapshots unverändert.
+Allgemeine npm-CI bleibt bekannte Kit-/Popup-/Lizenzbaseline.
+Nachweise docs/SIGEKO_S5_3A_ABNAHME.md und Testvergleich; geprüfter Produktcommit
+515895667fd969552c2a52f511990484df572cca, abschließend nur Dokumentation.
+Nächster Schritt direkt S5.3b: fachlicher Vorankündigungs-Snapshot und Formular-PDF.
+Gesamt-S5 offen; Rechnung #275 eingefroren.
+
 # docs/MODULARISIERUNGSPLAN.md
 
 ## Zweck

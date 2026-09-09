@@ -12,6 +12,7 @@ const TEST_GROUPS = Object.freeze([
       ["sigekoPreNotification.test.cjs", "runSigekoPreNotificationTests"],
       ["sigekoPreNotificationForm.test.cjs", "runSigekoPreNotificationFormTests"],
       ["sigekoPreNotificationTransfer.test.cjs", "runSigekoPreNotificationTransferTests"],
+      ["sharedFirmsPrintAccess.test.cjs", "runSharedFirmsPrintAccessTests"],
       ["projectBuilder.test.cjs", "runProjectBuilderTests"],
       ["projectBuilderTransfer.test.cjs", "runProjectBuilderTransferTests"],
       ["projectBuilderForm.test.cjs", "runProjectBuilderFormTests"],

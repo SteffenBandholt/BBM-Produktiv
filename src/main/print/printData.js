@@ -1069,6 +1069,18 @@ async function _loadInvoicePrintData({ db, invoiceId, invoicePreview = false } =
   };
 }
 
+// Main-internal shared header/runtime boundary. It uses the same preparation as
+// the existing print data path without loading any document's domain content.
+async function getPrintRuntimeContext({ mode, projectId, meetingId, settingsOverride, orientation } = {}) {
+  const { resolvePrintMode } = await _loadPrintModesModule();
+  const normalizedMode = resolvePrintMode(mode, { fallback: "protocol" });
+  if (!normalizedMode) {
+    throw new Error(`Unbekannter Druckmodus: ${String(mode || "").trim() || "-"}`);
+  }
+  return _buildPrintRuntimeContext({ db: initDatabase(), mode: normalizedMode,
+    projectId, meetingId, settingsOverride, orientation });
+}
+
 async function getPrintData({
   mode,
   projectId,
@@ -1137,4 +1149,4 @@ async function getPrintData({
   }; 
 } 
 
-module.exports = { getPrintData };
+module.exports = { getPrintData, getPrintRuntimeContext };
