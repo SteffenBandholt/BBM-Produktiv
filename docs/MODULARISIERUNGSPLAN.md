@@ -18,6 +18,17 @@ Diese Datei ist **kein** Architekturpapier und **kein** Codex-Ausfuehrungsmanual
 
 ## 1. Operative Arbeitsgrundsaetze
 
+### SiGeKo #274 / #255 – S4.2 Projektkontakte und Snapshots (2026-09-09)
+
+PR #332: aktuelle Projektzuordnungen, serverseitige Snapshots und konservativer
+Bestandslookup; manuelle Baustellenprüfung für Krankenhaus/D-Arzt. Quellen-,
+Adress- und neue Konfliktänderungen führen zu konkretem Prüfbedarf. Bestehender
+ZIP-Transfer V6 erhält Projektstände ohne globalen Behördenbestand zu importieren.
+Volltest 1732/97 (+39), exakt gleiche Baseline; unabhängiges Review ohne Restbefund
+nach Hashkorrektur, Windows/Linux-CI 34381539474 vollständig PASS. Details unter
+`docs/SIGEKO_S4_2_ZUORDNUNGEN.md` und Testvergleich. Anschließend separat S4.3 UI
+und Readiness; S4 noch offen. Rechnung #275 eingefroren, keine Recherche/Seeds.
+
 ### SiGeKo #274 / #255 – S4.1 Behördenbestand (2026-09-09)
 
 PR #331: strukturierter wiederverwendbarer SiGeKo-Bestand und expliziter manueller

@@ -1,3 +1,20 @@
+## 2026-09-09 – SiGeKo S4.2: Projektkontakte und Snapshots (PR #332)
+
+Auf main a4ed659 / integriertem S4.1: aktuelle Projektzuordnung je Kategorie,
+serverseitiger Kontaktsnapshot und konservativer schreibfreier Adresslookup.
+Eindeutige bestätigte Treffer per Sammelaktion übernehmen; Krankenhaus/D-Arzt
+zusätzlich projektbezogen auf Nähe/Eignung prüfen. Quellen-/Adressänderungen und
+neue Widersprüche machen bestehende Zuordnungen erneut prüfbedürftig, ohne deren
+Snapshot zu verändern. Neue Konfliktlage nach manueller Bestätigung im Review
+gefunden und über dokumentierten Kandidatenhash samt Regressionstests behoben.
+Vorhandener Projekttransfer V6 erhält Snapshots ohne globalen Bestandsimport.
+Volltest 1732/97, +39 neue grüne Prüfungen, exakt gleiche 97 Baselinefehler;
+Windows/Linux-CI 34381539474 vollständig PASS. Allgemeine npm-CI bekannte
+Kit-/Popup-/Lizenzbaseline separat rot. Produktcommit 234b70c7, Integration über
+PR #332; Bericht und exakter Testvergleich unter docs/SIGEKO_S4_2_*.
+Nächstes getrenntes Paket S4.3: Behördenbedienung und Readiness-Anbindung.
+S4 insgesamt noch offen; Rechnung #275 eingefroren, keine PDF-/YAML-Datenübernahme.
+
 ## 2026-09-09 – SiGeKo S4.1: wiederverwendbarer Behördenbestand (PR #331)
 
 Auf main ef11803e / S3: leere additive Modultabelle für Behörden-/Notfall-/

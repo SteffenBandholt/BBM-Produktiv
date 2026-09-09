@@ -30,4 +30,12 @@ Keine automatische Web-/KI-Recherche, kein Import aus der Behörden-PDF Januar 2
 
 ## Prüfung und Integration
 
-In Arbeit; Ergebnisse werden nach tatsächlicher Prüfung ergänzt.
+PR #332: Produktcommit `234b70c716f6b194d36f190dd3390f0329fecb2b`, Produkttree `9bff99d884d4daf8e87690828550df7cdce3a048` identisch mit lokal geprüftem Tree.
+
+- 25 neue echte SQLite-/API-/Preload-/Lizenztests und 14 reale ZIP-Tests bestanden. Zehn vorhandene Bauherr-Transferprüfungen ebenfalls bestanden.
+- Unabhängiger Review fand einen Fall neuer widersprüchlicher Evidenz nach manueller Bestätigung. Hashbindung korrigiert; beide Varianten (zweiter exakter Treffer sowie erster exakter Gegentreffer zu einer regionalen Quelle) unabhängig in Electron/SQLite nachgeprüft. Lesen verändert dabei weder Zuordnung noch Snapshot; ausdrückliche Neubestätigung bindet die aktuelle Lage.
+- Erstvolltest: 1730/99, ausschließlich zwei veraltete IPC-Inventarlisten zusätzlich rot. Erwartete Endpunktlisten um die drei tatsächlich separat geprüften APIs ergänzt. Abschließender Volltest: **1732 grün / exakt dieselben 97 Baselinefehler**, +39 erfolgreiche Prüfungen, keine verschwundenen grünen Tests. Namen und Häufigkeiten in `SIGEKO_S4_2_TESTVERGLEICH.json`.
+- Windows-/Linux-CI **34381539474 vollständig PASS**, je 39 neue S4.2-Prüfungen und bestehende reale Formularabnahme (11 Checks, rendererErrors leer, manualConfirmed false). PR #332 wird mit geprüftem Produktstand und anschließendem reinen Dokumentationsdelta integriert.
+- Allgemeine npm-CI 34381539608 weiterhin bekannte fehlende Kit-/Popup-/Lizenzbaseline; Protokoll separat geprüft. Kein grüner Gesamt-CI-Status behauptet.
+
+S4.2 verändert keine Oberfläche. Der bestehende echte Formularlauf prüft weiterhin S2.4/S3 samt ausdrücklichem S4-UI-Platzhalter. Die produktive Behördenanzeige und Readiness-Anbindung werden erst im nachfolgenden S4.3 ergänzt. Kein persönlicher manueller PASS behauptet.
