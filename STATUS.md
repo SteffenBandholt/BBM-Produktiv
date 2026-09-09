@@ -1,3 +1,23 @@
+## 2026-09-09 – SiGeKo S4.1: wiederverwendbarer Behördenbestand (PR #331)
+
+Auf main ef11803e / S3: leere additive Modultabelle für Behörden-/Notfall-/
+Versorgerbestand, Repository und AuthorityService über vorhandenen Modulguard.
+Sieben pflegbare Kategorien, feste 112/110; ausdrücklicher manueller Prüfabschluss
+mit Quelle, dokumentiertem Bezug und Pflichtkontakt. Echte Änderungen entziehen
+die Bestätigung, No-ops erhalten sie; gelesene Revision verhindert veraltetes
+Überschreiben oder Bestätigen. Keine automatische Verifikation/Projektzuständigkeit
+behauptet. Noch keine Projektzuordnungen, UI, Seed-/PDF-Übernahme oder Recherche.
+Volltest 1668/97 → 1693/97, exakt dieselben 97 Fehler, 25 neue grüne Prüfungen.
+Unabhängiges Review und Testwiederholung ohne Restbefund. Windows-/Linux-CI
+34379329083 vollständig PASS, neue Bestands- und bestehende Formularprüfungen grün.
+Vorübergehende Executorstörung behoben; unvollständigen Erstlauf ausgeschlossen,
+vollständige Wiederholung als Nachweis. Allgemeine npm-CI bekannte Kit-/Popup-/
+Lizenzbaseline separat rot. Integration über PR #331; Bericht/Testvergleich unter
+docs/SIGEKO_S4_1_BESTAND.md und SIGEKO_S4_1_TESTVERGLEICH.json.
+Nächstes getrenntes Paket S4.2: Projektzuordnung/Snapshots/Bestandslookup;
+S4.3 Bedienung. S4 insgesamt noch offen. Rechnung #275 eingefroren; Behörden-PDF
+Januar 2022 vor späterer Übernahme aktualitätsprüfen, noch keine Adressen übernommen.
+
 ## 2026-09-09 – SiGeKo S3: Übersicht und Readiness abgeschlossen (PR #330)
 
 Auf main c8acbfb8 / integrierter Bauherr-Vorstufe: lesender ReadinessService über
