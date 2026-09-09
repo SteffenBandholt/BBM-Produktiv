@@ -19,6 +19,9 @@ on:
       - 'package.json'
       - 'src/main/db/database.js'
       - 'src/main/db/projectsRepo.js'
+      - 'src/main/domain/projects/**'
+      - 'scripts/tests/projectBuilder*.cjs'
+      - 'src/renderer/modules/projektverwaltung/screens/ProjectBuilder*.js'
       - 'src/main/ipc/projectsIpc.js'
       - 'src/main/ipc/projectTransferIpc.js'
       - 'scripts/tests/plannedConstructionStart.test.cjs'
@@ -60,6 +63,14 @@ jobs:
       - name: SiGeKo project roles, module profile and archive integrity
         run: >-
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoProjectRoles.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
+      - name: Central project builder reference
+        run: >-
+          node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/projectBuilder.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
+      - name: Central project builder ZIP integrity
+        run: >-
+          node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/projectBuilderTransfer.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
+      - name: Central project builder form and mounted contract
+        run: node scripts/tests/projectBuilderForm.test.cjs
       - name: Form payload and mounted component contract
         run: node scripts/tests/plannedStartForm.test.cjs
       - name: SiGeKo form payload and mounted component contract
@@ -112,4 +123,4 @@ jobs:
         env:
           BBM_S22_OUTPUT: ${{ runner.temp }}/s22-results
         run: >-
-          node -e "const fs=require('fs'),p=require('path'),d=process.env.BBM_S22_OUTPUT;for(const n of ['planned-start-result.json','planned-start-form.png']){const f=p.join(d,n);if(fs.existsSync(f))console.log(n+'='+fs.readFileSync(f,n.endsWith('.png')?'base64':'utf8'));}"
+          node -e "const fs=require('fs'),p=require('path'),d=process.env.BBM_S22_OUTPUT;for(const n of ['planned-start-result.json','planned-start-form.png','project-builder-wide.png','project-builder-narrow.png']){const f=p.join(d,n);if(fs.existsSync(f))console.log(n+'='+fs.readFileSync(f,n.endsWith('.png')?'base64':'utf8'));}"

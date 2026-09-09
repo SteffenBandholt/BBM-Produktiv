@@ -1,3 +1,19 @@
+## 2026-09-09 – Zentrale Bauherrzuordnung: Vorbereitung für SiGeKo S3 (PR #329)
+
+Die bestätigte ausdrückliche Bauherrauswahl ersetzt den dokumentierten S3-Blocker.
+Vorhandene globale oder eigene Projektfirma im zentralen Projektformular wählen;
+Art/ID stabil referenzieren, zentrale Firmenangaben live lesen. Altprojekte bleiben
+unzugeordnet. Bestehende Projekt-IPC, SQLite und FirmDirectory verwenden; keine
+Kategorieableitung oder Datenkopie. Eigener vollständiger M83-Komponentenvertrag,
+Reopen-Races im Review korrigiert und durch gezielte Tests abgesichert.
+ZIP-V5 erhält die Zuordnung; bisherige globale Abhängigkeitsregeln bleiben bestehen.
+Vollvergleich 1601/97 → 1641/97, exakt dieselben Baselinefehler, 40 neue grüne Tests,
+keine fehlenden Bestandsprüfungen. Windows-/Linux-Abnahme 34310878375 vollständig
+PASS, reale Tastatur-/Maus-/IPC-/SQLite-Abläufe und gesichtete Screenshots. Allgemeine
+npm-CI weiterhin bekannte Kit-/Popup-/Lizenzbaseline. Integration über PR #329.
+Details: docs/PROJEKT_BAUHERR_ZUORDNUNG.md und TESTVERGLEICH.json.
+Readiness folgt separat. Rechnung #275 eingefroren; Behörden erst S4.
+
 ## 2026-09-08 – SiGeKo S2.4: Bedienbarkeit bestätigt, technische Restprüfung abgeschlossen (PR #328)
 
 Auf main 741fa373 / abgeschlossenem S2.3 ergänzt: eigenes modulweites SiGeKo-Profil

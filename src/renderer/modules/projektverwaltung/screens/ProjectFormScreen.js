@@ -15,6 +15,8 @@ import { installDevelopmentUiEditorOpenButton } from "../../../app/coreShellNavi
 import { beginM83ComponentBinding, completeM80PilotRender, getM80Ref, registerM80MultiRef, registerM80Ref } from "../../../ui-editor/m80Refs.js";
 import { PLANNED_START_COMPONENT, PLANNED_START_SCOPE } from "./ProjectPlannedStart.uiEditorContract.js";
 
+import ProjectBuilderField from "./ProjectBuilderField.js";
+
 export default class ProjectFormScreen {
   constructor({ router, projectId, mode = "page", onClose, onSaved } = {}) {
     this.router = router;
@@ -143,6 +145,7 @@ export default class ProjectFormScreen {
 
   _setBusy(on) {
     this.busy = !!on;
+    this.builderField?.setBusy(this.busy);
 
     const dis = this.busy;
 
@@ -205,6 +208,7 @@ export default class ProjectFormScreen {
 
   _fill(p) {
     const proj = p || {};
+    this.builderField?.setProject(proj);
 
     if (this.inpName) this.inpName.value = (proj.name || "").toString();
     if (this.inpProjectNumber)
@@ -249,7 +253,7 @@ export default class ProjectFormScreen {
       notes: this._normText(this.taNotes?.value),
     };
 
-    return payload;
+    return { ...payload, ...this.builderField?.patch() };
   }
 
   async _closeToProjects() {
@@ -352,6 +356,9 @@ export default class ProjectFormScreen {
       this.inpName?.focus();
       return;
     }
+
+    const builderError = this.builderField?.validationMessage();
+    if (builderError) { alert(builderError); this.builderField.input.focus(); return; }
 
     this._setBusy(true);
     this._setMsg("Speichere...");
@@ -755,7 +762,9 @@ export default class ProjectFormScreen {
       el.addEventListener("keydown", enterToSave);
     }
 
-    root.append(header, formCard);
+    this.builderField?.destroy();
+    this.builderField = new ProjectBuilderField({ projectId: this.projectId });
+    root.append(header, formCard, this.builderField.render());
 
     this.root = root;
     this.msgEl = msg;
@@ -1095,6 +1104,7 @@ export default class ProjectFormScreen {
   _closeModal() {
     if (!this.overlayEl) return;
     this._clearPlannedStartEditor();
+    this.builderField?.destroy();
     const overlay = this.overlayEl;
     cleanupPopupHandlers(overlay);
     if (this.modalBodyEl) this.modalBodyEl.innerHTML = "";
@@ -1120,6 +1130,7 @@ export default class ProjectFormScreen {
 
   destroy() {
     this._clearPlannedStartEditor();
+    this.builderField?.destroy();
     try {
       this._closeModal();
     } catch (_e) {
@@ -1144,6 +1155,7 @@ export default class ProjectFormScreen {
     }
     this.overlayEl.style.display = "flex";
     this._bindPlannedStartEditor();
+    this.builderField?.bind();
     this.overlayEl.focus();
     this._setBusy(this.busy);
   }
@@ -1175,6 +1187,7 @@ export default class ProjectFormScreen {
     if (!this.projectId) {
       this._fill({});
       this._setBusy(false); // sets archive disabled properly
+      await this.builderField?.load();
       this.inpName?.focus();
       return;
     }
@@ -1216,6 +1229,7 @@ export default class ProjectFormScreen {
     } finally {
       this._setMsg("");
       this._setBusy(false);
+      await this.builderField?.load();
     }
   }
 }

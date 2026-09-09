@@ -7,8 +7,8 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 31,
-  "registryFingerprint": "sha256:1277b900832d6c79a36347d48bd380b579a95d86ceaa97b034e9f2563c8ba2fc",
+  "registryVersion": 32,
+  "registryFingerprint": "sha256:e1f78854ac53566cf4f8165bfb9c96f79649f72a64937862ea696c44f14dd76a",
   "registryStatus": "incomplete",
   "activeScopes": [
     "restarbeiten.header.root",
@@ -19,7 +19,8 @@
     "protokoll.edit.root",
     "rechnung.screen",
     "sigeko.screen",
-    "projektverwaltung.plannedStart"
+    "projektverwaltung.plannedStart",
+    "projektverwaltung.builder"
   ],
   "uiCapability": "layout",
   "pdfCapability": "available",
@@ -59,6 +60,7 @@
     { "scopeId": "rechnung.screen", "status": "complete", "reason": null, "elementCount": 87, "missingReferenceCount": 0 },
     { "scopeId": "sigeko.screen", "status": "complete", "reason": null, "elementCount": 108, "missingReferenceCount": 0 },
     { "scopeId": "projektverwaltung.plannedStart", "status": "complete", "reason": null, "elementCount": 5, "missingReferenceCount": 0 },
+    { "scopeId": "projektverwaltung.builder", "status": "complete", "reason": null, "elementCount": 8, "missingReferenceCount": 0 },
     { "scopeId": "bbm.remaining", "status": "blocked", "reason": "registration_inventory_pending", "elementCount": 0, "missingReferenceCount": 0 },
     { "scopeId": "pdf.bbm.protocol", "status": "complete", "reason": null, "elementCount": 28, "missingReferenceCount": 0 }
   ],

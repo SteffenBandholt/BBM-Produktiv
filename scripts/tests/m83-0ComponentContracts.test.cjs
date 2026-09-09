@@ -54,7 +54,7 @@ async function runM830ComponentContractTests(run) {
   const listContract = contracts.find((component) => component.componentId === "bbm.restarbeiten.list");
 
   await run("M83.0 BBM 01: alle offiziellen Scopes stammen aus zwoelf komponentennahen Vertraegen", () => {
-    assert.equal(contracts.length, 15); assert.deepEqual([...contractIds].sort(), [...registryIds].sort()); assert.equal(new Set(contractIds).size, contractIds.length);
+    assert.equal(contracts.length, 16); assert.deepEqual([...contractIds].sort(), [...registryIds].sort()); assert.equal(new Set(contractIds).size, contractIds.length);
     for (const component of contracts) assert.deepEqual([...component.requiredSlots].sort(), component.slots.filter((slot) => slot.required).map((slot) => slot.slotId).sort(), component.componentId);
   });
   await run("M83.0 BBM 02: Meta-Startspalte deklariert Spalte, Kopf, Nr., Datum, Klasse und reale Zusatzinhalte", () => {
