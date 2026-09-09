@@ -39,6 +39,11 @@ async function runSigekoEntryAcceptanceTests(run) {
     appIsPackaged: async () => ({ ok: true, isPackaged: true }),
     licenseGetStatus: async () => license,
     projectsList: async () => ({ ok: true, list: projects }),
+    sigekoListAuthorityRecords: async () => ({ ok: true, data: [] }),
+    sigekoGetProjectAuthorities: async ({ projectId }) => ({ ok: true, data: { projectId, address: { street: null, zip: null, city: null }, status: 'red',
+      categories: require('../../src/shared/sigeko/authorities.cjs').AUTHORITY_CATEGORIES.map(category => ({ category, status: category === 'EMERGENCY_112' ? 'green' : 'red',
+        fixedPhone: category === 'EMERGENCY_112' ? '112' : category === 'POLICE' ? '110' : null,
+        assignment: null, candidates: [], proposal: null, issues: [] })) } }),
   } };
   const router = {
     currentProjectId: null, currentMeetingId: 'old-meeting',
@@ -84,7 +89,7 @@ async function runSigekoEntryAcceptanceTests(run) {
       license = { valid: true, license: { modules: ['sigeko'] } };
     });
     await run('S1.2: alle sichtbaren Slots besitzen vollstaendige echte Kit-Vertraege und Einzel-Refs', () => {
-      assert.equal(contract.slots.length, 121);
+      assert.equal(contract.slots.length, 206);
       assert.deepEqual(contract.requiredSlots, contract.slots.map(slot => slot.slotId));
       assert.equal(refs.validateM83ComponentReferences([contract.componentId]).ok, true);
       for (const slot of contract.slots) {

@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="de">
 <meta charset="utf-8">
-<title>BBM S2.4 / S3 – isolierte Grunddaten- und Readiness-Abnahme</title>
+<title>BBM S2.4 / S3 / S4 – isolierte SiGeKo-Abnahme</title>
 <body style="margin:0;font-family:system-ui,sans-serif;background:#f3f5f8">
 <script type="module">
   import SigekoScreen from "../../src/renderer/modules/sigeko/SigekoScreen.js";
@@ -46,9 +46,24 @@
           labelAbove: !labelRect || labelRect.bottom <= rect.top + 1 };
       });
     },
+    authoritiesGeometry() {
+      const keys = ["authorities.category.input", "authorities.contact.input", "authorities.record.organization.input",
+        "authorities.record.phone.input", "authorities.record.source.input", "authorities.record.scope_area.input",
+        "authorities.record.verification_note.input", "authorities.record.reason.input", "authorities.assignment.note.input",
+        "authorities.assignment.snapshot", "authorities.refresh", "authorities.apply", "authorities.new",
+        "authorities.record.save", "authorities.record.confirm", "authorities.record.uncertain",
+        "authorities.assignment.confirm", "authorities.assignment.uncertain"];
+      return keys.map(key => {
+        const el = this.element(key), rect = el.getBoundingClientRect(), parent = el.parentElement.getBoundingClientRect();
+        const label = el.parentElement.querySelector("label"), labelRect = label?.getBoundingClientRect();
+        return { key, width: rect.width, height: rect.height, inViewportWidth: rect.left >= -1 && rect.right <= innerWidth + 1,
+          inParent: rect.left >= parent.left - 1 && rect.right <= parent.right + 1,
+          labelAbove: !key.endsWith(".input") || !labelRect || labelRect.bottom <= rect.top + 1 };
+      });
+    },
     readinessGeometry() {
       const keys = ["readiness", "readiness.project.status", "readiness.project.issues", "readiness.authorities.status", "readiness.authorities.issues",
-        "readiness.warning", "readiness.refresh", "readiness.editProject", "readiness.editRoles"];
+        "readiness.warning", "readiness.refresh", "readiness.editProject", "readiness.editRoles", "readiness.editAuthorities"];
       return keys.map(key => {
         const el = this.element(key), rect = el.getBoundingClientRect(), parent = el.parentElement.getBoundingClientRect();
         return { key, width: rect.width, height: rect.height, inViewportWidth: rect.left >= -1 && rect.right <= innerWidth + 1,
