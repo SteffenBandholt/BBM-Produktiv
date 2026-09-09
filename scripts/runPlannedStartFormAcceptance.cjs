@@ -81,8 +81,9 @@ async function worker() {
     await click("btnSave"); await waitFor("s22.alerts.length > 0");
     assert.match(await evaluate("s22.alerts.at(-1)"), /Bauherrn/); assert.equal(repo.listAll().length, beforeCreate); assert.equal(await evaluate("!!s22.form.overlayEl"),true);
     // Native keyboard selection in the actual select; no synthetic save invocation.
+    win.focus(); win.webContents.focus();
     await evaluate("s22.form.builderField.input.focus()");
-    for (const keyCode of ["Home", "ArrowDown"]) {
+    for (const keyCode of ["Home", "Down"]) {
       win.webContents.sendInputEvent({type:"keyDown",keyCode}); win.webContents.sendInputEvent({type:"keyUp",keyCode});
     }
     await waitFor(`s22.form.builderField.input.value === ${JSON.stringify(JSON.stringify(["global_firm","builder-global"]))}`);
