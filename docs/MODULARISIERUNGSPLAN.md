@@ -18,6 +18,19 @@ Diese Datei ist **kein** Architekturpapier und **kein** Codex-Ausfuehrungsmanual
 
 ## 1. Operative Arbeitsgrundsaetze
 
+### Zentrale Bauherrzuordnung vor SiGeKo S3 (2026-09-09)
+
+Steffen bestätigt die ausdrückliche Bauherrauswahl im zentralen Projekt. PR #329
+referenziert vorhandene globale/Projektfirmen über den gemeinsamen FirmDirectory;
+keine Kategorieableitung oder Kontaktkopie, Altprojekte bleiben unzugeordnet.
+Bestehendes Projektformular mit eigener vollständiger M83-Komponente, zentraler
+Lesegrenze und ZIP-V5-Erhalt. Volltest main 1601/97 → Kandidat 1641/97, exakt gleiche
+Baselinefehler und keine fehlenden Bestandsprüfungen. Windows-/Linux-Abnahme
+34310878375 vollständig PASS, beide Bildgrößen gesichtet, Quellenreview/Nachprüfung
+ohne Restbefund im Paketdelta. Integration über PR #329.
+Danach S3 Übersicht/Readiness als eigenes Paket; Rechnung #275 eingefroren,
+Behörden erst S4. Details: `docs/PROJEKT_BAUHERR_ZUORDNUNG.md`.
+
 ### SiGeKo #274 – S2.4 Grunddaten-Bedienung (2026-09-08)
 
 Eigenes Modulprofil und getrennte Projektrollen im vorhandenen SiGeKo-Screen,

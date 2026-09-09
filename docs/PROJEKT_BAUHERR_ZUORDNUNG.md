@@ -79,8 +79,16 @@ Schließen/Wiederöffnen; Launcher-Ref-Erhalt und Neustart einer abgebrochenen L
 wurden korrigiert und erhalten gezielte Regressionstests.
 
 Frischer Volltest des unveränderten main: 1601 grün / 97 bekannte Baselinefehler.
-Kandidatenvergleich und Windows-/Linux-Electron-Nachweis werden vor Integration
-hier ergänzt. Vorhandene isolierte Abnahmeplattform, echte Produkt-IPC/SQLite,
+Kandidat: **1641 grün / exakt dieselben 97 Fehlernamen und Häufigkeiten**.
+40 zusätzliche grüne Prüfungen (18 Backend, 10 ZIP, 12 Formular), keine fehlende
+Bestandsprüfung. Drei historische Registry-Erwartungen wurden genau um den neuen
+Scope/Vertrag ergänzt; erster Kandidat 1638/100, danach 1641/97.
+Maschinenlesbarer Vergleich: `PROJEKT_BAUHERR_TESTVERGLEICH.json`.
+Produktcommit `1ace64ba10cf85a8f81022a283a17990ec066f8b`, Tree
+`7e526e5a75be448a71b84084b22649241b99e66a`. PR #329.
+Windows-/Linux-Electron-Abnahme: **34310878375 vollständig PASS**.
+Geprüfter Head `77bb3e53fc4b9fb76cc4945626b266a3f1cb01b2`.
+[CI und Artefakte](https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34310878375). Vorhandene isolierte Abnahmeplattform, echte Produkt-IPC/SQLite,
 keine Ersatzplattform und kein behaupteter persönlicher manueller PASS.
 
 ## Paketgrenzen
@@ -89,3 +97,74 @@ Dies ist ein zentrales Vorbereitungspaket, noch keine SiGeKo-Readiness-Anzeige.
 Architekt/Planer und weitere Rollen werden nicht zu zentralen Pflichtrollen.
 Rechnung #275 bleibt eingefroren. Behörden bleiben S4; die PDF Januar 2022 ist nur
 spätere Referenz, vor Übernahme auf Aktualität zu prüfen. Keine PDF-/Mailänderung.
+
+## Geänderte Dateien
+
+- `.github/workflows/sigeko-projects.yml`
+- `STATUS.md`
+- `docs/MODULARISIERUNGSPLAN.md`
+- `docs/PROJEKT_BAUHERR_TESTVERGLEICH.json`
+- `docs/PROJEKT_BAUHERR_UI_ENTWURF.md`
+- `docs/PROJEKT_BAUHERR_ZUORDNUNG.md`
+- `scripts/runPlannedStartFormAcceptance.cjs`
+- `scripts/testGroups.cjs`
+- `scripts/tests/m80ElectronUiEditor.test.cjs`
+- `scripts/tests/m82-1BbmFeintuning.test.cjs`
+- `scripts/tests/m83-0ComponentContracts.test.cjs`
+- `scripts/tests/plannedStartForm.test.cjs`
+- `scripts/tests/plannedStartFormAcceptance.html`
+- `scripts/tests/projectBuilder.test.cjs`
+- `scripts/tests/projectBuilderForm.test.cjs`
+- `scripts/tests/projectBuilderTransfer.test.cjs`
+- `scripts/tests/sigekoEditorManifest.test.cjs`
+- `src/main/db/database.js`
+- `src/main/db/projectsRepo.js`
+- `src/main/domain/projects/projectBuilder.js`
+- `src/main/ipc/projectTransferIpc.js`
+- `src/main/ipc/projectsIpc.js`
+- `src/main/preload.js`
+- `src/renderer/modules/projektverwaltung/screens/ProjectBuilder.uiEditorContract.js`
+- `src/renderer/modules/projektverwaltung/screens/ProjectBuilderField.js`
+- `src/renderer/modules/projektverwaltung/screens/ProjectFormScreen.js`
+- `src/renderer/ui-editor/m80Registry.js`
+- `ui-editor-target.json`
+
+## Praktische Nachprüfung / Abgrenzung
+
+Erster Lauf 34310720819: Linux brach bei der simulierten Tastaturauswahl ab;
+Windows wurde durch Matrix-fail-fast abgebrochen. Kein Produktfehler daraus behauptet.
+Im bestehenden Harness Electron-Taste Down und expliziter Fenster-/WebContents-Fokus
+korrigiert. Folgecommit `77bb3e53fc4b9fb76cc4945626b266a3f1cb01b2`, Tree
+`0503869e021d611e9f58c6873fbe26ec761b17ee`; gegenüber dem Volltestprodukt nur diese
+zwei Harnesszeilen geändert. Produktcode unverändert.
+
+Windows und Linux im Folgelauf 34310878375 vollständig PASS; beide breiten und
+beide schmalen Screenshots gesichtet. Beide Reports ok=true/manualConfirmed=false.
+Echte neutrale Core-IPC/SQLite ohne freigeschaltetes Fachmodul: Tastaturauswahl,
+Maus-Speichern, Neustart, zentrale Leseauflösung, Fremdprojektabgrenzung, Cancel,
+später entfernte Quelle mit Ablehnung/Entwurferhalt/Retry sowie explizites Leeren.
+Alle 40 neuen und bestehenden Workflow-Pakettests sowie der unveränderte SiGeKo-
+Formularablauf grün. Der Editor-Fontwechsel verändert keine Projektzeile.
+Die neue Bauherrkomponente und der Speichern-Button sind bei 560 px innerhalb des
+Viewports; Label, Auswahl, Hinweise und Aktualisieren überlagern sich nicht.
+Der unveränderte obere Altbereich des Projektformulars zeigt bei dieser schmalen
+Breite zusammengedrängte/überlagerte Projektleitungslabels und gekürzte Felder.
+Das ist ausdrücklich keine vollständige Freigabe des alten Formularlayouts bei
+560 px. Dieser Bereich wurde nicht umgestaltet oder als neuer Editorbestand erfasst.
+
+Allgemeine npm-CI 34310878402 bleibt rot: UI-Editor-kit fehlt dort, daneben bekannte
+Popup-/Lizenzfehler. Dedizierter Workflow verwendet das vorhandene Kit mit festem
+Commit; lokale vollständige Baseline bleibt die maßgebliche Regressionsabgrenzung.
+
+## Abschluss
+
+Zentrales Vorbereitungspaket technisch geprüft und über PR #329 zur Integration
+bereit. Quellenreview der Daten-/Transfergrenze und unabhängige UI-Nachprüfung ohne
+Restbefund im Paketdelta; die beiden Lifecyclefunde sind behoben. Goal-Arbeitslauf
+mit abgegrenzten Backend-, Transfer- und Formularprüfaufgaben. Reale UI-Abnahme über
+die vorhandene Windows-/Linux-CI, lokal kein Display. Kein persönlicher manueller
+PASS behauptet; die restlichen Prüfungen sind auf Steffens Auftrag übernommen.
+
+Nach dem geprüften Head folgen ausschließlich Dokumentationsänderungen. Der
+Dateibaum wird vor Merge lokal/remote exakt verglichen. Nächster separater Schritt
+bleibt S3 Übersicht/Readiness; der Bauherr-Zuordnungsblocker ist damit behoben.
