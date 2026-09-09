@@ -1,3 +1,28 @@
+## 2026-09-09 – SiGeKo S4 abgeschlossen: Behördenpflege und Readiness (PR #333)
+
+S4.1 Bestand (PR #331), S4.2 Projektkontakte/Snapshots/Lookup (PR #332) und
+S4.3 Bedienung/Readiness (PR #333) separat umgesetzt, getestet und geprüft.
+Acht feste Kategorieanzeigen, gemeinsame Bestandsmaske, getrennte Bestands- und
+Projektbestätigung, Sammelübernahme eindeutiger Kontakte. Quellen-/Adressänderungen
+und neue Widersprüche führen zu Prüfbedarf; gespeicherte Projektkontakte bleiben
+unverändert sichtbar. Entwurfschutz umfasst Sammelaktion und Prüfnotizen;
+unbekannter/fremder/archivierter Projektstatus sperrt Behördenmutationen.
+Ein geladenes Profil bleibt trotz verzögerter Rollen-/Behördenantwort bedienbar.
+
+Volltest 1750/97, exakt gleiche 97 Baselinefehler, +18 S4.3-Prüfungen (+82 über S4).
+43 Form-, 19 Readiness-, 12 Einstieg- und 7 Manifestprüfungen PASS; 206 Slots,
+207 Scopeziele, Registry34, fremde Scope-Fingerprints unverändert. Windows/Linux-CI
+34383932389 vollständig PASS, je 16 echte Prüfblöcke ohne Rendererfehler;
+Screenshots und breite/schmale Geometrie geprüft, alle Aktionen per Scrollen
+erreichbar. Externer Google-APT-Hashfehler des Erstlaufs durch getrennten CI-Fix
+auf Ubuntu-Paketquellen begrenzt, Sicherheitsprüfungen unverändert; Windows unabhängig.
+Allgemeine npm-CI bleibt bekannte Kit-/Popup-/Lizenzbaseline. Produkt 446b102d,
+CI-Fix 77ebf3ca; danach nur Dokumentation. Details docs/SIGEKO_S4_3_*.
+
+Nächster Schritt S5 Vorankündigung, separat abgrenzen. Keine automatische Recherche,
+keine PDF-/YAML-Datenübernahme, kein S5–S7-/Mail-/PDF-Vorgang vorgezogen.
+Rechnung #275 eingefroren; historische Behörden-PDF vor späterer Übernahme prüfen.
+
 ## 2026-09-09 – SiGeKo S4.2: Projektkontakte und Snapshots (PR #332)
 
 Auf main a4ed659 / integriertem S4.1: aktuelle Projektzuordnung je Kategorie,

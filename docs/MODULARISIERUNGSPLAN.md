@@ -18,6 +18,21 @@ Diese Datei ist **kein** Architekturpapier und **kein** Codex-Ausfuehrungsmanual
 
 ## 1. Operative Arbeitsgrundsaetze
 
+### SiGeKo #274 / #255 – S4.3 Bedienung / S4-Abschluss (2026-09-09)
+
+PR #333 ergänzt die Oberfläche und aktuelle Behördenbereitschaft zu den getrennt
+integrierten S4.1/S4.2-Paketen. Acht feste Kategorien, getrennte Bestandsprüfung und
+Projektbeurteilung, bekannte eindeutige Kontakte gesammelt übernehmen. Entwürfe,
+Prüfnotizen, Archivstatus und unabhängige Grunddatenbedienung abgesichert.
+206 Pflichtslots/207 Scopeziele, Registry34; fremde Editorbereiche unverändert.
+Volltest 1750/97 (+18), exakt gleiche Baseline. Reviewkorrekturen nachgeprüft;
+Windows/Linux-CI 34383932389 je 16 echte Prüfblöcke PASS, Screenshots/Geometrie geprüft.
+CI-only-Fix beschränkt Displaypakete nach externem APT-Hashfehler auf Ubuntuquellen,
+ohne Verifikationsregeln abzuschalten. Bericht/Testvergleich unter docs/SIGEKO_S4_3_*.
+S4 technisch abgeschlossen; nächste Paketplanung S5 Vorankündigung. Recherche,
+historische PDF-/YAML-Übernahme und S5–S7-Fachabläufe nicht vorgezogen; Rechnung #275
+bleibt eingefroren.
+
 ### SiGeKo #274 / #255 – S4.2 Projektkontakte und Snapshots (2026-09-09)
 
 PR #332: aktuelle Projektzuordnungen, serverseitige Snapshots und konservativer
