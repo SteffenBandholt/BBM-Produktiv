@@ -754,7 +754,8 @@ export function renderPrint({ pages, data, contentSlots = null } = {}) {
   if (!normalizedMode) {
     throw new Error(`Unbekannter Druckmodus: ${String(data?.mode || "").trim() || "-"}`);
   }
-  if (contentSlots && (!contentSlots.fullHeader || !contentSlots.body || !Array.isArray(pages) || pages.length !== 1)) {
+  if (contentSlots && (!contentSlots.body || !Array.isArray(pages) || pages.length !== 1 ||
+      (contentSlots.headerMode === "standard" ? Boolean(contentSlots.fullHeader) : contentSlots.headerMode != null || !contentSlots.fullHeader))) {
     throw new Error("PDF-Inhaltsslots benötigen genau eine vollständig deklarierte Seite.");
   }
   if (normalizedMode === "provider" && !contentSlots) throw new Error("PDF-Provider-Inhaltsslots fehlen.");
@@ -815,7 +816,7 @@ export function renderPrint({ pages, data, contentSlots = null } = {}) {
     if (pageNo === 1) {
       pageEl.appendChild(renderV2GlobalHeader({ data: runtimeData }));
       pageEl.appendChild(contentSlots
-        ? renderV2FullHeader({ data: runtimeData, pageNo, totalPages, modeLabel, content: contentSlots.fullHeader })
+        ? renderV2FullHeader({ data: runtimeData, pageNo, totalPages, modeLabel, content: contentSlots.headerMode === "standard" ? null : contentSlots.fullHeader })
         : normalizedMode === "invoice"
         ? renderV2FullHeader({
             data: runtimeData,

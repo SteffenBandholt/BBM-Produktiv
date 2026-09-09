@@ -601,15 +601,15 @@ async function _printToPdf(payload = {}, includeMetadata = false, options) {
       console.log(`[print:${jobId}] print:ready received`);
 
       try {
-        const options = buildPrintToPdfOptions({ orientation });
+        const pdfOptions = buildPrintToPdfOptions({ orientation });
         console.log(
           `[PRINT_ACTIVE] printToPDF options: ${JSON.stringify(
             {
               orientation,
-              landscape: options.landscape,
-              pageSize: options.pageSize,
-              displayHeaderFooter: options.displayHeaderFooter,
-              margin: options.margin,
+              landscape: pdfOptions.landscape,
+              pageSize: pdfOptions.pageSize,
+              displayHeaderFooter: pdfOptions.displayHeaderFooter,
+              margin: pdfOptions.margin,
             },
             null,
             0
@@ -620,7 +620,7 @@ async function _printToPdf(payload = {}, includeMetadata = false, options) {
         }
         if (sharedFirmsContext) recheckSharedFirmsPrint(payload, sharedFirmsContext);
         if (isProviderRequest(payload)) providerBridge().resolve(payload);
-        const pdfBuffer = await win.webContents.printToPDF(options);
+        const pdfBuffer = await win.webContents.printToPDF(pdfOptions);
         // Ein Timeout oder Fensterabbruch bleibt auch bei spaeter PDF-Antwort erfolglos.
         if (done) return;
         if (sharedFirmsContext) recheckSharedFirmsPrint(payload, sharedFirmsContext);

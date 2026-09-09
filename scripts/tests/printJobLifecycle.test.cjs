@@ -408,6 +408,13 @@ async function runPrintJobLifecycleTests(run) {
     assert.equal(value.byteSize, fs.statSync(value.filePath).size); assert.equal(value.sha256, createHash("sha256").update(fs.readFileSync(value.filePath)).digest("hex"));
     assert.equal(value.pageCount, 1); assert.equal(value.controlledOutputPath, value.filePath); assert.deepEqual(fs.readFileSync(value.filePath), buffer); h.assertClean();
   }));
+  await run("S5.3b2: optionless editor preview retains exactly the established metadata contract", () => withPrintHarness(async h => {
+    await h.start({ provider: true, metadata: true }); const init = h.load();
+    h.ready({ jobId: init.jobId, previewMetadata: { pageCount: 1, renderBounds: [] } }); h.pdf.resolve(Buffer.from("Existing editor PDF"));
+    const { value, error } = await h.outcome; assert.ifError(error);
+    assert.deepEqual(Object.keys(value).sort(), ["controlledOutputPath", "filePath", "generatedAt", "pageCount", "renderBounds"]);
+    assert.equal(value.pageCount, 1); assert.equal(init.pdfEditorPreview, true); h.assertClean();
+  }));
   await run("S5.3b2: Main exclusive output protects provider files while optionless provider behavior is retained", () => withPrintHarness(async h => {
     await h.start({ provider: true, options: { exclusiveWrite: true, includeMetadata: true } }); const init = h.load(); h.ready({ jobId: init.jobId });
     const target = path.join(h.root, "result.pdf"); fs.writeFileSync(target, "Existing document"); h.pdf.resolve(Buffer.from("Replacement"));
