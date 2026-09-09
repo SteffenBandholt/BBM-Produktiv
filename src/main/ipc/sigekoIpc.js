@@ -4,10 +4,12 @@ const { createSigekoProjectService } = require("../domain/sigeko/SigekoProjectSe
 const { createAuthorityService } = require("../domain/sigeko/AuthorityService");
 const { createProjectAuthorityService } = require("../domain/sigeko/ProjectAuthorityService");
 const { createReadinessService } = require("../domain/sigeko/ReadinessService");
+const { createPreNotificationService } = require("../domain/sigeko/PreNotificationService");
 
 function registerSigekoIpc({ ipcMain, service = createSigekoService(), projectService = createSigekoProjectService(),
   authorityService = createAuthorityService(), projectAuthorityService = createProjectAuthorityService(),
-  readinessService = createReadinessService({ projectService, projectAuthorityService }) } = {}) {
+  readinessService = createReadinessService({ projectService, projectAuthorityService }),
+  preNotificationService = createPreNotificationService({ projectService, projectAuthorityService }) } = {}) {
   for (const operation of ["getStoragePaths", "ensureStorageDirectories", "openStorageDirectory"]) {
     ipcMain.handle(`sigeko:${operation}`, async (_event, payload) => {
       try { return { ok: true, data: await service[operation](payload) }; }
@@ -35,6 +37,12 @@ function registerSigekoIpc({ ipcMain, service = createSigekoService(), projectSe
   for (const operation of ["getProjectAuthorities", "assignProjectAuthority", "applyKnownProjectAuthorities"]) {
     ipcMain.handle(`sigeko:${operation}`, async (_event, payload) => {
       try { return { ok: true, data: await projectAuthorityService[operation](payload) }; }
+      catch (error) { return { ok: false, error: error?.message || String(error), code: error?.code || "SIGEKO_ERROR" }; }
+    });
+  }
+  for (const operation of ["getPreNotification", "savePreNotification"]) {
+    ipcMain.handle(`sigeko:${operation}`, async (_event, payload) => {
+      try { return { ok: true, data: await preNotificationService[operation](payload) }; }
       catch (error) { return { ok: false, error: error?.message || String(error), code: error?.code || "SIGEKO_ERROR" }; }
     });
   }

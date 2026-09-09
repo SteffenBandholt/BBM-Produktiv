@@ -1,5 +1,6 @@
 const { CONTACT_FIELDS } = require("../../shared/sigeko/projectRoles.cjs");
 const { AUTHORITY_FIELDS, MUTABLE_AUTHORITY_CATEGORIES } = require("../../shared/sigeko/authorities.cjs");
+const { PRE_NOTIFICATION_COUNT_FIELDS } = require("../../shared/sigeko/preNotifications.cjs");
 
 function roleColumns(prefix) {
   return `${prefix}_source TEXT NOT NULL DEFAULT 'module' CHECK (${prefix}_source IN ('module','person','project_person','free')),
@@ -31,6 +32,26 @@ function ensureSigekoSchema(db) {
       ${roleChecks("planning")},
       ${roleChecks("execution")},
       CHECK (execution_same_as_planning = 0 OR execution_source = 'module')
+    );
+    CREATE TABLE IF NOT EXISTS sigeko_pre_notifications (
+      id TEXT PRIMARY KEY NOT NULL CHECK (length(trim(id)) > 0),
+      project_id TEXT NOT NULL UNIQUE REFERENCES projects(id) ON DELETE CASCADE,
+      building_type_override TEXT CHECK (building_type_override IS NULL OR
+        (typeof(building_type_override) = 'text' AND length(trim(building_type_override)) > 0 AND length(building_type_override) <= 4096)),
+      planned_start_override TEXT CHECK (planned_start_override IS NULL OR
+        (length(planned_start_override) = 10 AND planned_start_override GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'
+          AND substr(planned_start_override, 1, 4) BETWEEN '0001' AND '9999'
+          AND COALESCE(date(planned_start_override, '+0 days') = planned_start_override, 0))),
+      ${PRE_NOTIFICATION_COUNT_FIELDS.map(field => `${field} INTEGER CHECK (${field} IS NULL OR
+        (typeof(${field}) = 'integer' AND ${field} BETWEEN ${field === "duration_months" ? 1 : 0} AND 9007199254740991))`).join(",\n")},
+      firms_mode TEXT NOT NULL DEFAULT 'unknown' CHECK (firms_mode IN ('unknown','attachment')),
+      third_party_mode TEXT NOT NULL DEFAULT 'none' CHECK (third_party_mode IN ('none','free')),
+      ${CONTACT_FIELDS.map(field => `third_party_${field} TEXT CHECK (third_party_${field} IS NULL OR
+        (typeof(third_party_${field}) = 'text' AND length(trim(third_party_${field})) > 0 AND length(third_party_${field}) <= 4096))`).join(",\n")},
+      revision INTEGER NOT NULL CHECK (typeof(revision) = 'integer' AND revision BETWEEN 1 AND 9007199254740991),
+      created_at TEXT NOT NULL CHECK (length(trim(created_at)) > 0),
+      updated_at TEXT NOT NULL CHECK (length(trim(updated_at)) > 0),
+      CHECK (third_party_mode = 'free' OR (${CONTACT_FIELDS.map(field => `third_party_${field} IS NULL`).join(" AND ")}))
     );
     CREATE TABLE IF NOT EXISTS sigeko_authority_records (
       id TEXT PRIMARY KEY NOT NULL,

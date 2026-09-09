@@ -14,6 +14,7 @@ on:
       - 'scripts/tests/sigekoAuthorities.test.cjs'
       - 'scripts/tests/sigekoProjectAuthorities.test.cjs'
       - 'scripts/tests/sigekoAuthorityTransfer.test.cjs'
+      - 'scripts/tests/sigekoPreNotification*.test.cjs'
       - 'src/renderer/modules/sigeko/**'
       - 'scripts/tests/sigekoProjectForm*'
       - 'scripts/tests/sigekoGrunddatenForm.test.cjs'
@@ -82,6 +83,11 @@ jobs:
         run: |
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoProjectAuthorities.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoAuthorityTransfer.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
+      - name: SiGeKo pre-notification drafts and ZIP preservation
+        shell: bash
+        run: |
+          node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoPreNotification.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
+          node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoPreNotificationTransfer.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
       - name: Central project builder ZIP integrity
         run: >-
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/projectBuilderTransfer.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"

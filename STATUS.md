@@ -1,3 +1,21 @@
+## 2026-09-09 – SiGeKo S5.1: Vorankündigungsentwurf (PR #334)
+
+Eigener Entwurf je Projekt mit lokalen Overrides, manueller Monatsdauer,
+beiden Zahlen aus Punkt 8 und freiem/nicht vorhandenem Dritten. Zentrale
+Quellen werden über bestehende Dienste aufgelöst; kein Rückschreiben.
+Additive SQLite-Migration, CAS, Archiv-/Modulguard, strikter V7-Projekttransfer.
+25 neue Domain-/Preloadtests und 14 neue ZIP-Tests PASS. Volltest nach Ergänzung
+der drei vorhandenen Inventarerwartungen: 1789 grün / exakt 97 Baselinefehler,
+keine verlorenen Prüfungen. Unabhängiges Review ohne Restblocker.
+Windows/Linux-CI 34387710393 vollständig PASS, bestehende echte Formulare
+je 16 Prüfblöcke ohne Rendererfehler. Allgemeine npm-CI bleibt bekannte
+Kit-/Popup-/Lizenzbaseline. Produkt 3d9976b, Testkorrektur ea60202;
+abschließend nur Dokumentation. Details docs/SIGEKO_S5_1_ABNAHME.md und Testvergleich.
+
+Nächster Schritt direkt S5.2: eigene formularnahe Vorankündigungsansicht.
+Gesamt-S5 bleibt offen; noch keine VA-PDF-/Mail-/Rücklaufaktion. Rechnung #275
+bleibt eingefroren; historische Behördenreferenz nicht übernommen.
+
 ## 2026-09-09 – SiGeKo S4 abgeschlossen: Behördenpflege und Readiness (PR #333)
 
 S4.1 Bestand (PR #331), S4.2 Projektkontakte/Snapshots/Lookup (PR #332) und

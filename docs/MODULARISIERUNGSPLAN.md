@@ -18,6 +18,17 @@ Diese Datei ist **kein** Architekturpapier und **kein** Codex-Ausfuehrungsmanual
 
 ## 1. Operative Arbeitsgrundsaetze
 
+### SiGeKo #274 / #251 – S5.1 Vorankündigungsentwurf (2026-09-09)
+
+PR #334: additive Entwurfspersistenz, lokale Overrides, manuelle Monatsdauer,
+CAS/Archiv-/Lizenzschutz und V7-Projektarchiv. Gemeinsame Quellen bleiben fachführend.
+1789/97 im Volltest (+39), exakt gleiche Fehlerbaseline; alte Inventarprüfungen
+gezielt um neue Tabelle/Endpunkte ergänzt. Windows/Linux 34387710393 vollständig PASS,
+vorhandene echte Formulare je 16 Prüfblöcke ohne Rendererfehler. Unabhängig geprüft.
+S5.1 abgeschlossen; Gesamt-S5 offen. Automatisch weiter mit S5.2 gemäß Nutzerauftrag;
+Paketplan docs/SIGEKO_S5_PAKETPLAN.md, Nachweise docs/SIGEKO_S5_1_*.
+Keine Rechnung, Recherche, VA-PDF- oder Mail-/Rücklaufaktion vorgezogen.
+
 ### SiGeKo #274 / #255 – S4.3 Bedienung / S4-Abschluss (2026-09-09)
 
 PR #333 ergänzt die Oberfläche und aktuelle Behördenbereitschaft zu den getrennt
