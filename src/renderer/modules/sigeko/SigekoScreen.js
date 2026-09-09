@@ -34,10 +34,11 @@ function resultList(result) {
 }
 
 export default class SigekoScreen {
-  constructor({ router, projectId, project = null } = {}) {
+  constructor({ router, projectId, project = null, focusSection = null } = {}) {
     this.router = router;
     this.projectId = projectId || null;
     this.project = project && String(project.id) === String(this.projectId) ? project : null;
+    this.focusSection = ["roles", "authorities"].includes(focusSection) ? focusSection : null;
     this.uiEditorScopeId = SIGEKO_SCOPE_ID;
     this.router?._setProjectRuntimeContext?.({ projectId: this.projectId, meetingId: null });
     this.alive = true; this.loadSequence = 0; this.readinessSequence = 0;
@@ -89,6 +90,7 @@ export default class SigekoScreen {
     nav.style.cssText = "display:flex;flex-wrap:wrap;gap:8px";
     this._button(nav, ".workspace", "Projektarbeitsbereich", () => this._navigate(() => this.router.showProjectWorkspace(this.projectId, { project: this.project })));
     this._button(nav, ".projects", "Projekt wechseln", () => this._navigate(() => this.router.showProjects()));
+    this.preNotificationButton = this._button(nav, ".preNotification", "Vorankündigung öffnen", () => this._navigate(() => this.router.openProjectModule(this.projectId, "sigeko", { project: this.project, screen: "preNotification" })));
     this.notice = node("p", "sigeko.screen.notice", "Grunddaten werden geladen …"); this.notice.setAttribute("role", "status");
     const basic = node("section", "sigeko.screen.basic"); basic.style.cssText = "display:flex;flex-direction:column;gap:16px;min-width:0";
     this.basicPanel = basic;
@@ -96,7 +98,7 @@ export default class SigekoScreen {
     this._renderProfile(basic); this._renderRoles(basic);
     const planned = node("section", "sigeko.screen.planned"); planned.style.cssText = "padding:12px;border:1px solid #d3dfec;border-radius:8px;background:#f5f8fc";
     const plannedTitle = node("h2", "sigeko.screen.planned.title", "Geplante Bereiche – noch nicht umgesetzt"); plannedTitle.style.fontSize = "16px";
-    planned.append(plannedTitle, node("p", "sigeko.screen.planned.text", "Vorankündigung · SiGePlan · Begehungen · Übergabe an Restarbeiten"));
+    planned.append(plannedTitle, node("p", "sigeko.screen.planned.text", "SiGePlan · Begehungen · Übergabe an Restarbeiten"));
     this.authoritiesPanel = new SigekoAuthoritiesPanel({ screen: this });
     root.append(header, nav, this.notice, this._renderReadiness(), basic, this.authoritiesPanel.render(), planned); this.root = root;
     this._refreshEnabled(); completeM80PilotRender(); return root;
@@ -285,6 +287,10 @@ export default class SigekoScreen {
     return groups.flat().sort((a, b) => a.label.localeCompare(b.label, "de"));
   }
   async load() {
+    if (this.focusSection) {
+      const target = this.focusSection === "authorities" ? this.authoritiesPanel?.root : this.basicPanel;
+      target?.scrollIntoView?.({ block: "start" }); this.focusSection = null;
+    }
     void this._loadReadiness();
     void this.authoritiesPanel.load();
     const sequence = ++this.loadSequence;

@@ -7,8 +7,8 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 34,
-  "registryFingerprint": "sha256:ac1c61ce1cd614c4384349315f12bf0d70dbc652b31b338b48d1d81a350457d3",
+  "registryVersion": 35,
+  "registryFingerprint": "sha256:cdd901317db26bee7f73d13d90e8b7a075520483dfb3e8c396eaafbdcae7118b",
   "registryStatus": "incomplete",
   "activeScopes": [
     "restarbeiten.header.root",
@@ -19,6 +19,7 @@
     "protokoll.edit.root",
     "rechnung.screen",
     "sigeko.screen",
+    "sigeko.preNotification",
     "projektverwaltung.plannedStart",
     "projektverwaltung.builder"
   ],
@@ -58,7 +59,8 @@
     { "scopeId": "protokoll.list.root", "status": "complete", "reason": null, "elementCount": 32, "missingReferenceCount": 0 },
     { "scopeId": "protokoll.edit.root", "status": "complete", "reason": null, "elementCount": 38, "missingReferenceCount": 0 },
     { "scopeId": "rechnung.screen", "status": "complete", "reason": null, "elementCount": 87, "missingReferenceCount": 0 },
-    { "scopeId": "sigeko.screen", "status": "complete", "reason": null, "elementCount": 207, "missingReferenceCount": 0 },
+    { "scopeId": "sigeko.screen", "status": "complete", "reason": null, "elementCount": 208, "missingReferenceCount": 0 },
+    { "scopeId": "sigeko.preNotification", "status": "complete", "reason": null, "elementCount": 99, "missingReferenceCount": 0 },
     { "scopeId": "projektverwaltung.plannedStart", "status": "complete", "reason": null, "elementCount": 5, "missingReferenceCount": 0 },
     { "scopeId": "projektverwaltung.builder", "status": "complete", "reason": null, "elementCount": 8, "missingReferenceCount": 0 },
     { "scopeId": "bbm.remaining", "status": "blocked", "reason": "registration_inventory_pending", "elementCount": 0, "missingReferenceCount": 0 },

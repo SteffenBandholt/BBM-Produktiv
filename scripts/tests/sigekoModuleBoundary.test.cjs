@@ -41,7 +41,10 @@ async function runSigekoModuleBoundaryTests(run) {
     }
     assert.ok(Object.isFrozen(renderer));
     assert.equal(typeof renderer.screens.sigeko, "function");
-    assert.deepEqual(renderer.routes.project, [{ screenId: "sigeko" }]);
+    assert.deepEqual(renderer.routes.project, [{ screenId: "sigeko" }, { screenId: "preNotification" }]);
+    assert.equal(typeof renderer.screens.preNotification, "function");
+    assert.equal(typeof renderer.routing.project, "function");
+    assert.equal(renderer.navigation.project.length, 1);
     assert.equal(renderer.navigation.project[0].moduleId, "sigeko");
   });
 
@@ -53,7 +56,11 @@ async function runSigekoModuleBoundaryTests(run) {
     assert.match(defaults, /SIGEKO_MODULE_ID/);
     const { getSigekoModuleEntry } = await importEsmFromFile(path.join(root, "src/renderer/modules/sigeko/index.js"));
     const runtime = await importEsmFromFile(path.join(root, "src/renderer/app/modules/moduleRouteRuntime.js"));
-    assert.equal(await runtime.openModuleEntry({ moduleEntry: getSigekoModuleEntry(), scope: "project", projectId: "p", show(view) { assert.equal(view.projectId, "p"); } }), true);
+    let shown = 0;
+    assert.equal(await runtime.openModuleEntry({ moduleEntry: getSigekoModuleEntry(), scope: "project", projectId: "p",
+      router: { async show(view, options) { shown++; assert.equal(view.projectId, "p"); assert.equal(options.section, "sigeko"); } },
+      show() { assert.fail("Module-local adapter uses the existing public router.show host"); } }), true);
+    assert.equal(shown, 1);
   });
 
   await run("S1.1: produktiver IPC-Registrar erreicht SiGeKo-Service ohne Protokoll", () => {

@@ -4,6 +4,7 @@ import {
   BBM_M80_REGISTRY_VERSION,
   getM83ComponentContract,
   getM80RegistryEntry,
+  getM80LayoutStorageKey,
   listM80RegistryScopes,
 } from "./m80Registry.js";
 import {
@@ -769,6 +770,7 @@ export function createM80RegistrationDescriptor() {
     registryVersion: BBM_M80_REGISTRY_VERSION + diagnosticRegistryRevision,
     registryStatus: BBM_M80_REGISTRY_STATUS,
     activeScopes,
+    ...(getM80LayoutStorageKey(activeScopes) ? { layoutStorageKey: getM80LayoutStorageKey(activeScopes) } : {}),
     supportedOperations: [...SUPPORTED_OPERATIONS],
     uiCapability: "layout",
     pdfCapability: "unavailable",
@@ -1162,6 +1164,8 @@ export function createM80StartupRestoreKey(activeScopes) {
   const scopeIds = Array.isArray(activeScopes) ? activeScopes.map((scopeId) => String(scopeId || "").trim()).filter(Boolean) : [];
   const moduleIds = [...new Set(scopeIds.map((scopeId) => scopeId.split(".", 1)[0]))];
   if (moduleIds.length !== 1 || !/^[a-z0-9-]+$/.test(moduleIds[0])) throw new TypeError("Aktive Scopes ergeben keinen eindeutigen Modulschlüssel.");
+  const layoutStorageKey = getM80LayoutStorageKey(scopeIds);
+  if (layoutStorageKey) return `layout:${layoutStorageKey}`;
   return `module:${moduleIds[0]}`;
 }
 

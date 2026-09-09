@@ -1,6 +1,7 @@
 import { projectBuilderUiEditorContract, BUILDER_SCOPE } from "../modules/projektverwaltung/screens/ProjectBuilder.uiEditorContract.js";
 import { projectPlannedStartUiEditorContract, PLANNED_START_SCOPE } from "../modules/projektverwaltung/screens/ProjectPlannedStart.uiEditorContract.js";
 import { sigekoScreenUiEditorContract } from "../modules/sigeko/SigekoScreen.uiEditorContract.js";
+import { sigekoPreNotificationUiEditorContract } from "../modules/sigeko/SigekoPreNotificationScreen.uiEditorContract.js";
 import { restarbeitenFilterbarUiEditorContract } from "../modules/restarbeiten/RestarbeitenFilterbar.uiEditorContract.js";
 import { restarbeitenQuicklaneUiEditorContract } from "../modules/restarbeiten/RestarbeitenQuicklane.uiEditorContract.js";
 import { restarbeitenListUiEditorContract } from "../modules/restarbeiten/RestarbeitenList.uiEditorContract.js";
@@ -11,12 +12,13 @@ import { protokollEditUiEditorContract } from "../modules/protokoll/TopsWorkbenc
 import { rechnungUiEditorContract } from "../modules/rechnungen/RechnungScreen.uiEditorContract.js";
 import {
   sigekoMainHeaderLauncherUiEditorContract,
+  sigekoPreNotificationMainHeaderLauncherUiEditorContract,
   protokollMainHeaderLauncherUiEditorContract,
   restarbeitenMainHeaderLauncherUiEditorContract,
 } from "../ui/MainHeader.uiEditorContract.js";
 import { aggregateBbmM83Components } from "./m83ComponentContract.js";
 
-export const BBM_M80_REGISTRY_VERSION = 34;
+export const BBM_M80_REGISTRY_VERSION = 35;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
@@ -24,6 +26,8 @@ export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
   projectBuilderUiEditorContract,
   sigekoScreenUiEditorContract,
   sigekoMainHeaderLauncherUiEditorContract,
+  sigekoPreNotificationUiEditorContract,
+  sigekoPreNotificationMainHeaderLauncherUiEditorContract,
   restarbeitenFilterbarUiEditorContract,
   restarbeitenQuicklaneUiEditorContract,
   restarbeitenListUiEditorContract,
@@ -60,7 +64,7 @@ function blockedScope(scopeId, name, reason = "registration_inventory_pending") 
 export const BBM_M80_ACTIVE_SCOPES = Object.freeze([
   "restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root",
   "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root",
-  "rechnung.screen", "sigeko.screen", PLANNED_START_SCOPE, BUILDER_SCOPE,
+  "rechnung.screen", "sigeko.screen", "sigeko.preNotification", PLANNED_START_SCOPE, BUILDER_SCOPE,
 ]);
 
 export const BBM_M80_ACTIVE_SCOPE_GROUPS = Object.freeze([
@@ -69,7 +73,19 @@ export const BBM_M80_ACTIVE_SCOPE_GROUPS = Object.freeze([
   Object.freeze(["protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root"]),
   Object.freeze(["rechnung.screen"]),
   Object.freeze(["sigeko.screen"]),
+  Object.freeze(["sigeko.preNotification"]),
 ]);
+
+// Mutually exclusive views can select a distinct profile using the existing
+// store's declared key. Undeclared groups retain their established module key.
+const LAYOUT_STORAGE_GROUPS = Object.freeze([
+  Object.freeze({ scopes: Object.freeze(["sigeko.preNotification"]), key: "module-sigeko-prenotification" }),
+]);
+
+export function getM80LayoutStorageKey(activeScopes = []) {
+  return LAYOUT_STORAGE_GROUPS.find(group => group.scopes.length === activeScopes.length &&
+    group.scopes.every(scopeId => activeScopes.includes(scopeId)))?.key || null;
+}
 
 export const BBM_M80_REGISTRY_SCOPES = Object.freeze([
   ...BBM_M80_ACTIVE_SCOPES.map(completeScope),

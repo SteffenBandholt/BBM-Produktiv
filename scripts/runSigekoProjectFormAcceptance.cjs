@@ -11,7 +11,7 @@ const ROOT = path.resolve(__dirname, "..");
 async function worker() {
   const { app, BrowserWindow, ipcMain, dialog, screen } = require("electron");
   let profile, database, editor;
-  const report = { package: "S2.4 / S3 / S4", ok: false, manualConfirmed: false, checks: [], rendererErrors: [] };
+  const report = { package: "S2.4 / S3 / S4 / S5.2", ok: false, manualConfirmed: false, checks: [], rendererErrors: [] };
   try {
     app.setAppPath(ROOT);
     profile = configureUiEditorAcceptanceProfile({ electronApp: app }); assert.equal(profile.enabled, true);
@@ -328,6 +328,163 @@ async function worker() {
     assert.equal(await evaluate(`window.bbmDb.sigekoGetProjectAuthorities({projectId:${JSON.stringify(projects[0].id)}}).then(()=>false,e=>String(e).includes('MODULE_NOT_ACTIVE'))`), true);
     license = { valid: true, license: { modules: ["sigeko"] } };
     report.checks.push("already-open archived project rejects role and authority assignment mouse saves atomically; reopened authority form is read-only; production IPC enforces archive and current module license for profile, readiness, stock and project contacts");
+    // S5.2 uses the real module descriptor/route adapter and the actual form;
+    // only the surrounding router host and user confirmation answers are isolated.
+    const vaSnapshot = () => JSON.stringify([snapshot(), database.initDatabase().prepare("SELECT * FROM sigeko_pre_notifications ORDER BY id").all()]);
+    const vaRecord = id => database.initDatabase().prepare("SELECT * FROM sigeko_pre_notifications WHERE project_id=?").get(id);
+    const vaFill = values => evaluate(`s24.vaFill(${JSON.stringify(values)})`);
+    const vaValue = field => evaluate(`s24.screen.inputs[${JSON.stringify(field)}].value`);
+    const vaReady = () => waitFor("s24.screen.inputs?.duration_months && s24.screen.ready && !s24.screen.loading && !s24.screen.busy");
+    const vaClick = async key => {
+      const rect = await evaluate(`s24.vaBounds(${JSON.stringify(key)})`);
+      const viewport = await evaluate("({width:innerWidth,height:innerHeight})");
+      assert.ok(rect.width > 0 && rect.height > 0 && rect.x >= 0 && rect.y >= 0 &&
+        rect.x + rect.width <= viewport.width + 1 && rect.y + rect.height <= viewport.height + 1, JSON.stringify({ key, rect, viewport }));
+      const point = { x: Math.round(rect.x + rect.width / 2), y: Math.round(rect.y + rect.height / 2) };
+      win.webContents.sendInputEvent({ type: "mouseDown", button: "left", clickCount: 1, ...point });
+      win.webContents.sendInputEvent({ type: "mouseUp", button: "left", clickCount: 1, ...point });
+      await evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+    };
+    const vaOpen = async id => {
+      await evaluate("s24.confirmWith(true)");
+      assert.equal(await evaluate(`s24.openVa(${JSON.stringify(id)})`), true); await vaReady();
+    };
+    const vaSave = async () => {
+      await evaluate("s24.vaElement('status').textContent = ''");
+      await vaClick("actions.save");
+      try {
+        await waitFor("!s24.screen.busy && !s24.screen.isDirty() && s24.vaElement('status').textContent === 'Vorankündigung gespeichert.'");
+      } catch (error) {
+        const state = await evaluate("({status:s24.vaElement('status').textContent, ready:s24.screen.ready, loading:s24.screen.loading, busy:s24.screen.busy, dirty:s24.screen.isDirty(), saveDisabled:s24.screen.saveButton.disabled, revision:s24.screen.data?.record?.revision, firms:s24.screen.data?.effective?.firms?.length, draft:Object.fromEntries(Object.entries(s24.screen.inputs).map(([key,input])=>[key,input.value]))})");
+        error.message += "\nActual Vorankündigung save state: " + JSON.stringify(state);
+        throw error;
+      }
+    };
+    // The earlier contact fixtures deliberately have no project-participant use.
+    // A firms-list attachment requires an explicitly active project participant.
+    database.initDatabase().prepare("INSERT INTO project_firms (id,project_id,name,street,zip,city,use_project_participant,is_active) VALUES ('s52-contractor',?,'S5.2 Nachunternehmer','Gewerkweg 4','12345','Testort',1,1)").run(projects[0].id);
+    assert.ok(require("../src/main/domain/firms/FirmDirectoryService").getFirmDirectoryService()
+      .listProjectParticipants({ projectId: projects[0].id, includeInactive: false }).some(firm => firm.id === "s52-contractor"));
+    repo.updateProject({ id: projects[0].id, patch: { geplanter_baubeginn: null, end_date: "2030-12-31" } });
+    await open(projects[0].id); await waitFor("!s24.screen.readinessBusy");
+    const beforeVaEntry = vaSnapshot();
+    await evaluate("s24.confirmWith(false)"); await click("preNotification");
+    await waitFor("s24.confirmations.length === 1");
+    assert.equal(await evaluate("!!s24.screen.inputs?.duration_months"), false); assert.equal(vaSnapshot(), beforeVaEntry);
+    await evaluate("s24.confirmWith(true)"); await click("preNotification"); await vaReady();
+    assert.equal(await evaluate("s24.confirmations.length"), 1);
+    assert.match(await evaluate("s24.confirmations[0]"), /fehl|prüf|unvollständig/i);
+    assert.deepEqual(await evaluate("s24.pendingVaRead"), { loading: true, ready: false,
+      saveDisabled: true, backDisabled: true, saveBackDisabled: true, reloadDisabled: true });
+    assert.equal(await evaluate("s24.router.currentView === s24.screen"), true);
+    assert.equal(await evaluate("s24.router.currentProjectId"), projects[0].id);
+    assert.equal(vaRecord(projects[0].id), undefined);
+    assert.equal(await vaValue("planned_start_override"), ""); assert.equal(await vaValue("duration_months"), "");
+    assert.equal(await evaluate("s24.screen.saveButton.disabled"), false);
+    await vaSave(); assert.equal(vaRecord(projects[0].id).duration_months, null);
+    assert.equal(vaRecord(projects[0].id).planned_start_override, null);
+    report.checks.push("S5.2: actual module route checks readiness, cancellation preserves the overview and database, confirmation opens the document form with save and back actions disabled while the first actual IPC read is pending; incomplete draft saves without inventing start or duration");
+
+    const centralBeforeVa = snapshot();
+    const attachmentData = await evaluate(`window.bbmDb.sigekoGetPreNotification({projectId:${JSON.stringify(projects[0].id)}})`);
+    assert.equal(attachmentData.ok, true); assert.ok(attachmentData.data.effective.firms.some(firm => firm.id === "s52-contractor"));
+    for (const key of ["p1.value", "p2.value", "p5.planning.value", "p5.execution.value", "authority.value"]) {
+      assert.equal(await evaluate(`s24.vaElement(${JSON.stringify(key)}).matches('input,select,textarea')`), false, key);
+    }
+    await vaFill({ building_type_override: "Umbau – nur in dieser Vorankündigung", planned_start_override: "2028-02-29", duration_months: "17",
+      max_workers: "0", employer_count: "2", self_employed_count: "0", firms_mode: "attachment", third_party_mode: "free",
+      third_party_name: "Beauftragter Dritter", third_party_street: "Drittweg 8", third_party_zip: "54321", third_party_city: "Drittort",
+      third_party_phone: "040777", third_party_email: "dritter@example.invalid" });
+    assert.deepEqual(await evaluate("Array.from(s24.screen.inputs.firms_mode.options, option => option.value)"), ["unknown", "attachment"]);
+    await vaSave();
+    const fullVa = vaRecord(projects[0].id);
+    assert.equal(fullVa.duration_months, 17); assert.equal(fullVa.max_workers, 0); assert.equal(fullVa.self_employed_count, 0);
+    assert.equal(fullVa.firms_mode, "attachment"); assert.equal(fullVa.third_party_name, "Beauftragter Dritter");
+    assert.equal(fullVa.planned_start_override, "2028-02-29"); assert.equal(snapshot(), centralBeforeVa);
+    await vaFill({ employer_count: "3" }); await vaClick("actions.saveBack");
+    await waitFor("!s24.screen.inputs?.duration_months && !s24.screen.rolesBusy && s24.screen.rolesReady");
+    assert.equal(vaRecord(projects[0].id).employer_count, 3);
+    await vaOpen(projects[0].id); assert.equal(await vaValue("employer_count"), "3");
+    report.checks.push("S5.2: real mouse saves local overrides, explicit whole months, zero counts, a free third party and the two-choice firms mode through production IPC/SQLite; save-and-back reopens persisted values without changing central sources");
+
+    await vaClick("p3.reset"); await vaClick("p6.reset"); await vaFill({ third_party_mode: "none", firms_mode: "unknown" }); await vaSave();
+    assert.equal(vaRecord(projects[0].id).building_type_override, null); assert.equal(vaRecord(projects[0].id).planned_start_override, null);
+    for (const field of ["name", "street", "zip", "city", "phone", "email"]) assert.equal(vaRecord(projects[0].id)[`third_party_${field}`], null);
+    assert.equal(vaRecord(projects[0].id).duration_months, 17);
+    repo.updateProject({ id: projects[0].id, patch: { geplanter_baubeginn: "2027-06-15" } });
+    await vaOpen(projects[0].id); assert.equal(await vaValue("planned_start_override"), "2027-06-15");
+    assert.equal(vaRecord(projects[0].id).planned_start_override, null);
+    const firstVa = vaRecord(projects[0].id);
+    await vaOpen(projects[1].id); await vaFill({ duration_months: "5", max_workers: "4" }); await vaSave();
+    assert.deepEqual(vaRecord(projects[0].id), firstVa);
+    database.closeDatabase(); database.initDatabase();
+    await vaOpen(projects[0].id); assert.equal(await vaValue("duration_months"), "17");
+    assert.equal(await vaValue("planned_start_override"), "2027-06-15");
+    assert.equal(vaRecord(projects[1].id).duration_months, 5);
+    report.checks.push("S5.2: resetting overrides restores null/inherited project start, third-party none clears only local contact fields, manual duration survives date changes, and two independent projects retain their drafts after SQLite reopen");
+
+    await vaFill({ building_type_override: "Ungespeicherter Entwurf" });
+    const beforeDirtyGuard = vaSnapshot();
+    for (const action of ["actions.back", "actions.reload"]) {
+      await evaluate("s24.confirmWith(false)"); await vaClick(action); await waitFor("s24.confirmations.length === 1");
+      assert.equal(await vaValue("building_type_override"), "Ungespeicherter Entwurf"); assert.equal(vaSnapshot(), beforeDirtyGuard);
+    }
+    await evaluate("s24.confirmWith(true)"); await vaClick("actions.reload"); await vaReady();
+    assert.equal(await vaValue("building_type_override"), ""); assert.equal(vaSnapshot(), beforeDirtyGuard);
+    await vaFill({ duration_months: "1.5" }); await evaluate("s24.vaElement('status').textContent = ''");
+    await vaClick("actions.saveBack"); await waitFor("!s24.screen.busy && !!s24.vaElement('status').textContent");
+    assert.equal(await vaValue("duration_months"), "1.5"); assert.equal(vaSnapshot(), beforeDirtyGuard);
+    await vaFill({ duration_months: "18" });
+    const staleRecord = vaRecord(projects[0].id);
+    const concurrent = await evaluate(`window.bbmDb.sigekoSavePreNotification({projectId:${JSON.stringify(projects[0].id)},expectedRevision:${staleRecord.revision},patch:{duration_months:19}})`);
+    assert.equal(concurrent.ok, true);
+    const beforeConflict = vaSnapshot(); await evaluate("s24.vaElement('status').textContent = ''"); await vaClick("actions.saveBack");
+    await waitFor("!s24.screen.busy && /geändert|erneut laden/i.test(s24.vaElement('status').textContent)");
+    assert.equal(await vaValue("duration_months"), "18"); assert.equal(vaSnapshot(), beforeConflict);
+    await evaluate("s24.confirmWith(true)"); await vaClick("actions.reload"); await vaReady(); assert.equal(await vaValue("duration_months"), "19");
+    report.checks.push("S5.2: cancelled back/reload retain dirty inputs; invalid fractional months and a real concurrent revision conflict keep save-and-back on the form without overwriting data, and explicit reload recovers the current revision");
+
+    await vaFill({ third_party_mode: "free", third_party_name: "Beauftragter Dritter für das gesamte Bauvorhaben", third_party_street: "Langer Baustellenweg 123",
+      third_party_zip: "54321", third_party_city: "Drittort", third_party_phone: "040777", third_party_email: "dritter@example.invalid" }); await vaSave();
+    assert.equal(await evaluate("s24.refs.validateM83ComponentReferences(['bbm.sigeko.preNotification']).ok"), true);
+    assert.deepEqual((await evaluate("s24.descriptor()")).activeScopes, ["sigeko.preNotification"]);
+    report.preNotificationGeometry = {};
+    for (const [size, width, height] of [["wide", 1280, 950], ["narrow", 560, 950], ["low", 560, 480]]) {
+      win.setSize(width, height); await waitFor(`innerWidth <= ${width} && innerWidth >= ${width - 80} && innerHeight <= ${height}`);
+      await evaluate("s24.vaElement('document.title').scrollIntoView({block:'start'}); new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+      fs.writeFileSync(path.join(output, `sigeko-prenotification-${size}-top.png`), (await win.webContents.capturePage()).toPNG());
+      const geometry = await evaluate("s24.vaGeometry()"); report.preNotificationGeometry[size] = geometry;
+      for (const field of geometry) assert.ok(field.width > 40 && field.height > 15 && field.inViewportWidth && field.inParent && field.labelAbove, JSON.stringify(field));
+      await evaluate("s24.vaElement('signature.signer').scrollIntoView({block:'end'}); new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+      for (const key of ["actions.save", "actions.saveBack", "actions.back", "actions.reload"]) {
+        const rect = await evaluate(`(()=>{const {x,y,width,height}=s24.vaElement(${JSON.stringify(key)}).getBoundingClientRect();return {x,y,width,height};})()`);
+        const viewport = await evaluate("({width:innerWidth,height:innerHeight})");
+        assert.ok(rect.y >= -1 && rect.x >= -1 && rect.x + rect.width <= viewport.width + 1 && rect.y + rect.height <= viewport.height + 1, JSON.stringify({ size, key, rect, viewport }));
+      }
+      await evaluate("s24.vaElement('signature.signer').scrollIntoView({block:'end'}); new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+      fs.writeFileSync(path.join(output, `sigeko-prenotification-${size}-bottom.png`), (await win.webContents.capturePage()).toPNG());
+    }
+    const beforeVaEditor = vaSnapshot();
+    await evaluate("s24.refs.applyM80State('sigeko.preNotification.p4.contact.name.input', {fontSize:15}, 'textResize')");
+    assert.equal(await evaluate("getComputedStyle(s24.vaElement('p4.contact.name.input')).fontSize"), "15px");
+    assert.equal(vaSnapshot(), beforeVaEditor);
+    report.checks.push("S5.2: all component references and the dedicated editor scope are valid; wide, narrow and low windows keep labelled fields within width and all save/navigation actions reachable after deep scrolling; a real editor style change leaves all ten domain tables unchanged");
+
+    win.setSize(1280, 950); await vaOpen(projects[0].id);
+    repo.archiveProject(projects[0].id); const beforeVaArchive = vaSnapshot();
+    await vaFill({ duration_months: "20" }); await vaClick("actions.saveBack");
+    await waitFor("!s24.screen.busy && /archiv/i.test(s24.vaElement('status').textContent)");
+    assert.equal(await vaValue("duration_months"), "20"); assert.equal(vaSnapshot(), beforeVaArchive);
+    await vaOpen(projects[0].id); assert.equal(await evaluate("s24.screen.saveButton.disabled && s24.screen.saveBackButton.disabled"), true);
+    assert.equal(await evaluate("Object.values(s24.screen.inputs).every(input => input.disabled)"), true);
+    repo.unarchiveProject(projects[0].id); await vaOpen(projects[0].id);
+    const beforeVaLicense = vaSnapshot(); license = { valid: true, license: { modules: [] } };
+    assert.equal(await evaluate(`window.bbmDb.sigekoGetPreNotification({projectId:${JSON.stringify(projects[0].id)}}).then(()=>false,e=>String(e).includes('MODULE_NOT_ACTIVE'))`), true);
+    assert.equal(await evaluate(`window.bbmDb.sigekoSavePreNotification({projectId:${JSON.stringify(projects[0].id)},expectedRevision:${vaRecord(projects[0].id).revision},patch:{duration_months:99}}).then(()=>false,e=>String(e).includes('MODULE_NOT_ACTIVE'))`), true);
+    assert.equal(vaSnapshot(), beforeVaLicense); license = { valid: true, license: { modules: ["sigeko"] } };
+    await open(projects[0].id);
+    report.checks.push("S5.2: an already-open archived project rejects save-and-back atomically and preserves its dirty draft; reopened form is read-only, while production IPC enforces current module licensing for draft reads and writes");
+
     // Native test-window controls: fit the usable monitor, and X requests review only.
     const fitToWorkArea = () => {
       const area = screen.getDisplayMatching(win.getBounds()).workArea;
