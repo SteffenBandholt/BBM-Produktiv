@@ -1,0 +1,32 @@
+{
+  "baseline": {
+    "pass": 1841,
+    "fail": 97
+  },
+  "candidate": {
+    "pass": 1858,
+    "fail": 97
+  },
+  "newFailures": [],
+  "removedFailures": [],
+  "lostPass": [],
+  "addedPass": [
+    "S5.3b1: untouched project captures warning data without creating a draft or claiming a final document",
+    "S5.3b1: complete snapshot retains separate contacts point-eight numbers and manual whole months",
+    "S5.3b1: snapshot distinguishes unknown counts from explicit zero and local start from central start",
+    "S5.3b1: authority evidence captures every validated assignment column and exact confirmed source",
+    "S5.3b1: changed authority stock stays an orange warning with the original project evidence",
+    "S5.3b1: conservative equivalent address spelling retains the existing green authority assessment",
+    "S5.3b1: captured document is recursively immutable and survives lossless JSON roundtrip after source changes",
+    "S5.3b1: Main assigns document identity and rejects extra payload keys client snapshots and stale revisions",
+    "S5.3b1: license revocation during awaited runtime prevents snapshot creation",
+    "S5.3b1: draft revision change during awaited runtime is rejected before allocating document identity",
+    "S5.3b1: replacing a draft with the same revision during runtime cannot reuse its original document identity",
+    "S5.3b1: project source change or foreign runtime project during capture is rejected",
+    "S5.3b1: snapshot schema rejects unknown fields identity tampering and inconsistent draft references",
+    "S5.3b1: snapshot schema rejects invalid dates fractional months malformed contacts and misleading readiness",
+    "S5.3b1: authority address evidence and category cannot be independently substituted",
+    "S5.3b1: non-JSON runtime values are rejected before immutable capture",
+    "S5.3b1: real shared runtime captures the existing project settings and user profile without loading document content"
+  ]
+}

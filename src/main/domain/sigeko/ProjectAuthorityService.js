@@ -5,7 +5,7 @@ const { SigekoAuthoritiesRepository } = require("../../db/sigekoAuthoritiesRepo"
 const { SigekoProjectAuthoritiesRepository } = require("../../db/sigekoProjectAuthoritiesRepo");
 const { createAuthorityService } = require("./AuthorityService");
 const { AUTHORITY_CATEGORIES, MUTABLE_AUTHORITY_CATEGORIES, AUTHORITY_COLUMNS, EMERGENCY_NUMBERS } = require("../../../shared/sigeko/authorities.cjs");
-const { ADDRESS_FIELDS, validateProjectAuthorityRow } = require("../../../shared/sigeko/projectAuthorities.cjs");
+const { ADDRESS_FIELDS, validateProjectAuthorityRow, normalizeAuthorityAddressValue: normalized } = require("../../../shared/sigeko/projectAuthorities.cjs");
 
 const MEDICAL = new Set(["HOSPITAL", "ACCIDENT_DOCTOR"]);
 function fail(code, message) { throw Object.assign(new Error(message), { code }); }
@@ -19,7 +19,6 @@ function text(value, required = false) {
   if (required && !result) fail("INVALID_INPUT", "Nicht leerer Text erforderlich.");
   return result;
 }
-const normalized = value => (value || "").normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("de-DE");
 const addressOf = project => Object.fromEntries(ADDRESS_FIELDS.map(key => [key, project[key] || null]));
 const completeAddress = address => ADDRESS_FIELDS.every(key => normalized(address[key]));
 const equalAddress = (left, right) => ADDRESS_FIELDS.every(key => normalized(left[key]) === normalized(right[key]));

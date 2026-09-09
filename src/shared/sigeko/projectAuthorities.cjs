@@ -1,5 +1,8 @@
 const { AUTHORITY_COLUMNS, AUTHORITY_FIELDS, MUTABLE_AUTHORITY_CATEGORIES } = require("./authorities.cjs");
 
+// One conservative spelling comparison shared by current assessments and
+// immutable document validation; this is not fuzzy address matching.
+const normalizeAuthorityAddressValue = value => (value || "").normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("de-DE");
 const ADDRESS_FIELDS = Object.freeze(["street", "zip", "city"]);
 const PROJECT_AUTHORITY_COLUMNS = Object.freeze([
   "id", "project_id", "category", "source_id", "source_revision", "snapshot_json",
@@ -66,4 +69,4 @@ function validateProjectAuthorityRow(row, projectId) {
   }
   return row;
 }
-module.exports = Object.freeze({ PROJECT_AUTHORITY_COLUMNS, ADDRESS_FIELDS, validateProjectAuthorityRow });
+module.exports = Object.freeze({ PROJECT_AUTHORITY_COLUMNS, ADDRESS_FIELDS, normalizeAuthorityAddressValue, validateProjectAuthorityRow });

@@ -1,3 +1,19 @@
+## 2026-09-09 – SiGeKo S5.3b1: unveränderlicher Snapshotvertrag (PR #337)
+
+Main-interner Capture aus vorhandenen Entwurfs-/Rollen-/Behörden- und Druckdiensten;
+Formular, damaliger Behördennachweis, gemeinsame Kopf-/Nutzer-/Logodaten, Quellrevision.
+Serveridentität, Lizenz-/Entwurfs-/Projektwechsel und verlustfreier JSON-Vertrag geprüft.
+17 neue Tests grün, Volltest 1858 PASS / exakt dieselben 97 Baselinefehler (+17),
+keine verlorenen Prüfungen. Unabhängiger Review ohne Restblocker nach Reparatur des
+Adressschreibweisen-Randfalls über unveränderte gemeinsame Normalisierung.
+Windows/Linux 34400974507 vollständig PASS; je 17 neue und 22 vorhandene reale
+Formularprüfungen, keine Rendererfehler. Allgemeine npm-CI bleibt bekannte Baseline.
+Produkt c4eb5f90f284aeb86aa0a2fbef3ff895b56430d5; danach ausschließlich Dokumentation.
+Nachweise docs/SIGEKO_S5_3B1_ABNAHME.md, SNAPSHOTVERTRAG und TESTVERGLEICH.
+Keine neue UI/PDF/IPC/Tabelle oder vorläufige Dokumentfassung. Nächster Schritt direkt
+S5.3b2: tatsächliches Formular-PDF, finale Ablage und V8-Projekttransfer.
+Gesamt-S5 offen, Rechnung #275 eingefroren.
+
 ## 2026-09-09 – SiGeKo S5.3a: gemeinsamer Druckzugang (PR #336)
 
 Bestehende Firmenlisten-Ausgabe erhält einen expliziten Modul-/Projekt-/Storagezugang;
