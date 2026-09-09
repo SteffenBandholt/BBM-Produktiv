@@ -18,6 +18,18 @@ Diese Datei ist **kein** Architekturpapier und **kein** Codex-Ausfuehrungsmanual
 
 ## 1. Operative Arbeitsgrundsaetze
 
+### SiGeKo #274 / #251 – S5.2 Vorankündigungsformular (2026-09-09)
+
+PR #335: Formularpunkte 1–9, lokale Overrides, ausdrückliches Speichern und
+Speichern-und-zurück, frischer bestätigter Einstieg; 98 Pflichtziele plus
+Headerlauncher und Übersichtseinstieg. Vorhandene Layoutprofile der beiden
+Ansichten werden über deklarierte Identität getrennt, Adaptercommit separat.
+1822/97 im Volltest (+33), Fehlerbaseline exakt gleich. Windows/Linux 34391123679
+vollständig PASS, je 22 echte Bedienprüfungen und geprüfte breite/schmale/niedrige
+Screenshots. Testfixture-Firmenteilnahme korrigiert, Produktcode unverändert.
+S5.2 abgeschlossen; direkt S5.3a gemeinsamer Druckkontext/Firmenlisten-Modulzugang,
+anschließend fachlicher Snapshot/PDF. Grenzen/Nachweise docs/SIGEKO_S5_2_ABNAHME.md.
+
 ### SiGeKo #274 / #251 – S5.1 Vorankündigungsentwurf (2026-09-09)
 
 PR #334: additive Entwurfspersistenz, lokale Overrides, manuelle Monatsdauer,

@@ -1,0 +1,51 @@
+{
+  "baseline": {
+    "pass": 1789,
+    "fail": 97
+  },
+  "candidate": {
+    "pass": 1822,
+    "fail": 97
+  },
+  "newFailures": [],
+  "removedFailures": [],
+  "lostPass": [],
+  "addedPass": [
+    "S5.2: opening the document resolves central values without creating or saving a draft",
+    "S5.2: saving another field preserves the inherited planned start as a null override",
+    "S5.2: explicit start override and reset affect only the draft until successfully saved",
+    "S5.2: manual duration and both point-eight counts serialize as distinct integers with empty values null",
+    "S5.2: invalid numeric drafts remain visible and never become successful zero or truncated values",
+    "S5.2: third-party mode has two choices and preserves an unsaved free contact when toggled",
+    "S5.2: removing a saved third party clears contacts only after save and sends no contradictory hidden values",
+    "S5.2: firms mode offers only unknown or attachment and backend rejection preserves the choice",
+    "S5.2: save-and-back navigates once only after a successful save",
+    "S5.2: dirty navigation cancellation preserves the full draft without saving",
+    "S5.2: reload requires explicit draft discard and cancellation performs no replacement read",
+    "S5.2: CAS conflict retains the old revision and every input until deliberate reload",
+    "S5.2: a pending save blocks duplicate writes reload and navigation",
+    "S5.2: failed loading cannot retain old green readiness or permit saving stale data",
+    "S5.2: newer load wins over an older response and its revision cannot be replaced",
+    "S5.2: destroyed screen ignores delayed reads and leaves replacement project refs intact",
+    "S5.2: destroyed screen cannot navigate or overwrite replacement inputs after delayed save-and-back",
+    "S5.2: missing and mismatched project responses never enable mutation",
+    "S5.2: archived project remains readable and all mutation paths are disabled",
+    "S5.2: revoked license and transport failures preserve the draft and never navigate",
+    "S5.2: all 98 slots match the approved design exact DOM attributes parents and domain locks",
+    "S5.2: editor geometry and font changes affect no field values saved records or domain calls",
+    "S5.2: pending initial load blocks navigation and replacement reload until the project is known",
+    "S5.2: native invalid empty numeric input is dirty and cannot bypass navigation discard confirmation",
+    "S5.2: getrennte Ansichten erhalten eigene Profile und unveränderte Startschlüssel",
+    "S5.2: echter Profil-Restore Vorankündigung ohne Editorprozess",
+    "S5.2: generic licensed entry reads fresh readiness and opens the known document through router.show",
+    "S5.2: red and orange document entry each require exactly one fresh explicit confirmation",
+    "S5.2: failed malformed and foreign readiness never replace the current view and remain retryable",
+    "S5.2: unknown screen selectors are rejected without readiness calls or view replacement",
+    "S5.2: later module navigation supersedes pending readiness without a stale warning or reopened document",
+    "S5.2: readiness cannot replace an independently changed host view or project context",
+    "S5.2: newer pre-notification entry wins even when the earlier readiness response arrives last"
+  ],
+  "intentionalTestNameMapping": {
+    "SiGeKo: all 206 slots have exact mounted attributes, valid parents and domain locks": "SiGeKo: all 207 slots have exact mounted attributes, valid parents and domain locks"
+  }
+}

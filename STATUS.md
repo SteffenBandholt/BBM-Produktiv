@@ -1,3 +1,18 @@
+## 2026-09-09 – SiGeKo S5.2: Vorankündigungsformular (PR #335)
+
+Eigene Formularansicht Punkte 1–9, erreichbare Speicher-/Zurückaktionen,
+frischer bestätigter Moduleinstieg, lokale Overrides und vollständiger Editorvertrag.
+Vorhandener Profilspeicher trennt Übersicht und Vorankündigung; gemeinsame
+Adapteranbindung separat committed. Keine offenen Reviewblocker.
+1822 PASS / exakt dieselben 97 Baselinefehler (+33); drei feste Inventare gezielt ergänzt.
+Windows/Linux 34391123679 vollständig PASS, je 22 echte Bedienprüfungen,
+keine Rendererfehler. Screenshots einschließlich 560 × 480/tiefem Scroll geprüft.
+Ein fehlender Projektteilnehmer im Abnahmefixture wurde testseitig ergänzt;
+Produktstand seit Volltest unverändert. Allgemeine npm-CI weiterhin bekannte Baseline.
+Details docs/SIGEKO_S5_2_ABNAHME.md und Testvergleich. Keine persönliche manuelle Abnahme behauptet.
+Nächster Schritt direkt S5.3a: gemeinsame Druckkontext-/Firmenlistenanbindung,
+danach getrennt das fachliche VA-PDF. Rechnung #275 bleibt eingefroren.
+
 ## 2026-09-09 – SiGeKo S5.1: Vorankündigungsentwurf (PR #334)
 
 Eigener Entwurf je Projekt mit lokalen Overrides, manueller Monatsdauer,

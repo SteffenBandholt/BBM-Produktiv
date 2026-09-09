@@ -5,7 +5,7 @@ Ausgangsbasis: main `5b81ca770a2a8021273ec4c5aa37a862b0547282`, S4 über PR #331
 ## Reihenfolge und Grenzen
 
 1. S5.1: persistenter Vorankündigungsentwurf, lokale Overrides, gemeinsame Datenauflösung, abgesicherte IPC und Projektarchiv-Erhalt. Keine UI-/PDF-Ausgabe, kein Mail-/Rücklaufprozess in diesem Teilpaket.
-2. S5.2: formularnahe Bedienung in der Reihenfolge der Vorlage, vollständiger komponentennaher Editorvertrag, echte breite/schmale Electron-Abnahme.
+2. S5.2 abgeschlossen (PR #335, 1822/97, Windows/Linux je 22 Bedienprüfungen): formularnahe Bedienung in der Reihenfolge der Vorlage, vollständiger komponentennaher Editorvertrag, echte breite/schmale Electron-Abnahme.
 3. S5.3: fachliches Dokument-ViewModel und gespeicherter Snapshot; Formular-PDF mit gemeinsamem V2-Kopf, PrintShell, Vorschau und Projektablage. Vorher vollständige PDF-Entwurfsentscheidung und eigene Dokument-Guardrails. Die vorhandene Firmenlisten-Ausgabe und die gemeinsame Kopfkontext-Aufbereitung benötigen zuvor ein getrennt geprüftes kleines Anschluss-/Zugriffspaket für explizite Modulidentität.
 4. S5.4: Rücklaufdatei, vorbereitete Outlook-Übergabe zur Unterschrift/an Behörde und Abschluss, entsprechend den bestätigten vereinfachten Regeln. Optionaler Kalenderanschluss bleibt S9.
 
