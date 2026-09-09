@@ -21,6 +21,20 @@ function ensureSigekoSchema(db) {
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS sigeko_documents (
+      id TEXT PRIMARY KEY NOT NULL CHECK (length(trim(id)) > 0),
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      document_type TEXT NOT NULL CHECK (document_type = 'sigeko-vorankuendigung'),
+      snapshot_json TEXT NOT NULL CHECK (json_valid(snapshot_json)),
+      files_json TEXT NOT NULL CHECK (json_valid(files_json)),
+      created_at TEXT NOT NULL CHECK (length(trim(created_at)) > 0),
+      CHECK (COALESCE(json_extract(snapshot_json, '$.documentId') = id
+        AND json_extract(snapshot_json, '$.projectId') = project_id
+        AND json_extract(snapshot_json, '$.documentTypeId') = document_type, 0))
+    );
+    CREATE INDEX IF NOT EXISTS sigeko_documents_project_created ON sigeko_documents(project_id, document_type, created_at DESC, id DESC);
+    CREATE TRIGGER IF NOT EXISTS sigeko_documents_immutable BEFORE UPDATE ON sigeko_documents
+      BEGIN SELECT RAISE(ABORT, 'SiGeKo-Dokumentfassungen sind unveränderlich'); END;
     CREATE TABLE IF NOT EXISTS sigeko_projects (
       id TEXT PRIMARY KEY NOT NULL,
       project_id TEXT NOT NULL UNIQUE REFERENCES projects(id) ON DELETE CASCADE,

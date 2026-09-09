@@ -255,6 +255,6 @@ async function runSigekoPreNotificationSnapshotTests(run) {
   }));
 }
 
-module.exports = { runSigekoPreNotificationSnapshotTests };
+module.exports = { runSigekoPreNotificationSnapshotTests, withSnapshots };
 if (require.main === module) runSigekoPreNotificationSnapshotTests(async (name, check) => { await check(); console.log("PASS", name); })
   .catch(error => { console.error(error); process.exitCode = 1; });

@@ -32,6 +32,7 @@ export default class SigekoPreNotificationScreen {
     this.router?._setProjectRuntimeContext?.({ projectId: this.projectId, meetingId: null });
     this.alive = true; this.sequence = 0; this.ready = false; this.loading = false; this.busy = false;
     this.data = null; this.inputs = {}; this.buttons = []; this.snapshot = null; this.conflict = false;
+    this.documents = []; this.documentsLoading = false; this.documentsSequence = 0; this.pdfMessage = "";
   }
 
   _label(parent, suffix, content) {
@@ -73,9 +74,23 @@ export default class SigekoPreNotificationScreen {
     this.saveButton = this._button(actions, "actions.save", "Speichern", () => this.save());
     this.saveBackButton = this._button(actions, "actions.saveBack", "Speichern und zurück", () => this.save({ back: true }));
     this.backButton = this._button(actions, "actions.back", "Zurück zu SiGeKo", () => this.navigate(() => this._back()));
-    this.reloadButton = this._button(actions, "actions.reload", "Neu laden", () => this.reload()); root.append(actions);
+    this.reloadButton = this._button(actions, "actions.reload", "Neu laden", () => this.reload());
+    this.pdfPreviewButton = this._button(actions, "actions.pdfPreview", "PDF-Vorschau", () => this.runPdfAction("preview"));
+    this.pdfCreateButton = this._button(actions, "actions.pdfCreate", "PDF erstellen", () => this.runPdfAction("create"));
+    this.pdfLayoutButton = this._button(actions, "actions.pdfLayout", "PDF-Layout bearbeiten", () => this.runPdfAction("layout")); root.append(actions);
     this.status = this._label(root, "status", "Vorankündigung wird geladen …"); this.status.setAttribute("role", "status");
     this.readinessView = this._label(root, "readiness", "Angaben werden geprüft …"); this.readinessView.setAttribute("role", "status");
+    const pdf = node("section", "pdf"); pdf.style.cssText = STACK + ";box-sizing:border-box;width:100%;padding:8px;background:#f3f6fa;border:1px solid #cbd7e4;border-radius:4px";
+    this._label(pdf, "pdf.title", "PDF-Fassungen");
+    this.documentSelection = this._field(pdf, "pdf.selection", "Gespeicherte Fassung", "documentSelection", "select");
+    // Document selection is view state, never part of the editable form draft.
+    delete this.inputs.documentSelection;
+    this.documentSelection.oninput = this.documentSelection.onchange = () => this._refreshEnabled();
+    this.pdfInfo = this._label(pdf, "pdf.info", "Noch keine PDF-Fassung erstellt.");
+    const pdfActions = node("div", "pdf.actions"); pdfActions.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;min-width:0";
+    this.pdfOpenButton = this._button(pdfActions, "pdf.actions.open", "Gespeicherte PDF öffnen", () => this.openDocument("main"));
+    this.pdfOpenFirmsButton = this._button(pdfActions, "pdf.actions.openFirms", "Firmenanlage öffnen", () => this.openDocument("firms")); pdf.append(pdfActions);
+    this.pdfStatus = this._label(pdf, "pdf.status", ""); this.pdfStatus.setAttribute("role", "status"); root.append(pdf);
     const document = node("article", "document"); document.style.cssText = "box-sizing:border-box;align-self:center;width:100%;max-width:880px;padding:clamp(12px,3vw,28px);background:#fff;border:1px solid #d0dbe6;" + STACK + ";gap:14px";
     const authority = node("section", "authority"); authority.style.cssText = STACK;
     this._label(authority, "authority.title", "An die Arbeitsschutzbehörde"); this.authorityValue = this._label(authority, "authority.value", "Zuständige Behörde noch zu klären.");
@@ -162,6 +177,13 @@ export default class SigekoPreNotificationScreen {
     for (const button of this.buttons) button.disabled = this.busy || this.loading;
     this.saveButton.disabled = this.saveBackButton.disabled = this.buildingTypeReset.disabled = this.startReset.disabled = !writable;
     this.reloadButton.disabled = this.busy || this.loading;
+    this.pdfPreviewButton.disabled = this.pdfCreateButton.disabled = this.pdfLayoutButton.disabled = !writable || this.isDirty();
+    const selected = this.documents.find(entry => entry.id === this.documentSelection.value);
+    this.documentSelection.disabled = !this.alive || this.busy || this.loading || this.documentsLoading || !this.documents.length;
+    this.pdfOpenButton.disabled = !selected || this.documentSelection.disabled;
+    this.pdfOpenFirmsButton.disabled = this.pdfOpenButton.disabled || !selected?.files.some(file => file.kind === "firms");
+    this.pdfInfo.textContent = selected ? `Erstellt am ${this._documentDate(selected)} · ${this._documentName(selected)} · ${selected.files.some(file => file.kind === "firms") ? "mit" : "ohne"} Firmenanlage` : "Noch keine PDF-Fassung erstellt.";
+    this.pdfStatus.textContent = [this.isDirty() ? "Bitte Änderungen zuerst speichern." : this.conflict ? "Entwurf inzwischen geändert. Bitte bewusst neu laden." : "", this.pdfMessage].filter(Boolean).join("\n");
     if (this.data) {
       if (this.ready) {
         const issues = this.data.readiness.issues;
@@ -205,6 +227,7 @@ export default class SigekoPreNotificationScreen {
     if (!this.alive || this.busy) return false;
     const sequence = ++this.sequence, current = () => this.alive && this.sequence === sequence;
     this.loading = true; this.ready = false; this._refreshEnabled(); this.status.textContent = "Vorankündigung wird geladen …";
+    void this.loadDocuments();
     this.readinessView.textContent = "Angaben werden geprüft …"; this.readinessView.style.color = "inherit";
     try {
       const data = unpack(await window.bbmDb.sigekoGetPreNotification({ projectId: this.projectId }));
@@ -240,11 +263,112 @@ export default class SigekoPreNotificationScreen {
     if (saved && back && this.alive) await this._back();
     return saved;
   }
+  _documentDate(entry) { return new Date(entry.createdAt).toLocaleString("de-DE"); }
+  _documentName(entry) { return entry.files.find(file => file.kind === "main").projectRelativePath.split("/").pop(); }
+  _validateDocument(entry) {
+    if (!entry || typeof entry.id !== "string" || !entry.id.trim() || entry.projectId !== this.projectId
+      || typeof entry.createdAt !== "string" || !Number.isFinite(Date.parse(entry.createdAt))
+      || !Array.isArray(entry.files) || ![1, 2].includes(entry.files.length)
+      || entry.files[0]?.kind !== "main" || (entry.files.length === 2 && entry.files[1]?.kind !== "firms")
+      || entry.files.some(file => typeof file.projectRelativePath !== "string" || !file.projectRelativePath.endsWith(".pdf"))) {
+      throw new Error("PDF-Fassung konnte dem Projekt nicht sicher zugeordnet werden.");
+    }
+    return entry;
+  }
+  _setDocuments(documents, preferredId = this.documentSelection.value) {
+    if (!Array.isArray(documents)) throw new Error("PDF-Bestand ist nicht verfügbar.");
+    documents.forEach(entry => this._validateDocument(entry));
+    if (new Set(documents.map(entry => entry.id)).size !== documents.length) throw new Error("PDF-Bestand enthält doppelte Fassungen.");
+    this.documents = documents; this.documentSelection.textContent = "";
+    for (const entry of documents) {
+      const option = document.createElement("option"); option.value = entry.id;
+      option.textContent = `${this._documentDate(entry)} · ${this._documentName(entry)}`; this.documentSelection.append(option);
+    }
+    this.documentSelection.value = documents.some(entry => entry.id === preferredId) ? preferredId : documents[0]?.id || "";
+    return !!preferredId && !!documents.length && this.documentSelection.value !== preferredId;
+  }
+  async loadDocuments() {
+    if (!this.alive) return false;
+    const sequence = ++this.documentsSequence, projectId = this.projectId;
+    const current = () => this.alive && this.projectId === projectId && this.documentsSequence === sequence;
+    this.documentsLoading = true; this._refreshEnabled();
+    try {
+      const data = unpack(await window.bbmDb.sigekoListPreNotificationDocuments({ projectId }));
+      if (!current()) return false;
+      const replaced = this._setDocuments(data?.documents);
+      this.pdfMessage = replaced ? "Bisherige Auswahl nicht mehr vorhanden. Neueste Fassung ausgewählt." : "";
+      return true;
+    } catch (error) {
+      if (current()) this.pdfMessage = "PDF-Bestand konnte nicht geladen werden: " + error.message;
+      return false;
+    } finally { if (current()) { this.documentsLoading = false; this._refreshEnabled(); } }
+  }
+  async runPdfAction(action) {
+    if (!this._writable() || this.isDirty() || !["preview", "create", "layout"].includes(action)) return false;
+    const sequence = ++this.sequence, projectId = this.projectId;
+    const current = () => this.alive && this.projectId === projectId && this.sequence === sequence;
+    // An older list response must not remove a newly created final document.
+    ++this.documentsSequence; this.documentsLoading = false;
+    this.busy = true; this.pdfMessage = action === "layout" ? "PDF-Layout wird vorbereitet …" : "PDF wird erstellt …"; this._refreshEnabled();
+    try {
+      const payload = { projectId, expectedRevision: this.data.record?.revision || 0 };
+      const method = { preview: "sigekoPreviewPreNotificationPdf", create: "sigekoCreatePreNotificationPdf", layout: "sigekoPreparePreNotificationPdfEditor" }[action];
+      const data = unpack(await window.bbmDb[method](payload));
+      if (!current()) return false;
+      if (action === "create") {
+        const entry = this._validateDocument(data?.document);
+        this._setDocuments([entry, ...this.documents.filter(old => old.id !== entry.id)], entry.id);
+        this.pdfMessage = "PDF-Fassung erstellt und gespeichert.";
+      } else if (action === "layout") {
+        const context = data?.context, api = window.uiEditor;
+        if (context?.documentTypeId !== "sigeko-vorankuendigung" || context?.projectId !== projectId || !context?.documentId) throw new Error("PDF-Layoutkontext konnte dem Projekt nicht sicher zugeordnet werden.");
+        if (typeof api?.preparePdfContext !== "function" || typeof api?.open !== "function") throw new Error("Der separate UI-Editor oder seine sichere Brücke ist nicht verfügbar.");
+        const prepared = await api.preparePdfContext(context);
+        if (!current()) return false;
+        if (!prepared?.ok || prepared.documentTypeId !== context.documentTypeId) throw new Error(prepared?.message || "PDF-Dokumenttyp ist im Layouteditor nicht verfügbar.");
+        const guardedApi = { ...api, open: registration => {
+          if (!current()) throw new Error("Die Vorankündigung wurde bereits verlassen.");
+          return api.open(registration);
+        }, sendTargetEvent: event => {
+          if (!current()) throw new Error("Die Vorankündigung wurde bereits verlassen.");
+          return typeof api.sendTargetEvent === "function" ? api.sendTargetEvent(event) : { ok: false };
+        } };
+        // The shell catalog imports this screen; load its existing helper only
+        // at the user action to avoid a screen/catalog initialization cycle.
+        const { openNativeUiEditor } = await import("../../app/coreShellNavigation.js");
+        if (!current()) return false;
+        const opened = await openNativeUiEditor({ scopeId: PRE_NOTIFICATION_SCOPE_ID, api: guardedApi });
+        if (!current()) return false;
+        if (!opened?.ok) throw new Error(opened?.message || "Der PDF-Layouteditor konnte nicht geöffnet werden.");
+        this.pdfMessage = "Layouteditor geöffnet. Im Editor den Bereich ‚PDF-Ausgabe‘ wählen.";
+      } else this.pdfMessage = "PDF-Vorschau geöffnet. Es wurde keine finale Fassung gespeichert.";
+      return true;
+    } catch (error) {
+      if (current()) {
+        this.pdfMessage = "PDF-Aktion fehlgeschlagen: " + error.message;
+        if (error.code === "PRE_NOTIFICATION_CONFLICT") this.conflict = true;
+      }
+      return false;
+    } finally { if (current()) { this.busy = false; this._refreshEnabled(); completeM80PilotRender(); } }
+  }
+  async openDocument(kind) {
+    const entry = this.documents.find(document => document.id === this.documentSelection.value);
+    if (!this.alive || this.busy || this.loading || this.documentsLoading || !entry?.files.some(file => file.kind === kind)) return false;
+    const sequence = ++this.sequence, projectId = this.projectId;
+    const current = () => this.alive && this.projectId === projectId && this.sequence === sequence;
+    this.busy = true; this.pdfMessage = "Gespeicherte Datei wird geöffnet …"; this._refreshEnabled();
+    try {
+      unpack(await window.bbmDb.sigekoOpenPreNotificationDocumentFile({ projectId, documentId: entry.id, kind }));
+      if (!current()) return false;
+      this.pdfMessage = kind === "firms" ? "Gespeicherte Firmenanlage geöffnet." : "Gespeicherte PDF geöffnet."; return true;
+    } catch (error) { if (current()) this.pdfMessage = "Gespeicherte Datei konnte nicht geöffnet werden: " + error.message; return false; }
+    finally { if (current()) { this.busy = false; this._refreshEnabled(); } }
+  }
   _back(focusSection = null) { return this.router.openProjectModule(this.projectId, "sigeko", { project: this.project, ...(focusSection ? { focusSection } : {}) }); }
   navigate(action) {
     if (!this.alive || this.busy || this.loading) return false;
     if (this.isDirty() && !window.confirm("Ungespeicherte Vorankündigung verwerfen und diese Ansicht verlassen?")) return false;
     return action();
   }
-  destroy() { this.alive = false; ++this.sequence; beginM83ComponentBinding(PRE_NOTIFICATION_COMPONENT_ID); }
+  destroy() { this.alive = false; ++this.sequence; ++this.documentsSequence; beginM83ComponentBinding(PRE_NOTIFICATION_COMPONENT_ID); }
 }

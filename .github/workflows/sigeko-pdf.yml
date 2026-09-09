@@ -8,6 +8,12 @@ on:
       - 'src/main/ipc/printIpc.js'
       - 'src/main/modulePdfProviders.js'
       - 'src/main/modules/sigeko/technicalPdfProvider.js'
+      - 'src/main/modules/sigeko/preNotificationPdfProvider.js'
+      - 'src/main/domain/sigeko/PreNotificationDocumentService.js'
+      - 'src/main/domain/sigeko/PreNotificationSnapshotService.js'
+      - 'src/main/ipc/sigekoIpc.js'
+      - 'src/shared/sigeko/**'
+      - 'src/renderer/modules/sigeko/print/**'
       - 'src/main/ui-editor/**'
       - 'src/renderer/print/**'
       - 'src/shared/print/**'
@@ -15,6 +21,7 @@ on:
       - 'scripts/helpers/pdfAcceptanceLicense.cjs'
       - 'scripts/helpers/pdfExecutionAcceptance.cjs'
       - 'scripts/tests/printJobLifecycle.test.cjs'
+      - 'scripts/tests/sigekoPreNotificationPdfRenderer.test.cjs'
       - '.github/workflows/sigeko-pdf.yml'
 
 permissions:
@@ -69,6 +76,9 @@ jobs:
       - name: Real PDF, storage, internal preview and editor regeneration
         working-directory: BBM-Produktiv
         run: xvfb-run -a npm run test:sigeko:s1.4
+      - name: Explicit Vorankuendigung renderer and profile contracts
+        working-directory: BBM-Produktiv
+        run: node scripts/tests/sigekoPreNotificationPdfRenderer.test.cjs
       - name: Generate 49 baseline PDF snapshots
         if: always()
         working-directory: BBM-base
@@ -103,6 +113,7 @@ jobs:
           path: |
             /tmp/bbm-ui-editor-acceptance-*/acceptance-result.json
             /tmp/bbm-ui-editor-acceptance-*/internal-preview.png
+            /tmp/bbm-ui-editor-acceptance-*/vorankuendigung-preview.png
             /tmp/bbm-ui-editor-acceptance-*/Ablage/**/*.pdf
             /tmp/bbm-ui-editor-acceptance-*/temp/**/*.pdf
             ${{ runner.temp }}/*-golden.json
@@ -132,6 +143,9 @@ jobs:
           TEMP: ${{ runner.temp }}
           TMP: ${{ runner.temp }}
         run: npm run test:sigeko:s1.4
+      - name: Explicit Windows Vorankuendigung renderer and profile contracts
+        working-directory: BBM-Produktiv
+        run: node scripts/tests/sigekoPreNotificationPdfRenderer.test.cjs
       - name: Preserve Windows acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -141,5 +155,6 @@ jobs:
           path: |
             ${{ runner.temp }}/bbm-ui-editor-acceptance-*/acceptance-result.json
             ${{ runner.temp }}/bbm-ui-editor-acceptance-*/internal-preview.png
+            ${{ runner.temp }}/bbm-ui-editor-acceptance-*/vorankuendigung-preview.png
             ${{ runner.temp }}/bbm-ui-editor-acceptance-*/Ablage/**/*.pdf
             ${{ runner.temp }}/bbm-ui-editor-acceptance-*/temp/**/*.pdf

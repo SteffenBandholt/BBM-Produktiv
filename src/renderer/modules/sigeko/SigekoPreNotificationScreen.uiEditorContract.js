@@ -104,6 +104,19 @@ const declarations = [
   ["signature","Unterschrift durch Bauherr oder beauftragten Dritten","group","document",null,"layout"],
   ["signature.placeDate","Ort / Datum – handschriftlich zu ergänzen","label","signature",null,"content"],
   ["signature.signer","Bauherr / Beauftragter Dritter – Unterschrift","label","signature",null,"content"],
+  ["actions.pdfPreview","PDF-Vorschau","button","actions","previewPreNotificationPdf","domainActionLayout"],
+  ["actions.pdfCreate","PDF erstellen","button","actions","createPreNotificationPdf","domainActionLayout"],
+  ["actions.pdfLayout","PDF-Layout bearbeiten","button","actions","editPreNotificationPdfLayout","domainActionLayout"],
+  ["pdf","PDF-Fassungen","group","",null,"layout"],
+  ["pdf.title","PDF-Fassungen","label","pdf",null,"content"],
+  ["pdf.selection","Gespeicherte Fassung – Feldgruppe","fieldGroup","pdf",null,"layout"],
+  ["pdf.selection.label","Gespeicherte Fassung","label","pdf.selection",null,"content"],
+  ["pdf.selection.input","Gespeicherte Fassung","field","pdf.selection","select","dataFieldLayout"],
+  ["pdf.info","Angaben zur PDF-Fassung","label","pdf",null,"content"],
+  ["pdf.actions","Gespeicherte Dateien öffnen","group","pdf",null,"layout"],
+  ["pdf.actions.open","Gespeicherte PDF öffnen","button","pdf.actions","openPreNotificationPdf","domainActionLayout"],
+  ["pdf.actions.openFirms","Firmenanlage öffnen","button","pdf.actions","openPreNotificationFirmsPdf","domainActionLayout"],
+  ["pdf.status","PDF-Status","label","pdf",null,"status"],
 ];
 const id = suffix => PRE_NOTIFICATION_SCOPE_ID + (suffix ? "." + suffix : "");
 const elements = declarations.map(([suffix, name, type, parent, kind, role], order) => {
