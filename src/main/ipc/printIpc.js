@@ -42,6 +42,17 @@ const { createProductivePdfProviderRegistry } = require("../modulePdfProviders")
 let _providerBridge;
 function providerBridge() { return _providerBridge || (_providerBridge = createPdfProviderBridge({ registry: createProductivePdfProviderRegistry() })); }
 
+const { isSharedFirmsPrintRequest, createSharedFirmsPrintAccess } = require("../print/sharedFirmsPrintAccess");
+let _sharedFirmsPrintAccess;
+function sharedFirmsPrintAccess() { return _sharedFirmsPrintAccess || (_sharedFirmsPrintAccess = createSharedFirmsPrintAccess()); }
+function recheckSharedFirmsPrint(payload, initial) {
+  const current = sharedFirmsPrintAccess().resolve(payload);
+  if (current.moduleId !== initial.moduleId || current.projectId !== initial.projectId || current.directory !== initial.directory) {
+    throw Object.assign(new Error("Projektablage hat sich während der PDF-Erzeugung geändert. Bitte erneut erzeugen."), { code: "PDF_PROJECT_STORAGE_CHANGED" });
+  }
+  return current;
+}
+
 let _pdfEditorAdapterResolver = null;
 
 function _getPdfEditorAdapterResolver() {
@@ -414,6 +425,9 @@ function attachPrintDebugPipes(win, jobId) {
 }
 
 async function _printToPdf(payload = {}, includeMetadata = false) {
+  // Keep an explicit module request stable across asynchronous data/print steps.
+  if (isSharedFirmsPrintRequest(payload)) payload = structuredClone(payload);
+  const sharedFirmsContext = isSharedFirmsPrintRequest(payload) ? sharedFirmsPrintAccess().resolve(payload) : null;
   const jobId = _randId();
   const { resolvePrintMode } = await _loadPrintModesModule();
   const mode = resolvePrintMode(payload.mode, { fallback: "protocol" });
@@ -421,7 +435,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
     throw new Error(`Unbekannter Druckmodus: ${String(payload.mode || "").trim() || "-"}`);
   }
   const providerContext = isProviderRequest(payload) ? providerBridge().resolve(payload).request : null;
-  const projectId = providerContext?.projectId || payload.projectId || null;
+  const projectId = sharedFirmsContext?.projectId || providerContext?.projectId || payload.projectId || null;
   const meetingId = payload.meetingId || null;
   const invoiceId = payload.invoiceId || null;
   const invoicePreview = payload.invoicePreview === true;
@@ -431,6 +445,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
     `[print:${jobId}] start mode=${mode} projectId=${projectId} meetingId=${meetingId} invoiceId=${invoiceId} orientation=${orientation}`
   );
 
+  if (sharedFirmsContext) recheckSharedFirmsPrint(payload, sharedFirmsContext);
   const data = isProviderRequest(payload) ? await providerBridge().provide(payload) : await getPrintData({
     mode,
     projectId,
@@ -444,15 +459,22 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
     restarbeitenLocationLabels: payload.restarbeitenLocationLabels || null,
     showAmpelInList: typeof payload.showAmpelInList === "boolean" ? payload.showAmpelInList : null,
   });
+  if (sharedFirmsContext) recheckSharedFirmsPrint(payload, sharedFirmsContext);
   const projectNumber = data?.project?.project_number || data?.project?.projectNumber || null;
 
+  let sharedFirmsOutputPath;
+  if (sharedFirmsContext) {
+    const dir = payload.targetDir === "temp" ? app.getPath("temp") : sharedFirmsContext.directory;
+    fs.mkdirSync(dir, { recursive: true });
+    sharedFirmsOutputPath = uniquePath(dir, payload.fileName || "Firmenliste.pdf");
+  }
   let providerOutputPath;
   if (isProviderRequest(payload)) {
     const dir = payload.targetDir === "temp" ? app.getPath("temp") : providerBridge().outputDirectory(payload);
     fs.mkdirSync(dir, { recursive: true });
     providerOutputPath = uniquePath(dir, payload.fileName || "Technisches-Dokument.pdf");
   }
-  const outPath = providerOutputPath || await _buildOutputPath({
+  const outPath = sharedFirmsOutputPath || providerOutputPath || await _buildOutputPath({
     fileName: payload.fileName || null,
     targetDir: payload.targetDir,
     baseDir: payload.baseDir,
@@ -540,12 +562,15 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
         if (msg?.ok === false) {
           throw new Error(String(msg?.error || "Print-Renderer hat die PDF-Erzeugung abgewiesen."));
         }
+        if (sharedFirmsContext) recheckSharedFirmsPrint(payload, sharedFirmsContext);
         if (isProviderRequest(payload)) providerBridge().resolve(payload);
         const pdfBuffer = await win.webContents.printToPDF(options);
         // Ein Timeout oder Fensterabbruch bleibt auch bei spaeter PDF-Antwort erfolglos.
         if (done) return;
+        if (sharedFirmsContext) recheckSharedFirmsPrint(payload, sharedFirmsContext);
         if (isProviderRequest(payload)) providerBridge().resolve(payload);
-        fs.writeFileSync(outPath, pdfBuffer);
+        if (sharedFirmsContext) fs.writeFileSync(outPath, pdfBuffer, { flag: "wx" });
+        else fs.writeFileSync(outPath, pdfBuffer);
         console.log(`[print:${jobId}] PDF written -> ${outPath}`);
         done = true;
         cleanup();
@@ -572,6 +597,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
       win.webContents.send("print:init", {
         jobId,
         ...(isProviderRequest(payload) ? { providerRequest: structuredClone(payload.providerRequest), documentId: providerContext.documentId } : {}),
+        ...(sharedFirmsContext ? { moduleId: sharedFirmsContext.moduleId, storage: structuredClone(sharedFirmsContext.storage) } : {}),
         mode,
         documentTypeId: payload.documentTypeId || null,
         projectId,
@@ -610,12 +636,15 @@ function registerPrintIpc() {
   ipcMain.handle("print:getData", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      if (isProviderRequest(p)) providerBridge().resolve(p);
-      else _enforceFeature(_featureForPrintMode(p.mode));
+      const sharedFirmsContext = isSharedFirmsPrintRequest(p) ? sharedFirmsPrintAccess().resolve(p) : null;
+      if (!sharedFirmsContext) {
+        if (isProviderRequest(p)) providerBridge().resolve(p);
+        else _enforceFeature(_featureForPrintMode(p.mode));
+      }
       const orientation = _resolveRequestedOrientation(p);
       const data = isProviderRequest(p) ? await providerBridge().provide(p) : await getPrintData({
         mode: p.mode,
-        projectId: p.projectId,
+        projectId: sharedFirmsContext?.projectId || p.projectId,
         meetingId: p.meetingId,
         invoiceId: p.invoiceId,
         invoicePreview: p.invoicePreview === true,
@@ -626,6 +655,7 @@ function registerPrintIpc() {
         restarbeitenLocationLabels: p.restarbeitenLocationLabels || null,
         showAmpelInList: typeof p.showAmpelInList === "boolean" ? p.showAmpelInList : null,
       });
+      if (sharedFirmsContext) recheckSharedFirmsPrint(p, sharedFirmsContext);
       const pdfResolution = _getPdfEditorAdapterResolver().resolvePrintRegistration({ documentTypeId: p.documentTypeId, mode: isProviderRequest(p) ? undefined : data.mode });
       if (pdfResolution) {
         const pdfAdapter = pdfResolution.adapter;
@@ -666,8 +696,11 @@ function registerPrintIpc() {
   ipcMain.handle("print:openHtmlPreview", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      if (isProviderRequest(p)) providerBridge().resolve(p);
-      else _enforceFeature(_featureForPrintMode(p.mode));
+      const sharedFirmsContext = isSharedFirmsPrintRequest(p) ? sharedFirmsPrintAccess().resolve(p) : null;
+      if (!sharedFirmsContext) {
+        if (isProviderRequest(p)) providerBridge().resolve(p);
+        else _enforceFeature(_featureForPrintMode(p.mode));
+      }
       const orientation = _resolveRequestedOrientation(p);
       const jobId = _randId();
       const win = createPrintWindow({ show: true, devTools: false });
@@ -678,9 +711,10 @@ function registerPrintIpc() {
         win.webContents.send("print:init", {
           jobId,
           ...(isProviderRequest(p) ? { providerRequest: structuredClone(p.providerRequest), documentId: p.providerRequest.documentId } : {}),
+          ...(sharedFirmsContext ? { moduleId: sharedFirmsContext.moduleId, storage: structuredClone(sharedFirmsContext.storage) } : {}),
           mode: p.mode || "topsAll",
           documentTypeId: p.documentTypeId || null,
-          projectId: p.providerRequest?.projectId || p.projectId || null,
+          projectId: sharedFirmsContext?.projectId || p.providerRequest?.projectId || p.projectId || null,
           meetingId: p.meetingId || null,
           invoiceId: p.invoiceId || null,
           invoicePreview: p.invoicePreview === true,
@@ -713,8 +747,11 @@ function registerPrintIpc() {
   ipcMain.handle("print:toPdfAndOpen", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      if (isProviderRequest(p)) providerBridge().resolve(p);
-      else _enforceFeature(_featureForPrintMode(p.mode));
+      const sharedFirmsContext = isSharedFirmsPrintRequest(p) ? sharedFirmsPrintAccess().resolve(p) : null;
+      if (!sharedFirmsContext) {
+        if (isProviderRequest(p)) providerBridge().resolve(p);
+        else _enforceFeature(_featureForPrintMode(p.mode));
+      }
       const outPath = await printToPdf(p);
       const openError = await shell.openPath(outPath);
       if (String(openError || "").trim()) {
@@ -728,8 +765,11 @@ function registerPrintIpc() {
   ipcMain.handle("print:toPdfAndPreviewInternal", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      if (isProviderRequest(p)) providerBridge().resolve(p);
-      else _enforceFeature(_featureForPrintMode(p.mode));
+      const sharedFirmsContext = isSharedFirmsPrintRequest(p) ? sharedFirmsPrintAccess().resolve(p) : null;
+      if (!sharedFirmsContext) {
+        if (isProviderRequest(p)) providerBridge().resolve(p);
+        else _enforceFeature(_featureForPrintMode(p.mode));
+      }
       const outPath = await printToPdf(p);
       const previewResult = await openInternalPdfPreview({
         filePath: outPath,
@@ -745,8 +785,11 @@ function registerPrintIpc() {
   ipcMain.handle("print:toPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      if (isProviderRequest(p)) providerBridge().resolve(p);
-      else _enforceFeature(_featureForPrintMode(p.mode));
+      const sharedFirmsContext = isSharedFirmsPrintRequest(p) ? sharedFirmsPrintAccess().resolve(p) : null;
+      if (!sharedFirmsContext) {
+        if (isProviderRequest(p)) providerBridge().resolve(p);
+        else _enforceFeature(_featureForPrintMode(p.mode));
+      }
       console.log(
         `[PRINT_ACTIVE] handler=print:toPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""
@@ -797,8 +840,11 @@ function registerPrintIpc() {
   ipcMain.handle("print:htmlToPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      if (isProviderRequest(p)) providerBridge().resolve(p);
-      else _enforceFeature(_featureForPrintMode(p.mode));
+      const sharedFirmsContext = isSharedFirmsPrintRequest(p) ? sharedFirmsPrintAccess().resolve(p) : null;
+      if (!sharedFirmsContext) {
+        if (isProviderRequest(p)) providerBridge().resolve(p);
+        else _enforceFeature(_featureForPrintMode(p.mode));
+      }
       console.log(
         `[PRINT_ACTIVE] handler=print:htmlToPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""

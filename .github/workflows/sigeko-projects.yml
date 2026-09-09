@@ -9,6 +9,11 @@ on:
       - 'src/main/modules/sigeko/**'
       - 'src/main/ipc/sigekoIpc.js'
       - 'src/main/preload.js'
+      - 'src/main/print/printData.js'
+      - 'src/main/print/sharedFirmsPrintAccess.js'
+      - 'src/main/ipc/printIpc.js'
+      - 'scripts/tests/sharedFirmsPrintAccess.test.cjs'
+      - 'scripts/tests/printJobLifecycle.test.cjs'
       - 'scripts/tests/sigekoProjectRoles.test.cjs'
       - 'scripts/tests/sigekoReadiness.test.cjs'
       - 'scripts/tests/sigekoAuthorities.test.cjs'
@@ -97,6 +102,12 @@ jobs:
         run: node scripts/tests/plannedStartForm.test.cjs
       - name: SiGeKo form payload and mounted component contract
         run: node scripts/tests/sigekoGrunddatenForm.test.cjs
+      - name: Shared module firms print access and context
+        run: >-
+          node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sharedFirmsPrintAccess.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
+      - name: Existing print job lifecycle with explicit module access
+        run: >-
+          node -e "let failed=0;require('./scripts/tests/printJobLifecycle.test.cjs').runPrintJobLifecycleTests(async(n,f)=>{try{await f();console.log('PASS '+n)}catch(e){failed++;console.error(n,e)}}).then(()=>{process.exitCode=failed?1:0}).catch(e=>{console.error(e);process.exitCode=1})"
       - name: SiGeKo pre-notification form and mounted component contract
         run: node scripts/tests/sigekoPreNotificationForm.test.cjs
       - name: Install Linux display support
