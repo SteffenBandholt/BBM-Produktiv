@@ -1,3 +1,4 @@
+import { projectBuilderUiEditorContract, BUILDER_SCOPE } from "../modules/projektverwaltung/screens/ProjectBuilder.uiEditorContract.js";
 import { projectPlannedStartUiEditorContract, PLANNED_START_SCOPE } from "../modules/projektverwaltung/screens/ProjectPlannedStart.uiEditorContract.js";
 import { sigekoScreenUiEditorContract } from "../modules/sigeko/SigekoScreen.uiEditorContract.js";
 import { restarbeitenFilterbarUiEditorContract } from "../modules/restarbeiten/RestarbeitenFilterbar.uiEditorContract.js";
@@ -15,11 +16,12 @@ import {
 } from "../ui/MainHeader.uiEditorContract.js";
 import { aggregateBbmM83Components } from "./m83ComponentContract.js";
 
-export const BBM_M80_REGISTRY_VERSION = 31;
+export const BBM_M80_REGISTRY_VERSION = 32;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
   projectPlannedStartUiEditorContract,
+  projectBuilderUiEditorContract,
   sigekoScreenUiEditorContract,
   sigekoMainHeaderLauncherUiEditorContract,
   restarbeitenFilterbarUiEditorContract,
@@ -58,11 +60,11 @@ function blockedScope(scopeId, name, reason = "registration_inventory_pending") 
 export const BBM_M80_ACTIVE_SCOPES = Object.freeze([
   "restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root",
   "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root",
-  "rechnung.screen", "sigeko.screen", PLANNED_START_SCOPE,
+  "rechnung.screen", "sigeko.screen", PLANNED_START_SCOPE, BUILDER_SCOPE,
 ]);
 
 export const BBM_M80_ACTIVE_SCOPE_GROUPS = Object.freeze([
-  Object.freeze([PLANNED_START_SCOPE]),
+  Object.freeze([PLANNED_START_SCOPE, BUILDER_SCOPE]),
   Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]),
   Object.freeze(["protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root"]),
   Object.freeze(["rechnung.screen"]),

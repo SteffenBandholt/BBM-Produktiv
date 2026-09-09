@@ -34,7 +34,7 @@ function _sanitizeFilePart(value, fallback = "Projekt") {
 
 function _buildProjectTransferManifest({ projectId, project, storage, data, exportedAt, filesCount }) {
   return {
-    formatVersion: data.sigekoProjects?.length ? 4 : 3,
+    formatVersion: project.bauherr_firm_kind != null || project.bauherr_firm_id != null ? 5 : data.sigekoProjects?.length ? 4 : 3,
     firmLogicSchemaVersion: 1,
     exportDate: exportedAt,
     appVersion: app.getVersion ? app.getVersion() : "",
@@ -90,7 +90,7 @@ function _buildProjectTransferPayloads({ project, data }) {
   ];
 }
 
-function _fetchProjectData(projectId) {
+function _fetchProjectData(projectId, project) {
   const db = initDatabase();
 
   // Nicht aktivierte Fachmodule haben auf einer neuen Datenbank keine Tabellen.
@@ -162,6 +162,9 @@ function _fetchProjectData(projectId) {
 
   const sigekoProjects = projectRows("sigeko_projects");
   const globalFirmIds = new Set(projectGlobalFirms.map((row) => String(row.firm_id || "")).filter(Boolean));
+  if (project?.bauherr_firm_kind === "global_firm" && project.bauherr_firm_id) {
+    globalFirmIds.add(project.bauherr_firm_id);
+  }
   for (const row of meetingTops) {
     if (row.responsible_kind === "global_firm" && row.responsible_id) globalFirmIds.add(String(row.responsible_id));
   }
@@ -221,6 +224,9 @@ function _validateGlobalDependencies(db, payload, { requireSnapshots = false } =
   const requiredIds = new Set(
     (payload.projectGlobalFirms || []).map((row) => String(row?.firm_id || "")).filter(Boolean)
   );
+  if (payload.project?.bauherr_firm_kind === "global_firm" && payload.project.bauherr_firm_id) {
+    requiredIds.add(payload.project.bauherr_firm_id);
+  }
   for (const row of payload.meetingTops || []) {
     if (row?.responsible_kind === "global_firm" && row?.responsible_id) requiredIds.add(String(row.responsible_id));
   }
@@ -229,6 +235,10 @@ function _validateGlobalDependencies(db, payload, { requireSnapshots = false } =
   }
   const declaredById = new Map(declared.map((row) => [String(row?.id || ""), row]));
   const diagnostics = [];
+  if (payload.project?.bauherr_firm_kind === "global_firm" &&
+      declared.filter(row => row?.id === payload.project.bauherr_firm_id).length > 1) {
+    diagnostics.push(`Mehrdeutiger Snapshot der Bauherrfirma: ${payload.project.bauherr_firm_id}`);
+  }
   for (const id of requiredIds) {
     const existing = db.prepare("SELECT id, name FROM firms WHERE id = ?").get(id);
     if (!existing) {
@@ -277,6 +287,30 @@ function _validateGlobalDependencies(db, payload, { requireSnapshots = false } =
     error.code = "PROJECT_TRANSFER_GLOBAL_DEPENDENCY";
     throw error;
   }
+}
+
+// V5 prevents older importers from silently discarding the explicit central reference.
+// A project firm travels in this project's snapshots; global firms retain the existing
+// dependency policy (matching firm already present on the receiving installation).
+function _validateProjectBuilderReference(payload, { formatVersion }) {
+  const project = payload.project || {};
+  const kind = project.bauherr_firm_kind ?? null;
+  const id = project.bauherr_firm_id ?? null;
+  if (kind === null && id === null) {
+    if (formatVersion === 5) throw new Error("Bauherrreferenz fehlt im V5-Projektarchiv.");
+    return null;
+  }
+  if (formatVersion < 5) throw new Error("Bauherrreferenz erfordert Projektarchiv-Version 5.");
+  if (!["global_firm", "project_firm"].includes(kind) || typeof id !== "string" || !id.trim() || id !== id.trim()) {
+    throw new Error("Ungültige Bauherrreferenz im Projektarchiv.");
+  }
+  if (kind === "project_firm") {
+    const matches = (payload.projectFirms || []).filter(row => row?.id === id);
+    if (matches.length !== 1 || matches[0].project_id !== project.id) {
+      throw new Error("Bauherr-Projektfirma fehlt oder gehört nicht zum importierten Projekt.");
+    }
+  }
+  return { kind, id };
 }
 
 async function _countFilesRecursive(dirPath) {
@@ -471,7 +505,7 @@ async function _importProjectZip(filePath) {
     if (!manifestRes.ok) return { ok: false, error: manifestRes.error };
     const manifest = manifestRes.data || {};
     const formatVersion = Number(manifest.formatVersion || 1);
-    if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > 4) {
+    if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > 5) {
       return { ok: false, error: `Nicht unterstützte Projektarchiv-Version: ${manifest.formatVersion}` };
     }
     if (Number(manifest.firmLogicSchemaVersion || 0) > 1) {
@@ -529,8 +563,14 @@ async function _importProjectZip(filePath) {
       return { ok: false, error: "Ungültige SiGeKo-Projektzuordnung im Archiv." };
     }
 
+    if (formatVersion === 5 && (manifest.counts?.sigekoProjects ?? 0) !== payload.sigekoProjects.length) {
+      return { ok: false, error: "SiGeKo-Projektanzahl stimmt nicht mit dem V5-Manifest überein." };
+    }
+
     const project = payload.project;
     if (!project?.id) return { ok: false, error: "Projekt-ID fehlt im Export." };
+
+    const builder = _validateProjectBuilderReference(payload, { formatVersion });
 
     const projectNumber = project.project_number ?? project.projectNumber ?? manifest.projectNumber ?? null;
     const projectShortName = project.short ?? project.projectShortName ?? manifest.projectShortName ?? null;
@@ -593,6 +633,13 @@ async function _importProjectZip(filePath) {
       _insertRows(db, "project_settings", withPid(payload.projectSettings || []));
       const projectFirmRows = _withLegacyFirmUseDefaults(payload.projectFirms || []);
       _insertRows(db, "project_firms", withPid(projectFirmRows));
+      if (builder) {
+        // All referenced project firms now exist; never run selection validation
+        // before inserting them or bind an ID from a different project.
+        _validateGlobalDependencies(db, payload, { requireSnapshots: true });
+        db.prepare("UPDATE projects SET bauherr_firm_kind = ?, bauherr_firm_id = ? WHERE id = ?")
+          .run(builder.kind, builder.id, pid);
+      }
       _insertRows(db, "project_persons", payload.projectPersons || []);
       _insertRows(db, "sigeko_projects", payload.sigekoProjects);
       _insertRows(db, "project_candidates", withPid(payload.projectCandidates || []));
@@ -651,7 +698,12 @@ function registerProjectTransferIpc() {
       const exportName = `${fileNumber}-${fileShort}-export.zip`;
       const exportPath = path.join(exportRoot, exportName);
 
-      const data = _fetchProjectData(projectId);
+      const data = _fetchProjectData(projectId, project);
+      const builderVersion = project.bauherr_firm_kind != null || project.bauherr_firm_id != null ? 5 : 3;
+      const builder = _validateProjectBuilderReference({ project, projectFirms: data.projectFirms }, { formatVersion: builderVersion });
+      if (builder?.kind === "global_firm") {
+        _validateGlobalDependencies(initDatabase(), { project, globalFirmDependencies: data.globalFirmDependencies }, { requireSnapshots: true });
+      }
       const exportedAt = new Date().toISOString();
       const filesCount = projectDir && fs.existsSync(projectDir) ? await _countFilesRecursive(projectDir) : 0;
       const manifest = _buildProjectTransferManifest({

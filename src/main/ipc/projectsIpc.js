@@ -25,6 +25,10 @@ function _runProjectTask(task) {
 }
 
 function registerProjectsIpc() {
+  ipcMain.handle("projects:getBuilder", (_e, data) =>
+    _runProjectTask(() => ({ ok: true, data: projectsRepo.getBuilder(data?.projectId) }))
+  );
+
   ipcMain.handle("projects:list", () =>
     _runProjectTask(() => {
       const list = projectsRepo.listAll();
@@ -95,6 +99,7 @@ function registerProjectsIpc() {
 
         start_date: d.start_date ?? d.startDate ?? null,
         geplanter_baubeginn: d.geplanter_baubeginn ?? null,
+        bauherr: d.bauherr,
         end_date: d.end_date ?? d.endDate ?? null,
 
         notes: d.notes ?? null,

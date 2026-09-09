@@ -181,6 +181,8 @@ function ensureProjectsSchema(dbConn) {
   addCol("project_lead_phone", "TEXT");
   addCol("start_date", "TEXT");
   addCol("geplanter_baubeginn", "TEXT");
+  addCol("bauherr_firm_kind", "TEXT");
+  addCol("bauherr_firm_id", "TEXT");
   addCol("end_date", "TEXT");
   addCol("notes", "TEXT");
 
@@ -1973,6 +1975,8 @@ function initDatabase() {
       project_lead_phone TEXT,
       start_date TEXT,
       geplanter_baubeginn TEXT,
+      bauherr_firm_kind TEXT,
+      bauherr_firm_id TEXT,
       end_date TEXT,
       notes TEXT,
 

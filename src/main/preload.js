@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   // Projekte
   // ============================================================
   projectsList: () => ipcRenderer.invoke("projects:list"),
+  projectsGetBuilder: (data) => ipcRenderer.invoke("projects:getBuilder", data),
   projectsCreate: (data) => ipcRenderer.invoke("projects:create", data),
   projectsUpdate: (data) => ipcRenderer.invoke("projects:update", data),
   projectsStoragePreview: (data) => ipcRenderer.invoke("projects:storagePreview", data),

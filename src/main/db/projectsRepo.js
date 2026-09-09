@@ -1,6 +1,7 @@
 // src/main/db/projectsRepo.js
 const { initDatabase } = require("./database");
 const { randomUUID } = require("crypto");
+const { validateBuilder, resolveBuilder } = require("../domain/projects/projectBuilder");
 
 let _ensuredProjectNumberColumn = false;
 let _ensuredArchivedAtColumn = false;
@@ -91,6 +92,8 @@ function _safeGetById(db, projectId) {
           project_lead_phone,
           start_date,
           geplanter_baubeginn,
+          bauherr_firm_kind,
+          bauherr_firm_id,
           end_date,
           notes,
           archived_at
@@ -119,6 +122,8 @@ function _safeGetById(db, projectId) {
             project_lead_phone,
             start_date,
             geplanter_baubeginn,
+            bauherr_firm_kind,
+            bauherr_firm_id,
             end_date,
             notes
           FROM projects
@@ -144,6 +149,8 @@ function _safeGetById(db, projectId) {
             project_lead_phone,
             start_date,
             geplanter_baubeginn,
+            bauherr_firm_kind,
+            bauherr_firm_id,
             end_date,
             notes
           FROM projects
@@ -168,6 +175,12 @@ function getById(projectId) {
   _ensureProjectNumber(db);
   _ensureArchivedAt(db);
   return _safeGetById(db, projectId);
+}
+
+function getBuilder(projectId) {
+  const project = getById(projectId);
+  if (!project) throw new Error("Projekt nicht gefunden.");
+  return resolveBuilder(project, initDatabase());
 }
 
 function _orderByProjectNumberAndNameSql() {
@@ -205,6 +218,8 @@ function listAll() {
           project_lead_phone,
           start_date,
           geplanter_baubeginn,
+          bauherr_firm_kind,
+          bauherr_firm_id,
           end_date,
           notes,
           archived_at
@@ -234,6 +249,8 @@ function listAll() {
             project_lead_phone,
             start_date,
             geplanter_baubeginn,
+            bauherr_firm_kind,
+            bauherr_firm_id,
             end_date,
             notes
           FROM projects
@@ -258,6 +275,8 @@ function listAll() {
             project_lead_phone,
             start_date,
             geplanter_baubeginn,
+            bauherr_firm_kind,
+            bauherr_firm_id,
             end_date,
             notes
           FROM projects
@@ -294,6 +313,8 @@ function listArchived() {
           project_lead_phone,
           start_date,
           geplanter_baubeginn,
+          bauherr_firm_kind,
+          bauherr_firm_id,
           end_date,
           notes,
           archived_at
@@ -328,6 +349,9 @@ function createProject(data) {
   if (!name) throw new Error("name required");
 
   const id = randomUUID();
+  const builder = validateBuilder(d.bauherr, id, db);
+  const bauherr_firm_kind = builder?.kind ?? null;
+  const bauherr_firm_id = builder?.id ?? null;
 
   const project_number = _normText(d.project_number ?? d.projectNumber);
 
@@ -364,11 +388,13 @@ function createProject(data) {
         project_lead_phone,
         start_date,
         geplanter_baubeginn,
+        bauherr_firm_kind,
+        bauherr_firm_id,
         end_date,
         notes,
         archived_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     ).run(
       id,
@@ -382,6 +408,8 @@ function createProject(data) {
       project_lead_phone,
       start_date,
       geplanter_baubeginn,
+      bauherr_firm_kind,
+      bauherr_firm_id,
       end_date,
       notes,
       archived_at
@@ -402,10 +430,12 @@ function createProject(data) {
           project_lead_phone,
           start_date,
           geplanter_baubeginn,
+          bauherr_firm_kind,
+          bauherr_firm_id,
           end_date,
           notes
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
       ).run(
         id,
@@ -419,6 +449,8 @@ function createProject(data) {
         project_lead_phone,
         start_date,
         geplanter_baubeginn,
+        bauherr_firm_kind,
+        bauherr_firm_id,
         end_date,
         notes
       );
@@ -436,10 +468,12 @@ function createProject(data) {
           project_lead_phone,
           start_date,
           geplanter_baubeginn,
+          bauherr_firm_kind,
+          bauherr_firm_id,
           end_date,
           notes
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
       ).run(
         id,
@@ -452,6 +486,8 @@ function createProject(data) {
         project_lead_phone,
         start_date,
         geplanter_baubeginn,
+        bauherr_firm_kind,
+        bauherr_firm_id,
         end_date,
         notes
       );
@@ -514,7 +550,15 @@ function updateProject(data) {
   ]);
 
   const keys = Object.keys(patch).filter((k) => allowed.has(k) && patch[k] !== undefined);
-  if (keys.length === 0) return _safeGetById(db, projectId);
+  const changesBuilder = rawPatch.bauherr !== undefined;
+  let builder;
+  if (changesBuilder) {
+    const current = _safeGetById(db, projectId);
+    if (!current) throw new Error("Projekt nicht gefunden.");
+    if (current.archived_at) throw new Error("Bauherr eines archivierten Projekts kann nicht geändert werden.");
+    builder = validateBuilder(rawPatch.bauherr, projectId, db);
+  }
+  if (keys.length === 0 && !changesBuilder) return _safeGetById(db, projectId);
 
   const sets = [];
   const vals = [];
@@ -529,6 +573,11 @@ function updateProject(data) {
     }
     sets.push(`${k} = ?`);
     vals.push(_normText(patch[k]));
+  }
+
+  if (changesBuilder) {
+    sets.push("bauherr_firm_kind = ?", "bauherr_firm_id = ?");
+    vals.push(builder?.kind ?? null, builder?.id ?? null);
   }
 
   vals.push(projectId);
@@ -666,6 +715,7 @@ function deleteForever(projectId) {
 
 module.exports = {
   getById,
+  getBuilder,
   listAll,
   listArchived,
   createProject,

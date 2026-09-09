@@ -9,6 +9,7 @@
   import * as refs from "../../src/renderer/ui-editor/m80Refs.js";
   import { createM80RegistrationDescriptor } from "../../src/renderer/ui-editor/m80HostAdapter.js";
   window.s22 = {
+    alerts: [],
     refs, descriptor: createM80RegistrationDescriptor,
     async open(projectId = null) {
       this.form?.destroy();
@@ -22,10 +23,17 @@
         this.form[key].dispatchEvent(new Event("change", { bubbles: true }));
       }
     },
+    selectBuilder(kind, id) {
+      const input = this.form.builderField.input;
+      input.value = kind ? JSON.stringify([kind, id]) : "";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    },
     bounds(key) {
-      const el = this.form[key]; el.scrollIntoView({ block: "nearest" });
+      const el = key === "builder" ? this.form.builderField.input : this.form[key]; el.scrollIntoView({ block: "nearest" });
       const { x, y, width, height } = el.getBoundingClientRect(); return { x, y, width, height };
     },
   };
+  window.alert = message => window.s22.alerts.push(String(message));
 </script>
 </body></html>
