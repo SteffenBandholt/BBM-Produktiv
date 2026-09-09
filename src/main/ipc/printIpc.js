@@ -13,6 +13,8 @@
 
 const { ipcMain, app, shell, BrowserWindow } = require("electron");
 const fs = require("fs");
+const { createHash } = require("node:crypto");
+const { isDeepStrictEqual } = require("node:util");
 const path = require("path");
 const { pathToFileURL } = require("url");
 const { createPrintWindow, getPrintAppUrl } = require("../print/printWindow");
@@ -51,6 +53,38 @@ function recheckSharedFirmsPrint(payload, initial) {
     throw Object.assign(new Error("Projektablage hat sich während der PDF-Erzeugung geändert. Bitte erneut erzeugen."), { code: "PDF_PROJECT_STORAGE_CHANGED" });
   }
   return current;
+}
+
+// Only Main callers can supply prepared data or a write guard. Renderer requests
+// carry a job marker, never the trusted data or callbacks themselves.
+const preparedPrintJobs = new Map();
+const preparedPrintSenders = new WeakMap();
+function printJobError(message) { return Object.assign(new Error(message), { code: "PDF_PREPARED_JOB_INVALID" }); }
+function mainPrintOptions(options) {
+  if (options === undefined) return {};
+  if (!options || typeof options !== "object" || Array.isArray(options) ||
+      Reflect.ownKeys(options).some(key => !["preparedData", "beforeWrite", "exclusiveWrite", "includeMetadata"].includes(key)) ||
+      Object.hasOwn(options, "beforeWrite") && typeof options.beforeWrite !== "function" ||
+      ["exclusiveWrite", "includeMetadata"].some(key => Object.hasOwn(options, key) && typeof options[key] !== "boolean")) {
+    throw printJobError("Ungültige Main-Druckoptionen.");
+  }
+  const result = { ...options };
+  if (Object.hasOwn(result, "preparedData")) {
+    if (!result.preparedData || typeof result.preparedData !== "object" || Array.isArray(result.preparedData)) throw printJobError("Vorbereitete Druckdaten fehlen.");
+    result.preparedData = structuredClone(result.preparedData);
+  }
+  return result;
+}
+function preparedPrintJob(event, payload) {
+  const senderJob = event?.sender && preparedPrintSenders.get(event.sender);
+  const job = preparedPrintJobs.get(payload?.jobId);
+  if (!senderJob && !job && payload?.preparedDataJob !== true) return null;
+  if (!job || job !== senderJob || job.sender !== event?.sender || payload?.preparedDataJob !== true || payload.jobId !== job.jobId ||
+      ["mode", "projectId", "documentTypeId", "documentId", "moduleId"].some(key => (payload[key] ?? null) !== (job.identity[key] ?? null)) ||
+      !isDeepStrictEqual(payload.providerRequest ?? null, job.identity.providerRequest ?? null)) {
+    throw printJobError("Vorbereiteter Druckauftrag ist beendet oder gehört zu einem anderen Fenster/Dokument.");
+  }
+  return job;
 }
 
 let _pdfEditorAdapterResolver = null;
@@ -424,9 +458,11 @@ function attachPrintDebugPipes(win, jobId) {
   win.webContents.on("crashed", () => console.log(`[print:${jobId}] webContents crashed`));
 }
 
-async function _printToPdf(payload = {}, includeMetadata = false) {
+async function _printToPdf(payload = {}, includeMetadata = false, options) {
+  const mainOptions = mainPrintOptions(options);
+  const hasPreparedData = Object.hasOwn(mainOptions, "preparedData");
   // Keep an explicit module request stable across asynchronous data/print steps.
-  if (isSharedFirmsPrintRequest(payload)) payload = structuredClone(payload);
+  if (isSharedFirmsPrintRequest(payload) || hasPreparedData || options !== undefined) payload = structuredClone(payload);
   const sharedFirmsContext = isSharedFirmsPrintRequest(payload) ? sharedFirmsPrintAccess().resolve(payload) : null;
   const jobId = _randId();
   const { resolvePrintMode } = await _loadPrintModesModule();
@@ -441,12 +477,22 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
   const invoicePreview = payload.invoicePreview === true;
   const orientation = isProviderRequest(payload) ? "portrait" : _resolveRequestedOrientation(payload);
 
+  if (hasPreparedData) {
+    const prepared = mainOptions.preparedData;
+    if (prepared.mode !== mode || prepared.orientation !== orientation ||
+        (prepared.project?.id ?? prepared.projectId) !== projectId ||
+        prepared.projectId != null && prepared.projectId !== projectId ||
+        isProviderRequest(payload) && (prepared.documentId !== providerContext.documentId || prepared.documentTypeId !== payload.documentTypeId)) {
+      throw printJobError("Vorbereitete Druckdaten passen nicht zu Modus, Projekt, Dokument oder Ausrichtung.");
+    }
+  }
+
   console.log(
     `[print:${jobId}] start mode=${mode} projectId=${projectId} meetingId=${meetingId} invoiceId=${invoiceId} orientation=${orientation}`
   );
 
   if (sharedFirmsContext) recheckSharedFirmsPrint(payload, sharedFirmsContext);
-  const data = isProviderRequest(payload) ? await providerBridge().provide(payload) : await getPrintData({
+  const data = hasPreparedData ? mainOptions.preparedData : isProviderRequest(payload) ? await providerBridge().provide(payload) : await getPrintData({
     mode,
     projectId,
     meetingId,
@@ -489,6 +535,13 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
   const debug = !silent && !!payload.debug;
 
   const win = createPrintWindow({ show: debug, devTools: debug });
+  if (hasPreparedData) {
+    const identity = { mode, projectId, documentTypeId: payload.documentTypeId || null,
+      documentId: providerContext?.documentId || null, moduleId: sharedFirmsContext?.moduleId || null,
+      providerRequest: isProviderRequest(payload) ? structuredClone(payload.providerRequest) : null };
+    const entry = { jobId, sender: win.webContents, identity, payload, data: mainOptions.preparedData };
+    preparedPrintJobs.set(jobId, entry); preparedPrintSenders.set(win.webContents, entry);
+  }
   attachPrintDebugPipes(win, jobId);
 
   if (debug) {
@@ -508,6 +561,8 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
     const timeoutMs = Number.isFinite(timeoutMsRaw) && timeoutMsRaw > 0 ? timeoutMsRaw : 120000;
 
     const cleanup = () => {
+      preparedPrintJobs.delete(jobId);
+      preparedPrintSenders.delete(win.webContents);
       try {
         ipcMain.removeListener("print:ready", onReady);
         win.removeListener("closed", onClosed);
@@ -539,6 +594,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
     const onReady = async (evt, msg) => {
       if (done || printing) return;
       if (evt.sender !== win.webContents) return;
+      if (hasPreparedData && msg?.jobId !== jobId) return;
       if (msg?.jobId && msg.jobId !== jobId) return;
       printing = true;
 
@@ -569,7 +625,18 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
         if (done) return;
         if (sharedFirmsContext) recheckSharedFirmsPrint(payload, sharedFirmsContext);
         if (isProviderRequest(payload)) providerBridge().resolve(payload);
-        if (sharedFirmsContext) fs.writeFileSync(outPath, pdfBuffer, { flag: "wx" });
+        const bufferMetadata = options !== undefined && includeMetadata || mainOptions.beforeWrite ? {
+          sha256: createHash("sha256").update(pdfBuffer).digest("hex"), byteSize: pdfBuffer.length,
+        } : null;
+        if (mainOptions.beforeWrite) {
+          const result = mainOptions.beforeWrite(Object.freeze({ filePath: outPath, ...bufferMetadata }));
+          if (result && (typeof result === "object" || typeof result === "function") && typeof result.then === "function") {
+            Promise.resolve(result).catch(() => {});
+            throw printJobError("Druck-Schreibprüfung muss synchron erfolgen.");
+          }
+        }
+        if (done) return;
+        if (sharedFirmsContext || mainOptions.exclusiveWrite) fs.writeFileSync(outPath, pdfBuffer, { flag: "wx" });
         else fs.writeFileSync(outPath, pdfBuffer);
         console.log(`[print:${jobId}] PDF written -> ${outPath}`);
         done = true;
@@ -580,6 +647,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
           pageCount: Number(msg?.previewMetadata?.pageCount || 0),
           generatedAt: new Date().toISOString(),
           renderBounds: Array.isArray(msg?.previewMetadata?.renderBounds) ? msg.previewMetadata.renderBounds : [],
+          ...(options !== undefined ? bufferMetadata : {}),
         } : outPath);
       } catch (err) {
         console.log(`[print:${jobId}] printToPDF ERROR: ${err?.message || err}`);
@@ -596,6 +664,7 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
       console.log(`[print:${jobId}] sending print:init (debug=${debug})`);
       win.webContents.send("print:init", {
         jobId,
+        ...(hasPreparedData ? { preparedDataJob: true } : {}),
         ...(isProviderRequest(payload) ? { providerRequest: structuredClone(payload.providerRequest), documentId: providerContext.documentId } : {}),
         ...(sharedFirmsContext ? { moduleId: sharedFirmsContext.moduleId, storage: structuredClone(sharedFirmsContext.storage) } : {}),
         mode,
@@ -623,8 +692,8 @@ async function _printToPdf(payload = {}, includeMetadata = false) {
   });
 }
 
-async function printToPdf(payload = {}) {
-  return _printToPdf(payload, false);
+async function printToPdf(payload = {}, options) {
+  return _printToPdf(payload, options?.includeMetadata === true, options);
 }
 
 async function generatePdfForUiEditor(payload = {}) {
@@ -635,14 +704,15 @@ function registerPrintIpc() {
   // Stable technical service entry points for renderer callers.
   ipcMain.handle("print:getData", async (_evt, payload) =>
     _runIpcTask(async () => {
-      const p = payload || {};
+      const prepared = preparedPrintJob(_evt, payload);
+      const p = prepared ? prepared.payload : payload || {};
       const sharedFirmsContext = isSharedFirmsPrintRequest(p) ? sharedFirmsPrintAccess().resolve(p) : null;
       if (!sharedFirmsContext) {
         if (isProviderRequest(p)) providerBridge().resolve(p);
         else _enforceFeature(_featureForPrintMode(p.mode));
       }
       const orientation = _resolveRequestedOrientation(p);
-      const data = isProviderRequest(p) ? await providerBridge().provide(p) : await getPrintData({
+      const data = prepared ? structuredClone(prepared.data) : isProviderRequest(p) ? await providerBridge().provide(p) : await getPrintData({
         mode: p.mode,
         projectId: sharedFirmsContext?.projectId || p.projectId,
         meetingId: p.meetingId,

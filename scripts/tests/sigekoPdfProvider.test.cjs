@@ -70,6 +70,44 @@ async function runSigekoPdfProviderTests(run) {
       await assert.rejects(() => bridge.provide(source), { code: "PDF_PROVIDER_DATA_INVALID" });
     }
   });
+  await run("S5.3b2: provider receives immutable validated outer identity separately from untrusted input", async () => {
+    let received;
+    const registry = createModuleServiceProviderRegistry();
+    registry.register(PdfDocumentProvider({ moduleId: "sigeko", type: DOCUMENT_TYPE_ID, provide: request => {
+      received = request; request.input.title = "Provider-local mutation"; return { title: "Resolved by identity", body: "Main-owned content" };
+    } }));
+    const bridge = createPdfProviderBridge({ registry, storage, enforce: () => {} }); const source = payload();
+    source.providerRequest.data.identity = { projectId: "forged", documentId: "forged" };
+    await bridge.provide(source);
+    assert.deepEqual(received.identity, { moduleId: "sigeko", projectId: "project-a", documentId: "document-a" });
+    assert.ok(Object.isFrozen(received.identity)); assert.throws(() => { received.identity.documentId = "changed"; }, TypeError);
+    assert.equal(source.providerRequest.data.title, "Neutraler Titel"); assert.equal(received.input.identity.documentId, "forged");
+  });
+  await run("S5.3b2: provider-owned runtime supplies cloned shared header data while outer document identity remains authoritative", async () => {
+    const context = { project: { id: "project-a", name: "Captured project" }, orientation: "portrait", settings: { title: "Captured title" },
+      userData: { name1: "Captured office" }, logos: [{ dataUrl: "data:image/png;base64,fixture" }],
+      mode: "invoice", documentTypeId: "foreign", projectId: "foreign", documentId: "foreign", tableLayouts: { foreign: true } };
+    const registry = createModuleServiceProviderRegistry();
+    registry.register(PdfDocumentProvider({ moduleId: "sigeko", type: DOCUMENT_TYPE_ID, provide: () => ({ title: "Document", body: "Body", printRuntimeContext: context }) }));
+    const bridge = createPdfProviderBridge({ registry, storage, enforce: () => {} }); const result = await bridge.provide(payload());
+    assert.equal(result.mode, "provider"); assert.equal(result.projectId, "project-a"); assert.equal(result.documentId, "document-a");
+    assert.equal(result.documentTypeId, DOCUMENT_TYPE_ID); assert.equal(result.orientation, "portrait"); assert.deepEqual(result.tableLayouts, {});
+    assert.equal(result.project.name, "Captured project"); assert.equal(result.settings.title, "Captured title"); assert.equal(result.userData.name1, "Captured office");
+    context.project.name = "Changed later"; context.logos[0].dataUrl = "changed";
+    assert.equal(result.project.name, "Captured project"); assert.equal(result.logos[0].dataUrl, "data:image/png;base64,fixture");
+  });
+  await run("S5.3b2: malformed foreign and landscape provider runtimes cannot enter the common print envelope", async () => {
+    for (const context of [null, [], {}, { project: { id: "foreign" }, orientation: "portrait" }, { project: { id: "project-a" }, orientation: "landscape" }]) {
+      const registry = createModuleServiceProviderRegistry();
+      registry.register(PdfDocumentProvider({ moduleId: "sigeko", type: DOCUMENT_TYPE_ID, provide: () => ({ title: "Document", printRuntimeContext: context }) }));
+      const bridge = createPdfProviderBridge({ registry, storage, enforce: () => {} });
+      await assert.rejects(bridge.provide(payload()), { code: "PDF_PROVIDER_CONTEXT_INVALID" });
+    }
+    const bridge = createPdfProviderBridge({ registry: createProductivePdfProviderRegistry(), storage, enforce: () => {} });
+    const source = payload(); source.providerRequest.data.printRuntimeContext = { project: { id: "foreign" }, orientation: "landscape" };
+    // The existing technical provider only returns its validated title/body.
+    const result = await bridge.provide(source); assert.equal(result.project, undefined); assert.deepEqual(result.settings, {});
+  });
   await run("S1.4a: fixed-layout text operations enforce limits atomically and lock domain changes", () => {
     const adapter = adapterFor();
     assert.equal(REGISTRY.layoutModel, "fixed-layout");
