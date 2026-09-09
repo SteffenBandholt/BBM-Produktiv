@@ -109,7 +109,7 @@ async function runSigekoModuleBoundaryTests(run) {
         };
       },
     });
-    assert.deepEqual(Object.keys(exposed.bbmDb).filter((key) => key.startsWith("sigeko")), ["sigekoGetStoragePaths", "sigekoEnsureStorageDirectories", "sigekoOpenStorageDirectory", "sigekoGetModuleInfo", "sigekoGetCoordinatorProfile", "sigekoSaveCoordinatorProfile", "sigekoGetProjectData", "sigekoSaveProjectData"]);
+    assert.deepEqual(Object.keys(exposed.bbmDb).filter((key) => key.startsWith("sigeko")), ["sigekoGetStoragePaths", "sigekoEnsureStorageDirectories", "sigekoOpenStorageDirectory", "sigekoGetModuleInfo", "sigekoGetCoordinatorProfile", "sigekoSaveCoordinatorProfile", "sigekoGetProjectData", "sigekoGetReadiness", "sigekoSaveProjectData"]);
     assert.deepEqual(await exposed.bbmDb.sigekoGetModuleInfo(), { ok: true, module: { moduleId: "sigeko", moduleType: "project" } });
     harness.setStatus(status([]));
     await assert.rejects(exposed.bbmDb.sigekoGetModuleInfo(), { code: "MODULE_NOT_ACTIVE" });

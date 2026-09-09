@@ -1,3 +1,22 @@
+## 2026-09-09 – SiGeKo S3: Übersicht und Readiness abgeschlossen (PR #330)
+
+Auf main c8acbfb8 / integrierter Bauherr-Vorstufe: lesender ReadinessService über
+bestehende Projekt-/Bauherr-/Rollenquellen, konkrete Fehlstellen und Nacharbeitswege
+im vorhandenen SiGeKo-Screen. Gespeicherte Daten werden beim Öffnen, Aktualisieren
+und nach Profil-/Rollenspeichern geprüft; Entwürfe bleiben erhalten. Langsame oder
+fehlgeschlagene Readiness sperrt die Grunddatenpflege nicht. Reviewbefund dazu
+korrigiert und unabhängig durch Deferred-Test nachgeprüft.
+121 vollständige M83-Slots, Registry 33; fremde Scope-Fingerprints unverändert.
+Volltest 1641/97 → 1668/97, exakt gleiche 97 Baselinefehler, 27 neue grüne Prüfungen.
+Windows-/Linux-CI 34373164070 vollständig PASS, echte Maus-/IPC-/SQLite-Abläufe,
+Projektwechsel, breite/schmale Geometrie und Screenshots geprüft. Allgemeine npm-CI
+weiterhin bekannte Kit-/Popup-/Lizenzbaseline. Integration über PR #330.
+Details: docs/SIGEKO_S3_READINESS.md, UI_ENTWURF.md und TESTVERGLEICH.json.
+S4 separat als nächstes: Behörden / Notfall / Versorger. S3 zeigt dafür ausdrücklich
+„Noch nicht erfasst – folgt mit S4“. Konkrete Fortfahren-Bestätigungen an späteren
+Vorgangseinstiegen S5–S7 anschließen. Rechnung #275 eingefroren; Behörden-PDF
+Januar 2022 erst vor späterer Übernahme auf Aktualität prüfen.
+
 ## 2026-09-09 – Zentrale Bauherrzuordnung: Vorbereitung für SiGeKo S3 (PR #329)
 
 Die bestätigte ausdrückliche Bauherrauswahl ersetzt den dokumentierten S3-Blocker.
