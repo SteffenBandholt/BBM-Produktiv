@@ -42,23 +42,24 @@ async function runSigekoEditorManifestTests(run) {
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'ui-editor-target.json'), 'utf8'));
   const scopes = registry.listM80RegistryScopes();
   await run('S1.2-Fix: kanonisches Manifest enthaelt exakt den additiven SiGeKo-Scope', () => {
-    assert.deepEqual(manifest.activeScopes, [...Object.keys(EXISTING_SCOPE_FINGERPRINTS), 'sigeko.screen', 'projektverwaltung.plannedStart', 'projektverwaltung.builder']);
+    assert.deepEqual(manifest.activeScopes, [...Object.keys(EXISTING_SCOPE_FINGERPRINTS), 'sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.builder']);
     assert.deepEqual(manifest.activeScopes, registry.BBM_M80_ACTIVE_SCOPES);
     assert.equal(manifest.registryVersion, registry.BBM_M80_REGISTRY_VERSION);
     assert.equal(manifest.registryFingerprint, createRegistryFingerprint(scopes));
     assert.equal(manifest.schemaVersion, 2); assert.equal(manifest.contractVersion, '1.2');
     assert.equal(manifest.profileRoot, '.ui-editor-kit/profiles');
     assert.deepEqual(manifest.scopes.filter(s => s.scopeId === 'sigeko.screen'), [
-      { scopeId: 'sigeko.screen', status: 'complete', reason: null, elementCount: 207, missingReferenceCount: 0 },
+      { scopeId: 'sigeko.screen', status: 'complete', reason: null, elementCount: 208, missingReferenceCount: 0 },
     ]);
-    assert.equal(scopes.find(s => s.scopeId === 'sigeko.screen').elements.length, 207);
+    assert.equal(scopes.find(s => s.scopeId === 'sigeko.screen').elements.length, 208);
+    assert.deepEqual(manifest.scopes.filter(s => s.scopeId === 'sigeko.preNotification'), [{ scopeId: 'sigeko.preNotification', status: 'complete', reason: null, elementCount: 99, missingReferenceCount: 0 }]);
   });
   await run('S1.2-Fix: alle sieben bisherigen Scope-Fingerprints bleiben bytegleich', () => {
     for (const [scopeId, fingerprint] of Object.entries(EXISTING_SCOPE_FINGERPRINTS)) {
       assert.equal(createUiScopeFingerprint(scopes.find(s => s.scopeId === scopeId)), fingerprint, scopeId);
     }
     assert.equal(createUiScopeFingerprint(scopes.find(s => s.scopeId === 'projektverwaltung.plannedStart')), 'sha256:a3959a7358504a1a26f6b303de8929e6dab722b5835aa586be573646c04485a5');
-    assert.deepEqual(manifest.scopes.filter(s => !['sigeko.screen', 'projektverwaltung.plannedStart', 'projektverwaltung.builder'].includes(s.scopeId)).map(s => [s.scopeId, s.status, s.elementCount]), [
+    assert.deepEqual(manifest.scopes.filter(s => !['sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.builder'].includes(s.scopeId)).map(s => [s.scopeId, s.status, s.elementCount]), [
       ['restarbeiten.header.root', 'complete', 44], ['restarbeiten.list.root', 'complete', 32], ['restarbeiten.edit.root', 'complete', 53],
       ['protokoll.screen.root', 'complete', 34], ['protokoll.list.root', 'complete', 32], ['protokoll.edit.root', 'complete', 38],
       ['rechnung.screen', 'complete', 87], ['bbm.remaining', 'blocked', 0], ['pdf.bbm.protocol', 'complete', 28],
@@ -69,15 +70,56 @@ async function runSigekoEditorManifestTests(run) {
       ...(entry.baseline?.width === null || entry.baseline?.height === null ? { capturedBaseline: { width: 640, height: 64 } } : {}),
     })),
   } : scope);
+  await run('S5.2: getrennte Ansichten erhalten eigene Profile und unveränderte Startschlüssel', async () => {
+    const host = await importEsmFromFile(path.join(ROOT, 'src/renderer/ui-editor/m80HostAdapter.js'));
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'bbm-s52-profile-isolation-'));
+    try {
+      const cases = ['sigeko.screen', 'sigeko.preNotification'].map(scopeId => {
+        const activeScopes = [scopeId], key = registry.getM80LayoutStorageKey(activeScopes);
+        const registration = { applicationId: 'bbm-produktiv', displayName: 'BBM', framework: 'electron', registryStatus: 'incomplete', registryVersion: registry.BBM_M80_REGISTRY_VERSION,
+          activeScopes, registryScopes, supportedOperations: [...manifest.supportedOperations, 'setHorizontalOverflowMode'],
+          uiCapability: 'layout', pdfCapability: 'unavailable', labelFieldSeparation: true, visibilityCapability: true,
+          ...(key ? { layoutStorageKey: key } : {}) };
+        const scope = registryScopes.find(s => s.scopeId === scopeId);
+        const document = { schemaVersion: 2, applicationId: 'bbm-produktiv', profileId: 'standard', savedAt: '2026-09-09T00:00:00Z',
+          scopes: [{ scopeId, registryFingerprint: createUiScopeFingerprint(scope), layoutState: { elements: scope.elements.map(entry => savedElement(scopeId, entry)) } }] };
+        const profile = resolveBbmModuleLayoutProfileRoot(base, registration);
+        fs.mkdirSync(profile.profileRoot, { recursive: true });
+        const file = path.join(profile.profileRoot, 'standard.layout-profile.json'); fs.writeFileSync(file, JSON.stringify(document));
+        return { registration, profile, file, bytes: fs.readFileSync(file) };
+      });
+      assert.equal(path.basename(cases[0].profile.profileRoot), 'module-sigeko');
+      assert.equal(path.basename(cases[1].profile.profileRoot), 'module-sigeko-prenotification');
+      const controller = new ElectronUiEditorSessionController({ app: { getAppPath: () => ROOT, getVersion: () => '1.5.0', getPath: () => base },
+        ipcMain: { handle() {} }, getMainWindow: () => null, profileRootResolver: () => base,
+        spawnProcess: () => assert.fail('Kein Editorprozess für Restore') });
+      for (const projectId of ['project-a', 'project-b']) for (const entry of cases) {
+        const registration = { ...entry.registration, projectId };
+        assert.equal(resolveBbmModuleLayoutProfileRoot(base, registration).profileRoot, entry.profile.profileRoot);
+        const result = controller.loadStartupLayout(registration);
+        assert.equal(result.ok, true, JSON.stringify(result)); assert.equal(result.found, true);
+        assert.equal(controller.completeStartupLayout({ ok: true, profileSha256: result.profileSha256, layoutStorageKey: result.layoutStorageKey }).ok, true);
+        for (const sibling of cases) assert.deepEqual(fs.readFileSync(sibling.file), sibling.bytes);
+      }
+      assert.equal(host.createM80StartupRestoreKey(['sigeko.screen']), 'module:sigeko');
+      assert.equal(host.createM80StartupRestoreKey(['sigeko.preNotification']), 'layout:module-sigeko-prenotification');
+      for (const activeScopes of registry.BBM_M80_ACTIVE_SCOPE_GROUPS.filter(group => group[0] !== 'sigeko.preNotification')) {
+        assert.equal(registry.getM80LayoutStorageKey(activeScopes), null);
+        assert.equal(host.createM80StartupRestoreKey(activeScopes), `module:${activeScopes[0].split('.')[0]}`);
+      }
+      assert.equal(registry.getM80LayoutStorageKey(['sigeko.screen', 'sigeko.preNotification']), null);
+    } finally { fs.rmSync(base, { recursive: true, force: true }); }
+  });
   for (const activeScopes of registry.BBM_M80_ACTIVE_SCOPE_GROUPS) {
     const moduleId = activeScopes[0].split('.')[0];
-    await run(`S1.2-Fix: echter Profil-Restore ${moduleId} ohne Editorprozess`, () => {
+    await run(activeScopes[0] === 'sigeko.preNotification' ? 'S5.2: echter Profil-Restore Vorankündigung ohne Editorprozess' : `S1.2-Fix: echter Profil-Restore ${moduleId} ohne Editorprozess`, () => {
       const profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'bbm-s12-restore-'));
       try {
         const registration = {
           applicationId: 'bbm-produktiv', displayName: 'BBM', framework: 'electron',
           registryVersion: registry.BBM_M80_REGISTRY_VERSION, registryStatus: 'incomplete',
           activeScopes, registryScopes,
+          ...(registry.getM80LayoutStorageKey(activeScopes) ? { layoutStorageKey: registry.getM80LayoutStorageKey(activeScopes) } : {}),
           supportedOperations: [...manifest.supportedOperations, 'setHorizontalOverflowMode'],
           uiCapability: 'layout', pdfCapability: 'unavailable', labelFieldSeparation: true, visibilityCapability: true,
         };
@@ -86,7 +128,7 @@ async function runSigekoEditorManifestTests(run) {
           return { scopeId, registryFingerprint: EXISTING_SCOPE_FINGERPRINTS[scopeId] || createUiScopeFingerprint(scope), layoutState: { elements: scope.elements.map(entry => savedElement(scopeId, entry)) } };
         }) };
         const profile = resolveBbmModuleLayoutProfileRoot(profileRoot, registration);
-        assert.equal(path.basename(profile.profileRoot), `module-${moduleId}`);
+        assert.equal(path.basename(profile.profileRoot), registration.layoutStorageKey || `module-${moduleId}`);
         fs.mkdirSync(profile.profileRoot, { recursive: true });
         const file = path.join(profile.profileRoot, 'standard.layout-profile.json');
         fs.writeFileSync(file, JSON.stringify(document));

@@ -6,6 +6,7 @@ import {
 import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../ui-editor/m80Refs.js";
 import {
   SIGEKO_MAIN_HEADER_LAUNCHER,
+  SIGEKO_PRE_NOTIFICATION_MAIN_HEADER_LAUNCHER,
   PROTOKOLL_MAIN_HEADER_LAUNCHER,
   RESTARBEITEN_MAIN_HEADER_LAUNCHER,
   getMainHeaderLauncherContract,
@@ -49,6 +50,7 @@ const MAIN_HEADER_LAUNCHER_COMPONENT_IDS = Object.freeze([
   RESTARBEITEN_MAIN_HEADER_LAUNCHER.componentId,
   PROTOKOLL_MAIN_HEADER_LAUNCHER.componentId,
   SIGEKO_MAIN_HEADER_LAUNCHER.componentId,
+  SIGEKO_PRE_NOTIFICATION_MAIN_HEADER_LAUNCHER.componentId,
 ]);
 
 function isRegisteredMainHeaderLauncher(scopeId) {
