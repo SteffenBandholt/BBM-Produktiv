@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld("bbmDb", {
   sigekoSaveCoordinatorProfile: (payload) => ipcRenderer.invoke("sigeko:saveCoordinatorProfile", payload),
   sigekoGetProjectData: (payload) => ipcRenderer.invoke("sigeko:getProjectData", payload),
   sigekoGetReadiness: (payload) => ipcRenderer.invoke("sigeko:getReadiness", payload),
+  sigekoGetPreNotification: (payload) => ipcRenderer.invoke("sigeko:getPreNotification", payload),
+  sigekoSavePreNotification: (payload) => ipcRenderer.invoke("sigeko:savePreNotification", payload),
   sigekoSaveProjectData: (payload) => ipcRenderer.invoke("sigeko:saveProjectData", payload),
   sigekoListAuthorityRecords: (payload) => ipcRenderer.invoke("sigeko:listAuthorityRecords", payload),
   sigekoGetAuthorityRecord: (payload) => ipcRenderer.invoke("sigeko:getAuthorityRecord", payload),

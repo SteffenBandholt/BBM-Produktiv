@@ -12,6 +12,7 @@ const extract = require("extract-zip");
 
 const { initDatabase } = require("../db/database");
 const { PROJECT_AUTHORITY_COLUMNS, validateProjectAuthorityRow } = require("../../shared/sigeko/projectAuthorities.cjs");
+const { PRE_NOTIFICATION_COLUMNS, validatePreNotificationRow } = require("../../shared/sigeko/preNotifications.cjs");
 const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const projectsRepo = require("../db/projectsRepo");
 const { buildStoragePreviewPaths, sanitizeDirName, resolveProjectFolderName } = require("./projectStoragePaths");
@@ -35,7 +36,8 @@ function _sanitizeFilePart(value, fallback = "Projekt") {
 
 function _buildProjectTransferManifest({ projectId, project, storage, data, exportedAt, filesCount }) {
   return {
-    formatVersion: data.sigekoProjectAuthorities?.length ? 6
+    formatVersion: data.sigekoPreNotifications?.length ? 7
+      : data.sigekoProjectAuthorities?.length ? 6
       : project.bauherr_firm_kind != null || project.bauherr_firm_id != null ? 5
       : data.sigekoProjects?.length ? 4 : 3,
     firmLogicSchemaVersion: 1,
@@ -63,8 +65,9 @@ function _buildProjectTransferManifest({ projectId, project, storage, data, expo
       sigekoProjects: data.sigekoProjects?.length || 0,
       globalFirmDependencies: data.globalFirmDependencies.length,
       filesCount,
-      ...(data.sigekoProjectAuthorities?.length ? {
-        sigekoProjectAuthorities: data.sigekoProjectAuthorities.length,
+      ...(data.sigekoPreNotifications?.length ? { sigekoPreNotifications: data.sigekoPreNotifications.length } : {}),
+      ...(data.sigekoProjectAuthorities?.length || data.sigekoPreNotifications?.length ? {
+        sigekoProjectAuthorities: data.sigekoProjectAuthorities?.length || 0,
         restarbeitenAttachments: data.restarbeitenAttachments.length,
         restarbeitenNotes: data.restarbeitenNotes.length,
         globalPersonDependencies: data.globalPersonDependencies.length,
@@ -77,7 +80,8 @@ function _buildProjectTransferPayloads({ project, data }) {
   return [
     { name: "data/project.json", data: { project } },
     ...(data.sigekoProjects?.length ? [{ name: "data/sigeko_projects.json", data: { sigeko_projects: data.sigekoProjects } }] : []),
-    ...(data.sigekoProjectAuthorities?.length ? [{ name: "data/sigeko_project_authorities.json", data: { sigeko_project_authorities: data.sigekoProjectAuthorities } }] : []),
+    ...(data.sigekoPreNotifications?.length ? [{ name: "data/sigeko_pre_notifications.json", data: { sigeko_pre_notifications: data.sigekoPreNotifications } }] : []),
+    ...(data.sigekoProjectAuthorities?.length || data.sigekoPreNotifications?.length ? [{ name: "data/sigeko_project_authorities.json", data: { sigeko_project_authorities: data.sigekoProjectAuthorities || [] } }] : []),
     { name: "data/settings.json", data: { projectSettings: data.projectSettings || [] } },
     { name: "data/meetings.json", data: { meetings: data.meetings || [] } },
     { name: "data/tops.json", data: { tops: data.tops || [] } },
@@ -173,6 +177,8 @@ function _fetchProjectData(projectId, project) {
   const sigekoProjects = projectRows("sigeko_projects");
   const sigekoProjectAuthorities = projectRows("sigeko_project_authorities");
   _validateProjectAuthorities(sigekoProjectAuthorities, projectId);
+  const sigekoPreNotifications = projectRows("sigeko_pre_notifications");
+  _validatePreNotifications(sigekoPreNotifications, projectId);
   const globalFirmIds = new Set(projectGlobalFirms.map((row) => String(row.firm_id || "")).filter(Boolean));
   if (project?.bauherr_firm_kind === "global_firm" && project.bauherr_firm_id) {
     globalFirmIds.add(project.bauherr_firm_id);
@@ -229,6 +235,7 @@ function _fetchProjectData(projectId, project) {
     globalPersonDependencies,
     sigekoProjects,
     sigekoProjectAuthorities,
+    sigekoPreNotifications,
   };
 }
 
@@ -244,6 +251,11 @@ function _validateProjectAuthorities(rows, projectId) {
     ids.add(row.id);
     categories.add(row.category);
   }
+}
+
+function _validatePreNotifications(rows, projectId) {
+  if (!Array.isArray(rows) || rows.length > 1) throw new Error("Ungültige SiGeKo-Vorankündigungen im Archiv.");
+  for (const row of rows) validatePreNotificationRow(row, projectId);
 }
 
 function _validateGlobalDependencies(db, payload, { requireSnapshots = false } = {}) {
@@ -532,16 +544,16 @@ async function _importProjectZip(filePath) {
     if (!manifestRes.ok) return { ok: false, error: manifestRes.error };
     const manifest = manifestRes.data || {};
     const formatVersion = Number(manifest.formatVersion || 1);
-    if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > 6) {
+    if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > 7) {
       return { ok: false, error: `Nicht unterstützte Projektarchiv-Version: ${manifest.formatVersion}` };
     }
     if (Number(manifest.firmLogicSchemaVersion || 0) > 1) {
       return { ok: false, error: "Projektarchiv verwendet eine neuere Firmenlogik-Version." };
     }
 
-    // V6 is written only by the current complete exporter. Do not interpret a
+    // V6 and V7 are written only by the complete exporter. Do not interpret a
     // corrupt/missing payload as an empty collection and silently drop it.
-    const v6PayloadKeys = {
+    const completePayloadKeys = {
       "project.json": ["project"], "settings.json": ["projectSettings"],
       "meetings.json": ["meetings"], "tops.json": ["tops"],
       "meeting_tops.json": ["meeting_tops"], "meeting_participants.json": ["meeting_participants"],
@@ -551,18 +563,27 @@ async function _importProjectZip(filePath) {
       "restarbeiten_attachments.json": ["restarbeiten_attachments"], "restarbeiten_notes.json": ["restarbeiten_notes"],
       "sigeko_project_authorities.json": ["sigeko_project_authorities"],
     };
+    if (formatVersion === 7) {
+      if (manifest.formatVersion !== 7) return { ok: false, error: "Ungültige V7-Archivversion." };
+      completePayloadKeys["sigeko_pre_notifications.json"] = ["sigeko_pre_notifications"];
+      const allowed = new Set([...Object.keys(completePayloadKeys), "sigeko_projects.json"]);
+      const entries = await fs.promises.readdir(dataDir, { withFileTypes: true });
+      if (entries.some(entry => !entry.isFile() || !allowed.has(entry.name))) {
+        return { ok: false, error: "Unbekannte V7-Projektdaten im Archiv." };
+      }
+    }
     const readPayload = async (file, label) => {
       const result = await _readJsonIfExists(file, label);
-      if (formatVersion === 6) {
+      if (formatVersion >= 6) {
         if (!result.ok) throw new Error(result.error);
-        const keys = v6PayloadKeys[label] ||
+        const keys = completePayloadKeys[label] ||
           (label === "sigeko_projects.json" && fs.existsSync(file) ? ["sigeko_projects"] : null);
         if (keys && (!result.data || typeof result.data !== "object" || Array.isArray(result.data) ||
             Object.keys(result.data).length !== keys.length || keys.some(key => !Object.hasOwn(result.data, key)) ||
             keys.some(key => key === "project"
               ? !result.data[key] || typeof result.data[key] !== "object" || Array.isArray(result.data[key])
               : !Array.isArray(result.data[key])))) {
-          throw new Error(`Ungültige oder fehlende V6-Daten: ${label}`);
+          throw new Error(`Ungültige oder fehlende V${formatVersion}-Daten: ${label}`);
         }
       }
       return result;
@@ -625,7 +646,7 @@ async function _importProjectZip(filePath) {
 
     const authorityJson = await readPayload(path.join(dataDir, "sigeko_project_authorities.json"), "sigeko_project_authorities.json");
     if (!authorityJson.ok) return { ok: false, error: authorityJson.error };
-    if (formatVersion !== 6 && fs.existsSync(path.join(dataDir, "sigeko_project_authorities.json"))) {
+    if (formatVersion < 6 && fs.existsSync(path.join(dataDir, "sigeko_project_authorities.json"))) {
       return { ok: false, error: "SiGeKo-Behördenzuordnungen erfordern Projektarchiv-Version 6." };
     }
     payload.sigekoProjectAuthorities = authorityJson.data?.sigeko_project_authorities ?? [];
@@ -633,12 +654,23 @@ async function _importProjectZip(filePath) {
       return { ok: false, error: "SiGeKo-Behördenzuordnungen fehlen im V6-Archiv." };
     }
 
+    const preNotificationPath = path.join(dataDir, "sigeko_pre_notifications.json");
+    if (formatVersion < 7 && fs.existsSync(preNotificationPath)) {
+      return { ok: false, error: "SiGeKo-Vorankündigungen erfordern Projektarchiv-Version 7." };
+    }
+    if (formatVersion === 7) {
+      const draftJson = await readPayload(preNotificationPath, "sigeko_pre_notifications.json");
+      payload.sigekoPreNotifications = draftJson.data.sigeko_pre_notifications;
+      if (payload.sigekoPreNotifications.length !== 1) return { ok: false, error: "SiGeKo-Vorankündigung fehlt im V7-Archiv." };
+    }
+
     const project = payload.project;
     if (!project?.id) return { ok: false, error: "Projekt-ID fehlt im Export." };
 
     _validateProjectAuthorities(payload.sigekoProjectAuthorities, project.id);
-    if (formatVersion === 6) {
-      if (manifest.projectId !== project.id) return { ok: false, error: "Fremder Projektbezug im V6-Manifest." };
+    _validatePreNotifications(payload.sigekoPreNotifications || [], project.id);
+    if (formatVersion >= 6) {
+      if (manifest.projectId !== project.id) return { ok: false, error: `Fremder Projektbezug im V${formatVersion}-Manifest.` };
       const expectedCounts = Object.fromEntries(Object.entries(payload).filter(([key]) => key !== "project")
         .map(([key, rows]) => [key, Array.isArray(rows) ? rows.length : -1]));
       expectedCounts.filesCount = await _countFilesRecursive(path.join(tempDir, "project-folder"));
@@ -646,7 +678,7 @@ async function _importProjectZip(filePath) {
       if (!counts || typeof counts !== "object" || Array.isArray(counts) ||
           Object.keys(counts).length !== Object.keys(expectedCounts).length ||
           Object.entries(expectedCounts).some(([key, count]) => !Number.isSafeInteger(counts[key]) || counts[key] !== count)) {
-        return { ok: false, error: "Projektanzahlen stimmen nicht mit dem vollständigen V6-Manifest überein." };
+        return { ok: false, error: `Projektanzahlen stimmen nicht mit dem vollständigen V${formatVersion}-Manifest überein.` };
       }
     }
 
@@ -656,6 +688,15 @@ async function _importProjectZip(filePath) {
     const projectShortName = project.short ?? project.projectShortName ?? manifest.projectShortName ?? null;
 
     const db = initDatabase();
+    if (payload.sigekoPreNotifications?.length) {
+      const columns = db.prepare("PRAGMA table_info(sigeko_pre_notifications)").all().map(row => row.name);
+      if (columns.length !== PRE_NOTIFICATION_COLUMNS.length || PRE_NOTIFICATION_COLUMNS.some(key => !columns.includes(key))) {
+        return { ok: false, error: "SiGeKo muss vor diesem Import aktiviert und initialisiert sein (Vorankündigung)." };
+      }
+      if (_rowExists(db, "sigeko_pre_notifications", payload.sigekoPreNotifications[0].id)) {
+        return { ok: false, error: "SiGeKo-Vorankündigung existiert bereits (ID)." };
+      }
+    }
     if (payload.sigekoProjectAuthorities.length) {
       const columns = db.prepare("PRAGMA table_info(sigeko_project_authorities)").all().map(row => row.name);
       if (columns.length !== PROJECT_AUTHORITY_COLUMNS.length || PROJECT_AUTHORITY_COLUMNS.some(key => !columns.includes(key))) {
@@ -729,6 +770,7 @@ async function _importProjectZip(filePath) {
       _insertRows(db, "project_persons", payload.projectPersons || []);
       _insertRows(db, "sigeko_projects", payload.sigekoProjects);
       _insertRows(db, "sigeko_project_authorities", payload.sigekoProjectAuthorities);
+      _insertRows(db, "sigeko_pre_notifications", payload.sigekoPreNotifications || []);
       _insertRows(db, "project_candidates", withPid(payload.projectCandidates || []));
       _insertRows(db, "project_global_firms", withPid(payload.projectGlobalFirms || []));
       _insertRows(db, "meetings", withPid(payload.meetings || []));
