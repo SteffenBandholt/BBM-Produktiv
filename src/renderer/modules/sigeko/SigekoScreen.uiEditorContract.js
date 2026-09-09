@@ -5,9 +5,9 @@ export const SIGEKO_COMPONENT_ID = "bbm.sigeko.screen";
 
 const element = (id, name, type, role, parentId, order, fieldKind = "text") => m83Element({
   id, name, type, role, parentId, order,
-  ...(type === "field" ? { fieldKind, componentKind: fieldKind === "select" ? "select" : fieldKind === "checkbox" ? "checkbox" : "input" } : {}),
+  ...(type === "field" ? { fieldKind, componentKind: fieldKind === "select" ? "select" : fieldKind === "checkbox" ? "checkbox" : fieldKind === "multilineText" ? "textarea" : "input" } : {}),
   lockedOps: DOMAIN_LOCKS,
-  baseline: { minWidth: 8, maxWidth: 2400, minHeight: 8, maxHeight: 1600, minFontSize: 6, maxFontSize: 32 },
+  baseline: { minWidth: 8, maxWidth: 2400, minHeight: fieldKind === "multilineText" ? 24 : 8, maxHeight: fieldKind === "multilineText" ? 720 : 1600, minFontSize: 6, maxFontSize: 32 },
 });
 const elements = [
   element(SIGEKO_SCOPE_ID, "SiGeKo-Arbeitsbereich", "root", "scopeRoot", null, 0),
@@ -87,6 +87,51 @@ status(".readiness.warning", "Bereitschaftshinweis", ".readiness");
 button(".readiness.refresh", "Bereitschaft aktualisieren", ".readiness", "refreshSigekoReadiness");
 button(".readiness.editProject", "Projektverwaltung öffnen", ".readiness", "navigateProjectForm");
 button(".readiness.editRoles", "Profil und Projektrollen bearbeiten", ".readiness", "navigateSigekoBasicData");
+// Statically declared S4.3 presentation fields; never derived from database rows.
+export const SIGEKO_AUTHORITY_CATEGORIES = Object.freeze([
+  ["LABOR_AUTHORITY", "labor", "Arbeitsschutzbehörde"], ["HOSPITAL", "hospital", "Krankenhaus / ZNA"],
+  ["ACCIDENT_DOCTOR", "doctor", "D-Arzt"], ["WATER", "water", "Wasser"],
+  ["ELECTRICITY", "electricity", "Stromnetz"], ["GAS", "gas", "Gasnetz"],
+  ["EMERGENCY_112", "emergency", "Notruf 112"], ["POLICE", "police", "Polizei"],
+]);
+export const SIGEKO_AUTHORITY_INPUTS = Object.freeze([
+  ["organization", "Stelle / Einrichtung / Betreiber"], ["street", "Straße / Hausnummer"],
+  ["zip", "Postleitzahl"], ["city", "Ort"], ["phone", "Telefon"], ["email", "E-Mail"],
+  ["emergency_phone", "Havarie-/Störkontakt"], ["source", "Quelle"],
+  ["scope_street", "Zuständig für Straße / Hausnummer"], ["scope_zip", "Bezugs-PLZ"],
+  ["scope_city", "Bezugsort"], ["scope_district", "Bezirk / Kreis"],
+  ["scope_area", "Dokumentiertes Bezugsgebiet", "multilineText"],
+  ["verification_note", "Fachlicher Prüfnachweis", "multilineText"],
+]);
+add(".authorities", "Behörden / Notfall / Versorger", "group", "");
+add(".authorities.title", "Behörden / Notfall / Versorger", "label", ".authorities");
+add(".authorities.hint", "Behördenhinweis", "label", ".authorities");
+status(".authorities.status", "Behördenstatus", ".authorities");
+add(".authorities.overview", "Projektkontakte im Überblick", "group", ".authorities");
+for (const [, key, label] of SIGEKO_AUTHORITY_CATEGORIES) status(`.authorities.overview.${key}`, label, ".authorities.overview");
+button(".authorities.refresh", "Behörden aktualisieren", ".authorities", "refreshSigekoAuthorities");
+button(".authorities.apply", "Eindeutige Treffer übernehmen", ".authorities", "applyKnownProjectAuthorities");
+add(".authorities.record", "Wiederverwendbarer Bestand", "group", ".authorities");
+add(".authorities.record.title", "Bestandskontakt bearbeiten", "label", ".authorities.record");
+add(".authorities.record.hint", "Bestandshinweis", "label", ".authorities.record");
+field(".authorities.category", "Kategorie", ".authorities.record", "select");
+field(".authorities.contact", "Bestandskontakt", ".authorities.record", "select");
+button(".authorities.new", "Neuen Kontakt anlegen", ".authorities.record", "newAuthorityDraft");
+add(".authorities.record.fields", "Kontaktdaten und Nachweise", "group", ".authorities.record");
+for (const [key, label, kind] of SIGEKO_AUTHORITY_INPUTS) field(`.authorities.record.${key}`, label, ".authorities.record.fields", kind);
+button(".authorities.record.save", "Bestand speichern", ".authorities.record", "saveAuthorityRecord");
+button(".authorities.record.confirm", "Bestandsprüfung bestätigen", ".authorities.record", "confirmAuthorityRecord");
+field(".authorities.record.reason", "Grund für Unsicherheit", ".authorities.record", "multilineText");
+button(".authorities.record.uncertain", "Bestand als unsicher markieren", ".authorities.record", "markAuthorityUncertain");
+status(".authorities.record.status", "Bestandsprüfstatus", ".authorities.record");
+add(".authorities.assignment", "Kontakt für diese Baustelle", "group", ".authorities");
+add(".authorities.assignment.title", "Projektzuordnung", "label", ".authorities.assignment");
+add(".authorities.assignment.snapshot", "Gespeicherter Projektkontakt", "label", ".authorities.assignment");
+add(".authorities.assignment.hint", "Projektbezogener Prüfhinweis", "label", ".authorities.assignment");
+field(".authorities.assignment.note", "Projektbezogene Prüfung / Begründung", ".authorities.assignment", "multilineText");
+button(".authorities.assignment.confirm", "Zuständigkeit bestätigen und zuordnen", ".authorities.assignment", "assignConfirmedProjectAuthority");
+button(".authorities.assignment.uncertain", "Mit Prüfbedarf zuordnen", ".authorities.assignment", "assignUncertainProjectAuthority");
+button(".readiness.editAuthorities", "Behördenkontakte bearbeiten", ".readiness", "navigateSigekoAuthorities");
 Object.freeze(elements);
 
 export const sigekoScreenUiEditorContract = m83Component({

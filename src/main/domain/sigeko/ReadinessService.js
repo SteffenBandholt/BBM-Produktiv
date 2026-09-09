@@ -1,6 +1,7 @@
 "use strict";
 
 const { createSigekoProjectService } = require("./SigekoProjectService");
+const { createProjectAuthorityService } = require("./ProjectAuthorityService");
 const projectsRepo = require("../../db/projectsRepo");
 
 const PROJECT_FIELDS = [
@@ -8,6 +9,8 @@ const PROJECT_FIELDS = [
   ["geplanter_baubeginn", "Geplanter Baubeginn"], ["end_date", "Bauende"],
 ];
 const CONTACT_FIELDS = [["name", "Name"], ["street", "Straße und Hausnummer"], ["zip", "Postleitzahl"], ["city", "Ort"]];
+const AUTHORITY_LABELS = { LABOR_AUTHORITY: "Arbeitsschutzbehörde", HOSPITAL: "Krankenhaus / ZNA", ACCIDENT_DOCTOR: "D-Arzt",
+  WATER: "Wasser", ELECTRICITY: "Stromnetz", GAS: "Gasnetz", EMERGENCY_112: "Notruf 112", POLICE: "Polizei" };
 
 function missingFields(issues, values, fields, prefix, label, action) {
   for (const [field, title] of fields) {
@@ -19,7 +22,8 @@ function missingFields(issues, values, fields, prefix, label, action) {
 
 // Completeness is calculated from current saved sources. It is neither persisted
 // nor used as authorization; technical read errors must reach the caller.
-function createReadinessService({ projectService = createSigekoProjectService(), projects = projectsRepo } = {}) {
+function createReadinessService({ projectService = createSigekoProjectService(), projects = projectsRepo,
+  projectAuthorityService = createProjectAuthorityService({ projects }) } = {}) {
   return Object.freeze({
     getReadiness(payload) {
       const data = projectService.getProjectData(payload);
@@ -49,10 +53,12 @@ function createReadinessService({ projectService = createSigekoProjectService(),
           missingFields(issues, resolved.values, CONTACT_FIELDS, role, label, action);
         }
       }
+      const authorityData = projectAuthorityService.getProjectAuthorities({ projectId });
       return { projectId, projectData: { status: issues.length ? "red" : "green", issues },
-        authorities: { status: "red", available: false, issues: [
-          { code: "AUTHORITIES_NOT_IMPLEMENTED", message: "Noch nicht erfasst – folgt mit S4." },
-        ] } };
+        authorities: { status: authorityData.status, available: true,
+          categories: authorityData.categories.map(({ category, status }) => ({ category, status })),
+          issues: authorityData.categories.flatMap(entry => entry.issues.map(issue => ({ ...issue, category: entry.category,
+            message: `${AUTHORITY_LABELS[entry.category]}: ${issue.message}`, action: "authorities" }))) } };
     },
   });
 }

@@ -11,7 +11,7 @@ const ROOT = path.resolve(__dirname, "..");
 async function worker() {
   const { app, BrowserWindow, ipcMain, dialog, screen } = require("electron");
   let profile, database, editor;
-  const report = { package: "S2.4 / S3", ok: false, manualConfirmed: false, checks: [], rendererErrors: [] };
+  const report = { package: "S2.4 / S3 / S4", ok: false, manualConfirmed: false, checks: [], rendererErrors: [] };
   try {
     app.setAppPath(ROOT);
     profile = configureUiEditorAcceptanceProfile({ electronApp: app }); assert.equal(profile.enabled, true);
@@ -54,6 +54,7 @@ async function worker() {
       const point = { x: Math.round(rect.x + rect.width / 2), y: Math.round(rect.y + rect.height / 2) };
       win.webContents.sendInputEvent({ type: "mouseDown", button: "left", clickCount: 1, ...point });
       win.webContents.sendInputEvent({ type: "mouseUp", button: "left", clickCount: 1, ...point });
+      await evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
     };
     const save = async group => {
       await evaluate(`s24.element('${group}.status').textContent = ''`);
@@ -65,12 +66,12 @@ async function worker() {
       await waitFor(`!s24.screen.readinessBusy && s24.screen.readinessData?.projectId === ${JSON.stringify(id)} && s24.screen.readinessData.projectData.status === ${JSON.stringify(status)}`);
       const result = await evaluate("s24.screen.readinessData");
       assert.equal(await evaluate("s24.element('readiness.project.status').textContent"), status === "green" ? "Grün – Angaben vollständig." : "Rot – Angaben fehlen.");
-      assert.equal(result.authorities.status, "red"); assert.equal(result.authorities.available, false);
-      assert.equal(await evaluate("s24.element('readiness.authorities.status').textContent"), "Rot – noch nicht erfasst.");
-      assert.match(await evaluate("s24.element('readiness.authorities.issues').textContent"), /folgt mit S4/);
+      assert.equal(result.authorities.status, "red"); assert.equal(result.authorities.available, true);
+      assert.match(await evaluate("s24.element('readiness.authorities.status').textContent"), /Rot/);
+      assert.match(await evaluate("s24.element('readiness.authorities.issues').textContent"), /zugeordnet|Projektkontakt/);
       return result;
     };
-    const snapshot = () => JSON.stringify(["sigeko_profiles", "sigeko_projects", "projects", "firms", "persons", "project_firms", "project_persons"].map(table => [table, database.initDatabase().prepare(`SELECT * FROM ${table} ORDER BY id`).all()]));
+    const snapshot = () => JSON.stringify(["sigeko_profiles", "sigeko_projects", "projects", "firms", "persons", "project_firms", "project_persons", "sigeko_authority_records", "sigeko_project_authorities"].map(table => [table, database.initDatabase().prepare(`SELECT * FROM ${table} ORDER BY id`).all()]));
     const output = process.env.BBM_S24_OUTPUT ? path.resolve(process.env.BBM_S24_OUTPUT) : profile.rootPath; fs.mkdirSync(output, { recursive: true });
     await win.loadFile(path.join(__dirname, "tests/sigekoProjectFormAcceptance.html")); await waitFor("!!window.s24");
     await open(projects[0].id);
@@ -78,7 +79,7 @@ async function worker() {
     assert.ok(initialReadiness.projectData.issues.length > 0);
     assert.match(await evaluate("s24.element('readiness.project.issues').textContent"), /Bauherr/);
     assert.equal(await evaluate("s24.element('profile.save').disabled || s24.element('roles.save').disabled"), false);
-    report.checks.push("S3: incomplete project reports concrete missing builder data and explicit unimplemented S4 authority status; profile and role saves remain enabled");
+    report.checks.push("S3: incomplete project reports concrete missing builder data and actual missing S4 project-contact status; profile and role saves remain enabled");
     await fill({ "profile.name.input": "S2.4 Eigenes Büro", "profile.street.input": "Profilweg 7", "profile.email.input": "sigeko@example.invalid" });
     await save("profile");
     await fill({ "planning.source.input": "free", "planning.free.name.input": "Andere Planung", "execution.same.input": false, "execution.source.input": "module" });
@@ -118,7 +119,7 @@ async function worker() {
     assert.equal(await value("planning.free.name.input"), "Ungespeicherter Rollenentwurf");
     assert.equal(await value("profile.name.input"), "Ungespeicherter Profilentwurf");
     assert.equal((await readProject(projects[0].id)).data.planning.values.name, "Andere Planung");
-    report.checks.push("S3: real refresh reads persisted data only, preserves both unsaved drafts and leaves all seven domain tables unchanged");
+    report.checks.push("S3: real refresh reads persisted data only, preserves both unsaved drafts and leaves all nine domain tables unchanged");
     await open(projects[0].id);
     repo.updateProject({ id: projects[0].id, bauherr: null });
     await click("readiness.refresh"); await readiness(projects[0].id, "red");
@@ -147,20 +148,146 @@ async function worker() {
     await open(projects[0].id); await readiness(projects[0].id, "green");
     assert.equal(await value("planning.free.name.input"), "Andere Planung");
     report.checks.push("S3: profile saves automatically update the module-based project's readiness; switching to independently assigned free roles yields that project's own green state");
+    // S4 remains on the same real screen, preload and isolated SQLite database.
+    const panelIdle = "!s24.screen.authoritiesPanel.loading && !s24.screen.authoritiesPanel.busy && s24.screen.authoritiesPanel.ready";
+    const authorityReady = async id => {
+      await waitFor(`${panelIdle} && s24.screen.authoritiesPanel.projectData?.projectId === ${JSON.stringify(id)}`);
+      return evaluate("s24.screen.authoritiesPanel.projectData");
+    };
+    const authorityAction = async (key, condition) => {
+      await click(key);
+      await waitFor(`${panelIdle} && (${condition})`);
+      await waitFor("!s24.screen.readinessBusy");
+    };
+    const projectContact = async category => (await authorityReady(projects[0].id)).categories.find(row => row.category === category);
+    const selectCategory = async category => {
+      await fill({ "authorities.record.reason.input": "", "authorities.assignment.note.input": "", "authorities.category.input": category });
+      assert.equal(await value("authorities.category.input"), category);
+      if (sourceIds[category]) {
+        await fill({ "authorities.contact.input": sourceIds[category] });
+        assert.equal(await evaluate("s24.screen.authoritiesPanel.selectedRecord?.id"), sourceIds[category]);
+      }
+    };
+    const sourceIds = {};
+    const createConfirmedContact = async category => {
+      await selectCategory(category); await click("authorities.new");
+      await waitFor("s24.screen.authoritiesPanel.selectedRecord === null");
+      await fill(Object.fromEntries(Object.entries({ organization: `S4 ${category}`, street: "Kontaktweg 9", zip: "12345", city: "Testort",
+        phone: "040123456", email: "kontakt@example.invalid", emergency_phone: "040987654",
+        source: "https://example.invalid/gepruefter-kontakt", scope_street: "Testweg 1", scope_zip: "12345", scope_city: "Testort",
+        scope_area: "Dokumentierter Bereich Testweg 1, 12345 Testort", verification_note: category === "HOSPITAL"
+          ? "ZNA und Eignung nachgewiesen; Entfernung zur Baustelle fachlich geprüft"
+          : category === "ACCIDENT_DOCTOR" ? "D-Arzt-Zulassung und Eignung nachgewiesen; Entfernung zur Baustelle fachlich geprüft"
+          : "Zuständigkeit und erreichbarer Kontakt anhand der Quelle geprüft" }).map(([key, entry]) => [`authorities.record.${key}.input`, entry])));
+      assert.equal(await evaluate("s24.element('authorities.record.confirm').disabled"), true);
+      await authorityAction("authorities.record.save", `s24.screen.authoritiesPanel.selectedRecord?.organization === ${JSON.stringify(`S4 ${category}`)}`);
+      const record = await evaluate("s24.screen.authoritiesPanel.selectedRecord"); sourceIds[category] = record.id;
+      assert.equal(record.verification_status, "unverified");
+      assert.equal(database.initDatabase().prepare("SELECT COUNT(*) n FROM sigeko_project_authorities WHERE project_id=? AND category=?").get(projects[0].id, category).n, 0);
+      await authorityAction("authorities.record.confirm", "s24.screen.authoritiesPanel.selectedRecord?.verification_status === 'confirmed'");
+      assert.equal(database.initDatabase().prepare("SELECT COUNT(*) n FROM sigeko_project_authorities WHERE project_id=? AND category=?").get(projects[0].id, category).n, 0);
+    };
+    const assignSelected = async (category, note, status = "green") => {
+      const before = (await projectContact(category)).assignment?.revision || 0;
+      await fill({ "authorities.assignment.note.input": note });
+      await authorityAction("authorities.assignment.confirm", `s24.screen.authoritiesPanel.projectData.categories.find(row=>row.category===${JSON.stringify(category)}).assignment?.revision > ${before}`);
+      assert.equal((await projectContact(category)).status, status);
+    };
+    await authorityReady(projects[0].id);
+    assert.equal(await evaluate("Array.from(s24.element('authorities.category.input').options).some(option=>option.value==='EMERGENCY_112')"), false);
+    assert.match(await evaluate("s24.element('authorities.overview.emergency').textContent"), /112/);
+    assert.match(await evaluate("s24.element('authorities.overview.police').textContent"), /110/);
+    await click("readiness.editAuthorities");
+    await createConfirmedContact("LABOR_AUTHORITY");
+    await assignSelected("LABOR_AUTHORITY", "Staatliche Arbeitsschutzbehörde für Testweg 1 anhand Zuständigkeitsnachweis bestätigt");
+    for (const category of ["HOSPITAL", "ACCIDENT_DOCTOR"]) {
+      await createConfirmedContact(category);
+      assert.equal((await projectContact(category)).proposal, null);
+      assert.match(await evaluate("s24.element('authorities.assignment.hint').textContent"), /Nähe|Eignung/);
+      await assignSelected(category, "Nächstgelegene geeignete Stelle für diese Baustelle; Entfernung und ZNA beziehungsweise D-Arzt-Zulassung geprüft");
+    }
+    for (const category of ["WATER", "ELECTRICITY", "GAS", "POLICE"]) await createConfirmedContact(category);
+    await authorityAction("authorities.apply", "s24.screen.authoritiesPanel.projectData.status === 'green'");
+    let contacts = await authorityReady(projects[0].id);
+    assert.equal(contacts.categories.length, 8); assert.ok(contacts.categories.every(row => row.status === "green"));
+    assert.equal(contacts.categories.filter(row => row.assignment?.assessment_method === "known_stock").length, 4);
+    await waitFor("s24.screen.readinessData?.authorities.status === 'green'");
+    assert.equal(await evaluate("s24.element('authorities.apply').disabled"), true);
+    report.checks.push("S4: seven contacts saved and explicitly verified through real mouse/preload/IPC/SQLite without implicit project assignments; separate labor and medical suitability decisions plus one batch action yield eight green categories and fixed 112/110");
+    const aAssignments = JSON.stringify(database.initDatabase().prepare("SELECT * FROM sigeko_project_authorities WHERE project_id=? ORDER BY category").all(projects[0].id));
+    await open(projects[1].id); contacts = await authorityReady(projects[1].id);
+    assert.equal(contacts.categories.filter(row => row.assignment).length, 0);
+    assert.equal(contacts.categories.filter(row => row.proposal).length, 5);
+    await authorityAction("authorities.apply", "s24.screen.authoritiesPanel.projectData.categories.filter(row=>row.assignment).length === 5");
+    assert.equal(JSON.stringify(database.initDatabase().prepare("SELECT * FROM sigeko_project_authorities WHERE project_id=? ORDER BY category").all(projects[0].id)), aAssignments);
+    database.closeDatabase(); database.initDatabase(); await open(projects[0].id); await authorityReady(projects[0].id);
+    assert.equal(JSON.stringify(database.initDatabase().prepare("SELECT * FROM sigeko_project_authorities WHERE project_id=? ORDER BY category").all(projects[0].id)), aAssignments);
+    report.checks.push("S4: second project reuses all five exact nonmedical verified contacts without repeat individual confirmation, while medical decisions stay pending; first project snapshots remain independent across project switch and SQLite reopen");
+    await selectCategory("LABOR_AUTHORITY");
+    await fill({ "planning.free.name.input": "Ungespeicherter Rollenentwurf", "profile.name.input": "Ungespeicherter Profilentwurf",
+      "authorities.record.organization.input": "Ungespeicherter Behördenentwurf", "authorities.record.reason.input": "Offene Rückfrage",
+      "authorities.assignment.note.input": "Noch ungespeicherte Projektprüfung" });
+    const beforeAuthorityRefresh = snapshot();
+    assert.equal(await evaluate("s24.element('authorities.record.confirm').disabled && s24.element('authorities.assignment.confirm').disabled && s24.element('authorities.record.uncertain').disabled"), true);
+    await click("authorities.refresh"); await authorityReady(projects[0].id); await click("readiness.refresh");
+    await waitFor("!s24.screen.readinessBusy");
+    for (const [key, expected] of Object.entries({ "planning.free.name.input": "Ungespeicherter Rollenentwurf", "profile.name.input": "Ungespeicherter Profilentwurf",
+      "authorities.record.organization.input": "Ungespeicherter Behördenentwurf", "authorities.record.reason.input": "Offene Rückfrage", "authorities.assignment.note.input": "Noch ungespeicherte Projektprüfung" })) assert.equal(await value(key), expected);
+    assert.equal(snapshot(), beforeAuthorityRefresh);
+    report.checks.push("S4: authority and readiness refresh preserve profile, role, stock and both note drafts without changing any of nine domain tables; dirty stock blocks confirmation and project assignment");
+    await open(projects[0].id); await authorityReady(projects[0].id); await selectCategory("LABOR_AUTHORITY");
+    const originalContact = (await projectContact("LABOR_AUTHORITY")).assignment;
+    await fill({ "authorities.record.phone.input": "040777777" });
+    await authorityAction("authorities.record.save", "s24.screen.authoritiesPanel.selectedRecord?.phone === '040777777'");
+    assert.equal((await projectContact("LABOR_AUTHORITY")).assignment.snapshot_json, originalContact.snapshot_json);
+    assert.equal((await projectContact("LABOR_AUTHORITY")).status, "orange");
+    await assignSelected("LABOR_AUTHORITY", "Projektbezogene Zuständigkeit bestätigt; Quellenprüfung steht noch aus", "orange");
+    const unverifiedSnapshot = (await projectContact("LABOR_AUTHORITY")).assignment.snapshot_json;
+    assert.equal(JSON.parse(unverifiedSnapshot).verification_status, "unverified");
+    await authorityAction("authorities.record.confirm", "s24.screen.authoritiesPanel.selectedRecord?.verification_status === 'confirmed'");
+    assert.equal((await projectContact("LABOR_AUTHORITY")).assignment.snapshot_json, unverifiedSnapshot);
+    assert.equal((await projectContact("LABOR_AUTHORITY")).status, "orange");
+    await assignSelected("LABOR_AUTHORITY", "Aktuellen bestätigten Kontakt und Zuständigkeit erneut geprüft");
+    await fill({ "authorities.record.reason.input": "Erreichbarkeit muss erneut geprüft werden" });
+    await authorityAction("authorities.record.uncertain", "s24.screen.authoritiesPanel.selectedRecord?.verification_status === 'uncertain'");
+    assert.equal((await projectContact("LABOR_AUTHORITY")).status, "orange");
+    await fill({ "authorities.record.reason.input": "" });
+    await authorityAction("authorities.record.confirm", "s24.screen.authoritiesPanel.selectedRecord?.verification_status === 'confirmed'");
+    await fill({ "authorities.assignment.note.input": "Projektzuständigkeit nach Rückfrage noch klären" });
+    await authorityAction("authorities.assignment.uncertain", "s24.screen.authoritiesPanel.projectData.categories.find(row=>row.category==='LABOR_AUTHORITY').assignment?.assessment_status === 'uncertain'");
+    assert.equal((await projectContact("LABOR_AUTHORITY")).status, "orange");
+    await assignSelected("LABOR_AUTHORITY", "Rückfrage geklärt; aktuelle Quelle und Baustellenzuständigkeit erneut geprüft");
+    report.checks.push("S4: source editing and source/project uncertainty retain the saved project contact and turn status orange; a manual project decision cannot turn an unverified source green; only fresh source verification and explicit reassignment restore green");
+    await selectCategory("HOSPITAL");
+    const missingHospital = (await projectContact("HOSPITAL")).assignment;
+    database.initDatabase().prepare("DELETE FROM sigeko_authority_records WHERE id=?").run(sourceIds.HOSPITAL);
+    await authorityAction("authorities.refresh", "s24.screen.authoritiesPanel.projectData.categories.find(row=>row.category==='HOSPITAL').issues.some(issue=>issue.code==='SOURCE_MISSING')");
+    assert.equal((await projectContact("HOSPITAL")).assignment.snapshot_json, missingHospital.snapshot_json);
+    assert.equal((await projectContact("HOSPITAL")).status, "orange");
+    const hospitalText = await evaluate("s24.element('authorities.assignment.snapshot').textContent");
+    for (const field of ["organization", "street", "zip", "city", "phone", "source"]) assert.ok(hospitalText.includes(missingHospital.snapshot[field]), field);
+    report.checks.push("S4: a vanished reusable source leaves the complete saved project contact visible with explicit orange missing-source status");
     assert.equal(await evaluate("s24.refs.validateM83ComponentReferences(['bbm.sigeko.screen']).ok"), true);
     assert.deepEqual((await evaluate("s24.descriptor()")).activeScopes, ["sigeko.screen"]);
     report.geometry = {};
     report.readinessGeometry = {};
+    report.authoritiesGeometry = {};
     for (const [size, width] of [["wide", 1280], ["narrow", 560]]) {
       win.setSize(width, 950); await waitFor(`innerWidth <= ${width} && innerWidth >= ${width - 80}`);
       const geometry = await evaluate("s24.geometry()"); report.geometry[size] = geometry;
       for (const field of geometry) assert.ok(field.width > 60 && field.height > 15 && field.inViewportWidth && field.inParent && field.labelAbove, JSON.stringify(field));
       const panelGeometry = await evaluate("s24.readinessGeometry()"); report.readinessGeometry[size] = panelGeometry;
       for (const element of panelGeometry) assert.ok(element.width > 15 && element.height > 10 && element.inViewportWidth && element.inParent, JSON.stringify(element));
-      for (const key of ["readiness.refresh", "readiness.editProject", "readiness.editRoles"]) {
+      for (const key of ["readiness.refresh", "readiness.editProject", "readiness.editRoles", "readiness.editAuthorities", "authorities.refresh", "authorities.apply", "authorities.new", "authorities.record.save", "authorities.record.confirm", "authorities.record.uncertain", "authorities.assignment.confirm", "authorities.assignment.uncertain"]) {
         const rect = await evaluate(`s24.bounds(${JSON.stringify(key)})`);
         const viewport = await evaluate("({width:innerWidth,height:innerHeight})");
         assert.ok(rect.x >= -1 && rect.y >= -1 && rect.x + rect.width <= viewport.width + 1 && rect.y + rect.height <= viewport.height + 1, JSON.stringify({ key, rect, viewport }));
+      }
+      const authorityGeometry = await evaluate("s24.authoritiesGeometry()"); report.authoritiesGeometry[size] = authorityGeometry;
+      for (const element of authorityGeometry) assert.ok(element.width > 15 && element.height > 10 && element.inViewportWidth && element.inParent && element.labelAbove, JSON.stringify(element));
+      for (const [part, key] of [["overview", "authorities.title"], ["record", "authorities.record.title"], ["assignment", "authorities.assignment.title"]]) {
+        await evaluate(`s24.element('${key}').scrollIntoView({block:'start'}); new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))`);
+        fs.writeFileSync(path.join(output, `sigeko-authorities-${size}-${part}.png`), (await win.webContents.capturePage()).toPNG());
       }
       await evaluate("s24.element('readiness.title').scrollIntoView({block:'start'}); new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
       fs.writeFileSync(path.join(output, `sigeko-readiness-${size}.png`), (await win.webContents.capturePage()).toPNG());
@@ -173,8 +300,11 @@ async function worker() {
     await evaluate("s24.refs.applyM80State('sigeko.screen.profile.name.input', {fontSize:15}, 'textResize')");
     assert.equal(await evaluate("getComputedStyle(s24.element('profile.name.input')).fontSize"), "15px");
     assert.equal(await value("profile.name.input"), "S2.4 Eigenes Büro"); assert.equal(snapshot(), beforeLayout);
-    report.checks.push("complete component refs and active scope; wide/narrow field and readiness panel geometry with all three actions reachable by scrolling; real editor CSS operation leaves all domain tables unchanged");
-    win.setSize(1280, 950); await open(projects[0].id);
+    await evaluate("s24.refs.applyM80State('sigeko.screen.authorities.record.organization.input', {fontSize:15}, 'textResize')");
+    assert.equal(await evaluate("getComputedStyle(s24.element('authorities.record.organization.input')).fontSize"), "15px");
+    assert.equal(snapshot(), beforeLayout);
+    report.checks.push("complete component refs and active scope; wide/narrow field and readiness panel geometry and authority forms with all actions reachable by scrolling; real editor CSS operation leaves all domain tables unchanged");
+    win.setSize(1280, 950); await open(projects[0].id); await authorityReady(projects[0].id); await selectCategory("LABOR_AUTHORITY");
     repo.archiveProject(projects[0].id);
     const beforeArchiveSave = snapshot();
     await fill({ "planning.free.name.input": "Darf nicht gespeichert werden" });
@@ -182,12 +312,22 @@ async function worker() {
     await waitFor("/archiv/i.test(s24.element('roles.status').textContent)"); assert.equal(snapshot(), beforeArchiveSave);
     const blocked = await evaluate(`window.bbmDb.sigekoSaveProjectData({projectId:${JSON.stringify(projects[0].id)},planning:{source:'module'}})`);
     assert.equal(blocked.code, "PROJECT_ARCHIVED");
+    await fill({ "authorities.assignment.note.input": "Archiviertes Projekt darf keine neue Zuordnung erhalten" });
+    await click("authorities.assignment.confirm");
+    await waitFor("!s24.screen.authoritiesPanel.busy && /archiv/i.test(s24.element('authorities.status').textContent)");
+    assert.equal(snapshot(), beforeArchiveSave);
+    await open(projects[0].id); await authorityReady(projects[0].id);
+    for (const key of ["authorities.new", "authorities.record.save", "authorities.record.confirm", "authorities.record.uncertain", "authorities.assignment.confirm", "authorities.assignment.uncertain", "authorities.apply"]) {
+      assert.equal(await evaluate(`s24.element(${JSON.stringify(key)}).disabled`), true, key);
+    }
     repo.unarchiveProject(projects[0].id); await open(projects[0].id);
     license = { valid: true, license: { modules: [] } };
     assert.equal(await evaluate("window.bbmDb.sigekoSaveCoordinatorProfile({patch:{name:'Verboten'}}).then(()=>false,e=>String(e).includes('MODULE_NOT_ACTIVE'))"), true);
     assert.equal(await evaluate(`window.bbmDb.sigekoGetReadiness({projectId:${JSON.stringify(projects[0].id)}}).then(()=>false,e=>String(e).includes('MODULE_NOT_ACTIVE'))`), true);
+    assert.equal(await evaluate("window.bbmDb.sigekoSaveAuthorityRecord({patch:{category:'GAS',organization:'Verboten'}}).then(()=>false,e=>String(e).includes('MODULE_NOT_ACTIVE'))"), true);
+    assert.equal(await evaluate(`window.bbmDb.sigekoGetProjectAuthorities({projectId:${JSON.stringify(projects[0].id)}}).then(()=>false,e=>String(e).includes('MODULE_NOT_ACTIVE'))`), true);
     license = { valid: true, license: { modules: ["sigeko"] } };
-    report.checks.push("already-open archived project rejects mouse save atomically; production IPC enforces archive and current module license");
+    report.checks.push("already-open archived project rejects role and authority assignment mouse saves atomically; reopened authority form is read-only; production IPC enforces archive and current module license for profile, readiness, stock and project contacts");
     // Native test-window controls: fit the usable monitor, and X requests review only.
     const fitToWorkArea = () => {
       const area = screen.getDisplayMatching(win.getBounds()).workArea;

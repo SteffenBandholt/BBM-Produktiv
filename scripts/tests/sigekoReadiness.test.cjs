@@ -3,6 +3,8 @@ const assert = require("node:assert/strict");
 const { fixture, load } = require("./plannedConstructionStart.test.cjs");
 const { createSigekoProjectService } = require("../../src/main/domain/sigeko/SigekoProjectService");
 const { createReadinessService } = require("../../src/main/domain/sigeko/ReadinessService");
+const { createProjectAuthorityService } = require("../../src/main/domain/sigeko/ProjectAuthorityService");
+const { createAuthorityService } = require("../../src/main/domain/sigeko/AuthorityService");
 const { registerSigekoIpc } = require("../../src/main/ipc/sigekoIpc");
 const { registerActiveModuleIpcs } = require("../../src/main/moduleIpcRegistry");
 
@@ -17,7 +19,13 @@ function withReadiness(fn) {
     const projectService = createSigekoProjectService({ repo: roleRepo, projects: ctx.repo,
       persons: load("src/main/db/personsRepo.js", overrides), firms: load("src/main/db/firmsRepo.js", overrides),
       projectPersons: load("src/main/db/projectPersonsRepo.js", overrides), projectFirms: load("src/main/db/projectFirmsRepo.js", overrides) });
-    const service = createReadinessService({ projectService, projects: ctx.repo });
+    const { SigekoAuthoritiesRepository } = load("src/main/db/sigekoAuthoritiesRepo.js", overrides);
+    const { SigekoProjectAuthoritiesRepository } = load("src/main/db/sigekoProjectAuthoritiesRepo.js", overrides);
+    const stock = new SigekoAuthoritiesRepository({ dbProvider: ctx.database.initDatabase });
+    const assignmentRepo = new SigekoProjectAuthoritiesRepository({ dbProvider: ctx.database.initDatabase });
+    const projectAuthorityService = createProjectAuthorityService({ repo: assignmentRepo, stock, projects: ctx.repo });
+    const authorityService = createAuthorityService({ repo: stock });
+    const service = createReadinessService({ projectService, projects: ctx.repo, projectAuthorityService });
     const a = ctx.repo.createProject(projectFields); const b = ctx.repo.createProject({ ...projectFields, name: "Zweites Projekt" });
     ctx.db.prepare("INSERT INTO firms (id,name,street,zip,city) VALUES ('builder','Bauherr','Weg 3','34567','Ort')").run();
     ctx.db.prepare("INSERT INTO firms (id,name,street,zip,city) VALUES ('office','Büro','Weg 4','45678','Ort')").run();
@@ -32,7 +40,7 @@ function withReadiness(fn) {
       ctx.repo.updateProject({ id: project.id, bauherr: { kind: "global_firm", id: "builder" } });
       projectService.saveProjectData({ projectId: project.id, planning: free() });
     };
-    return fn({ ...ctx, roleRepo, projectService, service, a, b, ready, read: (project = a) => service.getReadiness({ projectId: project.id }) });
+    return fn({ ...ctx, roleRepo, projectService, projectAuthorityService, authorityService, service, a, b, ready, read: (project = a) => service.getReadiness({ projectId: project.id }) });
   }, { modules: ["sigeko"] });
 }
 function snapshot(db) {
@@ -43,11 +51,13 @@ function snapshot(db) {
 }
 
 async function runSigekoReadinessTests(run) {
-  await run("S3: minimal saved project is green independently of unavailable S4 authorities", () => withReadiness(({ ready, read, a }) => {
+  await run("S3/S4: minimal saved project is green independently of missing authority assignments", () => withReadiness(({ ready, read, a }) => {
     ready(); const result = read();
     assert.equal(result.projectId, a.id); assert.deepEqual(result.projectData, { status: "green", issues: [] });
-    assert.deepEqual(result.authorities, { status: "red", available: false,
-      issues: [{ code: "AUTHORITIES_NOT_IMPLEMENTED", message: "Noch nicht erfasst – folgt mit S4." }] });
+    assert.equal(result.authorities.status, "red"); assert.equal(result.authorities.available, true);
+    assert.equal(result.authorities.categories.length, 8); assert.equal(result.authorities.issues.length, 7);
+    assert.ok(result.authorities.issues.every(issue => issue.code === "ASSIGNMENT_MISSING" && issue.action === "authorities"));
+    assert.deepEqual(result.authorities.categories.find(item => item.category === "EMERGENCY_112"), { category: "EMERGENCY_112", status: "green" });
     assert.deepEqual(Object.keys(result), ["projectId", "projectData", "authorities"]);
   }));
 
@@ -209,6 +219,42 @@ async function runSigekoReadinessTests(run) {
       license = revoked; await assert.rejects(api.sigekoGetReadiness({ projectId: a.id }), { code: "MODULE_NOT_ACTIVE" });
     }
     license = status(["sigeko"]); assert.equal((await api.sigekoGetReadiness({ projectId: "missing" })).code, "PROJECT_NOT_FOUND");
+  }));
+
+  await run("S4.3: readiness aggregates live saved authorities without changing snapshots or project completeness", () => withReadiness(({ ready, read, a, b, db, authorityService, projectAuthorityService }) => {
+    ready();
+    let first;
+    for (const category of ["LABOR_AUTHORITY", "HOSPITAL", "ACCIDENT_DOCTOR", "WATER", "ELECTRICITY", "GAS", "POLICE"]) {
+      let source = authorityService.saveAuthorityRecord({ patch: { category, organization: category, street: "Kontaktweg 1", zip: "23456", city: "Bauort",
+        phone: "12345", emergency_phone: "54321", source: "Originalquelle geprüft", verification_note: "Kontakt und Eignung geprüft",
+        scope_street: a.street, scope_zip: a.zip, scope_city: a.city } });
+      source = authorityService.confirmAuthorityRecord({ id: source.id, expectedRevision: source.revision });
+      if (!first) first = source;
+      projectAuthorityService.assignProjectAuthority({ projectId: a.id, category, sourceId: source.id, sourceRevision: source.revision,
+        expectedRevision: 0, expectedAddress: { street: a.street, zip: a.zip, city: a.city }, status: "confirmed", note: "Zuständigkeit bzw. Nähe und Eignung zur Baustelle geprüft" });
+    }
+    let before = snapshot(db);
+    assert.equal(read().authorities.status, "green"); assert.deepEqual(read().authorities.issues, []);
+    assert.equal(read(b).authorities.status, "orange"); // Known stock is visible, but another project has no assignments.
+    assert.deepEqual(snapshot(db), before);
+    authorityService.saveAuthorityRecord({ id: first.id, expectedRevision: first.revision, patch: { phone: "Neue Telefonnummer" } });
+    before = snapshot(db);
+    const changed = read(); assert.equal(changed.authorities.status, "orange"); assert.equal(changed.projectData.status, "green");
+    assert.ok(changed.authorities.issues.some(issue => issue.code === "SOURCE_CHANGED" && issue.category === "LABOR_AUTHORITY" && issue.action === "authorities"));
+    assert.match(changed.authorities.issues[0].message, /^Arbeitsschutzbehörde:/);
+    assert.deepEqual(snapshot(db), before);
+    db.prepare("DELETE FROM sigeko_project_authorities WHERE project_id=? AND category='POLICE'").run(a.id);
+    db.prepare("DELETE FROM sigeko_authority_records WHERE category='POLICE'").run();
+    assert.equal(read().authorities.status, "red"); assert.equal(read().projectData.status, "green");
+  }));
+
+  await run("S4.3: authority storage errors remain technical failures through readiness IPC", () => withReadiness(async ({ ready, a, db, service, projectService, projectAuthorityService }) => {
+    ready(); const handlers = new Map();
+    registerSigekoIpc({ ipcMain: { handle: (key, fn) => handlers.set(key, fn) }, projectService, projectAuthorityService, readinessService: service });
+    assert.deepEqual(await handlers.get("sigeko:getReadiness")({}, { projectId: a.id }), { ok: true, data: service.getReadiness({ projectId: a.id }) });
+    db.exec("DROP TABLE sigeko_project_authorities");
+    const result = await handlers.get("sigeko:getReadiness")({}, { projectId: a.id });
+    assert.equal(result.ok, false); assert.equal(result.code, "SQLITE_ERROR"); assert.match(result.error, /sigeko_project_authorities/);
   }));
 
   await run("S3: default IPC readiness uses the same project service and preserves technical error codes", async () => {

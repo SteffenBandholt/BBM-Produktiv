@@ -6,8 +6,8 @@ const { createProjectAuthorityService } = require("../domain/sigeko/ProjectAutho
 const { createReadinessService } = require("../domain/sigeko/ReadinessService");
 
 function registerSigekoIpc({ ipcMain, service = createSigekoService(), projectService = createSigekoProjectService(),
-  readinessService = createReadinessService({ projectService }), authorityService = createAuthorityService(),
-  projectAuthorityService = createProjectAuthorityService() } = {}) {
+  authorityService = createAuthorityService(), projectAuthorityService = createProjectAuthorityService(),
+  readinessService = createReadinessService({ projectService, projectAuthorityService }) } = {}) {
   for (const operation of ["getStoragePaths", "ensureStorageDirectories", "openStorageDirectory"]) {
     ipcMain.handle(`sigeko:${operation}`, async (_event, payload) => {
       try { return { ok: true, data: await service[operation](payload) }; }

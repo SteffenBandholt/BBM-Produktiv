@@ -40,6 +40,7 @@ on:
 jobs:
   persistence:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -93,8 +94,10 @@ jobs:
       - name: Install Linux display support
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb libgtk-3-0 libnss3 libasound2t64
+          ubuntu_sources=/etc/apt/sources.list.d/ubuntu.sources
+          test -s "$ubuntu_sources"
+          sudo apt-get -o Dir::Etc::sourcelist="$ubuntu_sources" -o Dir::Etc::sourceparts="-" update
+          sudo apt-get -o Dir::Etc::sourcelist="$ubuntu_sources" -o Dir::Etc::sourceparts="-" install -y xvfb libgtk-3-0 libnss3 libasound2t64
           sudo chown root:root node_modules/electron/dist/chrome-sandbox
           sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
       - name: Real Electron form with SQLite on Linux
@@ -127,7 +130,7 @@ jobs:
         env:
           BBM_S24_OUTPUT: ${{ runner.temp }}/s24-results
         run: >-
-          node -e "const fs=require('fs'),p=require('path'),d=process.env.BBM_S24_OUTPUT;for(const n of ['sigeko-project-form-result.json','sigeko-project-form-wide-profile.png','sigeko-project-form-wide-roles.png','sigeko-project-form-narrow-profile.png','sigeko-project-form-narrow-roles.png','sigeko-readiness-wide.png','sigeko-readiness-narrow.png']){const f=p.join(d,n);if(fs.existsSync(f))console.log(n+'='+fs.readFileSync(f,n.endsWith('.png')?'base64':'utf8'));}"
+          node -e "const fs=require('fs'),p=require('path'),d=process.env.BBM_S24_OUTPUT;for(const n of ['sigeko-project-form-result.json','sigeko-project-form-wide-profile.png','sigeko-project-form-wide-roles.png','sigeko-project-form-narrow-profile.png','sigeko-project-form-narrow-roles.png','sigeko-readiness-wide.png','sigeko-readiness-narrow.png','sigeko-authorities-wide-overview.png','sigeko-authorities-wide-record.png','sigeko-authorities-wide-assignment.png','sigeko-authorities-narrow-overview.png','sigeko-authorities-narrow-record.png','sigeko-authorities-narrow-assignment.png']){const f=p.join(d,n);if(fs.existsSync(f))console.log(n+'='+fs.readFileSync(f,n.endsWith('.png')?'base64':'utf8'));}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

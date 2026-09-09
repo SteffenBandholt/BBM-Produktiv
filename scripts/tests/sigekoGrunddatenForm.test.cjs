@@ -7,6 +7,16 @@ const clone = value => JSON.parse(JSON.stringify(value));
 const contact = name => ({ name, street: null, zip: null, city: null, phone: null, email: null });
 const assignment = (source = "module", personId = null, data = null) => ({ source, personId, data });
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
+const { AUTHORITY_CATEGORIES, AUTHORITY_FIELDS } = require("../../src/shared/sigeko/authorities.cjs");
+const authorityAddress = { street: "Bauweg 1", zip: "12345", city: "Ort" };
+const authorityRecord = (id = "authority-1", category = "LABOR_AUTHORITY") => ({ id, category,
+  ...Object.fromEntries(AUTHORITY_FIELDS.map(field => [field, `${field} geprüft`])), organization: `Stelle ${id}`, verification_status: "confirmed",
+  verified_at: "2026-09-10T12:00:00Z", verification_method: "manual", uncertainty_reason: null, revision: 2,
+  created_at: "2026-09-10T11:00:00Z", updated_at: "2026-09-10T12:00:00Z", confirmationIssues: [] });
+const authorityOverview = (projectId = "a") => ({ projectId, address: { ...authorityAddress }, status: "red", categories: AUTHORITY_CATEGORIES.map(category => ({
+  category, status: category === "EMERGENCY_112" ? "green" : "red", fixedPhone: category === "EMERGENCY_112" ? "112" : category === "POLICE" ? "110" : null,
+  assignment: null, candidates: [], proposal: null, issues: category === "EMERGENCY_112" ? [] : [{ code: "ASSIGNMENT_MISSING", message: "Projektkontakt fehlt." }],
+})) });
 
 // Control, payload and explicit-ref checks only. Real geometry belongs to the Electron acceptance.
 class Element {
@@ -33,23 +43,50 @@ async function runSigekoGrunddatenFormTests(run) {
   const { sigekoScreenUiEditorContract: contract } = await esm("src/renderer/modules/sigeko/SigekoScreen.uiEditorContract.js");
   const previous = { window: global.window, document: global.document };
   const screens = [];
-  let form, profile, data, writes, api, navigations, confirmResult;
+  let form, profile, data, writes, api, navigations, confirmResult, stock, authorityData, authorityWrites;
   const legacyCalls = [];
   const makeData = (id = "a", extension = null) => ({ project: { id, name: `Projekt ${id}`, project_number: id.toUpperCase() }, sigekoProject: extension, planning: null, execution: null });
   const readiness = (id = "a", status = "red") => ({ projectId: id,
     projectData: { status, issues: status === "red" ? [{ code: "BUILDER_MISSING", message: "Bauherr: Zuordnung fehlt.", action: "project" }] : [] },
-    authorities: { status: "red", available: false, issues: [{ code: "AUTHORITIES_NOT_IMPLEMENTED", message: "Noch nicht erfasst – folgt mit S4." }] } });
+    authorities: { status: "red", available: true, issues: [{ code: "ASSIGNMENT_MISSING", message: "Arbeitsschutzbehörde: Projektkontakt fehlt.", action: "authorities" }] } });
   const mount = (id = "a") => {
     const screen = new Screen({ projectId: id, router: { _setProjectRuntimeContext() {}, showProjects() { navigations.push("projects"); }, showProjectForm(payload) { navigations.push(payload); }, showProjectWorkspace(projectId) { navigations.push(projectId); } } });
     document.body.append(screen.render()); screens.push(screen); return screen;
   };
-  const reset = async ({ id = "a", extension = null, archived = false, overrides = {} } = {}) => {
+  const reset = async ({ id = "a", extension = null, archived = false, overrides = {}, records = [], projectAuthorities = null } = {}) => {
     for (const screen of screens.splice(0)) { screen.destroy(); screen.root.remove(); }
     refs.resetM80PilotWorkingStatesForDiagnostic();
     profile = { ...contact("Steffen"), logo_path: "C:\\Logos\\sigeko.png" }; data = makeData(id, extension);
     if (archived) data.project.archived_at = "2026-01-01";
     writes = { profile: [], roles: [] }; navigations = []; confirmResult = false;
+    stock = clone(records); authorityData = clone(projectAuthorities || authorityOverview(id)); authorityWrites = { save: [], confirm: [], uncertain: [], assign: [], apply: [] };
     api = {
+      sigekoListAuthorityRecords: async () => ({ ok: true, data: clone(stock) }),
+      sigekoGetProjectAuthorities: async ({ projectId }) => ({ ok: true, data: { ...clone(authorityData), projectId } }),
+      sigekoSaveAuthorityRecord: async payload => {
+        authorityWrites.save.push(clone(payload)); const old = stock.find(record => record.id === payload.id);
+        const saved = { ...(old || authorityRecord("new-record", payload.patch.category)), ...payload.patch,
+          verification_status: "unverified", verified_at: null, verification_method: null, revision: (old?.revision || 0) + 1 };
+        stock = [...stock.filter(record => record.id !== saved.id), saved]; return { ok: true, data: clone(saved) };
+      },
+      sigekoConfirmAuthorityRecord: async payload => {
+        authorityWrites.confirm.push(clone(payload)); const saved = stock.find(record => record.id === payload.id);
+        Object.assign(saved, { verification_status: "confirmed", revision: saved.revision + 1 }); return { ok: true, data: clone(saved) };
+      },
+      sigekoMarkAuthorityUncertain: async payload => {
+        authorityWrites.uncertain.push(clone(payload)); const saved = stock.find(record => record.id === payload.id);
+        Object.assign(saved, { verification_status: "uncertain", uncertainty_reason: payload.reason, revision: saved.revision + 1 }); return { ok: true, data: clone(saved) };
+      },
+      sigekoAssignProjectAuthority: async payload => {
+        authorityWrites.assign.push(clone(payload)); const selected = stock.find(record => record.id === payload.sourceId);
+        const entry = authorityData.categories.find(entry => entry.category === payload.category);
+        entry.status = payload.status === "uncertain" || selected.verification_status !== "confirmed" ? "orange" : "green";
+        entry.issues = entry.status === "orange" ? [{ code: "SOURCE_UNCONFIRMED", message: "Quelle ist noch nicht bestätigt." }] : [];
+        entry.assignment = { id: "assignment-1", revision: (entry.assignment?.revision || 0) + 1, source_id: selected.id, source_revision: selected.revision,
+          snapshot: clone(selected), assessment_status: payload.status, assessment_note: payload.note };
+        return { ok: true, data: clone(authorityData) };
+      },
+      sigekoApplyKnownProjectAuthorities: async payload => { authorityWrites.apply.push(clone(payload)); return { ok: true, data: clone(authorityData) }; },
       sigekoGetReadiness: async ({ projectId }) => ({ ok: true, data: readiness(projectId) }),
       sigekoGetCoordinatorProfile: async () => ({ ok: true, data: clone(profile) }),
       sigekoGetProjectData: async () => ({ ok: true, data: clone(data) }),
@@ -75,6 +112,10 @@ async function runSigekoGrunddatenFormTests(run) {
     form = mount(id); await form.load(); return form;
   };
   const source = (role, value) => { form.roleInputs[role].source.value = value; form.roleInputs[role].source.onchange(); };
+  const panelReady = async options => { await reset(options); await form.authoritiesPanel.load(); return form.authoritiesPanel; };
+  const selectRecord = async (panel, id = "authority-1") => { panel.contactInput.value = id; await panel.contactInput.onchange(); };
+  const input = (element, value) => { element.value = value; element.oninput(); };
+  const settle = () => new Promise(resolve => setImmediate(resolve));
   global.document = { body: new Element("body"), createElement: tag => new Element(tag), querySelector: () => null };
   global.window = { dispatchEvent() {}, confirm: () => confirmResult, getComputedStyle: el => ({ ...el.style, fontSize: "12px", paddingLeft: "0px", paddingTop: "0px" }) };
   try {
@@ -203,8 +244,8 @@ async function runSigekoGrunddatenFormTests(run) {
       assert.equal(form.inputs.name.value, "Steffen"); assert.equal(old.inputs.name.value, "Alter Entwurf");
       assert.equal(refs.getM80Ref("sigeko.screen.profile.name.input").element, form.inputs.name);
     });
-    await run("SiGeKo: all 121 slots have exact mounted attributes, valid parents and domain locks", async () => {
-      await reset(); assert.equal(contract.slots.length, 121); assert.deepEqual(contract.requiredSlots, contract.slots.map(slot => slot.slotId));
+    await run("SiGeKo: all 206 slots have exact mounted attributes, valid parents and domain locks", async () => {
+      await reset(); assert.equal(contract.slots.length, 206); assert.deepEqual(contract.requiredSlots, contract.slots.map(slot => slot.slotId));
       assert.equal(refs.validateM83ComponentReferences([contract.componentId]).ok, true);
       for (const slot of contract.slots) {
         const entry = slot.element, ref = refs.getM80Ref(entry.id); assert.equal(ref.contractTargets.length, 1);
@@ -222,12 +263,12 @@ async function runSigekoGrunddatenFormTests(run) {
       assert.equal(form.inputs.name.style.fontSize, "17px"); assert.equal(form.rolesSave.style.width, "220px");
       assert.deepEqual(form._profileDraft(), profileBefore); assert.deepEqual(form._rolesDraft(), rolesBefore); assert.deepEqual(writes, { profile: [], roles: [] });
     });
-    await run("S3: red readiness shows concrete issues and S4 boundary without blocking editing", async () => {
+    await run("S3: red readiness shows concrete project and authority issues without blocking editing", async () => {
       await reset();
       assert.equal(form.readinessViews.project.status.textContent, "Rot – Angaben fehlen.");
       assert.match(form.readinessViews.project.issues.textContent, /Bauherr/);
-      assert.equal(form.readinessViews.authorities.status.textContent, "Rot – noch nicht erfasst.");
-      assert.match(form.readinessViews.authorities.issues.textContent, /folgt mit S4/);
+      assert.equal(form.readinessViews.authorities.status.textContent, "Rot – Angaben fehlen.");
+      assert.match(form.readinessViews.authorities.issues.textContent, /Projektkontakt fehlt/);
       assert.match(form.readinessWarning.textContent, /ungespeicherte Eingaben/);
       assert.equal(form.profileSave.disabled, false); assert.equal(form.rolesSave.disabled, false);
       assert.deepEqual(writes, { profile: [], roles: [] });
@@ -299,6 +340,192 @@ async function runSigekoGrunddatenFormTests(run) {
       refs.getM80Ref("sigeko.screen.readiness.editRoles").element.onclick();
       assert.equal(form.basicPanel.scrolled.block, "start"); assert.equal(form.inputs.name.value, "Entwurf");
       assert.deepEqual(writes, { profile: [], roles: [] });
+    });
+    await run("S4.3: overview keeps all eight categories and immutable emergency numbers separate from editable stock", async () => {
+      const panel = await panelReady();
+      assert.equal(panel.categoryInput.children.length, 7); assert.ok(panel.categoryInput.children.every(option => option.value !== "EMERGENCY_112"));
+      for (const suffix of ["labor", "hospital", "doctor", "water", "electricity", "gas", "emergency", "police"]) {
+        assert.ok(refs.getM80Ref(`sigeko.screen.authorities.overview.${suffix}`).element.textContent);
+      }
+      assert.match(refs.getM80Ref("sigeko.screen.authorities.overview.emergency").element.textContent, /112/);
+      assert.match(refs.getM80Ref("sigeko.screen.authorities.overview.police").element.textContent, /110/);
+      assert.equal(panel.applyButton.disabled, true); assert.equal(panel.confirmButton.disabled, true);
+      assert.deepEqual(authorityWrites, { save: [], confirm: [], uncertain: [], assign: [], apply: [] });
+      refs.getM80Ref("sigeko.screen.readiness.editAuthorities").element.onclick();
+      assert.equal(refs.getM80Ref("sigeko.screen.authorities").element.scrolled.block, "start");
+    });
+    await run("S4.3: saving stock confirming its verification and assigning a project contact are separate writes", async () => {
+      const panel = await panelReady({ records: [authorityRecord()] }); await selectRecord(panel);
+      input(panel.inputs.organization, "Gespeicherte neue Stelle"); await panel.saveButton.onclick(); await settle();
+      assert.equal(authorityWrites.save.length, 1); assert.equal(authorityWrites.save[0].id, "authority-1");
+      assert.equal(authorityWrites.save[0].expectedRevision, 2); assert.equal(authorityWrites.save[0].patch.organization, "Gespeicherte neue Stelle");
+      assert.equal(authorityWrites.confirm.length, 0); assert.equal(authorityWrites.assign.length, 0);
+      assert.equal(panel.selectedRecord.verification_status, "unverified");
+      await panel.confirmButton.onclick(); await settle(); assert.deepEqual(authorityWrites.confirm, [{ id: "authority-1", expectedRevision: 3 }]);
+      assert.equal(authorityWrites.assign.length, 0); input(panel.noteInput, "Zuständigkeit für diese Baustelle geprüft");
+      await panel.assignConfirmButton.onclick(); await settle(); assert.equal(authorityWrites.assign.length, 1);
+      assert.deepEqual(authorityWrites.assign[0], { projectId: "a", category: "LABOR_AUTHORITY", sourceId: "authority-1", sourceRevision: 4,
+        expectedRevision: 0, expectedAddress: authorityAddress, status: "confirmed", note: "Zuständigkeit für diese Baustelle geprüft" });
+      assert.deepEqual(writes, { profile: [], roles: [] });
+    });
+    await run("S4.3: unsaved visible stock values block confirmation uncertainty and both project assignments", async () => {
+      const panel = await panelReady({ records: [authorityRecord()] }); await selectRecord(panel);
+      input(panel.noteInput, "Geprüfte Zuständigkeit"); input(panel.reasonInput, "Quelle unklar"); input(panel.inputs.phone, "Ungespeicherte Nummer");
+      for (const button of [panel.confirmButton, panel.uncertainButton, panel.assignConfirmButton, panel.assignUncertainButton]) {
+        assert.equal(button.disabled, true); await button.onclick();
+      }
+      assert.deepEqual(authorityWrites, { save: [], confirm: [], uncertain: [], assign: [], apply: [] });
+      assert.equal(panel.inputs.phone.value, "Ungespeicherte Nummer");
+    });
+    await run("S4.3: successful assignment preserves calculated orange for an unconfirmed source", async () => {
+      const row = { ...authorityRecord(), verification_status: "unverified", verified_at: null, verification_method: null };
+      const panel = await panelReady({ records: [row] }); await selectRecord(panel); input(panel.noteInput, "Projektbeurteilung dokumentiert");
+      await panel.assignConfirmButton.onclick(); await settle(); assert.equal(authorityWrites.assign.length, 1);
+      assert.equal(panel.projectData.categories.find(entry => entry.category === "LABOR_AUTHORITY").status, "orange");
+      assert.match(refs.getM80Ref("sigeko.screen.authorities.overview.labor").element.textContent, /Orange|Prüfbedarf/i);
+      assert.equal(authorityWrites.confirm.length, 0);
+    });
+    await run("S4.3: batch action sends only offered missing proposals and never invents replacements", async () => {
+      const overview = authorityOverview(); const proposal = { category: "WATER", sourceId: "water-1", sourceRevision: 3, expectedRevision: 0 };
+      overview.categories.find(entry => entry.category === "WATER").proposal = proposal;
+      overview.categories.find(entry => entry.category === "GAS").candidates = [authorityRecord("gas-1", "GAS")];
+      const panel = await panelReady({ projectAuthorities: overview, records: [authorityRecord()] }); await selectRecord(panel);
+      assert.equal(panel.applyButton.disabled, false);
+      input(panel.inputs.organization, "Noch nicht gespeicherter sichtbarer Bestand");
+      assert.equal(panel.applyButton.disabled, true); await panel.applyButton.onclick(); assert.deepEqual(authorityWrites.apply, []);
+      confirmResult = true; await selectRecord(panel); assert.equal(panel.applyButton.disabled, false);
+      for (const note of [panel.reasonInput, panel.noteInput]) {
+        input(note, "Ungespeicherte Beurteilung"); assert.equal(panel.applyButton.disabled, true);
+        await panel.applyButton.onclick(); assert.deepEqual(authorityWrites.apply, []);
+        input(note, ""); assert.equal(panel.applyButton.disabled, false);
+      }
+      await panel.newButton.onclick(); assert.equal(panel.applyButton.disabled, true);
+      await panel.applyButton.onclick(); assert.deepEqual(authorityWrites.apply, []);
+      confirmResult = true; await selectRecord(panel); assert.equal(panel.applyButton.disabled, false);
+      await panel.applyButton.onclick(); assert.deepEqual(authorityWrites.apply, [{ projectId: "a", expectedAddress: authorityAddress, selections: [proposal] }]);
+      assert.deepEqual(authorityWrites.assign, []);
+    });
+    await run("S4.3: missing source still displays the saved project snapshot and its concrete warning", async () => {
+      const overview = authorityOverview(); const entry = overview.categories.find(entry => entry.category === "LABOR_AUTHORITY");
+      Object.assign(entry, { status: "orange", assignment: { revision: 4, source_id: "deleted", source_revision: 2,
+        snapshot: { ...authorityRecord("deleted"), organization: "Historische Behörde", phone: "040 11122", source: "Archivquelle" },
+        assessment_note: "Früher geprüft", assessment_status: "confirmed" }, issues: [{ code: "SOURCE_MISSING", message: "Quelle fehlt im lokalen Bestand." }] });
+      const panel = await panelReady({ projectAuthorities: overview });
+      const snapshot = refs.getM80Ref("sigeko.screen.authorities.assignment.snapshot").element.textContent;
+      assert.match(snapshot, /Historische Behörde/); assert.match(snapshot, /040 11122/); assert.match(snapshot, /Archivquelle/);
+      assert.match(refs.getM80Ref("sigeko.screen.authorities.overview.labor").element.textContent, /Quelle fehlt/);
+      assert.equal(panel.assignConfirmButton.disabled, true); assert.deepEqual(authorityWrites.assign, []);
+    });
+    await run("S4.3: refresh and foreign profile or role saves retain stock drafts and both review notes", async () => {
+      const panel = await panelReady({ records: [authorityRecord()] }); await selectRecord(panel);
+      input(panel.inputs.organization, "Bestandsentwurf"); input(panel.reasonInput, "Unsicherheitsentwurf"); input(panel.noteInput, "Prüfnotizentwurf");
+      form.inputs.name.value = "Profilentwurf"; source("planning", "free"); form.roleInputs.planning.inputs.name.value = "Rollenentwurf";
+      await panel.refreshButton.onclick();
+      assert.equal(form.inputs.name.value, "Profilentwurf"); assert.equal(form.roleInputs.planning.inputs.name.value, "Rollenentwurf");
+      await form.profileSave.onclick(); await form.rolesSave.onclick();
+      assert.equal(panel.inputs.organization.value, "Bestandsentwurf"); assert.equal(panel.reasonInput.value, "Unsicherheitsentwurf"); assert.equal(panel.noteInput.value, "Prüfnotizentwurf");
+      assert.equal(panel.isDirty(), true); assert.deepEqual(authorityWrites, { save: [], confirm: [], uncertain: [], assign: [], apply: [] });
+    });
+    await run("S4.3: category contact new and navigation changes require deliberate draft discard", async () => {
+      const panel = await panelReady({ records: [authorityRecord(), authorityRecord("authority-2")] }); await selectRecord(panel);
+      input(panel.inputs.organization, "Nicht verwerfen");
+      panel.categoryInput.value = "WATER"; await panel.categoryInput.onchange(); assert.equal(panel.categoryInput.value, "LABOR_AUTHORITY");
+      panel.contactInput.value = "authority-2"; await panel.contactInput.onchange(); assert.equal(panel.contactInput.value, "authority-1");
+      await panel.newButton.onclick(); assert.equal(panel.inputs.organization.value, "Nicht verwerfen");
+      refs.getM80Ref("sigeko.screen.projects").element.onclick(); assert.deepEqual(navigations, []);
+      confirmResult = true; panel.contactInput.value = "authority-2"; await panel.contactInput.onchange();
+      assert.equal(panel.inputs.organization.value, "Stelle authority-2");
+      input(panel.noteInput, "Nur eine ungespeicherte Prüfnotiz"); confirmResult = false;
+      await panel.newButton.onclick(); assert.equal(panel.contactInput.value, "authority-2");
+      confirmResult = true; await panel.newButton.onclick(); assert.equal(panel.selectedRecord, null); assert.equal(panel.inputs.organization.value, "");
+      assert.deepEqual(authorityWrites, { save: [], confirm: [], uncertain: [], assign: [], apply: [] });
+    });
+    await run("S4.3: pending authority writes prevent duplicate actions and navigation while preserving foreign drafts", async () => {
+      const panel = await panelReady({ records: [authorityRecord()] }); await selectRecord(panel); const gate = deferred();
+      input(panel.inputs.organization, "Speicherentwurf"); form.inputs.name.value = "Fremder Entwurf";
+      api.sigekoSaveAuthorityRecord = payload => { authorityWrites.save.push(clone(payload)); return gate.promise; };
+      const pending = panel.saveButton.onclick(); await panel.saveButton.onclick();
+      assert.equal(authorityWrites.save.length, 1); assert.equal(panel.busy, true);
+      confirmResult = true; refs.getM80Ref("sigeko.screen.projects").element.onclick(); assert.deepEqual(navigations, []);
+      gate.resolve({ ok: false, error: "Revision wurde inzwischen geändert", code: "AUTHORITY_CONFLICT" }); await pending;
+      assert.equal(panel.inputs.organization.value, "Speicherentwurf"); assert.equal(form.inputs.name.value, "Fremder Entwurf");
+      assert.equal(panel.saveButton.disabled, true); assert.equal(panel.busy, false);
+      await panel.refreshButton.onclick(); assert.equal(panel.inputs.organization.value, "Speicherentwurf"); assert.equal(panel.saveButton.disabled, false);
+    });
+    await run("S4.3: failed refresh clears previous green while retaining drafts and enabling retry", async () => {
+      const overview = authorityOverview(); overview.status = "green"; for (const entry of overview.categories) { entry.status = "green"; entry.issues = []; }
+      const panel = await panelReady({ projectAuthorities: overview, records: [authorityRecord()] }); await selectRecord(panel);
+      input(panel.inputs.organization, "Behalten"); api.sigekoGetProjectAuthorities = async () => ({ ok: false, error: "Behörden offline" });
+      await panel.load(); assert.equal(panel.projectData, null); assert.equal(panel.inputs.organization.value, "Behalten");
+      assert.doesNotMatch(refs.getM80Ref("sigeko.screen.authorities.overview.labor").element.textContent, /Grün/);
+      assert.equal(panel.assignConfirmButton.disabled, true); assert.equal(panel.refreshButton.disabled, false);
+      assert.equal(form.profileSave.disabled, false); assert.equal(form.rolesSave.disabled, false);
+    });
+    await run("S4.3: late authority responses cannot overwrite a newer result or replacement screen refs", async () => {
+      const panel = await panelReady(); const gate = deferred(); api.sigekoGetProjectAuthorities = () => gate.promise;
+      const pending = panel.load(); api.sigekoGetProjectAuthorities = async () => ({ ok: true, data: authorityOverview() }); await panel.load();
+      const green = authorityOverview(); green.status = "green"; gate.resolve({ ok: true, data: green }); await pending;
+      assert.equal(panel.projectData.status, "red");
+      const destroyedGate = deferred(); api.sigekoGetProjectAuthorities = () => destroyedGate.promise; const departed = panel.load();
+      form.destroy(); form.root.remove(); api.sigekoGetProjectAuthorities = async () => ({ ok: true, data: authorityOverview("b") });
+      form = mount("b"); await form.authoritiesPanel.load(); destroyedGate.resolve({ ok: true, data: green }); await departed;
+      assert.equal(form.authoritiesPanel.projectData.projectId, "b");
+      assert.equal(refs.getM80Ref("sigeko.screen.authorities.category.input").element, form.authoritiesPanel.categoryInput);
+    });
+    await run("S4.3: hung authority reads do not delay profile roles saves or clean navigation", async () => {
+      const gate = deferred(); await reset({ overrides: { sigekoGetProjectAuthorities: () => gate.promise, sigekoListAuthorityRecords: () => gate.promise } });
+      assert.equal(form.authoritiesPanel.loading, true); assert.equal(form.profileSave.disabled, false); assert.equal(form.rolesSave.disabled, false);
+      await form.profileSave.onclick(); await form.rolesSave.onclick();
+      assert.equal(form.profileBusy, false); assert.equal(form.rolesBusy, false);
+      refs.getM80Ref("sigeko.screen.projects").element.onclick(); assert.deepEqual(navigations, ["projects"]);
+      gate.resolve({ ok: false, error: "Abgebrochene Abfrage" }); await new Promise(resolve => setImmediate(resolve));
+    });
+    await run("S4.3: delayed authority save after destruction leaves the replacement form untouched", async () => {
+      const old = await panelReady({ records: [authorityRecord()] }); await selectRecord(old); const gate = deferred();
+      input(old.inputs.organization, "Alter Speicherentwurf"); api.sigekoSaveAuthorityRecord = () => gate.promise;
+      const pending = old.saveButton.onclick(); form.destroy(); form.root.remove();
+      form = mount(); await form.load(); await form.authoritiesPanel.load();
+      gate.resolve({ ok: true, data: { ...authorityRecord(), organization: "Späte Speicherantwort", revision: 3 } }); await pending;
+      assert.notEqual(form.authoritiesPanel.inputs.organization.value, "Späte Speicherantwort");
+      assert.equal(refs.getM80Ref("sigeko.screen.authorities.record.organization.input").element, form.authoritiesPanel.inputs.organization);
+      assert.equal(old.inputs.organization.value, "Alter Speicherentwurf");
+    });
+    await run("S4.3: archived project controls reject every authority mutation with loaded records", async () => {
+      const panel = await panelReady({ archived: true, records: [authorityRecord()] }); await selectRecord(panel);
+      for (const button of [panel.saveButton, panel.confirmButton, panel.uncertainButton, panel.assignConfirmButton, panel.assignUncertainButton, panel.applyButton, panel.newButton]) {
+        assert.equal(button.disabled, true); await button.onclick();
+      }
+      assert.deepEqual(authorityWrites, { save: [], confirm: [], uncertain: [], assign: [], apply: [] });
+      assert.equal(form.profileSave.disabled, false);
+    });
+    await run("S4.3: fast authority reads cannot enable stock writes before delayed project archive state is known", async () => {
+      for (const delayed of ["project", "contacts"]) for (const archived of [false, true]) {
+        await reset({ records: [authorityRecord()] }); form.destroy(); form.root.remove();
+        const gate = deferred(); const savedContactApi = api.firmDirectoryListAll;
+        const loadedProject = makeData(); if (archived) loadedProject.project.archived_at = "2026-09-01";
+        api.sigekoGetProjectData = delayed === "project" ? () => gate.promise : async () => ({ ok: true, data: loadedProject });
+        if (delayed === "contacts") api.firmDirectoryListAll = async payload => { await gate.promise; return savedContactApi(payload); };
+        form = mount(); const pending = form.load(); await settle(); const panel = form.authoritiesPanel;
+        assert.equal(form.project, null); assert.equal(panel.ready, true); assert.equal(panel.projectData.projectId, "a");
+        assert.equal(form.profileReady, true); assert.equal(form.profileSave.disabled, false, `${delayed}: loaded profile remains editable`);
+        await selectRecord(panel); input(panel.inputs.organization, "Noch gesperrter Entwurf");
+        for (const button of [panel.saveButton, panel.confirmButton, panel.uncertainButton, panel.assignConfirmButton, panel.assignUncertainButton, panel.applyButton, panel.newButton]) {
+          assert.equal(button.disabled, true, `${delayed}: project authorization pending`); await button.onclick();
+        }
+        assert.deepEqual(authorityWrites, { save: [], confirm: [], uncertain: [], assign: [], apply: [] });
+        gate.resolve(delayed === "project" ? { ok: true, data: loadedProject } : undefined); await pending;
+        assert.equal(form.project.id, "a"); assert.equal(panel.saveButton.disabled, archived);
+        assert.equal(panel.inputs.organization.disabled, archived); assert.equal(form.profileSave.disabled, false);
+        assert.deepEqual(authorityWrites, { save: [], confirm: [], uncertain: [], assign: [], apply: [] });
+      }
+    });
+    await run("S4.3: editor styling cannot change authority drafts or invoke domain actions", async () => {
+      const panel = await panelReady({ records: [authorityRecord()] }); await selectRecord(panel); input(panel.inputs.organization, "Fachentwurf"); input(panel.noteInput, "Fachnotiz");
+      refs.applyM80State("sigeko.screen.authorities.record.organization.input", { fontSize: 18 }, "textResize");
+      refs.applyM80State("sigeko.screen.authorities.record.save", { width: 230 }, "resizeWidth");
+      assert.equal(panel.inputs.organization.value, "Fachentwurf"); assert.equal(panel.noteInput.value, "Fachnotiz");
+      assert.equal(panel.inputs.organization.style.fontSize, "18px"); assert.equal(panel.saveButton.style.width, "230px");
+      assert.deepEqual(authorityWrites, { save: [], confirm: [], uncertain: [], assign: [], apply: [] });
     });
   } finally {
     for (const screen of screens) { screen.destroy(); screen.root.remove(); }
