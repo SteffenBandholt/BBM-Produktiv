@@ -39,7 +39,8 @@ export default class SigekoScreen {
     this.project = project && String(project.id) === String(this.projectId) ? project : null;
     this.uiEditorScopeId = SIGEKO_SCOPE_ID;
     this.router?._setProjectRuntimeContext?.({ projectId: this.projectId, meetingId: null });
-    this.alive = true; this.loadSequence = 0;
+    this.alive = true; this.loadSequence = 0; this.readinessSequence = 0;
+    this.readinessData = null; this.readinessBusy = false;
     this.profileReady = this.rolesReady = false;
     this.profileBusy = this.rolesBusy = false;
     this.contacts = { person: [], project_person: [] };
@@ -88,13 +89,73 @@ export default class SigekoScreen {
     this._button(nav, ".projects", "Projekt wechseln", () => this._navigate(() => this.router.showProjects()));
     this.notice = node("p", "sigeko.screen.notice", "Grunddaten werden geladen …"); this.notice.setAttribute("role", "status");
     const basic = node("section", "sigeko.screen.basic"); basic.style.cssText = "display:flex;flex-direction:column;gap:16px;min-width:0";
+    this.basicPanel = basic;
     basic.append(node("h2", "sigeko.screen.basic.title", "Grunddaten"));
     this._renderProfile(basic); this._renderRoles(basic);
     const planned = node("section", "sigeko.screen.planned"); planned.style.cssText = "padding:12px;border:1px solid #d3dfec;border-radius:8px;background:#f5f8fc";
     const plannedTitle = node("h2", "sigeko.screen.planned.title", "Geplante Bereiche – noch nicht umgesetzt"); plannedTitle.style.fontSize = "16px";
-    planned.append(plannedTitle, node("p", "sigeko.screen.planned.text", "Übersicht / Readiness · Behörden / Notfall / Versorger · Vorankündigung · SiGePlan · Begehungen · Übergabe an Restarbeiten"));
-    root.append(header, nav, this.notice, basic, planned); this.root = root;
+    planned.append(plannedTitle, node("p", "sigeko.screen.planned.text", "Behörden / Notfall / Versorger · Vorankündigung · SiGePlan · Begehungen · Übergabe an Restarbeiten"));
+    root.append(header, nav, this.notice, this._renderReadiness(), basic, planned); this.root = root;
     this._refreshEnabled(); completeM80PilotRender(); return root;
+  }
+
+  _renderReadiness() {
+    const panel = node("section", "sigeko.screen.readiness"); panel.style.cssText = PANEL;
+    panel.append(node("h2", "sigeko.screen.readiness.title", "Projektbereitschaft"));
+    this.readinessViews = {};
+    for (const [key, title] of [["project", "Projektdaten"], ["authorities", "Behörden / Notfall / Versorger"]]) {
+      const group = node("section", `sigeko.screen.readiness.${key}`);
+      group.style.cssText = "min-width:0;display:flex;flex-direction:column;gap:6px";
+      const heading = node("h3", `sigeko.screen.readiness.${key}.title`, title); heading.style.margin = "0";
+      const status = node("p", `sigeko.screen.readiness.${key}.status`, "Wird geprüft …");
+      status.setAttribute("role", "status"); status.style.cssText = "margin:0;font-weight:600";
+      const issues = node("p", `sigeko.screen.readiness.${key}.issues`);
+      issues.style.cssText = "margin:0;white-space:pre-line;overflow-wrap:anywhere";
+      group.append(heading, status, issues); panel.append(group);
+      this.readinessViews[key] = { status, issues };
+    }
+    this.readinessWarning = node("p", "sigeko.screen.readiness.warning", "Die Prüfung bezieht sich auf gespeicherte Angaben. Sie können die Grunddaten jederzeit weiterbearbeiten.");
+    this.readinessWarning.setAttribute("role", "status"); panel.append(this.readinessWarning);
+    this.readinessRefresh = this._button(panel, ".readiness.refresh", "Bereitschaft aktualisieren", () => this._loadReadiness());
+    this._button(panel, ".readiness.editProject", "Projektverwaltung öffnen", () => this._navigate(() => this.router.showProjectForm({ projectId: this.projectId })));
+    this._button(panel, ".readiness.editRoles", "Profil und Projektrollen bearbeiten", () => this.basicPanel.scrollIntoView({ block: "start", behavior: "smooth" }));
+    return panel;
+  }
+
+  async _loadReadiness() {
+    if (!this.alive) return;
+    const sequence = ++this.readinessSequence;
+    const current = () => this.alive && sequence === this.readinessSequence;
+    this.readinessData = null; this.readinessBusy = true; this.readinessRefresh.disabled = true;
+    for (const view of Object.values(this.readinessViews)) {
+      view.status.textContent = "Wird geprüft …"; view.status.style.color = "inherit"; view.issues.textContent = "";
+    }
+    this.readinessWarning.textContent = "Gespeicherte Angaben werden geprüft. Die Grunddaten bleiben bearbeitbar.";
+    try {
+      const data = resultData(await window.bbmDb.sigekoGetReadiness({ projectId: this.projectId }));
+      if (!current()) return;
+      if (String(data?.projectId) !== String(this.projectId) || !["red", "green"].includes(data?.projectData?.status)
+        || !["red", "orange", "green"].includes(data?.authorities?.status)
+        || !Array.isArray(data.projectData.issues) || !Array.isArray(data.authorities.issues)) {
+        throw new Error("Bereitschaftsdaten konnten nicht zugeordnet werden.");
+      }
+      this.readinessData = data;
+      for (const [key, area] of [["project", data.projectData], ["authorities", data.authorities]]) {
+        const view = this.readinessViews[key];
+        view.status.textContent = area.status === "green" ? "Grün – Angaben vollständig."
+          : area.status === "orange" ? "Orange – Angaben prüfen."
+          : key === "authorities" && area.available === false ? "Rot – noch nicht erfasst." : "Rot – Angaben fehlen.";
+        view.status.style.color = { red: "#a12622", orange: "#885700", green: "#176b3a" }[area.status];
+        view.issues.textContent = area.issues.map(issue => issue.message).join("\n") || "Keine fehlenden Angaben.";
+      }
+      this.readinessWarning.textContent = "Stand der gespeicherten Angaben; ungespeicherte Eingaben sind nicht berücksichtigt. Fehlende oder ungeprüfte Angaben sind ein Hinweis und sperren die Grunddatenpflege nicht.";
+    } catch (error) {
+      if (!current()) return;
+      for (const view of Object.values(this.readinessViews)) { view.status.textContent = "Prüfung nicht verfügbar."; view.status.style.color = "inherit"; view.issues.textContent = ""; }
+      this.readinessWarning.textContent = `Bereitschaft konnte nicht geprüft werden: ${error.message} Bitte erneut aktualisieren. Die Grunddaten bleiben bearbeitbar.`;
+    } finally {
+      if (current()) { this.readinessBusy = false; this.readinessRefresh.disabled = false; completeM80PilotRender(); }
+    }
   }
 
   _renderProfile(parent) {
@@ -219,6 +280,7 @@ export default class SigekoScreen {
     return groups.flat().sort((a, b) => a.label.localeCompare(b.label, "de"));
   }
   async load() {
+    void this._loadReadiness();
     const sequence = ++this.loadSequence;
     const current = () => this.alive && sequence === this.loadSequence;
     const profile = (async () => {
@@ -264,6 +326,7 @@ export default class SigekoScreen {
         if (resolved?.assignment.source === "module") { resolved.values = profile; resolved.sourceMissing = !profile; }
       }
       this._showResolved();
+      void this._loadReadiness();
     } catch (error) { if (this.alive) this.profileStatus.textContent = `Profil nicht gespeichert: ${error.message}`; }
     finally { this.profileBusy = false; if (this.alive) { this._refreshEnabled(); completeM80PilotRender(); } }
   }
@@ -281,9 +344,10 @@ export default class SigekoScreen {
       const data = resultData(await window.bbmDb.sigekoSaveProjectData(payload));
       if (!this.alive) return;
       this._setProjectData(data); this.rolesStatus.textContent = "Projektrollen gespeichert.";
+      void this._loadReadiness();
     } catch (error) { if (this.alive) this.rolesStatus.textContent = `Projektrollen nicht gespeichert: ${error.message}`; }
     finally { this.rolesBusy = false; if (this.alive) { this._refreshEnabled(); completeM80PilotRender(); } }
   }
 
-  destroy() { this.alive = false; ++this.loadSequence; beginM83ComponentBinding(SIGEKO_COMPONENT_ID); }
+  destroy() { this.alive = false; ++this.loadSequence; ++this.readinessSequence; beginM83ComponentBinding(SIGEKO_COMPONENT_ID); }
 }

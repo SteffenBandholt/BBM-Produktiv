@@ -73,6 +73,20 @@ for (const [role, title] of [["planning", "Planung"], ["execution", "Ausführung
 }
 button(".roles.save", "Projektrollen speichern", ".roles", "saveSigekoProjectRoles");
 status(".roles.status", "Rollenstatus", ".roles");
+add(".readiness", "Übersicht / Readiness", "group", "");
+add(".readiness.title", "Projektbereitschaft", "label", ".readiness");
+add(".readiness.project", "Projektdaten prüfen", "group", ".readiness");
+add(".readiness.project.title", "Projektdaten", "label", ".readiness.project");
+status(".readiness.project.status", "Bereitschaft der Projektdaten", ".readiness.project");
+add(".readiness.project.issues", "Fehlende Projektdaten", "label", ".readiness.project");
+add(".readiness.authorities", "Behörden und Versorger prüfen", "group", ".readiness");
+add(".readiness.authorities.title", "Behörden / Notfall / Versorger", "label", ".readiness.authorities");
+status(".readiness.authorities.status", "Bereitschaft der Behördenangaben", ".readiness.authorities");
+add(".readiness.authorities.issues", "Fehlende Behördenangaben", "label", ".readiness.authorities");
+status(".readiness.warning", "Bereitschaftshinweis", ".readiness");
+button(".readiness.refresh", "Bereitschaft aktualisieren", ".readiness", "refreshSigekoReadiness");
+button(".readiness.editProject", "Projektverwaltung öffnen", ".readiness", "navigateProjectForm");
+button(".readiness.editRoles", "Profil und Projektrollen bearbeiten", ".readiness", "navigateSigekoBasicData");
 Object.freeze(elements);
 
 export const sigekoScreenUiEditorContract = m83Component({

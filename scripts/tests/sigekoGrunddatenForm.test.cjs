@@ -23,6 +23,7 @@ class Element {
   getAttribute(key) { return this.attributes[key] ?? null; }
   append(...nodes) { for (const node of nodes) { node.remove(); node.parentElement = this; this.children.push(node); } }
   remove() { if (this.parentElement) this.parentElement.children = this.parentElement.children.filter(child => child !== this); this.parentElement = null; }
+  scrollIntoView(options) { this.scrolled = options; }
   getBoundingClientRect() { return { left: 0, top: 0, right: 320, bottom: 32, width: 320, height: 32 }; }
 }
 
@@ -35,8 +36,11 @@ async function runSigekoGrunddatenFormTests(run) {
   let form, profile, data, writes, api, navigations, confirmResult;
   const legacyCalls = [];
   const makeData = (id = "a", extension = null) => ({ project: { id, name: `Projekt ${id}`, project_number: id.toUpperCase() }, sigekoProject: extension, planning: null, execution: null });
+  const readiness = (id = "a", status = "red") => ({ projectId: id,
+    projectData: { status, issues: status === "red" ? [{ code: "BUILDER_MISSING", message: "Bauherr: Zuordnung fehlt.", action: "project" }] : [] },
+    authorities: { status: "red", available: false, issues: [{ code: "AUTHORITIES_NOT_IMPLEMENTED", message: "Noch nicht erfasst – folgt mit S4." }] } });
   const mount = (id = "a") => {
-    const screen = new Screen({ projectId: id, router: { _setProjectRuntimeContext() {}, showProjects() { navigations.push("projects"); }, showProjectWorkspace(projectId) { navigations.push(projectId); } } });
+    const screen = new Screen({ projectId: id, router: { _setProjectRuntimeContext() {}, showProjects() { navigations.push("projects"); }, showProjectForm(payload) { navigations.push(payload); }, showProjectWorkspace(projectId) { navigations.push(projectId); } } });
     document.body.append(screen.render()); screens.push(screen); return screen;
   };
   const reset = async ({ id = "a", extension = null, archived = false, overrides = {} } = {}) => {
@@ -46,6 +50,7 @@ async function runSigekoGrunddatenFormTests(run) {
     if (archived) data.project.archived_at = "2026-01-01";
     writes = { profile: [], roles: [] }; navigations = []; confirmResult = false;
     api = {
+      sigekoGetReadiness: async ({ projectId }) => ({ ok: true, data: readiness(projectId) }),
       sigekoGetCoordinatorProfile: async () => ({ ok: true, data: clone(profile) }),
       sigekoGetProjectData: async () => ({ ok: true, data: clone(data) }),
       sigekoSaveCoordinatorProfile: async payload => { writes.profile.push(clone(payload)); return { ok: true, data: { ...profile, ...payload.patch } }; },
@@ -198,8 +203,8 @@ async function runSigekoGrunddatenFormTests(run) {
       assert.equal(form.inputs.name.value, "Steffen"); assert.equal(old.inputs.name.value, "Alter Entwurf");
       assert.equal(refs.getM80Ref("sigeko.screen.profile.name.input").element, form.inputs.name);
     });
-    await run("S2.4: all 107 slots have exact mounted attributes, valid parents and domain locks", async () => {
-      await reset(); assert.equal(contract.slots.length, 107); assert.deepEqual(contract.requiredSlots, contract.slots.map(slot => slot.slotId));
+    await run("SiGeKo: all 121 slots have exact mounted attributes, valid parents and domain locks", async () => {
+      await reset(); assert.equal(contract.slots.length, 121); assert.deepEqual(contract.requiredSlots, contract.slots.map(slot => slot.slotId));
       assert.equal(refs.validateM83ComponentReferences([contract.componentId]).ok, true);
       for (const slot of contract.slots) {
         const entry = slot.element, ref = refs.getM80Ref(entry.id); assert.equal(ref.contractTargets.length, 1);
@@ -216,6 +221,84 @@ async function runSigekoGrunddatenFormTests(run) {
       refs.applyM80State("sigeko.screen.roles.save", { width: 220 }, "resizeWidth");
       assert.equal(form.inputs.name.style.fontSize, "17px"); assert.equal(form.rolesSave.style.width, "220px");
       assert.deepEqual(form._profileDraft(), profileBefore); assert.deepEqual(form._rolesDraft(), rolesBefore); assert.deepEqual(writes, { profile: [], roles: [] });
+    });
+    await run("S3: red readiness shows concrete issues and S4 boundary without blocking editing", async () => {
+      await reset();
+      assert.equal(form.readinessViews.project.status.textContent, "Rot – Angaben fehlen.");
+      assert.match(form.readinessViews.project.issues.textContent, /Bauherr/);
+      assert.equal(form.readinessViews.authorities.status.textContent, "Rot – noch nicht erfasst.");
+      assert.match(form.readinessViews.authorities.issues.textContent, /folgt mit S4/);
+      assert.match(form.readinessWarning.textContent, /ungespeicherte Eingaben/);
+      assert.equal(form.profileSave.disabled, false); assert.equal(form.rolesSave.disabled, false);
+      assert.deepEqual(writes, { profile: [], roles: [] });
+    });
+    await run("S3: refresh reads saved readiness and preserves both unsaved drafts", async () => {
+      await reset(); source("planning", "free"); form.roleInputs.planning.inputs.name.value = "Rollenentwurf";
+      form.inputs.name.value = "Profilentwurf"; const before = [form._profileDraft(), form._rolesDraft()];
+      api.sigekoGetReadiness = async payload => { assert.deepEqual(payload, { projectId: "a" }); return { ok: true, data: readiness("a", "green") }; };
+      await form.readinessRefresh.onclick();
+      assert.equal(form.readinessViews.project.status.textContent, "Grün – Angaben vollständig.");
+      assert.deepEqual([form._profileDraft(), form._rolesDraft()], before); assert.deepEqual(writes, { profile: [], roles: [] });
+    });
+    await run("S3: successful profile and role saves each refresh persisted readiness", async () => {
+      await reset(); let reads = 0;
+      api.sigekoGetReadiness = async () => { reads++; return { ok: true, data: readiness("a", "green") }; };
+      await form.profileSave.onclick(); assert.equal(reads, 1);
+      await form.rolesSave.onclick(); assert.equal(reads, 2); assert.equal(form.readinessData.projectData.status, "green");
+    });
+    await run("S3: failed readiness clears prior green and allows retry and domain editing", async () => {
+      await reset(); api.sigekoGetReadiness = async () => ({ ok: true, data: readiness("a", "green") }); await form._loadReadiness();
+      api.sigekoGetReadiness = async () => ({ ok: false, error: "SQLite nicht erreichbar" }); await form._loadReadiness();
+      assert.equal(form.readinessData, null); assert.equal(form.readinessViews.project.status.textContent, "Prüfung nicht verfügbar.");
+      assert.match(form.readinessWarning.textContent, /SQLite nicht erreichbar/); assert.equal(form.readinessRefresh.disabled, false);
+      assert.equal(form.rolesSave.disabled, false); assert.equal(form.profileSave.disabled, false);
+      api.sigekoGetReadiness = async () => ({ ok: true, data: readiness() }); await form._loadReadiness();
+      assert.equal(form.readinessData.projectData.status, "red");
+    });
+    await run("S3: readiness failure after successful save does not report an unsaved profile", async () => {
+      await reset(); api.sigekoGetReadiness = async () => { throw new Error("Lesefehler"); };
+      await form.profileSave.onclick(); assert.equal(writes.profile.length, 1);
+      assert.equal(form.profileStatus.textContent, "Profil gespeichert."); assert.match(form.readinessWarning.textContent, /Lesefehler/);
+    });
+    await run("S3: late readiness responses cannot replace newer results or restore stale green", async () => {
+      await reset(); const gate = deferred(); api.sigekoGetReadiness = () => gate.promise;
+      const pending = form._loadReadiness(); assert.equal(form.readinessData, null); assert.equal(form.readinessRefresh.disabled, true);
+      api.sigekoGetReadiness = async () => ({ ok: true, data: readiness() }); await form._loadReadiness();
+      gate.resolve({ ok: true, data: readiness("a", "green") }); await pending;
+      assert.equal(form.readinessData.projectData.status, "red"); assert.equal(form.readinessRefresh.disabled, false);
+    });
+    await run("S3: departed project readiness cannot update its replacement screen or refs", async () => {
+      await reset(); const old = form, gate = deferred(); api.sigekoGetReadiness = () => gate.promise;
+      const pending = old._loadReadiness(); old.destroy(); old.root.remove();
+      api.sigekoGetReadiness = async () => ({ ok: true, data: readiness("b") }); form = mount("b"); await form._loadReadiness();
+      gate.resolve({ ok: true, data: readiness("a", "green") }); await pending;
+      assert.equal(form.readinessData.projectId, "b"); assert.equal(old.readinessData, null);
+      assert.equal(refs.getM80Ref("sigeko.screen.readiness.project.status").element, form.readinessViews.project.status);
+    });
+    await run("S3: pending readiness never delays loaded forms, completed saves or navigation", async () => {
+      const gate = deferred(); await reset({ overrides: { sigekoGetReadiness: () => gate.promise } });
+      assert.equal(form.readinessBusy, true); assert.equal(form.profileSave.disabled, false); assert.equal(form.rolesSave.disabled, false);
+      await form.profileSave.onclick(); assert.equal(form.profileBusy, false); assert.equal(form.profileSave.disabled, false);
+      await form.rolesSave.onclick(); assert.equal(form.rolesBusy, false); assert.equal(form.rolesSave.disabled, false);
+      refs.getM80Ref("sigeko.screen.readiness.editProject").element.onclick(); assert.deepEqual(navigations, [{ projectId: "a" }]);
+      gate.resolve({ ok: true, data: readiness() }); await new Promise(resolve => setImmediate(resolve));
+      assert.equal(form.readinessBusy, false); assert.deepEqual(writes.profile.length, 1); assert.deepEqual(writes.roles.length, 1);
+    });
+    await run("S3: wrong-project or malformed readiness is unavailable rather than green", async () => {
+      await reset();
+      for (const data of [readiness("b", "green"), { ...readiness(), projectData: { status: "green", issues: null } }]) {
+        api.sigekoGetReadiness = async () => ({ ok: true, data }); await form._loadReadiness();
+        assert.equal(form.readinessData, null); assert.equal(form.readinessViews.project.status.textContent, "Prüfung nicht verfügbar.");
+      }
+    });
+    await run("S3: remediation opens the current central project and honors unsaved changes", async () => {
+      await reset(); const edit = refs.getM80Ref("sigeko.screen.readiness.editProject").element;
+      edit.onclick(); assert.deepEqual(navigations, [{ projectId: "a" }]);
+      form.inputs.name.value = "Entwurf"; edit.onclick(); assert.equal(navigations.length, 1);
+      confirmResult = true; edit.onclick(); assert.equal(navigations.length, 2);
+      refs.getM80Ref("sigeko.screen.readiness.editRoles").element.onclick();
+      assert.equal(form.basicPanel.scrolled.block, "start"); assert.equal(form.inputs.name.value, "Entwurf");
+      assert.deepEqual(writes, { profile: [], roles: [] });
     });
   } finally {
     for (const screen of screens) { screen.destroy(); screen.root.remove(); }

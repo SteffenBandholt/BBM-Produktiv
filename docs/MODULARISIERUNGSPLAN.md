@@ -18,6 +18,19 @@ Diese Datei ist **kein** Architekturpapier und **kein** Codex-Ausfuehrungsmanual
 
 ## 1. Operative Arbeitsgrundsaetze
 
+### SiGeKo #274 – S3 Übersicht / Readiness (2026-09-09)
+
+PR #330: getrennte berechnete Projektdaten-/Behördenbereitschaft, konkrete Fehlstellen
+und passende Bearbeitungswege im vorhandenen Screen. Keine Datenkopie/Migration,
+keine Sperre durch Readiness, Entwürfe bleiben erhalten. 121 vollständige lokale
+M83-Slots; Volltest 1668/97 bei exakt gleichen 97 Baselinefehlern, 27 neue Prüfungen.
+Windows/Linux-CI 34373164070 vollständig PASS und Screenshots gesichtet. Reviewfund
+zur langsamen Prüfantwort behoben und unabhängig nachgeprüft. Integration über
+PR #330; Details: `docs/SIGEKO_S3_READINESS.md` und Testvergleich.
+Nächstes getrenntes Paket S4 Behörden / Notfall / Versorger; keine Vorziehung durch
+S3. Bewusste Fortfahren-Bestätigung an realen Vorgangseinstiegen S5–S7 ergänzen.
+Rechnung #275 bleibt eingefroren. Januar-2022-PDF später vor Übernahme prüfen.
+
 ### Zentrale Bauherrzuordnung vor SiGeKo S3 (2026-09-09)
 
 Steffen bestätigt die ausdrückliche Bauherrauswahl im zentralen Projekt. PR #329
