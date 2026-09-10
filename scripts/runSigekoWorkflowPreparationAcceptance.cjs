@@ -14,6 +14,21 @@ async function worker() {
   let profile;
   const report = { package: "S5.4 PDF preparation only", ok: false, actualOutlookVerified: false,
     manualConfirmed: false, actualSendObserved: false, checks: {}, measurements: [] };
+  const failWorker = error => {
+    report.ok = false;
+    report.error = {message:error.message,stack:error.stack};
+    console.error(error.stack || error.message);
+    if (profile) {
+      const destination = path.join(profile.rootPath, "s54-preparation-result.json");
+      fs.writeFileSync(destination, JSON.stringify(report, null, 2));
+      console.error(`FAIL PDF preparation only: ${destination}`);
+    }
+    app.exit(1);
+  };
+  // Event callbacks run outside the async worker's try/catch. Never leave a
+  // hidden Electron exception dialog waiting for a person in this automatic test.
+  process.on("uncaughtException", failWorker);
+  const watchdog = setTimeout(() => failWorker(new Error("S54 preparation timed out after 60 seconds")), 60000);
   const measurements = [];
   // A failed layout clears the page before print:ready. Capture the real Range
   // result at its use site; return it unchanged and leave the guard untouched.
@@ -88,6 +103,8 @@ async function worker() {
     }
     if (report.error) console.error(report.error.message);
     console.log(JSON.stringify(report.measurements));
+    clearTimeout(watchdog);
+    process.removeListener("uncaughtException", failWorker);
     app.exit(report.ok ? 0 : 1);
   }
 }
