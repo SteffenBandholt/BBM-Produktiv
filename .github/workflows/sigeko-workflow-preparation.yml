@@ -1,0 +1,47 @@
+name: S5.4 real PDF preparation (no Outlook proof)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/runSigekoWorkflowPreparationAcceptance.cjs'
+      - 'scripts/helpers/sigekoWorkflowOutlookAcceptance.cjs'
+      - 'src/renderer/modules/sigeko/print/**'
+      - '.github/workflows/sigeko-workflow-preparation.yml'
+permissions:
+  contents: read
+jobs:
+  preparation:
+    strategy:
+      fail-fast: false
+      matrix:
+        scale: ['1', '1.25', '1.5', '2']
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: BBM-Produktiv
+      - uses: actions/checkout@v4
+        with:
+          repository: SteffenBandholt/UI-Editor-kit
+          ref: 5e0d551d93e97c32d169ea6d5107186a44ecd47f
+          path: UI-Editor-kit
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install locked dependencies
+        working-directory: BBM-Produktiv
+        run: npm ci
+      - name: Exact Outlook fixture up to the first mail boundary
+        working-directory: BBM-Produktiv
+        env:
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
+        run: node scripts/runSigekoWorkflowPreparationAcceptance.cjs --force-device-scale-factor=${{ matrix.scale }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: s54-preparation-scale-${{ matrix.scale }}
+          path: |
+            ${{ runner.temp }}/bbm-ui-editor-acceptance-*/s54-preparation-result.json
+            ${{ runner.temp }}/bbm-ui-editor-acceptance-*/S54-Ablage/**/*.pdf
