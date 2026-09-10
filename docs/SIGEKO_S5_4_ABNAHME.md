@@ -212,3 +212,52 @@ Textrechtecke, Schriftmetriken und tatsächliche Geräteskalierung auswerten.
 
 Status: S5.4 bleibt bei B6 offen, Draft-PR #339 bleibt unintegriert. Die Diagnose
 ist keine Fehlerbehebung und kein Ersatz für die spätere reale Outlook-Abnahme.
+
+## Nutzerdiagnose mit tatsächlichen Range-Maßen (2026-09-10)
+
+`Eingefügter Text(1).txt`, Profil `bbm-ui-editor-acceptance-V7SBYF`, bestätigt den
+aktualisierten Diagnoseworker e538cfbe auf dem sauberen Testworktree. Der Fehler
+ist jetzt vor dem Entfernen des Formular-DOM gemessen. CSS: 12 px, line-height
+13.8 px; scroll/client jeweils 703 x 19. Range links identisch mit Feld links,
+rechts weit innerhalb des Feldes. Auslöser ist allein der obere Range-Überstand
+von 1.80452 CSS-Pixeln gegenüber der vorhandenen 1-Pixel-Prüfgrenze.
+
+Die Windows-Matrix wurde um exakt 1.6625 erweitert (dd7a4daf). CI 34515101229
+bestand alle fünf Skalierungen; maßgeblicher Vergleichsjob 102998431756:
+
+| Messung | Nutzer | Windows-CI bei identischem DPR |
+|---|---:|---:|
+| devicePixelRatio | 1.662500023841858 | 1.662500023841858 |
+| Feldbreite | 702.9887084960938 | 702.9887084960938 |
+| Feldhöhe | 18.890975952148438 | 18.890975952148438 |
+| Feldoberkante | 211.6353302001953 | 211.6353302001953 |
+| Range-Oberkante | 209.830810546875 | 211.6353302001953 |
+| Range-Breite | 162.51878356933594 | 152.7725372314453 |
+| Range-Höhe | 16.2406005859375 | 13.233078002929688 |
+
+Damit erklärt der DPR allein den Unterschied nicht. Die angeforderte CSS-Familie
+und NotoSans-Fehlerstatus sind ebenfalls identisch; der tatsächliche verwendete
+Font war bisher nicht erfasst. Unterschiedliche Fontmetriken sind nachgewiesen,
+ihre Ursache und eine tatsächliche sichtbare Glyphenabschneidung jedoch nicht.
+Der DOM-Range umfasst typografische Fontmaße, nicht ausschließlich sichtbare Tinte.
+Keine pauschale Toleranzänderung, kein Entfernen der oberen Grenze und keine
+unbelegte Änderung von Nutzer-Anzeigeskalierung oder gemeinsamen Schriftdateien.
+
+Diagnosestand d4cd576aaf8c31f4c00681b6f797e9d797d2c92b ergänzt deshalb nach dem
+unveränderten ursprünglichen Vorbereitungslauf eine separate versteckte Fontprobe:
+derselbe gemeinsame Print-Einstieg, CSS und Fontladeweg, explizit dieselbe Beschriftung
+und Formatierung. CDP `CSS.getPlatformFontsForNode` meldet die tatsächlich verwendete
+Fontfamilie/PostScript-Bezeichnung; Canvas ergänzt Font- und Glyphenmaße. Breite und
+Höhe müssen zur ursprünglichen Range-Messung passen, sonst gilt die Zuordnung nicht
+als nachgewiesen. Probe erst nach dem Lauf, kein Einfluss auf dessen PDF/Guard-Ergebnis.
+Ausgabe `S54_FONT_PROBE:` und derselbe `s54-preparation-result.json`-Bericht.
+
+Die erste Fontprobe fe8f43d aktivierte die Debugger-Domänen vor dem Laden der
+Seite und lief ins begrenzte 60-Sekunden-Zeitlimit. d4cd576a lädt zuerst die Seite;
+der Windows-Nachweis bestätigt die tatsächliche Fontfamilie Arial / ArialMT und
+`matchesOriginalRangeMetrics:true` (Job 103000670353, CI 34515771232).
+Die Nutzer-Fontfamilie bleibt noch zu messen. Diagnosefehler sind keine Produktfehler.
+
+Nächster lokaler Aufruf: ausschließlich sauberen Test-BBM-Worktree auf d4cd576a
+fast-forwarden und denselben Diagnosebefehl ohne Skalierungsflag starten. Keine
+Neuinstallation, kein Outlook, kein produktiver Code geändert. B6/PR-Merge weiter offen.
