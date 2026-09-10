@@ -1,25 +1,36 @@
-## 2026-09-10 – SiGeKo S5.4: Rücklauf und Outlook, lokale COM-Abnahme offen (Draft-PR #339)
+## 2026-09-10 – SiGeKo S5.4: Abnahme abgeschlossen, Integrationsnachweis (PR #339)
 
-Basis main 676713aa (S5.3b2 integriert). Ergebnisbranch codex/sigeko-s54-ruecklauf-outlook.
-Separate aktuelle Workflowzeile je unveränderlicher Vorankündigungsfassung; signierte
-Rücklauf-PDF mit Datei-/CAS-/Lizenzschutz in bestehender Unterlagenablage. Bearbeitbare
-Mailvorbereitung, bestehender gemeinsamer Outlook-Handler, Orange/Grün nur nach
-bestätigter Entwurfsöffnung. Kein tatsächlicher Versandnachweis oder Mailverlauf.
-V9-Projekttransfer übernimmt Rückläufe und Workflowdaten an den bestehenden V8-Grenzen.
-32 neue UI-Ziele, 143 Pflichtrefs/144 Scopeziele; vorhandene Sticky-Aktionen erreichbar.
-Volltest 2030 PASS / exakt dieselben 97 Baselinefehler (+83), keine verlorenen PASS.
-PDF-CI 34439924951 und gemeinsame Mailgrenze 34439924943 Windows/Linux PASS;
-49 bestehende Golden-Strukturen/Seitenzahlen unverändert. Formular-CI 34439924999:
-Linux 28 / Windows 29 reale Prüfungen PASS, keine Rendererfehler; schmale/niedrige
-Bedienung und bestehender nativer Windows-PDF-Editor nachgewiesen. Outlook bleibt Stub.
-Unabhängige Reviews ohne Restblocker nach Chronologie-Korrektur; 12 DB-, 44 Main-,
-14 V9- und 49 Formtests PASS. Allgemeine npm-CI separat bekannte Umgebungsbaseline.
-Produkt c205377ff60f20b7d861aeec7b281159a51b28dc, Fachlogik und gemeinsame Grenzen
-in getrennten Commits. Nachweise docs/SIGEKO_S5_4_ABNAHME.md, TESTVERGLEICH und A–F.
-Gemäß #274 B6 fehlt noch die tatsächliche neue Outlook-COM-Abnahme unter Windows:
-npm run test:sigeko:s5.4:outlook (zwei Entwürfe prüfen/verwerfen, nativer Rücklaufdialog).
-Draft-PR #339 veröffentlicht, kein Merge und kein S6 vor diesem Nachweis.
-Rechnung #275 eingefroren; keine historische Behördenübernahme oder Kalenderfunktion.
+Basis main `676713aa`; Ergebnisbranch `codex/sigeko-s54-ruecklauf-outlook`.
+Geprüfter Produktstand `d0662acddb6222becd012c0937ccb5a06de8c0e8`.
+**B6 erfüllt:** Steffens isolierter Windowslauf `C1ZLBX` endet mit PASS.
+Beide tatsächlichen Outlook-Entwürfe samt PDF-Anlagen manuell bestätigt/verworfen,
+Rücklauf über nativen Dialog zugeordnet; Rot → Orange → Grün, Grün nach erneutem
+Öffnen der Datenbank erhalten, Originalbytes unverändert und neue Fassung Rot.
+Vorherige PDF-Vorbereitung `xVk60y` ebenfalls PASS. Keine Versandbeobachtung und
+keine echte Unterschrift; Nachweis über Nutzer-Terminalausgabe, JSON nicht separat gelesen.
+
+Die kleine vertikale Textmessungsreparatur berücksichtigt sichtbare Glyphen an
+Browser-Grundlinien; Schriftwahl, Layout, Toleranz und horizontale Grenzen bleiben.
+Windows-CI 34519222895: zehn Arial-/Noto-/Skalierungskombinationen PASS einschließlich
+Reproduktion des alten Noto-Abbruchs. PDF-CI 34519222888 Windows/Linux PASS;
+alle 49 Golden-Seitenzahlen/Strukturen unverändert, zehn neue Textmessungsfälle grün.
+Formular 34519222863 und gemeinsame Mailgrenze 34519222938 ebenfalls PASS.
+
+Allgemeine npm-CI 34519222870 weiter FAIL: 19 erfasste Fehlerzeilen identisch mit
+34515980114 vor Reparatur (Kit-/Popup-/Lizenzprobleme). Dieser begrenzte CI-Vergleich
+ersetzt keinen vollständigen Testlauf. Zusätzlich ist jetzt der volle Testumfang
+mit richtigem Kit geprüft: 2030/97 vor Reparatur → 2040/97 nach Reparatur, exakt
+gleiche Fehlernamen/-häufigkeiten, keine verlorenen PASS. Nach Unterbrechung in
+Gruppe 4 vollständig wiederholt/fortgesetzt; alle zehn Gruppen abschließend erfasst.
+Details: `docs/SIGEKO_S5_4_REPARATUR_TESTVERGLEICH.json`.
+Details: `docs/SIGEKO_S5_4_ABNAHME.md`, `docs/SIGEKO_S5_4_CI_ABGLEICH.json`.
+
+PR #339 ist vor Dokumentationsabschluss konfliktfrei, ohne offene Reviewthreads
+und ohne formell eingereichte GitHub-Reviews. Zusätzlicher unabhängiger Review
+der PDF-Reparatur ohne Blocker. Bestehende Integrationsfreigabe laut S5-Paketplan;
+Merge-ID und erfolgte Integration werden in PR #339/#274/#277 bestätigt. Danach
+S6 separat abgrenzen. Bestehende Schriftdatei-/Harnessmeldungen
+und allgemeine CI bleiben offen. Rechnung #275 eingefroren; Nutzer-Kit-Arbeit erhalten.
 
 ## 2026-09-10 – SiGeKo S5.3b2: Vorankündigungs-PDF und unveränderliche Fassungen (PR #338)
 

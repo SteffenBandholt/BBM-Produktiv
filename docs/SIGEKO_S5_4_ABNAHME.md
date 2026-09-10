@@ -1,4 +1,108 @@
-# S5.4 – Prüfnachweis und verbleibende Outlook-Abnahme
+# S5.4 – Prüfnachweis und bestandene Outlook-Abnahme
+
+## Aktueller Abnahmestand – 2026-09-10
+
+**B6 ist erfüllt.** Steffen hat den echten Windows-/Outlook-Abnahmelauf auf dem
+isolierten Testworktree `C:\01_Projekte\S54-Test-7ba06d29\BBM-Produktiv`
+nach dem Fast-forward auf `d0662acddb6222becd012c0937ccb5a06de8c0e8`
+mit abschließendem `PASS` übermittelt. Das separate Test-Kit bleibt auf
+`5e0d551d93e97c32d169ea6d5107186a44ecd47f`; seine normale Entwicklerkopie
+wurde nicht verändert. Der Integrationsnachweis erfolgt über PR #339 und die
+Merge-ID in #274/#277; die folgenden Prüfungen betreffen den genannten Produktstand.
+
+| Nachweis | Ergebnis |
+|---|---|
+| Lokale PDF-Vorbereitung, Profil `xVk60y` | PASS; Firmenliste und Vorankündigung geschrieben, erste Mailgrenze erreicht |
+| Echter S5.4-Outlooklauf, Profil `C1ZLBX` | PASS; beide Entwürfe über den unveränderten gemeinsamen COM-Handler geöffnet, manuelle Prüfungen bestätigt |
+| Rücklauf und Workflow | Technische Rücklaufdatei über nativen Dialog zugeordnet; Rot → Orange → Grün |
+| Erneutes Öffnen der Datenbank | Grün erhalten, Originaldokument und Originalbytes unverändert, neue Fassung unabhängig Rot |
+| Versand / echte Signatur | Kein Versandnachweis; Rücklauf ist eine technische Test-PDF ohne echte Unterschrift |
+
+Die Terminalausgabe endet mit:
+
+```text
+PASS: C:\Users\Steffen\AppData\Local\Temp\bbm-ui-editor-acceptance-C1ZLBX\mail-acceptance-result.json
+```
+
+Beleg ist die vom Nutzer übermittelte vollständige Terminalausgabe und der
+unveränderte Abnahmehelper, der `PASS` erst nach beiden manuellen Bestätigungen
+und sämtlichen nachgelagerten Assertions erreicht. Die genannte JSON-Datei selbst
+wurde nicht separat hochgeladen oder hier gelesen. Das ist kein unbeaufsichtigter
+CI-Transportstub und ersetzt keine tatsächliche Versandbeobachtung.
+
+Quellbelege im Chat, SHA-256 der unveränderten hochgeladenen Dateien:
+
+- `Eingefügter Text(20260910-194416).txt` (PDF-Vorbereitung):
+  `d8031448275a749628dedc57d1dbd954d8151723dd93fce899f9eeb942001974`
+- `Eingefügter Text(20260910-194754).txt` (Outlook-Abnahme):
+  `0ff36a2aa4afdbe7c45c50bb853f467792928ccc30f8b61281dc43b6bb9f4f70`
+
+### PDF-Reparatur und automatisierte Nachweise
+
+`d0662ac` korrigiert ausschließlich die vertikale Textprüfung der Vorankündigung:
+Wenn das typografische Range-Rechteck übersteht, werden sichtbare Glyphenmaße an
+den tatsächlichen Browser-Grundlinien geprüft. Horizontale Grenzen, Scrollmaße,
+Seiten-/Geschwistergrenzen und die 1-Pixel-Toleranz bleiben erhalten. Messmarker
+werden entfernt; bei veränderter Textgeometrie oder nicht belastbarer Messung
+bleibt der Abbruch. Schriftdateien, Schriftwahl, Zeilenhöhe, Layout und Kit-Vertrag
+wurden nicht geändert. Die A–F-Entscheidung ist unten historisch dokumentiert.
+
+- [Windows-Vorbereitung 34519222895](https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34519222895):
+  alle zehn Kombinationen aus Arial/Noto Sans und fünf Skalierungen PASS.
+  Bei Noto Sans / 1.6625 wurde zuerst der alte Guard mit dem bekannten Fehler
+  reproduziert und danach die Reparatur erfolgreich geprüft.
+- [PDF-Abnahme 34519222888](https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34519222888):
+  Windows/Linux PASS, einschließlich zehn neuer gezielter Textmessungsfälle.
+  Alle 49 bestehenden Golden-Seitenzahlen und vollständigen Struktur-Snapshots
+  sind gegenüber der Basis unverändert.
+- [Formular 34519222863](https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34519222863)
+  und [gemeinsame Mailgrenze 34519222938](https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34519222938): PASS.
+- [Allgemeiner npm-Lauf 34519222870](https://github.com/SteffenBandholt/BBM-Produktiv/actions/runs/34519222870):
+  weiterhin FAIL. Die 19 erfassten Fehlerzeilen sind nach Entfernen der Zeitstempel
+  einschließlich Reihenfolge/Häufigkeit identisch mit Lauf 34515980114 vor der
+  Reparatur: fehlendes Test-Kit, Popup- und Lizenzprüfungen. Reproduzierbarer
+  Vergleichsumfang und beide Listen: `SIGEKO_S5_4_CI_ABGLEICH.json`.
+
+Zusätzlich wurde der vollständige Testumfang mit dem vorgesehenen Kit lokal
+in identischer Linux-/UTC-Umgebung verglichen: **vor Reparatur 2030 PASS / 97 FAIL,
+nach Reparatur 2040 PASS / exakt dieselben 97 FAIL**. Keine neuen oder entfernten
+Fehlernamen/-häufigkeiten, kein verlorener PASS; zehn neue Textmessungsfälle grün.
+Nachweis: `SIGEKO_S5_4_REPARATUR_TESTVERGLEICH.json` mit vollständigen Fehlerlisten
+und Log-Hashes. Der frühere Vergleich gegen main (1947/97 → 2030/97) bleibt als
+separater historischer Nachweis erhalten.
+
+Ausführungsgrenze: Der erste Kandidatenlauf endete in Gruppe 4 ohne Abschlussmeldung.
+Die Ursache ist nicht festgestellt. Gruppen 1–3 waren vollständig abgeschlossen;
+Gruppe 4 wurde vollständig wiederholt (125/14, exakt wie Basis), anschließend
+Gruppen 5–10 mit dem unveränderten Gruppenrunner. Alle zehn Gruppen besitzen im
+Vergleich genau eine bestätigte Abschlussmarke; die unvollständige erste Gruppe 4
+wurde nicht mitgezählt. Keine Assertion, Testgruppe oder Zeitgrenze abgeschwächt.
+Die allgemeine GitHub-CI bleibt trotz dieses vollständig konfigurierten Nachweises rot.
+
+### Integration und verbleibende Grenzen
+
+Die abschließende GitHub-Prüfung vor dieser Dokumentation zeigt `main` auf
+`676713aa`, PR #339 konfliktfrei (`mergeable:true`), keine offenen Reviewthreads
+und keine formell eingereichten GitHub-Reviews. Die früher dokumentierten
+unabhängigen Fachreviews sind daher nicht als GitHub-Reviewfreigaben zu lesen.
+Ein zusätzlicher unabhängiger Read-only-Review der Reparatur `d0662ac` gegen
+`8d48210d` findet keine blockierende Überlauf- oder Layoutmutation. Er umfasst
+Produktcode, Tests, CI-Workflow und A–F-Vertrag; keine unabhängig erneut
+ausgeführte Windows-/COM-Abnahme oder formelle GitHub-Reviewfreigabe.
+Die bestehende Integrationsfreigabe steht in `SIGEKO_S5_PAKETPLAN.md`.
+Der vollständige Testvergleich ist abgeschlossen. PR #339 wird im Rahmen der
+bestehenden Freigabe regulär integriert; erst die GitHub-Bestätigung und die
+Merge-ID in #274/#277 belegen die erfolgte Integration. Danach folgt die gesonderte
+Abgrenzung von S6. Dieser Dokumentationsabschluss enthält keinen S6-Produktcode.
+Die bestehenden NotoSans-Dateifehler, `tableLayouts:getOne`-Meldungen im
+Abnahmeharness und die allgemeine npm-CI bleiben ausdrücklich offen.
+Rechnung #275 bleibt eingefroren.
+
+## Historischer Entwicklungs- und Diagnosestand
+
+Die folgenden Abschnitte bewahren die früheren Prüfungen, Abnahmepläne und
+Fehlversuche. Aussagen wie „B6 offen“ oder „noch auszuführen“ beschreiben den
+damaligen Zwischenstand; maßgeblich ist der aktuelle Abnahmestand oben.
 
 Basis main `676713aa395cd6d6d4aa7633d5fc8bb251bb2a11` (PR #338).
 Ergebnisbranch `codex/sigeko-s54-ruecklauf-outlook`, Draft-PR #339.
