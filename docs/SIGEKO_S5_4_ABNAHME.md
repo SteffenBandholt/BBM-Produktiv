@@ -82,11 +82,38 @@ ausschließlich Dateidialogantwort und Mailtransport durch kontrollierte Testgre
 sie sind ausdrücklich kein Nachweis für installiertes Outlook/COM.
 
 Auf dem Windows-Rechner mit klassischem Outlook den geprüften PR-Branch verwenden
-(nicht nur den noch unveränderten main). Im BBM-Projektordner starten:
+(nicht nur den noch unveränderten main). Außerdem muss die separat verlinkte
+Abhängigkeit `../UI-Editor-kit` mindestens den bereits freigegebenen Commit
+`5e0d551d93e97c32d169ea6d5107186a44ecd47f` (Kit-PR #93, fixed-layout-Vertrag)
+enthalten. Ein Fetch/Switch im BBM-Repository aktualisiert dieses zweite Repository
+nicht. Der Windows-/Linux-CI-Nachweis verwendet ausdrücklich diesen Kit-Stand.
+
+Im BBM-Projektordner die bestehende Kit-Arbeitskopie ausschließlich per Fast-forward
+auf den getesteten Stand bringen und danach den Abnahmelauf starten:
 
 ```powershell
+git -C ..\UI-Editor-kit fetch origin
+if ($LASTEXITCODE -ne 0) { throw 'UI-Editor-kit konnte nicht abgerufen werden.' }
+git -C ..\UI-Editor-kit merge --ff-only 5e0d551d93e97c32d169ea6d5107186a44ecd47f
+if ($LASTEXITCODE -ne 0) { throw 'Kit-Abgleich gestoppt; bitte Git-Ausgabe prüfen.' }
 npm run test:sigeko:s5.4:outlook
 ```
+
+Die npm-Abhängigkeit ist laut `package-lock.json` ein lokaler Link auf diesen
+Geschwisterordner. Kein Reset, kein Erzwingen eines Branchwechsels und keine
+Aktualisierung auf einen ungeprüften neuesten Kit-Stand.
+
+### Rückmeldung des ersten lokalen Laufs
+
+Profil `bbm-ui-editor-acceptance-YxDFUj`: FAIL vor Outlook mit
+`Deklarative PDF-Registry ist ungueltig.` Der bisherige Vorbereitungshinweis hatte
+den separaten Kit-Abgleich ausgelassen. Dieselbe Meldung wurde mit dem realen
+älteren Kit-Validator aus `0240ef8` reproduziert: Er verlangt im fixed-layout-PDF
+fälschlich Tabellen-/Spalten-/Wiederholungsziele. Die getestete aktuelle Kit-Version
+unterstützt diesen bereits freigegebenen Vertrag. Der konkrete lokal geladene
+Kit-Stand ist aus der Nutzer-Terminalausgabe allein nicht bewiesen; der Abgleich
+oben beseitigt diese reproduzierte Inkompatibilität. Kein Outlook-PASS und kein
+Merge aus diesem fehlgeschlagenen Lauf abgeleitet.
 
 Der Lauf verwendet ein eigenes temporäres Testprofil, eine eigene SQLite-Datenbank
 und künstliche Projekt-/Behördendaten. Er öffnet zwei tatsächliche Outlook-Entwürfe.
