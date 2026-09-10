@@ -814,8 +814,13 @@ export function renderPrint({ pages, data, contentSlots = null } = {}) {
       pageEl.appendChild(_buildSpineNote(runtimeData));
     }
     if (pageNo === 1) {
-      pageEl.appendChild(renderV2GlobalHeader({ data: runtimeData }));
-      pageEl.appendChild(contentSlots
+      // A standard provider exposes one complete header zone to the native
+      // editor, containing the unchanged global and document header blocks.
+      const headerParent = contentSlots?.headerMode === "standard"
+        ? _el("div", "v2StandardProviderHeader") : pageEl;
+      if (headerParent !== pageEl) pageEl.appendChild(headerParent);
+      headerParent.appendChild(renderV2GlobalHeader({ data: runtimeData }));
+      headerParent.appendChild(contentSlots
         ? renderV2FullHeader({ data: runtimeData, pageNo, totalPages, modeLabel, content: contentSlots.headerMode === "standard" ? null : contentSlots.fullHeader })
         : normalizedMode === "invoice"
         ? renderV2FullHeader({
