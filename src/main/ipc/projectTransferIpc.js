@@ -15,6 +15,7 @@ const { initDatabase } = require("../db/database");
 const { PROJECT_AUTHORITY_COLUMNS, validateProjectAuthorityRow } = require("../../shared/sigeko/projectAuthorities.cjs");
 const { PRE_NOTIFICATION_COLUMNS, validatePreNotificationRow } = require("../../shared/sigeko/preNotifications.cjs");
 const { SIGEKO_DOCUMENT_COLUMNS, validateSigekoDocumentRow, parseSigekoDocumentFiles } = require("../../shared/sigeko/documents.cjs");
+const { SIGEKO_PRE_NOTIFICATION_WORKFLOW_COLUMNS, validatePreNotificationWorkflowRow, parseSignedReturnFile } = require("../../shared/sigeko/preNotificationWorkflows.cjs");
 const { inspectDocumentFile } = require("../domain/sigeko/preNotificationDocumentFiles");
 const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const projectsRepo = require("../db/projectsRepo");
@@ -39,7 +40,8 @@ function _sanitizeFilePart(value, fallback = "Projekt") {
 
 function _buildProjectTransferManifest({ projectId, project, storage, data, exportedAt, filesCount }) {
   return {
-    formatVersion: data.sigekoDocuments?.length ? 8
+    formatVersion: data.sigekoPreNotificationWorkflows?.length ? 9
+      : data.sigekoDocuments?.length ? 8
       : data.sigekoPreNotifications?.length ? 7
       : data.sigekoProjectAuthorities?.length ? 6
       : project.bauherr_firm_kind != null || project.bauherr_firm_id != null ? 5
@@ -69,6 +71,7 @@ function _buildProjectTransferManifest({ projectId, project, storage, data, expo
       sigekoProjects: data.sigekoProjects?.length || 0,
       globalFirmDependencies: data.globalFirmDependencies.length,
       filesCount,
+      ...(data.sigekoPreNotificationWorkflows?.length ? { sigekoPreNotificationWorkflows: data.sigekoPreNotificationWorkflows.length } : {}),
       ...(data.sigekoDocuments?.length ? { sigekoDocuments: data.sigekoDocuments.length } : {}),
       ...(data.sigekoPreNotifications?.length || data.sigekoDocuments?.length ? { sigekoPreNotifications: data.sigekoPreNotifications?.length || 0 } : {}),
       ...(data.sigekoProjectAuthorities?.length || data.sigekoPreNotifications?.length || data.sigekoDocuments?.length ? {
@@ -85,6 +88,7 @@ function _buildProjectTransferPayloads({ project, data }) {
   return [
     { name: "data/project.json", data: { project } },
     ...(data.sigekoProjects?.length ? [{ name: "data/sigeko_projects.json", data: { sigeko_projects: data.sigekoProjects } }] : []),
+    ...(data.sigekoPreNotificationWorkflows?.length ? [{ name: "data/sigeko_pre_notification_workflows.json", data: { sigeko_pre_notification_workflows: data.sigekoPreNotificationWorkflows } }] : []),
     ...(data.sigekoDocuments?.length ? [{ name: "data/sigeko_documents.json", data: { sigeko_documents: data.sigekoDocuments } }] : []),
     ...(data.sigekoPreNotifications?.length || data.sigekoDocuments?.length ? [{ name: "data/sigeko_pre_notifications.json", data: { sigeko_pre_notifications: data.sigekoPreNotifications || [] } }] : []),
     ...(data.sigekoProjectAuthorities?.length || data.sigekoPreNotifications?.length || data.sigekoDocuments?.length ? [{ name: "data/sigeko_project_authorities.json", data: { sigeko_project_authorities: data.sigekoProjectAuthorities || [] } }] : []),
@@ -187,6 +191,8 @@ function _fetchProjectData(projectId, project) {
   _validatePreNotifications(sigekoPreNotifications, projectId);
   const sigekoDocuments = projectRows("sigeko_documents");
   _validateSigekoDocuments(sigekoDocuments, projectId);
+  const sigekoPreNotificationWorkflows = projectRows("sigeko_pre_notification_workflows");
+  _validateSigekoWorkflows(sigekoPreNotificationWorkflows, sigekoDocuments, projectId);
   const globalFirmIds = new Set(projectGlobalFirms.map((row) => String(row.firm_id || "")).filter(Boolean));
   if (project?.bauherr_firm_kind === "global_firm" && project.bauherr_firm_id) {
     globalFirmIds.add(project.bauherr_firm_id);
@@ -245,6 +251,7 @@ function _fetchProjectData(projectId, project) {
     sigekoProjectAuthorities,
     sigekoPreNotifications,
     sigekoDocuments,
+    sigekoPreNotificationWorkflows,
   };
 }
 
@@ -284,17 +291,40 @@ function _validateSigekoDocuments(rows, projectId) {
   }
 }
 
-function _validateSigekoDocumentFiles(projectRoot, rows) {
-  for (const row of rows) for (const file of parseSigekoDocumentFiles(row)) {
-    inspectDocumentFile(projectRoot, file);
+function _validateSigekoWorkflows(rows, documents, projectId) {
+  if (!Array.isArray(rows)) throw new Error("Ungültige SiGeKo-Vorankündigungsabläufe im Archiv.");
+  const documentIds = new Set(documents.map(row => row.id));
+  const workflowIds = new Set();
+  const paths = new Set(documents.flatMap(parseSigekoDocumentFiles).map(file => file.projectRelativePath.toLocaleLowerCase("en-US")));
+  for (const row of rows) {
+    validatePreNotificationWorkflowRow(row, projectId);
+    if (!documentIds.has(row.document_id)) throw new Error("SiGeKo-Ablauf verweist auf keine Dokumentfassung dieses Projekts.");
+    if (workflowIds.has(row.document_id)) throw new Error("Doppelter SiGeKo-Dokumentablauf im Archiv.");
+    workflowIds.add(row.document_id);
+    const file = parseSignedReturnFile(row);
+    if (file) {
+      const key = file.projectRelativePath.toLocaleLowerCase("en-US");
+      if (paths.has(key)) throw new Error("Doppelte SiGeKo-Rücklaufdatei im Archiv.");
+      paths.add(key);
+    }
   }
 }
 
-async function _validateArchivedSigekoDocumentFiles(exportPath, rows) {
+function _validateSigekoDocumentFiles(projectRoot, rows, workflows = []) {
+  for (const row of rows) for (const file of parseSigekoDocumentFiles(row)) {
+    inspectDocumentFile(projectRoot, file);
+  }
+  for (const row of workflows) {
+    const file = parseSignedReturnFile(row);
+    if (file) inspectDocumentFile(projectRoot, file);
+  }
+}
+
+async function _validateArchivedSigekoDocumentFiles(exportPath, rows, workflows = []) {
   const tempDir = await fs.promises.mkdtemp(path.join(app.getPath("temp"), "bbm-export-verify-"));
   try {
     await _extractZipToTemp(exportPath, tempDir);
-    _validateSigekoDocumentFiles(path.join(tempDir, "project-folder"), rows);
+    _validateSigekoDocumentFiles(path.join(tempDir, "project-folder"), rows, workflows);
   } finally {
     await fs.promises.rm(tempDir, { recursive: true, force: true });
   }
@@ -587,7 +617,7 @@ async function _importProjectZip(filePath) {
     if (!manifestRes.ok) return { ok: false, error: manifestRes.error };
     const manifest = manifestRes.data || {};
     const formatVersion = Number(manifest.formatVersion || 1);
-    if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > 8) {
+    if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > 9) {
       return { ok: false, error: `Nicht unterstützte Projektarchiv-Version: ${manifest.formatVersion}` };
     }
     if (Number(manifest.firmLogicSchemaVersion || 0) > 1) {
@@ -609,7 +639,8 @@ async function _importProjectZip(filePath) {
     if (formatVersion >= 7) {
       if (manifest.formatVersion !== formatVersion) return { ok: false, error: `Ungültige V${formatVersion}-Archivversion.` };
       completePayloadKeys["sigeko_pre_notifications.json"] = ["sigeko_pre_notifications"];
-      if (formatVersion === 8) completePayloadKeys["sigeko_documents.json"] = ["sigeko_documents"];
+      if (formatVersion >= 8) completePayloadKeys["sigeko_documents.json"] = ["sigeko_documents"];
+      if (formatVersion >= 9) completePayloadKeys["sigeko_pre_notification_workflows.json"] = ["sigeko_pre_notification_workflows"];
       const allowed = new Set([...Object.keys(completePayloadKeys), "sigeko_projects.json"]);
       const entries = await fs.promises.readdir(dataDir, { withFileTypes: true });
       if (entries.some(entry => !entry.isFile() || !allowed.has(entry.name))) {
@@ -712,10 +743,20 @@ async function _importProjectZip(filePath) {
     if (formatVersion < 8 && fs.existsSync(documentPath)) {
       return { ok: false, error: "SiGeKo-Dokumente erfordern Projektarchiv-Version 8." };
     }
-    if (formatVersion === 8) {
+    if (formatVersion >= 8) {
       const documentJson = await readPayload(documentPath, "sigeko_documents.json");
       payload.sigekoDocuments = documentJson.data.sigeko_documents;
-      if (!payload.sigekoDocuments.length) return { ok: false, error: "SiGeKo-Dokumente fehlen im V8-Archiv." };
+      if (!payload.sigekoDocuments.length) return { ok: false, error: "SiGeKo-Dokumente fehlen im Dokumentarchiv." };
+    }
+
+    const workflowPath = path.join(dataDir, "sigeko_pre_notification_workflows.json");
+    if (formatVersion < 9 && fs.existsSync(workflowPath)) {
+      return { ok: false, error: "SiGeKo-Vorankündigungsabläufe erfordern Projektarchiv-Version 9." };
+    }
+    if (formatVersion >= 9) {
+      const workflowJson = await readPayload(workflowPath, "sigeko_pre_notification_workflows.json");
+      payload.sigekoPreNotificationWorkflows = workflowJson.data.sigeko_pre_notification_workflows;
+      if (!payload.sigekoPreNotificationWorkflows.length) return { ok: false, error: "SiGeKo-Vorankündigungsabläufe fehlen im V9-Archiv." };
     }
 
     const project = payload.project;
@@ -724,7 +765,8 @@ async function _importProjectZip(filePath) {
     _validateProjectAuthorities(payload.sigekoProjectAuthorities, project.id);
     _validatePreNotifications(payload.sigekoPreNotifications || [], project.id);
     _validateSigekoDocuments(payload.sigekoDocuments || [], project.id);
-    if (formatVersion === 8) _validateSigekoDocumentFiles(path.join(tempDir, "project-folder"), payload.sigekoDocuments);
+    _validateSigekoWorkflows(payload.sigekoPreNotificationWorkflows || [], payload.sigekoDocuments || [], project.id);
+    if (formatVersion >= 8) _validateSigekoDocumentFiles(path.join(tempDir, "project-folder"), payload.sigekoDocuments, payload.sigekoPreNotificationWorkflows);
     if (formatVersion >= 6) {
       if (manifest.projectId !== project.id) return { ok: false, error: `Fremder Projektbezug im V${formatVersion}-Manifest.` };
       const expectedCounts = Object.fromEntries(Object.entries(payload).filter(([key]) => key !== "project")
@@ -744,6 +786,16 @@ async function _importProjectZip(filePath) {
     const projectShortName = project.short ?? project.projectShortName ?? manifest.projectShortName ?? null;
 
     const db = initDatabase();
+    if (payload.sigekoPreNotificationWorkflows?.length) {
+      const columns = db.prepare("PRAGMA table_info(sigeko_pre_notification_workflows)").all().map(row => row.name);
+      if (columns.length !== SIGEKO_PRE_NOTIFICATION_WORKFLOW_COLUMNS.length || SIGEKO_PRE_NOTIFICATION_WORKFLOW_COLUMNS.some(key => !columns.includes(key))) {
+        return { ok: false, error: "SiGeKo muss vor diesem Import aktiviert und initialisiert sein (Vorankündigungsabläufe)." };
+      }
+      const exists = db.prepare("SELECT 1 FROM sigeko_pre_notification_workflows WHERE document_id = ? LIMIT 1");
+      if (payload.sigekoPreNotificationWorkflows.some(row => exists.get(row.document_id))) {
+        return { ok: false, error: "SiGeKo-Vorankündigungsablauf existiert bereits (Dokument-ID)." };
+      }
+    }
     if (payload.sigekoDocuments?.length) {
       const columns = db.prepare("PRAGMA table_info(sigeko_documents)").all().map(row => row.name);
       if (columns.length !== SIGEKO_DOCUMENT_COLUMNS.length || SIGEKO_DOCUMENT_COLUMNS.some(key => !columns.includes(key))) {
@@ -837,6 +889,7 @@ async function _importProjectZip(filePath) {
       _insertRows(db, "sigeko_project_authorities", payload.sigekoProjectAuthorities);
       _insertRows(db, "sigeko_pre_notifications", payload.sigekoPreNotifications || []);
       _insertRows(db, "sigeko_documents", payload.sigekoDocuments || []);
+      _insertRows(db, "sigeko_pre_notification_workflows", payload.sigekoPreNotificationWorkflows || []);
       _insertRows(db, "project_candidates", withPid(payload.projectCandidates || []));
       _insertRows(db, "project_global_firms", withPid(payload.projectGlobalFirms || []));
       _insertRows(db, "meetings", withPid(payload.meetings || []));
@@ -848,12 +901,12 @@ async function _importProjectZip(filePath) {
       _insertRows(db, "restarbeiten_notes", payload.restarbeitenNotes || []);
     });
 
-    if (formatVersion === 8) {
+    if (formatVersion >= 8) {
       await fs.promises.mkdir(path.dirname(targetDir), { recursive: true });
       await fs.promises.mkdir(targetDir); // Exclusive reservation; never remove an existing folder.
       reservedTargetDir = targetDir;
       await fs.promises.cp(projectFolderSource, targetDir, { recursive: true, force: false, errorOnExist: true });
-      _validateSigekoDocumentFiles(targetDir, payload.sigekoDocuments);
+      _validateSigekoDocumentFiles(targetDir, payload.sigekoDocuments, payload.sigekoPreNotificationWorkflows);
       const currentSettings = appSettingsGetMany(["pdf.protocolsDir"]) || {};
       const currentBaseDir = String(currentSettings["pdf.protocolsDir"] || "").trim() || app.getPath("downloads");
       if (path.resolve(currentBaseDir) !== path.resolve(baseDir)) {
@@ -912,7 +965,7 @@ function registerProjectTransferIpc() {
       const exportPath = path.join(exportRoot, exportName);
 
       const data = _fetchProjectData(projectId, project);
-      if (data.sigekoDocuments.length) _validateSigekoDocumentFiles(projectDir, data.sigekoDocuments);
+      if (data.sigekoDocuments.length) _validateSigekoDocumentFiles(projectDir, data.sigekoDocuments, data.sigekoPreNotificationWorkflows);
       const builderVersion = project.bauherr_firm_kind != null || project.bauherr_firm_id != null ? 5 : 3;
       const builder = _validateProjectBuilderReference({ project, projectFirms: data.projectFirms }, { formatVersion: builderVersion });
       if (builder?.kind === "global_firm") {
@@ -942,10 +995,10 @@ function registerProjectTransferIpc() {
         return { ok: false, error: validation.error || "Exportvalidierung fehlgeschlagen." };
       }
 
-      // V8 validates the actual archive bytes and prevents deleting changes made
+      // V8 and later validate the actual archive bytes and prevent deleting changes made
       // while archiver/extraction awaited. Existing V1–V7 ordering is unchanged.
-      if (manifest.formatVersion === 8) {
-        await _validateArchivedSigekoDocumentFiles(exportPath, data.sigekoDocuments);
+      if (manifest.formatVersion >= 8) {
+        await _validateArchivedSigekoDocumentFiles(exportPath, data.sigekoDocuments, data.sigekoPreNotificationWorkflows);
         initDatabase().transaction(() => {
           const currentProject = projectsRepo.getById(projectId);
           if (!isDeepStrictEqual(currentProject, project) ||
@@ -957,7 +1010,7 @@ function registerProjectTransferIpc() {
           if (path.resolve(currentBaseDir) !== path.resolve(baseDir)) {
             throw new Error("Projektablage wurde während des Exports geändert. Bitte erneut exportieren.");
           }
-          _validateSigekoDocumentFiles(projectDir, data.sigekoDocuments);
+          _validateSigekoDocumentFiles(projectDir, data.sigekoDocuments, data.sigekoPreNotificationWorkflows);
           projectsRepo.deleteForever(projectId);
         })();
       } else {
