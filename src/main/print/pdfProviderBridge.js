@@ -39,8 +39,19 @@ function createPdfProviderBridge({ registry, enforce = enforceLicensedFeature, s
     resolve,
     async provide(payload) {
       const { request, provider } = resolve(payload);
-      const document = await provider.provide({ input: structuredClone(request.data) });
-      return { mode: "provider", documentTypeId: request.providerId, projectId: request.projectId, documentId: request.documentId, providerDocument: document, orientation: "portrait", settings: {}, tableLayouts: {} };
+      const identity = Object.freeze({ moduleId: request.moduleId, projectId: request.projectId, documentId: request.documentId });
+      const document = await provider.provide({ input: structuredClone(request.data), identity });
+      let context = {};
+      if (document && Object.hasOwn(document, "printRuntimeContext")) {
+        const supplied = document.printRuntimeContext;
+        if (!supplied || typeof supplied !== "object" || Array.isArray(supplied) ||
+            supplied.project?.id !== request.projectId || supplied.orientation !== "portrait") {
+          fail("PDF_PROVIDER_CONTEXT_INVALID", "Provider-Druckkontext passt nicht zu Projekt und Hochformat.");
+        }
+        context = structuredClone(supplied);
+      }
+      return { ...context, mode: "provider", documentTypeId: request.providerId, projectId: request.projectId, documentId: request.documentId,
+        providerDocument: document, orientation: "portrait", settings: context.settings || {}, tableLayouts: {} };
     },
     outputDirectory(payload) { return resolve(payload).directory; },
   });

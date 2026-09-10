@@ -2311,7 +2311,7 @@ async function handleInit(payload) {
       root._bbmRuntimeData = data;
       app.innerHTML = "";
       app.appendChild(root);
-      validateProviderDocumentLayout(root);
+      validateProviderDocumentLayout(root, data);
       window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: true, previewMetadata: collectBbmPdfPreviewMetadata(root, data) });
       return;
     }

@@ -11,15 +11,22 @@ const ROOT = path.resolve(__dirname, "..");
 async function worker() {
   const { app, BrowserWindow, ipcMain, dialog, screen } = require("electron");
   let profile, database, editor;
-  const report = { package: "S2.4 / S3 / S4 / S5.2", ok: false, manualConfirmed: false, checks: [], rendererErrors: [] };
+  const report = { package: "S2.4 / S3 / S4 / S5.2 / S5.3b2", ok: false, manualConfirmed: false, checks: [], rendererErrors: [] };
   try {
     app.setAppPath(ROOT);
     profile = configureUiEditorAcceptanceProfile({ electronApp: app }); assert.equal(profile.enabled, true);
     await app.whenReady();
-    let license = { valid: true, license: { modules: ["sigeko"] } };
+    const licenseFixture = require("./helpers/pdfAcceptanceLicense.cjs").createPdfAcceptanceLicense({ electronApp: app, profile });
+    let license = licenseFixture.getStatus({ fresh: true });
+    report.pdfLicense = { source: licenseFixture.source, cryptographicLicenseVerified: false, developmentOverridesEnabled: false };
     database = require("../src/main/db/database");
     database.configureDatabaseMigrations(license, { allowLegacyImport: false });
     database.initDatabase();
+    require("../src/main/db/appSettingsRepo").appSettingsSetMany({ "pdf.protocolsDir": path.join(profile.rootPath, "Ablage") });
+    const { registerPrintIpc, generatePdfForUiEditor } = require("../src/main/ipc/printIpc"); registerPrintIpc();
+    const uiEditorRoot = path.join(profile.userDataPath, "ui-editor");
+    const pdfAdapter = require("../src/main/ui-editor/pdfAdapterRegistry.cjs").createPdfEditorAdapterResolver({
+      profileBaseRoot: path.join(uiEditorRoot, "profiles"), registrationRoot: uiEditorRoot, regeneratePdf: generatePdfForUiEditor });
     const repo = require("../src/main/db/projectsRepo");
     const projects = ["A", "B"].map(letter => repo.createProject({ name: `S2.4 Projekt ${letter}`, project_number: `S24-${letter}`, street: "Testweg 1", zip: "12345", city: "Testort" }));
     const db = database.initDatabase();
@@ -39,7 +46,7 @@ async function worker() {
     const win = new BrowserWindow({ width: 1280, height: 950, show: true, webPreferences: { preload: path.join(ROOT, "src/main/preload.js"), contextIsolation: true, nodeIntegration: false, sandbox: false } });
     win.webContents.on("console-message", (_event, level, message) => { if (level >= 3 && !message.includes("Electron Security Warning")) report.rendererErrors.push(message); });
     const { ElectronUiEditorSessionController } = require("../src/main/ui-editor/electronUiEditorSession");
-    editor = new ElectronUiEditorSessionController({ app, ipcMain, getMainWindow: () => win }); editor.registerIpc();
+    editor = new ElectronUiEditorSessionController({ app, ipcMain, getMainWindow: () => win, pdfAdapter }); editor.registerIpc();
     const evaluate = code => win.webContents.executeJavaScript(code, true);
     const waitFor = async (code, timeout = 10000) => {
       const start = Date.now();
@@ -74,6 +81,7 @@ async function worker() {
     const snapshot = () => JSON.stringify(["sigeko_profiles", "sigeko_projects", "projects", "firms", "persons", "project_firms", "project_persons", "sigeko_authority_records", "sigeko_project_authorities"].map(table => [table, database.initDatabase().prepare(`SELECT * FROM ${table} ORDER BY id`).all()]));
     const output = process.env.BBM_S24_OUTPUT ? path.resolve(process.env.BBM_S24_OUTPUT) : profile.rootPath; fs.mkdirSync(output, { recursive: true });
     await win.loadFile(path.join(__dirname, "tests/sigekoProjectFormAcceptance.html")); await waitFor("!!window.s24");
+    await evaluate("import('../../src/renderer/ui-editor/m80Bridge.js').then(module => module.installBbmM80EditorBridge())");
     await open(projects[0].id);
     const initialReadiness = await readiness(projects[0].id, "red");
     assert.ok(initialReadiness.projectData.issues.length > 0);
@@ -454,13 +462,18 @@ async function worker() {
       await evaluate("s24.vaElement('document.title').scrollIntoView({block:'start'}); new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
       fs.writeFileSync(path.join(output, `sigeko-prenotification-${size}-top.png`), (await win.webContents.capturePage()).toPNG());
       const geometry = await evaluate("s24.vaGeometry()"); report.preNotificationGeometry[size] = geometry;
+      const pdfSelectionGeometry = await evaluate("(()=>{const element=s24.vaElement('pdf.selection.input'),r=element.getBoundingClientRect(),p=element.parentElement.getBoundingClientRect();return {width:r.width,height:r.height,inParent:r.left>=p.left-1&&r.right<=p.right+1,labelLinked:element.parentElement.querySelector('label').htmlFor===element.id};})()");
+      assert.ok(pdfSelectionGeometry.width > 100 && pdfSelectionGeometry.height >= 30 && pdfSelectionGeometry.inParent && pdfSelectionGeometry.labelLinked);
+      report.preNotificationGeometry[size + "PdfSelection"] = pdfSelectionGeometry;
       for (const field of geometry) assert.ok(field.width > 40 && field.height > 15 && field.inViewportWidth && field.inParent && field.labelAbove, JSON.stringify(field));
       await evaluate("s24.vaElement('signature.signer').scrollIntoView({block:'end'}); new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
-      for (const key of ["actions.save", "actions.saveBack", "actions.back", "actions.reload"]) {
+      for (const key of ["actions.save", "actions.saveBack", "actions.back", "actions.reload", "actions.pdfPreview", "actions.pdfCreate", "actions.pdfLayout"]) {
         const rect = await evaluate(`(()=>{const {x,y,width,height}=s24.vaElement(${JSON.stringify(key)}).getBoundingClientRect();return {x,y,width,height};})()`);
         const viewport = await evaluate("({width:innerWidth,height:innerHeight})");
         assert.ok(rect.y >= -1 && rect.x >= -1 && rect.x + rect.width <= viewport.width + 1 && rect.y + rect.height <= viewport.height + 1, JSON.stringify({ size, key, rect, viewport }));
       }
+      const toolbar = await evaluate("(()=>{const r=s24.vaElement('actions').getBoundingClientRect();return {height:r.height,viewportHeight:innerHeight};})()");
+      assert.ok(toolbar.height < toolbar.viewportHeight / 2, JSON.stringify({ size, toolbar }));
       await evaluate("s24.vaElement('signature.signer').scrollIntoView({block:'end'}); new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
       fs.writeFileSync(path.join(output, `sigeko-prenotification-${size}-bottom.png`), (await win.webContents.capturePage()).toPNG());
     }
@@ -470,6 +483,85 @@ async function worker() {
     assert.equal(vaSnapshot(), beforeVaEditor);
     report.checks.push("S5.2: all component references and the dedicated editor scope are valid; wide, narrow and low windows keep labelled fields within width and all save/navigation actions reachable after deep scrolling; a real editor style change leaves all ten domain tables unchanged");
 
+    // S5.3b2 uses the production Main workflow, real Chromium PDF output and stored-file preview.
+    win.setSize(1280, 950); await vaOpen(projects[0].id); await waitFor("!s24.screen.documentsLoading");
+    const documentRows = () => database.initDatabase().prepare("SELECT * FROM sigeko_documents WHERE project_id=? ORDER BY created_at,id").all(projects[0].id);
+    const closePreview = async () => {
+      const previews = BrowserWindow.getAllWindows().filter(candidate => candidate !== win);
+      assert.equal(previews.length, 1, "one actual stored-file/temporary PDF preview window");
+      assert.match(previews[0].webContents.getURL(), /^file:/);
+      previews[0].destroy(); win.focus();
+    };
+    const pdfAction = async (key, message) => {
+      await evaluate("s24.screen.pdfMessage = ''; s24.screen._refreshEnabled()"); await vaClick(key);
+      try { await waitFor("!s24.screen.busy && !!s24.screen.pdfMessage", 60000); }
+      catch (error) { error.message += "\nPDF status: " + await evaluate("s24.screen.pdfMessage"); throw error; }
+      assert.match(await evaluate("s24.screen.pdfMessage"), message);
+    };
+    await vaFill({ duration_months: "21" }); const beforePdfDirty = vaSnapshot();
+    assert.equal(await evaluate("s24.screen.pdfPreviewButton.disabled && s24.screen.pdfCreateButton.disabled && s24.screen.pdfLayoutButton.disabled"), true);
+    assert.match(await evaluate("s24.screen.pdfStatus.textContent"), /zuerst speichern/);
+    assert.equal(documentRows().length, 0); assert.equal(vaSnapshot(), beforePdfDirty); await vaSave();
+    const finalReadiness = await evaluate(`window.bbmDb.sigekoGetPreNotification({projectId:${JSON.stringify(projects[0].id)}})`);
+    assert.equal(finalReadiness.ok, true); assert.equal(finalReadiness.data.effective.authority.status, "green", "existing manually verified labor authority remains current for final PDF");
+    assert.equal(finalReadiness.data.effective.firms_mode, "unknown");
+    assert.ok(finalReadiness.data.effective.firms.some(firm => firm.id === "s52-contractor"), "explicitly active project participant is available for the later attachment");
+    const savedBeforePreview = vaSnapshot();
+    await pdfAction("actions.pdfPreview", /Vorschau geöffnet/); await closePreview();
+    assert.equal(documentRows().length, 0); assert.equal(vaSnapshot(), savedBeforePreview);
+    await pdfAction("actions.pdfCreate", /erstellt und gespeichert/);
+    const firstDocument = documentRows()[0]; assert.ok(firstDocument); assert.equal(JSON.parse(firstDocument.files_json).length, 1);
+    assert.equal(await evaluate("s24.screen.documentSelection.value"), firstDocument.id);
+    assert.equal(await evaluate("s24.screen.pdfOpenFirmsButton.disabled"), true);
+    await vaFill({ firms_mode: "attachment" }); await vaSave();
+    await pdfAction("actions.pdfCreate", /erstellt und gespeichert/);
+    const secondDocument = documentRows().find(row => row.id !== firstDocument.id); assert.ok(secondDocument);
+    assert.deepEqual(JSON.parse(secondDocument.files_json).map(file => file.kind), ["main", "firms"]);
+    assert.equal(await evaluate("s24.screen.documentSelection.value"), secondDocument.id);
+    await pdfAction("pdf.actions.openFirms", /Firmenanlage geöffnet/); await closePreview();
+    await vaFill({ duration_months: "22" }); const dirtyDraft = await vaValue("duration_months");
+    await evaluate(`s24.screen.documentSelection.value=${JSON.stringify(firstDocument.id)};s24.screen.documentSelection.dispatchEvent(new Event('change',{bubbles:true}))`);
+    await pdfAction("pdf.actions.open", /PDF geöffnet/); await closePreview();
+    assert.equal(await vaValue("duration_months"), dirtyDraft); assert.equal(await evaluate("s24.screen.isDirty()"), true);
+    assert.deepEqual(documentRows().find(row => row.id === firstDocument.id), firstDocument);
+    await evaluate("s24.confirmWith(true)"); await vaClick("actions.reload"); await vaReady(); await waitFor("!s24.screen.documentsLoading");
+    assert.equal(await evaluate("s24.screen.documentSelection.value"), firstDocument.id);
+    const rootPath = path.dirname(require("../src/main/ipc/projectStoragePaths").createProjectStorageAccess().resolve({ moduleId: "sigeko", projectId: projects[0].id }).moduleDir);
+    const firstFile = path.join(rootPath, JSON.parse(firstDocument.files_json)[0].projectRelativePath);
+    const firstBytes = fs.readFileSync(firstFile); fs.appendFileSync(firstFile, "changed");
+    await pdfAction("pdf.actions.open", /konnte nicht geöffnet werden/);
+    assert.equal(BrowserWindow.getAllWindows().length, 1); assert.equal(fs.readFileSync(firstFile).length, firstBytes.length + 7);
+    fs.writeFileSync(firstFile, firstBytes); assert.deepEqual(documentRows().find(row => row.id === firstDocument.id), firstDocument);
+    report.checks.push("S5.3b2: real mouse actions reject dirty output without autosave; temporary Chromium preview creates no final row; two final immutable versions include the existing firms renderer attachment; native version selection opens historical files while dirty, retains selection on reload and rejects changed bytes without live regeneration");
+    report.nativePdfEditor = { verified: false, reason: process.platform === "win32" ? "pending actual Windows UI" : "native Windows manager unavailable on Linux" };
+    if (process.platform === "win32") {
+      await pdfAction("actions.pdfLayout", /Layouteditor geöffnet/);
+      assert.ok(editor.child?.pid, "production editor process launched");
+      const nativeReport = path.join(output, "sigeko-native-pdf-editor.json");
+      const nativeShot = path.join(output, "sigeko-native-pdf-editor.png");
+      const inspected = await new Promise((resolve, reject) => {
+        const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", path.join(__dirname, "helpers/inspectSigekoNativePdfEditor.ps1"),
+          "-ManagerProcessId", String(editor.child.pid), "-ReportPath", nativeReport, "-ScreenshotPath", nativeShot], { stdio: ["ignore", "pipe", "pipe"] });
+        let diagnostic = ""; child.stdout.on("data", value => { diagnostic += value; }); child.stderr.on("data", value => { diagnostic += value; });
+        child.once("error", reject); child.once("exit", code => resolve({ code, diagnostic }));
+      });
+      if (fs.existsSync(nativeReport)) report.nativePdfEditor = JSON.parse(fs.readFileSync(nativeReport, "utf8").replace(/^\uFEFF/, ""));
+      const diagnostics = [];
+      const visitDiagnostics = directory => {
+        if (!fs.existsSync(directory)) return;
+        for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+          const file = path.join(directory, entry.name);
+          if (entry.isDirectory()) visitDiagnostics(file);
+          else if (entry.isFile() && entry.name === "m80-last-error.log") diagnostics.push({ path: path.relative(uiEditorRoot, file), content: fs.readFileSync(file, "utf8") });
+        }
+      };
+      visitDiagnostics(uiEditorRoot); report.nativePdfEditor.diagnostics = diagnostics;
+      fs.writeFileSync(nativeReport, JSON.stringify(report.nativePdfEditor, null, 2));
+      assert.equal(inspected.code, 0, inspected.diagnostic + "\nNative editor evidence: " + JSON.stringify(report.nativePdfEditor));
+      assert.equal(report.nativePdfEditor.verified, true); await editor.close(); win.focus();
+      report.checks.push("S5.3b2: real PDF-Layout mouse action prepares the SiGeKo document context and opens the production Windows manager; UIAutomation selects the native PDF-Ausgabe tab and captures the actual visible editor");
+    }
+
     win.setSize(1280, 950); await vaOpen(projects[0].id);
     repo.archiveProject(projects[0].id); const beforeVaArchive = vaSnapshot();
     await vaFill({ duration_months: "20" }); await vaClick("actions.saveBack");
@@ -477,6 +569,10 @@ async function worker() {
     assert.equal(await vaValue("duration_months"), "20"); assert.equal(vaSnapshot(), beforeVaArchive);
     await vaOpen(projects[0].id); assert.equal(await evaluate("s24.screen.saveButton.disabled && s24.screen.saveBackButton.disabled"), true);
     assert.equal(await evaluate("Object.values(s24.screen.inputs).every(input => input.disabled)"), true);
+    await waitFor("!s24.screen.documentsLoading");
+    assert.equal(await evaluate("s24.screen.pdfPreviewButton.disabled && s24.screen.pdfCreateButton.disabled && s24.screen.pdfLayoutButton.disabled"), true);
+    await pdfAction("pdf.actions.open", /PDF geöffnet/); await closePreview();
+    report.checks.push("S5.3b2: archived project disables all new PDF and layout actions but still opens the stored immutable PDF");
     repo.unarchiveProject(projects[0].id); await vaOpen(projects[0].id);
     const beforeVaLicense = vaSnapshot(); license = { valid: true, license: { modules: [] } };
     assert.equal(await evaluate(`window.bbmDb.sigekoGetPreNotification({projectId:${JSON.stringify(projects[0].id)}}).then(()=>false,e=>String(e).includes('MODULE_NOT_ACTIVE'))`), true);

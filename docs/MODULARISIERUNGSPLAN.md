@@ -1,3 +1,24 @@
+## 2026-09-10 – SiGeKo S5.3b2: Vorankündigungs-PDF und unveränderliche Fassungen (PR #338)
+
+Vorhandener Formularvorgang mit echter Vorschau, finaler PDF/Firmenanlage, Layoutstart
+und historischen Fassungen. Gemeinsame Provider-/PrintShell-/Ablageinfrastruktur;
+Main-Dokumentzeile erst nach vollständigen geprüften Dateien. V8-Projekttransfer
+bewahrt Snapshots und PDF-Bytes; alte V1–V7 erhalten. 81 PDF-Ziele mit explizitem
+vollständigem Kopfcontainer; 13 zusätzliche Formularziele, Registry 36.
+1947 PASS / exakt dieselben 97 Baselinefehler (+89), keine verlorenen Prüfungen.
+PDF-CI 34437646316 Windows/Linux PASS; alle 49 Golden-Strukturen/Seitenzahlen gleich.
+Formular-CI 34437646334 Linux 24 / Windows 25 reale Prüfungen ohne Rendererfehler.
+Echter nativer Windows-Editor öffnet, PDF-Ausgabe ausgewählt, 81 Ziele sichtbar;
+Schriftänderung/Undo/Regeneration separat durch reale PDF-/Adapterabnahme belegt.
+Unabhängiger Review nach Reparatur von Legacy-Metadaten, Import-Ablagewechsel,
+Fensterzerstörung und nativer Kopfzone ohne Restblocker. Vorschauerkennung testseitig
+korrigiert; Kopfcontainer erhält pixelgleiche Windows-Vorschau. Generische native
+Kit-Fenstergröße auf kleinen Displays bleibt dokumentierte Bestandsgrenze.
+Geprüfter Produktstand 49fba31c10aa774c9085ecea4f4aa6abe858fbc2; Abschluss nur Doku.
+Details docs/SIGEKO_S5_3B2_ABNAHME.md, TESTVERGLEICH und A–F-Verträge.
+Nächster Schritt direkt S5.4: Rücklaufdatei und vorhandener Outlook-Entwurfsweg.
+Gesamt-S5 offen; Rechnung #275 eingefroren, keine historische Behördenübernahme.
+
 ## 2026-09-09 – SiGeKo S5.3b1: unveränderlicher Snapshotvertrag (PR #337)
 
 Main-interner Capture aus vorhandenen Entwurfs-/Rollen-/Behörden- und Druckdiensten;

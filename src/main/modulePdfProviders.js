@@ -4,6 +4,7 @@ const { createModuleServiceProviderRegistry } = require("./moduleServiceProvider
 function createProductivePdfProviderRegistry() {
   const registry = createModuleServiceProviderRegistry();
   registry.register(require("./modules/sigeko/technicalPdfProvider").technicalPdfProvider);
+  registry.register(require("./modules/sigeko/preNotificationPdfProvider").preNotificationPdfProvider);
   return registry;
 }
 

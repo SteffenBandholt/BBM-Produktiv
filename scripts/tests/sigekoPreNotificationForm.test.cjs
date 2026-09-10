@@ -24,6 +24,7 @@ class Element {
   setAttribute(key, value) { this.attributes[key] = String(value); }
   getAttribute(key) { return this.attributes[key] ?? null; }
   append(...nodes) { for (const node of nodes) { node.remove(); node.parentElement = this; this.children.push(node); } }
+  appendChild(node) { this.append(node); return node; }
   remove() { if (this.parentElement) this.parentElement.children = this.parentElement.children.filter(child => child !== this); this.parentElement = null; }
   scrollIntoView(options) { this.scrolled = options; }
   getBoundingClientRect() { return { left: 0, top: 0, right: 320, bottom: 32, width: 320, height: 32 }; }
@@ -37,7 +38,8 @@ async function runSigekoPreNotificationFormTests(run) {
   const { sigekoPreNotificationUiEditorContract: contract } = await esm("src/renderer/modules/sigeko/SigekoPreNotificationScreen.uiEditorContract.js");
   const previous = { window: global.window, document: global.document };
   const screens = [];
-  let form, data, api, writes, reads, navigations, confirmations, confirmResult;
+  let form, data, api, writes, reads, navigations, confirmations, confirmResult, pdfCalls, documents;
+  const pdfDocument = (id = "document-a", firms = false, projectId = "a") => ({ id, projectId, createdAt: "2026-09-10T12:00:00Z", files: ["main", ...(firms ? ["firms"] : [])].map(kind => ({ kind, projectRelativePath: `SiGeKo/Unterlagen/${id}-${kind}.pdf`, sha256: "a".repeat(64), byteSize: 100 })) });
   const makeData = (id = "a", patch = null, archived = false) => {
     const record = patch === null ? null : { ...defaults(), id: `va-${id}`, project_id: id, revision: 3,
       created_at: "2026-09-10T10:00:00Z", updated_at: "2026-09-10T11:00:00Z", ...patch };
@@ -70,7 +72,13 @@ async function runSigekoPreNotificationFormTests(run) {
     for (const screen of screens.splice(0)) { screen.destroy(); screen.root.remove(); }
     refs.resetM80PilotWorkingStatesForDiagnostic();
     data = makeData(id, patch, archived); writes = []; reads = []; navigations = []; confirmations = []; confirmResult = false;
+    pdfCalls = []; documents = []; delete global.window.uiEditor;
     api = {
+      sigekoListPreNotificationDocuments: async () => ({ ok: true, data: { documents: clone(documents) } }),
+      sigekoPreviewPreNotificationPdf: async payload => { pdfCalls.push(["preview", clone(payload)]); return { ok: true, data: {} }; },
+      sigekoCreatePreNotificationPdf: async payload => { pdfCalls.push(["create", clone(payload)]); const document = pdfDocument(); documents.unshift(document); return { ok: true, data: { document } }; },
+      sigekoOpenPreNotificationDocumentFile: async payload => { pdfCalls.push(["open", clone(payload)]); return { ok: true, data: {} }; },
+      sigekoPreparePreNotificationPdfEditor: async payload => { pdfCalls.push(["layout", clone(payload)]); return { ok: true, data: { context: { projectId: id, documentId: "context-a", documentTypeId: "sigeko-vorankuendigung" } } }; },
       sigekoGetPreNotification: async payload => { reads.push(clone(payload)); return { ok: true, data: clone(data) }; },
       sigekoSavePreNotification: async payload => {
         writes.push(clone(payload));
@@ -241,8 +249,113 @@ async function runSigekoPreNotificationFormTests(run) {
         assert.match(form.status.textContent, new RegExp(failure.error)); assert.equal(form.busy, false);
       }
     });
+    await run("S5.3b2: dirty drafts disable every new PDF action without autosave and saving restores them", async () => {
+      await reset(); input("duration_months", "9"); const before = draft();
+      for (const action of ["preview", "create", "layout"]) assert.equal(await form.runPdfAction(action), false);
+      assert.ok([form.pdfPreviewButton, form.pdfCreateButton, form.pdfLayoutButton].every(button => button.disabled));
+      assert.match(form.pdfStatus.textContent, /zuerst speichern/); assert.deepEqual(pdfCalls, []); assert.deepEqual(writes, []); assert.deepEqual(draft(), before);
+      await form.save(); assert.ok([form.pdfPreviewButton, form.pdfCreateButton, form.pdfLayoutButton].every(button => !button.disabled));
+      await form.runPdfAction("preview"); assert.deepEqual(pdfCalls, [["preview", { projectId: "a", expectedRevision: 1 }]]); assert.equal(writes.length, 1);
+    });
+    await run("S5.3b2: initial preview uses revision zero without creating a draft or a final version", async () => {
+      await reset(); assert.equal(await form.pdfPreviewButton.onclick(), true);
+      assert.deepEqual(pdfCalls, [["preview", { projectId: "a", expectedRevision: 0 }]]); assert.deepEqual(writes, []);
+      assert.deepEqual(form.documents, []); assert.equal(form.data.record, null); assert.match(form.pdfStatus.textContent, /keine finale/);
+    });
+    await run("S5.3b2: pending PDF blocks duplicate jobs edits saves reload and local navigation", async () => {
+      await reset(); const gate = deferred(); api.sigekoPreviewPreNotificationPdf = payload => { pdfCalls.push(payload); return gate.promise; };
+      const pending = form.runPdfAction("preview"), count = reads.length;
+      assert.equal(form.busy, true); assert.ok(Object.values(form.inputs).every(element => element.disabled));
+      await form.runPdfAction("create"); await form.runPdfAction("layout"); await form.save(); await form.reload(); await form.backButton.onclick();
+      assert.equal(pdfCalls.length, 1); assert.deepEqual(writes, []); assert.equal(reads.length, count); assert.deepEqual(navigations, []);
+      gate.resolve({ ok: true, data: {} }); assert.equal(await pending, true); assert.equal(form.busy, false);
+    });
+    await run("S5.3b2: final creation selects only the successful new version and defeats an older list response", async () => {
+      await reset(); documents = [pdfDocument("old", true)]; await form.loadDocuments();
+      const list = deferred(); api.sigekoListPreNotificationDocuments = () => list.promise; const listing = form.loadDocuments();
+      const create = deferred(); api.sigekoCreatePreNotificationPdf = () => create.promise; const creating = form.runPdfAction("create");
+      assert.deepEqual(form.documents.map(entry => entry.id), ["old"]);
+      create.resolve({ ok: true, data: { document: pdfDocument("new") } }); assert.equal(await creating, true);
+      list.resolve({ ok: true, data: { documents: [] } }); await listing;
+      assert.deepEqual(form.documents.map(entry => entry.id), ["new", "old"]); assert.equal(form.documentSelection.value, "new");
+      assert.equal(form.pdfOpenFirmsButton.disabled, true); assert.deepEqual(writes, []);
+    });
+    await run("S5.3b2: version selection preserves dirty fields and sends identities for stored main and firms files", async () => {
+      await reset(); documents = [pdfDocument("new"), pdfDocument("old", true)]; await form.loadDocuments();
+      input("duration_months", "12"); const before = draft(); form.documentSelection.value = "old"; form.documentSelection.onchange();
+      assert.equal(form.pdfOpenFirmsButton.disabled, false); await form.pdfOpenButton.onclick(); await form.pdfOpenFirmsButton.onclick();
+      assert.deepEqual(pdfCalls, [["open", { projectId: "a", documentId: "old", kind: "main" }], ["open", { projectId: "a", documentId: "old", kind: "firms" }]]);
+      assert.deepEqual(draft(), before); assert.deepEqual(writes, []); assert.deepEqual(confirmations, []);
+      await form.loadDocuments(); assert.equal(form.documentSelection.value, "old");
+      documents = [pdfDocument("new")]; await form.loadDocuments(); assert.equal(form.documentSelection.value, "new"); assert.match(form.pdfStatus.textContent, /nicht mehr vorhanden/);
+    });
+    await run("S5.3b2: document list loading and failure cannot erase or block an editable form", async () => {
+      await reset(); input("duration_months", "12"); const before = draft(), list = deferred();
+      api.sigekoListPreNotificationDocuments = () => list.promise; const pending = form.loadDocuments();
+      assert.equal(form.saveButton.disabled, false); assert.equal(form.inputs.duration_months.disabled, false); assert.equal(form.documentSelection.disabled, true);
+      list.resolve({ ok: false, code: "SQLITE_ERROR", error: "Bestand nicht erreichbar" }); assert.equal(await pending, false);
+      assert.deepEqual(draft(), before); assert.equal(form.ready, true); assert.equal(form.isDirty(), true); assert.match(form.pdfStatus.textContent, /Bestand nicht erreichbar/);
+      api.sigekoListPreNotificationDocuments = async () => ({ ok: true, data: { documents: [pdfDocument("foreign", false, "b")] } });
+      assert.equal(await form.loadDocuments(), false); assert.deepEqual(form.documents, []); assert.deepEqual(draft(), before);
+    });
+    await run("S5.3b2: archived projects open stored versions but reject all new output", async () => {
+      await reset({ archived: true }); documents = [pdfDocument("old", true)]; await form.loadDocuments();
+      for (const action of ["preview", "create", "layout"]) assert.equal(await form.runPdfAction(action), false);
+      assert.ok([form.pdfPreviewButton, form.pdfCreateButton, form.pdfLayoutButton].every(button => button.disabled));
+      assert.equal(await form.openDocument("main"), true); assert.equal(await form.openDocument("firms"), true);
+      assert.equal(pdfCalls.length, 2); assert.ok(pdfCalls.every(([action]) => action === "open")); assert.deepEqual(writes, []);
+    });
+    await run("S5.3b2: PDF conflicts lock new output until reload while ordinary failure remains retryable", async () => {
+      await reset({ patch: { duration_months: 4 } }); const before = draft();
+      api.sigekoCreatePreNotificationPdf = async () => ({ ok: false, code: "PDF_OVERFLOW", error: "Feld passt nicht" });
+      assert.equal(await form.runPdfAction("create"), false); assert.equal(form.pdfCreateButton.disabled, false); assert.match(form.pdfStatus.textContent, /Feld passt nicht/);
+      api.sigekoCreatePreNotificationPdf = async () => ({ ok: false, code: "PRE_NOTIFICATION_CONFLICT", error: "Entwurf inzwischen geändert" });
+      assert.equal(await form.runPdfAction("create"), false); assert.equal(form.conflict, true); assert.equal(form.pdfPreviewButton.disabled, true);
+      assert.deepEqual(draft(), before); assert.equal(form.data.record.revision, 3); await form.reload(); assert.equal(form.conflict, false);
+    });
+    await run("S5.3b2: destroyed screens ignore pending creation and document list responses", async () => {
+      await reset(); const list = deferred(), create = deferred(); api.sigekoListPreNotificationDocuments = () => list.promise;
+      const listing = form.loadDocuments(); api.sigekoCreatePreNotificationPdf = () => create.promise; const creating = form.runPdfAction("create");
+      form.destroy(); create.resolve({ ok: true, data: { document: pdfDocument("late") } }); list.resolve({ ok: true, data: { documents: [pdfDocument("late")] } });
+      assert.equal(await creating, false); assert.equal(await listing, false); assert.deepEqual(form.documents, []);
+    });
+    await run("S5.3b2: layout prepares the document type before opening the existing editor and activating its scope", async () => {
+      await reset(); const calls = [];
+      const launcher = new Element("button"); target("header").append(launcher); bindDevelopmentUiEditorOpenButtonRef({ scopeId: "sigeko.preNotification", button: launcher });
+      window.uiEditor = { preparePdfContext: async context => { calls.push(["prepare", context]); return { ok: true, documentTypeId: context.documentTypeId }; },
+        open: async registration => { calls.push(["open", registration.activeScopes]); return { ok: true }; },
+        sendTargetEvent: async event => { calls.push([event.action, event.scopeId]); return { ok: true }; } };
+      assert.equal(await form.runPdfAction("layout"), true);
+      assert.deepEqual(calls.map(([action]) => action), ["prepare", "open", "scopeChanged"]);
+      assert.equal(calls[0][1].documentTypeId, "sigeko-vorankuendigung"); assert.equal(calls[0][1].meetingId, undefined);
+      assert.deepEqual(calls[1][1], ["sigeko.preNotification"]); assert.equal(calls[2][1], "sigeko.preNotification"); assert.deepEqual(writes, []);
+      assert.match(form.pdfStatus.textContent, /PDF-Ausgabe/);
+    });
+    await run("S5.3b2: failed prepare and a destroyed pending prepare cannot open a native editor", async () => {
+      await reset(); let opened = 0;
+      window.uiEditor = { preparePdfContext: async () => ({ ok: false, message: "Dokumenttyp fehlt" }), open: async () => { ++opened; return { ok: true }; } };
+      assert.equal(await form.runPdfAction("layout"), false); assert.equal(opened, 0); assert.match(form.pdfStatus.textContent, /Dokumenttyp fehlt/);
+      const gate = deferred(); window.uiEditor.preparePdfContext = () => gate.promise;
+      const pending = form.runPdfAction("layout"); await new Promise(resolve => setImmediate(resolve)); form.destroy();
+      gate.resolve({ ok: true, documentTypeId: "sigeko-vorankuendigung" }); assert.equal(await pending, false); assert.equal(opened, 0);
+    });
+    await run("S5.3b2: all thirteen added refs match approved attributes and forbid domain execution", async () => {
+      await reset(); assert.equal(contract.slots.length, 111);
+      const design = fs.readFileSync(path.resolve(__dirname, "../../docs/SIGEKO_S5_3B2_UI_ENTWURF.md"), "utf8");
+      const rows = design.split("\n").filter(line => /^\| `sigeko\.preNotification/.test(line)).map(line => line.split("|").slice(1, -1).map(value => value.trim().replaceAll("`", "")));
+      assert.equal(rows.length, 13); assert.deepEqual(contract.slots.slice(98).map(slot => slot.element.id), rows.map(row => row[0]));
+      for (const slot of contract.slots.slice(98)) {
+        const entry = slot.element, element = refs.getM80Ref(entry.id).element, row = rows.find(row => row[0] === entry.id);
+        assert.deepEqual(["inspector-id", "editor-kind", "editor-label", "editor-parent", "editor-editable", "editor-ops"].map(key => element.getAttribute(`data-ui-${key}`)), row);
+        assert.equal(element.parentElement, refs.getM80Ref(entry.parentId).element); assert.equal(slot.referenceKind, "single");
+        for (const op of ["executeTargetAction", "modifyDomainData", "createRecord", "deleteRecord"]) assert.ok(entry.lockedOps.includes(op));
+      }
+      assert.equal(form.documentSelection.tagName, "SELECT"); assert.equal(refs.validateM83ComponentReferences([contract.componentId]).ok, true);
+      refs.applyM80State("sigeko.preNotification.actions.pdfCreate", { fontSize: 16 }, "textResize");
+      assert.equal(form.pdfCreateButton.style.fontSize, "16px"); assert.deepEqual(pdfCalls, []); assert.deepEqual(writes, []);
+    });
     await run("S5.2: all 98 slots match the approved design exact DOM attributes parents and domain locks", async () => {
-      await reset(); assert.equal(contract.slots.length, 98); assert.deepEqual(contract.requiredSlots, contract.slots.map(slot => slot.slotId));
+      await reset(); assert.equal(contract.slots.slice(0, 98).length, 98); assert.deepEqual(contract.requiredSlots, contract.slots.map(slot => slot.slotId));
       assert.equal(refs.validateM83ComponentReferences([contract.componentId]).ok, true);
       const launcher = new Element("button"); target("header").append(launcher);
       bindDevelopmentUiEditorOpenButtonRef({ scopeId: "sigeko.preNotification", button: launcher });
@@ -252,8 +365,8 @@ async function runSigekoPreNotificationFormTests(run) {
       const design = fs.readFileSync(path.resolve(__dirname, "../../docs/SIGEKO_S5_2_UI_ENTWURF.md"), "utf8");
       const declared = design.split("\n").filter(line => /^\| \d+ \| sigeko\.preNotification/.test(line)).map(line => line.split("|").slice(1, -1).map(value => value.trim()));
       const normal = declared.filter(parts => parts[1] !== "sigeko.preNotification.header.action.openUiEditor");
-      assert.equal(normal.length, 98); assert.deepEqual(contract.slots.map(slot => slot.element.id), normal.map(parts => parts[1]));
-      for (const slot of contract.slots) {
+      assert.equal(normal.length, 98); assert.deepEqual(contract.slots.slice(0, 98).map(slot => slot.element.id), normal.map(parts => parts[1]));
+      for (const slot of contract.slots.slice(0, 98)) {
         const entry = slot.element, ref = refs.getM80Ref(entry.id), expected = normal.find(parts => parts[1] === entry.id);
         assert.equal(ref.contractTargets.length, 1); assert.equal(slot.referenceKind, "single");
         for (const [key, value] of Object.entries({ "inspector-id": entry.id, "editor-kind": entry.type, "editor-label": entry.name,

@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const Module = require("node:module");
+const { createHash } = require("node:crypto");
 const { EventEmitter } = require("node:events");
 
 function deferred() {
@@ -57,7 +58,7 @@ async function withPrintHarness(test) {
   const stubs = {
     electron: { ipcMain, app: { getPath: () => root }, shell: {}, BrowserWindow: function () {} },
     fs: fsBoundary,
-    "../print/printWindow": { createPrintWindow: () => { h.windowsCreated++; created.resolve(); return win; }, getPrintAppUrl: () => "file:///print-fixture.html" },
+    "../print/printWindow": { createPrintWindow: () => { h.windowsCreated++; created.resolve(); h.onWindowCreated?.(); return h.nextWindow || win; }, getPrintAppUrl: () => "file:///print-fixture.html" },
     "../print/printData": { getPrintData: async (request) => { h.dataCalls++; h.dataRequests.push(request); h.events.push("data"); return { mode: request.mode, project: { id: request.projectId } }; } },
     "../licensing/featureGuard": { enforceLicensedFeature: (feature) => { h.featureCalls.push(feature); }, toLicenseErrorPayload: (error) => ({ ok: false, error: error.message }) },
     "./projectStoragePaths": { sanitizeDirName: (s) => s, resolveProjectFolderName: () => "fixture" },
@@ -86,7 +87,7 @@ async function withPrintHarness(test) {
     : name === "../ipc/projectStoragePaths" ? { createProjectStorageAccess: () => storageBoundary } : sharedRequire(name);
   sharedModule._compile(fs.readFileSync(sharedPath, "utf8"), sharedPath);
   stubs["../print/sharedFirmsPrintAccess"] = sharedModule.exports;
-  for (const name of ["bbmPdfAdapter", "restarbeitenPdfAdapter", "invoicePdfAdapter", "technicalPdfAdapter"]) {
+  for (const name of ["bbmPdfAdapter", "restarbeitenPdfAdapter", "invoicePdfAdapter", "technicalPdfAdapter", "sigekoPreNotificationPdfAdapter"]) {
     stubs[`../ui-editor/${name}.cjs`] = {};
   }
   Module._load = function (request, parent, isMain) {
@@ -111,13 +112,13 @@ async function withPrintHarness(test) {
     h.payload = (provider = false) => ({ mode: provider ? "provider" : "protocol", targetDir: "temp", fileName: "result.pdf", timeoutMs: 314159,
       ...(provider ? { documentTypeId: "technical-neutral", providerRequest: { moduleId: "sigeko", providerId: "technical-neutral", projectId: "p", documentId: "d" } } : {}) });
     h.sharedPayload = () => ({ mode: "firms", moduleId: "sigeko", projectId: "p", storage: { target: "Unterlagen" }, fileName: "result.pdf", timeoutMs: 314159 });
-    h.start = async ({ provider = false, metadata = false, ipc = false, shared = false } = {}) => {
+    h.start = async ({ provider = false, metadata = false, ipc = false, shared = false, options } = {}) => {
       const payload = shared ? h.sharedPayload() : h.payload(provider);
       let result;
       if (ipc) {
         h.service.registerPrintIpc();
         result = handlers.get("print:htmlToPdf")({}, payload);
-      } else result = metadata ? h.service.generatePdfForUiEditor(payload) : h.service.printToPdf(payload);
+      } else result = metadata ? h.service.generatePdfForUiEditor(payload) : h.service.printToPdf(payload, options);
       // Attach rejection handling before the test triggers any failure event.
       h.outcome = result.then((value) => ({ value }), (error) => ({ error }));
       await created.promise;
@@ -146,6 +147,8 @@ async function withPrintHarness(test) {
 }
 
 async function runPrintJobLifecycleTests(run) {
+  const preparedFirms = () => ({ mode: "firms", project: { id: "p", name: "Captured project" }, orientation: "portrait",
+    firms: [{ id: "firm-a", name: "Captured firm", persons: [{ name: "Captured person" }] }] });
   await run("S1.4: shared tabular print ignores foreign and duplicate ready events", () => withPrintHarness(async (h) => {
     await h.start();
     const init = h.load();
@@ -318,6 +321,155 @@ async function runPrintJobLifecycleTests(run) {
     const { error } = await h.outcome; assert.equal(error.code, "PDF_PROJECT_STORAGE_CHANGED");
     assert.equal(h.writes, 0); assert.equal(fs.existsSync(path.join(originalDirectory, "result.pdf")), false);
     assert.equal(fs.existsSync(h.sharedDirectory), false); h.assertClean();
+  }));
+
+  await run("S5.3b2: Main-prepared firms stay immutable through renderer reads without a second live load", () => withPrintHarness(async h => {
+    const preparedData = preparedFirms(); h.service.registerPrintIpc();
+    await h.start({ shared: true, options: { preparedData } }); const init = h.load();
+    preparedData.firms[0].name = "Later live name"; preparedData.firms[0].persons.push({ name: "Later person" });
+    const get = () => h.handlers.get("print:getData")({ sender: h.win.webContents }, init);
+    const first = await get(); assert.equal(first.ok, true, first.error); assert.equal(first.data.firms[0].name, "Captured firm");
+    first.data.firms[0].persons[0].name = "Renderer mutation";
+    const second = await get(); assert.equal(second.data.firms[0].persons[0].name, "Captured person"); assert.equal(second.data.firms[0].persons.length, 1);
+    assert.equal(h.dataCalls, 0); assert.equal(h.providerCalls, 0);
+    h.ready({ jobId: init.jobId }); h.pdf.resolve(Buffer.from("Prepared PDF")); assert.ifError((await h.outcome).error);
+    const stale = await get(); assert.equal(stale.ok, false); assert.equal(h.dataCalls, 0); h.assertClean();
+  }));
+  await run("S5.3b2: prepared jobs require their exact sender job and document and never fall back to live reads", () => withPrintHarness(async h => {
+    h.service.registerPrintIpc(); await h.start({ shared: true, options: { preparedData: preparedFirms() } }); const init = h.load();
+    const get = (payload, sender = h.win.webContents) => h.handlers.get("print:getData")({ sender }, payload);
+    for (const payload of [{ ...init, jobId: undefined }, { ...init, jobId: "other-job" }, { ...init, projectId: "other-project" },
+      { ...init, moduleId: "protokoll" }, { ...init, mode: "protocol" }, { ...init, preparedDataJob: false }]) assert.equal((await get(payload)).ok, false);
+    assert.equal((await get(init, new EventEmitter())).ok, false);
+    h.ready(); h.ready({ jobId: "other-job" }); assert.equal(h.calls.length, 0);
+    assert.equal((await get(init)).ok, true); assert.equal(h.dataCalls, 0);
+    h.ready({ jobId: init.jobId }); h.pdf.resolve(Buffer.from("Prepared PDF")); assert.ifError((await h.outcome).error); h.assertClean();
+  }));
+  await run("S5.3b2: two simultaneous prepared windows keep separate snapshots and lifecycle ownership", () => withPrintHarness(async h => {
+    h.service.registerPrintIpc(); await h.start({ shared: true, options: { preparedData: preparedFirms() } }); const firstInit = h.load();
+    const second = new EventEmitter(); second.webContents = new EventEmitter(); const secondPdf = deferred(); const secondCreated = deferred();
+    let secondInit, secondClosed = false;
+    second.webContents.send = (_channel, value) => { secondInit = value; };
+    second.webContents.printToPDF = () => secondPdf.promise;
+    second.loadURL = () => Promise.resolve();
+    second.close = () => { if (!secondClosed) { secondClosed = true; second.emit("closed"); } };
+    h.nextWindow = second; h.onWindowCreated = secondCreated.resolve;
+    const secondData = preparedFirms(); secondData.firms[0].name = "Second document firm";
+    const pending = h.service.printToPdf({ ...h.sharedPayload(), fileName: "second.pdf" }, { preparedData: secondData });
+    const outcome = pending.then(value => ({ value }), error => ({ error })); await secondCreated.promise;
+    second.webContents.emit("did-finish-load"); assert.notEqual(firstInit.jobId, secondInit.jobId);
+    const get = (sender, init) => h.handlers.get("print:getData")({ sender }, init);
+    assert.equal((await get(h.win.webContents, firstInit)).data.firms[0].name, "Captured firm");
+    assert.equal((await get(second.webContents, secondInit)).data.firms[0].name, "Second document firm");
+    assert.equal((await get(second.webContents, firstInit)).ok, false); assert.equal((await get(h.win.webContents, secondInit)).ok, false);
+    h.ready({ jobId: firstInit.jobId }); h.pdf.resolve(Buffer.from("First PDF")); assert.ifError((await h.outcome).error);
+    assert.equal((await get(h.win.webContents, firstInit)).ok, false);
+    assert.equal((await get(second.webContents, secondInit)).data.firms[0].name, "Second document firm");
+    h.ready({ jobId: secondInit.jobId }, second.webContents); secondPdf.resolve(Buffer.from("Second PDF")); assert.ifError((await outcome).error);
+    assert.equal((await get(second.webContents, secondInit)).ok, false); assert.equal(h.dataCalls, 0); assert.equal(secondClosed, true); h.assertClean();
+  }));
+  await run("S5.3b2: malformed or mismatched Main-prepared data fail before window and output creation", () => withPrintHarness(async h => {
+    for (const preparedData of [null, [], { ...preparedFirms(), mode: "invoice" }, { ...preparedFirms(), project: { id: "foreign" } },
+      { ...preparedFirms(), projectId: "foreign" }, { ...preparedFirms(), orientation: "landscape" }]) {
+      await assert.rejects(h.service.printToPdf(h.sharedPayload(), { preparedData }), { code: "PDF_PREPARED_JOB_INVALID" });
+    }
+    for (const options of [null, [], { unknown: 1 }, { beforeWrite: true }, { exclusiveWrite: "true" }, { includeMetadata: 1 }]) {
+      await assert.rejects(h.service.printToPdf(h.sharedPayload(), options), { code: "PDF_PREPARED_JOB_INVALID" });
+    }
+    assert.equal(h.dataCalls, 0); assert.equal(h.windowsCreated, 0); h.assertNoOutput();
+  }));
+  await run("S5.3b2: prepared data never replace live license validation", () => withPrintHarness(async h => {
+    h.service.registerPrintIpc(); await h.start({ shared: true, options: { preparedData: preparedFirms() } }); const init = h.load();
+    h.allowed = false;
+    const result = await h.handlers.get("print:getData")({ sender: h.win.webContents }, init);
+    assert.equal(result.ok, false); assert.match(result.error, /LICENSE_MODULE_DISABLED/); assert.equal(h.dataCalls, 0);
+    h.ready({ jobId: init.jobId }); assert.match((await h.outcome).error.message, /LICENSE_MODULE_DISABLED/); assert.equal(h.writes, 0); h.assertClean();
+  }));
+  await run("S5.3b2: synchronous Main write guard sees actual buffer metadata and can reject the final file", () => withPrintHarness(async h => {
+    const buffer = Buffer.from("%PDF-1.7 actual bytes %%EOF"); let received;
+    await h.start({ shared: true, options: { preparedData: preparedFirms(), beforeWrite: value => { received = value; throw new Error("SOURCE_CHANGED"); } } });
+    const init = h.load(); h.ready({ jobId: init.jobId }); assert.equal(received, undefined);
+    h.pdf.resolve(buffer); assert.match((await h.outcome).error.message, /SOURCE_CHANGED/);
+    assert.equal(received.byteSize, buffer.length); assert.equal(received.sha256, createHash("sha256").update(buffer).digest("hex"));
+    assert.equal(received.filePath, path.join(h.sharedDirectory, "result.pdf")); assert.ok(Object.isFrozen(received));
+    assert.equal(h.writes, 0); assert.equal(fs.existsSync(received.filePath), false); h.assertClean();
+  }));
+  await run("S5.3b2: asynchronous write guards are rejected instead of silently authorizing output", () => withPrintHarness(async h => {
+    await h.start({ shared: true, options: { beforeWrite: async () => { throw new Error("Late rejection"); } } });
+    const init = h.load(); h.ready({ jobId: init.jobId }); h.pdf.resolve(Buffer.from("PDF"));
+    assert.equal((await h.outcome).error.code, "PDF_PREPARED_JOB_INVALID"); assert.equal(h.writes, 0); h.assertClean();
+  }));
+  await run("S5.3b2: explicit Main metadata hashes exactly the bytes written without enabling editor preview", () => withPrintHarness(async h => {
+    const buffer = Buffer.from("%PDF-1.7\nÜmlaut bytes\n%%EOF"); let guarded = 0;
+    await h.start({ shared: true, options: { preparedData: preparedFirms(), includeMetadata: true, beforeWrite: () => { guarded++; } } });
+    const init = h.load(); assert.equal(init.pdfEditorPreview, false);
+    h.ready({ jobId: init.jobId, previewMetadata: { pageCount: 1, renderBounds: [] } }); h.pdf.resolve(buffer);
+    const { value, error } = await h.outcome; assert.ifError(error); assert.equal(guarded, 1);
+    assert.equal(value.byteSize, fs.statSync(value.filePath).size); assert.equal(value.sha256, createHash("sha256").update(fs.readFileSync(value.filePath)).digest("hex"));
+    assert.equal(value.pageCount, 1); assert.equal(value.controlledOutputPath, value.filePath); assert.deepEqual(fs.readFileSync(value.filePath), buffer); h.assertClean();
+  }));
+  await run("S5.3b2: optionless editor preview retains exactly the established metadata contract", () => withPrintHarness(async h => {
+    await h.start({ provider: true, metadata: true }); const init = h.load();
+    h.ready({ jobId: init.jobId, previewMetadata: { pageCount: 1, renderBounds: [] } }); h.pdf.resolve(Buffer.from("Existing editor PDF"));
+    const { value, error } = await h.outcome; assert.ifError(error);
+    assert.deepEqual(Object.keys(value).sort(), ["controlledOutputPath", "filePath", "generatedAt", "pageCount", "renderBounds"]);
+    assert.equal(value.pageCount, 1); assert.equal(init.pdfEditorPreview, true); h.assertClean();
+  }));
+  await run("S5.3b2: Main exclusive output protects provider files while optionless provider behavior is retained", () => withPrintHarness(async h => {
+    await h.start({ provider: true, options: { exclusiveWrite: true, includeMetadata: true } }); const init = h.load(); h.ready({ jobId: init.jobId });
+    const target = path.join(h.root, "result.pdf"); fs.writeFileSync(target, "Existing document"); h.pdf.resolve(Buffer.from("Replacement"));
+    assert.equal((await h.outcome).error.code, "EEXIST"); assert.equal(fs.readFileSync(target, "utf8"), "Existing document"); h.assertClean();
+  }));
+  await run("S5.3b2: renderer payload fields cannot inject prepared data or request Main metadata", () => withPrintHarness(async h => {
+    h.service.registerPrintIpc();
+    const pending = h.handlers.get("print:toPdf")({}, { ...h.sharedPayload(), preparedData: preparedFirms(), includeMetadata: true,
+      beforeWrite: "forged", exclusiveWrite: true });
+    await h.created.promise; const init = h.load(); assert.equal(init.preparedDataJob, undefined); assert.equal(h.dataCalls, 1);
+    h.ready({ jobId: init.jobId }); h.pdf.resolve(Buffer.from("Normal PDF")); const result = await pending;
+    assert.equal(result.ok, true); assert.equal(result.sha256, undefined); assert.equal(result.byteSize, undefined); h.assertClean();
+  }));
+  for (const reason of ["timeout", "closed", "renderer", "load", "write"]) {
+    await run(`S5.3b2: prepared job ${reason} cleanup prevents subsequent snapshot and live-data access`, () => withPrintHarness(async h => {
+      h.service.registerPrintIpc(); await h.start({ shared: true, options: { preparedData: preparedFirms() } }); const init = h.load();
+      if (reason === "timeout") h.expire();
+      if (reason === "closed") h.win.close();
+      if (reason === "renderer") h.win.webContents.emit("render-process-gone", {}, { reason: "crashed" });
+      if (reason === "load") h.loading.reject(new Error("URL load failure"));
+      if (reason === "write") { h.writeError = new Error("Disk full"); h.ready({ jobId: init.jobId }); h.pdf.resolve(Buffer.from("PDF")); }
+      assert.ok((await h.outcome).error);
+      assert.equal((await h.handlers.get("print:getData")({ sender: h.win.webContents }, init)).ok, false);
+      assert.equal(h.dataCalls, 0); assert.equal(h.providerCalls, 0); h.assertClean();
+    }));
+  }
+  for (const prepared of [false, true]) {
+    await run(`S5.3b2: destroyed window getters cannot interrupt ${prepared ? "prepared" : "legacy"} job cleanup or rejection`, () => withPrintHarness(async h => {
+      h.service.registerPrintIpc();
+      await h.start(prepared ? { shared: true, options: { preparedData: preparedFirms() } } : {});
+      const sender = h.win.webContents, init = h.load();
+      Object.defineProperty(h.win, "webContents", { configurable: true, get() {
+        if (h.closed) throw new Error("Object has been destroyed");
+        return sender;
+      } });
+      h.ready({ jobId: init.jobId }); assert.equal(h.calls.length, 1);
+      assert.doesNotThrow(() => h.win.close());
+      const { error } = await h.outcome; assert.match(error.message, /Print-Window geschlossen/);
+      h.pdf.resolve(Buffer.from("Late PDF after native destruction")); await Promise.resolve();
+      assert.equal(h.writes, 0); h.assertClean();
+      if (prepared) {
+        const stale = await h.handlers.get("print:getData")({ sender }, init);
+        assert.equal(stale.ok, false); assert.equal(h.dataCalls, 0);
+      } else h.assertNoOutput();
+    }));
+  }
+  await run("S5.3b2: prepared provider data keep the validated identity without a second provider execution", () => withPrintHarness(async h => {
+    h.service.registerPrintIpc(); const preparedData = { mode: "provider", projectId: "p", documentId: "d", documentTypeId: "technical-neutral",
+      orientation: "portrait", providerDocument: { title: "Captured provider", body: "Captured body" } };
+    await h.start({ provider: true, options: { preparedData } }); const init = h.load();
+    const get = payload => h.handlers.get("print:getData")({ sender: h.win.webContents }, payload);
+    const result = await get(init); assert.equal(result.ok, true, result.error); assert.equal(result.data.providerDocument.title, "Captured provider");
+    assert.equal((await get({ ...init, providerRequest: { ...init.providerRequest, documentId: "foreign" } })).ok, false);
+    assert.equal(h.providerCalls, 0); assert.equal(h.dataCalls, 0);
+    h.ready({ jobId: init.jobId }); h.pdf.resolve(Buffer.from("Captured provider PDF")); assert.ifError((await h.outcome).error); h.assertClean();
   }));
 
 }

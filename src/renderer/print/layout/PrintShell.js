@@ -754,7 +754,8 @@ export function renderPrint({ pages, data, contentSlots = null } = {}) {
   if (!normalizedMode) {
     throw new Error(`Unbekannter Druckmodus: ${String(data?.mode || "").trim() || "-"}`);
   }
-  if (contentSlots && (!contentSlots.fullHeader || !contentSlots.body || !Array.isArray(pages) || pages.length !== 1)) {
+  if (contentSlots && (!contentSlots.body || !Array.isArray(pages) || pages.length !== 1 ||
+      (contentSlots.headerMode === "standard" ? Boolean(contentSlots.fullHeader) : contentSlots.headerMode != null || !contentSlots.fullHeader))) {
     throw new Error("PDF-Inhaltsslots benötigen genau eine vollständig deklarierte Seite.");
   }
   if (normalizedMode === "provider" && !contentSlots) throw new Error("PDF-Provider-Inhaltsslots fehlen.");
@@ -813,9 +814,14 @@ export function renderPrint({ pages, data, contentSlots = null } = {}) {
       pageEl.appendChild(_buildSpineNote(runtimeData));
     }
     if (pageNo === 1) {
-      pageEl.appendChild(renderV2GlobalHeader({ data: runtimeData }));
-      pageEl.appendChild(contentSlots
-        ? renderV2FullHeader({ data: runtimeData, pageNo, totalPages, modeLabel, content: contentSlots.fullHeader })
+      // A standard provider exposes one complete header zone to the native
+      // editor, containing the unchanged global and document header blocks.
+      const headerParent = contentSlots?.headerMode === "standard"
+        ? _el("div", "v2StandardProviderHeader") : pageEl;
+      if (headerParent !== pageEl) pageEl.appendChild(headerParent);
+      headerParent.appendChild(renderV2GlobalHeader({ data: runtimeData }));
+      headerParent.appendChild(contentSlots
+        ? renderV2FullHeader({ data: runtimeData, pageNo, totalPages, modeLabel, content: contentSlots.headerMode === "standard" ? null : contentSlots.fullHeader })
         : normalizedMode === "invoice"
         ? renderV2FullHeader({
             data: runtimeData,

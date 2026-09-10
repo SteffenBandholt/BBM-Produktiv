@@ -1,8 +1,11 @@
 import { headerUtils } from "../v2/header/headerUtils.js";
+import { buildPreNotificationPdfContent, validatePreNotificationPdfLayout } from "../../modules/sigeko/print/PreNotificationPdfContent.js";
 
 // The provider supplies content slots; PrintShell owns the page, header and footer.
 export function buildProviderDocumentContent(data) {
   const content = data?.providerDocument;
+  if (content?.kind === "sigeko-vorankuendigung" && data?.documentTypeId === content.kind) return buildPreNotificationPdfContent(data);
+  if (content?.kind != null || data?.documentTypeId !== "technical-neutral") throw new Error("Unbekannter PDF-Provider-Inhaltstyp.");
   if (data?.mode !== "provider" || typeof content?.title !== "string" || !content.title.trim() ||
       typeof content?.body !== "string" || !content.body.trim()) throw new Error("PDF-Providerdaten fehlen.");
   const title = headerUtils.el("div", "providerTitle", content.title);
@@ -19,7 +22,11 @@ export function buildProviderDocumentContent(data) {
 
 // Measure the final DOM after editor styles and fonts, before print:ready.
 // A bounded single-page document must fail instead of silently clipping text.
-export function validateProviderDocumentLayout(root) {
+export function validateProviderDocumentLayout(root, data = null) {
+  if (data?.providerDocument?.kind === "sigeko-vorankuendigung" && data?.documentTypeId === "sigeko-vorankuendigung") {
+    return validatePreNotificationPdfLayout(root, data);
+  }
+  if (data && (data.providerDocument?.kind != null || data.documentTypeId !== "technical-neutral")) throw new Error("Unbekannter PDF-Provider-Inhaltstyp.");
   const page = root.querySelector(".page");
   const title = root.querySelector(".providerTitle");
   const body = root.querySelector(".providerBody");
