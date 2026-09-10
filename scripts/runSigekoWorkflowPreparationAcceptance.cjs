@@ -15,6 +15,33 @@ async function worker() {
   const report = { package: "S5.4 PDF preparation only", ok: false, actualOutlookVerified: false,
     manualConfirmed: false, actualSendObserved: false, checks: {}, measurements: [] };
   const measurements = [];
+  // A failed layout clears the page before print:ready. Capture the real Range
+  // result at its use site; return it unchanged and leave the guard untouched.
+  const onWindow = (_event, window) => {
+    window.webContents.on("console-message", (_event, _level, message) => {
+      if (message.startsWith("S54_RANGE_MEASUREMENT:")) {
+        report.measurements.push(JSON.parse(message.slice("S54_RANGE_MEASUREMENT:".length)));
+      }
+    });
+    window.webContents.once("dom-ready", () => {
+      measurements.push(window.webContents.executeJavaScript(`(() => {
+        const original = Range.prototype.getBoundingClientRect;
+        Range.prototype.getBoundingClientRect = function() {
+          const rect = original.call(this);
+          const node = this.commonAncestorContainer.nodeType === 1 ? this.commonAncestorContainer : this.commonAncestorContainer.parentElement;
+          if (node?.matches('[data-sigeko-va-pdf="authority.label"]')) {
+            const css = getComputedStyle(node);
+            console.log('S54_RANGE_MEASUREMENT:' + JSON.stringify({atRangeCheck:true,
+              box:node.getBoundingClientRect().toJSON(), text:rect.toJSON(), devicePixelRatio,
+              fontFamily:css.fontFamily,fontSize:css.fontSize,lineHeight:css.lineHeight,
+              scrollHeight:node.scrollHeight,clientHeight:node.clientHeight,
+              scrollWidth:node.scrollWidth,clientWidth:node.clientWidth}));
+          }
+          return rect;
+        };
+      })()`).catch(error => report.measurements.push({instrumentationError:error.message})));
+    });
+  };
   const onReady = (event, message) => {
     if (event.sender.isDestroyed()) return;
     measurements.push(event.sender.executeJavaScript(`(() => {
@@ -27,7 +54,7 @@ async function worker() {
         devicePixelRatio, scrollWidth: node.scrollWidth, clientWidth: node.clientWidth,
         scrollHeight: node.scrollHeight, clientHeight: node.clientHeight,
         fonts: Array.from(document.fonts, font => ({family:font.family,status:font.status})) };
-    })()`).then(value => { if (value) report.measurements.push({ ...value, ready: message }); })
+    })()`).then(value => { if (value) report.measurements.push({ ...value, ready: {ok:message?.ok,jobId:message?.jobId} }); })
       .catch(error => report.measurements.push({ error: error.message })));
   };
   try {
@@ -39,6 +66,7 @@ async function worker() {
     report.platform = process.platform;
     report.electron = process.versions.electron;
     report.display = screen.getPrimaryDisplay();
+    app.on("browser-window-created", onWindow);
     const caller = new BrowserWindow({ show: false, webPreferences: {
       preload: path.join(ROOT, "src/main/preload.js"), contextIsolation: true, nodeIntegration: false, sandbox: false } });
     await caller.loadURL("about:blank");
@@ -58,10 +86,12 @@ async function worker() {
     assert.deepEqual(methods, ["sigekoCreatePreNotificationPdf", "sigekoGetPreNotificationWorkflow"]);
     assert.equal(report.checks.s54Fixture.actualChromiumFinalPdf, true);
     assert.equal(report.checks.s54Fixture.originalFiles.length, 2);
+    assert.ok(report.measurements.some(item => item.atRangeCheck), "Range instrumentation did not run");
     report.ok = true;
   } catch (error) { report.error = { message: error.message, stack: error.stack }; }
   finally {
     ipcMain.removeListener("print:ready", onReady);
+    app.removeListener("browser-window-created", onWindow);
     await Promise.all(measurements);
     for (const win of BrowserWindow.getAllWindows()) win.destroy();
     if (profile) {
