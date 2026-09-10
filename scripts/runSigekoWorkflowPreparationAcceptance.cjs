@@ -19,7 +19,7 @@ async function worker() {
   // result at its use site; return it unchanged and leave the guard untouched.
   const onWindow = (_event, window) => {
     window.webContents.on("console-message", (_event, _level, message) => {
-      if (message.startsWith("S54_RANGE_MEASUREMENT:")) {
+      if (typeof message === "string" && message.startsWith("S54_RANGE_MEASUREMENT:")) {
         report.measurements.push(JSON.parse(message.slice("S54_RANGE_MEASUREMENT:".length)));
       }
     });
@@ -34,6 +34,7 @@ async function worker() {
             console.log('S54_RANGE_MEASUREMENT:' + JSON.stringify({atRangeCheck:true,
               box:node.getBoundingClientRect().toJSON(), text:rect.toJSON(), devicePixelRatio,
               fontFamily:css.fontFamily,fontSize:css.fontSize,lineHeight:css.lineHeight,
+              fonts:Array.from(document.fonts,font=>({family:font.family,status:font.status})),
               scrollHeight:node.scrollHeight,clientHeight:node.clientHeight,
               scrollWidth:node.scrollWidth,clientWidth:node.clientWidth}));
           }
@@ -42,26 +43,13 @@ async function worker() {
       })()`).catch(error => report.measurements.push({instrumentationError:error.message})));
     });
   };
-  const onReady = (event, message) => {
-    if (event.sender.isDestroyed()) return;
-    measurements.push(event.sender.executeJavaScript(`(() => {
-      const node = document.querySelector('[data-sigeko-va-pdf="authority.label"]');
-      if (!node) return null;
-      const css = getComputedStyle(node);
-      return { box: node.getBoundingClientRect().toJSON(),
-        fontFamily: css.fontFamily, fontSize: css.fontSize, lineHeight: css.lineHeight,
-        devicePixelRatio, scrollWidth: node.scrollWidth, clientWidth: node.clientWidth,
-        scrollHeight: node.scrollHeight, clientHeight: node.clientHeight,
-        fonts: Array.from(document.fonts, font => ({family:font.family,status:font.status})) };
-    })()`).then(value => { if (value) report.measurements.push({ ...value, ready: {ok:message?.ok,jobId:message?.jobId} }); })
-      .catch(error => report.measurements.push({ error: error.message })));
-  };
   try {
     app.setAppPath(ROOT);
     profile = configureUiEditorAcceptanceProfile({ electronApp: app });
     assert.equal(profile.enabled, true);
     const fixture = require("./helpers/pdfAcceptanceLicense.cjs").createPdfAcceptanceLicense({ electronApp: app, profile });
     await app.whenReady();
+    console.log("S54 preparation: Electron ready");
     report.platform = process.platform;
     report.electron = process.versions.electron;
     report.display = screen.getPrimaryDisplay();
@@ -69,17 +57,17 @@ async function worker() {
     const caller = new BrowserWindow({ show: false, webPreferences: {
       preload: path.join(ROOT, "src/main/preload.js"), contextIsolation: true, nodeIntegration: false, sandbox: false } });
     await caller.loadURL("about:blank");
+    console.log("S54 preparation: caller loaded");
     const stop = new Error("S54_PREPARATION_BOUNDARY_REACHED");
     const methods = [];
     const boundaryCaller = { webContents: { executeJavaScript(source) {
       const method = /^window\.bbmDb\["([^"]+)"\]/.exec(source)?.[1];
       assert.ok(method, "Unexpected acceptance call");
-      if (method === "sigekoPreparePreNotificationMail") throw stop;
+      if (method === "sigekoPreparePreNotificationMail") { console.log("S54 preparation: boundary reached"); throw stop; }
       assert.ok(["sigekoCreatePreNotificationPdf", "sigekoGetPreNotificationWorkflow"].includes(method), method);
       methods.push(method);
       return caller.webContents.executeJavaScript(source);
     } } };
-    ipcMain.on("print:ready", onReady);
     await assert.rejects(require("./helpers/sigekoWorkflowOutlookAcceptance.cjs").runWorkflowOutlookAcceptance({
       app, BrowserWindow, dialog, ipcMain, profile, fixture, caller: boundaryCaller, report }), error => error === stop);
     assert.deepEqual(methods, ["sigekoCreatePreNotificationPdf", "sigekoGetPreNotificationWorkflow"]);
@@ -89,9 +77,9 @@ async function worker() {
     report.ok = true;
   } catch (error) { report.error = { message: error.message, stack: error.stack }; }
   finally {
-    ipcMain.removeListener("print:ready", onReady);
+    console.log("S54 preparation: writing diagnostic result");
     app.removeListener("browser-window-created", onWindow);
-    await Promise.all(measurements);
+    await Promise.race([Promise.all(measurements), new Promise(resolve => setTimeout(resolve, 2000))]);
     for (const win of BrowserWindow.getAllWindows()) win.destroy();
     if (profile) {
       const destination = path.join(profile.rootPath, "s54-preparation-result.json");
