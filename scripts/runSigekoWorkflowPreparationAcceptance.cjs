@@ -15,11 +15,11 @@ async function measureActualFont() {
   const {createPrintWindow, getPrintAppUrl} = require("../src/main/print/printWindow");
   const probe = createPrintWindow({show:false});
   try {
+    await probe.loadURL(getPrintAppUrl());
     const inspector = probe.webContents.debugger;
     inspector.attach("1.3");
     await inspector.sendCommand("DOM.enable");
     await inspector.sendCommand("CSS.enable");
-    await probe.loadURL(getPrintAppUrl());
     const metrics = await probe.webContents.executeJavaScript(`(async () => {
       await Promise.allSettled([document.fonts.load('400 11pt "Noto Sans"'),document.fonts.load('700 11pt "Noto Sans"')]);
       await document.fonts.ready;
