@@ -9,8 +9,9 @@ const SCOPE_ID = "pdf.bbm.sigeko-vorankuendigung";
 const DECLARATIONS = [
   ["",null,"document","layout","Vorankündigung",0.0,0.0,210.0,297.0,null],
   ["page","","page","layout","A4-Seite",0.0,0.0,210.0,297.0,null],
-  ["globalHeader","page","header","layout","Gemeinsamer V2-GlobalHeader",12.0,5.0,186.0,8.0,null],
-  ["fullHeader","page","header","layout","Gemeinsamer V2-FullHeader",12.0,14.0,186.0,40.0,null],
+  ["header","page","header","layout","Gemeinsamer V2-Kopfbereich",12.0,5.0,186.0,49.0,null],
+  ["globalHeader","header","group","layout","Gemeinsamer V2-GlobalHeader",12.0,5.0,186.0,8.0,null],
+  ["fullHeader","header","group","layout","Gemeinsamer V2-FullHeader",12.0,14.0,186.0,40.0,null],
   ["body","page","area","layout","Vorankündigungsformular",12.0,56.0,186.0,227.0,null],
   ["authority","body","group","layout","Zuständige Arbeitsschutzbehörde",12.0,56.0,186.0,21.0,null],
   ["authority.label","authority","label","fieldLabel","An die Arbeitsschutzbehörde",12.0,56.0,186.0,5.0,9.0],
@@ -89,10 +90,10 @@ const DECLARATIONS = [
   ["signature.signer.label","signature.signer","label","fieldLabel","Bauherr / Beauftragter Dritter",112.0,278.0,86.0,4.0,8.0]
 ];
 const id = suffix => SCOPE_ID + (suffix ? "." + suffix : "");
-const selectors = { "": ".printRoot", page: ".page", globalHeader: ".v2GlobalHeaderBlock", fullHeader: ".v2HeaderFull", body: ".sigekoVaBody" };
+const selectors = { "": ".printRoot", page: ".page", header: ".v2StandardProviderHeader", globalHeader: ".v2GlobalHeaderBlock", fullHeader: ".v2HeaderFull", body: ".sigekoVaBody" };
 const elements = DECLARATIONS.map(([suffix, parent, kind, role, name, x, y, width, height, fontSize], order) => {
   const capabilities = fontSize === null ? [] : ["textResize"];
-  const pageArea = ["", "page"].includes(suffix) ? "document" : ["globalHeader", "fullHeader"].includes(suffix) ? "header" : "body";
+  const pageArea = ["", "page"].includes(suffix) ? "document" : ["header", "globalHeader", "fullHeader"].includes(suffix) ? "header" : "body";
   return { id: id(suffix), scopeId: SCOPE_ID, parentId: parent === null ? null : id(parent), kind, role, name, order,
     pageArea, visible: true, editable: capabilities.length > 0, capabilities, allowedOps: capabilities,
     lockedOps: [...PDF_TARGET_OPERATIONS.filter(op => !capabilities.includes(op)), "changeText", "modifyDomainData", "setPageBreakRule", "changePageAssignment", "create", "delete", "save", "upload", "import", "export", "autosave", "invokeDomainAction"],
@@ -104,7 +105,7 @@ const elements = DECLARATIONS.map(([suffix, parent, kind, role, name, x, y, widt
     refKey: "sigekoVaPdf." + (suffix || "document"), rendererKey: selectors[suffix] || `[data-sigeko-va-pdf="${suffix}"]` };
 });
 const base = { applicationId: "bbm-produktiv", documentTypeId: DOCUMENT_TYPE_ID, displayName: "Vorankündigung", scopeId: SCOPE_ID,
-  unit: "mm", registryVersion: 1, layoutModel: "fixed-layout",
+  unit: "mm", registryVersion: 2, layoutModel: "fixed-layout",
   pageSettings: { format: "A4", orientation: "portrait", width: 210, height: 297, margins: { top: 5, right: 12, bottom: 0, left: 12 } }, elements };
 const REGISTRY = { ...base, registryFingerprint: createPdfRegistryFingerprint(base) };
 function createSigekoPreNotificationPdfAdapter() {

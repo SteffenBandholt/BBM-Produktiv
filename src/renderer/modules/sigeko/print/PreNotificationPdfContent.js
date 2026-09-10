@@ -11,7 +11,7 @@ function overflow(entry, detail = "Text passt nicht vollständig auf die Formula
 function definitions(data) {
   const registry = data?.pdfEditorRegistry;
   if (registry?.documentTypeId !== DOCUMENT_TYPE || registry.scopeId !== SCOPE || registry.layoutModel !== "fixed-layout" ||
-      !Array.isArray(registry.elements) || registry.elements.length !== 80) invalid("Vorankündigungs-PDF-Vertrag fehlt oder ist unvollständig.");
+      !Array.isArray(registry.elements) || registry.elements.length !== 81) invalid("Vorankündigungs-PDF-Vertrag fehlt oder ist unvollständig.");
   return registry.elements;
 }
 function fieldValues(form) {

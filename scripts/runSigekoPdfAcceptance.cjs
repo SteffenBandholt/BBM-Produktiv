@@ -229,7 +229,7 @@ async function runPreNotificationAcceptance({ db, profile, baseDir, tempPath, Br
   const change = resolver.submitPdfChangeRequest({ changeId: "s53b2-font", scopeId: SCOPE_ID, elementId, operation: "textResize", payload: { text: { fontSize: 10 } } });
   assert.equal(change.success, true, JSON.stringify(change));
   const generated = await resolver.regeneratePdfPreview(); const editedPdf = await inspectPdf(generated.controlledOutputPath);
-  assert.equal(generated.pageCount, 1); assert.equal(generated.renderBounds.length, 80);
+  assert.equal(generated.pageCount, 1); assert.equal(generated.renderBounds.length, 81);
   assert.equal(editedPdf.text, firstPdf.text, "PDF-Layoutbearbeitung verändert Fachtext");
   assert.ok(editedPdf.textItems.some(item => item.text === "Neubau Wohnhaus" && item.fontSizePoints > 9.5), "Echte PDF enthält die 10pt-Schriftänderung nicht");
   assert.equal(resolver.rollbackPdfEditorSessionPreparation({ previousLayoutState: initial }), true);
@@ -438,7 +438,7 @@ async function runWorker() {
     const recoveredPdf = await inspectPdf(recovered.filePath);
     assert.equal(recoveredPdf.text, stored.text);
     report.checks.recoveryAfterFailures = { ok: true, pdf: recoveredPdf };
-    console.log("[S5.3b2] Echte Vorankündigung, Firmenanlage, 80 PDF-Refs und Editor-Regeneration");
+    console.log("[S5.3b2] Echte Vorankündigung, Firmenanlage, 81 PDF-Refs und Editor-Regeneration");
     report.checks.preNotification = await runPreNotificationAcceptance({ db, profile, baseDir, tempPath, BrowserWindow, ipcMain, invoke, resolver });
     report.package = "S1.4 / S5.3b2";
     report.ok = true;

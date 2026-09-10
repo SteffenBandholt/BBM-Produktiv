@@ -38,7 +38,8 @@ const rect = (x, y, width, height) => ({ left: x, top: y, right: x + width, bott
 function mount(body) {
   const root = new Element(); root.className = "printRoot";
   const page = root.appendChild(new Element()); page.className = "page";
-  for (const className of ["v2GlobalHeaderBlock", "v2HeaderFull"]) { const node = page.appendChild(new Element()); node.className = className; }
+  const header = page.appendChild(new Element()); header.className = "v2StandardProviderHeader";
+  for (const className of ["v2GlobalHeaderBlock", "v2HeaderFull"]) { const node = header.appendChild(new Element()); node.className = className; }
   page.appendChild(body);
   const footer = page.appendChild(new Element()); footer.className = "v2FooterReserveSpacer"; footer.rect = rect(12, 285, 186, 12);
   for (const entry of REGISTRY.elements) {
@@ -91,8 +92,8 @@ async function runSigekoPreNotificationPdfRendererTests(run) {
       fill(305, 420, 986, 460, 255); fill(342, 441, 418, 444, 0);
       assert.equal(pdfPagePaintEvidence(bitmap, width, height).visible, false);
     });
-    await run("S5.3b2: VA registry declares exactly eighty stable targets with valid parents and text-only permissions", () => {
-      assert.equal(REGISTRY.elements.length, 80); assert.equal(new Set(REGISTRY.elements.map(entry => entry.id)).size, 80);
+    await run("S5.3b2: VA registry declares exactly eighty-one stable targets with valid parents and text-only permissions", () => {
+      assert.equal(REGISTRY.elements.length, 81); assert.equal(new Set(REGISTRY.elements.map(entry => entry.id)).size, 81);
       assert.equal(REGISTRY.layoutModel, "fixed-layout"); assert.equal(REGISTRY.pageSettings.orientation, "portrait");
       for (const entry of REGISTRY.elements) {
         assert.equal(entry.id.startsWith(SCOPE_ID), true); assert.equal(entry.parentId === null, entry.id === SCOPE_ID);
@@ -102,6 +103,25 @@ async function runSigekoPreNotificationPdfRendererTests(run) {
         assert.equal(["table", "tableColumn"].includes(entry.kind), false);
         for (const operation of ["move", "resize", "setVisibility", "setPageBreakRule", "changeText", "modifyDomainData", "save", "import", "export"]) assert.ok(entry.lockedOps.includes(operation), `${entry.id}: ${operation}`);
       }
+    });
+    await run("S5.3b2: native header zone contains both unchanged header blocks without a full-page fallback", () => {
+      // The native ElectronPdfPipeHostAdapter uses the FIRST header as its
+      // complete zone. Previously globalHeader (5..13) excluded fullHeader
+      // (14..54) and the production Windows manager refused to start.
+      const headers = REGISTRY.elements.filter(entry => entry.kind === "header");
+      assert.equal(headers.length, 1);
+      const header = headers[0], zone = header.baseline;
+      assert.equal(header.id, `${SCOPE_ID}.header`);
+      assert.equal(header.rendererKey, ".v2StandardProviderHeader");
+      assert.deepEqual([zone.x, zone.y, zone.width, zone.height], [12, 5, 186, 49]);
+      for (const [suffix, y, height] of [["globalHeader", 5, 8], ["fullHeader", 14, 40]]) {
+        const entry = REGISTRY.elements.find(item => item.id === `${SCOPE_ID}.${suffix}`), box = entry.baseline;
+        assert.equal(entry.kind, "group"); assert.equal(entry.parentId, header.id); assert.equal(entry.pageArea, "header");
+        assert.deepEqual([box.x, box.y, box.width, box.height], [12, y, 186, height]);
+        assert.ok(box.x >= zone.x && box.y >= zone.y && box.x + box.width <= zone.x + zone.width && box.y + box.height <= zone.y + zone.height);
+        assert.equal(entry.editable, false); assert.deepEqual(entry.capabilities, []);
+      }
+      assert.equal(header.editable, false); assert.deepEqual(header.capabilities, []);
     });
     await run("S5.3b2: rendered VA uses frozen fields with distinct roles counts whole months zero and blank signature", () => {
       const data = dataFor(), before = clone(data); const content = renderer.buildPreNotificationPdfContent(data), root = mount(content.body);
