@@ -47,9 +47,8 @@ async function worker() {
     measurements.push(event.sender.executeJavaScript(`(() => {
       const node = document.querySelector('[data-sigeko-va-pdf="authority.label"]');
       if (!node) return null;
-      const range = document.createRange(); range.selectNodeContents(node);
       const css = getComputedStyle(node);
-      return { box: node.getBoundingClientRect().toJSON(), text: range.getBoundingClientRect().toJSON(),
+      return { box: node.getBoundingClientRect().toJSON(),
         fontFamily: css.fontFamily, fontSize: css.fontSize, lineHeight: css.lineHeight,
         devicePixelRatio, scrollWidth: node.scrollWidth, clientWidth: node.clientWidth,
         scrollHeight: node.scrollHeight, clientHeight: node.clientHeight,
