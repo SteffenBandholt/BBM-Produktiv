@@ -194,9 +194,18 @@ die zu späte Erfassung sowie einen synthetischen Range-Aufruf im späteren
 Diagnoseblock. Syntax und Whitespace-Prüfung grün. Es wurde kein neuer Volltest
 behauptet: Produktcode unverändert, letzter Volltest weiterhin 2030/97.
 
+Die erste Fassung der Range-Instrumentierung ließ spätere Mess-Promises an bereits
+geschlossenen Druckfenstern hängen. Diagnosecommit f38fec0f entfernt die nachträgliche
+Renderer-Messung vollständig und begrenzt das Aufräumen. CI 34511789349 bestand
+erneut bei allen vier Windows-Skalierungen, einschließlich der Assertion, dass die
+Messwerte aus der echten Layoutprüfung stammen. e538cfbe ergänzt ausschließlich
+einen expliziten Fehlerabschluss für ungefangene Ereignisfehler und ein 60-Sekunden-
+Zeitlimit des automatischen Diagnoseworkers. Der reale manuelle Outlook-Test bekommt
+weder dieses Zeitlimit noch eine geänderte Fehlerbehandlung.
+
 Nächster notwendiger Nachweis: denselben Diagnoseworker ohne erzwungene Skalierung
 im vorhandenen isolierten Nutzer-Testordner ausführen. Vorher nur dessen sauberen
-BBM-Worktree per Fast-forward auf 8369a36b0619e8be1c78310daaa38e9de8b8c960 bringen;
+BBM-Worktree per Fast-forward auf e538cfbe4eabe48e29fe37b00bdf04998a7f6470 bringen;
 Kit und normale Entwicklerarbeitskopien erhalten. Keine erneute Installation nötig,
 da Paketmanifest und Lockfile unverändert sind. Anschließend die lokalen Feld- und
 Textrechtecke, Schriftmetriken und tatsächliche Geräteskalierung auswerten.
