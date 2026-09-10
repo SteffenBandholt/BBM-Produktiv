@@ -1,3 +1,26 @@
+## 2026-09-10 – SiGeKo S5.4: Rücklauf und Outlook, lokale COM-Abnahme offen (Draft-PR #339)
+
+Basis main 676713aa (S5.3b2 integriert). Ergebnisbranch codex/sigeko-s54-ruecklauf-outlook.
+Separate aktuelle Workflowzeile je unveränderlicher Vorankündigungsfassung; signierte
+Rücklauf-PDF mit Datei-/CAS-/Lizenzschutz in bestehender Unterlagenablage. Bearbeitbare
+Mailvorbereitung, bestehender gemeinsamer Outlook-Handler, Orange/Grün nur nach
+bestätigter Entwurfsöffnung. Kein tatsächlicher Versandnachweis oder Mailverlauf.
+V9-Projekttransfer übernimmt Rückläufe und Workflowdaten an den bestehenden V8-Grenzen.
+32 neue UI-Ziele, 143 Pflichtrefs/144 Scopeziele; vorhandene Sticky-Aktionen erreichbar.
+Volltest 2030 PASS / exakt dieselben 97 Baselinefehler (+83), keine verlorenen PASS.
+PDF-CI 34439924951 und gemeinsame Mailgrenze 34439924943 Windows/Linux PASS;
+49 bestehende Golden-Strukturen/Seitenzahlen unverändert. Formular-CI 34439924999:
+Linux 28 / Windows 29 reale Prüfungen PASS, keine Rendererfehler; schmale/niedrige
+Bedienung und bestehender nativer Windows-PDF-Editor nachgewiesen. Outlook bleibt Stub.
+Unabhängige Reviews ohne Restblocker nach Chronologie-Korrektur; 12 DB-, 44 Main-,
+14 V9- und 49 Formtests PASS. Allgemeine npm-CI separat bekannte Umgebungsbaseline.
+Produkt c205377ff60f20b7d861aeec7b281159a51b28dc, Fachlogik und gemeinsame Grenzen
+in getrennten Commits. Nachweise docs/SIGEKO_S5_4_ABNAHME.md, TESTVERGLEICH und A–F.
+Gemäß #274 B6 fehlt noch die tatsächliche neue Outlook-COM-Abnahme unter Windows:
+npm run test:sigeko:s5.4:outlook (zwei Entwürfe prüfen/verwerfen, nativer Rücklaufdialog).
+Draft-PR #339 veröffentlicht, kein Merge und kein S6 vor diesem Nachweis.
+Rechnung #275 eingefroren; keine historische Behördenübernahme oder Kalenderfunktion.
+
 ## 2026-09-10 – SiGeKo S5.3b2: Vorankündigungs-PDF und unveränderliche Fassungen (PR #338)
 
 Vorhandener Formularvorgang mit echter Vorschau, finaler PDF/Firmenanlage, Layoutstart
