@@ -9,6 +9,40 @@ const { spawn } = require("node:child_process");
 const { createAcceptanceProfile, createSanitizedEnvironment } = require("./runIsolatedUiEditorAcceptance.cjs");
 const { ACCEPTANCE_SWITCH, configureUiEditorAcceptanceProfile } = require("../src/main/startup/uiEditorAcceptanceProfile");
 const ROOT = path.resolve(__dirname, "..");
+async function measureActualFont() {
+  // Independent, hidden probe AFTER the original preparation has succeeded or
+  // failed. Same print entry/CSS and font loading, no change to the tested PDF.
+  const {createPrintWindow, getPrintAppUrl} = require("../src/main/print/printWindow");
+  const probe = createPrintWindow({show:false});
+  try {
+    const inspector = probe.webContents.debugger;
+    inspector.attach("1.3");
+    await inspector.sendCommand("DOM.enable");
+    await inspector.sendCommand("CSS.enable");
+    await probe.loadURL(getPrintAppUrl());
+    const metrics = await probe.webContents.executeJavaScript(`(async () => {
+      await Promise.allSettled([document.fonts.load('400 11pt "Noto Sans"'),document.fonts.load('700 11pt "Noto Sans"')]);
+      await document.fonts.ready;
+      const node = document.createElement('div'); node.id='s54-font-probe';
+      node.style.cssText='font-size:9pt;font-weight:400;line-height:1.15;box-sizing:border-box;min-width:0;min-height:0;margin:0;padding:0;white-space:pre-wrap;overflow-wrap:anywhere;width:186mm;height:5mm';
+      node.textContent='An die Arbeitsschutzbehörde'; document.body.appendChild(node);
+      const range=document.createRange();range.selectNodeContents(node);
+      const css=getComputedStyle(node),canvas=document.createElement('canvas'),context=canvas.getContext('2d');
+      const candidates={};
+      for(const family of [css.fontFamily,'Arial','"Noto Sans"','sans-serif']) {
+        context.font='400 12px '+family;const m=context.measureText(node.textContent);
+        candidates[family]={width:m.width,actualAscent:m.actualBoundingBoxAscent,actualDescent:m.actualBoundingBoxDescent,
+          fontAscent:m.fontBoundingBoxAscent,fontDescent:m.fontBoundingBoxDescent};
+      }
+      return {box:node.getBoundingClientRect().toJSON(),text:range.getBoundingClientRect().toJSON(),
+        fontFamily:css.fontFamily,fontSize:css.fontSize,lineHeight:css.lineHeight,devicePixelRatio,candidates};
+    })()`);
+    const {root} = await inspector.sendCommand("DOM.getDocument");
+    const {nodeId} = await inspector.sendCommand("DOM.querySelector", {nodeId:root.nodeId,selector:"#s54-font-probe"});
+    const {fonts} = await inspector.sendCommand("CSS.getPlatformFontsForNode", {nodeId});
+    return {...metrics,fonts};
+  } finally { if (!probe.isDestroyed()) probe.destroy(); }
+}
 async function worker() {
   const { app, BrowserWindow, dialog, ipcMain, screen } = require("electron");
   let profile;
@@ -95,6 +129,18 @@ async function worker() {
     console.log("S54 preparation: writing diagnostic result");
     app.removeListener("browser-window-created", onWindow);
     await Promise.race([Promise.all(measurements), new Promise(resolve => setTimeout(resolve, 2000))]);
+    if (profile && app.isReady()) {
+      try { report.fontProbe = await measureActualFont(); }
+      catch (error) { report.fontProbe = {error:error.message}; }
+      const original = report.measurements.find(item => item.atRangeCheck);
+      report.fontProbe.matchesOriginalRangeMetrics = !!original && !!report.fontProbe.text &&
+        Math.abs(original.text.width - report.fontProbe.text.width) < 0.02 &&
+        Math.abs(original.text.height - report.fontProbe.text.height) < 0.02;
+      if (report.ok && (!report.fontProbe.fonts?.length || !report.fontProbe.matchesOriginalRangeMetrics)) {
+        report.ok = false; report.error = {message:"Font probe did not identify matching original font metrics"};
+      }
+      console.log("S54_FONT_PROBE:" + JSON.stringify(report.fontProbe));
+    }
     for (const win of BrowserWindow.getAllWindows()) win.destroy();
     if (profile) {
       const destination = path.join(profile.rootPath, "s54-preparation-result.json");
