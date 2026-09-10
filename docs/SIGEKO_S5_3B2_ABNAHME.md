@@ -4,7 +4,7 @@ Basis main c7103ae5e74795defb77fdc9d15809054d9cb983, Branch codex/sigeko-s53b2-v
 
 ## Umgesetzter Umfang
 
-Vorankündigung über vorhandene Provider-/PrintShell-Infrastruktur mit gemeinsamem V2-Kopf, 80 deklarierten PDF-Zielen, getrennten Rollen und Punkt-8-Zahlen sowie leerem Unterschriftsbereich. Zu lange Inhalte werden vor der PDF-Ausgabe mit betroffenem Feld abgewiesen. Firmenanlage verwendet den bestehenden Firmenrenderer und einmalig vorbereitete Main-Daten.
+Vorankündigung über vorhandene Provider-/PrintShell-Infrastruktur mit gemeinsamem V2-Kopf, 81 deklarierten PDF-Zielen, getrennten Rollen und Punkt-8-Zahlen sowie leerem Unterschriftsbereich. Zu lange Inhalte werden vor der PDF-Ausgabe mit betroffenem Feld abgewiesen. Firmenanlage verwendet den bestehenden Firmenrenderer und einmalig vorbereitete Main-Daten.
 
 Vorhandenes Formular um Vorschau, finale Erstellung, bestehenden nativen Layouteditor-Einstieg und Auswahl/Öffnung gespeicherter Fassungen ergänzt: 13 neue Ziele, 111 Pflichtrefs/112 Scopeziele, Registry 36. Dirtyzustand verlangt ausdrücklich Speichern; keine automatische Speicherung. Archivierte Projekte können bestehende Dateien öffnen.
 
@@ -14,14 +14,28 @@ V8-Projekttransfer erhält Fassungen und tatsächliche Dateien. Import kopiert u
 
 ## Lokale Prüfungen
 
-Volltest: **1942 PASS / exakt dieselben 97 Baselinefehler**, gegenüber 1858/97 auf main. **+84 PASS**, keine neuen oder entfallenen Fehlernamen, keine verlorenen PASS. Maschinenvergleich in SIGEKO_S5_3B2_TESTVERGLEICH.json. Exitcode 1 aufgrund bekannter Baseline.
+Volltest: **1947 PASS / exakt dieselben 97 Baselinefehler**, gegenüber 1858/97 auf main. **+89 PASS**, keine neuen oder entfallenen Fehlernamen, keine verlorenen PASS. Maschinenvergleich in SIGEKO_S5_3B2_TESTVERGLEICH.json. Exitcode 1 aufgrund bekannter Baseline.
 
-Gezielt bestanden: 36 Printjobfälle, 11 Provider-/Adapterfälle, 28 neue Dokumentworkflowfälle mit realer SQLite/Dateien, 15 reale V8-ZIP-Prüfungen, 36 Formulartests (12 neu), 9 PDF-Renderer-/Adaptertests und 9 Manifestprüfungen. Bei lokalen Fachworkflowtests sind nur Render-/Fenstergrenzen injiziert; dies ist kein tatsächlicher Chromium-PDF- oder GUI-Nachweis.
+Gezielt bestanden: 38 Printjobfälle, 11 Provider-/Adapterfälle, 28 neue Dokumentworkflowfälle mit realer SQLite/Dateien, 15 reale V8-ZIP-Prüfungen, 36 Formulartests (12 neu), 12 PDF-Renderer-/Adaptertests und 9 Manifestprüfungen. Bei lokalen Fachworkflowtests sind nur Render-/Fenstergrenzen injiziert; dies ist kein tatsächlicher Chromium-PDF- oder GUI-Nachweis.
 
-Unabhängiger Review fand zwei reparierte Fehler: Schattenvariable in Druckoptionen veränderte den bisherigen Editor-Metadatenvertrag; Änderung der Standardablage während V8-Import konnte Dateien an einem überholten Pfad erfolgreich importieren. Beide durch gezielte Regressionstests abgesichert. Neue IPC-/Tabelleninventare in bestehenden Grenztests ergänzt; Lizenzentzug sperrt sämtliche neuen Preload-Aufrufe. Gemeinsame Druckanschlüsse separat committet. git diff --check bestanden.
+Unabhängiger Review fand drei reparierte Fehler: Schattenvariable in Druckoptionen veränderte den bisherigen Editor-Metadatenvertrag; Änderung der Standardablage während V8-Import konnte Dateien an einem überholten Pfad erfolgreich importieren. Zusätzlich konnte das Lesen von win.webContents nach Zerstörung des Druckfensters die Fehlerbereinigung unterbrechen; die vorab erfasste Referenz verhindert diesen Hänger. Alle drei durch gezielte Regressionstests abgesichert. Neue IPC-/Tabelleninventare in bestehenden Grenztests ergänzt; Lizenzentzug sperrt sämtliche neuen Preload-Aufrufe. Gemeinsame Druckanschlüsse separat committet. git diff --check bestanden.
 
-## Noch ausstehende Integrationsnachweise
+## Plattformnachweise
 
-Windows-/Linux-Workflows sind vorbereitet, aber noch nicht als bestanden bewertet: tatsächliche Vorankündigung/Vorschau/Firmenanlage, 80 gemountete PDF-Ziele, Schriftänderung und Rücknahme, zwei unveränderte Fassungen, benannter Overflow ohne Datei/DB-Zeile; alle 49 bestehenden PDF-Seitenzahlen und Struktursnapshots. Formularprüfung umfasst sieben erreichbare Sticky-Aktionen bei 1280, 560 und 560×480, native Fassungswahl und historische Dateizugriffe. Windows baut den unveränderten vorhandenen Kit-Manager und prüft echten Einstieg/Reiter PDF-Ausgabe/Vorankündigungsbaum mit Screenshot.
+Geprüfter Produktstand: 49fba31c10aa774c9085ecea4f4aa6abe858fbc2. PDF-CI 34437646316 unter Windows und Linux PASS: tatsächliche Vorankündigung, interne Vorschau, Firmenanlage, 81 gemountete PDF-Ziele mit allen sechs Attributen, Schriftänderung 9 auf 10 pt und Rücknahme, zwei unveränderte Fassungen, benannter Overflow ohne Datei/DB-Zeile. Alle 49 bestehenden PDF-Seitenzahlen und vollständigen strukturellen Snapshots unverändert.
 
-Eine persönliche manuelle Abnahme wird nicht behauptet. PR-Review, Plattformnachweise, Integration und GitHub-Abschlussdokumentation stehen noch aus. Danach direkt S5.4; keine Unterschrifts-/Mailprozessampel oder Folgepakete in diesem Stand.
+Formular-CI 34437646334 unter Linux mit 24 und Windows mit 25 realen Bedienprüfungen PASS, jeweils rendererErrors=[]. Sieben Sticky-Aktionen bei 1280, 560 und 560×480, native Fassungswahl, echte Vorschau/finale Dateien/Firmenanlage und historische Dateizugriffe. Unter Windows startet die echte Formularaktion den unveränderten produktiven Kit-Manager, UIAutomation wählt dessen tatsächlichen Reiter PDF-Ausgabe, der Vorankündigungsbaum zeigt 81 registrierte Ziele, native Diagnose bleibt leer. Screenshot geprüft. Das belegt Öffnen und Reiterwahl; Fontänderung/Undo/Regeneration werden separat durch den realen PDF-/Adapterlauf belegt, nicht als native Mausklickabnahme ausgegeben.
+
+Das bestehende native Kit-Fenster ist auf dem 1024×768-CI-Desktop beim ersten Öffnen teilweise außerhalb des sichtbaren Bereichs; keine vollständige Kleinbildschirmabnahme des generischen Kit-Editors behauptet. Die SiGeKo-Formularaktionen selbst sind auch bei 560×480 vollständig erreichbar. Der Kit wird in diesem Fachpaket nicht umgebaut.
+
+## Reparaturen aus der realen Abnahme
+
+Die alte Windows-Vorschauerkennung prüfte nur eine horizontale Linie, die im Vorankündigungsformular Kontakttext traf und eine korrekt gezeichnete Seite fälschlich ablehnte. Mehrere räumlich getrennte Zeilen bestätigen nun dieselben Seitenränder, weiterhin mit Mindestweißfläche und tatsächlichem Text. Zwei Regressionstests sichern den beobachteten Fehlalarm und Ablehnung leerer/grauer/schmaler/isoliert weißer Flächen ab.
+
+Die native Startdiagnose identifizierte anschließend pdf_invalid_page_zone: Der erste einzelne Headerblock definierte die gesamte Headerzone und schloss den zweiten aus. Vollständige A–F-Ergänzung vor der Reparatur im PDF-Entwurf. Ein realer gemeinsamer PrintShell-Kopfcontainer ist nun alleiniger Header mit zwei gesperrten Untergruppen; kein Ausweiten auf eine seitenweite Ersatz-Kopfzone. Gemeinsamer Container separat in 1d78ee2c155cd3ffdcb4660bc7cb9f03d3fb9878; SiGeKo-Vertrag in 49fba31c10aa774c9085ecea4f4aa6abe858fbc2. Registryversion 2 mit 81 Zielen. Die Windows-Vorschau vor und nach diesem Strukturfix ist pixelgleich: SHA-256 da020e0447c696c5e86bc577a541b0285f9a4fd7f11cc841eddf0efac1a13ce2. Unabhängiger Review der Reparatur ohne Restblocker.
+
+## Abschluss und verbleibende Grenzen
+
+PR #338 gegen main; abschließender Commit ausschließlich Dokumentation. Nachweise und operative Planung werden gemeinsam abgeschlossen. Allgemeine npm-CI bleibt separat bekannte Kit-/Popup-/Lizenzumgebungsbaseline; die exakten 97 Fehler beziehen sich auf den vollständigen lokalen Lauf mit vorhandenem Kit. Kein pauschaler grüner npm-CI-Status behauptet.
+
+Keine persönliche manuelle Abnahme behauptet. Geprüfte Arbeitsweise: Goal-Lauf mit unabhängiger Fehleranalyse/Review, reale Electron-/Windows-UIAutomation-Bedienung und PDF-Ausgabe. Alle Paket-Abnahmekriterien erfüllt; die genannte allgemeine Kit-Fenstergröße ist kein behobener Bestandteil dieses Pakets. Fachliche Rücklauf-/Unterschrifts-/Mailampel folgt separat in S5.4. Rechnung #275 bleibt eingefroren.

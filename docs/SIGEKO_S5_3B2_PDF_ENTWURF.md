@@ -1,6 +1,6 @@
 # S5.3b2 – verbindlicher PDF-Entwurf
 
-Vom Hauptagenten ausgewertet und für S5.3b2 vor Code festgelegt. Basis main c7103ae5e74795defb77fdc9d15809054d9cb983, Branch codex/sigeko-s53b2-vorankuendigung-pdf. S5.3a und S5.3b1 integriert; Rechnung #275 eingefroren. Ergänzende UI-Entscheidung: SIGEKO_S5_3B2_UI_ENTWURF.md. Der verbindliche Workflow-/Dateivertrag in SIGEKO_S5_3B2_WORKFLOW.md konkretisiert und ersetzt nachfolgende ältere Anschlussvorschläge, insbesondere den bereits integrierten Snapshotvertrag aus S5.3b1.
+Vom Hauptagenten ausgewertet und für S5.3b2 vor Code festgelegt. Basis main c7103ae5e74795defb77fdc9d15809054d9cb983, Branch codex/sigeko-s53b2-vorankuendigung-pdf. S5.3a und S5.3b1 integriert; Rechnung #275 eingefroren. Ergänzende UI-Entscheidung: SIGEKO_S5_3B2_UI_ENTWURF.md. Der verbindliche Workflow-/Dateivertrag in SIGEKO_S5_3B2_WORKFLOW.md konkretisiert die gemeinsamen Anschlüsse und verwendet den bereits integrierten Snapshotvertrag aus S5.3b1.
 
 ## A. Art der Ausgabe
 
@@ -8,7 +8,7 @@ PDF: eine A4-Hochformatseite mit dem vorhandenen V2-Global-/FullHeader, danach B
 
 Keine Punkt-9-Firmentabelle: ausschließlich „Noch nicht bekannt“ oder ein eindeutiger Verweis auf die einmalig über die vorhandene Firmenlisten-PDF erzeugte Anlage. Diese Anlage bleibt eine getrennte vorhandene Dokumentausgabe; keine zweite Firmenkartenimplementierung, keine neuen Tabellenspalten.
 
-**Bedienung ist separat zu entwerfen:** S5.2 hat noch keine PDF-Aktionen. Mindestens „PDF-Vorschau“ und „PDF erstellen“ benötigen vor UI-Code eine eigene A–F-Ergänzung am vorhandenen Formularvertrag, einschließlich genauer Ref-IDs, Dirty-/Save-Verhalten, Fehleranzeige und neuer Inventar-/Manifestwerte. Dieser PDF-Entwurf erklärt keine unbenannten UI-Buttons als freigegeben. Auch der tatsächliche Aufruf des PDF-Editors braucht einen vorhandenen erreichbaren Einstieg; der Form-Headerlauncher öffnet zunächst nur den UI-Editor.
+**Bedienung ist vollständig separat deklariert:** SIGEKO_S5_3B2_UI_ENTWURF.md legt die neuen Aktionen, Ref-IDs, Dirty-/Speicherzustände, Fehleranzeigen und Inventarwerte fest. Der Layoutstart bereitet den Main-Dokumentkontext vor und öffnet den vorhandenen nativen Editor; dort wird der bestehende Bereich PDF-Ausgabe gewählt.
 
 ## B. Editorfähigkeit
 
@@ -20,97 +20,98 @@ A4 210 × 297 mm; Ränder oben 5, rechts 12, unten 0, links 12 mm. Gemeinsame Fu
 
 ## C. Vollständige Zieldeklaration
 
-Alle IDs nachfolgend sind konkrete vollständige Werte. `name` entspricht `data-ui-editor-label`; `kind` entspricht genau dem PDF-Registry-Kind und damit `data-ui-editor-kind` (kein UI-frame/single-Mapping). `visible:true` für alle; `editable:true` nur mit textResize. `allowedOps` und `capabilities` sind genau die letzte Tabellenspalte als Liste; sonst leer. `order` entspricht exakt der angegebenen fortlaufenden Nummer. `pageArea` ist `document` für Root/Seite, `header` für Global-/FullHeader und `body` für Body sowie alle seine Nachfahren.
+Alle IDs nachfolgend sind konkrete vollständige Werte. `name` entspricht `data-ui-editor-label`; `kind` entspricht genau dem PDF-Registry-Kind und damit `data-ui-editor-kind` (kein UI-frame/single-Mapping). `visible:true` für alle; `editable:true` nur mit textResize. `allowedOps` und `capabilities` sind genau die letzte Tabellenspalte als Liste; sonst leer. `order` entspricht exakt der angegebenen fortlaufenden Nummer. `pageArea` ist `document` für Root/Seite, `header` für Kopfcontainer und Global-/FullHeader und `body` für Body sowie alle seine Nachfahren.
 
 Für alle Elemente: `lockedOps = PDF_TARGET_OPERATIONS.filter(op => !allowedOps.includes(op))` plus `changeText`, `modifyDomainData`, `setPageBreakRule`, `changePageAssignment`, `create`, `delete`, `save`, `upload`, `import`, `export`, `autosave`, `invokeDomainAction`. Weder IDs noch Metadaten enthalten Projekt-, Behörden-, Personen- oder Snapshotwerte.
 
 `baseline = {x,y,width,height,visible:true}` plus bei Text `fontSize`, `lineSpacing:1.15`, `textAlignment:'left'`. Typografische Grenzwerte für Text `minFontSize:8,maxFontSize:12`; für Dokumenttitel maxFontSize:14. Struktur ohne Fontgrenzen. Geometrische `layoutBounds` für Root/Seite 0≤x≤210, 0≤y≤297, 1≤width≤210, 1≤height≤297; sonst 12≤x≤198, 5≤y≤285, 1≤width≤186, 1≤height≤280. Da Geometrieoperationen gesperrt sind, sind dies keine freigegebenen Verschiebungs-/Größenaktionen. Tatsächlicher Seitenrand-, Überlappungs- und Text-Overflow-Nachweis erfolgt im End-DOM.
 
-`refKey` ist immer `sigekoVaPdf.` + Suffix (Root `document`). `rendererKey`: Root `.printRoot`, Seite `.page`, GlobalHeader `.v2GlobalHeaderBlock`, FullHeader `.v2HeaderFull`, Body `.sigekoVaBody`; alle übrigen Ziele `[data-sigeko-va-pdf="SUFFIX"]` mit genau dem in der ID nach dem Scope angegebenen Suffix. Diese Selektoren werden beim bewussten Rendern gesetzt, nicht aus sichtbaren Texten oder DOM-Reihenfolge abgeleitet. Die vorhandene Funktion `applyBbmPdfEditorLayout` setzt die sechs Metadatenattribute aus der Registry. Separate generierte Listen außerhalb dieses dokumentierten Komponentenvertrags sind nicht nötig.
+`refKey` ist immer `sigekoVaPdf.` + Suffix (Root `document`). `rendererKey`: Root `.printRoot`, Seite `.page`, Kopfcontainer `.v2StandardProviderHeader`, GlobalHeader `.v2GlobalHeaderBlock`, FullHeader `.v2HeaderFull`, Body `.sigekoVaBody`; alle übrigen Ziele `[data-sigeko-va-pdf="SUFFIX"]` mit genau dem in der ID nach dem Scope angegebenen Suffix. Diese Selektoren werden beim bewussten Rendern gesetzt, nicht aus sichtbaren Texten oder DOM-Reihenfolge abgeleitet. Die vorhandene Funktion `applyBbmPdfEditorLayout` setzt die sechs Metadatenattribute aus der Registry. Separate generierte Listen außerhalb dieses dokumentierten Komponentenvertrags sind nicht nötig.
 
 
 | order | id | parentId | kind / role | name | x / y / width / height mm; font pt | allowedOps |
 |---:|---|---|---|---|---|---|
 | 0 | `pdf.bbm.sigeko-vorankuendigung` | `` | document / layout | Vorankündigung | 0 / 0 / 210 / 297 | — |
 | 1 | `pdf.bbm.sigeko-vorankuendigung.page` | `pdf.bbm.sigeko-vorankuendigung` | page / layout | A4-Seite | 0 / 0 / 210 / 297 | — |
-| 2 | `pdf.bbm.sigeko-vorankuendigung.globalHeader` | `pdf.bbm.sigeko-vorankuendigung.page` | header / layout | Gemeinsamer V2-GlobalHeader | 12 / 5 / 186 / 8 | — |
-| 3 | `pdf.bbm.sigeko-vorankuendigung.fullHeader` | `pdf.bbm.sigeko-vorankuendigung.page` | header / layout | Gemeinsamer V2-FullHeader | 12 / 14 / 186 / 40 | — |
-| 4 | `pdf.bbm.sigeko-vorankuendigung.body` | `pdf.bbm.sigeko-vorankuendigung.page` | area / layout | Vorankündigungsformular | 12 / 56 / 186 / 227 | — |
-| 5 | `pdf.bbm.sigeko-vorankuendigung.authority` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | Zuständige Arbeitsschutzbehörde | 12 / 56 / 186 / 21 | — |
-| 6 | `pdf.bbm.sigeko-vorankuendigung.authority.label` | `pdf.bbm.sigeko-vorankuendigung.authority` | label / fieldLabel | An die Arbeitsschutzbehörde | 12 / 56 / 186 / 5; 9 pt | textResize |
-| 7 | `pdf.bbm.sigeko-vorankuendigung.authority.name` | `pdf.bbm.sigeko-vorankuendigung.authority` | value / content | Behördenname | 12 / 61 / 186 / 8; 9 pt | textResize |
-| 8 | `pdf.bbm.sigeko-vorankuendigung.authority.street` | `pdf.bbm.sigeko-vorankuendigung.authority` | value / content | Behördenstraße / Hausnummer | 12 / 69 / 186 / 4; 9 pt | textResize |
-| 9 | `pdf.bbm.sigeko-vorankuendigung.authority.zip` | `pdf.bbm.sigeko-vorankuendigung.authority` | value / content | Behörden-PLZ | 12 / 73 / 20 / 4; 9 pt | textResize |
-| 10 | `pdf.bbm.sigeko-vorankuendigung.authority.city` | `pdf.bbm.sigeko-vorankuendigung.authority` | value / content | Behördenort | 34 / 73 / 164 / 4; 9 pt | textResize |
-| 11 | `pdf.bbm.sigeko-vorankuendigung.title` | `pdf.bbm.sigeko-vorankuendigung.body` | label / fieldLabel | Vorankündigung (gem. § 2 (2) BaustellV) | 12 / 78 / 186 / 7; 12 pt | textResize |
-| 12 | `pdf.bbm.sigeko-vorankuendigung.p1` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 1 Ort der Baustelle | 12 / 87 / 186 / 16 | — |
-| 13 | `pdf.bbm.sigeko-vorankuendigung.p1.label` | `pdf.bbm.sigeko-vorankuendigung.p1` | label / fieldLabel | 1 Ort der Baustelle | 12 / 87 / 186 / 5; 8.5 pt | textResize |
-| 14 | `pdf.bbm.sigeko-vorankuendigung.p2` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 2 Name und Anschrift des Bauherrn | 12 / 105 / 186 / 22 | — |
-| 15 | `pdf.bbm.sigeko-vorankuendigung.p2.label` | `pdf.bbm.sigeko-vorankuendigung.p2` | label / fieldLabel | 2 Name und Anschrift des Bauherrn | 12 / 105 / 186 / 5; 8.5 pt | textResize |
-| 16 | `pdf.bbm.sigeko-vorankuendigung.p3` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 3 Art des Bauvorhabens | 12 / 129 / 186 / 13 | — |
-| 17 | `pdf.bbm.sigeko-vorankuendigung.p3.label` | `pdf.bbm.sigeko-vorankuendigung.p3` | label / fieldLabel | 3 Art des Bauvorhabens | 12 / 129 / 186 / 5; 8.5 pt | textResize |
-| 18 | `pdf.bbm.sigeko-vorankuendigung.p4` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 4 Name und Anschrift des verantwortlichen Dritten | 12 / 144 / 186 / 23 | — |
-| 19 | `pdf.bbm.sigeko-vorankuendigung.p4.label` | `pdf.bbm.sigeko-vorankuendigung.p4` | label / fieldLabel | 4 Name und Anschrift des verantwortlichen Dritten | 12 / 144 / 186 / 5; 8.5 pt | textResize |
-| 20 | `pdf.bbm.sigeko-vorankuendigung.p5` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 5 Name und Anschrift des Koordinators / der Koordinatoren | 12 / 169 / 186 / 34 | — |
-| 21 | `pdf.bbm.sigeko-vorankuendigung.p5.label` | `pdf.bbm.sigeko-vorankuendigung.p5` | label / fieldLabel | 5 Name und Anschrift des Koordinators / der Koordinatoren | 12 / 169 / 186 / 5; 8.5 pt | textResize |
-| 22 | `pdf.bbm.sigeko-vorankuendigung.p6` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 6 Voraussichtlicher Beginn und Dauer der Arbeiten | 12 / 205 / 186 / 14 | — |
-| 23 | `pdf.bbm.sigeko-vorankuendigung.p6.label` | `pdf.bbm.sigeko-vorankuendigung.p6` | label / fieldLabel | 6 Voraussichtlicher Beginn und Dauer der Arbeiten | 12 / 205 / 186 / 5; 8.5 pt | textResize |
-| 24 | `pdf.bbm.sigeko-vorankuendigung.p7` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 7 Voraussichtliche Höchstzahl der Beschäftigten | 12 / 221 / 186 / 13 | — |
-| 25 | `pdf.bbm.sigeko-vorankuendigung.p7.label` | `pdf.bbm.sigeko-vorankuendigung.p7` | label / fieldLabel | 7 Voraussichtliche Höchstzahl der Beschäftigten | 12 / 221 / 186 / 5; 8.5 pt | textResize |
-| 26 | `pdf.bbm.sigeko-vorankuendigung.p8` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 8 Zahl der Arbeitgeber und Unternehmer ohne Beschäftigte | 12 / 236 / 186 / 14 | — |
-| 27 | `pdf.bbm.sigeko-vorankuendigung.p8.label` | `pdf.bbm.sigeko-vorankuendigung.p8` | label / fieldLabel | 8 Zahl der Arbeitgeber und Unternehmer ohne Beschäftigte | 12 / 236 / 186 / 5; 8.5 pt | textResize |
-| 28 | `pdf.bbm.sigeko-vorankuendigung.p9` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 9 Bereits ausgewählte Arbeitgeber und Unternehmer ohne Beschäftigte | 12 / 252 / 186 / 10 | — |
-| 29 | `pdf.bbm.sigeko-vorankuendigung.p9.label` | `pdf.bbm.sigeko-vorankuendigung.p9` | label / fieldLabel | 9 Bereits ausgewählte Arbeitgeber und Unternehmer ohne Beschäftigte | 12 / 252 / 186 / 5; 8.5 pt | textResize |
-| 30 | `pdf.bbm.sigeko-vorankuendigung.p1.street` | `pdf.bbm.sigeko-vorankuendigung.p1` | value / content | Baustelle Straße / Hausnummer | 12 / 93 / 186 / 4; 9 pt | textResize |
-| 31 | `pdf.bbm.sigeko-vorankuendigung.p1.zip` | `pdf.bbm.sigeko-vorankuendigung.p1` | value / content | Baustelle PLZ | 12 / 98 / 20 / 4; 9 pt | textResize |
-| 32 | `pdf.bbm.sigeko-vorankuendigung.p1.city` | `pdf.bbm.sigeko-vorankuendigung.p1` | value / content | Baustelle Ort | 34 / 98 / 164 / 4; 9 pt | textResize |
-| 33 | `pdf.bbm.sigeko-vorankuendigung.p2.name` | `pdf.bbm.sigeko-vorankuendigung.p2` | value / content | Bauherr Name | 12 / 111 / 94 / 4; 9 pt | textResize |
-| 34 | `pdf.bbm.sigeko-vorankuendigung.p2.street` | `pdf.bbm.sigeko-vorankuendigung.p2` | value / content | Bauherr Straße / Hausnummer | 12 / 116 / 94 / 4; 9 pt | textResize |
-| 35 | `pdf.bbm.sigeko-vorankuendigung.p2.zip` | `pdf.bbm.sigeko-vorankuendigung.p2` | value / content | Bauherr Postleitzahl | 12 / 121 / 20 / 4; 9 pt | textResize |
-| 36 | `pdf.bbm.sigeko-vorankuendigung.p2.city` | `pdf.bbm.sigeko-vorankuendigung.p2` | value / content | Bauherr Ort | 34 / 121 / 72 / 4; 9 pt | textResize |
-| 37 | `pdf.bbm.sigeko-vorankuendigung.p2.phone` | `pdf.bbm.sigeko-vorankuendigung.p2` | value / content | Bauherr Telefon | 112 / 111 / 86 / 4; 9 pt | textResize |
-| 38 | `pdf.bbm.sigeko-vorankuendigung.p2.email` | `pdf.bbm.sigeko-vorankuendigung.p2` | value / content | Bauherr E-Mail | 112 / 116 / 86 / 4; 9 pt | textResize |
-| 39 | `pdf.bbm.sigeko-vorankuendigung.p4.name` | `pdf.bbm.sigeko-vorankuendigung.p4` | value / content | Dritter Name | 12 / 150 / 94 / 4; 9 pt | textResize |
-| 40 | `pdf.bbm.sigeko-vorankuendigung.p4.street` | `pdf.bbm.sigeko-vorankuendigung.p4` | value / content | Dritter Straße / Hausnummer | 12 / 155 / 94 / 4; 9 pt | textResize |
-| 41 | `pdf.bbm.sigeko-vorankuendigung.p4.zip` | `pdf.bbm.sigeko-vorankuendigung.p4` | value / content | Dritter Postleitzahl | 12 / 160 / 20 / 4; 9 pt | textResize |
-| 42 | `pdf.bbm.sigeko-vorankuendigung.p4.city` | `pdf.bbm.sigeko-vorankuendigung.p4` | value / content | Dritter Ort | 34 / 160 / 72 / 4; 9 pt | textResize |
-| 43 | `pdf.bbm.sigeko-vorankuendigung.p4.phone` | `pdf.bbm.sigeko-vorankuendigung.p4` | value / content | Dritter Telefon | 112 / 150 / 86 / 4; 9 pt | textResize |
-| 44 | `pdf.bbm.sigeko-vorankuendigung.p4.email` | `pdf.bbm.sigeko-vorankuendigung.p4` | value / content | Dritter E-Mail | 112 / 155 / 86 / 4; 9 pt | textResize |
-| 45 | `pdf.bbm.sigeko-vorankuendigung.p3.value` | `pdf.bbm.sigeko-vorankuendigung.p3` | value / content | Art des Bauvorhabens | 12 / 135 / 186 / 7; 9 pt | textResize |
-| 46 | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | `pdf.bbm.sigeko-vorankuendigung.p5` | group / layout | Während der Planung der Ausführung | 12 / 175 / 90 / 28 | — |
-| 47 | `pdf.bbm.sigeko-vorankuendigung.p5.planning.label` | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | label / fieldLabel | Während der Planung der Ausführung | 12 / 175 / 90 / 8; 8 pt | textResize |
-| 48 | `pdf.bbm.sigeko-vorankuendigung.p5.planning.name` | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | value / content | Während der Planung der Ausführung – Name | 12 / 183 / 90 / 4; 8.5 pt | textResize |
-| 49 | `pdf.bbm.sigeko-vorankuendigung.p5.planning.street` | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | value / content | Während der Planung der Ausführung – Straße / Hausnummer | 12 / 187 / 90 / 4; 8.5 pt | textResize |
-| 50 | `pdf.bbm.sigeko-vorankuendigung.p5.planning.zip` | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | value / content | Während der Planung der Ausführung – Postleitzahl | 12 / 191 / 18 / 4; 8.5 pt | textResize |
-| 51 | `pdf.bbm.sigeko-vorankuendigung.p5.planning.city` | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | value / content | Während der Planung der Ausführung – Ort | 32 / 191 / 70 / 4; 8.5 pt | textResize |
-| 52 | `pdf.bbm.sigeko-vorankuendigung.p5.planning.phone` | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | value / content | Während der Planung der Ausführung – Telefon | 12 / 195 / 90 / 4; 8.5 pt | textResize |
-| 53 | `pdf.bbm.sigeko-vorankuendigung.p5.planning.email` | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | value / content | Während der Planung der Ausführung – E-Mail | 12 / 199 / 90 / 4; 8.5 pt | textResize |
-| 54 | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | `pdf.bbm.sigeko-vorankuendigung.p5` | group / layout | Während der Ausführung des Bauvorhabens | 108 / 175 / 90 / 28 | — |
-| 55 | `pdf.bbm.sigeko-vorankuendigung.p5.execution.label` | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | label / fieldLabel | Während der Ausführung des Bauvorhabens | 108 / 175 / 90 / 8; 8 pt | textResize |
-| 56 | `pdf.bbm.sigeko-vorankuendigung.p5.execution.name` | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | value / content | Während der Ausführung des Bauvorhabens – Name | 108 / 183 / 90 / 4; 8.5 pt | textResize |
-| 57 | `pdf.bbm.sigeko-vorankuendigung.p5.execution.street` | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | value / content | Während der Ausführung des Bauvorhabens – Straße / Hausnummer | 108 / 187 / 90 / 4; 8.5 pt | textResize |
-| 58 | `pdf.bbm.sigeko-vorankuendigung.p5.execution.zip` | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | value / content | Während der Ausführung des Bauvorhabens – Postleitzahl | 108 / 191 / 18 / 4; 8.5 pt | textResize |
-| 59 | `pdf.bbm.sigeko-vorankuendigung.p5.execution.city` | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | value / content | Während der Ausführung des Bauvorhabens – Ort | 128 / 191 / 70 / 4; 8.5 pt | textResize |
-| 60 | `pdf.bbm.sigeko-vorankuendigung.p5.execution.phone` | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | value / content | Während der Ausführung des Bauvorhabens – Telefon | 108 / 195 / 90 / 4; 8.5 pt | textResize |
-| 61 | `pdf.bbm.sigeko-vorankuendigung.p5.execution.email` | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | value / content | Während der Ausführung des Bauvorhabens – E-Mail | 108 / 199 / 90 / 4; 8.5 pt | textResize |
-| 62 | `pdf.bbm.sigeko-vorankuendigung.p6.start.label` | `pdf.bbm.sigeko-vorankuendigung.p6` | label / fieldLabel | Beginn | 12 / 211 / 30 / 5; 8.5 pt | textResize |
-| 63 | `pdf.bbm.sigeko-vorankuendigung.p6.start.value` | `pdf.bbm.sigeko-vorankuendigung.p6` | value / content | Voraussichtlicher Beginn | 44 / 211 / 55 / 5; 9 pt | textResize |
-| 64 | `pdf.bbm.sigeko-vorankuendigung.p6.duration.label` | `pdf.bbm.sigeko-vorankuendigung.p6` | label / fieldLabel | Voraussichtliche Dauer | 108 / 211 / 58 / 5; 8.5 pt | textResize |
-| 65 | `pdf.bbm.sigeko-vorankuendigung.p6.duration.value` | `pdf.bbm.sigeko-vorankuendigung.p6` | value / content | Dauer in ganzen Monaten | 168 / 211 / 14 / 5; 9 pt | textResize |
-| 66 | `pdf.bbm.sigeko-vorankuendigung.p6.duration.unit` | `pdf.bbm.sigeko-vorankuendigung.p6` | label / fieldLabel | Monate | 184 / 211 / 14 / 5; 8 pt | textResize |
-| 67 | `pdf.bbm.sigeko-vorankuendigung.p7.value` | `pdf.bbm.sigeko-vorankuendigung.p7` | value / content | Höchstzahl Beschäftigte | 12 / 227 / 186 / 5; 9 pt | textResize |
-| 68 | `pdf.bbm.sigeko-vorankuendigung.p8.employers.label` | `pdf.bbm.sigeko-vorankuendigung.p8` | label / fieldLabel | Anzahl Arbeitgeber | 12 / 242 / 69 / 7; 8.5 pt | textResize |
-| 69 | `pdf.bbm.sigeko-vorankuendigung.p8.employers.value` | `pdf.bbm.sigeko-vorankuendigung.p8` | value / content | Anzahl Arbeitgeber | 83 / 242 / 20 / 7; 9 pt | textResize |
-| 70 | `pdf.bbm.sigeko-vorankuendigung.p8.selfEmployed.label` | `pdf.bbm.sigeko-vorankuendigung.p8` | label / fieldLabel | Anzahl Unternehmer ohne Beschäftigte | 108 / 242 / 67 / 7; 8 pt | textResize |
-| 71 | `pdf.bbm.sigeko-vorankuendigung.p8.selfEmployed.value` | `pdf.bbm.sigeko-vorankuendigung.p8` | value / content | Anzahl Unternehmer ohne Beschäftigte | 178 / 242 / 20 / 7; 9 pt | textResize |
-| 72 | `pdf.bbm.sigeko-vorankuendigung.p9.value` | `pdf.bbm.sigeko-vorankuendigung.p9` | value / content | Firmenangabe / Anlagenverweis | 12 / 258 / 186 / 4; 9 pt | textResize |
-| 73 | `pdf.bbm.sigeko-vorankuendigung.signature` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | Handschriftlicher Abschluss | 12 / 264 / 186 / 18 | — |
-| 74 | `pdf.bbm.sigeko-vorankuendigung.signature.placeDate` | `pdf.bbm.sigeko-vorankuendigung.signature` | group / layout | Ort / Datum | 12 / 264 / 80 / 18 | — |
-| 75 | `pdf.bbm.sigeko-vorankuendigung.signature.placeDate.blank` | `pdf.bbm.sigeko-vorankuendigung.signature.placeDate` | area / layout | Ort / Datum – Leerbereich | 12 / 264 / 80 / 13 | — |
-| 76 | `pdf.bbm.sigeko-vorankuendigung.signature.placeDate.label` | `pdf.bbm.sigeko-vorankuendigung.signature.placeDate` | label / fieldLabel | Ort / Datum | 12 / 278 / 80 / 4; 8 pt | textResize |
-| 77 | `pdf.bbm.sigeko-vorankuendigung.signature.signer` | `pdf.bbm.sigeko-vorankuendigung.signature` | group / layout | Bauherr / Beauftragter Dritter | 112 / 264 / 86 / 18 | — |
-| 78 | `pdf.bbm.sigeko-vorankuendigung.signature.signer.blank` | `pdf.bbm.sigeko-vorankuendigung.signature.signer` | area / layout | Bauherr / Beauftragter Dritter – Leerbereich | 112 / 264 / 86 / 13 | — |
-| 79 | `pdf.bbm.sigeko-vorankuendigung.signature.signer.label` | `pdf.bbm.sigeko-vorankuendigung.signature.signer` | label / fieldLabel | Bauherr / Beauftragter Dritter | 112 / 278 / 86 / 4; 8 pt | textResize |
+| 2 | `pdf.bbm.sigeko-vorankuendigung.header` | `pdf.bbm.sigeko-vorankuendigung.page` | header / layout | Gemeinsamer V2-Kopfbereich | 12 / 5 / 186 / 49 | — |
+| 3 | `pdf.bbm.sigeko-vorankuendigung.globalHeader` | `pdf.bbm.sigeko-vorankuendigung.header` | group / layout | Gemeinsamer V2-GlobalHeader | 12 / 5 / 186 / 8 | — |
+| 4 | `pdf.bbm.sigeko-vorankuendigung.fullHeader` | `pdf.bbm.sigeko-vorankuendigung.header` | group / layout | Gemeinsamer V2-FullHeader | 12 / 14 / 186 / 40 | — |
+| 5 | `pdf.bbm.sigeko-vorankuendigung.body` | `pdf.bbm.sigeko-vorankuendigung.page` | area / layout | Vorankündigungsformular | 12 / 56 / 186 / 227 | — |
+| 6 | `pdf.bbm.sigeko-vorankuendigung.authority` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | Zuständige Arbeitsschutzbehörde | 12 / 56 / 186 / 21 | — |
+| 7 | `pdf.bbm.sigeko-vorankuendigung.authority.label` | `pdf.bbm.sigeko-vorankuendigung.authority` | label / fieldLabel | An die Arbeitsschutzbehörde | 12 / 56 / 186 / 5; 9 pt | textResize |
+| 8 | `pdf.bbm.sigeko-vorankuendigung.authority.name` | `pdf.bbm.sigeko-vorankuendigung.authority` | value / content | Behördenname | 12 / 61 / 186 / 8; 9 pt | textResize |
+| 9 | `pdf.bbm.sigeko-vorankuendigung.authority.street` | `pdf.bbm.sigeko-vorankuendigung.authority` | value / content | Behördenstraße / Hausnummer | 12 / 69 / 186 / 4; 9 pt | textResize |
+| 10 | `pdf.bbm.sigeko-vorankuendigung.authority.zip` | `pdf.bbm.sigeko-vorankuendigung.authority` | value / content | Behörden-PLZ | 12 / 73 / 20 / 4; 9 pt | textResize |
+| 11 | `pdf.bbm.sigeko-vorankuendigung.authority.city` | `pdf.bbm.sigeko-vorankuendigung.authority` | value / content | Behördenort | 34 / 73 / 164 / 4; 9 pt | textResize |
+| 12 | `pdf.bbm.sigeko-vorankuendigung.title` | `pdf.bbm.sigeko-vorankuendigung.body` | label / fieldLabel | Vorankündigung (gem. § 2 (2) BaustellV) | 12 / 78 / 186 / 7; 12 pt | textResize |
+| 13 | `pdf.bbm.sigeko-vorankuendigung.p1` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 1 Ort der Baustelle | 12 / 87 / 186 / 16 | — |
+| 14 | `pdf.bbm.sigeko-vorankuendigung.p1.label` | `pdf.bbm.sigeko-vorankuendigung.p1` | label / fieldLabel | 1 Ort der Baustelle | 12 / 87 / 186 / 5; 8.5 pt | textResize |
+| 15 | `pdf.bbm.sigeko-vorankuendigung.p2` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 2 Name und Anschrift des Bauherrn | 12 / 105 / 186 / 22 | — |
+| 16 | `pdf.bbm.sigeko-vorankuendigung.p2.label` | `pdf.bbm.sigeko-vorankuendigung.p2` | label / fieldLabel | 2 Name und Anschrift des Bauherrn | 12 / 105 / 186 / 5; 8.5 pt | textResize |
+| 17 | `pdf.bbm.sigeko-vorankuendigung.p3` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 3 Art des Bauvorhabens | 12 / 129 / 186 / 13 | — |
+| 18 | `pdf.bbm.sigeko-vorankuendigung.p3.label` | `pdf.bbm.sigeko-vorankuendigung.p3` | label / fieldLabel | 3 Art des Bauvorhabens | 12 / 129 / 186 / 5; 8.5 pt | textResize |
+| 19 | `pdf.bbm.sigeko-vorankuendigung.p4` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 4 Name und Anschrift des verantwortlichen Dritten | 12 / 144 / 186 / 23 | — |
+| 20 | `pdf.bbm.sigeko-vorankuendigung.p4.label` | `pdf.bbm.sigeko-vorankuendigung.p4` | label / fieldLabel | 4 Name und Anschrift des verantwortlichen Dritten | 12 / 144 / 186 / 5; 8.5 pt | textResize |
+| 21 | `pdf.bbm.sigeko-vorankuendigung.p5` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 5 Name und Anschrift des Koordinators / der Koordinatoren | 12 / 169 / 186 / 34 | — |
+| 22 | `pdf.bbm.sigeko-vorankuendigung.p5.label` | `pdf.bbm.sigeko-vorankuendigung.p5` | label / fieldLabel | 5 Name und Anschrift des Koordinators / der Koordinatoren | 12 / 169 / 186 / 5; 8.5 pt | textResize |
+| 23 | `pdf.bbm.sigeko-vorankuendigung.p6` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 6 Voraussichtlicher Beginn und Dauer der Arbeiten | 12 / 205 / 186 / 14 | — |
+| 24 | `pdf.bbm.sigeko-vorankuendigung.p6.label` | `pdf.bbm.sigeko-vorankuendigung.p6` | label / fieldLabel | 6 Voraussichtlicher Beginn und Dauer der Arbeiten | 12 / 205 / 186 / 5; 8.5 pt | textResize |
+| 25 | `pdf.bbm.sigeko-vorankuendigung.p7` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 7 Voraussichtliche Höchstzahl der Beschäftigten | 12 / 221 / 186 / 13 | — |
+| 26 | `pdf.bbm.sigeko-vorankuendigung.p7.label` | `pdf.bbm.sigeko-vorankuendigung.p7` | label / fieldLabel | 7 Voraussichtliche Höchstzahl der Beschäftigten | 12 / 221 / 186 / 5; 8.5 pt | textResize |
+| 27 | `pdf.bbm.sigeko-vorankuendigung.p8` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 8 Zahl der Arbeitgeber und Unternehmer ohne Beschäftigte | 12 / 236 / 186 / 14 | — |
+| 28 | `pdf.bbm.sigeko-vorankuendigung.p8.label` | `pdf.bbm.sigeko-vorankuendigung.p8` | label / fieldLabel | 8 Zahl der Arbeitgeber und Unternehmer ohne Beschäftigte | 12 / 236 / 186 / 5; 8.5 pt | textResize |
+| 29 | `pdf.bbm.sigeko-vorankuendigung.p9` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | 9 Bereits ausgewählte Arbeitgeber und Unternehmer ohne Beschäftigte | 12 / 252 / 186 / 10 | — |
+| 30 | `pdf.bbm.sigeko-vorankuendigung.p9.label` | `pdf.bbm.sigeko-vorankuendigung.p9` | label / fieldLabel | 9 Bereits ausgewählte Arbeitgeber und Unternehmer ohne Beschäftigte | 12 / 252 / 186 / 5; 8.5 pt | textResize |
+| 31 | `pdf.bbm.sigeko-vorankuendigung.p1.street` | `pdf.bbm.sigeko-vorankuendigung.p1` | value / content | Baustelle Straße / Hausnummer | 12 / 93 / 186 / 4; 9 pt | textResize |
+| 32 | `pdf.bbm.sigeko-vorankuendigung.p1.zip` | `pdf.bbm.sigeko-vorankuendigung.p1` | value / content | Baustelle PLZ | 12 / 98 / 20 / 4; 9 pt | textResize |
+| 33 | `pdf.bbm.sigeko-vorankuendigung.p1.city` | `pdf.bbm.sigeko-vorankuendigung.p1` | value / content | Baustelle Ort | 34 / 98 / 164 / 4; 9 pt | textResize |
+| 34 | `pdf.bbm.sigeko-vorankuendigung.p2.name` | `pdf.bbm.sigeko-vorankuendigung.p2` | value / content | Bauherr Name | 12 / 111 / 94 / 4; 9 pt | textResize |
+| 35 | `pdf.bbm.sigeko-vorankuendigung.p2.street` | `pdf.bbm.sigeko-vorankuendigung.p2` | value / content | Bauherr Straße / Hausnummer | 12 / 116 / 94 / 4; 9 pt | textResize |
+| 36 | `pdf.bbm.sigeko-vorankuendigung.p2.zip` | `pdf.bbm.sigeko-vorankuendigung.p2` | value / content | Bauherr Postleitzahl | 12 / 121 / 20 / 4; 9 pt | textResize |
+| 37 | `pdf.bbm.sigeko-vorankuendigung.p2.city` | `pdf.bbm.sigeko-vorankuendigung.p2` | value / content | Bauherr Ort | 34 / 121 / 72 / 4; 9 pt | textResize |
+| 38 | `pdf.bbm.sigeko-vorankuendigung.p2.phone` | `pdf.bbm.sigeko-vorankuendigung.p2` | value / content | Bauherr Telefon | 112 / 111 / 86 / 4; 9 pt | textResize |
+| 39 | `pdf.bbm.sigeko-vorankuendigung.p2.email` | `pdf.bbm.sigeko-vorankuendigung.p2` | value / content | Bauherr E-Mail | 112 / 116 / 86 / 4; 9 pt | textResize |
+| 40 | `pdf.bbm.sigeko-vorankuendigung.p4.name` | `pdf.bbm.sigeko-vorankuendigung.p4` | value / content | Dritter Name | 12 / 150 / 94 / 4; 9 pt | textResize |
+| 41 | `pdf.bbm.sigeko-vorankuendigung.p4.street` | `pdf.bbm.sigeko-vorankuendigung.p4` | value / content | Dritter Straße / Hausnummer | 12 / 155 / 94 / 4; 9 pt | textResize |
+| 42 | `pdf.bbm.sigeko-vorankuendigung.p4.zip` | `pdf.bbm.sigeko-vorankuendigung.p4` | value / content | Dritter Postleitzahl | 12 / 160 / 20 / 4; 9 pt | textResize |
+| 43 | `pdf.bbm.sigeko-vorankuendigung.p4.city` | `pdf.bbm.sigeko-vorankuendigung.p4` | value / content | Dritter Ort | 34 / 160 / 72 / 4; 9 pt | textResize |
+| 44 | `pdf.bbm.sigeko-vorankuendigung.p4.phone` | `pdf.bbm.sigeko-vorankuendigung.p4` | value / content | Dritter Telefon | 112 / 150 / 86 / 4; 9 pt | textResize |
+| 45 | `pdf.bbm.sigeko-vorankuendigung.p4.email` | `pdf.bbm.sigeko-vorankuendigung.p4` | value / content | Dritter E-Mail | 112 / 155 / 86 / 4; 9 pt | textResize |
+| 46 | `pdf.bbm.sigeko-vorankuendigung.p3.value` | `pdf.bbm.sigeko-vorankuendigung.p3` | value / content | Art des Bauvorhabens | 12 / 135 / 186 / 7; 9 pt | textResize |
+| 47 | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | `pdf.bbm.sigeko-vorankuendigung.p5` | group / layout | Während der Planung der Ausführung | 12 / 175 / 90 / 28 | — |
+| 48 | `pdf.bbm.sigeko-vorankuendigung.p5.planning.label` | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | label / fieldLabel | Während der Planung der Ausführung | 12 / 175 / 90 / 8; 8 pt | textResize |
+| 49 | `pdf.bbm.sigeko-vorankuendigung.p5.planning.name` | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | value / content | Während der Planung der Ausführung – Name | 12 / 183 / 90 / 4; 8.5 pt | textResize |
+| 50 | `pdf.bbm.sigeko-vorankuendigung.p5.planning.street` | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | value / content | Während der Planung der Ausführung – Straße / Hausnummer | 12 / 187 / 90 / 4; 8.5 pt | textResize |
+| 51 | `pdf.bbm.sigeko-vorankuendigung.p5.planning.zip` | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | value / content | Während der Planung der Ausführung – Postleitzahl | 12 / 191 / 18 / 4; 8.5 pt | textResize |
+| 52 | `pdf.bbm.sigeko-vorankuendigung.p5.planning.city` | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | value / content | Während der Planung der Ausführung – Ort | 32 / 191 / 70 / 4; 8.5 pt | textResize |
+| 53 | `pdf.bbm.sigeko-vorankuendigung.p5.planning.phone` | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | value / content | Während der Planung der Ausführung – Telefon | 12 / 195 / 90 / 4; 8.5 pt | textResize |
+| 54 | `pdf.bbm.sigeko-vorankuendigung.p5.planning.email` | `pdf.bbm.sigeko-vorankuendigung.p5.planning` | value / content | Während der Planung der Ausführung – E-Mail | 12 / 199 / 90 / 4; 8.5 pt | textResize |
+| 55 | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | `pdf.bbm.sigeko-vorankuendigung.p5` | group / layout | Während der Ausführung des Bauvorhabens | 108 / 175 / 90 / 28 | — |
+| 56 | `pdf.bbm.sigeko-vorankuendigung.p5.execution.label` | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | label / fieldLabel | Während der Ausführung des Bauvorhabens | 108 / 175 / 90 / 8; 8 pt | textResize |
+| 57 | `pdf.bbm.sigeko-vorankuendigung.p5.execution.name` | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | value / content | Während der Ausführung des Bauvorhabens – Name | 108 / 183 / 90 / 4; 8.5 pt | textResize |
+| 58 | `pdf.bbm.sigeko-vorankuendigung.p5.execution.street` | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | value / content | Während der Ausführung des Bauvorhabens – Straße / Hausnummer | 108 / 187 / 90 / 4; 8.5 pt | textResize |
+| 59 | `pdf.bbm.sigeko-vorankuendigung.p5.execution.zip` | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | value / content | Während der Ausführung des Bauvorhabens – Postleitzahl | 108 / 191 / 18 / 4; 8.5 pt | textResize |
+| 60 | `pdf.bbm.sigeko-vorankuendigung.p5.execution.city` | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | value / content | Während der Ausführung des Bauvorhabens – Ort | 128 / 191 / 70 / 4; 8.5 pt | textResize |
+| 61 | `pdf.bbm.sigeko-vorankuendigung.p5.execution.phone` | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | value / content | Während der Ausführung des Bauvorhabens – Telefon | 108 / 195 / 90 / 4; 8.5 pt | textResize |
+| 62 | `pdf.bbm.sigeko-vorankuendigung.p5.execution.email` | `pdf.bbm.sigeko-vorankuendigung.p5.execution` | value / content | Während der Ausführung des Bauvorhabens – E-Mail | 108 / 199 / 90 / 4; 8.5 pt | textResize |
+| 63 | `pdf.bbm.sigeko-vorankuendigung.p6.start.label` | `pdf.bbm.sigeko-vorankuendigung.p6` | label / fieldLabel | Beginn | 12 / 211 / 30 / 5; 8.5 pt | textResize |
+| 64 | `pdf.bbm.sigeko-vorankuendigung.p6.start.value` | `pdf.bbm.sigeko-vorankuendigung.p6` | value / content | Voraussichtlicher Beginn | 44 / 211 / 55 / 5; 9 pt | textResize |
+| 65 | `pdf.bbm.sigeko-vorankuendigung.p6.duration.label` | `pdf.bbm.sigeko-vorankuendigung.p6` | label / fieldLabel | Voraussichtliche Dauer | 108 / 211 / 58 / 5; 8.5 pt | textResize |
+| 66 | `pdf.bbm.sigeko-vorankuendigung.p6.duration.value` | `pdf.bbm.sigeko-vorankuendigung.p6` | value / content | Dauer in ganzen Monaten | 168 / 211 / 14 / 5; 9 pt | textResize |
+| 67 | `pdf.bbm.sigeko-vorankuendigung.p6.duration.unit` | `pdf.bbm.sigeko-vorankuendigung.p6` | label / fieldLabel | Monate | 184 / 211 / 14 / 5; 8 pt | textResize |
+| 68 | `pdf.bbm.sigeko-vorankuendigung.p7.value` | `pdf.bbm.sigeko-vorankuendigung.p7` | value / content | Höchstzahl Beschäftigte | 12 / 227 / 186 / 5; 9 pt | textResize |
+| 69 | `pdf.bbm.sigeko-vorankuendigung.p8.employers.label` | `pdf.bbm.sigeko-vorankuendigung.p8` | label / fieldLabel | Anzahl Arbeitgeber | 12 / 242 / 69 / 7; 8.5 pt | textResize |
+| 70 | `pdf.bbm.sigeko-vorankuendigung.p8.employers.value` | `pdf.bbm.sigeko-vorankuendigung.p8` | value / content | Anzahl Arbeitgeber | 83 / 242 / 20 / 7; 9 pt | textResize |
+| 71 | `pdf.bbm.sigeko-vorankuendigung.p8.selfEmployed.label` | `pdf.bbm.sigeko-vorankuendigung.p8` | label / fieldLabel | Anzahl Unternehmer ohne Beschäftigte | 108 / 242 / 67 / 7; 8 pt | textResize |
+| 72 | `pdf.bbm.sigeko-vorankuendigung.p8.selfEmployed.value` | `pdf.bbm.sigeko-vorankuendigung.p8` | value / content | Anzahl Unternehmer ohne Beschäftigte | 178 / 242 / 20 / 7; 9 pt | textResize |
+| 73 | `pdf.bbm.sigeko-vorankuendigung.p9.value` | `pdf.bbm.sigeko-vorankuendigung.p9` | value / content | Firmenangabe / Anlagenverweis | 12 / 258 / 186 / 4; 9 pt | textResize |
+| 74 | `pdf.bbm.sigeko-vorankuendigung.signature` | `pdf.bbm.sigeko-vorankuendigung.body` | group / layout | Handschriftlicher Abschluss | 12 / 264 / 186 / 18 | — |
+| 75 | `pdf.bbm.sigeko-vorankuendigung.signature.placeDate` | `pdf.bbm.sigeko-vorankuendigung.signature` | group / layout | Ort / Datum | 12 / 264 / 80 / 18 | — |
+| 76 | `pdf.bbm.sigeko-vorankuendigung.signature.placeDate.blank` | `pdf.bbm.sigeko-vorankuendigung.signature.placeDate` | area / layout | Ort / Datum – Leerbereich | 12 / 264 / 80 / 13 | — |
+| 77 | `pdf.bbm.sigeko-vorankuendigung.signature.placeDate.label` | `pdf.bbm.sigeko-vorankuendigung.signature.placeDate` | label / fieldLabel | Ort / Datum | 12 / 278 / 80 / 4; 8 pt | textResize |
+| 78 | `pdf.bbm.sigeko-vorankuendigung.signature.signer` | `pdf.bbm.sigeko-vorankuendigung.signature` | group / layout | Bauherr / Beauftragter Dritter | 112 / 264 / 86 / 18 | — |
+| 79 | `pdf.bbm.sigeko-vorankuendigung.signature.signer.blank` | `pdf.bbm.sigeko-vorankuendigung.signature.signer` | area / layout | Bauherr / Beauftragter Dritter – Leerbereich | 112 / 264 / 86 / 13 | — |
+| 80 | `pdf.bbm.sigeko-vorankuendigung.signature.signer.label` | `pdf.bbm.sigeko-vorankuendigung.signature.signer` | label / fieldLabel | Bauherr / Beauftragter Dritter | 112 / 278 / 86 / 4; 8 pt | textResize |
 
 ### Exakte DOM-Metadaten pro Ziel
 
@@ -118,8 +119,9 @@ Für alle Elemente: `lockedOps = PDF_TARGET_OPERATIONS.filter(op => !allowedOps.
 |---|---|---|---|---|---|
 | `pdf.bbm.sigeko-vorankuendigung` | `document` | Vorankündigung | `` | `false` | `` |
 | `pdf.bbm.sigeko-vorankuendigung.page` | `page` | A4-Seite | `pdf.bbm.sigeko-vorankuendigung` | `false` | `` |
-| `pdf.bbm.sigeko-vorankuendigung.globalHeader` | `header` | Gemeinsamer V2-GlobalHeader | `pdf.bbm.sigeko-vorankuendigung.page` | `false` | `` |
-| `pdf.bbm.sigeko-vorankuendigung.fullHeader` | `header` | Gemeinsamer V2-FullHeader | `pdf.bbm.sigeko-vorankuendigung.page` | `false` | `` |
+| `pdf.bbm.sigeko-vorankuendigung.header` | `header` | Gemeinsamer V2-Kopfbereich | `pdf.bbm.sigeko-vorankuendigung.page` | `false` | `` |
+| `pdf.bbm.sigeko-vorankuendigung.globalHeader` | `group` | Gemeinsamer V2-GlobalHeader | `pdf.bbm.sigeko-vorankuendigung.header` | `false` | `` |
+| `pdf.bbm.sigeko-vorankuendigung.fullHeader` | `group` | Gemeinsamer V2-FullHeader | `pdf.bbm.sigeko-vorankuendigung.header` | `false` | `` |
 | `pdf.bbm.sigeko-vorankuendigung.body` | `area` | Vorankündigungsformular | `pdf.bbm.sigeko-vorankuendigung.page` | `false` | `` |
 | `pdf.bbm.sigeko-vorankuendigung.authority` | `group` | Zuständige Arbeitsschutzbehörde | `pdf.bbm.sigeko-vorankuendigung.body` | `false` | `` |
 | `pdf.bbm.sigeko-vorankuendigung.authority.label` | `label` | An die Arbeitsschutzbehörde | `pdf.bbm.sigeko-vorankuendigung.authority` | `true` | `textResize` |
@@ -219,52 +221,27 @@ Vorhanden: Kit `validatePdfRegistry`, `validatePdfTargetContract`; deklarativer 
 
 Echte Electron-PDFs auf Windows und Linux: mindestens vollständige Standardfixture, optionale Felder leer, alle Null-/Nullzahlkontraste, zwei getrennte Rollen und handschriftlicher Leerbereich; sichtbare PNG-Rasterprüfung sowie PDF-Textprüfung. Abbruchfixture mit absichtlichem Overflow muss ohne finale Datei enden. Keine GUI/PDF-Abnahme als erbracht ausgeben, solange nur unit/fake DOM lief. Änderungen an `printApp`/`PrintShell` berühren PDF-V2-SATZ-001/002/003/005/013; bestehende M85-Goldenfälle müssen für Protokoll/Restarbeiten/Rechnung unverändert bleiben. Eigene VA-Regeln `PDF-V2-SIGEKO-VA-001` bis `008`: Einseite, V2-Kopf, 1–9-Reihenfolge, Quellen-Snapshot, getrennte Rollen/Zahlen, leere Signatur, vollständige Textmessung, unveränderte Anlagenreferenz. Die IDs sind im Entwurf vorgeschlagen, noch kein grüner technischer Nachweis.
 
-## Schmale technische Anschlüsse
+## Verbindliche technische Konkretisierung
 
-1. Neues fachliches `PdfDocumentProvider` unter `src/main/modules/sigeko`, Registry in `modulePdfProviders` ergänzen. `technical-neutral` unverändert erhalten. `documentTypeId/providerId = sigeko-vorankuendigung`. Keine frei wählbare Rendererklasse vom Client.
-2. Bridge erhält für `provider.provide` zusätzlich die bereits geprüfte Identität `{moduleId,projectId,documentId}`. Fachprovider lädt/verifiziert den passenden gespeicherten Snapshot in Main. Eingabe referenziert den Snapshot, enthält keine vom Renderer maßgeblich erfundenen Formularwerte oder Runtime-Settings. Optionaler vom **registrierten Main-Provider** erzeugter `printRuntimeContext` wird von der Bridge als expliziter gemeinsamer Kontext übernommen; Identitäten/orientation/mode bleiben Bridgebesitz. Alte Provider ohne diesen Kontext bleiben bytegleich im Verhalten. Snapshot, Runtime und Outputpfad müssen auf dieselbe validierte Projekt-ID zeigen.
-3. Die Snapshot-Erstellung ruft das S5.3a-`getPrintRuntimeContext({mode:'provider',projectId,orientation:'portrait'})` auf. Projekt-/Nutzer-/Logo-/Settingwerte werden zusammen mit Formularwerten eingefroren. Für VA `printProfile.documentLabel='Vorankündigung'`, `printProfile.header.titleMode='documentLabel'`; keine alte Protokollüberschrift übernehmen. Der gemeinsame FullHeader rendert so Projekt, Dokumenttitel und Nutzerblock. Unterschriftsdatum bleibt davon vollständig getrennt.
-4. `ProviderDocument.js` dispatcht nur bekannte Dokumenttypen zu einem moduleigenen Formular-Contentbuilder. `PrintShell` erlaubt für ausdrücklich deklarierten einseitigen Providercontent den vorhandenen **Standard-FullHeader** (z. B. `{headerMode:'standard',body}` statt zwingendem `fullHeader`-Node). Bei Standard-Modus ruft es unverändert `renderV2FullHeader({data,...})` auf. Keine kopierte V2-Kopfkomponente. Technischer Provider behält seinen bisherigen FullHeader-Inhaltsslot.
-5. `printApp` bleibt Eigentümer der Einseite/Schriften/Messung/print:ready. Auswahl des jeweils deklarieren Layoutvalidators ergänzt den bestehenden Providerzweig; keine zweite printToPDF-Stelle. Gezielte typed Contentcontract-Prüfung statt allgemeiner Akzeptanz beliebiger DOM-Objekte.
-6. Neuer moduleigener PDF-Descriptor nutzt `createDeclarativePdfAdapter`/`registerPdfEditorAdapter`, explizite Regenerationsanforderung und bestehenden Profilspeicher. Keine Änderung des Engineschemas nötig. Editorregeneration schreibt temporär; finale Dokumentdatei niemals vom Editor überschreiben. Die Snapshotidentität bleibt gleich, temporäre Layoutvorschau darf unterschiedliche Layoutzustände zeigen; finale PDF/Hashreferenz bleibt unveränderlich.
+Der vollständige Anschluss-/Datei-/Transfervertrag steht in SIGEKO_S5_3B2_WORKFLOW.md. Er ersetzt die vorgelagerten Analysevorschläge: Der integrierte S5.3b1-Snapshot wird unverändert als Datenvertrag benutzt; keine zweite reduzierte Behörden- oder Kontaktstruktur. Der Main-Fachworkflow stellt dem registrierten Provider ausschließlich geprüfte Kontext- oder Dokumentidentitäten bereit. Clientschattenkopien sind keine Datenquelle.
 
-## Unveränderlicher Snapshot: fachlicher JSON-Vertrag als Vorschlag
+Gemeinsame Druckdaten können Main-intern einmal vorbereitet und an tatsächliches Druckfenster plus Job-ID gebunden werden. Die tatsächliche Firmenanlage wird dauerhaft mit der Haupt-PDF referenziert. Historische Anlagen werden bytegleich geöffnet; kein späterer Live-Firmenreprint. Lizenz, Projekt, Ablage und bestätigte Behördenzuordnung werden an der Dateigrenze erneut geprüft.
 
-Persistenzspalten und Projekt-ZIP-Erweiterung sind Eigentum des Datenpakets und müssen vor Migration separat konkret festgelegt werden. Keine neue SQL-Tabelle durch diesen Designauftrag freigegeben oder angelegt. Empfohlener intern validierter Payload (keine Registry-Metadaten):
+Endgültige Fassung erst nach vollständigen geprüften Dateien; V8-Transfer erhält diese Fassungen. Readiness und S5.4-Mailprozess bleiben getrennt. Tatsächliche Nachweise und etwaige verbleibende Einschränkungen stehen in SIGEKO_S5_3B2_ABNAHME.md; dieser Entwurf behauptet keine bereits bestandene Abnahme.
 
-```js
-{
-  schemaVersion: 1,
-  documentTypeId: 'sigeko-vorankuendigung',
-  projectId, documentId, createdAt,
-  source: { draftId, draftRevision },
-  form: {
-    address: { street, zip, city },
-    builder: { name, street, zip, city, phone, email },
-    buildingType,
-    thirdParty: null | { name, street, zip, city, phone, email },
-    planning: null | { name, street, zip, city, phone, email },
-    execution: null | { name, street, zip, city, phone, email },
-    plannedStart, durationMonths, maxWorkers, employerCount, selfEmployedCount,
-    firmsMode: 'unknown' | 'attachment',
-    authority: { organization, street, zip, city, phone, email },
-    // Anschrift UND Zuständigkeitsbestätigung zum Erstellungszeitpunkt:
-    authorityEvidence: { assignmentId, assignmentRevision, sourceId, sourceRevision, assessmentStatus, assessmentMethod, assessmentNote, assessedAt, sourceVerifiedAt }
-  },
-  printRuntimeContext: { project, settings, printProfile, v2Layout, userData, logos, orientation:'portrait' },
-  // Bei Erstellung serverseitig aus tatsächlicher gemeinsamer Ausgabe ergänzt:
-  attachments: [{ kind:'project-firms', projectRelativePath, sha256, byteSize }]
-}
-```
 
-Authority-Mapping: `authority.name` druckt `assignment.snapshot.organization`; ein separates Department existiert im Bestand nicht und wird nicht erfunden. `assignmentId/revision/sourceId/sourceRevision` kommen aus `assignment.id/revision/source_id/source_revision`; assessmentStatus/Method/Note aus `assessment_status/assessment_method/assessment_note`; assessedAt aus `assignment.updated_at`, sourceVerifiedAt aus `assignment.snapshot.verified_at`. Die vollständige freigegebene Zuordnung samt adressbezogener Beurteilung darf als unveränderlicher Nachweis gespeichert werden. `effective.authority.assignment.snapshot` ist die Anschriftquelle; `effective.authority.status==='green'` plus vorhandene frische Zuständigkeitsprüfung die Finalvoraussetzung. Referenzen allein sind kein Drucksnapshot. Name/Adresse des Bauherrn stammen aus effektiver zentraler Firmenzuordnung, nicht Projektkurzname. Rollen stammen jeweils aus `effective.planning` / `effective.execution`, niemals Planer=Architekt. Felder erhalten ihre String-/Null-/Integerform, kein pauschales String(value||'') das Nullzahlen verschluckt.
+## A–F-Ergänzung vor Reparatur: nativer gemeinsamer Kopfbereich (2026-09-10)
 
-Darstellung mappt Telefonnummern und E-Mail mit festen sichtbaren Präfixen im jeweiligen PDF-Wertziel; Adress-PLZ/Ort sind getrennte Ziele in derselben Zeile. Punkt 4 ohne Dritten druckt „Nicht vorhanden“ im Namenfeld und lässt die übrigen Werte leer. Unzugeordnete optionale Rollen drucken „Noch nicht angegeben“ im Namenfeld. Punkt 9 druckt entweder „Noch nicht bekannt“ oder „Firmenliste siehe Anlage: <sicherer Dateiname>“. Signaturflächen haben absichtlich keine Snapshotwerte. Klartext nur textContent, keine ungeprüften HTML-Templates.
+A. PDF; keine neue Formularbedienung. B. Der Kopfcontainer und beide Untergruppen sind strukturelle Editorziele, nicht bearbeitbar. C. Genau ein zusätzliches explizites Ziel; die folgenden Angaben ersetzen für die beiden vorhandenen Kopfziele die bisherige Typ-/Parentzuordnung:
 
-**Reproduzierbarkeit:** Die gespeicherte finale PDF plus zugehörige Anlage und Hash sind die unveränderlichen Dokumentdateien. Ein späteres Reprint aus Snapshot benutzt dessen vollständigen Header-/Formkontext; darf nie den aktuellen Live-Projektkopf nachladen. Falls das aktuelle Layoutprofil geändert wurde, ist eine neue temporäre Layoutvorschau keine bytegleiche historische PDF; die historische finale Datei bleibt maßgeblich.
+| data-ui-inspector-id | data-ui-editor-kind | data-ui-editor-label | data-ui-editor-parent | data-ui-editor-editable | data-ui-editor-ops |
+|---|---|---|---|---|---|
+| pdf.bbm.sigeko-vorankuendigung.header | header | Gemeinsamer V2-Kopfbereich | pdf.bbm.sigeko-vorankuendigung.page | false | leer |
+| pdf.bbm.sigeko-vorankuendigung.globalHeader | group | Gemeinsamer V2-GlobalHeader | pdf.bbm.sigeko-vorankuendigung.header | false | leer |
+| pdf.bbm.sigeko-vorankuendigung.fullHeader | group | Gemeinsamer V2-FullHeader | pdf.bbm.sigeko-vorankuendigung.header | false | leer |
 
-**Firmenanlagen-Grenze:** S5.3a hat den vorhandenen Live-Firmen-PDF-Weg für SiGeKo geöffnet, noch keinen historischen Firmen-ViewModel-Eingang geschaffen. Deshalb Anlage einmalig durch denselben Weg erzeugen und Datei+Hash referenzieren, später unverändert öffnen/anhängen. Soll ein gespeicherter Firmen-ViewModel-Reprint garantiert werden, vorher expliziten neutralen Frozen-Printdata-Anschluss an getPrintData/Printjob entwerfen und separat prüfen. Nicht spätere Live-Firmenliste stillschweigend als historische Anlage ausgeben. Auch die Erzeugung muss einen definierten Konsistenzvertrag zwischen gespeichertem Firmenbezug und tatsächlicher ausgegebener Datei haben; bloß vor und nach einem asynchronen Job zu lesen beweist bei A→B→A keine exakte Quellidentität.
+Neuer Container: role=layout, pageArea=header, visible=true, editable=false, allowedOps/capabilities=[], vollständige vorhandene lockedOps für Strukturziele. Baseline x=12/y=5/width=186/height=49 mm; layoutBounds wie andere gesperrte Kopfziele. Ref sigekoVaPdf.header, Rendererref .v2StandardProviderHeader. Einfügung an order=2; folgende Deklarationen rücken um eins weiter, stabile IDs bleiben erhalten. Registryversion 2, insgesamt 81 PDF-Ziele. GlobalHeader und FullHeader behalten ihre bestehenden geometrischen Baselines.
 
-## Ergebnismeldung dieses Unterauftrags
+D. Sämtliche Fachaktionen und Text-/Geometrie-/Seitenoperationen bleiben am Kopf gesperrt. E. PrintShell umfasst beim vorhandenen standardmäßigen Providerkopf die beiden bisherigen Kopfblöcke mit genau einem realen Blockcontainer. Der bestehende Abstand zum Body folgt außerhalb dieses Containers. Kein künstlicher zusammengesetzter DOM-Ref und keine vorgetäuschte Bounding-Box. Der native Kit-Adapter erhält genau einen vollständigen Kopfbereich statt zweier konkurrierender Zonen.
 
-Nur Code-/Regel-/Vorlagenanalyse und konkreter Entwurf. Kein Produktcode geändert, keine Tests ausgeführt, kein PDF erzeugt, kein PR erstellt. Der Hauptagent führt die fehlende UI-/Persistenzentscheidung und den endgültigen Paketumfang zusammen. Kritische offene technische Entscheidung ist die historische Firmenanlagen-Konsistenz; der Einseiten-Overflow-Abbruch ist ausdrücklich der hier vorgeschlagene enge Satzvertrag.
+F. Native Zonen-Regression gegen den tatsächlichen first-header-Vertrag, gemountete 81 Ziele und vollständige Parents, echte Windows-Editor-Ausgabe, PDF-Regeneration/Undo sowie Windows/Linux-PDFs und alle 49 unveränderten Golden-Seitenzahlen/Strukturhashes. Betroffene bestehende Vertrags-IDs PDF-V2-SATZ-001/002/003/005/013; die acht VA-Regeln bleiben erhalten. Fehlercode pdf_invalid_page_zone aus Job 102743525775 ist der konkrete Reparaturanlass. Keine Abschwächung auf eine seitenweite Ersatz-Kopfzone.
