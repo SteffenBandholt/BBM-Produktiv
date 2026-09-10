@@ -545,7 +545,19 @@ async function worker() {
         let diagnostic = ""; child.stdout.on("data", value => { diagnostic += value; }); child.stderr.on("data", value => { diagnostic += value; });
         child.once("error", reject); child.once("exit", code => resolve({ code, diagnostic }));
       });
-      assert.equal(inspected.code, 0, inspected.diagnostic); report.nativePdfEditor = JSON.parse(fs.readFileSync(nativeReport, "utf8").replace(/^\uFEFF/, ""));
+      if (fs.existsSync(nativeReport)) report.nativePdfEditor = JSON.parse(fs.readFileSync(nativeReport, "utf8").replace(/^\uFEFF/, ""));
+      const diagnostics = [];
+      const visitDiagnostics = directory => {
+        if (!fs.existsSync(directory)) return;
+        for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+          const file = path.join(directory, entry.name);
+          if (entry.isDirectory()) visitDiagnostics(file);
+          else if (entry.isFile() && entry.name === "m80-last-error.log") diagnostics.push({ path: path.relative(uiEditorRoot, file), content: fs.readFileSync(file, "utf8") });
+        }
+      };
+      visitDiagnostics(uiEditorRoot); report.nativePdfEditor.diagnostics = diagnostics;
+      fs.writeFileSync(nativeReport, JSON.stringify(report.nativePdfEditor, null, 2));
+      assert.equal(inspected.code, 0, inspected.diagnostic + "\nNative editor evidence: " + JSON.stringify(report.nativePdfEditor));
       assert.equal(report.nativePdfEditor.verified, true); await editor.close(); win.focus();
       report.checks.push("S5.3b2: real PDF-Layout mouse action prepares the SiGeKo document context and opens the production Windows manager; UIAutomation selects the native PDF-Ausgabe tab and captures the actual visible editor");
     }

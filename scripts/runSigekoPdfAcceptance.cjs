@@ -50,14 +50,29 @@ function pdfPagePaintEvidence(bitmap, width, height) {
     samples += 1;
     if (white(x, y)) whiteSamples += 1;
   }
-  const scanY = Math.floor(height * 0.65);
-  let start = 0;
+  // A single horizontal line can cross document text and split a fully painted
+  // page into short white runs. Locate the same wide page edges on several
+  // separated rows instead; toolbar, thumbnail and isolated white bands do not
+  // establish a page. The white-area and actual-ink requirements stay unchanged.
+  const rowRuns = [];
+  for (let row = 0; row <= 30; row += 1) {
+    const y = Math.floor(height * (0.2 + row * 0.02));
+    let start = 0, left = 0, right = 0;
+    for (let x = 0; x <= width; x += 1) {
+      if (x < width && white(x, y)) continue;
+      if (x - start > right - left) { left = start; right = x; }
+      start = x + 1;
+    }
+    rowRuns.push({ left, right, y });
+  }
   let pageLeft = 0;
   let pageRight = 0;
-  for (let x = 0; x <= width; x += 1) {
-    if (x < width && white(x, scanY)) continue;
-    if (x - start > pageRight - pageLeft) { pageLeft = start; pageRight = x; }
-    start = x + 1;
+  let supportingRows = 0;
+  for (const candidate of rowRuns) {
+    const matches = rowRuns.filter(run => Math.abs(run.left - candidate.left) <= 2 && Math.abs(run.right - candidate.right) <= 2);
+    if (matches.length < 3 || Math.max(...matches.map(run => run.y)) - Math.min(...matches.map(run => run.y)) < height * 0.1) continue;
+    const left = Math.max(...matches.map(run => run.left)), right = Math.min(...matches.map(run => run.right));
+    if (right - left > pageRight - pageLeft) { pageLeft = left; pageRight = right; supportingRows = matches.length; }
   }
   let inkSamples = 0;
   for (let y = Math.max(15, Math.floor(height * 0.1)); y < Math.min(height - 15, height * 0.75); y += 2) {
@@ -69,7 +84,7 @@ function pdfPagePaintEvidence(bitmap, width, height) {
   }
   const whiteFraction = whiteSamples / Math.max(samples, 1);
   return { visible: width > 0 && height > 0 && whiteFraction > 0.2 && whiteFraction < 0.98 &&
-    pageRight - pageLeft > width * 0.3 && inkSamples >= 10, width, height, whiteFraction, pageLeft, pageRight, inkSamples };
+    pageRight - pageLeft > width * 0.3 && inkSamples >= 10, width, height, whiteFraction, pageLeft, pageRight, supportingRows, inkSamples };
 }
 
 async function capturePaintedPdfPreview(window, screenshotPath) {

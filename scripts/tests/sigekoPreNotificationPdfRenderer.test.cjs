@@ -56,6 +56,41 @@ async function runSigekoPreNotificationPdfRendererTests(run) {
   global.document = { createElement: tag => new Element(tag) };
   global.getComputedStyle = () => ({ paddingLeft: "12", paddingRight: "12", paddingTop: "5" });
   try {
+    const { pdfPagePaintEvidence } = require("../runSigekoPdfAcceptance.cjs");
+    const bitmapFixture = ({ page = true, ink = true, pageLeft = 305, pageRight = 986, background = 50 } = {}) => {
+      const width = 1008, height = 681, bitmap = Buffer.alloc(width * height * 4, background);
+      const fill = (left, top, right, bottom, color) => {
+        for (let y = top; y < bottom; y++) for (let x = left; x < right; x++) {
+          const offset = (y * width + x) * 4; bitmap[offset] = bitmap[offset + 1] = bitmap[offset + 2] = color; bitmap[offset + 3] = 255;
+        }
+      };
+      if (page) fill(pageLeft, 60, pageRight, height, 255);
+      if (ink) { fill(Math.max(pageLeft + 37, 342), 441, Math.min(pageRight - 12, 418), 444, 0); fill(Math.max(pageLeft + 37, 668), 441, Math.min(pageRight - 12, 808), 444, 0); }
+      return { bitmap, width, height, fill };
+    };
+    await run("S5.3b2: preview paint evidence finds stable page edges when the old single scan row intersects contact text", () => {
+      // Reproduces the observed Windows 1008x681 VA viewport without storing a
+      // screenshot: white page x305..986 and builder-contact ink at y442.
+      const { bitmap, width, height } = bitmapFixture();
+      const oldY = Math.floor(height * 0.65); let longest = 0, start = 0;
+      for (let x = 0; x <= width; x++) {
+        if (x < width && bitmap[(oldY * width + x) * 4] > 240) continue;
+        longest = Math.max(longest, x - start); start = x + 1;
+      }
+      assert.ok(longest < width * 0.3, "Fixture must reproduce the previous false negative");
+      const result = pdfPagePaintEvidence(bitmap, width, height);
+      assert.equal(result.visible, true); assert.equal(result.pageLeft, 305); assert.equal(result.pageRight, 986);
+      assert.ok(result.supportingRows >= 3); assert.ok(result.inkSamples >= 10);
+    });
+    await run("S5.3b2: preview paint evidence still rejects gray empty white blank narrow and isolated white-band frames", () => {
+      for (const options of [{ page: false, ink: false }, { page: false, ink: false, background: 255 }, { ink: false }, { pageLeft: 305, pageRight: 500 }]) {
+        const { bitmap, width, height } = bitmapFixture(options); assert.equal(pdfPagePaintEvidence(bitmap, width, height).visible, false);
+      }
+      assert.equal(pdfPagePaintEvidence(Buffer.alloc(0), 0, 0).visible, false);
+      const { bitmap, width, height, fill } = bitmapFixture({ page: false, ink: false });
+      fill(305, 420, 986, 460, 255); fill(342, 441, 418, 444, 0);
+      assert.equal(pdfPagePaintEvidence(bitmap, width, height).visible, false);
+    });
     await run("S5.3b2: VA registry declares exactly eighty stable targets with valid parents and text-only permissions", () => {
       assert.equal(REGISTRY.elements.length, 80); assert.equal(new Set(REGISTRY.elements.map(entry => entry.id)).size, 80);
       assert.equal(REGISTRY.layoutModel, "fixed-layout"); assert.equal(REGISTRY.pageSettings.orientation, "portrait");
