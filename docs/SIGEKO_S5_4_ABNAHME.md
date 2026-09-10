@@ -261,3 +261,40 @@ Die Nutzer-Fontfamilie bleibt noch zu messen. Diagnosefehler sind keine Produktf
 Nächster lokaler Aufruf: ausschließlich sauberen Test-BBM-Worktree auf d4cd576a
 fast-forwarden und denselben Diagnosebefehl ohne Skalierungsflag starten. Keine
 Neuinstallation, kein Outlook, kein produktiver Code geändert. B6/PR-Merge weiter offen.
+
+
+## A–F vor S5.4-Reparatur: Noto-Schriftrechteck und sichtbarer Text
+
+Anlass: Nutzerlauf `hB0xwv` auf `d4cd576a`: lokal installiertes
+`Noto Sans / NotoSans-Regular`, DPR 1.662500023841858. Original-Range und
+isolierte Schriftprobe stimmen überein. Range-Oberkante 209.830810546875 px
+liegt 1.8045196533 px über der Feldoberkante 211.6353302001953 px;
+Canvas-Glyphenaufstieg 10 px, Fontaufstieg 13 px. Windows-CI verwendet Arial.
+Beide Systeme weisen die bestehenden mitgelieferten Noto-Dateien zurück.
+
+A. PDF-Prüfung der bestehenden Vorankündigung, keine Layoutänderung.
+B. Bestehende Editorfähigkeit bleibt bestehen.
+C. Alle 81 Ziele und sämtliche sechs Pflichtattribute werden unverändert aus
+`SIGEKO_S5_3B2_PDF_ENTWURF.md`, einschließlich der Kopfcontainer-Ergänzung,
+übernommen: IDs, kinds, labels, parents, editable und ops bleiben identisch.
+Keine neuen Editorziele.
+D. Fachaktionen, Speichern, Rücklauf, Outlook, IPC und Datenänderungen bleiben
+außerhalb des Editors. Kurzlebige leere Messmarker sind ausschließlich
+Prüfmittel innerhalb eines expliziten Textziels und werden vor PDF-Erzeugung
+in jedem Fall entfernt; sie erhalten keine Editoridentität.
+E. Bestehende Parents, V2-Kopf, Einseite, Geometrie, Schriftwahl, Schriftgröße,
+Zeilenhöhe und Fußreserve bleiben bestehen. Nur bei vertikal überstehendem
+Range-Schriftrechteck wird zusätzlich der sichtbare Text an real gemessenen
+Browser-Grundlinien geprüft. Unveränderte Textfragmente und Scrollmaße sind
+Voraussetzung; bei fehlenden Messwerten oder Mess-Reflow bleibt der Abbruch.
+Mehrzeilige Canvas-Messung wird auf lateinischen Text mit gemeinsamen Zeichen
+und kombinierenden Akzenten begrenzt; andere komplexe Umbruchformungen
+behalten bei überstehendem Range den konservativen bisherigen Abbruch.
+F. Regressionen für gemeldete Noto-Metriken, obere Akzente, Unterlängen,
+Mehrzeilenüberlauf, horizontale Grenzen, Mess-Reflow und Aufräumen.
+Reale Windows-Vorbereitung mit Arial und testweise lokal installierter Noto
+bei fünf Skalierungen; alter Guard muss mit Noto nachweislich scheitern.
+Bestehende Windows/Linux-PDF-Abnahme und 49 Golden-Strukturen/Seitenzahlen.
+Betroffen: `PDF-V2-SIGEKO-VA-007` (vollständige Textmessung); kein neuer Satz.
+Die technische Implementierung und ihre Prüfungen folgen dieser Entscheidung;
+diese Passage allein behauptet noch keinen bestandenen Nachweis.

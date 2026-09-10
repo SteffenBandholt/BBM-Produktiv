@@ -139,6 +139,10 @@ async function worker() {
       if (report.ok && (!report.fontProbe.fonts?.length || !report.fontProbe.matchesOriginalRangeMetrics)) {
         report.ok = false; report.error = {message:"Font probe did not identify matching original font metrics"};
       }
+      const expectedFont = process.argv.find(arg => arg.startsWith("--expect-font="))?.slice("--expect-font=".length);
+      if (report.ok && expectedFont && !report.fontProbe.fonts?.some(font => font.familyName === expectedFont && !font.isCustomFont)) {
+        report.ok = false; report.error = {message:`Expected local font ${expectedFont} was not used`};
+      }
       console.log("S54_FONT_PROBE:" + JSON.stringify(report.fontProbe));
     }
     for (const win of BrowserWindow.getAllWindows()) win.destroy();
@@ -156,8 +160,8 @@ async function worker() {
 }
 async function launch() {
   const profile = createAcceptanceProfile();
-  const scale = process.argv.find(arg => arg.startsWith("--force-device-scale-factor="));
-  const args = [__filename, "--worker", `${ACCEPTANCE_SWITCH}${profile.rootPath}`, ...(scale ? [scale] : [])];
+  const switches = process.argv.filter(arg => arg.startsWith("--force-device-scale-factor=") || arg.startsWith("--expect-font="));
+  const args = [__filename, "--worker", `${ACCEPTANCE_SWITCH}${profile.rootPath}`, ...switches];
   const child = spawn(require("electron"), args, { cwd: ROOT, env: createSanitizedEnvironment(), stdio: "inherit" });
   process.exitCode = await new Promise((resolve, reject) => { child.once("error", reject); child.once("exit", code => resolve(code ?? 1)); });
 }

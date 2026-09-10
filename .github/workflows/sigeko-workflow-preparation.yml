@@ -15,6 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         scale: ['1', '1.25', '1.5', '1.6625', '2']
+        font: ['Arial', 'Noto Sans']
     runs-on: windows-latest
     timeout-minutes: 10
     steps:
@@ -26,22 +27,79 @@ jobs:
           repository: SteffenBandholt/UI-Editor-kit
           ref: 5e0d551d93e97c32d169ea6d5107186a44ecd47f
           path: UI-Editor-kit
+      - uses: actions/checkout@v4
+        if: matrix.font == 'Noto Sans'
+        with:
+          repository: notofonts/noto-fonts
+          ref: ffebf8c1ee449e544955a7e813c54f9b73848eac
+          path: s54-test-fonts
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /LICENSE
+            /hinted/ttf/NotoSans/NotoSans-Regular.ttf
+            /hinted/ttf/NotoSans/NotoSans-Bold.ttf
+      - name: Install pinned Noto only on the disposable test runner
+        if: matrix.font == 'Noto Sans'
+        shell: pwsh
+        run: |
+          Add-Type @'
+          using System.Runtime.InteropServices;
+          public static class S54TestFonts {
+            [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+            public static extern int AddFontResource(string path);
+          }
+          '@
+          foreach ($face in @('Regular', 'Bold')) {
+            $source = Join-Path $PWD "s54-test-fonts/hinted/ttf/NotoSans/NotoSans-$face.ttf"
+            $destination = Join-Path $env:WINDIR "Fonts/NotoSans-$face.ttf"
+            Copy-Item $source $destination
+            New-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts' -Name "Noto Sans $face (TrueType)" -Value "NotoSans-$face.ttf" -PropertyType String -Force | Out-Null
+            if ([S54TestFonts]::AddFontResource($destination) -eq 0) { throw "Noto font registration failed" }
+          }
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - name: Install locked dependencies
         working-directory: BBM-Produktiv
         run: npm ci
+      - name: Reproduce the old Noto failure before testing the repair
+        if: matrix.font == 'Noto Sans' && matrix.scale == '1.6625'
+        working-directory: BBM-Produktiv
+        shell: pwsh
+        env:
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
+        run: |
+          $guard = 'src/renderer/modules/sigeko/print/PreNotificationPdfContent.js'
+          git fetch --depth=1 origin 8d48210d22f337f94981acab9779ffea0d9c4a28
+          if ($LASTEXITCODE -ne 0) { throw 'Old guard fetch failed' }
+          $old = git show "8d48210d22f337f94981acab9779ffea0d9c4a28:$guard"
+          if ($LASTEXITCODE -ne 0) { throw 'Old guard read failed' }
+          try {
+            [System.IO.File]::WriteAllText((Join-Path $PWD $guard), ($old -join "`n"), [System.Text.UTF8Encoding]::new($false))
+            node scripts/runSigekoWorkflowPreparationAcceptance.cjs --force-device-scale-factor=1.6625 '--expect-font=Noto Sans'
+            if ($LASTEXITCODE -eq 0) { throw 'Old guard unexpectedly passed with Noto' }
+            $reportFile = Get-ChildItem "$env:TEMP/bbm-ui-editor-acceptance-*/s54-preparation-result.json" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+            $report = Get-Content $reportFile.FullName -Raw | ConvertFrom-Json
+            if ($report.ok -or $report.error.message -notmatch 'Arbeitsschutzbehörde' -or
+                -not $report.fontProbe.matchesOriginalRangeMetrics -or
+                $report.fontProbe.fonts[0].familyName -ne 'Noto Sans') { throw 'Expected original Noto failure not reproduced' }
+            Copy-Item $reportFile.FullName "$env:TEMP/s54-old-noto-failure.json"
+          } finally {
+            git restore --source=HEAD -- $guard
+            if ($LASTEXITCODE -ne 0) { throw 'Failed to restore repaired guard' }
+          }
       - name: Exact Outlook fixture up to the first mail boundary
         working-directory: BBM-Produktiv
         env:
           TEMP: ${{ runner.temp }}
           TMP: ${{ runner.temp }}
-        run: node scripts/runSigekoWorkflowPreparationAcceptance.cjs --force-device-scale-factor=${{ matrix.scale }}
+        run: node scripts/runSigekoWorkflowPreparationAcceptance.cjs --force-device-scale-factor=${{ matrix.scale }} "--expect-font=${{ matrix.font }}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: s54-preparation-scale-${{ matrix.scale }}
+          name: s54-preparation-${{ matrix.font }}-scale-${{ matrix.scale }}
           path: |
+            ${{ runner.temp }}/s54-old-noto-failure.json
             ${{ runner.temp }}/bbm-ui-editor-acceptance-*/s54-preparation-result.json
             ${{ runner.temp }}/bbm-ui-editor-acceptance-*/S54-Ablage/**/*.pdf

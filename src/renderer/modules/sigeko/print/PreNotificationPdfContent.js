@@ -85,6 +85,44 @@ export function buildPreNotificationPdfContent(data) {
 function outside(rect, bounds) {
   return rect.left < bounds.left - 1 || rect.right > bounds.right + 1 || rect.top < bounds.top - 1 || rect.bottom > bounds.bottom + 1;
 }
+function visibleTextFits(node, bounds) {
+  // Range includes unused font ascent/descent (notably local Noto Sans).
+  // Read actual browser baselines instead of increasing overflow tolerance.
+  const text = node.firstChild;
+  if (node.childNodes.length !== 1 || text.nodeType !== 3) return false;
+  const range = document.createRange(), markers = [];
+  const edges = ["left", "right", "top", "bottom", "width", "height"];
+  const sizes = ["scrollWidth", "scrollHeight", "clientWidth", "clientHeight"];
+  try {
+    range.selectNodeContents(text);
+    const fragments = Array.from(range.getClientRects());
+    if (!fragments.length || fragments.some(rect => !edges.every(key => Number.isFinite(rect[key])))) return false;
+    // Across soft wraps, complex-script shaping may differ from canvas. Keep
+    // the original conservative rejection when that cannot be measured here.
+    const multiline = fragments.some(rect => rect.top !== fragments[0].top);
+    if (multiline && /[^\p{Script=Latin}\p{Script=Common}\p{Script=Inherited}]/u.test(text.textContent)) return false;
+    const dimensions = sizes.map(key => node[key]);
+    const css = getComputedStyle(node), context = document.createElement("canvas").getContext("2d");
+    if (!context || css.writingMode !== "horizontal-tb" || css.textTransform !== "none") return false;
+    context.font = `${css.fontStyle} ${css.fontWeight} ${css.fontSize} ${css.fontFamily}`;
+    context.textBaseline = "alphabetic"; context.direction = css.direction;
+    const metrics = context.measureText(text.textContent);
+    const ascent = metrics.actualBoundingBoxAscent, descent = metrics.actualBoundingBoxDescent;
+    if (![ascent, descent].every(Number.isFinite)) return false;
+    for (let i = 0; i < 2; i++) {
+      const marker = document.createElement("span"); markers.push(marker);
+      marker.style.cssText = "display:inline-block;width:0;height:0;min-width:0;min-height:0;margin:0;padding:0;border:0;vertical-align:baseline;overflow:hidden";
+      node.insertBefore(marker, i === 0 ? text : null);
+    }
+    const after = Array.from(range.getClientRects());
+    if (after.length !== fragments.length || after.some((rect, i) => edges.some(key => rect[key] !== fragments[i][key])) ||
+        sizes.some((key, i) => node[key] !== dimensions[i])) return false;
+    const first = markers[0].getBoundingClientRect().top, last = markers[1].getBoundingClientRect().top;
+    return Number.isFinite(first) && Number.isFinite(last) && first <= last &&
+      first - ascent >= bounds.top - 1 && last + descent <= bounds.bottom + 1;
+  } catch { return false; }
+  finally { for (const marker of markers) marker.remove(); range.detach?.(); }
+}
 export function validatePreNotificationPdfLayout(root, data) {
   const entries = definitions(data), pages = root.querySelectorAll(".page"), footer = root.querySelector(".v2FooterReserveSpacer");
   if (pages.length !== 1 || !footer) invalid("Vorankündigung benötigt genau eine Seite mit gemeinsamer Fußreserve.");
@@ -111,7 +149,8 @@ export function validatePreNotificationPdfLayout(root, data) {
       if (node.textContent && typeof document.createRange === "function") {
         const range = document.createRange(); range.selectNodeContents(node);
         const textRect = range.getBoundingClientRect(); range.detach?.();
-        if (outside(textRect, rect)) overflow(entry);
+        if (textRect.left < rect.left - 1 || textRect.right > rect.right + 1) overflow(entry);
+        if ((textRect.top < rect.top - 1 || textRect.bottom > rect.bottom + 1) && !visibleTextFits(node, rect)) overflow(entry);
       }
     }
     const siblings = entries.filter(sibling => sibling.parentId === entry.parentId && sibling.order < entry.order);
