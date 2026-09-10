@@ -88,20 +88,47 @@ Abhängigkeit `../UI-Editor-kit` mindestens den bereits freigegebenen Commit
 enthalten. Ein Fetch/Switch im BBM-Repository aktualisiert dieses zweite Repository
 nicht. Der Windows-/Linux-CI-Nachweis verwendet ausdrücklich diesen Kit-Stand.
 
-Im BBM-Projektordner die bestehende Kit-Arbeitskopie ausschließlich per Fast-forward
-auf den getesteten Stand bringen und danach den Abnahmelauf starten:
+Die lokale Kit-Arbeitskopie enthält laut Nutzer inzwischen nachgewiesen 18 geänderte
+und drei neue Dateien. `PdfModel.cs` ergänzt die Ausblendbarkeit der Seitenzahl;
+der freigegebene Commit erweitert dieselbe Datei an anderen Stellen. Der sichere
+Abnahmeweg verwendet deshalb zwei zusätzliche, unveränderte Git-Arbeitskopien.
+Die vorhandene Kit-Entwicklung wird weder verworfen noch gestasht oder vermischt.
+
+Die folgenden Befehle verwenden exakt den getesteten BBM-Produktcommit und Kit-Pin.
+Beide Commits sind durch die bereits ausgeführten Fetches lokal vorhanden. Der
+neue Testordner enthält die nötige Geschwisterstruktur: `BBM-Produktiv` neben
+`UI-Editor-kit`. Damit zeigt der lokale npm-Link auf das saubere Test-Kit.
 
 ```powershell
-git -C ..\UI-Editor-kit fetch origin
-if ($LASTEXITCODE -ne 0) { throw 'UI-Editor-kit konnte nicht abgerufen werden.' }
-git -C ..\UI-Editor-kit merge --ff-only 5e0d551d93e97c32d169ea6d5107186a44ecd47f
-if ($LASTEXITCODE -ne 0) { throw 'Kit-Abgleich gestoppt; bitte Git-Ausgabe prüfen.' }
-npm run test:sigeko:s5.4:outlook
+& {
+    $s54TestRoot = Join-Path 'C:\01_Projekte' ('S54-Test-' + [guid]::NewGuid().ToString('N').Substring(0,8))
+    $s54TestBbm = Join-Path $s54TestRoot 'BBM-Produktiv'
+    $s54TestKit = Join-Path $s54TestRoot 'UI-Editor-kit'
+
+    git -C C:\01_Projekte\UI-Editor-kit worktree add --detach $s54TestKit 5e0d551d93e97c32d169ea6d5107186a44ecd47f
+    if ($LASTEXITCODE -ne 0) { throw 'Kit-Testordner konnte nicht angelegt werden.' }
+
+    git -C C:\01_Projekte\BBM-Produktiv worktree add --detach $s54TestBbm c205377ff60f20b7d861aeec7b281159a51b28dc
+    if ($LASTEXITCODE -ne 0) { throw 'BBM-Testordner konnte nicht angelegt werden.' }
+
+    Write-Host "Testordner: $s54TestRoot"
+    Push-Location $s54TestBbm
+    try {
+        npm ci
+        if ($LASTEXITCODE -ne 0) { throw 'Installation fehlgeschlagen. Bitte Ausgabe schicken.' }
+        npm run test:sigeko:s5.4:outlook
+    }
+    finally { Pop-Location }
+}
 ```
 
-Die npm-Abhängigkeit ist laut `package-lock.json` ein lokaler Link auf diesen
-Geschwisterordner. Kein Reset, kein Erzwingen eines Branchwechsels und keine
-Aktualisierung auf einen ungeprüften neuesten Kit-Stand.
+`npm ci` installiert ausschließlich die durch den vorhandenen Lockfile bestimmten
+Abhängigkeiten im neuen BBM-Testordner und richtet die bestehende Electron-ABI ein.
+Kein neuer Produkt- oder Kit-Code, kein Validator-Workaround und kein anderer
+Abnahmetransport. Die normalen Arbeitskopien behalten ihre Dateien und Branches.
+Die zusätzlichen Git-Arbeitskopien bleiben für Nachprüfung erhalten; keine automatische
+Löschung. Der eigentliche Outlooklauf verwendet weiterhin sein eigenes temporäres
+Datenprofil. Installation und Outlook sind auf diesem lokalen Windowsweg noch auszuführen.
 
 ### Rückmeldung des ersten lokalen Laufs
 
@@ -111,8 +138,8 @@ den separaten Kit-Abgleich ausgelassen. Dieselbe Meldung wurde mit dem realen
 älteren Kit-Validator aus `0240ef8` reproduziert: Er verlangt im fixed-layout-PDF
 fälschlich Tabellen-/Spalten-/Wiederholungsziele. Die getestete aktuelle Kit-Version
 unterstützt diesen bereits freigegebenen Vertrag. Der konkrete lokal geladene
-Kit-Stand ist aus der Nutzer-Terminalausgabe allein nicht bewiesen; der Abgleich
-oben beseitigt diese reproduzierte Inkompatibilität. Kein Outlook-PASS und kein
+Kit-Stand ist aus der Nutzer-Terminalausgabe allein nicht bewiesen; der saubere Test-Kit-Stand
+oben enthält die hierfür bereits freigegebene Erweiterung. Kein Outlook-PASS und kein
 Merge aus diesem fehlgeschlagenen Lauf abgeleitet.
 
 Der Lauf verwendet ein eigenes temporäres Testprofil, eine eigene SQLite-Datenbank
