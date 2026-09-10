@@ -154,9 +154,52 @@ Es gibt keinen automatischen Versand und keine Änderung produktiver Daten.
 
 Danach prüft der Lauf selbst die gespeicherte grüne Zuordnung nach DB-Neustart und
 den unabhängigen roten Anfang einer neuen Fassung. Der Berichtspfad steht im Terminal:
-`sigeko-workflow-outlook-result.json`. Nur ein erfolgreich abgeschlossener Lauf mit
+`mail-acceptance-result.json`. Nur ein erfolgreich abgeschlossener Lauf mit
 beiden ausdrücklich bestätigten Sichtprüfungen gilt als manuelle Abnahme. Die Testdatei
 enthält keine echte Unterschrift; eine Signaturvalidierung wird nicht behauptet.
 
 Rechnung #275 bleibt eingefroren. Kalenderanschluss und weitere Pakete werden bis
 zur vollständigen Abnahme/Integration dieses Pakets nicht begonnen.
+
+## Lokaler PDF-Abbruch vor Outlook und gezielte Diagnose (2026-09-10)
+
+Die Nutzerdatei `Eingefügter Text.txt` belegt für `S54-Test-7ba06d29`: beide
+sauberen Worktrees (BBM c205377f / Kit 5e0d551), `npm ci` und Electron-ABI erfolgreich.
+Profil `bbm-ui-editor-acceptance-33m3Fj`: Firmenanlage geschrieben, anschließend
+Vorankündigung mit Textüberlauf an der statischen Beschriftung `authority.label`
+abgebrochen. Die relevante Prüfung ist der DOM-Range-Vergleich in
+`PreNotificationPdfContent.js`, nicht der frühere Registryfehler. Kein Outlook-Aufruf
+und kein erfolgreicher B6-Nachweis.
+
+Die NotoSans-Fehler `prep: table overruns end of file` sind auch im bereits
+bestandenen Windows-PDF-Job 102752631025 enthalten. Sie bleiben ein bestehender
+Schriftmangel; ihr Vorhandensein allein erklärt den neuen lokalen Abbruch nicht.
+Weder gemeinsame Fonts noch Satzvertrag oder Overflow-Toleranzen werden deshalb
+auf Verdacht geändert. Auch die npm-Auditmeldungen sind kein Beleg der PDF-Ursache.
+
+Der neue Diagnoseworker `scripts/runSigekoWorkflowPreparationAcceptance.cjs` ruft
+denselben unveränderten S5.4-Helper auf. Echte SQLite, Lizenzgrenze, Preload/IPC,
+Firmen-/Vorankündigungs-PDF und technische Rücklauf-PDF werden ausgeführt. Eine
+strikte Testgrenze stoppt VOR dem ersten Mailvorbereitungsaufruf; kein Mailtransport
+wird registriert. Der Bericht heißt `s54-preparation-result.json` und benennt
+`actualOutlookVerified:false`, `manualConfirmed:false` ausdrücklich.
+
+Windows-CI 34510966326 (Diagnosestand 0a78dbc) bestand bei Skalierung 1, 1.25, 1.5
+und 2. Der Fehler ist dort nicht reproduziert. Die Folgekorrekturen 8ad5b874 und
+8369a36b erfassen die unveränderten Range-Maße bereits während der produktiven
+Layoutprüfung, bevor der Fehlerpfad das Formular entfernt. Die testseitige
+Instrumentierung gibt das originale Rechteck unverändert zurück und verändert
+weder Fachdaten noch Guard-Ergebnis. Ein separater Review fand und beseitigte
+die zu späte Erfassung sowie einen synthetischen Range-Aufruf im späteren
+Diagnoseblock. Syntax und Whitespace-Prüfung grün. Es wurde kein neuer Volltest
+behauptet: Produktcode unverändert, letzter Volltest weiterhin 2030/97.
+
+Nächster notwendiger Nachweis: denselben Diagnoseworker ohne erzwungene Skalierung
+im vorhandenen isolierten Nutzer-Testordner ausführen. Vorher nur dessen sauberen
+BBM-Worktree per Fast-forward auf 8369a36b0619e8be1c78310daaa38e9de8b8c960 bringen;
+Kit und normale Entwicklerarbeitskopien erhalten. Keine erneute Installation nötig,
+da Paketmanifest und Lockfile unverändert sind. Anschließend die lokalen Feld- und
+Textrechtecke, Schriftmetriken und tatsächliche Geräteskalierung auswerten.
+
+Status: S5.4 bleibt bei B6 offen, Draft-PR #339 bleibt unintegriert. Die Diagnose
+ist keine Fehlerbehebung und kein Ersatz für die spätere reale Outlook-Abnahme.
