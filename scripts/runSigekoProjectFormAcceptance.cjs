@@ -11,7 +11,7 @@ const ROOT = path.resolve(__dirname, "..");
 async function worker() {
   const { app, BrowserWindow, ipcMain, dialog, screen } = require("electron");
   let profile, database, editor;
-  const report = { package: "S2.4 / S3 / S4 / S5.2 / S5.3b2", ok: false, manualConfirmed: false, checks: [], rendererErrors: [] };
+  const report = { package: "S2.4 / S3 / S4 / S5.2 / S5.3b2 / S5.4", ok: false, manualConfirmed: false, checks: [], rendererErrors: [] };
   try {
     app.setAppPath(ROOT);
     profile = configureUiEditorAcceptanceProfile({ electronApp: app }); assert.equal(profile.enabled, true);
@@ -37,8 +37,10 @@ async function worker() {
       db.prepare("INSERT INTO project_persons (id,project_firm_id,first_name,last_name,name) VALUES (?,?,?,?,?)").run(`s24-person-${project.id}`, `s24-firm-${project.id}`, "Projekt", "Koordinator", "Projekt Koordinator");
     }
     require("../src/main/ipc/projectsIpc").registerProjectsIpc();
+    const workflowBoundary = require("./helpers/sigekoWorkflowFormAcceptance.cjs").createWorkflowFormBoundary();
     require("../src/main/moduleIpcRegistry").registerActiveModuleIpcs({ licenseStatus: license, getLicenseStatus: () => license, ipcMain,
-      registrars: { sigeko: require("../src/main/ipc/sigekoIpc").registerSigekoIpc } });
+      registrars: { sigeko: options => require("../src/main/ipc/sigekoIpc").registerSigekoIpc({ ...options,
+        workflowService: require("../src/main/domain/sigeko/PreNotificationWorkflowService").createPreNotificationWorkflowService(workflowBoundary.options) }) } });
     require("../src/main/ipc/firmDirectoryIpc").registerFirmDirectoryIpc();
     report.contactReadBoundary = "Unmodified shared firmDirectory IPC, service and SQLite resolve global and project contacts with a SiGeKo-only license; no Protokoll registrar or replacement read adapters. SiGeKo writes use unmodified productive IPC, service and current license guard.";
     ipcMain.handle("app:isPackaged", () => ({ ok: true, isPackaged: false }));
@@ -533,6 +535,8 @@ async function worker() {
     assert.equal(BrowserWindow.getAllWindows().length, 1); assert.equal(fs.readFileSync(firstFile).length, firstBytes.length + 7);
     fs.writeFileSync(firstFile, firstBytes); assert.deepEqual(documentRows().find(row => row.id === firstDocument.id), firstDocument);
     report.checks.push("S5.3b2: real mouse actions reject dirty output without autosave; temporary Chromium preview creates no final row; two final immutable versions include the existing firms renderer attachment; native version selection opens historical files while dirty, retains selection on reload and rejects changed bytes without live regeneration");
+    await require("./helpers/sigekoWorkflowFormAcceptance.cjs").runWorkflowFormAcceptance({ boundary: workflowBoundary, database, projectId: projects[0].id,
+      firstDocument, secondDocument, rootPath, profile, output, report, win, evaluate, waitFor, vaClick, vaOpen, closePreview });
     report.nativePdfEditor = { verified: false, reason: process.platform === "win32" ? "pending actual Windows UI" : "native Windows manager unavailable on Linux" };
     if (process.platform === "win32") {
       await pdfAction("actions.pdfLayout", /Layouteditor geöffnet/);
@@ -573,6 +577,14 @@ async function worker() {
     assert.equal(await evaluate("s24.screen.pdfPreviewButton.disabled && s24.screen.pdfCreateButton.disabled && s24.screen.pdfLayoutButton.disabled"), true);
     await pdfAction("pdf.actions.open", /PDF geöffnet/); await closePreview();
     report.checks.push("S5.3b2: archived project disables all new PDF and layout actions but still opens the stored immutable PDF");
+    await evaluate(`s24.screen.documentSelection.value=${JSON.stringify(secondDocument.id)};s24.screen.documentSelection.dispatchEvent(new Event('change',{bubbles:true}))`);
+    await waitFor("!s24.screen.workflowLoading && s24.screen.workflow?.documentId===s24.screen.documentSelection.value");
+    assert.equal(await evaluate("s24.screen.returnImportButton.disabled && s24.screen.signatureMailButton.disabled && s24.screen.authorityMailButton.disabled && s24.screen.mailOpenButton.disabled"), true);
+    assert.equal(await evaluate("s24.screen.returnOpenButton.disabled"), false);
+    const archivedWorkflowBefore = database.initDatabase().prepare("SELECT * FROM sigeko_pre_notification_workflows WHERE document_id=?").get(secondDocument.id);
+    await vaClick("pdf.workflow.return.open"); await waitFor("!s24.screen.busy"); await closePreview();
+    assert.deepEqual(database.initDatabase().prepare("SELECT * FROM sigeko_pre_notification_workflows WHERE document_id=?").get(secondDocument.id), archivedWorkflowBefore);
+    report.checks.push("S5.4: archived form disables return import and mail actions while the stored signed return remains openable without workflow changes");
     repo.unarchiveProject(projects[0].id); await vaOpen(projects[0].id);
     const beforeVaLicense = vaSnapshot(); license = { valid: true, license: { modules: [] } };
     assert.equal(await evaluate(`window.bbmDb.sigekoGetPreNotification({projectId:${JSON.stringify(projects[0].id)}}).then(()=>false,e=>String(e).includes('MODULE_NOT_ACTIVE'))`), true);

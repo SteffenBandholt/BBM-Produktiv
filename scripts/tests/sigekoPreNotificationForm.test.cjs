@@ -38,8 +38,12 @@ async function runSigekoPreNotificationFormTests(run) {
   const { sigekoPreNotificationUiEditorContract: contract } = await esm("src/renderer/modules/sigeko/SigekoPreNotificationScreen.uiEditorContract.js");
   const previous = { window: global.window, document: global.document };
   const screens = [];
-  let form, data, api, writes, reads, navigations, confirmations, confirmResult, pdfCalls, documents;
+  let form, data, api, writes, reads, navigations, confirmations, confirmResult, pdfCalls, documents, workflowCalls, workflows;
   const pdfDocument = (id = "document-a", firms = false, projectId = "a") => ({ id, projectId, createdAt: "2026-09-10T12:00:00Z", files: ["main", ...(firms ? ["firms"] : [])].map(kind => ({ kind, projectRelativePath: `SiGeKo/Unterlagen/${id}-${kind}.pdf`, sha256: "a".repeat(64), byteSize: 100 })) });
+  const workflowDto = (documentId = "document-a", patch = {}) => ({ projectId: "a", documentId, revision: null, status: "red", signedFile: null, signedReceivedAt: null, signatureOpenedAt: null, authorityOpenedAt: null, returnRequestedBy: null, canWrite: true, ...patch });
+  const signedFile = { kind: "signed", projectRelativePath: "SiGeKo/Unterlagen/signed.pdf", sha256: "b".repeat(64), byteSize: 100 };
+  const workflowInput = (key, value) => { form.workflowInputs[key].value = value; form.workflowInputs[key].oninput?.(); };
+  const setWorkflowDocuments = async (entries = [pdfDocument()]) => { documents = entries; form._setDocuments(entries); await form.workflowLoad; form._refreshEnabled(); };
   const makeData = (id = "a", patch = null, archived = false) => {
     const record = patch === null ? null : { ...defaults(), id: `va-${id}`, project_id: id, revision: 3,
       created_at: "2026-09-10T10:00:00Z", updated_at: "2026-09-10T11:00:00Z", ...patch };
@@ -72,8 +76,15 @@ async function runSigekoPreNotificationFormTests(run) {
     for (const screen of screens.splice(0)) { screen.destroy(); screen.root.remove(); }
     refs.resetM80PilotWorkingStatesForDiagnostic();
     data = makeData(id, patch, archived); writes = []; reads = []; navigations = []; confirmations = []; confirmResult = false;
-    pdfCalls = []; documents = []; delete global.window.uiEditor;
+    pdfCalls = []; documents = []; workflowCalls = []; workflows = new Map(); delete global.window.uiEditor;
     api = {
+      sigekoGetPreNotificationWorkflow: async payload => { workflowCalls.push(["get", clone(payload)]); return { ok: true, data: clone(workflows.get(payload.documentId) || workflowDto(payload.documentId, { projectId: id, canWrite: !archived })) }; },
+      sigekoPreparePreNotificationMail: async payload => { workflowCalls.push(["prepare", clone(payload)]); return { ok: true, data: { ...payload, revision: workflows.get(payload.documentId)?.revision ?? null, recipients: ["builder@example.test"], subject: "Unterschrift", body: "Bitte prüfen", attachments: [{ name: "VA.pdf", byteSize: 100 }] } }; },
+      sigekoImportPreNotificationSignedReturn: async payload => { workflowCalls.push(["import", clone(payload)]); const workflow = workflowDto(payload.documentId, { revision: 1, signedFile, signedReceivedAt: "2026-09-10T12:00:00Z" }); workflows.set(payload.documentId, workflow); return { ok: true, data: { canceled: false, workflow } }; },
+      sigekoOpenPreNotificationSignedReturn: async payload => { workflowCalls.push(["open", clone(payload)]); return { ok: true, data: { opened: true } }; },
+      sigekoOpenPreNotificationMailDraft: async payload => { workflowCalls.push(["mail", clone(payload)]); const workflow = { ...(workflows.get(payload.documentId) || workflowDto(payload.documentId)), revision: (payload.expectedRevision || 0) + 1, status: payload.purpose === "signature" ? "orange" : "green", returnRequestedBy: payload.returnRequestedBy }; workflows.set(payload.documentId, workflow); return { ok: true, data: { outcome: "draft-opened", transport: "outlook", workflow } }; },
+      firmDirectoryListProjectParticipants: async () => ({ ok: true, list: [] }),
+      firmDirectoryListPersons: async () => ({ ok: true, list: [] }),
       sigekoListPreNotificationDocuments: async () => ({ ok: true, data: { documents: clone(documents) } }),
       sigekoPreviewPreNotificationPdf: async payload => { pdfCalls.push(["preview", clone(payload)]); return { ok: true, data: {} }; },
       sigekoCreatePreNotificationPdf: async payload => { pdfCalls.push(["create", clone(payload)]); const document = pdfDocument(); documents.unshift(document); return { ok: true, data: { document } }; },
@@ -339,12 +350,122 @@ async function runSigekoPreNotificationFormTests(run) {
       const pending = form.runPdfAction("layout"); await new Promise(resolve => setImmediate(resolve)); form.destroy();
       gate.resolve({ ok: true, documentTypeId: "sigeko-vorankuendigung" }); assert.equal(await pending, false); assert.equal(opened, 0);
     });
+    await run("S5.4: workflow fields preserve draft dirty state and preparation never saves or opens Outlook", async () => {
+      await reset(); await setWorkflowDocuments(); const before = draft();
+      workflowInput("due", "2027-01-02"); assert.equal(form.isDirty(), false);
+      await form.prepareMail("signature"); workflowInput("subject", "Bearbeitet"); workflowInput("body", "Mehrzeilig\nText");
+      assert.deepEqual(draft(), before); assert.equal(form.isDirty(), false); assert.equal(form.workflow.status, "red");
+      assert.equal(workflowCalls.filter(([action]) => action === "mail").length, 0); assert.deepEqual(writes, []);
+      input("building_type_override", "Ungespeichert"); assert.equal(form.mailOpenButton.disabled, false);
+      await form.runWorkflowAction("mail"); assert.equal(form.workflow.status, "orange"); assert.equal(form.workflow.returnRequestedBy, "2027-01-02");
+      assert.equal(form.isDirty(), true); assert.equal(form.inputs.building_type_override.value, "Ungespeichert");
+      const sent = workflowCalls.find(([action]) => action === "mail")[1]; assert.equal(sent.subject, "Bearbeitet"); assert.equal(sent.body, "Mehrzeilig\nText");
+      assert.equal(Object.hasOwn(sent, "attachments"), false); assert.equal(sent.expectedRevision, null); assert.equal(form.mailPreparation, null);
+    });
+    await run("S5.4: changed date invalidates prepared signature and no date is silently persisted", async () => {
+      await reset(); await setWorkflowDocuments(); workflowInput("due", "2027-01-01"); await form.prepareMail("signature");
+      workflowInput("due", "2027-02-02"); assert.equal(form.mailPreparation, null); assert.equal(await form.runWorkflowAction("mail"), false);
+      assert.equal(form.workflow.returnRequestedBy, null); assert.match(form.workflowMessage, /erneut vorbereiten/);
+      workflowInput("due", "2027-02-30"); assert.equal(await form.prepareMail("signature"), false);
+      assert.equal(workflowCalls.filter(([action]) => action === "prepare").length, 1);
+    });
+    await run("S5.4: contacts are opt-in suggestions with global project context and free deduplicated recipients", async () => {
+      await reset(); await setWorkflowDocuments(); const personCalls = [];
+      api.firmDirectoryListProjectParticipants = async () => ({ ok: true, list: [{ label: "Firma", email: "firm@example.test", ref: { kind: "global_firm", id: "f", projectId: null } }] });
+      api.firmDirectoryListPersons = async payload => { personCalls.push(payload); return { ok: true, list: [{ name: "Person", email: "person@example.test" }] }; };
+      await form.prepareMail("signature"); assert.equal(form.workflowInputs.recipients.value, "builder@example.test");
+      assert.equal(personCalls[0].ref.projectId, "a"); assert.equal(personCalls[0].forUse, "project_participant");
+      workflowInput("choice", "person@example.test"); form.addRecipientButton.onclick(); workflowInput("choice", "PERSON@example.test"); form.addRecipientButton.onclick();
+      assert.equal(form.workflowInputs.recipients.value, "builder@example.test; person@example.test");
+      workflowInput("recipients", "other@example.test; OTHER@example.test"); await form.runWorkflowAction("mail");
+      assert.deepEqual(workflowCalls.find(([action]) => action === "mail")[1].recipients, ["other@example.test"]);
+    });
+    await run("S5.4: recipient directory failure permits reviewed free addresses but invalid address blocks opening", async () => {
+      await reset(); await setWorkflowDocuments(); api.firmDirectoryListProjectParticipants = async () => ({ ok: false, error: "nicht verfügbar" });
+      assert.equal(await form.prepareMail("signature"), true); assert.match(form.workflowMessage, /frei eingetragen/);
+      workflowInput("recipients", "bad"); assert.equal(await form.runWorkflowAction("mail"), false);
+      assert.equal(workflowCalls.filter(([action]) => action === "mail").length, 0); assert.equal(form.busy, false);
+    });
+    await run("S5.4: canceled picker preserves preparation and imported replacement uses returned state", async () => {
+      await reset(); await setWorkflowDocuments(); await form.prepareMail("signature");
+      const importOriginal = api.sigekoImportPreNotificationSignedReturn;
+      api.sigekoImportPreNotificationSignedReturn = async () => ({ ok: true, data: { canceled: true } });
+      await form.runWorkflowAction("import"); assert.ok(form.mailPreparation); assert.equal(form.workflow.signedFile, null);
+      api.sigekoImportPreNotificationSignedReturn = importOriginal; await form.runWorkflowAction("import");
+      assert.equal(form.mailPreparation, null); assert.deepEqual(form.workflow.signedFile, signedFile); assert.equal(form.workflow.status, "red");
+      await form.runWorkflowAction("open"); assert.deepEqual(workflowCalls.find(([action]) => action === "open")[1], { projectId: "a", documentId: "document-a" });
+      await form.prepareMail("authority"); await form.runWorkflowAction("mail"); assert.equal(form.workflow.status, "green");
+      await form.runWorkflowAction("import"); assert.equal(form.workflow.status, "red"); assert.equal(form.workflow.authorityOpenedAt, null);
+    });
+    await run("S5.4: selecting versions isolates workflow and discards only mail preparation", async () => {
+      await reset(); workflows.set("document-b", workflowDto("document-b", { revision: 2, status: "green", signedFile }));
+      await setWorkflowDocuments([pdfDocument("document-a"), pdfDocument("document-b")]); await form.prepareMail("signature"); input("building_type_override", "Dirty");
+      form.documentSelection.value = "document-b"; form.documentSelection.onchange(); await form.workflowLoad;
+      assert.equal(form.workflow.documentId, "document-b"); assert.equal(form.workflow.status, "green"); assert.equal(form.mailPreparation, null);
+      assert.equal(form.inputs.building_type_override.value, "Dirty"); assert.equal(form.isDirty(), true);
+    });
+    await run("S5.4: late workflow loads after selection or destroy never populate another version", async () => {
+      await reset(); const gate = deferred(); api.sigekoGetPreNotificationWorkflow = () => gate.promise;
+      form._setDocuments([pdfDocument("document-a"), pdfDocument("document-b")]); const oldLoad = form.workflowLoad;
+      api.sigekoGetPreNotificationWorkflow = async () => ({ ok: true, data: workflowDto("document-b", { revision: 1, status: "orange" }) });
+      form.documentSelection.value = "document-b"; form.documentSelection.onchange(); await form.workflowLoad;
+      gate.resolve({ ok: true, data: workflowDto() }); await oldLoad; assert.equal(form.workflow.documentId, "document-b");
+      const second = deferred(); api.sigekoGetPreNotificationWorkflow = () => second.promise; const pending = form.loadWorkflow(); form.destroy();
+      second.resolve({ ok: true, data: workflowDto("document-b") }); assert.equal(await pending, false); assert.equal(form.workflow, null);
+    });
+    await run("S5.4: pending preparation locks selection and duplicate action then destroy prevents opening", async () => {
+      await reset(); await setWorkflowDocuments(); const gate = deferred();
+      api.sigekoPreparePreNotificationMail = payload => { workflowCalls.push(["prepare", payload]); return gate.promise; };
+      const pending = form.prepareMail("signature"); assert.equal(form.busy, true); assert.equal(form.documentSelection.disabled, true);
+      assert.equal(await form.prepareMail("signature"), false); assert.equal(await form.runWorkflowAction("import"), false);
+      form.destroy(); gate.resolve({ ok: true, data: {} }); assert.equal(await pending, false); assert.equal(form.mailPreparation, null);
+    });
+    await run("S5.4: pending Outlook action starts once and unexpected success cannot turn the status green", async () => {
+      await reset(); await setWorkflowDocuments(); await form.prepareMail("signature"); const gate = deferred(); let calls = 0;
+      api.sigekoOpenPreNotificationMailDraft = () => { calls++; return gate.promise; };
+      const pending = form.runWorkflowAction("mail"); assert.equal(form.documentSelection.disabled, true); assert.equal(form.saveButton.disabled, true);
+      assert.equal(await form.runWorkflowAction("mail"), false); assert.equal(calls, 1);
+      gate.resolve({ ok: true, data: { outcome: "sent", transport: "mailto", workflow: workflowDto("document-a", { status: "green" }) } });
+      assert.equal(await pending, false); assert.equal(form.workflow.status, "red"); assert.equal(form.busy, false);
+    });
+    await run("S5.4: already opened but unsaved failure clears preparation and reloads without automatic retry", async () => {
+      await reset(); await setWorkflowDocuments(); await form.prepareMail("signature"); let calls = 0;
+      api.sigekoOpenPreNotificationMailDraft = async () => { calls++; return { ok: false, code: "SIGEKO_MAIL_OPENED_STATE_UNSAVED", error: "Outlook bereits geöffnet, Stand nicht gespeichert" }; };
+      assert.equal(await form.runWorkflowAction("mail"), false); assert.equal(calls, 1); assert.equal(form.mailPreparation, null);
+      assert.match(form.workflowMessage, /bereits geöffnet/); assert.equal(form.workflow.status, "red"); assert.equal(form.mailOpenButton.disabled, true);
+    });
+    await run("S5.4: archive allows return opening and rejects mutations even if called directly", async () => {
+      await reset({ archived: true }); workflows.set("document-a", workflowDto("document-a", { revision: 1, signedFile, canWrite: false })); await setWorkflowDocuments();
+      assert.equal(form.returnOpenButton.disabled, false); assert.equal(await form.runWorkflowAction("open"), true);
+      assert.equal(await form.prepareMail("signature"), false); assert.equal(await form.runWorkflowAction("import"), false); assert.equal(form.workflowInputs.due.disabled, true);
+    });
+    await run("S5.4: foreign workflow or mail DTO is rejected without overwriting draft or opening Outlook", async () => {
+      await reset(); input("building_type_override", "Erhalten"); api.sigekoGetPreNotificationWorkflow = async () => ({ ok: true, data: workflowDto("foreign") });
+      await setWorkflowDocuments(); assert.equal(form.workflow, null); assert.equal(form.inputs.building_type_override.value, "Erhalten"); assert.equal(form.signatureMailButton.disabled, true);
+      api.sigekoGetPreNotificationWorkflow = async () => ({ ok: true, data: workflowDto() }); await form.loadWorkflow();
+      api.sigekoPreparePreNotificationMail = async () => ({ ok: true, data: { projectId: "foreign" } }); assert.equal(await form.prepareMail("signature"), false);
+      assert.equal(form.mailPreparation, null); assert.equal(workflowCalls.filter(([action]) => action === "mail").length, 0);
+    });
+    await run("S5.4: all 32 new static refs match design kinds parents and permitted layout operations", async () => {
+      await reset(); const rows = fs.readFileSync(path.resolve(__dirname, "../../docs/SIGEKO_S5_4_UI_ENTWURF.md"), "utf8").split("\n").filter(line => /^\|1[1-4]\d\|/.test(line)).map(line => line.split("|").slice(1, -1).map(value => value.trim().replaceAll("`", "")));
+      assert.equal(rows.length, 32); assert.equal(contract.slots.length, 143);
+      for (const row of rows) {
+        const [order, ident, parent, kinds, name, , ops] = row, entry = contract.slots[Number(order)].element, el = refs.getM80Ref(ident).element;
+        assert.equal(entry.id, ident); assert.equal(entry.parentId, parent); assert.equal(entry.name, name); assert.equal(entry.type, kinds.split(" / ")[0]);
+        assert.equal(el.parentElement, refs.getM80Ref(parent).element); assert.equal(entry.editable, true);
+        const expected = ["move", "resizeWidth", "resizeHeight", "setVisibility", ...(ops === "T" ? ["textResize"] : [])]; assert.deepEqual(entry.allowedOps, expected);
+        assert.deepEqual(["inspector-id", "editor-kind", "editor-label", "editor-parent", "editor-editable", "editor-ops"].map(key => el.getAttribute(`data-ui-${key}`)), [ident, entry.type, name, parent, "true", expected.join(",")]);
+        assert.deepEqual(entry.lockedOps, ["executeTargetAction", "modifyDomainData", "createRecord", "deleteRecord"]);
+      }
+      assert.equal(contract.slots[139].element.componentKind, "textarea"); assert.equal(form.workflowInputs.body.tagName, "TEXTAREA");
+      assert.equal(refs.validateM83ComponentReferences([contract.componentId]).ok, true); assert.equal(form.isDirty(), false);
+    });
     await run("S5.3b2: all thirteen added refs match approved attributes and forbid domain execution", async () => {
-      await reset(); assert.equal(contract.slots.length, 111);
+      await reset(); assert.equal(contract.slots.length, 143);
       const design = fs.readFileSync(path.resolve(__dirname, "../../docs/SIGEKO_S5_3B2_UI_ENTWURF.md"), "utf8");
       const rows = design.split("\n").filter(line => /^\| `sigeko\.preNotification/.test(line)).map(line => line.split("|").slice(1, -1).map(value => value.trim().replaceAll("`", "")));
-      assert.equal(rows.length, 13); assert.deepEqual(contract.slots.slice(98).map(slot => slot.element.id), rows.map(row => row[0]));
-      for (const slot of contract.slots.slice(98)) {
+      assert.equal(rows.length, 13); assert.deepEqual(contract.slots.slice(98, 111).map(slot => slot.element.id), rows.map(row => row[0]));
+      for (const slot of contract.slots.slice(98, 111)) {
         const entry = slot.element, element = refs.getM80Ref(entry.id).element, row = rows.find(row => row[0] === entry.id);
         assert.deepEqual(["inspector-id", "editor-kind", "editor-label", "editor-parent", "editor-editable", "editor-ops"].map(key => element.getAttribute(`data-ui-${key}`)), row);
         assert.equal(element.parentElement, refs.getM80Ref(entry.parentId).element); assert.equal(slot.referenceKind, "single");

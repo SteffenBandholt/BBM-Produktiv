@@ -94,10 +94,10 @@ Führend dafür: **#253, #254 und #274**.
 - Punkt 9 nur `Noch nicht bekannt` oder `Firmenliste im Anhang`.
 - BBM V2-Kopf, darunter Formularaufbau wie Vorlage.
 - Versand zur Unterschrift wird vorbereitet und vom Nutzer bewusst ausgelöst.
-- optionales Rücklaufdatum / Outlook-Erinnerung.
+- optionales Rücklaufdatum; Outlook-Erinnerung bleibt dem späteren Kalenderpaket vorbehalten.
 - unterschriebener Rücklauf wird dem Vorgang zugeordnet.
-- Abschluss entweder durch eigenen Behördenversand oder dokumentierte Versandbestätigung durch Bauherr/Architekt.
-- Status automatisch Rot / Orange / Grün aus dem echten Prozessstand ableiten.
+- Gemäß #274 B3/B4 genügt der tatsächlich geöffnete Outlook-Entwurf: Orange zur Unterschrift, Grün an die bestätigte Behörde mit zugeordnetem Rücklauf. Keine zusätzliche Fremdversandbestätigung, Versandbeobachtung oder Mailhistorie.
+- Status Rot / Orange / Grün aus diesem Prozessstand der ausgewählten Fassung ableiten; Rücklaufimport allein erzeugt kein Grün.
 
 ### #252 – SiGePlan
 - V1 arbeitet mit unveränderter Standardmatrix.

@@ -33,6 +33,8 @@ export default class SigekoPreNotificationScreen {
     this.alive = true; this.sequence = 0; this.ready = false; this.loading = false; this.busy = false;
     this.data = null; this.inputs = {}; this.buttons = []; this.snapshot = null; this.conflict = false;
     this.documents = []; this.documentsLoading = false; this.documentsSequence = 0; this.pdfMessage = "";
+    this.workflow = null; this.workflowInputs = {}; this.workflowSequence = 0; this.workflowLoading = false;
+    this.mailPreparation = null; this.workflowMessage = "";
   }
 
   _label(parent, suffix, content) {
@@ -85,12 +87,13 @@ export default class SigekoPreNotificationScreen {
     this.documentSelection = this._field(pdf, "pdf.selection", "Gespeicherte Fassung", "documentSelection", "select");
     // Document selection is view state, never part of the editable form draft.
     delete this.inputs.documentSelection;
-    this.documentSelection.oninput = this.documentSelection.onchange = () => this._refreshEnabled();
+    this.documentSelection.oninput = this.documentSelection.onchange = () => { this.workflowLoad = this.loadWorkflow(); };
     this.pdfInfo = this._label(pdf, "pdf.info", "Noch keine PDF-Fassung erstellt.");
     const pdfActions = node("div", "pdf.actions"); pdfActions.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;min-width:0";
     this.pdfOpenButton = this._button(pdfActions, "pdf.actions.open", "Gespeicherte PDF öffnen", () => this.openDocument("main"));
     this.pdfOpenFirmsButton = this._button(pdfActions, "pdf.actions.openFirms", "Firmenanlage öffnen", () => this.openDocument("firms")); pdf.append(pdfActions);
-    this.pdfStatus = this._label(pdf, "pdf.status", ""); this.pdfStatus.setAttribute("role", "status"); root.append(pdf);
+    this.pdfStatus = this._label(pdf, "pdf.status", ""); this.pdfStatus.setAttribute("role", "status");
+    this._renderWorkflow(pdf); root.append(pdf);
     const document = node("article", "document"); document.style.cssText = "box-sizing:border-box;align-self:center;width:100%;max-width:880px;padding:clamp(12px,3vw,28px);background:#fff;border:1px solid #d0dbe6;" + STACK + ";gap:14px";
     const authority = node("section", "authority"); authority.style.cssText = STACK;
     this._label(authority, "authority.title", "An die Arbeitsschutzbehörde"); this.authorityValue = this._label(authority, "authority.value", "Zuständige Behörde noch zu klären.");
@@ -184,6 +187,7 @@ export default class SigekoPreNotificationScreen {
     this.pdfOpenFirmsButton.disabled = this.pdfOpenButton.disabled || !selected?.files.some(file => file.kind === "firms");
     this.pdfInfo.textContent = selected ? `Erstellt am ${this._documentDate(selected)} · ${this._documentName(selected)} · ${selected.files.some(file => file.kind === "firms") ? "mit" : "ohne"} Firmenanlage` : "Noch keine PDF-Fassung erstellt.";
     this.pdfStatus.textContent = [this.isDirty() ? "Bitte Änderungen zuerst speichern." : this.conflict ? "Entwurf inzwischen geändert. Bitte bewusst neu laden." : "", this.pdfMessage].filter(Boolean).join("\n");
+    this._refreshWorkflow();
     if (this.data) {
       if (this.ready) {
         const issues = this.data.readiness.issues;
@@ -285,6 +289,7 @@ export default class SigekoPreNotificationScreen {
       option.textContent = `${this._documentDate(entry)} · ${this._documentName(entry)}`; this.documentSelection.append(option);
     }
     this.documentSelection.value = documents.some(entry => entry.id === preferredId) ? preferredId : documents[0]?.id || "";
+    this.workflowLoad = this.loadWorkflow();
     return !!preferredId && !!documents.length && this.documentSelection.value !== preferredId;
   }
   async loadDocuments() {
@@ -364,11 +369,208 @@ export default class SigekoPreNotificationScreen {
     } catch (error) { if (current()) this.pdfMessage = "Gespeicherte Datei konnte nicht geöffnet werden: " + error.message; return false; }
     finally { if (current()) { this.busy = false; this._refreshEnabled(); } }
   }
+  _workflowField(parent, suffix, label, key, kind = "text") {
+    let input;
+    if (kind === "multilineText") {
+      const group = node("div", suffix); group.style.cssText = STACK + ";gap:3px";
+      const caption = node("label", suffix + ".label", label); caption.htmlFor = id(suffix + ".input");
+      input = node("textarea", suffix + ".input"); input.id = id(suffix + ".input"); input.rows = 5; input.maxLength = 32768;
+      input.style.cssText = "box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-height:100px;padding:6px;font:inherit";
+      group.append(caption, input); parent.append(group);
+    } else {
+      input = this._field(parent, suffix, label, key, kind); delete this.inputs[key];
+    }
+    input.oninput = input.onchange = () => this._refreshEnabled();
+    this.workflowInputs[key] = input; return input;
+  }
+  _renderWorkflow(parent) {
+    const prefix = "pdf.workflow", section = node("section", prefix); section.style.cssText = STACK + ";padding-top:12px;border-top:1px solid #cbd7e4";
+    this._label(section, prefix + ".title", "Rücklauf und Outlook");
+    this.workflowState = this._label(section, prefix + ".state", "Noch keine PDF-Fassung ausgewählt."); this.workflowState.setAttribute("role", "status");
+    this._label(section, prefix + ".hint", "Die Ampel zeigt die bestätigte Outlook-Entwurfsübergabe, keinen tatsächlichen Versand. Das optionale Rücklaufdatum wird erst beim erfolgreichen Öffnen des Unterschrift-Entwurfs gespeichert.");
+    const returned = node("div", prefix + ".return"); returned.style.cssText = STACK;
+    this.returnInfo = this._label(returned, prefix + ".return.info", "Keine Rücklaufdatei zugeordnet.");
+    this.returnImportButton = this._button(returned, prefix + ".return.import", "Unterschriebenes PDF zuordnen", () => this.runWorkflowAction("import"));
+    this.returnOpenButton = this._button(returned, prefix + ".return.open", "Unterschriebenes PDF öffnen", () => this.runWorkflowAction("open"));
+    this._workflowField(returned, prefix + ".return.due", "Erbetener Rücklauf – optional, gespeichert beim Öffnen des Unterschrift-Entwurfs", "due", "date");
+    this.workflowInputs.due.oninput = this.workflowInputs.due.onchange = () => {
+      if (this.mailPreparation?.purpose === "signature" && normalized(this.workflowInputs.due.value) !== this.mailPreparation.returnRequestedBy) {
+        this._clearMail(); this.workflowMessage = "Rücklaufdatum geändert. Bitte den Unterschrift-Entwurf erneut vorbereiten.";
+      }
+      this._refreshEnabled();
+    };
+    section.append(returned);
+    const actions = node("div", prefix + ".actions"); actions.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;min-width:0";
+    this.signatureMailButton = this._button(actions, prefix + ".actions.signature", "Zur Unterschrift vorbereiten", () => this.prepareMail("signature"));
+    this.authorityMailButton = this._button(actions, prefix + ".actions.authority", "An Behörde vorbereiten", () => this.prepareMail("authority")); section.append(actions);
+    const mail = node("div", prefix + ".mail"); mail.style.cssText = STACK;
+    this.mailPurpose = this._label(mail, prefix + ".mail.purpose", "Kein Mailvorgang vorbereitet.");
+    this._workflowField(mail, prefix + ".mail.choice", "Empfänger aus Projektkontakten auswählen", "choice", "select");
+    this.addRecipientButton = this._button(mail, prefix + ".mail.addRecipient", "Adresse übernehmen", () => {
+      if (!this._workflowWritable() || !this.mailPreparation || !this.workflowInputs.choice.value) return false;
+      this.workflowInputs.recipients.value = this._recipients(this.workflowInputs.recipients.value + ";" + this.workflowInputs.choice.value).join("; ");
+      this._refreshEnabled(); return true;
+    });
+    this._workflowField(mail, prefix + ".mail.recipients", "Empfängeradressen – mit Semikolon trennen", "recipients");
+    this._workflowField(mail, prefix + ".mail.subject", "Betreff", "subject").maxLength = 1000;
+    this._workflowField(mail, prefix + ".mail.body", "Nachricht", "body", "multilineText");
+    this.mailAttachments = this._label(mail, prefix + ".mail.attachments", "Keine Anlagen vorbereitet.");
+    this.mailOpenButton = this._button(mail, prefix + ".mail.open", "Outlook-Entwurf öffnen", () => this.runWorkflowAction("mail")); section.append(mail);
+    this.workflowStatus = this._label(section, prefix + ".status", ""); this.workflowStatus.setAttribute("role", "status"); parent.append(section);
+  }
+  _clearMail() {
+    this.mailPreparation = null;
+    for (const key of ["recipients", "subject", "body"]) this.workflowInputs[key].value = "";
+    this.workflowInputs.choice.textContent = ""; this.workflowInputs.choice.value = "";
+  }
+  _workflowAvailable() {
+    return this.alive && !this.busy && !this.loading && !this.documentsLoading && !this.workflowLoading
+      && this.workflow?.projectId === this.projectId && this.workflow?.documentId === this.documentSelection.value;
+  }
+  _workflowWritable() { return this._workflowAvailable() && this.workflow.canWrite && !this.project?.archived_at; }
+  _refreshWorkflow() {
+    if (!this.workflowState) return;
+    const available = this._workflowAvailable(), writable = this._workflowWritable(), prepared = !!this.mailPreparation;
+    this.returnImportButton.disabled = this.signatureMailButton.disabled = !writable;
+    this.returnOpenButton.disabled = !available || !this.workflow?.signedFile;
+    this.authorityMailButton.disabled = !writable || !this.workflow?.signedFile;
+    this.mailOpenButton.disabled = !writable || !prepared;
+    this.addRecipientButton.disabled = !writable || !prepared || !this.workflowInputs.choice.value;
+    for (const [key, input] of Object.entries(this.workflowInputs)) input.disabled = !writable || (key !== "due" && !prepared) || (key === "due" && this.mailPreparation?.purpose === "authority");
+    const state = this.workflow?.status;
+    this.workflowState.textContent = this.workflowLoading ? "Prozessstand wird geladen …" : state === "green" ? "Grün – Outlook-Entwurf an die Behörde geöffnet."
+      : state === "orange" ? "Orange – Outlook-Entwurf zur Unterschrift geöffnet." : state === "red" ? "Rot – noch keine Outlook-Übergabe bestätigt."
+        : this.documentSelection.value ? "Prozessstand nicht verfügbar." : "Noch keine PDF-Fassung ausgewählt.";
+    this.workflowState.style.color = { red: "#a12622", orange: "#885700", green: "#176b3a" }[state] || "inherit";
+    this.returnInfo.textContent = this.workflow?.signedFile ? "Zugeordneter Rücklauf: " + this.workflow.signedFile.projectRelativePath.split("/").pop() : "Keine Rücklaufdatei zugeordnet.";
+    this.mailPurpose.textContent = prepared ? `Vorbereitet für die ausgewählte Fassung: ${this.mailPreparation.purpose === "signature" ? "zur Unterschrift" : "an die Behörde"}.` : "Kein Mailvorgang vorbereitet.";
+    this.mailAttachments.textContent = prepared ? "Anlagen:\n" + this.mailPreparation.attachments.map(file => `${file.name} (${file.byteSize} Bytes)`).join("\n") : "Keine Anlagen vorbereitet.";
+    this.workflowStatus.textContent = this.workflowMessage;
+  }
+  _validateWorkflow(value, documentId) {
+    const revision = value?.revision;
+    if (value?.projectId !== this.projectId || value?.documentId !== documentId || !["red", "orange", "green"].includes(value?.status)
+      || !(revision === null || Number.isSafeInteger(revision) && revision > 0) || typeof value.canWrite !== "boolean"
+      || !(value.signedFile === null || value.signedFile?.kind === "signed" && typeof value.signedFile.projectRelativePath === "string" && value.signedFile.projectRelativePath.endsWith(".pdf"))) {
+      throw new Error("Rücklaufdaten konnten der ausgewählten Fassung nicht sicher zugeordnet werden.");
+    }
+    return value;
+  }
+  async loadWorkflow({ message = "" } = {}) {
+    const sequence = ++this.workflowSequence, projectId = this.projectId, documentId = this.documentSelection.value;
+    const current = () => this.alive && this.workflowSequence === sequence && this.projectId === projectId && this.documentSelection.value === documentId;
+    this.workflow = null; this._clearMail(); this.workflowInputs.due.value = ""; this.workflowMessage = message;
+    this.workflowLoading = !!documentId; this._refreshEnabled();
+    if (!documentId || !this.alive) return false;
+    try {
+      const data = unpack(await window.bbmDb.sigekoGetPreNotificationWorkflow({ projectId, documentId }));
+      if (!current()) return false;
+      this.workflow = this._validateWorkflow(data, documentId); this.workflowInputs.due.value = string(data.returnRequestedBy); return true;
+    } catch (error) { if (current()) this.workflowMessage = [message, "Prozessstand konnte nicht geladen werden: " + error.message].filter(Boolean).join("\n"); return false; }
+    finally { if (current()) { this.workflowLoading = false; this._refreshEnabled(); } }
+  }
+  _returnDate() {
+    const input = this.workflowInputs.due, value = normalized(input.value);
+    if (input.validity?.badInput || value !== null && (!/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(Date.parse(value)) || new Date(value).toISOString().slice(0, 10) !== value)) throw new Error("Bitte ein gültiges Rücklaufdatum eingeben.");
+    return value;
+  }
+  _recipients(value) {
+    const seen = new Set();
+    return string(value).split(/[;,]/).map(entry => entry.trim()).filter(entry => {
+      const key = entry.toLowerCase(); if (!entry || seen.has(key)) return false; seen.add(key); return true;
+    });
+  }
+  async _loadRecipientChoices(projectId, current) {
+    const api = window.bbmDb, options = [], seen = new Set();
+    const add = (email, label) => { const value = string(email).trim(), key = value.toLowerCase(); if (value && !seen.has(key)) { seen.add(key); options.push({ value, label: `${label || value} – ${value}` }); } };
+    try {
+      const firms = await api.firmDirectoryListProjectParticipants({ projectId, includeInactive: false });
+      if (!current()) return;
+      if (!firms?.ok || !Array.isArray(firms.list)) throw new Error(firms?.error || "Projektkontakte nicht verfügbar.");
+      for (const entry of firms.list) {
+        add(entry.email, entry.label || entry.name);
+        const persons = await api.firmDirectoryListPersons({ ref: { ...entry.ref, projectId }, forUse: "project_participant" });
+        if (!current()) return;
+        if (!persons?.ok || !Array.isArray(persons.list)) throw new Error(persons?.error || "Ansprechpartner nicht verfügbar.");
+        for (const person of persons.list) add(person.email, `${entry.label || entry.name} / ${person.name || "Ansprechpartner"}`);
+      }
+    } catch (error) { if (current()) this.workflowMessage += "\nProjektkontakte konnten nicht vollständig geladen werden. Empfänger können frei eingetragen werden: " + error.message; }
+    if (!current()) return;
+    const select = this.workflowInputs.choice; select.textContent = "";
+    for (const item of [{ value: "", label: "Bitte auswählen" }, ...options]) { const option = document.createElement("option"); option.value = item.value; option.textContent = item.label; select.append(option); }
+    select.value = "";
+  }
+  async prepareMail(purpose) {
+    if (!this._workflowWritable() || !["signature", "authority"].includes(purpose) || purpose === "authority" && !this.workflow.signedFile) return false;
+    let returnRequestedBy;
+    try { returnRequestedBy = purpose === "signature" ? this._returnDate() : this.workflow.returnRequestedBy; }
+    catch (error) { this.workflowMessage = error.message; this._refreshEnabled(); return false; }
+    const projectId = this.projectId, documentId = this.documentSelection.value, generation = this.workflowSequence, sequence = ++this.sequence;
+    const current = () => this.alive && this.projectId === projectId && this.documentSelection.value === documentId && this.workflowSequence === generation && this.sequence === sequence;
+    this.busy = true; this._clearMail(); this.workflowMessage = "Outlook-Entwurf wird vorbereitet …"; this._refreshEnabled();
+    try {
+      const data = unpack(await window.bbmDb.sigekoPreparePreNotificationMail({ projectId, documentId, purpose, returnRequestedBy }));
+      if (!current()) return false;
+      if (data?.projectId !== projectId || data?.documentId !== documentId || data?.purpose !== purpose || data.revision !== this.workflow.revision
+        || data.returnRequestedBy !== returnRequestedBy || !Array.isArray(data.recipients) || data.recipients.some(value => typeof value !== "string")
+        || typeof data.subject !== "string" || typeof data.body !== "string" || !Array.isArray(data.attachments) || !data.attachments.length
+        || data.attachments.some(file => typeof file.name !== "string" || !Number.isSafeInteger(file.byteSize) || file.byteSize < 1)) throw new Error("Mailvorbereitung passt nicht zur ausgewählten Fassung oder zum aktuellen Prozessstand. Bitte erneut laden.");
+      this.mailPreparation = data; this.workflowInputs.recipients.value = data.recipients.join("; ");
+      this.workflowInputs.subject.value = data.subject; this.workflowInputs.body.value = data.body;
+      this.workflowMessage = "Empfänger, Betreff, Nachricht und Anlagen prüfen. Erst ‚Outlook-Entwurf öffnen‘ führt die Übergabe aus.";
+      await this._loadRecipientChoices(projectId, current); return current();
+    } catch (error) { if (current()) { this._clearMail(); this.workflowMessage = "Mailvorbereitung fehlgeschlagen: " + error.message; } return false; }
+    finally { if (this.alive && this.sequence === sequence) { this.busy = false; this._refreshEnabled(); completeM80PilotRender(); } }
+  }
+  async runWorkflowAction(action) {
+    if (!["import", "open", "mail"].includes(action) || !(action === "open" ? this._workflowAvailable() && this.workflow.signedFile : this._workflowWritable()) || action === "mail" && !this.mailPreparation) return false;
+    const projectId = this.projectId, documentId = this.documentSelection.value, sequence = ++this.sequence, generation = this.workflowSequence;
+    const current = () => this.alive && this.projectId === projectId && this.documentSelection.value === documentId && this.workflowSequence === generation && this.sequence === sequence;
+    let reload = false, payload = { projectId, documentId };
+    try {
+      if (action !== "open") payload.expectedRevision = this.workflow.revision;
+      if (action === "mail") {
+        const mail = this.mailPreparation, recipients = this._recipients(this.workflowInputs.recipients.value);
+        if (mail.documentId !== documentId || mail.projectId !== projectId || mail.revision !== this.workflow.revision) throw new Error("Mailvorbereitung ist nicht mehr aktuell. Bitte erneut vorbereiten.");
+        if (!recipients.length || recipients.some(value => !/^[^\s@<>;,]+@[^\s@<>;,]+\.[^\s@<>;,]+$/.test(value))) throw new Error("Bitte gültige Empfängeradressen eintragen.");
+        const due = mail.purpose === "signature" ? this._returnDate() : this.workflow.returnRequestedBy;
+        if (due !== mail.returnRequestedBy) { this._clearMail(); throw new Error("Rücklaufdatum geändert. Bitte erneut vorbereiten."); }
+        payload = { ...payload, purpose: mail.purpose, recipients, subject: this.workflowInputs.subject.value, body: this.workflowInputs.body.value, returnRequestedBy: due };
+      }
+      this.busy = true; this.workflowMessage = action === "import" ? "Rücklauf-PDF auswählen …" : action === "open" ? "Rücklauf wird geöffnet …" : "Outlook-Entwurf wird geöffnet …"; this._refreshEnabled();
+      const method = { import: "sigekoImportPreNotificationSignedReturn", open: "sigekoOpenPreNotificationSignedReturn", mail: "sigekoOpenPreNotificationMailDraft" }[action];
+      const data = unpack(await window.bbmDb[method](payload));
+      if (!current()) return false;
+      if (action === "open") {
+        if (data?.opened !== true) throw new Error("Dateiöffnung wurde nicht bestätigt.");
+        this.workflowMessage = "Zugeordneter Rücklauf geöffnet.";
+      } else if (action === "import" && data?.canceled === true) this.workflowMessage = "Dateiauswahl abgebrochen. Rücklauf unverändert.";
+      else {
+        if (action === "mail" && (data?.outcome !== "draft-opened" || data?.transport !== "outlook") || action === "import" && data?.canceled !== false) throw new Error("Vorgang wurde nicht bestätigt.");
+        this.workflow = this._validateWorkflow(data.workflow, documentId); this.workflowInputs.due.value = string(this.workflow.returnRequestedBy); this._clearMail();
+        this.workflowMessage = action === "import" ? "Rücklaufdatei zugeordnet. Der Dateiinhalt wurde nicht auf eine gültige Unterschrift geprüft." : "Outlook-Entwurf mit Anlagen geöffnet. Der tatsächliche Versand erfolgt in Outlook.";
+      }
+      return true;
+    } catch (error) {
+      if (current()) {
+        this.workflowMessage = "Vorgang fehlgeschlagen: " + error.message;
+        if (["SIGEKO_MAIL_OPENED_STATE_UNSAVED", "PRE_NOTIFICATION_WORKFLOW_CONFLICT"].includes(error.code)) {
+          this._clearMail(); reload = true;
+        }
+      }
+      return false;
+    } finally {
+      if (this.alive && this.sequence === sequence) {
+        this.busy = false; this._refreshEnabled(); completeM80PilotRender();
+        if (reload && current()) await this.loadWorkflow({ message: this.workflowMessage });
+      }
+    }
+  }
   _back(focusSection = null) { return this.router.openProjectModule(this.projectId, "sigeko", { project: this.project, ...(focusSection ? { focusSection } : {}) }); }
   navigate(action) {
     if (!this.alive || this.busy || this.loading) return false;
     if (this.isDirty() && !window.confirm("Ungespeicherte Vorankündigung verwerfen und diese Ansicht verlassen?")) return false;
     return action();
   }
-  destroy() { this.alive = false; ++this.sequence; ++this.documentsSequence; beginM83ComponentBinding(PRE_NOTIFICATION_COMPONENT_ID); }
+  destroy() { this.alive = false; ++this.sequence; ++this.documentsSequence; ++this.workflowSequence; beginM83ComponentBinding(PRE_NOTIFICATION_COMPONENT_ID); }
 }
