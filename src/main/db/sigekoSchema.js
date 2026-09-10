@@ -33,8 +33,38 @@ function ensureSigekoSchema(db) {
         AND json_extract(snapshot_json, '$.documentTypeId') = document_type, 0))
     );
     CREATE INDEX IF NOT EXISTS sigeko_documents_project_created ON sigeko_documents(project_id, document_type, created_at DESC, id DESC);
+    CREATE UNIQUE INDEX IF NOT EXISTS sigeko_documents_id_project ON sigeko_documents(id, project_id);
     CREATE TRIGGER IF NOT EXISTS sigeko_documents_immutable BEFORE UPDATE ON sigeko_documents
       BEGIN SELECT RAISE(ABORT, 'SiGeKo-Dokumentfassungen sind unveränderlich'); END;
+    CREATE TABLE IF NOT EXISTS sigeko_pre_notification_workflows (
+      document_id TEXT PRIMARY KEY NOT NULL CHECK (length(trim(document_id)) > 0),
+      project_id TEXT NOT NULL CHECK (length(trim(project_id)) > 0),
+      signed_file_json TEXT CHECK (signed_file_json IS NULL OR
+        (json_valid(signed_file_json) AND COALESCE(json_type(signed_file_json) = 'object'
+          AND json_extract(signed_file_json, '$.kind') = 'signed', 0))),
+      signed_received_at TEXT,
+      signature_opened_at TEXT,
+      authority_opened_at TEXT,
+      return_requested_by TEXT CHECK (return_requested_by IS NULL OR
+        (length(return_requested_by) = 10 AND return_requested_by GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'
+          AND substr(return_requested_by, 1, 4) BETWEEN '0001' AND '9999'
+          AND COALESCE(date(return_requested_by, '+0 days') = return_requested_by, 0))),
+      revision INTEGER NOT NULL CHECK (typeof(revision) = 'integer' AND revision BETWEEN 1 AND 9007199254740991),
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (document_id, project_id) REFERENCES sigeko_documents(id, project_id) ON DELETE CASCADE,
+      ${["signed_received_at", "signature_opened_at", "authority_opened_at", "created_at", "updated_at"].map(key => `CHECK (${key} IS NULL OR
+        (length(${key}) = 24 AND substr(${key}, 1, 4) BETWEEN '0001' AND '9999'
+          AND COALESCE(strftime('%Y-%m-%dT%H:%M:%fZ', ${key}, '+0 seconds') = ${key}, 0)))`).join(",\n")},
+      CHECK ((signed_file_json IS NULL) = (signed_received_at IS NULL)),
+      CHECK (authority_opened_at IS NULL OR signed_file_json IS NOT NULL),
+      CHECK (authority_opened_at IS NULL OR authority_opened_at >= signed_received_at),
+      CHECK (updated_at >= created_at),
+      CHECK (signed_received_at IS NULL OR signed_received_at BETWEEN created_at AND updated_at),
+      CHECK (signature_opened_at IS NULL OR signature_opened_at BETWEEN created_at AND updated_at),
+      CHECK (authority_opened_at IS NULL OR authority_opened_at BETWEEN created_at AND updated_at)
+    );
+    CREATE INDEX IF NOT EXISTS sigeko_pre_notification_workflows_project ON sigeko_pre_notification_workflows(project_id, document_id);
     CREATE TABLE IF NOT EXISTS sigeko_projects (
       id TEXT PRIMARY KEY NOT NULL,
       project_id TEXT NOT NULL UNIQUE REFERENCES projects(id) ON DELETE CASCADE,

@@ -310,6 +310,6 @@ async function runSigekoPreNotificationDocumentTests(run) {
   }));
 }
 
-module.exports = { runSigekoPreNotificationDocumentTests };
+module.exports = { runSigekoPreNotificationDocumentTests, withDocuments };
 if (require.main === module) runSigekoPreNotificationDocumentTests(async (name, check) => { await check(); console.log("PASS", name); })
   .catch(error => { console.error(error); process.exitCode = 1; });

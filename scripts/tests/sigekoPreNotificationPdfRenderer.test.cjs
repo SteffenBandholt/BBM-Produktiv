@@ -166,6 +166,52 @@ async function runSigekoPreNotificationPdfRendererTests(run) {
         assert.throws(() => renderer.validatePreNotificationPdfLayout(root, data), error => error.code === "PDF_PROVIDER_LAYOUT_OVERFLOW" && error.field === "p3.value" && /Art des Bauvorhabens/.test(error.message));
       }
     });
+    // Inject the observed Windows Noto geometry; browser acceptance separately
+    // verifies actual font shaping, zero-size baselines and unchanged PDF DOM.
+    for (const [name, options, fits] of [
+      ["local Noto font padding", {}, true],
+      ["tall combining accent", { ascent: 15 }, false],
+      ["visible descender below field", { descent: 10 }, false],
+      ["second visible line below field", { multiline: true }, false],
+      ["horizontal overflow", { horizontal: true }, false],
+      ["marker causes text reflow", { reflow: true }, false],
+      ["marker changes scroll height", { scrollChange: true }, false],
+      ["missing ink metrics", { ascent: undefined }, false],
+      ["nonfinite ink metrics", { ascent: NaN }, false],
+      ["baseline measurement throws", { markerThrows: true }, false],
+    ]) await run(`S5.4: measured ink guard handles ${name} and restores all temporary markers`, () => {
+      const data = dataFor(), root = mount(renderer.buildPreNotificationPdfContent(data).body);
+      for (const node of [root, ...root.querySelectorAll(".page"), ...REGISTRY.elements.filter(e => !["document", "page"].includes(e.kind)).map(e => root.querySelector(e.rendererKey)), root.querySelector(".v2FooterReserveSpacer")]) {
+        const r = node.rect; node.rect = rect(r.left * 96 / 25.4, r.top * 96 / 25.4, r.width * 96 / 25.4, r.height * 96 / 25.4);
+      }
+      const target = root.querySelector('[data-sigeko-va-pdf="authority.label"]');
+      target.rect = rect(45.34774398803711, 211.6353302001953, 702.9887084960938, 18.890975952148438);
+      const text = { nodeType: 3, textContent: target.textContent, parentElement: target };
+      target.firstChild = text; target.childNodes = [text];
+      const markers = [];
+      target.insertBefore = marker => { markers.push(marker); target.childNodes.push(marker); if (options.scrollChange) target.scrollHeight += 2; };
+      const doc = global.document, computed = global.getComputedStyle;
+      global.getComputedStyle = node => node === target ? { writingMode: "horizontal-tb", textTransform: "none", fontStyle: "normal", fontWeight: "400", fontSize: "12px", fontFamily: '\"Noto Sans\", Arial, sans-serif', direction: "ltr" } : computed(node);
+      const originalTextRect = rect(target.rect.left, target.rect.top - 1.8045196533, options.horizontal ? target.rect.width + 3 : 162.5187835693, 16.2406005859);
+      global.document = { createElement(tag) {
+        if (tag === "canvas") return { getContext: () => ({ measureText: () => ({ actualBoundingBoxAscent: Object.hasOwn(options, "ascent") ? options.ascent : 10, actualBoundingBoxDescent: options.descent ?? 0 }) }) };
+        const marker = { style: {}, remove() { target.childNodes = target.childNodes.filter(child => child !== marker); }, getBoundingClientRect() {
+          if (options.markerThrows) throw new Error("Synthetic measurement failure");
+          return { top: target.rect.top + 11.44 + (options.multiline && markers.indexOf(marker) === 1 ? 13.8 : 0) };
+        } }; return marker;
+      }, createRange() { let selected; return { selectNodeContents(node) { selected = node; }, detach() {},
+        getBoundingClientRect() { return selected === target ? originalTextRect : selected.rect; },
+        getClientRects() {
+          assert.equal(selected, text);
+          const first = { ...originalTextRect, left: originalTextRect.left + (options.reflow && markers.length ? 2 : 0) };
+          return options.multiline ? [first, { ...first, top: first.top + 13.8, bottom: first.bottom + 13.8 }] : [first];
+        } }; } };
+      try {
+        if (fits) assert.equal(renderer.validatePreNotificationPdfLayout(root, data), root);
+        else assert.throws(() => renderer.validatePreNotificationPdfLayout(root, data), error => error.code === "PDF_PROVIDER_LAYOUT_OVERFLOW" && error.field === "authority.label");
+        assert.deepEqual(target.childNodes, [text]); assert.equal(target.textContent, text.textContent);
+      } finally { global.document = doc; global.getComputedStyle = computed; }
+    });
     await run("S5.3b2: overflow guard rejects duplicate missing and reparented explicit refs", () => {
       for (const change of [root => root.querySelector('[data-sigeko-va-pdf="p3.value"]').remove(),
         root => { const duplicate = new Element(); duplicate.setAttribute("data-sigeko-va-pdf", "p3.value"); root.appendChild(duplicate); },

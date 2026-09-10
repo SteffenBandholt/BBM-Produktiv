@@ -6,12 +6,20 @@ const { createProjectAuthorityService } = require("../domain/sigeko/ProjectAutho
 const { createReadinessService } = require("../domain/sigeko/ReadinessService");
 const { createPreNotificationService } = require("../domain/sigeko/PreNotificationService");
 const { getPreNotificationDocumentService } = require("../domain/sigeko/PreNotificationDocumentService");
+const { createPreNotificationWorkflowService } = require("../domain/sigeko/PreNotificationWorkflowService");
 
 function registerSigekoIpc({ ipcMain, service = createSigekoService(), projectService = createSigekoProjectService(),
   authorityService = createAuthorityService(), projectAuthorityService = createProjectAuthorityService(),
   readinessService = createReadinessService({ projectService, projectAuthorityService }),
   preNotificationService = createPreNotificationService({ projectService, projectAuthorityService }),
-  documentService = getPreNotificationDocumentService() } = {}) {
+  documentService = getPreNotificationDocumentService(), workflowService = createPreNotificationWorkflowService() } = {}) {
+  for (const operation of ["getPreNotificationWorkflow", "preparePreNotificationMail", "importPreNotificationSignedReturn",
+    "openPreNotificationSignedReturn", "openPreNotificationMailDraft"]) {
+    ipcMain.handle(`sigeko:${operation}`, async (_event, payload) => {
+      try { return { ok: true, data: await workflowService[operation](payload) }; }
+      catch (error) { return { ok: false, error: error?.message || String(error), code: error?.code || "SIGEKO_WORKFLOW_ERROR" }; }
+    });
+  }
   for (const operation of ["previewPreNotificationPdf", "createPreNotificationPdf", "listPreNotificationDocuments",
     "openPreNotificationDocumentFile", "preparePreNotificationPdfEditor"]) {
     ipcMain.handle(`sigeko:${operation}`, async (_event, payload) => {

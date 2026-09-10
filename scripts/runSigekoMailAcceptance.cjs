@@ -9,11 +9,13 @@ const { ACCEPTANCE_SWITCH, configureUiEditorAcceptanceProfile } = require("../sr
 const ROOT = path.resolve(__dirname, "..");
 
 async function runWorker() {
-  const { app, BrowserWindow, dialog } = require("electron");
+  const { app, BrowserWindow, dialog, ipcMain } = require("electron");
   let profile;
-  const report = { package: "S1.5", ok: false, checks: {}, actualSendObserved: false, cryptographicLicenseVerified: false };
+  const s54 = process.argv.includes("--s54");
+  const report = { package: s54 ? "S5.4" : "S1.5", ok: false, checks: {}, actualSendObserved: false, cryptographicLicenseVerified: false };
   try {
     assert.equal(process.platform, "win32", "Abnahme erfordert Windows mit installiertem klassischem Outlook (COM).");
+    app.setAppPath(ROOT);
     profile = configureUiEditorAcceptanceProfile({ electronApp: app });
     assert.equal(profile.enabled, true);
     // Reuse the existing isolated status fixture; no product license bypass.
@@ -25,6 +27,10 @@ async function runWorker() {
     const caller = new BrowserWindow({ show: false, webPreferences: { preload: path.join(ROOT, "src/main/preload.js"), contextIsolation: true, nodeIntegration: false, sandbox: false } });
     await caller.loadURL("about:blank");
     const invoke = (payload) => caller.webContents.executeJavaScript(`window.bbmMail.createOutlookDraft(${JSON.stringify(payload)})`);
+    if (s54) {
+      await require("./helpers/sigekoWorkflowOutlookAcceptance.cjs").runWorkflowOutlookAcceptance({ app, BrowserWindow, dialog, ipcMain, profile, fixture, caller, report });
+      return;
+    }
     const to = ["bbm-abnahme@example.invalid"];
     const subject = "BBM S1.5 – technischer Entwurf, bitte verwerfen";
     const body = "Technische Prüfung der gemeinsamen Mailgrenze.\nDiesen Entwurf nach der Prüfung verwerfen.";
@@ -67,12 +73,12 @@ async function launch() {
   if (process.platform !== "win32") throw new Error("Diese praktische Abnahme benötigt Windows und klassisches Outlook (COM).");
   const profile = createAcceptanceProfile();
   console.log(`Abnahmebericht: ${path.join(profile.rootPath, "mail-acceptance-result.json")}`);
-  const child = spawn(require("electron"), [__filename, "--worker", `${ACCEPTANCE_SWITCH}${profile.rootPath}`],
+  const child = spawn(require("electron"), [__filename, "--worker", `${ACCEPTANCE_SWITCH}${profile.rootPath}`, ...(process.argv.includes("--s54") ? ["--s54"] : [])],
     { cwd: ROOT, env: createSanitizedEnvironment(), stdio: "inherit" });
   process.exitCode = await new Promise((resolve, reject) => { child.once("error", reject); child.once("exit", (code) => resolve(code ?? 1)); });
 }
 if (process.versions.electron && process.argv.includes("--worker")) void runWorker();
 else if (require.main === module) {
-  if (process.argv.includes("--help")) console.log("Windows mit klassischem Outlook: npm run test:sigeko:s1.5:outlook\nÖffnet einen isolierten Testentwurf mit zwei Textanlagen. Bitte prüfen und verwerfen. Kein Versand.");
+  if (process.argv.includes("--help")) console.log("Windows mit klassischem Outlook:\n  npm run test:sigeko:s1.5:outlook — ein isolierter Entwurf mit zwei Textanlagen.\n  npm run test:sigeko:s5.4:outlook — zwei echte Entwürfe mit Vorankündigung/Rücklauf und Firmen-PDF; nativen Rücklaufdialog bedienen.\nJeden Entwurf prüfen und verwerfen. Kein Versand; keine Produktivdaten.");
   else launch().catch((err) => { console.error(err.message); process.exitCode = 1; });
 }

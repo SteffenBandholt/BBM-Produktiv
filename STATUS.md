@@ -1,3 +1,37 @@
+## 2026-09-10 – SiGeKo S5.4: Abnahme abgeschlossen, Integrationsnachweis (PR #339)
+
+Basis main `676713aa`; Ergebnisbranch `codex/sigeko-s54-ruecklauf-outlook`.
+Geprüfter Produktstand `d0662acddb6222becd012c0937ccb5a06de8c0e8`.
+**B6 erfüllt:** Steffens isolierter Windowslauf `C1ZLBX` endet mit PASS.
+Beide tatsächlichen Outlook-Entwürfe samt PDF-Anlagen manuell bestätigt/verworfen,
+Rücklauf über nativen Dialog zugeordnet; Rot → Orange → Grün, Grün nach erneutem
+Öffnen der Datenbank erhalten, Originalbytes unverändert und neue Fassung Rot.
+Vorherige PDF-Vorbereitung `xVk60y` ebenfalls PASS. Keine Versandbeobachtung und
+keine echte Unterschrift; Nachweis über Nutzer-Terminalausgabe, JSON nicht separat gelesen.
+
+Die kleine vertikale Textmessungsreparatur berücksichtigt sichtbare Glyphen an
+Browser-Grundlinien; Schriftwahl, Layout, Toleranz und horizontale Grenzen bleiben.
+Windows-CI 34519222895: zehn Arial-/Noto-/Skalierungskombinationen PASS einschließlich
+Reproduktion des alten Noto-Abbruchs. PDF-CI 34519222888 Windows/Linux PASS;
+alle 49 Golden-Seitenzahlen/Strukturen unverändert, zehn neue Textmessungsfälle grün.
+Formular 34519222863 und gemeinsame Mailgrenze 34519222938 ebenfalls PASS.
+
+Allgemeine npm-CI 34519222870 weiter FAIL: 19 erfasste Fehlerzeilen identisch mit
+34515980114 vor Reparatur (Kit-/Popup-/Lizenzprobleme). Dieser begrenzte CI-Vergleich
+ersetzt keinen vollständigen Testlauf. Zusätzlich ist jetzt der volle Testumfang
+mit richtigem Kit geprüft: 2030/97 vor Reparatur → 2040/97 nach Reparatur, exakt
+gleiche Fehlernamen/-häufigkeiten, keine verlorenen PASS. Nach Unterbrechung in
+Gruppe 4 vollständig wiederholt/fortgesetzt; alle zehn Gruppen abschließend erfasst.
+Details: `docs/SIGEKO_S5_4_REPARATUR_TESTVERGLEICH.json`.
+Details: `docs/SIGEKO_S5_4_ABNAHME.md`, `docs/SIGEKO_S5_4_CI_ABGLEICH.json`.
+
+PR #339 ist vor Dokumentationsabschluss konfliktfrei, ohne offene Reviewthreads
+und ohne formell eingereichte GitHub-Reviews. Zusätzlicher unabhängiger Review
+der PDF-Reparatur ohne Blocker. Bestehende Integrationsfreigabe laut S5-Paketplan;
+Merge-ID und erfolgte Integration werden in PR #339/#274/#277 bestätigt. Danach
+S6 separat abgrenzen. Bestehende Schriftdatei-/Harnessmeldungen
+und allgemeine CI bleiben offen. Rechnung #275 eingefroren; Nutzer-Kit-Arbeit erhalten.
+
 ## 2026-09-10 – SiGeKo S5.3b2: Vorankündigungs-PDF und unveränderliche Fassungen (PR #338)
 
 Vorhandener Formularvorgang mit echter Vorschau, finaler PDF/Firmenanlage, Layoutstart

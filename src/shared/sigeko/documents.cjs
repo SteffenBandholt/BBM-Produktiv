@@ -9,7 +9,7 @@ function exact(value, keys) {
 }
 function validateDocumentFile(file) {
   exact(file, ["kind", "projectRelativePath", "sha256", "byteSize"]);
-  if (!["main", "firms"].includes(file.kind) || typeof file.projectRelativePath !== "string" ||
+  if (!["main", "firms", "signed"].includes(file.kind) || typeof file.projectRelativePath !== "string" ||
       !/^SiGeKo\/Unterlagen\/[^/\\]+\.pdf$/.test(file.projectRelativePath) ||
       /[<>:"|?*\u0000-\u001f]/.test(file.projectRelativePath) ||
       /^(?:CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])(?:\.|$)/i.test(file.projectRelativePath.split("/").at(-1)) ||

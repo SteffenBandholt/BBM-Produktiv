@@ -52,7 +52,7 @@ async function runSigekoEditorManifestTests(run) {
       { scopeId: 'sigeko.screen', status: 'complete', reason: null, elementCount: 208, missingReferenceCount: 0 },
     ]);
     assert.equal(scopes.find(s => s.scopeId === 'sigeko.screen').elements.length, 208);
-    assert.deepEqual(manifest.scopes.filter(s => s.scopeId === 'sigeko.preNotification'), [{ scopeId: 'sigeko.preNotification', status: 'complete', reason: null, elementCount: 112, missingReferenceCount: 0 }]);
+    assert.deepEqual(manifest.scopes.filter(s => s.scopeId === 'sigeko.preNotification'), [{ scopeId: 'sigeko.preNotification', status: 'complete', reason: null, elementCount: 144, missingReferenceCount: 0 }]);
   });
   await run('S1.2-Fix: alle sieben bisherigen Scope-Fingerprints bleiben bytegleich', () => {
     for (const [scopeId, fingerprint] of Object.entries(EXISTING_SCOPE_FINGERPRINTS)) {
