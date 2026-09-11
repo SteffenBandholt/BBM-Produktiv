@@ -17,6 +17,8 @@ const TEST_GROUPS = Object.freeze([
       ["sigekoPreNotificationDocuments.test.cjs", "runSigekoPreNotificationDocumentTests"],
       ["sigekoPreNotificationPdfRenderer.test.cjs", "runSigekoPreNotificationPdfRendererTests"],
       ["sigekoDocumentTransfer.test.cjs", "runSigekoDocumentTransferTests"],
+      ["outlookReminderDraft.test.cjs", "runOutlookReminderDraftTests"],
+      ["sigekoSimpleWorkflow.test.cjs", "runSigekoSimpleWorkflowTests"],
       ["sigekoPreNotificationWorkflows.test.cjs", "runSigekoPreNotificationWorkflowTests"],
       ["sigekoPreNotificationWorkflowService.test.cjs", "runSigekoPreNotificationWorkflowServiceTests"],
       ["sigekoWorkflowTransfer.test.cjs", "runSigekoWorkflowTransferTests"],

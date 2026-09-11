@@ -1,12 +1,31 @@
 "use strict";
 const { initDatabase } = require("./database");
 const { SIGEKO_PRE_NOTIFICATION_WORKFLOW_COLUMNS: COLUMNS, validatePreNotificationWorkflowRow } = require("../../shared/sigeko/preNotificationWorkflows.cjs");
+const { VA_RECIPIENTS_KEY, normalizeRecipients, parseRecipientSetting } = require("../../shared/sigeko/preNotificationRecipients.cjs");
 function conflict() {
   throw Object.assign(new Error("Der Vorankündigungsablauf wurde zwischenzeitlich geändert. Bitte neu laden."), { code: "PRE_NOTIFICATION_WORKFLOW_CONFLICT" });
 }
 class SigekoPreNotificationWorkflowsRepository {
   constructor({ dbProvider = initDatabase } = {}) { this.dbProvider = dbProvider; }
   transaction(fn) { return this.dbProvider().transaction(fn)(); }
+  getRecipients(projectId) {
+    const row = this.dbProvider().prepare("SELECT value FROM project_settings WHERE project_id=? AND key=?").get(projectId, VA_RECIPIENTS_KEY);
+    return parseRecipientSetting(row?.value);
+  }
+  saveRecipients(projectId, values, expectedRevision) {
+    const recipients = normalizeRecipients(values);
+    return this.transaction(() => {
+      const current = this.getRecipients(projectId);
+      if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0 || current.revision !== expectedRevision) conflict();
+      const next = { revision: expectedRevision + 1, recipients };
+      if (!Number.isSafeInteger(next.revision)) conflict();
+      const now = new Date().toISOString();
+      this.dbProvider().prepare(`INSERT INTO project_settings(project_id,key,value,created_at,updated_at) VALUES(?,?,?,?,?)
+        ON CONFLICT(project_id,key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`)
+        .run(projectId, VA_RECIPIENTS_KEY, JSON.stringify(next), now, now);
+      return this.getRecipients(projectId);
+    });
+  }
   get(projectId, documentId) {
     const row = this.dbProvider().prepare("SELECT * FROM sigeko_pre_notification_workflows WHERE project_id=? AND document_id=?").get(projectId, documentId);
     return row ? validatePreNotificationWorkflowRow(row, projectId) : null;

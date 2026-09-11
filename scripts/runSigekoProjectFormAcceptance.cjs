@@ -11,7 +11,7 @@ const ROOT = path.resolve(__dirname, "..");
 async function worker() {
   const { app, BrowserWindow, ipcMain, dialog, screen } = require("electron");
   let profile, database, editor;
-  const report = { package: "S2.4 / S3 / S4 / S5.2 / S5.3b2 / S5.4", ok: false, manualConfirmed: false, checks: [], rendererErrors: [] };
+  const report = { package: "S2.4 / S3 / S4 / S5.2 / S5.3b2 / S5.5", ok: false, manualConfirmed: false, checks: [], rendererErrors: [] };
   try {
     app.setAppPath(ROOT);
     profile = configureUiEditorAcceptanceProfile({ electronApp: app }); assert.equal(profile.enabled, true);
@@ -90,6 +90,10 @@ async function worker() {
     assert.match(await evaluate("s24.element('readiness.project.issues').textContent"), /Bauherr/);
     assert.equal(await evaluate("s24.element('profile.save').disabled || s24.element('roles.save').disabled"), false);
     report.checks.push("S3: incomplete project reports concrete missing builder data and actual missing S4 project-contact status; profile and role saves remain enabled");
+    await waitFor("!!s24.screen.vaRecipientSettings");
+    await fill({ "vaRecipients.addresses.input": "s55-owner@example.invalid" });
+    await click("vaRecipients.save"); await waitFor("!s24.screen.vaRecipientsBusy && s24.screen.vaRecipientSettings.revision===1");
+    report.checks.push("S5.5: project recipient entered and saved by real mouse/preload/SQLite, independent of profile and roles");
     await fill({ "profile.name.input": "S2.4 Eigenes Büro", "profile.street.input": "Profilweg 7", "profile.email.input": "sigeko@example.invalid" });
     await save("profile");
     await fill({ "planning.source.input": "free", "planning.free.name.input": "Andere Planung", "execution.same.input": false, "execution.source.input": "module" });
@@ -579,12 +583,8 @@ async function worker() {
     report.checks.push("S5.3b2: archived project disables all new PDF and layout actions but still opens the stored immutable PDF");
     await evaluate(`s24.screen.documentSelection.value=${JSON.stringify(secondDocument.id)};s24.screen.documentSelection.dispatchEvent(new Event('change',{bubbles:true}))`);
     await waitFor("!s24.screen.workflowLoading && s24.screen.workflow?.documentId===s24.screen.documentSelection.value");
-    assert.equal(await evaluate("s24.screen.returnImportButton.disabled && s24.screen.signatureMailButton.disabled && s24.screen.authorityMailButton.disabled && s24.screen.mailOpenButton.disabled"), true);
-    assert.equal(await evaluate("s24.screen.returnOpenButton.disabled"), false);
-    const archivedWorkflowBefore = database.initDatabase().prepare("SELECT * FROM sigeko_pre_notification_workflows WHERE document_id=?").get(secondDocument.id);
-    await vaClick("pdf.workflow.return.open"); await waitFor("!s24.screen.busy"); await closePreview();
-    assert.deepEqual(database.initDatabase().prepare("SELECT * FROM sigeko_pre_notification_workflows WHERE document_id=?").get(secondDocument.id), archivedWorkflowBefore);
-    report.checks.push("S5.4: archived form disables return import and mail actions while the stored signed return remains openable without workflow changes");
+    assert.equal(await evaluate("s24.screen.workflowSaveButton.disabled && s24.screen.mailOpenButton.disabled && Object.values(s24.screen.workflowInputs).every(e=>e.disabled)"), true);
+    report.checks.push("S5.5: archived form disables manual completion fields and direct Outlook action");
     repo.unarchiveProject(projects[0].id); await vaOpen(projects[0].id);
     const beforeVaLicense = vaSnapshot(); license = { valid: true, license: { modules: [] } };
     assert.equal(await evaluate(`window.bbmDb.sigekoGetPreNotification({projectId:${JSON.stringify(projects[0].id)}}).then(()=>false,e=>String(e).includes('MODULE_NOT_ACTIVE'))`), true);

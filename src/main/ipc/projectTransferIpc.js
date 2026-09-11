@@ -16,10 +16,20 @@ const { PROJECT_AUTHORITY_COLUMNS, validateProjectAuthorityRow } = require("../.
 const { PRE_NOTIFICATION_COLUMNS, validatePreNotificationRow } = require("../../shared/sigeko/preNotifications.cjs");
 const { SIGEKO_DOCUMENT_COLUMNS, validateSigekoDocumentRow, parseSigekoDocumentFiles } = require("../../shared/sigeko/documents.cjs");
 const { SIGEKO_PRE_NOTIFICATION_WORKFLOW_COLUMNS, validatePreNotificationWorkflowRow, parseSignedReturnFile } = require("../../shared/sigeko/preNotificationWorkflows.cjs");
+const { VA_RECIPIENTS_KEY, parseRecipientSetting } = require("../../shared/sigeko/preNotificationRecipients.cjs");
 const { inspectDocumentFile } = require("../domain/sigeko/preNotificationDocumentFiles");
 const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const projectsRepo = require("../db/projectsRepo");
 const { buildStoragePreviewPaths, sanitizeDirName, resolveProjectFolderName } = require("./projectStoragePaths");
+
+function validateVaRecipientSettings(rows) {
+  const matches = (rows || []).filter(row => row.key === VA_RECIPIENTS_KEY);
+  if (matches.length > 1) throw new Error("Doppelte Vorankündigungsempfänger im Projektarchiv.");
+  for (const row of matches) {
+    if (typeof row.value !== "string") throw new Error("Ungültige Vorankündigungsempfänger im Projektarchiv.");
+    parseRecipientSetting(row.value);
+  }
+}
 
 function _getExportRoot() {
   const settings = appSettingsGetMany(["pdf.protocolsDir"]) || {};
@@ -40,7 +50,7 @@ function _sanitizeFilePart(value, fallback = "Projekt") {
 
 function _buildProjectTransferManifest({ projectId, project, storage, data, exportedAt, filesCount }) {
   return {
-    formatVersion: data.sigekoPreNotificationWorkflows?.length ? 9
+    formatVersion: data.sigekoPreNotificationWorkflows?.length ? 10
       : data.sigekoDocuments?.length ? 8
       : data.sigekoPreNotifications?.length ? 7
       : data.sigekoProjectAuthorities?.length ? 6
@@ -170,6 +180,8 @@ function _fetchProjectData(projectId, project) {
   const projectSettings = db
     .prepare("SELECT key, value FROM project_settings WHERE project_id = ?")
     .all(projectId);
+
+  validateVaRecipientSettings(projectSettings);
 
   const restarbeitenItems = projectRows("restarbeiten_items");
   const restarbeitIds = restarbeitenItems.map((item) => item.id).filter(Boolean);
@@ -617,7 +629,7 @@ async function _importProjectZip(filePath) {
     if (!manifestRes.ok) return { ok: false, error: manifestRes.error };
     const manifest = manifestRes.data || {};
     const formatVersion = Number(manifest.formatVersion || 1);
-    if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > 9) {
+    if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > 10) {
       return { ok: false, error: `Nicht unterstützte Projektarchiv-Version: ${manifest.formatVersion}` };
     }
     if (Number(manifest.firmLogicSchemaVersion || 0) > 1) {
@@ -756,12 +768,20 @@ async function _importProjectZip(filePath) {
     if (formatVersion >= 9) {
       const workflowJson = await readPayload(workflowPath, "sigeko_pre_notification_workflows.json");
       payload.sigekoPreNotificationWorkflows = workflowJson.data.sigeko_pre_notification_workflows;
+      if (formatVersion === 9) {
+        payload.sigekoPreNotificationWorkflows = payload.sigekoPreNotificationWorkflows.map(row => {
+          // Validate the exact legacy shape before adding the two new null fields.
+          if (Object.hasOwn(row, "returned_on") || Object.hasOwn(row, "authority_sent_on")) throw new Error("Manuelle VA-Angaben erfordern Archiv-Version 10.");
+          return { ...row, returned_on: null, authority_sent_on: null };
+        });
+      }
       if (!payload.sigekoPreNotificationWorkflows.length) return { ok: false, error: "SiGeKo-Vorankündigungsabläufe fehlen im V9-Archiv." };
     }
 
     const project = payload.project;
     if (!project?.id) return { ok: false, error: "Projekt-ID fehlt im Export." };
 
+    validateVaRecipientSettings(payload.projectSettings);
     _validateProjectAuthorities(payload.sigekoProjectAuthorities, project.id);
     _validatePreNotifications(payload.sigekoPreNotifications || [], project.id);
     _validateSigekoDocuments(payload.sigekoDocuments || [], project.id);

@@ -1,3 +1,22 @@
+## 2026-09-11 – SiGeKo S5.5: Vorankündigung vereinfacht
+
+Nutzerentscheidung umgesetzt auf `codex/sigeko-va-einfacher-workflow`, Basis main
+`e3f1197f`. Projektbezogene Empfänger frei/aus Adressdaten; direkte Outlook-Mail mit
+PDF und Rückgabedatum/Absenderadresse; nach Entwurfsschluss optionale Outlook-Aufgabe
+„VA schon zurück“. BBM nur manuelle Checkboxen mit Datum für Rücklauf und Behördenversand.
+Keine Rücklaufdatei nötig, keine BBM-Prozessampel, kein zweiter Mailtexteditor.
+Historische Daten/Dateien erhalten; additive Migration und V9/V10-Projekttransfer.
+
+Reale Electron-Formularabnahme mit 28 Prüfschritten bestanden, keine Rendererfehler;
+Outlook dort kontrolliert simuliert. Echter Windows-/Outlooklauf über
+`npm run test:sigeko:s5.5:outlook` und Integration in main noch offen.
+Vollständiger Vergleich 2040/97 → 2069/97, exakt dieselben 97 Bestandsfehler.
+Vollständige Test- und UI-Nachweise: `docs/SIGEKO_S5_5_ABNAHME.md`,
+`docs/SIGEKO_S5_5_TESTVERGLEICH.json`. S5.4 bleibt historischer Nachweis; seine
+Prozessentscheidung wird durch die bestätigte S5.5-Vereinfachung ersetzt.
+Kit-Pin unverändert `5e0d551`; Steffens normaler Kit-Checkout bleibt unangetastet.
+Rechnung eingefroren, kein S6 vorgezogen.
+
 ## 2026-09-10 – SiGeKo S5.4: Abnahme abgeschlossen, Integrationsnachweis (PR #339)
 
 Basis main `676713aa`; Ergebnisbranch `codex/sigeko-s54-ruecklauf-outlook`.

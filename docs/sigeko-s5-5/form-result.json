@@ -1,0 +1,1411 @@
+{
+  "package": "S2.4 / S3 / S4 / S5.2 / S5.3b2 / S5.5",
+  "ok": true,
+  "manualConfirmed": false,
+  "checks": [
+    "S3: incomplete project reports concrete missing builder data and actual missing S4 project-contact status; profile and role saves remain enabled",
+    "S5.5: project recipient entered and saved by real mouse/preload/SQLite, independent of profile and roles",
+    "actual mouse save through production preload/IPC/SQLite; separate free planning and module execution",
+    "one module profile shared across two projects; project assignments remain independent",
+    "global/project contacts resolved with project boundary; like-planning persists through SQLite restart and screen reopen",
+    "S3: saving complete planning and inherited execution automatically refreshes project readiness to green without mandatory phone, email or logo",
+    "S3: real refresh reads persisted data only, preserves both unsaved drafts and leaves all nine domain tables unchanged",
+    "S3: real refresh changes green/red/green for cleared and missing builder sources; central edit action routes the current project and local editing remains reachable",
+    "S3: profile saves automatically update the module-based project's readiness; switching to independently assigned free roles yields that project's own green state",
+    "S4: seven contacts saved and explicitly verified through real mouse/preload/IPC/SQLite without implicit project assignments; separate labor and medical suitability decisions plus one batch action yield eight green categories and fixed 112/110",
+    "S4: second project reuses all five exact nonmedical verified contacts without repeat individual confirmation, while medical decisions stay pending; first project snapshots remain independent across project switch and SQLite reopen",
+    "S4: authority and readiness refresh preserve profile, role, stock and both note drafts without changing any of nine domain tables; dirty stock blocks confirmation and project assignment",
+    "S4: source editing and source/project uncertainty retain the saved project contact and turn status orange; a manual project decision cannot turn an unverified source green; only fresh source verification and explicit reassignment restore green",
+    "S4: a vanished reusable source leaves the complete saved project contact visible with explicit orange missing-source status",
+    "complete component refs and active scope; wide/narrow field and readiness panel geometry and authority forms with all actions reachable by scrolling; real editor CSS operation leaves all domain tables unchanged",
+    "already-open archived project rejects role and authority assignment mouse saves atomically; reopened authority form is read-only; production IPC enforces archive and current module license for profile, readiness, stock and project contacts",
+    "S5.2: actual module route checks readiness, cancellation preserves the overview and database, confirmation opens the document form with save and back actions disabled while the first actual IPC read is pending; incomplete draft saves without inventing start or duration",
+    "S5.2: real mouse saves local overrides, explicit whole months, zero counts, a free third party and the two-choice firms mode through production IPC/SQLite; save-and-back reopens persisted values without changing central sources",
+    "S5.2: resetting overrides restores null/inherited project start, third-party none clears only local contact fields, manual duration survives date changes, and two independent projects retain their drafts after SQLite reopen",
+    "S5.2: cancelled back/reload retain dirty inputs; invalid fractional months and a real concurrent revision conflict keep save-and-back on the form without overwriting data, and explicit reload recovers the current revision",
+    "S5.2: all component references and the dedicated editor scope are valid; wide, narrow and low windows keep labelled fields within width and all save/navigation actions reachable after deep scrolling; a real editor style change leaves all ten domain tables unchanged",
+    "S5.3b2: real mouse actions reject dirty output without autosave; temporary Chromium preview creates no final row; two final immutable versions include the existing firms renderer attachment; native version selection opens historical files while dirty, retains selection on reload and rejects changed bytes without live regeneration",
+    "S5.5: actual form/preload/Main/SQLite flow opens a controlled draft with stored recipients and immutable PDF hashes; failure preserves data, closed draft changes no completion, manual dates need no return file and survive independent version selection plus database reopen",
+    "S5.5: 133 component refs plus launcher, 22 workflow targets with exact metadata, real scrolling/geometry at 1280x950, 560x950 and 560x480",
+    "S5.3b2: archived project disables all new PDF and layout actions but still opens the stored immutable PDF",
+    "S5.5: archived form disables manual completion fields and direct Outlook action",
+    "S5.2: an already-open archived project rejects save-and-back atomically and preserves its dirty draft; reopened form is read-only, while production IPC enforces current module licensing for draft reads and writes",
+    "test window fits monitor work area; native X requests review without closing, saving or confirming PASS"
+  ],
+  "rendererErrors": [],
+  "pdfLicense": {
+    "source": "simulated-development-license-status",
+    "cryptographicLicenseVerified": false,
+    "developmentOverridesEnabled": false
+  },
+  "contactReadBoundary": "Unmodified shared firmDirectory IPC, service and SQLite resolve global and project contacts with a SiGeKo-only license; no Protokoll registrar or replacement read adapters. SiGeKo writes use unmodified productive IPC, service and current license guard.",
+  "geometry": {
+    "wide": [
+      {
+        "key": "profile.name.input",
+        "width": 230.1875,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "profile.email.input",
+        "width": 230.1875,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "planning.source.input",
+        "width": 557.5,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "planning.free.name.input",
+        "width": 272.75,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "execution.source.input",
+        "width": 557.5,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "execution.free.name.input",
+        "width": 272.75,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      }
+    ],
+    "narrow": [
+      {
+        "key": "profile.name.input",
+        "width": 233.5,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "profile.email.input",
+        "width": 233.5,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "planning.source.input",
+        "width": 445,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "planning.free.name.input",
+        "width": 445,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "execution.source.input",
+        "width": 445,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "execution.free.name.input",
+        "width": 445,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      }
+    ]
+  },
+  "readinessGeometry": {
+    "wide": [
+      {
+        "key": "readiness",
+        "width": 1233,
+        "height": 537.8125,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.project.status",
+        "width": 1199,
+        "height": 19,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.project.issues",
+        "width": 1199,
+        "height": 19,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.authorities.status",
+        "width": 1199,
+        "height": 19,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.authorities.issues",
+        "width": 1199,
+        "height": 19,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.warning",
+        "width": 1199,
+        "height": 38,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.refresh",
+        "width": 198.28125,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.editProject",
+        "width": 195.578125,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.editRoles",
+        "width": 255.25,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.editAuthorities",
+        "width": 227.46875,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true
+      }
+    ],
+    "narrow": [
+      {
+        "key": "readiness",
+        "width": 513,
+        "height": 575.8125,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.project.status",
+        "width": 479,
+        "height": 19,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.project.issues",
+        "width": 479,
+        "height": 19,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.authorities.status",
+        "width": 479,
+        "height": 19,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.authorities.issues",
+        "width": 479,
+        "height": 19,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.warning",
+        "width": 479,
+        "height": 76,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.refresh",
+        "width": 198.28125,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.editProject",
+        "width": 195.578125,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.editRoles",
+        "width": 255.25,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true
+      },
+      {
+        "key": "readiness.editAuthorities",
+        "width": 227.46875,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true
+      }
+    ]
+  },
+  "authoritiesGeometry": {
+    "wide": [
+      {
+        "key": "authorities.category.input",
+        "width": 1165,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.contact.input",
+        "width": 1165,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.organization.input",
+        "width": 223.390625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.phone.input",
+        "width": 223.390625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.source.input",
+        "width": 223.390625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.scope_area.input",
+        "width": 223.390625,
+        "height": 71,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.verification_note.input",
+        "width": 223.40625,
+        "height": 71,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.reason.input",
+        "width": 1165,
+        "height": 71,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.assignment.note.input",
+        "width": 1165,
+        "height": 71,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.assignment.snapshot",
+        "width": 1165,
+        "height": 380,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.refresh",
+        "width": 182.359375,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.apply",
+        "width": 235.25,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.new",
+        "width": 184.390625,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.save",
+        "width": 151.8125,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.confirm",
+        "width": 217.25,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.uncertain",
+        "width": 239.203125,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.assignment.confirm",
+        "width": 290.859375,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.assignment.uncertain",
+        "width": 189.1875,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      }
+    ],
+    "narrow": [
+      {
+        "key": "authorities.category.input",
+        "width": 445,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.contact.input",
+        "width": 445,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.organization.input",
+        "width": 445,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.phone.input",
+        "width": 445,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.source.input",
+        "width": 445,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.scope_area.input",
+        "width": 445,
+        "height": 71,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.verification_note.input",
+        "width": 445,
+        "height": 71,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.reason.input",
+        "width": 445,
+        "height": 71,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.assignment.note.input",
+        "width": 445,
+        "height": 71,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.assignment.snapshot",
+        "width": 445,
+        "height": 494,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.refresh",
+        "width": 182.359375,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.apply",
+        "width": 235.25,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.new",
+        "width": 184.390625,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.save",
+        "width": 151.8125,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.confirm",
+        "width": 217.25,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.record.uncertain",
+        "width": 239.203125,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.assignment.confirm",
+        "width": 290.859375,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "authorities.assignment.uncertain",
+        "width": 189.1875,
+        "height": 35,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      }
+    ]
+  },
+  "preNotificationGeometry": {
+    "wide": [
+      {
+        "key": "building_type_override",
+        "width": 822,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_mode",
+        "width": 822,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_name",
+        "width": 266,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_street",
+        "width": 266,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_zip",
+        "width": 266,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_city",
+        "width": 266,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_phone",
+        "width": 266,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_email",
+        "width": 266,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "planned_start_override",
+        "width": 822,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "duration_months",
+        "width": 822,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "max_workers",
+        "width": 822,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "employer_count",
+        "width": 266,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "self_employed_count",
+        "width": 266,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "firms_mode",
+        "width": 822,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      }
+    ],
+    "widePdfSelection": {
+      "width": 1223,
+      "height": 34,
+      "inParent": true,
+      "labelLinked": true
+    },
+    "narrow": [
+      {
+        "key": "building_type_override",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_mode",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_name",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_street",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_zip",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_city",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_phone",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_email",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "planned_start_override",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "duration_months",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "max_workers",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "employer_count",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "self_employed_count",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "firms_mode",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      }
+    ],
+    "narrowPdfSelection": {
+      "width": 503,
+      "height": 34,
+      "inParent": true,
+      "labelLinked": true
+    },
+    "low": [
+      {
+        "key": "building_type_override",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_mode",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_name",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_street",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_zip",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_city",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_phone",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "third_party_email",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "planned_start_override",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "duration_months",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "max_workers",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "employer_count",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "self_employed_count",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      },
+      {
+        "key": "firms_mode",
+        "width": 485.40625,
+        "height": 34,
+        "inViewportWidth": true,
+        "inParent": true,
+        "labelAbove": true
+      }
+    ],
+    "lowPdfSelection": {
+      "width": 503,
+      "height": 34,
+      "inParent": true,
+      "labelLinked": true
+    }
+  },
+  "workflow": {
+    "transport": "controlled Main callback, not Outlook COM",
+    "actualOutlookVerified": false,
+    "geometry": {
+      "wide": [
+        {
+          "key": "editRecipients",
+          "x": 21,
+          "y": 445,
+          "width": 245.40625,
+          "height": 34
+        },
+        {
+          "key": "due.input",
+          "x": 21,
+          "y": 445,
+          "width": 1223,
+          "height": 34
+        },
+        {
+          "key": "open",
+          "x": 21,
+          "y": 445,
+          "width": 144.984375,
+          "height": 34
+        },
+        {
+          "key": "returned.input",
+          "x": 98.375,
+          "y": 452,
+          "width": 20,
+          "height": 20
+        },
+        {
+          "key": "returnedOn.input",
+          "x": 21,
+          "y": 445,
+          "width": 1223,
+          "height": 34
+        },
+        {
+          "key": "authoritySent.input",
+          "x": 132.28125,
+          "y": 452,
+          "width": 20,
+          "height": 20
+        },
+        {
+          "key": "authoritySentOn.input",
+          "x": 21,
+          "y": 445,
+          "width": 1223,
+          "height": 34
+        },
+        {
+          "key": "save",
+          "x": 21,
+          "y": 445,
+          "width": 159,
+          "height": 34
+        }
+      ],
+      "narrow": [
+        {
+          "key": "editRecipients",
+          "x": 21,
+          "y": 445,
+          "width": 245.40625,
+          "height": 34
+        },
+        {
+          "key": "due.input",
+          "x": 21,
+          "y": 445,
+          "width": 503,
+          "height": 34
+        },
+        {
+          "key": "open",
+          "x": 21,
+          "y": 445,
+          "width": 144.984375,
+          "height": 34
+        },
+        {
+          "key": "returned.input",
+          "x": 98.375,
+          "y": 452,
+          "width": 20,
+          "height": 20
+        },
+        {
+          "key": "returnedOn.input",
+          "x": 21,
+          "y": 445,
+          "width": 503,
+          "height": 34
+        },
+        {
+          "key": "authoritySent.input",
+          "x": 132.28125,
+          "y": 452,
+          "width": 20,
+          "height": 20
+        },
+        {
+          "key": "authoritySentOn.input",
+          "x": 21,
+          "y": 445,
+          "width": 503,
+          "height": 34
+        },
+        {
+          "key": "save",
+          "x": 21,
+          "y": 445,
+          "width": 159,
+          "height": 34
+        }
+      ],
+      "low": [
+        {
+          "key": "editRecipients",
+          "x": 21,
+          "y": 210,
+          "width": 245.40625,
+          "height": 34
+        },
+        {
+          "key": "due.input",
+          "x": 21,
+          "y": 210,
+          "width": 503,
+          "height": 34
+        },
+        {
+          "key": "open",
+          "x": 21,
+          "y": 210,
+          "width": 144.984375,
+          "height": 34
+        },
+        {
+          "key": "returned.input",
+          "x": 98.375,
+          "y": 217,
+          "width": 20,
+          "height": 20
+        },
+        {
+          "key": "returnedOn.input",
+          "x": 21,
+          "y": 210,
+          "width": 503,
+          "height": 34
+        },
+        {
+          "key": "authoritySent.input",
+          "x": 132.28125,
+          "y": 217,
+          "width": 20,
+          "height": 20
+        },
+        {
+          "key": "authoritySentOn.input",
+          "x": 21,
+          "y": 210,
+          "width": 503,
+          "height": 34
+        },
+        {
+          "key": "save",
+          "x": 21,
+          "y": 210,
+          "width": 159,
+          "height": 34
+        }
+      ]
+    },
+    "mountedReferences": 133,
+    "newTargets": [
+      {
+        "id": "sigeko.preNotification.pdf.workflow",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow",
+          "group",
+          "Versand und Abschluss",
+          "sigeko.preNotification.pdf",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.title",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.title",
+          "label",
+          "Versand und Abschluss",
+          "sigeko.preNotification.pdf.workflow",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.recipients",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.recipients",
+          "label",
+          "Empfänger",
+          "sigeko.preNotification.pdf.workflow",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.editRecipients",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.editRecipients",
+          "button",
+          "Empfänger im Projekt festlegen",
+          "sigeko.preNotification.pdf.workflow",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.due",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.due",
+          "fieldGroup",
+          "Rückgabe bis – Feldgruppe",
+          "sigeko.preNotification.pdf.workflow",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.due.label",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.due.label",
+          "label",
+          "Rückgabe bis",
+          "sigeko.preNotification.pdf.workflow.due",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.due.input",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.due.input",
+          "field",
+          "Rückgabe bis",
+          "sigeko.preNotification.pdf.workflow.due",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.open",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.open",
+          "button",
+          "In Outlook öffnen",
+          "sigeko.preNotification.pdf.workflow",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.returned",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.returned",
+          "fieldGroup",
+          "VA zurück – Feldgruppe",
+          "sigeko.preNotification.pdf.workflow",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.returned.label",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.returned.label",
+          "label",
+          "VA zurück",
+          "sigeko.preNotification.pdf.workflow.returned",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.returned.input",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.returned.input",
+          "field",
+          "VA zurück",
+          "sigeko.preNotification.pdf.workflow.returned",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.returnedOn",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.returnedOn",
+          "fieldGroup",
+          "Rücklaufdatum – Feldgruppe",
+          "sigeko.preNotification.pdf.workflow",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.returnedOn.label",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.returnedOn.label",
+          "label",
+          "Rücklaufdatum",
+          "sigeko.preNotification.pdf.workflow.returnedOn",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.returnedOn.input",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.returnedOn.input",
+          "field",
+          "Rücklaufdatum",
+          "sigeko.preNotification.pdf.workflow.returnedOn",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.authoritySent",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.authoritySent",
+          "fieldGroup",
+          "VA an Behörde – Feldgruppe",
+          "sigeko.preNotification.pdf.workflow",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.authoritySent.label",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.authoritySent.label",
+          "label",
+          "VA an Behörde",
+          "sigeko.preNotification.pdf.workflow.authoritySent",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.authoritySent.input",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.authoritySent.input",
+          "field",
+          "VA an Behörde",
+          "sigeko.preNotification.pdf.workflow.authoritySent",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.authoritySentOn",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.authoritySentOn",
+          "fieldGroup",
+          "Versanddatum – Feldgruppe",
+          "sigeko.preNotification.pdf.workflow",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.authoritySentOn.label",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.authoritySentOn.label",
+          "label",
+          "Versanddatum",
+          "sigeko.preNotification.pdf.workflow.authoritySentOn",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.authoritySentOn.input",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.authoritySentOn.input",
+          "field",
+          "Versanddatum",
+          "sigeko.preNotification.pdf.workflow.authoritySentOn",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.save",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.save",
+          "button",
+          "Angaben speichern",
+          "sigeko.preNotification.pdf.workflow",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      },
+      {
+        "id": "sigeko.preNotification.pdf.workflow.status",
+        "attributes": [
+          "sigeko.preNotification.pdf.workflow.status",
+          "label",
+          "Speicher-/Outlookmeldung",
+          "sigeko.preNotification.pdf.workflow",
+          "true",
+          "move,resizeWidth,resizeHeight,setVisibility,textResize"
+        ],
+        "parentMatches": true
+      }
+    ]
+  },
+  "nativePdfEditor": {
+    "verified": false,
+    "reason": "native Windows manager unavailable on Linux"
+  },
+  "manualWindow": {
+    "bounds": {
+      "x": 60,
+      "y": 50,
+      "width": 1280,
+      "height": 950
+    },
+    "workArea": {
+      "x": 0,
+      "y": 0,
+      "width": 1400,
+      "height": 1050
+    }
+  }
+}

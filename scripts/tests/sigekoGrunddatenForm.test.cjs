@@ -87,6 +87,8 @@ async function runSigekoGrunddatenFormTests(run) {
         return { ok: true, data: clone(authorityData) };
       },
       sigekoApplyKnownProjectAuthorities: async payload => { authorityWrites.apply.push(clone(payload)); return { ok: true, data: clone(authorityData) }; },
+      sigekoGetPreNotificationRecipients: async ({ projectId }) => ({ ok: true, data: { projectId, revision: 0, recipients: [] } }),
+      sigekoSavePreNotificationRecipients: async payload => ({ ok: true, data: { projectId: payload.projectId, revision: payload.expectedRevision + 1, recipients: payload.recipients } }),
       sigekoGetReadiness: async ({ projectId }) => ({ ok: true, data: readiness(projectId) }),
       sigekoGetCoordinatorProfile: async () => ({ ok: true, data: clone(profile) }),
       sigekoGetProjectData: async () => ({ ok: true, data: clone(data) }),
@@ -119,6 +121,26 @@ async function runSigekoGrunddatenFormTests(run) {
   global.document = { body: new Element("body"), createElement: tag => new Element(tag), querySelector: () => null };
   global.window = { dispatchEvent() {}, confirm: () => confirmResult, getComputedStyle: el => ({ ...el.style, fontSize: "12px", paddingLeft: "0px", paddingTop: "0px" }) };
   try {
+    await run("S5.5: free project recipients save independently; existing firm/person addresses can be added once", async () => {
+      await reset({ overrides: {
+        firmDirectoryListAll: async ({kind})=>({ok:true,list:kind==="global_firm"?[{ref:{kind,id:"firm"},name:"Bauherr",email:"owner@example.test"}]:[]}),
+        firmDirectoryListPersons: async ()=>({ok:true,list:[{id:"a",name:"Architekt",email:"architect@example.test"},{id:"b",is_active:0,email:"inactive@example.test"}]})
+      }});
+      assert.equal(form.vaRecipientChoice.children.length,3);
+      form.vaRecipientsInput.value="free@example.test";
+      form.vaRecipientChoice.value="architect@example.test";form.vaRecipientChoice.onchange();form.vaRecipientsAdd.onclick();form.vaRecipientsAdd.onclick();
+      await form.vaRecipientsSave.onclick();
+      assert.equal(form.vaRecipientsInput.value,"free@example.test; architect@example.test");assert.equal(form.vaRecipientSettings.revision,1);
+      assert.deepEqual(writes,{profile:[],roles:[]});assert.match(form.vaRecipientsStatus.textContent,/gespeichert/);
+    });
+    await run("S5.5: recipients prevent silent navigation loss and retain draft after save failure", async () => {
+      await reset();form.vaRecipientsInput.value="owner@example.test";
+      form._navigate(()=>navigations.push("away"));assert.equal(navigations.length,0);
+      api.sigekoSavePreNotificationRecipients=async()=>({ok:false,error:"Versionskonflikt"});await form.vaRecipientsSave.onclick();
+      assert.equal(form.vaRecipientsInput.value,"owner@example.test");assert.match(form.vaRecipientsStatus.textContent,/nicht gespeichert/);
+      confirmResult=true;form._navigate(()=>navigations.push("away"));assert.equal(navigations.length,1);
+      await reset({archived:true});assert.equal(form.vaRecipientsSave.disabled,true);assert.equal(form.vaRecipientsInput.disabled,true);
+    });
     await run("S2.4: opening an unassigned project loads defaults without any writes", async () => {
       await reset();
       assert.equal(form.inputs.name.value, "Steffen"); assert.equal(form.roleInputs.planning.source.value, "module");
@@ -244,8 +266,8 @@ async function runSigekoGrunddatenFormTests(run) {
       assert.equal(form.inputs.name.value, "Steffen"); assert.equal(old.inputs.name.value, "Alter Entwurf");
       assert.equal(refs.getM80Ref("sigeko.screen.profile.name.input").element, form.inputs.name);
     });
-    await run("SiGeKo: all 207 slots have exact mounted attributes, valid parents and domain locks", async () => {
-      await reset(); assert.equal(contract.slots.length, 207); assert.deepEqual(contract.requiredSlots, contract.slots.map(slot => slot.slotId));
+    await run("SiGeKo: all 218 slots have exact mounted attributes, valid parents and domain locks", async () => {
+      await reset(); assert.equal(contract.slots.length, 218); assert.deepEqual(contract.requiredSlots, contract.slots.map(slot => slot.slotId));
       assert.equal(refs.validateM83ComponentReferences([contract.componentId]).ok, true);
       for (const slot of contract.slots) {
         const entry = slot.element, ref = refs.getM80Ref(entry.id); assert.equal(ref.contractTargets.length, 1);

@@ -37,7 +37,7 @@ function createPreNotificationWorkflowService({ repo = new SigekoPreNotification
   chooseFile = () => require("electron").dialog.showOpenDialog({ title: "Unterschriebenes PDF zuordnen", properties: ["openFile"], filters: [{ name: "PDF", extensions: ["pdf"] }] }),
   open = payload => require("../../ipc/printIpc").openInternalPdfPreview(payload),
   tempDirectory = () => require("electron").app.getPath("temp"),
-  mail = null, uuid = randomUUID, clock = () => new Date().toISOString() } = {}) {
+  mail = null, reminderMail = null, uuid = randomUUID, clock = () => new Date().toISOString() } = {}) {
   const jobs = new Set();
   const pathsFor = projectId => storage.resolve({ moduleId: "sigeko", projectId });
   function context(payload, writing = false) {
@@ -69,7 +69,7 @@ function createPreNotificationWorkflowService({ repo = new SigekoPreNotification
   function next(ctx, patch, time) {
     return { document_id: ctx.document.id, project_id: ctx.document.project_id, signed_file_json: null,
       signed_received_at: null, signature_opened_at: null, authority_opened_at: null, return_requested_by: null,
-      created_at: time, ...ctx.row, ...patch, revision: (ctx.row?.revision || 0) + 1, updated_at: time };
+      created_at: time, returned_on: null, authority_sent_on: null, ...ctx.row, ...patch, revision: (ctx.row?.revision || 0) + 1, updated_at: time };
   }
   function signed(ctx) {
     const file = ctx.row && parseSignedReturnFile(ctx.row);
@@ -106,7 +106,92 @@ function createPreNotificationWorkflowService({ repo = new SigekoPreNotification
     jobs.add(payload.projectId);
     try { return await action(); } finally { jobs.delete(payload.projectId); }
   }
+  function recipientProject(payload, writing = false) {
+    enforce("sigeko");
+    if (typeof payload?.projectId !== "string" || !payload.projectId.trim() || payload.projectId !== payload.projectId.trim()) fail("INVALID_INPUT", "Projekt-ID erforderlich.");
+    const project = projects.getById(payload.projectId);
+    if (!project) fail("PROJECT_NOT_FOUND", "Projekt nicht gefunden.");
+    if (writing && project.archived_at) fail("PROJECT_ARCHIVED", "Archiviertes Projekt zuerst wiederherstellen.");
+    return project;
+  }
+  function completion(ctx) {
+    return { projectId: ctx.document.project_id, documentId: ctx.document.id, revision: ctx.row?.revision ?? null,
+      returnRequestedBy: ctx.row?.return_requested_by ?? null, returnedOn: ctx.row?.returned_on ?? null,
+      authoritySentOn: ctx.row?.authority_sent_on ?? null, canWrite: !ctx.project.archived_at };
+  }
   return Object.freeze({
+    getPreNotificationRecipients(payload) {
+      recipientProject(payload);
+      if (Object.keys(payload).join() !== "projectId") fail("INVALID_INPUT", "Ungültige Empfängerabfrage.");
+      return { projectId: payload.projectId, ...repo.getRecipients(payload.projectId) };
+    },
+    savePreNotificationRecipients(payload) {
+      recipientProject(payload, true);
+      if (Object.keys(payload).sort().join() !== "expectedRevision,projectId,recipients") fail("INVALID_INPUT", "Ungültige Empfängerangaben.");
+      return { projectId: payload.projectId, ...repo.saveRecipients(payload.projectId, payload.recipients, payload.expectedRevision) };
+    },
+    getPreNotificationCompletion(payload) {
+      request(payload, ["projectId", "documentId"]);
+      return completion(context(payload));
+    },
+    savePreNotificationCompletion(payload) {
+      request(payload, ["projectId", "documentId", "expectedRevision", "returnedOn", "authoritySentOn", "returnRequestedBy"]);
+      const patch = { returned_on: deadline(payload.returnedOn), authority_sent_on: deadline(payload.authoritySentOn), return_requested_by: deadline(payload.returnRequestedBy) };
+      return repo.transaction(() => {
+        const ctx = context(payload, true); checkRevision(ctx, payload.expectedRevision);
+        const saved = repo.save(next(ctx, patch, clock()), payload.expectedRevision);
+        return completion({ ...ctx, row: saved });
+      });
+    },
+    async openSimplePreNotificationMail(payload) {
+      request(payload, ["projectId", "documentId", "expectedRevision", "returnRequestedBy"]);
+      const due = deadline(payload.returnRequestedBy);
+      if (!due) fail("INVALID_INPUT", "Bitte das gewünschte Rückgabedatum angeben.");
+      return exclusive(payload, async () => {
+        let ctx = context(payload, true); checkRevision(ctx, payload.expectedRevision);
+        const settings = repo.getRecipients(payload.projectId), to = recipients(settings.recipients);
+        const selected = files(ctx, "signature");
+        const snapshot = JSON.parse(ctx.document.snapshot_json), form = snapshot.form;
+        const projectName = [ctx.project.project_number, ctx.project.name].filter(Boolean).join(" – ");
+        const address = [form.address?.street, form.address?.zip, form.address?.city].filter(Boolean).join(" ");
+        const displayDue = due.split("-").reverse().join(".");
+        let temporary;
+        try {
+          temporary = fs.mkdtempSync(path.join(tempDirectory(), "bbm-sigeko-mail-files-"));
+          const attachments = selected.map(file => {
+            const source = inspectDocumentFile(path.dirname(ctx.paths.moduleDir), file);
+            const destination = path.join(temporary, path.basename(file.projectRelativePath));
+            fs.writeFileSync(destination, readVerified(source, file), { flag: "wx", mode: 0o600 });
+            return destination;
+          });
+          guard(payload, ctx);
+          if (!isDeepStrictEqual(settings, repo.getRecipients(payload.projectId))) fail("PRE_NOTIFICATION_WORKFLOW_CONFLICT", "Empfänger wurden geändert. Bitte erneut öffnen.");
+          // Save the requested date, never a sent/received state. Outlook may be discarded.
+          const saved = repo.transaction(() => {
+            guard(payload, ctx);
+            return repo.save(next(ctx, { return_requested_by: due }, clock()), payload.expectedRevision);
+          });
+          ctx = { ...ctx, row: saved };
+          const transport = reminderMail || require("../../mail/outlookReminderDraft.cjs").createOutlookReminderDraftHandler({
+            app: require("electron").app, enforce: moduleId => { enforce(moduleId); context(payload, true); }, licenseError: toLicenseErrorPayload,
+            showMessageBox: options => require("electron").dialog.showMessageBox(options),
+          });
+          const result = await transport(null, { moduleId: "sigeko", to, attachments,
+            subject: `Vorankündigung – Bitte um Unterschrift${projectName || address ? ` – ${projectName || address}` : ""}`,
+            body: `Guten Tag,\n\nanbei erhalten Sie die Vorankündigung${address ? ` für das Bauvorhaben ${address}` : ""}.\nBitte prüfen und unterschreiben Sie die Vorankündigung und senden Sie diese bis zum ${displayDue} an {{BBM_RETURN_ADDRESS}} zurück.\n\nVielen Dank.\nMit freundlichen Grüßen`,
+            returnAddressToken: "{{BBM_RETURN_ADDRESS}}", returnRequestedBy: due,
+            reminder: { subject: "VA schon zurück", body: `Vorankündigung: ${projectName || address}\nErbetener Rücklauf: ${displayDue}` } });
+          if (result?.outcome === "draft-closed") {
+            // Never lose an already confirmed external action through a late refresh failure.
+            try { return { ...result, completion: completion(context(payload)) }; }
+            catch (error) { return { ...result, completion: null, refreshError: error.message }; }
+          }
+          fail(result?.code || "MAIL_DRAFT_NOT_CONFIRMED", result?.error || "Outlook konnte nicht geöffnet werden.");
+        } finally {
+          if (temporary) try { fs.rmSync(temporary, { recursive: true, force: true }); } catch (_) { /* Own temporary copies only. */ }
+        }
+      });
+    },
     getPreNotificationWorkflow(payload) {
       request(payload, ["projectId", "documentId"]);
       return dto(context(payload));
