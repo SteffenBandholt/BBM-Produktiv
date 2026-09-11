@@ -1,3 +1,15 @@
+## 2026-09-11 – S5.5: fehlenden Registrar im Outlook-Teststarter repariert
+
+Steffens Windowslauf `dey6V2` auf `310b92aa` scheiterte vor Outlook:
+`No handler registered for sigeko:savePreNotificationRecipients`.
+Ursache: Teststarter rief `registerActiveModuleIpcs` ohne Registrarzuordnung auf.
+Der Starter registriert jetzt den produktiven SiGeKo-Registrar und prüft die Registrierung.
+Neuer Vorbereitungsmodus durchläuft denselben echten Preload/IPC/SQLite/PDF-Startweg
+bis unmittelbar vor Outlook. Linux-Electron-Lauf `3YW9mA`: PASS, Empfänger-Roundtrip,
+Abschlussdaten lesen und zwei echte PDFs. CI prüft diesen Weg unter Windows/Linux.
+Produktcode unverändert; die tatsächliche Windows-/Outlook-Abnahme bleibt offen.
+Nachweis: `docs/sigeko-s5-5/starter-preparation-result.json`, PR #340.
+
 ## 2026-09-11 – SiGeKo S5.5: Vorankündigung vereinfacht
 
 Nutzerentscheidung umgesetzt auf `codex/sigeko-va-einfacher-workflow`, Basis main

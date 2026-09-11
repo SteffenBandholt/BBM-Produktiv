@@ -12,9 +12,10 @@ async function runWorker() {
   const { app, BrowserWindow, dialog, ipcMain } = require("electron");
   let profile;
   const s54 = process.argv.includes("--s54"), s55 = process.argv.includes("--s55");
+  const preparationOnly = s55 && process.argv.includes("--prepare-only");
   const report = { package: s55 ? "S5.5" : s54 ? "S5.4" : "S1.5", ok: false, checks: {}, actualSendObserved: false, cryptographicLicenseVerified: false };
   try {
-    assert.equal(process.platform, "win32", "Abnahme erfordert Windows mit installiertem klassischem Outlook (COM).");
+    if (!preparationOnly) assert.equal(process.platform, "win32", "Abnahme erfordert Windows mit installiertem klassischem Outlook (COM).");
     app.setAppPath(ROOT);
     profile = configureUiEditorAcceptanceProfile({ electronApp: app });
     assert.equal(profile.enabled, true);
@@ -28,7 +29,7 @@ async function runWorker() {
     await caller.loadURL("about:blank");
     const invoke = (payload) => caller.webContents.executeJavaScript(`window.bbmMail.createOutlookDraft(${JSON.stringify(payload)})`);
     if (s55) {
-      await require("./helpers/sigekoSimpleWorkflowOutlookAcceptance.cjs").runSimpleWorkflowOutlookAcceptance({ app, BrowserWindow, dialog, ipcMain, profile, fixture, caller, report });
+      await require("./helpers/sigekoSimpleWorkflowOutlookAcceptance.cjs").runSimpleWorkflowOutlookAcceptance({ app, BrowserWindow, dialog, ipcMain, profile, fixture, caller, report, preparationOnly });
       return;
     }
     if (s54) {
@@ -74,10 +75,10 @@ async function runWorker() {
 }
 
 async function launch() {
-  if (process.platform !== "win32") throw new Error("Diese praktische Abnahme benötigt Windows und klassisches Outlook (COM).");
+  if (process.platform !== "win32" && !(process.argv.includes("--s55") && process.argv.includes("--prepare-only"))) throw new Error("Diese praktische Abnahme benötigt Windows und klassisches Outlook (COM).");
   const profile = createAcceptanceProfile();
   console.log(`Abnahmebericht: ${path.join(profile.rootPath, "mail-acceptance-result.json")}`);
-  const child = spawn(require("electron"), [__filename, "--worker", `${ACCEPTANCE_SWITCH}${profile.rootPath}`, ...process.argv.filter(arg => ["--s54", "--s55"].includes(arg))],
+  const child = spawn(require("electron"), [__filename, "--worker", `${ACCEPTANCE_SWITCH}${profile.rootPath}`, ...process.argv.filter(arg => ["--s54", "--s55", "--prepare-only"].includes(arg))],
     { cwd: ROOT, env: createSanitizedEnvironment(), stdio: "inherit" });
   process.exitCode = await new Promise((resolve, reject) => { child.once("error", reject); child.once("exit", (code) => resolve(code ?? 1)); });
 }

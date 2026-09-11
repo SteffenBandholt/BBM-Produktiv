@@ -83,6 +83,20 @@ Die bestehenden Vollständigkeits-/Behördenhinweise des Formulars bleiben davon
 
 ![Vereinfachter Vorankündigungsablauf](sigeko-s5-5/workflow-wide.png)
 
+## Reparatur des Outlook-Teststarters
+
+Steffens Windowslauf `dey6V2` auf `310b92aa` scheiterte vor dem ersten Outlookaufruf,
+weil der neue Teststarter keinen SiGeKo-Registrar an `registerActiveModuleIpcs` übergab.
+Die Registrierung ist ergänzt und wird unmittelbar geprüft. Produktcode unverändert.
+
+`npm run test:sigeko:s5.5:prepare` prüft jetzt denselben Starter bis unmittelbar vor
+Outlook, einschließlich produktivem Preload/IPC, Empfänger-Roundtrip, Abschlussdaten
+und zwei echten PDFs. Dieser Modus erzeugt keinen Outlook-Entwurf und keine Aufgabe.
+Linux-Electron-Lauf `3YW9mA`: PASS; siehe `sigeko-s5-5/starter-preparation-result.json`.
+CI führt den Vorbereitungsmodus unter Windows und Linux aus. Der ursprüngliche
+vollständige Testvergleich gilt für den vorherigen Stand; für diese reine Starterreparatur
+wurde der konkrete Startweg geprüft, kein neuer Gesamttestlauf behauptet.
+
 ## Noch erforderliche Windows-Abnahme
 
 Die bestandene S5.4-Abnahme belegt nicht die neue S5.5-Erinnerungsfunktion.

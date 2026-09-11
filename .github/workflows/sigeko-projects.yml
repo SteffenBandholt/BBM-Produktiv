@@ -147,6 +147,12 @@ jobs:
           sudo apt-get -o Dir::Etc::sourcelist="$ubuntu_sources" -o Dir::Etc::sourceparts="-" install -y xvfb libgtk-3-0 libnss3 libasound2t64
           sudo chown root:root node_modules/electron/dist/chrome-sandbox
           sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
+      - name: S5.5 Outlook starter preparation with real IPC and PDFs on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:sigeko:s5.5:prepare
+      - name: S5.5 Outlook starter preparation with real IPC and PDFs on Windows
+        if: runner.os == 'Windows'
+        run: npm run test:sigeko:s5.5:prepare
       - name: Real Electron form with SQLite on Linux
         if: runner.os == 'Linux'
         env:

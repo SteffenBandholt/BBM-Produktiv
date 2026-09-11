@@ -6,7 +6,7 @@ const { createWorkflowOutlookFixture } = require("./sigekoWorkflowOutlookAccepta
 
 // User-run Windows acceptance. Real Outlook COM, real PDF generation and IPC.
 // No automatic sending; only explicit Yes creates a real Outlook task.
-async function runSimpleWorkflowOutlookAcceptance({ BrowserWindow, dialog, ipcMain, profile, fixture, caller, report }) {
+async function runSimpleWorkflowOutlookAcceptance({ BrowserWindow, dialog, ipcMain, profile, fixture, caller, report, preparationOnly = false }) {
   const database = require("../../src/main/db/database");
   database.configureDatabaseMigrations(fixture.getStatus({ fresh: true }), { allowLegacyImport: false });
   database.initDatabase();
@@ -14,7 +14,11 @@ async function runSimpleWorkflowOutlookAcceptance({ BrowserWindow, dialog, ipcMa
     require("../../src/main/db/appSettingsRepo").appSettingsSetMany({ "pdf.protocolsDir": path.join(profile.rootPath, "S55-Ablage") });
     const { project, draft } = createWorkflowOutlookFixture();
     require("../../src/main/ipc/printIpc").registerPrintIpc();
-    require("../../src/main/moduleIpcRegistry").registerActiveModuleIpcs({ licenseStatus: fixture.getStatus({ fresh: true }), getLicenseStatus: () => fixture.getStatus({ fresh: true }), ipcMain });
+    const registration = require("../../src/main/moduleIpcRegistry").registerActiveModuleIpcs({
+      licenseStatus: fixture.getStatus({ fresh: true }), getLicenseStatus: () => fixture.getStatus({ fresh: true }), ipcMain,
+      registrars: { sigeko: options => require("../../src/main/ipc/sigekoIpc").registerSigekoIpc(options) },
+    });
+    assert.deepEqual(registration.registeredModuleIds, ["sigeko"], "S5.5 requires the production SiGeKo IPC registrar.");
     const invoke = async (method, payload) => {
       const result = await caller.webContents.executeJavaScript(`window.bbmDb[${JSON.stringify(method)}](${JSON.stringify(payload)})`);
       assert.equal(result?.ok, true, `${method}: ${JSON.stringify(result)}`); return result.data;
@@ -28,6 +32,18 @@ async function runSimpleWorkflowOutlookAcceptance({ BrowserWindow, dialog, ipcMa
     const storedBefore = db.prepare("SELECT * FROM sigeko_documents WHERE id=?").get(identity.documentId);
     const root = path.dirname(require("../../src/main/ipc/projectStoragePaths").createProjectStorageAccess().resolve({ moduleId: "sigeko", projectId: project.id }).moduleDir);
     const originalBytes = JSON.parse(storedBefore.files_json).map(file => fs.readFileSync(path.join(root, file.projectRelativePath)));
+    const savedRecipients = await invoke("sigekoGetPreNotificationRecipients", { projectId: project.id });
+    assert.deepEqual(savedRecipients.recipients, recipients);
+    const completion = await invoke("sigekoGetPreNotificationCompletion", identity);
+    assert.equal(completion.returnedOn, null); assert.equal(completion.authoritySentOn, null);
+    for (const bytes of originalBytes) assert.equal(bytes.subarray(0, 5).toString("ascii"), "%PDF-");
+    report.checks.s55Preparation = { registeredModuleIds: registration.registeredModuleIds,
+      recipientRoundtrip: true, completionRead: true, actualPdfCount: originalBytes.length };
+    if (preparationOnly) {
+      // Same starter and productive IPC/PDF path as the user-run Outlook test,
+      // stopping before any native dialog, Outlook draft or task is created.
+      report.preparationOnly = true; report.actualOutlookVerified = false; report.ok = true; return;
+    }
     const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
     const due = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,"0")}-${String(tomorrow.getDate()).padStart(2,"0")}`;
     const intro = await dialog.showMessageBox({ type: "question", title: "S5.5 – Outlook-Abnahme",

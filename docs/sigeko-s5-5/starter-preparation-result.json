@@ -1,0 +1,18 @@
+{
+  "package": "S5.5",
+  "ok": true,
+  "checks": {
+    "s55Preparation": {
+      "registeredModuleIds": [
+        "sigeko"
+      ],
+      "recipientRoundtrip": true,
+      "completionRead": true,
+      "actualPdfCount": 2
+    }
+  },
+  "actualSendObserved": false,
+  "cryptographicLicenseVerified": false,
+  "preparationOnly": true,
+  "actualOutlookVerified": false
+}
