@@ -133,6 +133,13 @@ button(".authorities.assignment.confirm", "Zuständigkeit bestätigen und zuordn
 button(".authorities.assignment.uncertain", "Mit Prüfbedarf zuordnen", ".authorities.assignment", "assignUncertainProjectAuthority");
 button(".readiness.editAuthorities", "Behördenkontakte bearbeiten", ".readiness", "navigateSigekoAuthorities");
 button(".preNotification", "Vorankündigung öffnen", ".navigation", "navigatePreNotification");
+add(".vaRecipients", "Vorankündigung – Empfänger im Projekt", "group", ".basic");
+add(".vaRecipients.title", "Vorankündigung – Empfänger", "label", ".vaRecipients");
+field(".vaRecipients.addresses", "E-Mail-Adressen (mit Semikolon trennen)", ".vaRecipients");
+field(".vaRecipients.choice", "Aus Adressdaten übernehmen", ".vaRecipients", "select");
+button(".vaRecipients.add", "Adresse übernehmen", ".vaRecipients", "selectPreNotificationRecipient");
+button(".vaRecipients.save", "Empfänger speichern", ".vaRecipients", "savePreNotificationRecipients");
+status(".vaRecipients.status", "Empfängerstatus", ".vaRecipients");
 Object.freeze(elements);
 
 export const sigekoScreenUiEditorContract = m83Component({

@@ -125,12 +125,14 @@ jobs:
         run: |
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoPreNotificationDocuments.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoDocumentTransfer.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
-      - name: SiGeKo signed return workflow and V9 ZIP integrity (Outlook transport simulated)
+      - name: SiGeKo simple VA workflow and V9/V10 ZIP integrity (Outlook transport simulated)
         shell: bash
         run: |
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoPreNotificationWorkflows.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoPreNotificationWorkflowService.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
           node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoWorkflowTransfer.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
+          node -e "const s=require('node:child_process').spawnSync(require('electron'),['scripts/tests/sigekoSimpleWorkflow.test.cjs'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:'inherit'});process.exitCode=s.status??1"
+          node scripts/tests/outlookReminderDraft.test.cjs
       - name: Existing print job lifecycle with explicit module access
         run: >-
           node -e "let failed=0;require('./scripts/tests/printJobLifecycle.test.cjs').runPrintJobLifecycleTests(async(n,f)=>{try{await f();console.log('PASS '+n)}catch(e){failed++;console.error(n,e)}}).then(()=>{process.exitCode=failed?1:0}).catch(e=>{console.error(e);process.exitCode=1})"
@@ -145,6 +147,12 @@ jobs:
           sudo apt-get -o Dir::Etc::sourcelist="$ubuntu_sources" -o Dir::Etc::sourceparts="-" install -y xvfb libgtk-3-0 libnss3 libasound2t64
           sudo chown root:root node_modules/electron/dist/chrome-sandbox
           sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
+      - name: S5.5 Outlook starter preparation with real IPC and PDFs on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:sigeko:s5.5:prepare
+      - name: S5.5 Outlook starter preparation with real IPC and PDFs on Windows
+        if: runner.os == 'Windows'
+        run: npm run test:sigeko:s5.5:prepare
       - name: Real Electron form with SQLite on Linux
         if: runner.os == 'Linux'
         env:

@@ -30,7 +30,7 @@ function document(projectId = "imported", id = "document", firms = false) {
 function workflow(projectId = "imported", documentId = "document", signed = true) {
   const row = { document_id: documentId, project_id: projectId, signed_file_json: signed ? JSON.stringify(file(documentId, "signed")) : null,
     signed_received_at: signed ? stamp : null, signature_opened_at: stamp, authority_opened_at: signed ? stamp : null,
-    return_requested_by: null, revision: 1, created_at: stamp, updated_at: stamp };
+    return_requested_by: null, returned_on: null, authority_sent_on: null, revision: 1, created_at: stamp, updated_at: stamp };
   validatePreNotificationWorkflowRow(row, projectId); return row;
 }
 function register(ctx, overrides = {}) {
@@ -72,7 +72,7 @@ function parts(documents = [document()], workflows = [workflow()]) {
   for (const row of workflows) if (row.signed_file_json) result[`project-folder/${JSON.parse(row.signed_file_json).projectRelativePath}`] = pdf("signed");
   const counts = Object.fromEntries(Object.entries(data).map(([key, values]) => [key, values.length]));
   counts.filesCount = Object.keys(result).filter(name => name.startsWith("project-folder/") && !name.endsWith("/")).length;
-  result["manifest.json"] = { formatVersion: workflows.length ? 9 : 8, projectId: "imported", counts }; return result;
+  result["manifest.json"] = { formatVersion: workflows.length ? 10 : 8, projectId: "imported", counts }; return result;
 }
 async function archive(ctx, candidate) {
   const target = path.join(ctx.root, "candidate.zip");
@@ -92,21 +92,24 @@ async function rejected(ctx, transfer, candidate, pattern) {
 const flowPayload = "data/sigeko_pre_notification_workflows.json";
 const signedPath = "project-folder/SiGeKo/Unterlagen/document-signed.pdf";
 async function runSigekoWorkflowTransferTests(run) {
-  await run("S5.4-Transfer: V9 ZIP preserves per-version workflow, original PDFs, signed return and unrelated project", () => fixture(async ctx => {
+  await run("S5.5-Transfer: V10 ZIP preserves per-version workflow, original PDFs, signed return and unrelated project", () => fixture(async ctx => {
     const project = ctx.repo.createProject({ name: "Workflow export" });
-    const first = document(project.id, "document", true), firstFlow = workflow(project.id);
+    const first = document(project.id, "document", true), firstFlow = { ...workflow(project.id), returned_on: "2026-09-11", authority_sent_on: "2026-09-12" };
     const second = document(project.id, "previous"), secondFlow = workflow(project.id, "previous", false);
     const other = ctx.repo.createProject({ name: "Unberührt" }); const otherDoc = document(other.id, "other"), otherFlow = workflow(other.id, "other");
     insert(ctx, first, firstFlow); insert(ctx, second, secondFlow); insert(ctx, otherDoc, otherFlow);
+    const recipientValue = JSON.stringify({revision: 2, recipients: ["owner@example.test"]});
+    ctx.db.prepare("INSERT INTO project_settings (project_id,key,value) VALUES (?,?,?)").run(project.id,"sigeko.preNotification.recipients",recipientValue);
     filesAt(folder(ctx, project), first, firstFlow); filesAt(folder(ctx, project), second, secondFlow);
     const transfer = register(ctx); const exported = await transfer.exportProject(project.id); assert.equal(exported.ok, true, exported.error);
     assert.equal(ctx.repo.getById(project.id), undefined); assert.equal(fs.existsSync(folder(ctx, project)), false);
     assert.deepEqual(ctx.db.prepare("SELECT * FROM sigeko_pre_notification_workflows").all(), [otherFlow]);
     const unpacked = path.join(ctx.root, "inspect"); await extract(exported.exportPath, { dir: unpacked });
     const manifest = JSON.parse(fs.readFileSync(path.join(unpacked, "manifest.json")));
-    assert.equal(manifest.formatVersion, 9); assert.equal(manifest.counts.sigekoPreNotificationWorkflows, 2); assert.equal(manifest.counts.filesCount, 4);
+    assert.equal(manifest.formatVersion, 10); assert.equal(manifest.counts.sigekoPreNotificationWorkflows, 2); assert.equal(manifest.counts.filesCount, 4);
     assert.equal(manifest.counts.sigekoPreNotifications, 0);
     const imported = await transfer.importProject(exported.exportPath); assert.equal(imported.ok, true, imported.error);
+    assert.equal(ctx.db.prepare("SELECT value FROM project_settings WHERE project_id=? AND key=?").get(project.id,"sigeko.preNotification.recipients").value,recipientValue);
     assert.deepEqual(ctx.db.prepare("SELECT * FROM sigeko_documents WHERE project_id=? ORDER BY id").all(project.id), [first, second]);
     assert.deepEqual(ctx.db.prepare("SELECT * FROM sigeko_pre_notification_workflows WHERE project_id=? ORDER BY document_id").all(project.id), [firstFlow, secondFlow]);
     for (const entry of [...JSON.parse(first.files_json), JSON.parse(firstFlow.signed_file_json), ...JSON.parse(second.files_json)]) {
@@ -116,6 +119,21 @@ async function runSigekoWorkflowTransferTests(run) {
     assert.deepEqual(reopened.prepare("SELECT * FROM sigeko_pre_notification_workflows WHERE document_id=?").get(first.id), firstFlow);
     assert.equal(reopened.pragma("integrity_check", { simple: true }), "ok"); assert.deepEqual(reopened.pragma("foreign_key_check"), []);
   }, { modules: ["sigeko"] }));
+  await run("S5.5-Transfer: exact historical V9 imports with empty manual dates and preserved signed PDF", () => fixture(async ctx => {
+    const candidate=parts(); candidate["manifest.json"].formatVersion=9;
+    const row=candidate[flowPayload].sigeko_pre_notification_workflows[0];delete row.returned_on;delete row.authority_sent_on;
+    const result=await register(ctx).importProject(await archive(ctx,candidate));assert.equal(result.ok,true,result.error);
+    assert.deepEqual(ctx.db.prepare("SELECT * FROM sigeko_pre_notification_workflows").all(),[workflow()]);
+  },{modules:["sigeko"]}));
+  await run("S5.5-Transfer: malformed recipient settings and manual dates reject before any writes", () => fixture(async ctx => {
+    const transfer=register(ctx);
+    for (const value of ['{',JSON.stringify({revision:1,recipients:["invalid"]}),JSON.stringify({revision:0,recipients:[]})]) {
+      const candidate=parts();candidate["data/settings.json"].projectSettings=[{project_id:"imported",key:"sigeko.preNotification.recipients",value}];candidate["manifest.json"].counts.projectSettings=1;
+      await rejected(ctx,transfer,candidate);
+    }
+    for (const value of ["2030-02-30","0000-01-01",true]) { const candidate=parts();candidate[flowPayload].sigeko_pre_notification_workflows[0].returned_on=value;await rejected(ctx,transfer,candidate); }
+    const candidate=parts();candidate["manifest.json"].formatVersion=9;await rejected(ctx,transfer,candidate);
+  },{modules:["sigeko"]}));
   await run("S5.4-Transfer: document-only export remains exact V8 without workflow payload or count", () => fixture(async ctx => {
     const project = ctx.repo.createProject({ name: "Legacy V8" }); const doc = document(project.id); insert(ctx, doc); filesAt(folder(ctx, project), doc);
     const transfer = register(ctx); const exported = await transfer.exportProject(project.id); assert.equal(exported.ok, true, exported.error);
@@ -126,11 +144,11 @@ async function runSigekoWorkflowTransferTests(run) {
     assert.equal((await transfer.importProject(exported.exportPath)).ok, true);
     assert.deepEqual(ctx.db.prepare("SELECT * FROM sigeko_pre_notification_workflows").all(), []);
   }, { modules: ["sigeko"] }));
-  await run("S5.4-Transfer: missing, corrupt, extra, empty, downgraded and future V9 payloads reject atomically", () => fixture(async ctx => {
+  await run("S5.4-Transfer: missing, corrupt, extra, empty, downgraded and future V10 payloads reject atomically", () => fixture(async ctx => {
     const mutations = [p => { delete p[flowPayload]; }, p => { p[flowPayload] = "{"; },
       p => { p[flowPayload].sigeko_pre_notification_workflows = []; }, p => { p[flowPayload].sigeko_pre_notification_workflows = {}; },
       p => { p[flowPayload].extra = true; }, p => { delete p["data/sigeko_documents.json"]; }, p => { p["data/future.json"] = {}; },
-      ...[1, 2, 3, 4, 5, 6, 7, 8, 10, "9"].map(version => p => { p["manifest.json"].formatVersion = version; })];
+      ...[1, 2, 3, 4, 5, 6, 7, 8, 11, "10"].map(version => p => { p["manifest.json"].formatVersion = version; })];
     const transfer = register(ctx); for (const mutate of mutations) { const candidate = parts(); mutate(candidate); await rejected(ctx, transfer, candidate); }
   }, { modules: ["sigeko"] }));
   await run("S5.4-Transfer: workflow identity, row shape, chronology and signed pairing reject before writes", () => fixture(async ctx => {
@@ -155,13 +173,13 @@ async function runSigekoWorkflowTransferTests(run) {
       await rejected(ctx, transfer, parts([document(), document("imported", "second")], [first, second]), /Doppelte/);
     }
   }, { modules: ["sigeko"] }));
-  await run("S5.4-Transfer: V9 requires every exact count and manifest project identity", () => fixture(async ctx => {
+  await run("S5.4-Transfer: V10 requires every exact count and manifest project identity", () => fixture(async ctx => {
     const transfer = register(ctx);
     for (const key of Object.keys(parts()["manifest.json"].counts)) for (const value of [undefined, -1, "0", 999]) {
-      const candidate = parts(); candidate["manifest.json"].counts[key] = value; await rejected(ctx, transfer, candidate, /V9-Manifest/);
+      const candidate = parts(); candidate["manifest.json"].counts[key] = value; await rejected(ctx, transfer, candidate, /V10-Manifest/);
     }
     for (const mutate of [p => { p["manifest.json"].projectId = "foreign"; }, p => { p["manifest.json"].counts.extra = 0; }]) {
-      const candidate = parts(); mutate(candidate); await rejected(ctx, transfer, candidate, /V9-Manifest/);
+      const candidate = parts(); mutate(candidate); await rejected(ctx, transfer, candidate, /V10-Manifest/);
     }
   }, { modules: ["sigeko"] }));
   await run("S5.4-Transfer: missing, changed and non-PDF signed archive bytes preserve database", () => fixture(async ctx => {

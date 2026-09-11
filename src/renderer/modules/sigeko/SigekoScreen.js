@@ -38,7 +38,7 @@ export default class SigekoScreen {
     this.router = router;
     this.projectId = projectId || null;
     this.project = project && String(project.id) === String(this.projectId) ? project : null;
-    this.focusSection = ["roles", "authorities"].includes(focusSection) ? focusSection : null;
+    this.focusSection = ["roles", "authorities", "recipients"].includes(focusSection) ? focusSection : null;
     this.uiEditorScopeId = SIGEKO_SCOPE_ID;
     this.router?._setProjectRuntimeContext?.({ projectId: this.projectId, meetingId: null });
     this.alive = true; this.loadSequence = 0; this.readinessSequence = 0;
@@ -95,7 +95,7 @@ export default class SigekoScreen {
     const basic = node("section", "sigeko.screen.basic"); basic.style.cssText = "display:flex;flex-direction:column;gap:16px;min-width:0";
     this.basicPanel = basic;
     basic.append(node("h2", "sigeko.screen.basic.title", "Grunddaten"));
-    this._renderProfile(basic); this._renderRoles(basic);
+    this._renderProfile(basic); this._renderRoles(basic); this._renderVaRecipients(basic);
     const planned = node("section", "sigeko.screen.planned"); planned.style.cssText = "padding:12px;border:1px solid #d3dfec;border-radius:8px;background:#f5f8fc";
     const plannedTitle = node("h2", "sigeko.screen.planned.title", "Geplante Bereiche – noch nicht umgesetzt"); plannedTitle.style.fontSize = "16px";
     planned.append(plannedTitle, node("p", "sigeko.screen.planned.text", "SiGePlan · Begehungen · Übergabe an Restarbeiten"));
@@ -215,6 +215,70 @@ export default class SigekoScreen {
     parent.append(roles);
   }
 
+  _renderVaRecipients(parent) {
+    const panel = node("section", "sigeko.screen.vaRecipients"); panel.style.cssText = PANEL;
+    panel.append(node("h2", "sigeko.screen.vaRecipients.title", "Vorankündigung – Empfänger"));
+    this.vaRecipientsPanel = panel;
+    this.vaRecipientsInput = this._field(panel, ".vaRecipients.addresses", "E-Mail-Adressen (mit Semikolon trennen)");
+    this.vaRecipientChoice = this._field(panel, ".vaRecipients.choice", "Aus Adressdaten übernehmen", "select");
+    this.vaRecipientChoice.onchange = () => this._refreshEnabled();
+    this.vaRecipientsAdd = this._button(panel, ".vaRecipients.add", "Adresse übernehmen", () => {
+      if (this.vaRecipientsAdd.disabled || !this.vaRecipientChoice.value) return;
+      const addresses = this.vaRecipientsInput.value.split(/[;,]/).map(value => value.trim()).filter(Boolean);
+      if (!addresses.some(value => value.toLowerCase() === this.vaRecipientChoice.value.toLowerCase())) addresses.push(this.vaRecipientChoice.value);
+      this.vaRecipientsInput.value = addresses.join("; ");
+    });
+    this.vaRecipientsSave = this._button(panel, ".vaRecipients.save", "Empfänger speichern", () => this._saveVaRecipients());
+    this.vaRecipientsStatus = node("p", "sigeko.screen.vaRecipients.status", "Empfänger werden geladen …");
+    this.vaRecipientsStatus.setAttribute("role", "status"); panel.append(this.vaRecipientsStatus); parent.append(panel);
+  }
+  async _loadVaRecipients() {
+    const sequence = this.vaRecipientsSequence = (this.vaRecipientsSequence || 0) + 1;
+    const current = () => this.alive && this.vaRecipientsSequence === sequence;
+    this.vaRecipientSettings = null; this._refreshEnabled();
+    try {
+      const settings = resultData(await window.bbmDb.sigekoGetPreNotificationRecipients({ projectId: this.projectId }));
+      if (!current()) return;
+      if (settings.projectId !== this.projectId || !Array.isArray(settings.recipients)) throw new Error("Empfänger gehören nicht zum Projekt.");
+      this.vaRecipientSettings = settings;
+      this.vaRecipientsInput.value = settings.recipients.join("; "); this.vaRecipientsSnapshot = this.vaRecipientsInput.value;
+      this.vaRecipientsStatus.textContent = "Freie Eingabe oder Übernahme aus Adressdaten. Die Auswahl gilt für dieses Projekt.";
+    } catch (error) { if (current()) this.vaRecipientsStatus.textContent = "Empfänger konnten nicht geladen werden: " + error.message; }
+    if (!current()) return;
+    this._refreshEnabled();
+    const choices = new Map();
+    const add = (email, label) => {
+      const value = text(email).trim();
+      if (/^[^\s@;,<>]+@[^\s@;,<>]+\.[^\s@;,<>]+$/.test(value) && !choices.has(value.toLowerCase())) choices.set(value.toLowerCase(), [value, `${label || value} – ${value}`]);
+    };
+    try {
+      const lists = await Promise.all(["global_firm", "project_firm"].map(kind => window.bbmDb.firmDirectoryListAll({ kind, projectId: this.projectId, includeInactive: false })));
+      if (!current()) return;
+      for (const result of lists) {
+        for (const firm of resultList(result).filter(active)) {
+          add(firm.email, firm.name);
+          const persons = resultList(await window.bbmDb.firmDirectoryListPersons({ ref: firm.ref }));
+          if (!current()) return;
+          for (const person of persons.filter(active)) add(person.email, [firm.name, person.name].filter(Boolean).join(" / "));
+        }
+      }
+    } catch (error) { if (current()) this.vaRecipientsStatus.textContent += " Adressauswahl unvollständig; freie Eingabe bleibt möglich."; }
+    if (current()) { options(this.vaRecipientChoice, [["", "Adresse auswählen …"], ...choices.values()]); this._refreshEnabled(); completeM80PilotRender(); }
+  }
+  async _saveVaRecipients() {
+    if (!this.alive || !this.vaRecipientSettings || this.vaRecipientsBusy || this.project?.archived_at) return;
+    this.vaRecipientsBusy = true; this._refreshEnabled();
+    try {
+      const recipients = this.vaRecipientsInput.value.split(/[;,]/).map(value => value.trim()).filter(Boolean);
+      const settings = resultData(await window.bbmDb.sigekoSavePreNotificationRecipients({ projectId: this.projectId, expectedRevision: this.vaRecipientSettings.revision, recipients }));
+      if (!this.alive) return;
+      if (settings.projectId !== this.projectId || !Array.isArray(settings.recipients)) throw new Error("Empfänger gehören nicht zum Projekt.");
+      this.vaRecipientSettings = settings; this.vaRecipientsInput.value = settings.recipients.join("; "); this.vaRecipientsSnapshot = this.vaRecipientsInput.value;
+      this.vaRecipientsStatus.textContent = "Empfänger im Projekt gespeichert.";
+    } catch (error) { if (this.alive) this.vaRecipientsStatus.textContent = "Empfänger nicht gespeichert: " + error.message; }
+    finally { this.vaRecipientsBusy = false; if (this.alive) { this._refreshEnabled(); completeM80PilotRender(); } }
+  }
+
   _showLogo() { this.logoLabel.textContent = this.logoPath ? `Gewähltes Logo: ${this.logoPath}` : "Kein Logo ausgewählt."; }
   _profileDraft() { return { ...Object.fromEntries(KEYS.map(key => [key, normalized(this.inputs[key].value)])), logo_path: this.logoPath || null }; }
   _roleDraft(role) {
@@ -224,9 +288,9 @@ export default class SigekoScreen {
   }
   _rolesDraft() { return { planning: this._roleDraft("planning"), executionSameAsPlanning: this.sameInput.checked, execution: this.sameInput.checked ? null : this._roleDraft("execution") }; }
   _navigate(action) {
-    if (this.profileBusy || this.rolesBusy || this.authoritiesPanel?.busy) return;
+    if (this.profileBusy || this.rolesBusy || this.vaRecipientsBusy || this.authoritiesPanel?.busy) return;
     const dirty = (this.profileReady && JSON.stringify(this._profileDraft()) !== this.profileSnapshot)
-      || (this.rolesReady && JSON.stringify(this._rolesDraft()) !== this.rolesSnapshot) || this.authoritiesPanel?.isDirty();
+      || (this.rolesReady && JSON.stringify(this._rolesDraft()) !== this.rolesSnapshot) || this.authoritiesPanel?.isDirty() || (this.vaRecipientSettings && this.vaRecipientsInput.value !== this.vaRecipientsSnapshot);
     if (dirty && !window.confirm("Ungespeicherte SiGeKo-Eingaben verwerfen und diese Ansicht verlassen?")) return;
     return action();
   }
@@ -239,6 +303,11 @@ export default class SigekoScreen {
   }
   _refreshEnabled() {
     this.authoritiesPanel?.refreshEnabled();
+    if (this.vaRecipientsInput) {
+      const disabled = !this.vaRecipientSettings || this.vaRecipientsBusy || !!this.project?.archived_at;
+      this.vaRecipientsInput.disabled = this.vaRecipientsSave.disabled = this.vaRecipientChoice.disabled = disabled;
+      this.vaRecipientsAdd.disabled = disabled || !this.vaRecipientChoice.value;
+    }
     const profileDisabled = !this.profileReady || this.profileBusy;
     for (const input of [...Object.values(this.inputs), this.logoInput, this.logoClear, this.profileSave]) input.disabled = profileDisabled;
     const disabled = !this.rolesReady || this.rolesBusy || !!this.project?.archived_at;
@@ -288,11 +357,12 @@ export default class SigekoScreen {
   }
   async load() {
     if (this.focusSection) {
-      const target = this.focusSection === "authorities" ? this.authoritiesPanel?.root : this.basicPanel;
+      const target = this.focusSection === "authorities" ? this.authoritiesPanel?.root : this.focusSection === "recipients" ? this.vaRecipientsPanel : this.basicPanel;
       target?.scrollIntoView?.({ block: "start" }); this.focusSection = null;
     }
     void this._loadReadiness();
     void this.authoritiesPanel.load();
+    const vaRecipientsLoad = this._loadVaRecipients();
     const sequence = ++this.loadSequence;
     const current = () => this.alive && sequence === this.loadSequence;
     const profile = (async () => {
@@ -324,7 +394,7 @@ export default class SigekoScreen {
       }
       if (current()) { this._refreshEnabled(); completeM80PilotRender(); }
     })();
-    await Promise.all([profile, roles]);
+    await Promise.all([profile, roles, vaRecipientsLoad]);
     if (current()) { this._refreshEnabled(); completeM80PilotRender(); }
   }
   async _saveProfile() {

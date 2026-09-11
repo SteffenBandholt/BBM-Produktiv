@@ -266,6 +266,6 @@ async function runSigekoPreNotificationWorkflowServiceTests(run) {
     const result = await service.openPreNotificationMailDraft(ctx.mailPayload()); assert.equal(result.workflow.status, "orange"); ctx.assertTempEmpty();
   }));
 }
-module.exports = { runSigekoPreNotificationWorkflowServiceTests };
+module.exports = { runSigekoPreNotificationWorkflowServiceTests, withWorkflow };
 if (require.main === module) runSigekoPreNotificationWorkflowServiceTests(async (name, check) => { await check(); console.log("PASS", name); })
   .catch(error => { console.error(error); process.exitCode = 1; });

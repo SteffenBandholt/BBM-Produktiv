@@ -11,7 +11,7 @@ const { validateDocumentFile, parseSigekoDocumentFiles } = require("../../src/sh
 const T0 = "2026-09-10T12:00:00.000Z", T1 = "2026-09-10T12:01:00.000Z", T2 = "2026-09-10T12:02:00.000Z";
 const signedFile = () => ({ kind: "signed", projectRelativePath: "SiGeKo/Unterlagen/Vorankuendigung-unterschrieben.pdf", sha256: "a".repeat(64), byteSize: 27 });
 const row = (patch = {}) => ({ document_id: "d1", project_id: "p1", signed_file_json: null, signed_received_at: null,
-  signature_opened_at: null, authority_opened_at: null, return_requested_by: null, revision: 1, created_at: T0, updated_at: T0, ...patch });
+  signature_opened_at: null, authority_opened_at: null, return_requested_by: null, returned_on: null, authority_sent_on: null, revision: 1, created_at: T0, updated_at: T0, ...patch });
 function fixture(check) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-s54-workflows-")), file = path.join(root, "data.db");
   let db = new Database(file); db.pragma("foreign_keys=ON");

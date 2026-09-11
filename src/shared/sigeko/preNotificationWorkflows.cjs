@@ -2,7 +2,7 @@
 const { validateDocumentFile } = require("./documents.cjs");
 const SIGEKO_PRE_NOTIFICATION_WORKFLOW_COLUMNS = Object.freeze([
   "document_id", "project_id", "signed_file_json", "signed_received_at", "signature_opened_at",
-  "authority_opened_at", "return_requested_by", "revision", "created_at", "updated_at",
+  "authority_opened_at", "return_requested_by", "revision", "created_at", "updated_at", "returned_on", "authority_sent_on",
 ]);
 function invalid() {
   throw Object.assign(new Error("Ungültiger gespeicherter Vorankündigungsablauf."), { code: "PRE_NOTIFICATION_WORKFLOW_INVALID" });
@@ -32,6 +32,9 @@ function validatePreNotificationWorkflowRow(row, projectId) {
   }
   if (row.return_requested_by !== null && (typeof row.return_requested_by !== "string" ||
       !/^\d{4}-\d{2}-\d{2}$/.test(row.return_requested_by) || !timestamp(row.return_requested_by + "T00:00:00.000Z"))) invalid();
+  for (const key of ["returned_on", "authority_sent_on"]) {
+    if (row[key] !== null && (typeof row[key] !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(row[key]) || !timestamp(row[key] + "T00:00:00.000Z"))) invalid();
+  }
   const file = parseSignedReturnFile(row);
   if ((file === null) !== (row.signed_received_at === null) || (row.authority_opened_at !== null && file === null)) invalid();
   if (row.authority_opened_at !== null && row.authority_opened_at < row.signed_received_at) invalid();

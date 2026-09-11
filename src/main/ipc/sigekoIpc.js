@@ -13,7 +13,7 @@ function registerSigekoIpc({ ipcMain, service = createSigekoService(), projectSe
   readinessService = createReadinessService({ projectService, projectAuthorityService }),
   preNotificationService = createPreNotificationService({ projectService, projectAuthorityService }),
   documentService = getPreNotificationDocumentService(), workflowService = createPreNotificationWorkflowService() } = {}) {
-  for (const operation of ["getPreNotificationWorkflow", "preparePreNotificationMail", "importPreNotificationSignedReturn",
+  for (const operation of ["getPreNotificationRecipients", "savePreNotificationRecipients", "getPreNotificationCompletion", "savePreNotificationCompletion", "openSimplePreNotificationMail", "getPreNotificationWorkflow", "preparePreNotificationMail", "importPreNotificationSignedReturn",
     "openPreNotificationSignedReturn", "openPreNotificationMailDraft"]) {
     ipcMain.handle(`sigeko:${operation}`, async (_event, payload) => {
       try { return { ok: true, data: await workflowService[operation](payload) }; }

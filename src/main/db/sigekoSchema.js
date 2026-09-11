@@ -14,7 +14,7 @@ function roleChecks(prefix) {
     CHECK (${prefix}_source = 'free' OR (${CONTACT_FIELDS.map(key => `${prefix}_free_${key} IS NULL`).join(" AND ")}))`;
 }
 function ensureSigekoSchema(db) {
-  db.transaction(() => db.exec(`
+  db.transaction(() => { db.exec(`
     CREATE TABLE IF NOT EXISTS sigeko_profiles (
       id TEXT PRIMARY KEY NOT NULL CHECK (id = 'standard'),
       ${[...CONTACT_FIELDS, "logo_path"].map(key => `${key} TEXT`).join(",\n")},
@@ -141,6 +141,15 @@ function ensureSigekoSchema(db) {
         AND json_type(snapshot_json, '$.revision') = 'integer'
         AND json_extract(snapshot_json, '$.revision') = source_revision, 0))
     );
-  `))();
+  `);
+    // S5.5: additive manual completion fields; historical files/events stay intact.
+    const workflowColumns = new Set(db.prepare("PRAGMA table_info(sigeko_pre_notification_workflows)").all().map(row => row.name));
+    for (const key of ["returned_on", "authority_sent_on"]) {
+      if (!workflowColumns.has(key)) db.exec(`ALTER TABLE sigeko_pre_notification_workflows ADD COLUMN ${key} TEXT
+        CHECK (${key} IS NULL OR (length(${key}) = 10 AND substr(${key},1,4) BETWEEN '0001' AND '9999'
+          AND ${key} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'
+          AND COALESCE(date(${key}, '+0 days') = ${key}, 0)))`);
+    }
+  })();
 }
 module.exports = Object.freeze({ ensureSigekoSchema });

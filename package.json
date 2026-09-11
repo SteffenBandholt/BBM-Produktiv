@@ -16,6 +16,8 @@
     "test": "node scripts/runElectronNodeTest.cjs",
     "test:sigeko:s1.4a": "node scripts/runSigekoPdfAcceptance.cjs",
     "test:sigeko:s1.5:outlook": "node scripts/runSigekoMailAcceptance.cjs",
+    "test:sigeko:s5.5:prepare": "node scripts/runSigekoMailAcceptance.cjs --s55 --prepare-only",
+    "test:sigeko:s5.5:outlook": "node scripts/runSigekoMailAcceptance.cjs --s55",
     "test:sigeko:s5.4:outlook": "node scripts/runSigekoMailAcceptance.cjs --s54",
     "test:sigeko:s2.2:form": "node scripts/runPlannedStartFormAcceptance.cjs --manual",
     "test:sigeko:s2.4:form": "node scripts/runSigekoProjectFormAcceptance.cjs",
