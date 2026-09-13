@@ -82,18 +82,18 @@ async function runM82AppStarterPackageTests(run) {
     const invoiceScope = registryScopes.find((scope) => scope.scopeId === "rechnung.screen");
     const invoiceTarget = manifest.scopes.find((scope) => scope.scopeId === "rechnung.screen");
 
-    assert.equal(invoiceContract.slots.length, 131);
+    assert.equal(invoiceContract.slots.length, 146);
     assert.equal(invoiceScope.elements.length, invoiceContract.slots.length);
     assert.equal(invoiceTarget.elementCount, invoiceScope.elements.length);
     assert.deepEqual(compareManifestScopeCounts(manifest, registryScopes), []);
 
     const staleManifest = structuredClone(manifest);
-    staleManifest.scopes.find((scope) => scope.scopeId === "rechnung.screen").elementCount = 117;
+    staleManifest.scopes.find((scope) => scope.scopeId === "rechnung.screen").elementCount = 151;
     assert.deepEqual(compareManifestScopeCounts(staleManifest, registryScopes), [{
       code: "target_manifest_element_count_mismatch",
       scopeId: "rechnung.screen",
-      manifestElementCount: 117,
-      registryElementCount: 131,
+      manifestElementCount: 151,
+      registryElementCount: 146,
     }]);
   });
 

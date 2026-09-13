@@ -1,11 +1,9 @@
 const { InvoiceIssuerProfileRepository } = require("../../db/invoiceIssuerProfileRepo");
 const { InvoiceServiceCatalogRepository } = require("../../db/invoiceServiceCatalogRepo");
-const path = require("node:path");
-const { pathToFileURL } = require("node:url");
 
 let positionsPromise;
 function centralVatRate() {
-  if (!positionsPromise) positionsPromise = import(pathToFileURL(path.join(__dirname, "../../../shared/rechnung/rechnungPositions.mjs")).href);
+  if (!positionsPromise) positionsPromise = import("../../../shared/rechnung/rechnungPositions.mjs");
   return positionsPromise.then((rules) => rules.DEFAULT_VAT_RATE_PERCENT);
 }
 

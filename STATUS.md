@@ -5001,3 +5001,30 @@ Gezielte Verhaltenstests mit abweichender Vorgabe 7 Prozent, alter 19-Prozent-
 Katalogtabelle, DB-Neustart, unverändertem Beleg und isoliertem Kundenrefresh sind
 grün. Kit-/Windows-/sichtbare Electron-Prüfungen bleiben wie im Zwischenstand
 offen. Kein RE-S1.2, kein Merge; danach Stopp.
+
+## 2026-09-13 – Rechnung RE-S1.1 / PR #348: Bedienkorrektur
+
+Die zweite Kundenpflege ist aus den Rechnungsstammdaten entfernt. Kunden bleiben
+ausschließlich Eigentum der gemeinsamen Firmen-/Kundenverwaltung; der vorhandene
+Kundenpicker im Rechnungsentwurf und seine typisierte globale Identität bleiben
+unverändert. Die Stammdaten zeigen nur Rechnungstellerprofil und
+Leistungskatalog. Der Bereich ist mit `height: 100%` an den vorhandenen
+`rechnung-live-content` gebunden und besitzt bei begrenzter Fensterhöhe einen
+nutzbaren eigenen Scrollweg.
+
+Fünf Kundenpflege-Ziele wurden aus dem expliziten Komponentenvertrag entfernt;
+`rechnung.screen` umfasst nun 146 Ziele. Target-Manifest, Scope-Fingerprint und
+Registry-Fingerprint wurden mit dem vorhandenen Kit synchronisiert. Gezielter
+RE-S1.1-Test, Manifesttests, Vertrags-Selbsttest und der neue reale Rechnung-Ref-
+Mount sind grün. Der breite Rechnungsblock bleibt ausschließlich an bereits
+dokumentierten Altfehlern rot; diese wurden nicht repariert.
+
+Im isolierten Windows-/Electron-Lauf bei 1155 × 575 sind Profil und Katalog über
+338 px Scrollweg erreichbar; Kundenpflege fehlt und der Entwurfs-Kundenpicker ist
+vorhanden. Das Rechnungstellerprofil wurde per UI-Klick gespeichert und aus der
+isolierten SQLite-Datei bestätigt. Der erneute sichtbare Katalog-Speichernachweis
+blieb nach der einzigen Reparaturrunde an einer schon in der Startnavigation
+ausstehenden IPC-Antwort offen; Service-/DB-Neustarttests sind grün. Native
+Computer Use war wegen fehlender Pipe nicht verfügbar. Kein RE-S1.2, keine
+PDF-/Buchungs-/Navigationsänderung, kein Merge. Paket bleibt auf PR #348; Commit-
+und Pushnachweis folgen im Abschluss.

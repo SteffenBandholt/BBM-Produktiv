@@ -691,7 +691,7 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-screen__sheet-area { padding: 0; background: #fff; scrollbar-gutter: stable both-edges; }
 .rechnung-screen__sheet-canvas { min-height: 0; background: #fff; }
 .rechnung-live-editor__body.rechnung-sheet { flex: 0 0 auto; min-height: 0; box-sizing: border-box; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-.rechnung-master-data { min-height: 0; overflow: auto; padding: 18px; }
+.rechnung-master-data { height: 100%; min-height: 0; overflow: auto; padding: 18px; }
 .rechnung-master-layout { display: grid; gap: 14px; }
 .rechnung-master-card { display: grid; gap: 10px; padding: 14px; border: 1px solid #d8dee8; border-radius: 10px; background: #fff; }
 .rechnung-master-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }

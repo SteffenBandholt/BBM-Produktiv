@@ -97,6 +97,20 @@ async function runM830ComponentContractTests(run) {
     const invoiceRoot = invoiceScreen.render();
     body.appendChild(invoiceRoot);
     await Promise.resolve();
+    await run("M83.0 Rechnung RE-S1.1: 146 aktuelle Einzel-Refs ohne zweite Kundenpflege sind vollständig gebunden", () => {
+      const component = contracts.find((entry) => entry.componentId === "bbm.rechnung.screen");
+      const scope = scopes.find((entry) => entry.scopeId === "rechnung.screen");
+      const expectedIds = scope.elements.map((entry) => entry.id);
+      const rendered = collectEditorElements(invoiceRoot);
+      const renderedIds = rendered.map((element) => element.getAttribute("data-ui-inspector-id"));
+      assert.equal(expectedIds.length, 146);
+      assert.equal(component.slots.length, 146);
+      assert.equal(new Set(renderedIds).size, 146);
+      assert.deepEqual([...renderedIds].sort(), [...expectedIds].sort());
+      assert.equal(renderedIds.some((id) => id.startsWith("rechnung.masterData.customers")), false);
+      assert.equal(renderedIds.includes("rechnung.editor.customerPicker"), true);
+      assert.equal(refs.validateM83ComponentReferences([component.componentId]).ok, true);
+    });
     await run("M83.0 Rechnung 01: echter Rechnungsscreen mountet alle 131 Einzel-Refs mit vollstaendigem DOM-Vertrag", () => {
       const component = contracts.find((entry) => entry.componentId === "bbm.rechnung.screen");
       const scope = scopes.find((entry) => entry.scopeId === "rechnung.screen");

@@ -1,3 +1,19 @@
+## 2026-09-13 – Rechnung RE-S1.1 / PR #348: Bedienkorrektur
+
+Im bestehenden Rechnungspaket wurde ausschließlich die Bediengrenze korrigiert:
+Die doppelte Kundenpflege entfällt aus den Rechnungsstammdaten, während gemeinsamer
+Firmenbestand und Entwurfs-Kundenpicker unverändert bleiben. Profil und
+Leistungskatalog sind bei begrenzter Höhe über einen lokal gebundenen Scrollbereich
+erreichbar. Der explizite Rechnung-Vertrag und das Target-Manifest sind auf 146
+Ziele synchronisiert. RE-S1.2, PDF, Buchung, Navigation, Datenmodell und
+gemeinsame Firmenverwaltung bleiben außerhalb des Pakets. Der technische
+Katalog-Speicherpfad verwendet weiter die zentrale MwSt.-Konstante; sein erneuter
+sichtbarer Electron-Nachweis bleibt wegen einer ausstehenden Start-IPC-Antwort
+offen. Nächster Schritt ist ausschließlich die Nutzerabnahme des korrigierten
+Stammdatenablaufs; keine automatische Fortsetzung.
+
+---
+
 ## 2026-09-13 – SiGeKo gestoppt; ausschließlich Git-Abschluss
 
 SiGeKo wird auf Nutzerwunsch vorläufig nicht weiterentwickelt. S5.5 / PR #340 ist ohne Merge geschlossen; Branch und Zwischenstand bleiben erhalten. Keine Windows-/Outlook-Gesamtabnahme. Frühere automatische Folgeaufträge S5/S6 sind ausgesetzt. Wiederaufnahme nur durch ausdrücklichen Mini-Auftrag ohne Unteragenten. Produktbasis e3f1197f bleibt fachlich unverändert; bekannte Fehler bleiben offen. Maßgeblich: `00_PROJEKTSTEUERUNG/00_GESAMTPLAN_BBM_REVISION.md` und GitHub #274/#277.

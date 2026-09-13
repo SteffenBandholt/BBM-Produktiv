@@ -1,23 +1,78 @@
 # Rechnungsscreen – UI-/PDF-Entwurfsentscheidung
 
-## RE-S1.1 – Stammdaten und Leistungskatalog (13.09.2026)
+## RE-S1.1 – Bedienkorrektur Stammdaten und Leistungskatalog (13.09.2026)
 
-Art der Ausgabe ist UI, ohne PDF-Änderung. Der vorhandene Scope
-`rechnung.screen` erhält die ausdrücklich deklarierten Bereiche
-`rechnung.masterData`, `rechnung.masterData.issuer`,
-`rechnung.masterData.customers` und `rechnung.masterData.catalog` einschließlich
-ihrer sichtbaren Felder, Feldlabels und Layoutbuttons. Alle Parents sind im selben
-Komponentenvertrag vorhanden. Kunden- und Katalogauswahl sind Bedienlisten und
-keine Tabellenlayout-Ziele.
+### A. Art der Ausgabe
 
-Layoutoperationen bleiben auf `move`, `resizeWidth`, `resizeHeight`,
-`setVisibility` und bei sichtbarem Text `textResize` beschränkt. Fachliches
-Speichern und Anlegen, Kunden-/Katalogauswahl, IPC- und Datenbankaktionen sowie
-`executeTargetAction`, `modifyDomainData`, `createRecord` und `deleteRecord` sind
-keine Editoroperationen. Die tatsächliche Vertragsprüfung bleibt wegen des in der
-Laufumgebung fehlenden vertrauenswürdigen `UI-Editor-kit` offen; sie wird nicht als
-grün behauptet. IDs und Parents stehen vollständig in
-`RechnungScreen.uiEditorContract.js`.
+- UI
+- keine PDF-Änderung
+
+### B. Editorfähigkeit
+
+- editorfähig: ja
+- Es werden keine neuen Editorziele angelegt. Der bestehende Scope
+  `rechnung.screen` behält die Stammdatenziele für Rechnungstellerprofil und
+  Leistungskatalog; die neu hinzugekommene zweite Kundenpflege entfällt.
+
+### C. Editorfähige Elemente
+
+Erhalten bleiben `rechnung.masterData` als Root der Ansicht,
+`rechnung.masterData.header` mit Titel und Schließen-Schaltfläche,
+`rechnung.masterData.issuer` mit Zusammenfassung, 18 expliziten Feldern und
+zugehörigen Labels sowie `rechnung.masterData.catalog` mit Auswahl, fünf Feldern,
+zugehörigen Labels und zwei Schaltflächen. Für jedes Element stehen
+`data-ui-inspector-id`, `data-ui-editor-kind`, `data-ui-editor-label`,
+`data-ui-editor-parent`, `data-ui-editor-editable` und `data-ui-editor-ops`
+vollständig im Komponentenvertrag `RechnungScreen.uiEditorContract.js`.
+
+Die erlaubten Layoutoperationen bleiben je nach Elementtyp auf `move`,
+`resizeWidth`, `resizeHeight`, `setVisibility` und bei sichtbarem Text
+`textResize` beschränkt. Der aktuelle Scope umfasst nach der Korrektur 146 Ziele.
+
+### D. Nicht editorfähige Elemente und verbotene Editor-Ziele
+
+Entfernt werden genau diese fünf Ziele:
+
+- `rechnung.masterData.customers`
+- `rechnung.masterData.customers.select`
+- `rechnung.masterData.customers.select.label`
+- `rechnung.masterData.customers.create`
+- `rechnung.masterData.customers.edit`
+
+Fachliches Speichern, Anlegen, Löschen, Upload, Import, Export, Autosave,
+Kunden-/Katalogauswahl, IPC- und Datenbankaktionen sowie `executeTargetAction`,
+`modifyDomainData`, `createRecord` und `deleteRecord` bleiben als
+Editoroperationen gesperrt. Die vorhandene Kundenauswahl
+`rechnung.editor.customerPicker` im Rechnungsentwurf bleibt erhalten und ist eine
+Bedienliste, keine Inhaltstabelle.
+
+### E. Parent-/Strukturregel
+
+Alle erhaltenen Elemente behalten einen vorhandenen, selbst registrierten Parent.
+Die entfernten Kundenpflegeziele hinterlassen keinen Parent-Verweis. Tabellen,
+Spalten, Tabellen-Registry und PDF-Strukturen sind nicht betroffen.
+
+### F. Prüfung
+
+- `scripts/tests/rechnungReS11.test.cjs` sichert die Bereichsgrenze, den erhaltenen
+  Entwurfs-Kundenpicker, die zentrale MwSt.-Vorgabe und die lokale Scrollregel.
+- Der gezielte RE-S1.1-Teil von
+  `scripts/tests/m83-0ComponentContracts.test.cjs` mountet 146 reale Einzel-Refs
+  ohne Kundenpflegeziele und prüft den vollständigen Ref-Vertrag.
+- `scripts/tests/m82AppStarterPackage.test.cjs` und
+  `scripts/tests/sigekoEditorManifest.test.cjs` prüfen Manifestzahl sowie Scope-
+  und Registry-Fingerprint mit dem vorhandenen UI-Editor-Kit.
+- `scripts/ui-editor-contract-check.cjs --self-test` ist grün; der Dateicheck findet
+  erwartungsgemäß keine statischen `data-ui-*`-Attribute, weil die produktiven
+  Metadaten dynamisch aus dem Komponentenvertrag gebunden werden.
+- Der echte Windows-/Electron-Lauf bestätigt bei begrenzter Fensterhöhe den
+  nutzbaren Scrollweg und die Erreichbarkeit des Katalog-Speicherknopfs. Die native
+  Computer-Use-Pipe war nicht verfügbar; die Bedienung erfolgte automatisiert über
+  Electron-Chromium/CDP. Ein echter Electron-Main-Prozess bestätigt zusätzlich die
+  zentrale Katalogvorgabe mit 19 Prozent. Der erneute sichtbare Katalog-
+  Speichernachweis blieb wegen
+  einer bereits in der Startnavigation ausstehenden IPC-Antwort offen und wird
+  nicht als grün behauptet.
 
 Stand: 24.08.2026
 Scope: `rechnung.screen`

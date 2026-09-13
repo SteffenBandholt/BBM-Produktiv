@@ -49,24 +49,22 @@ async function runRechnungReS11Tests(run) {
     assert.match(sql, /BETWEEN 0 AND 100/); db.close(); fs.rmSync(root, { recursive: true, force: true });
   });
 
-  await run("Rechnung RE-S1.1 Korrektur: Kundenrefresh bewahrt ungespeicherte Profil- und Katalogwerte", async () => {
-    const { buildCustomerRefresh, formatCatalogVatRate } = await import("../../src/renderer/modules/rechnungen/masterDataCustomerRefresh.mjs");
-    const unsaved = { issuer: { legalName: "Noch nicht gespeichert" }, catalog: { selectedId: "service-2", shortText: "Ungespeichert geändert", unitPrice: "77,00" } };
-    const before = structuredClone(unsaved);
-    const refreshed = buildCustomerRefresh({ ok: true, list: [{ kind: "global_firm", id: "customer-a", name: "Kunde geändert" }, { kind: "global_firm", id: "customer-b", name: "Kunde B" }] }, "global_firm:customer-a");
-    assert.deepEqual(refreshed.customers.map((entry) => entry.id), ["customer-a", "customer-b"]);
-    assert.equal(refreshed.selectedKey, "global_firm:customer-a");
-    assert.deepEqual(unsaved, before);
+  await run("Rechnung RE-S1.1 Korrektur: zentrale Mehrwertsteuer bleibt im Katalog sichtbar", async () => {
+    const { formatCatalogVatRate } = await import("../../src/renderer/modules/rechnungen/masterDataCatalogFormat.mjs");
     assert.equal(formatCatalogVatRate(null, 7), "7 %");
     assert.equal(formatCatalogVatRate({ vatRatePercent: 16 }, 7), "16 %");
+    assert.throws(() => formatCatalogVatRate({ vatRatePercent: 101 }, 7), /Mehrwertsteuer-Vorgabe/);
   });
 
-  await run("Rechnung RE-S1.1: IPC, Preload und UI nutzen rechnungsspezifische Stammdatenwege", async () => {
+  await run("Rechnung RE-S1.1 Bedienkorrektur: Stammdaten enthalten Profil und Katalog ohne zweite Kundenpflege", async () => {
     const read = (file) => fs.readFileSync(path.join(process.cwd(), file), "utf8");
-    const ipc = read("src/main/ipc/rechnungIpc.js"); const preload = read("src/main/preload.js"); const screen = read("src/renderer/modules/rechnungen/screens/RechnungScreen.js"); const contract = read("src/renderer/modules/rechnungen/RechnungScreen.uiEditorContract.js");
+    const ipc = read("src/main/ipc/rechnungIpc.js"); const preload = read("src/main/preload.js"); const screen = read("src/renderer/modules/rechnungen/screens/RechnungScreen.js"); const contract = read("src/renderer/modules/rechnungen/RechnungScreen.uiEditorContract.js"); const css = read("src/renderer/modules/rechnungen/styles/rechnungenDesign.css");
     for (const channel of ["rechnung:issuer:get", "rechnung:issuer:save", "rechnung:catalog:list", "rechnung:catalog:defaults", "rechnung:catalog:create", "rechnung:catalog:update"]) { assert.match(ipc, new RegExp(channel)); assert.match(preload, new RegExp(channel)); }
-    assert.match(screen, /rechnungIssuerGet/); assert.doesNotMatch(screen, /userProfileGet/); assert.match(screen, /openFirmEditor/); assert.match(screen, /origin: "invoice"/);
-    for (const id of ["rechnung.masterData", "rechnung.masterData.issuer", "rechnung.masterData.customers.select", "rechnung.masterData.catalog.shortText", "rechnung.masterData.catalog.vatRate"]) assert.match(contract, new RegExp(id.replaceAll(".", "\\.")));
+    assert.match(screen, /rechnungIssuerGet/); assert.doesNotMatch(screen, /userProfileGet|openFirmEditor|buildCustomerRefresh|masterData\.customers|_editCustomer|_refreshMasterCustomers/);
+    assert.match(screen, /rechnungListCustomers/); assert.match(screen, /rechnung\.editor\.customerPicker/);
+    assert.doesNotMatch(contract, /rechnung\.masterData\.customers/);
+    for (const id of ["rechnung.masterData", "rechnung.masterData.issuer", "rechnung.masterData.issuer.save", "rechnung.masterData.catalog", "rechnung.masterData.catalog.shortText", "rechnung.masterData.catalog.vatRate", "rechnung.masterData.catalog.save"]) assert.match(contract, new RegExp(id.replaceAll(".", "\\.")));
+    assert.match(css, /\.rechnung-master-data\s*\{[^}]*height:\s*100%;[^}]*overflow:\s*auto;/s);
     assert.deepEqual(await new InvoiceMasterDataService().getCatalogDefaults(), { vatRatePercent: 19 });
   });
 }
