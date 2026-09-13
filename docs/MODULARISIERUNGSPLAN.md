@@ -1,3 +1,9 @@
+## 2026-09-13 – SiGeKo gestoppt; ausschließlich Git-Abschluss
+
+SiGeKo wird auf Nutzerwunsch vorläufig nicht weiterentwickelt. S5.5 / PR #340 ist ohne Merge geschlossen; Branch und Zwischenstand bleiben erhalten. Keine Windows-/Outlook-Gesamtabnahme. Frühere automatische Folgeaufträge S5/S6 sind ausgesetzt. Wiederaufnahme nur durch ausdrücklichen Mini-Auftrag ohne Unteragenten. Produktbasis e3f1197f bleibt fachlich unverändert; bekannte Fehler bleiben offen. Maßgeblich: `00_PROJEKTSTEUERUNG/00_GESAMTPLAN_BBM_REVISION.md` und GitHub #274/#277.
+
+---
+
 ## 2026-09-10 – SiGeKo S5.4: Abnahme abgeschlossen, Integrationsnachweis (PR #339)
 
 Basis main `676713aa`; Ergebnisbranch `codex/sigeko-s54-ruecklauf-outlook`.

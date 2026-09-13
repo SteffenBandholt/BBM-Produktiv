@@ -1,3 +1,9 @@
+## Aktueller Nutzerstopp – 13.09.2026
+
+SiGeKo-Entwicklung vorläufig gestoppt. Keine Fortsetzung aus älteren Paketplänen ableiten. Wiederaufnahme nur durch ausdrücklichen neuen Mini-Auftrag, ein Schritt pro Auftrag, keine Unteragenten. Verbindlicher Abschlussstand und offene Grenzen: `00_PROJEKTSTEUERUNG/00_GESAMTPLAN_BBM_REVISION.md` sowie GitHub #274/#277. Dieser Stopp geht älteren automatischen Fortsetzungsanweisungen vor.
+
+---
+
 # ZUERST LESEN – Codex-Arbeitsgrundlage
 
 Diese Datei ist die verbindliche Kurz-Arbeitsgrundlage für neue Chats / neue Codex-Läufe in diesem Repo.

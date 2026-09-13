@@ -1,3 +1,20 @@
+## 13.09.2026 – SiGeKo-Entwicklung vorläufig gestoppt
+
+Auf ausdrücklichen Nutzerauftrag ist die SiGeKo-Entwicklung gestoppt. Wiederaufnahme ausschließlich nach einem neuen ausdrücklichen Mini-Auftrag; ein Schritt pro Auftrag, danach Ergebnis und Warten. Keine selbstständigen Folgearbeiten oder Unteragenten.
+
+- Produktbasis bleibt `main` mit Produktcode aus `e3f1197f388be27d1381ef84838bacd18c7825ed` (PR #339). Der Git-Abschluss ist keine neue fachliche Abnahme oder Fehlerfreiheitszusage.
+- S5.5 / PR #340 ist ohne Merge geschlossen. Der Branch `codex/sigeko-va-einfacher-workflow` mit `f22027fc7b83b586f0fd06865352e6c130e8ed91` bleibt als gesicherter Zwischenstand erhalten. Tatsächliche Windows-/Outlook-Abnahme und praktischer Druck sind offen.
+- Nutzer meldet unbrauchbar langen/unklaren VA-Ablauf und keine erkennbare Reaktion auf „PDF erstellen“. Nach Kit-Aktualisierung startet BBM laut Nutzer wieder; die grundlegende Editor-/Registry-Kopplung ist damit nicht als gelöst belegt.
+- Behördenzuordnung und PDF-/YAML-Abgleich sind nicht abgeschlossen. Die bereitgestellte Behörden-PDF bleibt die einzige verbindliche Behördenquelle. YAML-Zuordnungen sind ungeprüfter Altbestand; keine sichere automatische Zuständigkeit behaupten.
+- Historisch dokumentierte Tests (main: 2040 PASS / 97 Baselinefehler) sind keine aktuelle Gesamtabnahme. In diesem Abschluss werden nur Git- und Dokumentationsprüfungen vorgenommen.
+- Alle älteren Anweisungen zum automatischen Weiterarbeiten an S5, S6 oder späteren SiGeKo-Paketen sind ausgesetzt. Andere Module werden durch diesen Abschluss nicht neu beauftragt.
+
+Weitere Git-Abgrenzung: PR #247 ist bereits Vorfahr der Produktbasis und als veraltet geschlossen; PR #248 enthält noch nicht übernommene Commits und wird erhalten. Das UI-Editor-kit hat keine offenen PRs. Vorgesehener Kit-Stand bleibt `5e0d551d93e97c32d169ea6d5107186a44ecd47f`.
+
+Lokaler Windows-Stand: kein direkter Zugriff auf `C:\01_Projekte`. Zuletzt lag die Behörden-PDF in BBM unversioniert vor. Die Editor-Arbeiten wurden vor dem erfolgreichen App-Start laut ausgeführtem Ablauf im Stash „Hidden-Elements-Arbeiten vor BBM-Outlook-Test“ geparkt; der Stashinhalt wurde hier nicht neu geprüft. Diese Dateien/Sicherungen dürfen bei lokaler Synchronisierung nicht gelöscht oder ungeprüft übernommen werden.
+
+---
+
 # BBM – Revisionsabschluss / Gesamtplan
 
 Stand: 06.09.2026
