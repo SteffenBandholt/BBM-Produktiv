@@ -110,6 +110,7 @@ const TEST_GROUPS = Object.freeze([
       ["rechnungCentralCustomers.test.cjs", "runRechnungCentralCustomersTests"],
       ["rechnungPositions.test.cjs", "runRechnungPositionsTests"],
       ["rechnungStammdaten.test.cjs", "runRechnungStammdatenTests"],
+      ["rechnungReS11.test.cjs", "runRechnungReS11Tests"],
       ["rechnungNavigation.test.cjs", "runRechnungNavigationTests"],
       ["rechnungUiEditorUnbounded.test.cjs", "runRechnungUiEditorUnboundedTests"],
       ["rechnungButtonEffectiveGeometry.test.cjs", "runRechnungButtonEffectiveGeometryTests"],

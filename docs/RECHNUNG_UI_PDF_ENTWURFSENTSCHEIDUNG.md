@@ -1,5 +1,24 @@
 # Rechnungsscreen – UI-/PDF-Entwurfsentscheidung
 
+## RE-S1.1 – Stammdaten und Leistungskatalog (13.09.2026)
+
+Art der Ausgabe ist UI, ohne PDF-Änderung. Der vorhandene Scope
+`rechnung.screen` erhält die ausdrücklich deklarierten Bereiche
+`rechnung.masterData`, `rechnung.masterData.issuer`,
+`rechnung.masterData.customers` und `rechnung.masterData.catalog` einschließlich
+ihrer sichtbaren Felder, Feldlabels und Layoutbuttons. Alle Parents sind im selben
+Komponentenvertrag vorhanden. Kunden- und Katalogauswahl sind Bedienlisten und
+keine Tabellenlayout-Ziele.
+
+Layoutoperationen bleiben auf `move`, `resizeWidth`, `resizeHeight`,
+`setVisibility` und bei sichtbarem Text `textResize` beschränkt. Fachliches
+Speichern und Anlegen, Kunden-/Katalogauswahl, IPC- und Datenbankaktionen sowie
+`executeTargetAction`, `modifyDomainData`, `createRecord` und `deleteRecord` sind
+keine Editoroperationen. Die tatsächliche Vertragsprüfung bleibt wegen des in der
+Laufumgebung fehlenden vertrauenswürdigen `UI-Editor-kit` offen; sie wird nicht als
+grün behauptet. IDs und Parents stehen vollständig in
+`RechnungScreen.uiEditorContract.js`.
+
 Stand: 24.08.2026
 Scope: `rechnung.screen`
 Komponente: `bbm.rechnung.screen`

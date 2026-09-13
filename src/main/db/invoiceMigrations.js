@@ -71,6 +71,19 @@ const CREATE_INVOICE_ISSUER_PROFILES_SQL = `
   )
 `;
 
+const CREATE_INVOICE_SERVICE_CATALOG_SQL = `
+  CREATE TABLE IF NOT EXISTS invoice_service_catalog (
+    id TEXT PRIMARY KEY,
+    short_text TEXT NOT NULL,
+    long_text TEXT NOT NULL DEFAULT '',
+    unit TEXT NOT NULL DEFAULT '',
+    unit_price_cents INTEGER NOT NULL CHECK (unit_price_cents >= 0),
+    vat_rate_percent INTEGER NOT NULL DEFAULT 19 CHECK (vat_rate_percent = 19),
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )
+`;
+
 const CREATE_INVOICES_SQL = `
   CREATE TABLE IF NOT EXISTS invoices (
     id TEXT PRIMARY KEY,
@@ -767,6 +780,7 @@ function ensureInvoiceSchema(db) {
         );
     `);
     ensureInvoiceIssuerProfile(db);
+    db.exec(CREATE_INVOICE_SERVICE_CATALOG_SQL);
     customerMigration = migrateDraftCustomerRefs(db);
   };
   if (db.inTransaction) migrate();

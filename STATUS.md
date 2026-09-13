@@ -4972,3 +4972,18 @@ kein Merge und kein S1.3. Nachweise: `docs/SIGEKO_S1_2.md` und
 - 6/6 neue und 11/11 bisherige S1.3-Prüfungen grün. Volltest 1499/99 gegenüber 1493/99, identische Fehlernamen und keine fehlenden Fälle.
 - Branch und PR #320 werden weiterverwendet; Commit-Nachweis in #274.
 - Windows-/Explorer-Abnahme bleibt offen; kein Merge, kein S1.4, keine Rechnung.
+## 2026-09-13 – Rechnung RE-S1.1: Stammdaten/Katalog, Kit-Abnahme offen
+
+Auf Basis `9997910f519d9be0e81567dc3a7f5a65d28102d0` ergänzt das begrenzte
+Rechnungspaket die Bedienung des eigenständigen Rechnungstellerprofils, nutzt für
+zwei gemeinsame Kunden weiterhin globale Firmen und führt einen additiven
+rechnungsspezifischen Leistungskatalog ein. Drei persistente Katalogidentitäten,
+eine Änderung, DB-Neustart und unveränderter Belegbestand sind gezielt grün.
+
+Die tatsächliche Electron-/Windows-Bedienprüfung und der vollständige M83-/
+Manifestcheck bleiben offen: Linux fehlt `libatk-1.0.so.0`, der verlinkte
+vertrauenswürdige `../UI-Editor-kit`-Quellpfad fehlt. Deshalb kein grüner UI-
+Abschluss und keine unbelegte Manifest-Fingerprintänderung. RE-S1.2, Belege,
+Buchung, PDF, Aufträge und Nachträge wurden nicht begonnen. Nächster Schritt ist
+ausschließlich die Kit-/UI-Abnahme und gegebenenfalls eine gezielte Vertrags-
+Synchronisierung, nicht RE-S1.2.
