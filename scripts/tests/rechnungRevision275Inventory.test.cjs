@@ -48,12 +48,14 @@ async function runRechnungRevision275InventoryTests(run) {
     assert.match(read("src/main/modules/rechnung/registerMigrations.js"), /migrations\.ensureInvoiceSchema\(db\)/);
   });
 
-  await run("Rechnung #275 R2: nächste Identitätslücke ist ehrlich dokumentiert", () => {
+  await run("Rechnung #275 R2: gemeinsame Eigene-Organisation ist als Ausstellerquelle dokumentiert", () => {
     const report = read("docs/RECHNUNG_REVISION_275.md");
     assert.match(report, /`main` bleibt die einzige Integrationsbasis/);
     assert.match(report, /Nicht übernehmen/);
-    assert.match(report, /eigenständige[s\n ]+`InvoiceIssuerProfile`/);
-    assert.match(read("src/main/db/invoiceRepository.js"), /invoice_issuer_profiles/);
+    assert.match(report, /Eigene Organisation/);
+    assert.match(read("src/main/db/invoiceRepository.js"), /getOwnOrganization\(\{ dbConn: db \}\)/);
+    assert.doesNotMatch(read("src/main/db/invoiceRepository.js"), /invoice_issuer_profiles/);
+    assert.match(read("src/main/db/invoiceMigrations.js"), /invoice_issuer_profiles/);
   });
 }
 

@@ -1,3 +1,27 @@
+## 2026-09-13 – Rechnung RE-S1.1: abschließende Korrektur in PR #348
+
+Branch `codex/setze-bbm-rechnung-re-s1.1-um`, Basis `9997910f`, Weiterarbeit auf
+dem veröffentlichten PR-Stand. Die vorhandene Eigene Organisation ist nun die
+einzige aktive Ausstellerquelle für Entwurf, Vorschau und neue Buchung. Die
+historische Rechnungsteller-Tabelle bleibt unverändert als Altbestand erhalten;
+gebuchte Snapshots und bestehende PDF-Dateien werden nicht nachgeführt.
+
+Die zusätzliche Rechnungsstammdatenseite mit Rechnungsteller- und Kundenpflege
+ist entfernt. Der gemeinsame Firmenbestand und der Kundenpicker bleiben; der
+Leistungskatalog ist direkt erreichbar und innerhalb der verfügbaren Fensterhöhe
+lokal scrollbar. Vertrag, Runtime-Refs und Manifest stehen auf 107 real
+abgeleiteten Zielen (Registry 38). RE-S1.2 sowie neue DB-, IPC-, Buchungs- oder
+PDF-Arbeit sind ausdrücklich nicht enthalten.
+
+Die fünf gezielten RE-S1.1-Prüfungen, die fünf historischen Profil-/Snapshot-
+Prüfungen, die aktualisierten Buchungs-/PDF-Vertragschecks, der neue 107-Ref-Check,
+Manifest-/Fingerprint-Checks, Vertrags-Selbsttest, fokussierter ESLint und
+`git diff --check` sind grün. Die breite Rechnungsgruppe behält ausschließlich
+ihre dokumentierten Altfehler (unter anderem alte Screen-/87-Ziele-/Routerchecks).
+Eine sichtbare Windows-Bedienabnahme ist offen: Die native Computer-Use-Pipe war
+nach Wiederholung und Neuinitialisierung nicht verfügbar. Nächster Schritt ist
+nur diese fachliche Nutzerabnahme; keine automatische Fortsetzung.
+
 ## 2026-09-10 – SiGeKo S5.4: Abnahme abgeschlossen, Integrationsnachweis (PR #339)
 
 Basis main `676713aa`; Ergebnisbranch `codex/sigeko-s54-ruecklauf-outlook`.

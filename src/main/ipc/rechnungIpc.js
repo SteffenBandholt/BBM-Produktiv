@@ -43,8 +43,6 @@ function registerRechnungIpc({
   handle("rechnung:order:amendment:createDraft", (data) => billingOrderService.createDraftAmendment(data));
   handle("rechnung:order:amendment:confirm", (data) => billingOrderService.confirmAmendment(data));
   handle("rechnung:list", () => service.list(), "list");
-  handle("rechnung:issuer:get", () => masterDataService.getIssuerProfile(), "profile");
-  handle("rechnung:issuer:save", (data) => masterDataService.saveIssuerProfile(data), "profile");
   handle("rechnung:catalog:list", () => masterDataService.listCatalog(), "list");
   handle("rechnung:catalog:defaults", () => masterDataService.getCatalogDefaults());
   handle("rechnung:catalog:create", (data) => masterDataService.createCatalogEntry(data), "entry");

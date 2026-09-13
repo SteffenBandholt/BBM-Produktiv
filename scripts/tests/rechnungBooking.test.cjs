@@ -197,7 +197,7 @@ async function runRechnungBookingTests(run) {
       const restored = env.service.get(draft.id);
       assert.equal(restored.customer_snapshot.companyName, "Kunde Alt"); assert.equal(restored.customer_snapshot.street, "Altweg 1");
       assert.equal(restored.issuer_snapshot.companyName, "BBM Betrieb"); assert.equal(restored.issuer_snapshot.iban, "DE001");
-      assert.equal(restored.issuer_snapshot.profileId, "default");
+      assert.equal(restored.issuer_snapshot.profileId, "own-organization");
       assert.equal(restored.positions[0].short_text, "Montage");
       await assert.rejects(() => env.service.updateDraft(draft.id, { invoice_date: "2026-08-16" }), /nicht geändert/);
       assert.throws(() => env.service.deleteDraft(draft.id), /nicht gelöscht/);

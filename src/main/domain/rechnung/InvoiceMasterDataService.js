@@ -1,4 +1,3 @@
-const { InvoiceIssuerProfileRepository } = require("../../db/invoiceIssuerProfileRepo");
 const { InvoiceServiceCatalogRepository } = require("../../db/invoiceServiceCatalogRepo");
 
 let positionsPromise;
@@ -8,9 +7,7 @@ function centralVatRate() {
 }
 
 class InvoiceMasterDataService {
-  constructor({ issuerRepository = new InvoiceIssuerProfileRepository(), catalogRepository = new InvoiceServiceCatalogRepository(), vatRateProvider = centralVatRate } = {}) { this.issuerRepository = issuerRepository; this.catalogRepository = catalogRepository; this.vatRateProvider = vatRateProvider; }
-  getIssuerProfile() { return this.issuerRepository.get(); }
-  saveIssuerProfile(input) { return this.issuerRepository.upsert(input); }
+  constructor({ catalogRepository = new InvoiceServiceCatalogRepository(), vatRateProvider = centralVatRate } = {}) { this.catalogRepository = catalogRepository; this.vatRateProvider = vatRateProvider; }
   listCatalog() { return this.catalogRepository.list(); }
   async getCatalogDefaults() { return { vatRatePercent: await this.vatRateProvider() }; }
   async createCatalogEntry(input) { return this.catalogRepository.create({ ...input, vatRatePercent: await this.vatRateProvider() }); }

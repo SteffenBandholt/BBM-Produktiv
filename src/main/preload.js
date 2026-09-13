@@ -150,8 +150,6 @@ contextBridge.exposeInMainWorld("bbmDb", {
   rechnungOpenPdf: (id) => ipcRenderer.invoke("rechnung:openPdf", { id }),
   rechnungListCustomers: () => ipcRenderer.invoke("rechnung:listCustomers"),
   rechnungListProjects: () => ipcRenderer.invoke("rechnung:listProjects"),
-  rechnungIssuerGet: () => ipcRenderer.invoke("rechnung:issuer:get"),
-  rechnungIssuerSave: (profile) => ipcRenderer.invoke("rechnung:issuer:save", profile),
   rechnungCatalogList: () => ipcRenderer.invoke("rechnung:catalog:list"),
   rechnungCatalogDefaults: () => ipcRenderer.invoke("rechnung:catalog:defaults"),
   rechnungCatalogCreate: (entry) => ipcRenderer.invoke("rechnung:catalog:create", entry),

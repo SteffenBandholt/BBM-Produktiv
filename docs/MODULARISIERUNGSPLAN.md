@@ -1,16 +1,16 @@
 ## 2026-09-13 – Rechnung RE-S1.1 / PR #348: Bedienkorrektur
 
-Im bestehenden Rechnungspaket wurde ausschließlich die Bediengrenze korrigiert:
-Die doppelte Kundenpflege entfällt aus den Rechnungsstammdaten, während gemeinsamer
-Firmenbestand und Entwurfs-Kundenpicker unverändert bleiben. Profil und
-Leistungskatalog sind bei begrenzter Höhe über einen lokal gebundenen Scrollbereich
-erreichbar. Der explizite Rechnung-Vertrag und das Target-Manifest sind auf 146
-Ziele synchronisiert. RE-S1.2, PDF, Buchung, Navigation, Datenmodell und
-gemeinsame Firmenverwaltung bleiben außerhalb des Pakets. Der technische
-Katalog-Speicherpfad verwendet weiter die zentrale MwSt.-Konstante; sein erneuter
-sichtbarer Electron-Nachweis bleibt wegen einer ausstehenden Start-IPC-Antwort
-offen. Nächster Schritt ist ausschließlich die Nutzerabnahme des korrigierten
-Stammdatenablaufs; keine automatische Fortsetzung.
+Im bestehenden Rechnungspaket wird die Bedien- und Identitätsgrenze korrigiert:
+Die vorhandene Eigene Organisation aus `Einstellungen > Profil / Adresse` ist die
+einzige aktive Ausstellerquelle. Der zusätzliche Rechnungsstammdatenbereich samt
+Rechnungsteller- und Kundenpflege entfällt; gemeinsamer Firmenbestand und
+Entwurfs-Kundenpicker bleiben erhalten. Der Leistungskatalog ist direkt aus der
+Übersicht erreichbar und besitzt einen lokal höhengebundenen Scrollbereich.
+Komponentenvertrag und Target-Manifest folgen mit 107 aus dem realen Vertrag
+berechneten Zielen. Historische Profilkopie, gebuchte Snapshots und vorhandene
+PDFs bleiben unverändert. RE-S1.2, neue Buchungs-/PDF-Arbeit, Datenmodell und
+gemeinsame Firmenverwaltung bleiben außerhalb des Pakets. Nach diesem
+Korrekturpaket folgt keine automatische Fortsetzung.
 
 ---
 

@@ -56,7 +56,7 @@ async function runRechnungNavigationTests(run) {
 
   await run("Rechnung Navigation: Übersicht und Editor respektieren hidden trotz Grid-Layout", () => {
     const css = fs.readFileSync(path.join(root, "src/renderer/modules/rechnungen/styles/rechnungenDesign.css"), "utf8");
-    assert.match(css, /\.rechnung-live-overview\[hidden\],\s*\.rechnung-live-editor\[hidden\]\s*\{\s*display:\s*none;\s*\}/);
+    assert.match(css, /\.rechnung-live-overview\[hidden\],\s*\.rechnung-live-editor\[hidden\],\s*\.rechnung-catalog\[hidden\]\s*\{\s*display:\s*none;\s*\}/);
     assert.match(css, /\.rechnung-live-preview\[hidden\]\s*\{\s*display:\s*none;\s*\}/);
   });
 

@@ -1,6 +1,6 @@
 # Rechnungsscreen – UI-/PDF-Entwurfsentscheidung
 
-## RE-S1.1 – Bedienkorrektur Stammdaten und Leistungskatalog (13.09.2026)
+## RE-S1.1 – abschließende Korrektur für PR #348 (13.09.2026)
 
 ### A. Art der Ausgabe
 
@@ -9,70 +9,69 @@
 
 ### B. Editorfähigkeit
 
-- editorfähig: ja
-- Es werden keine neuen Editorziele angelegt. Der bestehende Scope
-  `rechnung.screen` behält die Stammdatenziele für Rechnungstellerprofil und
-  Leistungskatalog; die neu hinzugekommene zweite Kundenpflege entfällt.
+- editorfähig: ja, innerhalb des vorhandenen Scopes `rechnung.screen`
+- Die zusätzliche Stammdatenseite wird entfernt. Der Leistungskatalog erhält einen
+  direkten Übersichtseinstieg und einen eigenen expliziten UI-Teilbaum.
 
 ### C. Editorfähige Elemente
 
-Erhalten bleiben `rechnung.masterData` als Root der Ansicht,
-`rechnung.masterData.header` mit Titel und Schließen-Schaltfläche,
-`rechnung.masterData.issuer` mit Zusammenfassung, 18 expliziten Feldern und
-zugehörigen Labels sowie `rechnung.masterData.catalog` mit Auswahl, fünf Feldern,
-zugehörigen Labels und zwei Schaltflächen. Für jedes Element stehen
-`data-ui-inspector-id`, `data-ui-editor-kind`, `data-ui-editor-label`,
+Alle folgenden Elemente besitzen im Komponentenvertrag `id`, `name`, `type`,
+`role`, `parentId`, `order`, `visible`, `editable`, `allowedOps` und `lockedOps`.
+Die ID ist zugleich `data-ui-inspector-id`; Typ, Name, Parent, Editierbarkeit und
+Operationen werden als `data-ui-editor-kind`, `data-ui-editor-label`,
 `data-ui-editor-parent`, `data-ui-editor-editable` und `data-ui-editor-ops`
-vollständig im Komponentenvertrag `RechnungScreen.uiEditorContract.js`.
+dynamisch an das echte DOM-Ziel gebunden.
 
-Die erlaubten Layoutoperationen bleiben je nach Elementtyp auf `move`,
-`resizeWidth`, `resizeHeight`, `setVisibility` und bei sichtbarem Text
-`textResize` beschränkt. Der aktuelle Scope umfasst nach der Korrektur 146 Ziele.
+| IDs | Typ / Rolle | Parent | Erlaubte Operationen |
+| --- | --- | --- | --- |
+| `rechnung.overview.catalog` | button / domainActionLayout | `rechnung.overview.header` | move, resizeWidth, resizeHeight, setVisibility, textResize |
+| `rechnung.catalog` | area / layout | `rechnung.screen.content` | move, resizeWidth, resizeHeight, setVisibility |
+| `rechnung.catalog.header` | group / layout | `rechnung.catalog` | move, resizeWidth, resizeHeight, setVisibility |
+| `rechnung.catalog.title` | label / content | `rechnung.catalog.header` | move, resizeWidth, resizeHeight, setVisibility, textResize |
+| `rechnung.catalog.close` | button / domainActionLayout | `rechnung.catalog.header` | move, resizeWidth, resizeHeight, setVisibility, textResize |
+| `rechnung.catalog.form` | group / layout | `rechnung.catalog` | move, resizeWidth, resizeHeight, setVisibility |
+| `rechnung.catalog.select`, `.shortText`, `.longText`, `.unit`, `.unitPrice`, `.vatRate` | field / content | `rechnung.catalog.form` | move, resizeWidth, resizeHeight, setVisibility, textResize |
+| `rechnung.catalog.select.label`, `.shortText.label`, `.longText.label`, `.unit.label`, `.unitPrice.label`, `.vatRate.label` | label / fieldLabel | `rechnung.catalog.form` | move, resizeWidth, resizeHeight, setVisibility, textResize |
+| `rechnung.catalog.create`, `rechnung.catalog.save` | button / domainActionLayout | `rechnung.catalog.form` | move, resizeWidth, resizeHeight, setVisibility, textResize |
+
+Die Feldarten sind `select`, `singleLineText`, `multilineText`, `currency` und
+für die feste Mehrwertsteuer `readOnlyText`. Der vollständige Scope umfasst 107
+Ziele. Die genaue Reihenfolge 25 bis 38 steht im Komponentenvertrag.
 
 ### D. Nicht editorfähige Elemente und verbotene Editor-Ziele
 
-Entfernt werden genau diese fünf Ziele:
+Entfernt werden `rechnung.overview.masterData` und der gesamte Teilbaum
+`rechnung.masterData*`, also auch Rechnungsteller- und Kundenpflege. Die weiterhin
+vorhandene Kundenauswahl `rechnung.editor.customerPicker` ist eine Bedienliste,
+keine Inhaltstabelle.
 
-- `rechnung.masterData.customers`
-- `rechnung.masterData.customers.select`
-- `rechnung.masterData.customers.select.label`
-- `rechnung.masterData.customers.create`
-- `rechnung.masterData.customers.edit`
-
-Fachliches Speichern, Anlegen, Löschen, Upload, Import, Export, Autosave,
-Kunden-/Katalogauswahl, IPC- und Datenbankaktionen sowie `executeTargetAction`,
-`modifyDomainData`, `createRecord` und `deleteRecord` bleiben als
-Editoroperationen gesperrt. Die vorhandene Kundenauswahl
-`rechnung.editor.customerPicker` im Rechnungsentwurf bleibt erhalten und ist eine
-Bedienliste, keine Inhaltstabelle.
+Bei allen sichtbaren Buttons sind `executeTargetAction`, `modifyDomainData`,
+`createRecord` und `deleteRecord` gesperrt. Fachliches Speichern, Anlegen, Löschen,
+Upload, Import, Export, Autosave sowie IPC-/Datenbankaktionen sind keine
+Editoroperationen. Die fachliche Mehrwertsteuer ist nicht auswählbar.
 
 ### E. Parent-/Strukturregel
 
-Alle erhaltenen Elemente behalten einen vorhandenen, selbst registrierten Parent.
-Die entfernten Kundenpflegeziele hinterlassen keinen Parent-Verweis. Tabellen,
-Spalten, Tabellen-Registry und PDF-Strukturen sind nicht betroffen.
+Jedes Element außer dem bestehenden Scope-Root besitzt den oben genannten,
+ebenfalls registrierten Parent. Es gibt keine verwaisten `rechnung.masterData*`-
+Referenzen. Tabellen, Spalten, Tabellen-Registry und PDF-Strukturen bleiben
+unverändert.
 
 ### F. Prüfung
 
-- `scripts/tests/rechnungReS11.test.cjs` sichert die Bereichsgrenze, den erhaltenen
-  Entwurfs-Kundenpicker, die zentrale MwSt.-Vorgabe und die lokale Scrollregel.
-- Der gezielte RE-S1.1-Teil von
-  `scripts/tests/m83-0ComponentContracts.test.cjs` mountet 146 reale Einzel-Refs
-  ohne Kundenpflegeziele und prüft den vollständigen Ref-Vertrag.
+- `scripts/tests/rechnungReS11.test.cjs` prüft Quelle, Bestandsschutz,
+  Kunden-/Katalogpersistenz, feste 19 Prozent und die UI-Grenze.
+- `scripts/tests/m83-0ComponentContracts.test.cjs` mountet die 107 realen Ziele
+  und vergleicht Komponentenvertrag und Ref-Bindung.
 - `scripts/tests/m82AppStarterPackage.test.cjs` und
-  `scripts/tests/sigekoEditorManifest.test.cjs` prüfen Manifestzahl sowie Scope-
-  und Registry-Fingerprint mit dem vorhandenen UI-Editor-Kit.
-- `scripts/ui-editor-contract-check.cjs --self-test` ist grün; der Dateicheck findet
-  erwartungsgemäß keine statischen `data-ui-*`-Attribute, weil die produktiven
-  Metadaten dynamisch aus dem Komponentenvertrag gebunden werden.
-- Der echte Windows-/Electron-Lauf bestätigt bei begrenzter Fensterhöhe den
-  nutzbaren Scrollweg und die Erreichbarkeit des Katalog-Speicherknopfs. Die native
-  Computer-Use-Pipe war nicht verfügbar; die Bedienung erfolgte automatisiert über
-  Electron-Chromium/CDP. Ein echter Electron-Main-Prozess bestätigt zusätzlich die
-  zentrale Katalogvorgabe mit 19 Prozent. Der erneute sichtbare Katalog-
-  Speichernachweis blieb wegen
-  einer bereits in der Startnavigation ausstehenden IPC-Antwort offen und wird
-  nicht als grün behauptet.
+  `scripts/tests/sigekoEditorManifest.test.cjs` leiten Zielzahl sowie Scope- und
+  Registry-Fingerprint aus dem realen Vertrag ab.
+- `scripts/ui-editor-contract-check.cjs --self-test` sichert den Grundvertrag.
+- Der tatsächliche Windows-/Electron-Ablauf und etwaige Kit-/Umgebungsgrenzen
+  werden nur dann als bedient gemeldet, wenn sie im Arbeitslauf ausgeführt wurden.
+
+Der bisherige RE-S1.1-Zwischenstand mit eigener Rechnungstellerpflege, der
+`rechnung.masterData*`-Struktur und 146 Zielen ist überholt und nicht mehr gültig.
 
 Stand: 24.08.2026
 Scope: `rechnung.screen`

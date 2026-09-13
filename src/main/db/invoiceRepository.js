@@ -3,7 +3,7 @@
 const { randomUUID } = require("crypto");
 const { initDatabase } = require("./database");
 const { toInvoiceIssuerSnapshot } = require("../../shared/rechnung/invoiceIssuerProfile.cjs");
-const { ensureInvoiceIssuerProfile } = require("./invoiceMigrations");
+const { getOwnOrganization } = require("./ownOrganizationRepo");
 const { assertOrderSnapshotInput } = require("../domain/rechnung/invoiceOrderSnapshot");
 
 const HEADER_COLUMNS = Object.freeze([
@@ -198,12 +198,11 @@ class InvoiceRepository {
   }
 
   _issuerSnapshot(db) {
-    ensureInvoiceIssuerProfile(db);
-    const row = db.prepare("SELECT * FROM invoice_issuer_profiles WHERE id = 'default'").get();
-    if (!row || !String(row.legal_name || "").trim() || !String(row.street || "").trim() || !String(row.zip || "").trim() || !String(row.city || "").trim()) {
-      throw new Error("Das Rechnungstellerprofil ist für die Buchung unvollständig.");
+    const snapshot = toInvoiceIssuerSnapshot(getOwnOrganization({ dbConn: db }));
+    if (!snapshot.companyName || !snapshot.street || !snapshot.zip || !snapshot.city) {
+      throw new Error("Die eigenen Unternehmensdaten sind für die Buchung unvollständig. Bitte unter Einstellungen > Profil / Adresse ergänzen.");
     }
-    return toInvoiceIssuerSnapshot(row);
+    return snapshot;
   }
 
   buildPreviewSnapshots(header) {

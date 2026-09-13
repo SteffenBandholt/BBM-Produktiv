@@ -1,6 +1,26 @@
 # Rechnung – Revision #275
 
-Stand: 2026-09-06, Paket 4d – Nachträge und Ursprungsreferenzen.
+Stand: 2026-09-13, RE-S1.1-Korrektur in PR #348.
+
+## Aktuelle Ausstellergrenze
+
+Die vorhandene **Eigene Organisation** (`OwnOrganization`) aus
+`Einstellungen > Profil / Adresse` ist die einzige aktive Quelle für
+Rechnungsentwürfe, Vorschauen und neue Buchungen. Das frühere eigenständige
+`InvoiceIssuerProfile` ist als aktives Pflege- und Lesemodell aufgehoben. Seine
+historische Tabelle und die einmalige Bestandsmigration bleiben erhalten, werden
+aber nicht mehr gelesen, beschrieben, gelöscht oder in `user_profile`
+zurückkopiert.
+
+Gebuchte Rechnungen behalten ihren gespeicherten Ausstellersnapshot und ihre
+vorhandenen PDF-Dateien unverändert. Die historischen Abschnitte „Offene
+Reihenfolge ab Paket 2“, „Aktuell belegte R3-Lücke“, „Paket 2 / R3“ und die dortige
+Quellenaussage in „Paket 3 / R3“ dokumentieren frühere Paketentscheidungen und
+sind durch diese Korrektur ausdrücklich überholt. `main` bleibt die einzige
+Integrationsbasis; historische Branches und alte Infrastruktur werden weiterhin
+nicht übernommen.
+
+Die folgenden Paketabschnitte bleiben als Verlauf erhalten.
 
 ## Paket 4d – Nachtragszugang am bestätigten Auftrag
 

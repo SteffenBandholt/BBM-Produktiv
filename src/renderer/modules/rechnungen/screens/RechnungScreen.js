@@ -32,7 +32,22 @@ function field(labelText, input, className = "") {
   return wrapper;
 }
 function address(value = {}) { const source = value || {}; return [source.companyName || source.name, source.companyName2 || source.name2, source.street, [source.zip, source.city].filter(Boolean).join(" "), source.country].filter(Boolean).join("\n"); }
-export function issuerInformation(value = {}) { const source = value || {}; const vatId = text(source.vatId || source.vat_id); const taxNumber = text(source.taxNumber || source.tax_number); const iban = text(source.iban); const bic = text(source.bic); const nameLines = [text(source.companyName || source.name), text(source.companyName2 || source.name2)].filter(Boolean); const addressLines = [text(source.street), [text(source.zip), text(source.city)].filter(Boolean).join(" ")].filter(Boolean); const register = text(source.commercialRegister || source.commercial_register); const registerNumber = text(source.registerNumber || source.register_number); const managingDirector = text(source.managingDirector || source.managing_director); return Object.freeze({ nameLines, addressLines, taxRow: vatId ? Object.freeze({ label: "USt-IdNr.", value: vatId }) : taxNumber ? Object.freeze({ label: "Steuernr.", value: taxNumber }) : null, bankRows: Object.freeze([...(iban ? [{ label: "IBAN", value: iban }] : []), ...(bic ? [{ label: "BIC", value: bic }] : [])]), footerLines: Object.freeze([[...nameLines, ...addressLines].join(" · "), [vatId && `USt-IdNr. ${vatId}`, taxNumber && `Steuernr. ${taxNumber}`, iban && `IBAN ${iban}`, bic && `BIC ${bic}`].filter(Boolean).join(" · "), [register, registerNumber && `Registernr. ${registerNumber}`, managingDirector && `Geschäftsführer ${managingDirector}`].filter(Boolean).join(" · ")].filter(Boolean)) }); }
+export function issuerInformation(value = {}) {
+  const source = value || {};
+  const sourceAddress = source.address || source;
+  const sourceBank = source.bank || source;
+  const sourceLegal = source.legal || source;
+  const vatId = text(source.vatId || source.vat_id);
+  const taxNumber = text(source.taxNumber || source.tax_number);
+  const iban = text(sourceBank.iban);
+  const bic = text(sourceBank.bic);
+  const nameLines = [text(source.companyName || source.legalName || source.name), text(source.companyName2 || source.additionalName || source.name2)].filter(Boolean);
+  const addressLines = [text(sourceAddress.street), [text(sourceAddress.zip), text(sourceAddress.city)].filter(Boolean).join(" ")].filter(Boolean);
+  const register = text(sourceLegal.commercialRegister || source.commercial_register);
+  const registerNumber = text(sourceLegal.registerNumber || source.register_number);
+  const managingDirector = text(sourceLegal.managingDirector || source.managing_director);
+  return Object.freeze({ nameLines, addressLines, taxRow: vatId ? Object.freeze({ label: "USt-IdNr.", value: vatId }) : taxNumber ? Object.freeze({ label: "Steuernr.", value: taxNumber }) : null, bankRows: Object.freeze([...(iban ? [{ label: "IBAN", value: iban }] : []), ...(bic ? [{ label: "BIC", value: bic }] : [])]), footerLines: Object.freeze([[...nameLines, ...addressLines].join(" · "), [vatId && `USt-IdNr. ${vatId}`, taxNumber && `Steuernr. ${taxNumber}`, iban && `IBAN ${iban}`, bic && `BIC ${bic}`].filter(Boolean).join(" · "), [register, registerNumber && `Registernr. ${registerNumber}`, managingDirector && `Geschäftsführer ${managingDirector}`].filter(Boolean).join(" · ")].filter(Boolean)) });
+}
 function customerKey(value = {}) { return `${value.kind || value.ref?.kind}:${value.id || value.ref?.id}`; }
 function money(cents) { return `${(Number(cents || 0) / 100).toFixed(2).replace(".", ",")} EUR`; }
 export function formatEuroCents(cents) { return `${GERMAN_EURO_AMOUNT_FORMATTER.format(Number(cents || 0) / 100)} €`; }
@@ -73,7 +88,7 @@ export default class RechnungScreen {
     const root = bind(node("section", "bbm-invoice-design bbm-popup-standard bbm-rechnung-live"), RECHNUNG_SCOPE_ID);
     root.dataset.invoiceLiveScreen = "step-2";
     const content = bind(node("div", "rechnung-live-content"), "rechnung.screen.content");
-    content.append(this._overview(), this._masterData(), this._editor(), this._preview());
+    content.append(this._overview(), this._catalog(), this._editor(), this._preview());
     root.append(content); this.root = root;
     completeM80PilotRender();
     this._setEditorSidebarState(false);
@@ -86,7 +101,7 @@ export default class RechnungScreen {
     const header = bind(node("header", "invoice-page-header"), "rechnung.overview.header");
     const heading = node("div", "invoice-page-heading");
     heading.append(bind(node("h1", "invoice-page-title", "Rechnungen"), "rechnung.overview.title"), bind(node("p", "invoice-page-subtitle", "Rechnungsgrunddaten und Belegköpfe"), "rechnung.overview.subtitle"));
-    header.append(heading, button("Stammdaten", "rechnung.overview.masterData", () => void this._openMasterData()), button("Freie Rechnung", "rechnung.overview.new", () => void this._newDraft(), "primary"));
+    header.append(heading, button("Leistungskatalog", "rechnung.overview.catalog", () => void this._openCatalog()), button("Freie Rechnung", "rechnung.overview.new", () => void this._newDraft(), "primary"));
     this.list = bind(node("div", "rechnung-live-list"), "rechnung.overview.list");
     overview.append(header, this.list); this.overview = overview; return overview;
   }
@@ -95,47 +110,38 @@ export default class RechnungScreen {
     return this._sheetEditor();
   }
 
-  _masterDataField(label, id, tag = "input") {
+  _catalogField(label, id, tag = "input") {
     const input = control(tag, id); if (tag === "textarea") input.rows = 3;
     return { input, wrapper: field(label, input) };
   }
 
-  _masterData() {
-    const area = bind(node("section", "rechnung-master-data"), "rechnung.masterData"); area.hidden = true;
-    const header = bind(node("header", "invoice-page-header"), "rechnung.masterData.header");
-    header.append(bind(node("h1", "invoice-page-title", "Rechnungsstammdaten"), "rechnung.masterData.title"), button("Schließen", "rechnung.masterData.close", () => this._closeMasterData()));
-    const issuer = bind(node("section", "rechnung-master-card"), "rechnung.masterData.issuer");
-    issuer.append(bind(node("h2", "invoice-section-title", "Rechnungstellerprofil"), "rechnung.masterData.issuer.summary"));
-    const issuerFields = [["legalName", "Firmen-/Rechtsname"], ["additionalName", "Namenszusatz"], ["street", "Straße"], ["zip", "PLZ"], ["city", "Ort"], ["country", "Land"], ["phone", "Telefon"], ["email", "E-Mail"], ["website", "Website"], ["taxNumber", "Steuernummer"], ["vatId", "USt-IdNr."], ["iban", "IBAN"], ["bic", "BIC"], ["bankName", "Bank"], ["commercialRegister", "Registergericht"], ["registerNumber", "Registernummer"], ["managingDirector", "Geschäftsführung"], ["legalNotice", "Rechtlicher Hinweis"]];
-    this.issuerInputs = {}; const issuerGrid = node("div", "rechnung-master-grid");
-    issuerFields.forEach(([key, label]) => { const result = this._masterDataField(label, `rechnung.masterData.issuer.${key}`, key === "legalNotice" ? "textarea" : "input"); this.issuerInputs[key] = result.input; issuerGrid.append(result.wrapper); });
-    issuer.append(issuerGrid, button("Rechnungsteller speichern", "rechnung.masterData.issuer.save", () => void this._saveIssuer(), "primary"));
-    const catalog = bind(node("section", "rechnung-master-card"), "rechnung.masterData.catalog"); catalog.append(node("h2", "invoice-section-title", "Leistungskatalog"));
-    this.catalogSelect = control("select", "rechnung.masterData.catalog.select"); this.catalogSelect.onchange = () => this._selectCatalogEntry();
-    this.catalogInputs = {}; const catalogGrid = node("div", "rechnung-master-grid");
-    [["shortText", "Kurztext", "input"], ["longText", "Langtext", "textarea"], ["unit", "Einheit", "input"], ["unitPrice", "Einzelpreis (EUR)", "input"], ["vatRate", "MwSt.", "input"]].forEach(([key, label, tag]) => { const result = this._masterDataField(label, `rechnung.masterData.catalog.${key}`, tag); this.catalogInputs[key] = result.input; catalogGrid.append(result.wrapper); });
+  _catalog() {
+    const area = bind(node("section", "rechnung-catalog"), "rechnung.catalog"); area.hidden = true;
+    const header = bind(node("header", "invoice-page-header"), "rechnung.catalog.header");
+    header.append(bind(node("h1", "invoice-page-title", "Leistungskatalog"), "rechnung.catalog.title"), button("Schließen", "rechnung.catalog.close", () => this._closeCatalog()));
+    const catalog = bind(node("section", "rechnung-catalog-form"), "rechnung.catalog.form");
+    this.catalogSelect = control("select", "rechnung.catalog.select"); this.catalogSelect.onchange = () => this._selectCatalogEntry();
+    this.catalogInputs = {}; const catalogGrid = node("div", "rechnung-catalog-grid");
+    [["shortText", "Kurztext", "input"], ["longText", "Langtext", "textarea"], ["unit", "Einheit" , "input"], ["unitPrice", "Einzelpreis (EUR)", "input"], ["vatRate", "MwSt.", "input"]].forEach(([key, label, tag]) => { const result = this._catalogField(label, `rechnung.catalog.${key}`, tag); this.catalogInputs[key] = result.input; catalogGrid.append(result.wrapper); });
     this.catalogInputs.vatRate.readOnly = true;
-    catalog.append(field("Katalogleistung", this.catalogSelect), catalogGrid, button("Neue Katalogleistung", "rechnung.masterData.catalog.create", () => this._newCatalogEntry()), button("Katalogleistung speichern", "rechnung.masterData.catalog.save", () => void this._saveCatalogEntry(), "primary"));
-    const layout = node("div", "rechnung-master-layout");
-    this.masterMessage = node("div", "rechnung-live-message"); layout.append(issuer, catalog, this.masterMessage); area.append(header, layout); this.masterData = area; return area;
+    catalog.append(field("Katalogleistung", this.catalogSelect), catalogGrid, button("Neue Katalogleistung", "rechnung.catalog.create", () => this._newCatalogEntry()), button("Katalogleistung speichern", "rechnung.catalog.save", () => void this._saveCatalogEntry(), "primary"));
+    this.catalogMessage = node("div", "rechnung-live-message"); area.append(header, catalog, this.catalogMessage); this.catalog = area; return area;
   }
 
-  async _openMasterData() { this.overview.hidden = true; this.masterData.hidden = false; await this._loadMasterData(); }
-  _closeMasterData() { this.masterData.hidden = true; this.overview.hidden = false; }
-  async _loadMasterData() {
-    const [profile, catalog, catalogDefaults] = await Promise.all([api().rechnungIssuerGet?.(), api().rechnungCatalogList?.(), api().rechnungCatalogDefaults?.()]);
-    if (!profile?.ok || !catalog?.ok || !catalogDefaults?.ok) return this._masterError(profile?.error || catalog?.error || catalogDefaults?.error);
-    this.profile = profile.profile || null; this.catalogEntries = catalog.list || [];
+  async _openCatalog() { this.overview.hidden = true; this.catalog.hidden = false; await this._loadCatalog(); }
+  _closeCatalog() { this.catalog.hidden = true; this.overview.hidden = false; }
+  async _loadCatalog() {
+    const [catalog, catalogDefaults] = await Promise.all([api().rechnungCatalogList?.(), api().rechnungCatalogDefaults?.()]);
+    if (!catalog?.ok || !catalogDefaults?.ok) return this._catalogError(catalog?.error || catalogDefaults?.error);
+    this.catalogEntries = catalog.list || [];
     this.catalogVatRatePercent = catalogDefaults.data?.vatRatePercent;
-    Object.entries(this.issuerInputs).forEach(([key, input]) => { input.value = this.profile?.[key] || ""; });
-    this._renderCatalogOptions(); this.masterMessage.textContent = "";
+    this._renderCatalogOptions(); this.catalogMessage.textContent = "";
   }
-  async _saveIssuer() { const result = await api().rechnungIssuerSave?.(Object.fromEntries(Object.entries(this.issuerInputs).map(([key, input]) => [key, input.value]))); if (!result?.ok) return this._masterError(result?.error); this.profile = result.profile; this.masterMessage.textContent = "Rechnungstellerprofil gespeichert."; }
   _renderCatalogOptions(selectedId = "") { this.catalogSelect.replaceChildren(option("", "Katalogleistung wählen"), ...(this.catalogEntries || []).map((entry) => option(entry.id, entry.shortText))); this.catalogSelect.value = selectedId; this._selectCatalogEntry(); }
-  _selectCatalogEntry() { const entry = (this.catalogEntries || []).find((value) => value.id === this.catalogSelect.value); this.catalogInputs.shortText.value = entry?.shortText || ""; this.catalogInputs.longText.value = entry?.longText || ""; this.catalogInputs.unit.value = entry?.unit || ""; this.catalogInputs.unitPrice.value = entry ? (entry.unitPriceCents / 100).toFixed(2).replace(".", ",") : ""; try { this.catalogInputs.vatRate.value = formatCatalogVatRate(entry, this.catalogVatRatePercent); } catch (error) { this.catalogInputs.vatRate.value = ""; this._masterError(error.message); } }
+  _selectCatalogEntry() { const entry = (this.catalogEntries || []).find((value) => value.id === this.catalogSelect.value); this.catalogInputs.shortText.value = entry?.shortText || ""; this.catalogInputs.longText.value = entry?.longText || ""; this.catalogInputs.unit.value = entry?.unit || ""; this.catalogInputs.unitPrice.value = entry ? (entry.unitPriceCents / 100).toFixed(2).replace(".", ",") : ""; try { this.catalogInputs.vatRate.value = formatCatalogVatRate(entry, this.catalogVatRatePercent); } catch (error) { this.catalogInputs.vatRate.value = ""; this._catalogError(error.message); } }
   _newCatalogEntry() { this.catalogSelect.value = ""; this._selectCatalogEntry(); this.catalogInputs.shortText.focus(); }
-  async _saveCatalogEntry() { const price = Number(String(this.catalogInputs.unitPrice.value).replace(",", ".")); if (!Number.isFinite(price) || price < 0) return this._masterError("Bitte einen gültigen Einzelpreis eingeben."); const entry = { shortText: this.catalogInputs.shortText.value, longText: this.catalogInputs.longText.value, unit: this.catalogInputs.unit.value, unitPriceCents: Math.round(price * 100) }; const id = this.catalogSelect.value; const result = id ? await api().rechnungCatalogUpdate?.(id, entry) : await api().rechnungCatalogCreate?.(entry); if (!result?.ok) return this._masterError(result?.error); const list = await api().rechnungCatalogList?.(); this.catalogEntries = list?.ok ? list.list || [] : this.catalogEntries; this._renderCatalogOptions(result.entry.id); this.masterMessage.textContent = "Katalogleistung gespeichert."; }
-  _masterError(message) { this.masterMessage.textContent = message || "Aktion fehlgeschlagen."; this.masterMessage.dataset.tone = "error"; }
+  async _saveCatalogEntry() { const price = Number(String(this.catalogInputs.unitPrice.value).replace(",", ".")); if (!Number.isFinite(price) || price < 0) return this._catalogError("Bitte einen gültigen Einzelpreis eingeben."); const entry = { shortText: this.catalogInputs.shortText.value, longText: this.catalogInputs.longText.value, unit: this.catalogInputs.unit.value, unitPriceCents: Math.round(price * 100) }; const id = this.catalogSelect.value; const result = id ? await api().rechnungCatalogUpdate?.(id, entry) : await api().rechnungCatalogCreate?.(entry); if (!result?.ok) return this._catalogError(result?.error); const list = await api().rechnungCatalogList?.(); this.catalogEntries = list?.ok ? list.list || [] : this.catalogEntries; this._renderCatalogOptions(result.entry.id); this.catalogMessage.textContent = "Katalogleistung gespeichert."; }
+  _catalogError(message) { this.catalogMessage.textContent = message || "Aktion fehlgeschlagen."; this.catalogMessage.dataset.tone = "error"; }
 
   _sheetEditor() {
     const editor = bind(node("section", "rechnung-live-editor"), "rechnung.editor"); editor.hidden = true;
@@ -276,11 +282,11 @@ export default class RechnungScreen {
   }
 
   async _load() {
-    const [invoices, customers, projects, profile] = await Promise.all([api().rechnungList?.(), api().rechnungListCustomers?.(), api().rechnungListProjects?.(), api().rechnungIssuerGet?.()]);
+    const [invoices, customers, projects, organization] = await Promise.all([api().rechnungList?.(), api().rechnungListCustomers?.(), api().rechnungListProjects?.(), api().ownOrganizationGet?.()]);
     this.invoices = invoices?.ok ? invoices.list || [] : [];
     this.customers = customers?.ok ? customers.list || [] : [];
     this.projects = projects?.ok ? projects.list || [] : [];
-    this.profile = profile?.ok ? profile.profile || null : null;
+    this.ownOrganization = organization?.ok ? organization.organization || null : null;
     this._renderList();
   }
 
@@ -438,7 +444,7 @@ export default class RechnungScreen {
     this.title.textContent = formatDocumentType({ document_type: this.documentType.value, installment_number: Number(this.installmentNumber.value) || null });
     const customer = this.customers.find((entry) => customerKey(entry) === this.customer.value);
     const customerValue = this.current?.status === "BOOKED" ? this.current.customer_snapshot : customer || this.current?.legacy_customer;
-    const issuerValue = this.current?.status === "BOOKED" ? this.current.issuer_snapshot : this.profile ? { companyName: this.profile.legalName, companyName2: this.profile.additionalName, ...this.profile } : null;
+    const issuerValue = this.current?.status === "BOOKED" ? this.current.issuer_snapshot : this.ownOrganization;
     this.customerAddress.textContent = address(customerValue);
     this._renderIssuerInformation(issuerValue);
     this._renderIssuerMeta();
