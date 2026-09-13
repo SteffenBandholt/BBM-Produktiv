@@ -2,6 +2,24 @@
 
 Stand: 13.09.2026
 
+## Gezielte Korrekturrunde PR #348
+
+Die Prüfung der tatsächlichen Settingsquelle ergab, dass es keinen zentralen
+persistierten MwSt.-Setting-Key gibt. Die vorhandene zentrale Rechnungsfachvorgabe
+ist `DEFAULT_VAT_RATE_PERCENT` in `src/shared/rechnung/rechnungPositions.mjs`:
+19 Prozent als Standard, während die zentrale Validierung ganzzahlige Sätze von
+0 bis 100 zulässt. Es wurde deshalb keine zweite Einstellung erfunden.
+
+Kataloganlage und -änderung beziehen die Vorgabe nun über diese zentrale Regel.
+Die Katalogtabelle erlaubt gültige Sätze von 0 bis 100 statt ausschließlich 19.
+Eine gezielte additive Kompatibilitätsmigration baut nur die frühere feste
+CHECK-Constraint um und kopiert alle vorhandenen Katalogzeilen unverändert.
+Rechnungsbelege werden dabei nicht gelesen oder geschrieben.
+
+Nach erfolgreicher Kundenanlage oder -änderung wird nur noch die Kundenliste
+erneut geladen. Ungespeicherte Rechnungsteller- und Katalogfelder sowie die
+ausgewählte Katalogleistung werden nicht neu gerendert, geladen oder gespeichert.
+
 ## Umfang
 
 RE-S1.1 macht drei vorhandene beziehungsweise ergänzte Stammdatenbereiche im
@@ -14,8 +32,8 @@ Rechnungsmodul bedienbar:
   `invoice_customer`. Anlage und Änderung verwenden unverändert den gemeinsamen
   Firmeneditor; es gibt keine zweite Kundenidentität.
 - `invoice_service_catalog` speichert Kurztext, Langtext, Einheit, Netto-
-  Einzelpreis in Cent und den vorhandenen Standardsatz von 19 Prozent. Der Satz
-  ist in RE-S1.1 nicht frei editierbar.
+  Einzelpreis in Cent und die beim Speichern gültige zentrale Rechnungsfachvorgabe.
+  Der Standard beträgt 19 Prozent; die Anzeige ist in RE-S1.1 nicht frei editierbar.
 
 Die Katalogeinträge sind eigenständige Stammdaten. RE-S1.1 übernimmt sie nicht in
 Rechnungsentwürfe und verändert keine Rechnungsposition. Bestehende Beleg- und

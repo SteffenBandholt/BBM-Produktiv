@@ -78,11 +78,27 @@ const CREATE_INVOICE_SERVICE_CATALOG_SQL = `
     long_text TEXT NOT NULL DEFAULT '',
     unit TEXT NOT NULL DEFAULT '',
     unit_price_cents INTEGER NOT NULL CHECK (unit_price_cents >= 0),
-    vat_rate_percent INTEGER NOT NULL DEFAULT 19 CHECK (vat_rate_percent = 19),
+    vat_rate_percent INTEGER NOT NULL DEFAULT 19 CHECK (vat_rate_percent BETWEEN 0 AND 100),
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   )
 `;
+
+function ensureInvoiceServiceCatalogSchema(db) {
+  const existingSql = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'invoice_service_catalog'").get()?.sql || "";
+  if (!existingSql) { db.exec(CREATE_INVOICE_SERVICE_CATALOG_SQL); return; }
+  if (!/CHECK\s*\(\s*vat_rate_percent\s*=\s*19\s*\)/i.test(existingSql)) return;
+  db.exec(`
+    ALTER TABLE invoice_service_catalog RENAME TO invoice_service_catalog_fixed_vat_legacy;
+    ${CREATE_INVOICE_SERVICE_CATALOG_SQL};
+    INSERT INTO invoice_service_catalog (
+      id, short_text, long_text, unit, unit_price_cents, vat_rate_percent, created_at, updated_at
+    ) SELECT
+      id, short_text, long_text, unit, unit_price_cents, vat_rate_percent, created_at, updated_at
+    FROM invoice_service_catalog_fixed_vat_legacy;
+    DROP TABLE invoice_service_catalog_fixed_vat_legacy;
+  `);
+}
 
 const CREATE_INVOICES_SQL = `
   CREATE TABLE IF NOT EXISTS invoices (
@@ -780,7 +796,7 @@ function ensureInvoiceSchema(db) {
         );
     `);
     ensureInvoiceIssuerProfile(db);
-    db.exec(CREATE_INVOICE_SERVICE_CATALOG_SQL);
+    ensureInvoiceServiceCatalogSchema(db);
     customerMigration = migrateDraftCustomerRefs(db);
   };
   if (db.inTransaction) migrate();

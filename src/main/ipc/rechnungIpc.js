@@ -46,6 +46,7 @@ function registerRechnungIpc({
   handle("rechnung:issuer:get", () => masterDataService.getIssuerProfile(), "profile");
   handle("rechnung:issuer:save", (data) => masterDataService.saveIssuerProfile(data), "profile");
   handle("rechnung:catalog:list", () => masterDataService.listCatalog(), "list");
+  handle("rechnung:catalog:defaults", () => masterDataService.getCatalogDefaults());
   handle("rechnung:catalog:create", (data) => masterDataService.createCatalogEntry(data), "entry");
   handle("rechnung:catalog:update", (data) => masterDataService.updateCatalogEntry(data), "entry");
   handle("rechnung:get", (data) => service.get(data.id));

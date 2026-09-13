@@ -5,6 +5,7 @@ import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from
 import { ensureRechnungenDesignStyles } from "../styles.js";
 import { RECHNUNG_COMPONENT_ID, RECHNUNG_SCOPE_ID } from "../RechnungScreen.uiEditorContract.js";
 import { openFirmEditor } from "../../../features/firms/openFirmEditor.js";
+import { buildCustomerRefresh, formatCatalogVatRate } from "../masterDataCustomerRefresh.mjs";
 
 const GERMAN_EURO_AMOUNT_FORMATTER = new Intl.NumberFormat("de-DE", {
   minimumFractionDigits: 2,
@@ -117,7 +118,7 @@ export default class RechnungScreen {
     this.catalogSelect = control("select", "rechnung.masterData.catalog.select"); this.catalogSelect.onchange = () => this._selectCatalogEntry();
     this.catalogInputs = {}; const catalogGrid = node("div", "rechnung-master-grid");
     [["shortText", "Kurztext", "input"], ["longText", "Langtext", "textarea"], ["unit", "Einheit", "input"], ["unitPrice", "Einzelpreis (EUR)", "input"], ["vatRate", "MwSt.", "input"]].forEach(([key, label, tag]) => { const result = this._masterDataField(label, `rechnung.masterData.catalog.${key}`, tag); this.catalogInputs[key] = result.input; catalogGrid.append(result.wrapper); });
-    this.catalogInputs.vatRate.value = "19 %"; this.catalogInputs.vatRate.readOnly = true;
+    this.catalogInputs.vatRate.readOnly = true;
     catalog.append(field("Katalogleistung", this.catalogSelect), catalogGrid, button("Neue Katalogleistung", "rechnung.masterData.catalog.create", () => this._newCatalogEntry()), button("Katalogleistung speichern", "rechnung.masterData.catalog.save", () => void this._saveCatalogEntry(), "primary"));
     this.masterMessage = node("div", "rechnung-live-message"); area.append(header, node("div", "rechnung-master-layout")); area.lastChild.append(issuer, customers, catalog, this.masterMessage); this.masterData = area; return area;
   }
@@ -125,17 +126,19 @@ export default class RechnungScreen {
   async _openMasterData() { this.overview.hidden = true; this.masterData.hidden = false; await this._loadMasterData(); }
   _closeMasterData() { this.masterData.hidden = true; this.overview.hidden = false; }
   async _loadMasterData() {
-    const [profile, customers, catalog] = await Promise.all([api().rechnungIssuerGet?.(), api().rechnungListCustomers?.(), api().rechnungCatalogList?.()]);
-    if (!profile?.ok || !customers?.ok || !catalog?.ok) return this._masterError(profile?.error || customers?.error || catalog?.error);
+    const [profile, customers, catalog, catalogDefaults] = await Promise.all([api().rechnungIssuerGet?.(), api().rechnungListCustomers?.(), api().rechnungCatalogList?.(), api().rechnungCatalogDefaults?.()]);
+    if (!profile?.ok || !customers?.ok || !catalog?.ok || !catalogDefaults?.ok) return this._masterError(profile?.error || customers?.error || catalog?.error || catalogDefaults?.error);
     this.profile = profile.profile || null; this.customers = customers.list || []; this.catalogEntries = catalog.list || [];
+    this.catalogVatRatePercent = catalogDefaults.data?.vatRatePercent;
     Object.entries(this.issuerInputs).forEach(([key, input]) => { input.value = this.profile?.[key] || ""; });
     this.masterCustomer.replaceChildren(option("", "Rechnungskunde wählen"), ...this.customers.map((entry) => option(customerKey(entry), entry.label || entry.name)));
     this._renderCatalogOptions(); this.masterMessage.textContent = "";
   }
   async _saveIssuer() { const result = await api().rechnungIssuerSave?.(Object.fromEntries(Object.entries(this.issuerInputs).map(([key, input]) => [key, input.value]))); if (!result?.ok) return this._masterError(result?.error); this.profile = result.profile; this.masterMessage.textContent = "Rechnungstellerprofil gespeichert."; }
-  async _editCustomer(edit = false) { const selected = this.customers.find((entry) => customerKey(entry) === this.masterCustomer.value); if (edit && !selected) return this._masterError("Bitte zuerst einen Kunden auswählen."); const result = await openFirmEditor({ origin: "invoice", kind: "global_firm", firm: edit ? selected : null, title: edit ? "Rechnungskunde bearbeiten" : "Rechnungskunde anlegen" }); if (result?.ok && !result.canceled) await this._loadMasterData(); else if (!result?.ok) this._masterError(result?.error); }
+  async _editCustomer(edit = false) { const selected = this.customers.find((entry) => customerKey(entry) === this.masterCustomer.value); if (edit && !selected) return this._masterError("Bitte zuerst einen Kunden auswählen."); const result = await openFirmEditor({ origin: "invoice", kind: "global_firm", firm: edit ? selected : null, title: edit ? "Rechnungskunde bearbeiten" : "Rechnungskunde anlegen" }); if (result?.ok && !result.canceled) await this._refreshMasterCustomers(customerKey(result.firm || selected)); else if (!result?.ok) this._masterError(result?.error); }
+  async _refreshMasterCustomers(preferredKey = this.masterCustomer.value) { const response = await api().rechnungListCustomers?.(); let refreshed; try { refreshed = buildCustomerRefresh(response, preferredKey); } catch (error) { return this._masterError(error.message); } this.customers = refreshed.customers; this.masterCustomer.replaceChildren(option("", "Rechnungskunde wählen"), ...this.customers.map((entry) => option(customerKey(entry), entry.label || entry.name))); this.masterCustomer.value = refreshed.selectedKey; }
   _renderCatalogOptions(selectedId = "") { this.catalogSelect.replaceChildren(option("", "Katalogleistung wählen"), ...(this.catalogEntries || []).map((entry) => option(entry.id, entry.shortText))); this.catalogSelect.value = selectedId; this._selectCatalogEntry(); }
-  _selectCatalogEntry() { const entry = (this.catalogEntries || []).find((value) => value.id === this.catalogSelect.value); this.catalogInputs.shortText.value = entry?.shortText || ""; this.catalogInputs.longText.value = entry?.longText || ""; this.catalogInputs.unit.value = entry?.unit || ""; this.catalogInputs.unitPrice.value = entry ? (entry.unitPriceCents / 100).toFixed(2).replace(".", ",") : ""; this.catalogInputs.vatRate.value = "19 %"; }
+  _selectCatalogEntry() { const entry = (this.catalogEntries || []).find((value) => value.id === this.catalogSelect.value); this.catalogInputs.shortText.value = entry?.shortText || ""; this.catalogInputs.longText.value = entry?.longText || ""; this.catalogInputs.unit.value = entry?.unit || ""; this.catalogInputs.unitPrice.value = entry ? (entry.unitPriceCents / 100).toFixed(2).replace(".", ",") : ""; try { this.catalogInputs.vatRate.value = formatCatalogVatRate(entry, this.catalogVatRatePercent); } catch (error) { this.catalogInputs.vatRate.value = ""; this._masterError(error.message); } }
   _newCatalogEntry() { this.catalogSelect.value = ""; this._selectCatalogEntry(); this.catalogInputs.shortText.focus(); }
   async _saveCatalogEntry() { const price = Number(String(this.catalogInputs.unitPrice.value).replace(",", ".")); if (!Number.isFinite(price) || price < 0) return this._masterError("Bitte einen gültigen Einzelpreis eingeben."); const entry = { shortText: this.catalogInputs.shortText.value, longText: this.catalogInputs.longText.value, unit: this.catalogInputs.unit.value, unitPriceCents: Math.round(price * 100) }; const id = this.catalogSelect.value; const result = id ? await api().rechnungCatalogUpdate?.(id, entry) : await api().rechnungCatalogCreate?.(entry); if (!result?.ok) return this._masterError(result?.error); const list = await api().rechnungCatalogList?.(); this.catalogEntries = list?.ok ? list.list || [] : this.catalogEntries; this._renderCatalogOptions(result.entry.id); this.masterMessage.textContent = "Katalogleistung gespeichert."; }
   _masterError(message) { this.masterMessage.textContent = message || "Aktion fehlgeschlagen."; this.masterMessage.dataset.tone = "error"; }

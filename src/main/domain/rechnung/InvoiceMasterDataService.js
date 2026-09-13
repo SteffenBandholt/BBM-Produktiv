@@ -1,13 +1,22 @@
 const { InvoiceIssuerProfileRepository } = require("../../db/invoiceIssuerProfileRepo");
 const { InvoiceServiceCatalogRepository } = require("../../db/invoiceServiceCatalogRepo");
+const path = require("node:path");
+const { pathToFileURL } = require("node:url");
+
+let positionsPromise;
+function centralVatRate() {
+  if (!positionsPromise) positionsPromise = import(pathToFileURL(path.join(__dirname, "../../../shared/rechnung/rechnungPositions.mjs")).href);
+  return positionsPromise.then((rules) => rules.DEFAULT_VAT_RATE_PERCENT);
+}
 
 class InvoiceMasterDataService {
-  constructor({ issuerRepository = new InvoiceIssuerProfileRepository(), catalogRepository = new InvoiceServiceCatalogRepository() } = {}) { this.issuerRepository = issuerRepository; this.catalogRepository = catalogRepository; }
+  constructor({ issuerRepository = new InvoiceIssuerProfileRepository(), catalogRepository = new InvoiceServiceCatalogRepository(), vatRateProvider = centralVatRate } = {}) { this.issuerRepository = issuerRepository; this.catalogRepository = catalogRepository; this.vatRateProvider = vatRateProvider; }
   getIssuerProfile() { return this.issuerRepository.get(); }
   saveIssuerProfile(input) { return this.issuerRepository.upsert(input); }
   listCatalog() { return this.catalogRepository.list(); }
-  createCatalogEntry(input) { return this.catalogRepository.create(input); }
-  updateCatalogEntry({ id, entry } = {}) { return this.catalogRepository.update(id, entry); }
+  async getCatalogDefaults() { return { vatRatePercent: await this.vatRateProvider() }; }
+  async createCatalogEntry(input) { return this.catalogRepository.create({ ...input, vatRatePercent: await this.vatRateProvider() }); }
+  async updateCatalogEntry({ id, entry } = {}) { return this.catalogRepository.update(id, { ...entry, vatRatePercent: await this.vatRateProvider() }); }
 }
 
 let singleton;

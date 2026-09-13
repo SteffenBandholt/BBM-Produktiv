@@ -1,8 +1,6 @@
 const { randomUUID } = require("node:crypto");
 const { initDatabase } = require("./database");
 
-const DEFAULT_VAT_RATE_PERCENT = 19;
-
 function text(value) { return String(value ?? "").trim(); }
 function normalizePriceCents(value) {
   const parsed = Number(value);
@@ -12,12 +10,14 @@ function normalizePriceCents(value) {
 function normalize(input = {}) {
   const shortText = text(input.shortText ?? input.short_text);
   if (!shortText) throw new Error("Kurztext ist erforderlich.");
+  const vatRatePercent = Number(input.vatRatePercent ?? input.vat_rate_percent);
+  if (!Number.isInteger(vatRatePercent) || vatRatePercent < 0 || vatRatePercent > 100) throw new Error("Der Mehrwertsteuersatz ist ungültig.");
   return {
     short_text: shortText,
     long_text: text(input.longText ?? input.long_text),
     unit: text(input.unit),
     unit_price_cents: normalizePriceCents(input.unitPriceCents ?? input.unit_price_cents),
-    vat_rate_percent: DEFAULT_VAT_RATE_PERCENT,
+    vat_rate_percent: vatRatePercent,
   };
 }
 function record(row) {
@@ -41,4 +41,4 @@ class InvoiceServiceCatalogRepository {
   }
 }
 
-module.exports = { InvoiceServiceCatalogRepository, DEFAULT_VAT_RATE_PERCENT };
+module.exports = { InvoiceServiceCatalogRepository };

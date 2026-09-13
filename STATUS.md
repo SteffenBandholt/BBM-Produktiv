@@ -4987,3 +4987,17 @@ Abschluss und keine unbelegte Manifest-Fingerprintänderung. RE-S1.2, Belege,
 Buchung, PDF, Aufträge und Nachträge wurden nicht begonnen. Nächster Schritt ist
 ausschließlich die Kit-/UI-Abnahme und gegebenenfalls eine gezielte Vertrags-
 Synchronisierung, nicht RE-S1.2.
+## 2026-09-13 – Rechnung RE-S1.1 / PR #348: gezielte Korrekturrunde
+
+Die feste 19-Prozent-Katalogbeschränkung ist entfernt. Da kein persistierter
+zentraler MwSt.-Setting-Key existiert, verwendet der Katalog ohne neue
+Konkurrenzquelle die vorhandene zentrale Rechnungsregel
+`DEFAULT_VAT_RATE_PERCENT` (19 als Standard, gültig 0 bis 100). Die additive
+Kompatibilitätsmigration erhält vorhandene Katalogzeilen; Belege bleiben
+unverändert. Kundenanlage/-änderung lädt nur noch Kunden neu und bewahrt
+ungespeicherte Profil-/Katalogfelder sowie die Katalogauswahl.
+
+Gezielte Verhaltenstests mit abweichender Vorgabe 7 Prozent, alter 19-Prozent-
+Katalogtabelle, DB-Neustart, unverändertem Beleg und isoliertem Kundenrefresh sind
+grün. Kit-/Windows-/sichtbare Electron-Prüfungen bleiben wie im Zwischenstand
+offen. Kein RE-S1.2, kein Merge; danach Stopp.
