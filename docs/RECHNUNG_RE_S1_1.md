@@ -1,6 +1,6 @@
 # BBM Rechnung RE-S1.1 – Stammdaten und Leistungskatalog
 
-Stand: 13.09.2026, abschließende Korrektur im bestehenden PR #348
+Stand: 14.09.2026, technischer Abschluss im bestehenden PR #348
 
 ## Fachlicher Endstand
 
@@ -52,8 +52,10 @@ Entwurfsentscheidung steht in
 
 ## Technischer Nachweis
 
-Der gezielte Persistenztest verwendet eine dateibasierte SQLite-Datenbank und
-prüft nach erneutem Öffnen:
+Der gezielte Persistenztest verwendet eine dateibasierte SQLite-Datenbank. Sein
+historischer PDF-Bytevergleich bleibt ausdrücklich ein synthetischer
+Dateireferenz-Guard; er wird nicht als Nachweis einer durch Electron erzeugten
+PDF ausgegeben. Der Test prüft nach erneutem Öffnen:
 
 - zwei unverwechselbare gemeinsame Rechnungskunden,
 - drei unverwechselbare Katalogleistungen einschließlich Änderung und 19 Prozent,
@@ -61,9 +63,52 @@ prüft nach erneutem Öffnen:
 - unveränderten historischen Ausstellersnapshot,
 - unveränderte historische Profilkopie sowie PDF-Referenz und PDF-Bytes.
 
-Komponenten-, Ref-, Manifest- und Fingerprint-Prüfungen werden aus dem realen
-Vertrag abgeleitet. Eine tatsächliche Windows-/Electron-Bedienprüfung und mögliche
-Umgebungsgrenzen werden ausschließlich im Abschluss des Arbeitslaufs berichtet.
+Der zusätzliche Befehl `npm run test:rechnung:re-s1.1:pdf` führt einen
+automatisierten Electron-Nachweis in einem frisch erzeugten Temp-Profil aus. Er
+verwendet den produktiven Weg `Preload -> Rechnung-IPC -> InvoicePdfFinalizer ->
+printIpc -> BrowserWindow.webContents.printToPDF`. Der Lauf vom 14.09.2026 war
+grün und belegte:
+
+- frische isolierte `app.db`, deaktivierten Legacy-Import und ausschließlich
+  PDF-Pfade innerhalb des Temp-Profils,
+- Buchung `2026-0001` mit dem ersten vollständigen Ausstellersnapshot und echter
+  einseitiger PDF (20.971 Bytes,
+  `4de3cb9c71caa0f0f8878ffb742e5f2cff4885a1bfd51a199ec618610e9c6f4d`),
+- nach Änderung von Unternehmensadresse und Bankdaten Buchung `2026-0002` mit
+  den aktuellen Werten und eigener echter einseitiger PDF (20.923 Bytes,
+  `4e66c2787c35e54b918f8b530c864db1e85d4d42fad1d933a0fe6d01fc4281c1`),
+- nach Schließen und Wiederöffnen der SQLite-Datenbank den unveränderten ersten
+  Snapshot, dieselbe Dateireferenz, dieselbe Bytezahl und denselben PDF-Hash;
+  die READY-Prüfung löste kein erneutes Rendern aus.
+
+Der vollständige Bericht liegt für diesen Lauf ausschließlich im temporären
+Pfad
+`C:\Users\Steffen\AppData\Local\Temp\bbm-ui-editor-acceptance-Ar0ugW\rechnung-re-s1.1-pdf-result.json`.
+Dies ist eine automatisierte Electron-Prüfung, keine neue Computer-Use- oder
+manuelle Bedienabnahme. Die bereits bestätigten Bedienprüfungen wurden nicht
+wiederholt.
+
+## Einordnung der GitHub-Prüfung
+
+Run 34774197021 / Job 103769166990 lief auf Head `e8bb36f9`. `npm ci` konnte die
+lokale Abhängigkeit `file:../UI-Editor-kit` im isolierten GitHub-Checkout nicht
+mit den benötigten Kit-Inhalten bereitstellen. Unter anderem fehlten
+`dist/ui-component-contract.mjs` und
+`src/core/target-app-adapter-manifest.cjs`. Das ist ein CI-/Umgebungsfehler; die
+Abhängigkeitsdeklaration und der Workflow sind zwischen Basis und Head
+unverändert. Mit dem vorhandenen vertrauenswürdigen Kit lassen sich beide Module
+auf Basis und Head laden.
+
+Die drei Popup-Assertions und vier fachlich echte Lizenz-Assertions sind auf der
+Basis `9997910f` und auf dem Head identisch rot; in den betroffenen Produkt- und
+Testdateien gibt es keinen PR-Diff. Die fünfte Lizenzmeldung des GitHub-Jobs
+(`moduleAccessState`) ist ebenfalls der fehlenden Kit-Datei zugeordnet und läuft
+lokal mit vorhandenem Kit grün. Damit weist der Job keine neue RE-S1.1-Regression
+nach. Popup-, Lizenz-, Kit- oder allgemeine CI-Reparaturen wurden nicht
+durchgeführt.
+
+Komponenten-, Ref-, Manifest- und Fingerprint-Prüfungen werden weiterhin aus dem
+realen Vertrag abgeleitet.
 
 RE-S1.2, Buchungsfachausbau, PDF-/ZUGFeRD-Arbeit, neue Persistenz, neue IPC-Kanäle
 und Änderungen an der gemeinsamen Firmenverwaltung sind nicht Bestandteil dieser

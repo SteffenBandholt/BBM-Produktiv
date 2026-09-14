@@ -1,3 +1,32 @@
+## 2026-09-14 – Rechnung RE-S1.1 / PR #348: technischer Abschluss
+
+Branch `codex/setze-bbm-rechnung-re-s1.1-um`, Basis `9997910f`, Ausgangs-Head
+`e8bb36f9`. Der neue gezielte Electron-Lauf verwendet eine frisch erzeugte
+isolierte `app.db`, deaktivierten Legacy-Import und ausschließlich Pfade im
+Temp-Profil. Buchung `2026-0001` enthält die alten Unternehmens- und Bankdaten;
+ihre echte PDF besitzt 20.971 Bytes und Hash
+`4de3cb9c71caa0f0f8878ffb742e5f2cff4885a1bfd51a199ec618610e9c6f4d`.
+Nach Änderung der Daten enthält Buchung `2026-0002` die neuen Werte; ihre echte
+PDF besitzt 20.923 Bytes und Hash
+`4e66c2787c35e54b918f8b530c864db1e85d4d42fad1d933a0fe6d01fc4281c1`.
+Nach Datenbank-Wiederöffnung blieben erster Snapshot, PDF-Referenz, Bytes und
+Hash unverändert; der READY-Pfad renderte nicht neu. Bericht:
+`C:\Users\Steffen\AppData\Local\Temp\bbm-ui-editor-acceptance-Ar0ugW\rechnung-re-s1.1-pdf-result.json`.
+
+Run 34774197021 / Job 103769166990: fehlende Dateien der lokalen
+`file:../UI-Editor-kit`-Abhängigkeit sind CI-/Umgebungsfehler. Die drei Popup- und
+vier echten Lizenzfehler laufen auf Basis und Head identisch rot; die fünfte
+Lizenzmeldung (`moduleAccessState`) ist ein weiterer fehlender-Kit-Fehler und mit
+vorhandenem Kit grün. Kein PR-Diff in den betroffenen Bereichen, keine allgemeine
+Reparatur. Bereits bestandene Bedienprüfungen wurden nicht wiederholt. RE-S1.2,
+Produkt-PDF-Satz, Popup, Lizenzierung, Kit und Merge blieben unverändert.
+
+Prüfung: echter Electron-PDF-Abschluss grün; gezielte Rechnungstests,
+Syntaxprüfung, Vertragscheck und `git diff --check` werden im Abschlussbericht
+festgehalten. Nächster Schritt: kontrollierte Integration von PR #348.
+
+---
+
 ## 2026-09-13 – Rechnung RE-S1.1: abschließende Korrektur in PR #348
 
 Branch `codex/setze-bbm-rechnung-re-s1.1-um`, Basis `9997910f`, Weiterarbeit auf

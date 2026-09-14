@@ -1,3 +1,23 @@
+## 2026-09-14 – Rechnung RE-S1.1 / PR #348: technischer Abschluss
+
+Der fehlende Bestandsschutz-Nachweis läuft nun reproduzierbar mit einer frisch
+erzeugten isolierten SQLite-Datenbank und ausschließlich temporären PDF-Pfaden.
+Zwei Buchungen verwenden vor beziehungsweise nach der Unternehmensänderung die
+jeweils richtigen vollständigen Ausstellersnapshots. Beide PDFs entstehen über
+den vorhandenen Electron-`printToPDF`-Weg. Nach Datenbank-Wiederöffnung bleiben
+Snapshot, Referenz, Bytes und Hash der ersten PDF unverändert; READY rendert nicht
+neu. Die frühere synthetische PDF bleibt nur als schneller Dateireferenz-Guard
+gekennzeichnet.
+
+Run 34774197021 / Job 103769166990 ist gegen Basis `9997910f` eingeordnet:
+fehlende lokale Kit-Inhalte sind CI-/Umgebungsfehler; drei Popup- und vier echte
+Lizenz-Assertions sind identische Baselinefehler. Die zusätzliche fünfte
+Lizenzmeldung folgt ebenfalls aus der fehlenden Kit-Datei. Keine allgemeine
+Popup-, Lizenz-, Kit- oder CI-Reparatur, kein RE-S1.2 und kein Merge. Nächster
+offener Schritt ist nur die kontrollierte Integration von PR #348.
+
+---
+
 ## 2026-09-13 – Rechnung RE-S1.1 / PR #348: Bedienkorrektur
 
 Im bestehenden Rechnungspaket wird die Bedien- und Identitätsgrenze korrigiert:

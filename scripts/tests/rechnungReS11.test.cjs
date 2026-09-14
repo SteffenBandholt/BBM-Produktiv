@@ -64,7 +64,7 @@ function setProfile(db, values) {
 }
 
 async function runRechnungReS11Tests(run) {
-  await run("Rechnung RE-S1.1: OwnOrganization ist aktuelle Ausstellerquelle; Altbeleg/PDF und historische Profilkopie bleiben unverändert", async () => {
+  await run("Rechnung RE-S1.1: OwnOrganization ist aktuelle Ausstellerquelle; synthetischer Dateireferenz-Guard und historische Profilkopie bleiben unverändert", async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-re-s11-"));
     const file = path.join(root, "bbm.db");
     const initialProfile = {
