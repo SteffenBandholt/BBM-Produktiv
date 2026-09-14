@@ -5,6 +5,7 @@ export const PDF_SATZVERTRAG_IDS = Object.freeze({
   firstPageHeader: "PDF-V2-SATZ-002",
   followingPageHeader: "PDF-V2-SATZ-003",
   pageCounter: "PDF-V2-SATZ-004",
+  standardFullHeaderProjectAddress: "PDF-V2-SATZ-016",
   footerReserve: "PDF-V2-SATZ-005",
   repeatedTableHeader: "PDF-V2-SATZ-006",
   recordFit: "PDF-V2-SATZ-007",

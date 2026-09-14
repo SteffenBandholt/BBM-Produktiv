@@ -1,8 +1,8 @@
 # PDF-Satzvertrag V2
 
-Stand: 2026-08-24
+Stand: 2026-09-14
 Inventarbasis: `rechnung-integration` / `2d9dcc113af89a3b1005e9b8d9ba41416108dbff`
-Vertragsversion: `m85.2-v5-invoice`
+Vertragsversion: `m85.2-v6-standard-header-address`
 
 ## Zweck und Geltungsgrenze
 
@@ -74,7 +74,7 @@ keinen zweiten Renderer und keine zweite Paginierung.
 | `src/renderer/print/v2/v2.css` | produktiv, Design-/Messquelle | V2-Kopf, Teilnehmer, Vorbemerkung, Abschluss, Fußreserve und Farbtreue. |
 | `src/renderer/print/v2/v2LayoutConfig.js` | produktiv, zentrale Baseline | Kopf- und Abstandsbaselines; keine Engine. |
 | `src/renderer/print/v2/header/GlobalHeader.js` | produktiv, Renderer | Logos und erste Trennlinie nur auf Seite 1. |
-| `src/renderer/print/v2/header/FullHeader.js` | produktiv, Renderer | Projekt, Dokumenttitel, Listenstand und Nutzerblock auf Seite 1. Protokoll, Vorschau und Vorabzug zeigen zusätzlich denselben sichtbaren Seitenzähler wie der MiniHeader. |
+| `src/renderer/print/v2/header/FullHeader.js` | produktiv, Renderer | Projekt, Dokumenttitel, Listenstand und Bauvorhabenadresse auf Seite 1. Protokoll, Vorschau und Vorabzug zeigen zusätzlich denselben sichtbaren Seitenzähler wie der MiniHeader. Dokumentartspezifische FullHeader-Slots bleiben eigenständig. |
 | `src/renderer/print/v2/header/MiniHeader.js` | produktiv, Renderer | Projekt, Dokumenttitel und sichtbarer Zähler `Seite n / gesamt` ab Seite 2. |
 | `src/renderer/print/v2/header/headerUtils.js` | produktiv, Adapter | Gemeinsame Texte/Normalisierung für V2-Köpfe. |
 | `src/shared/tableLayouts/protokollTopsLayout.js` | produktiv, Quelle für TOP-Spalten | Drei logische TOP-Spalten, Labels, UI-/PDF-Standardwerte und validierte Overlays. |
@@ -112,6 +112,7 @@ keinen zweiten Renderer und keine zweite Paginierung.
 | `PDF-V2-SATZ-013` | PDF-Erzeugung erfolgt nur über das dedizierte Print-Fenster und genau einen `webContents.printToPDF`-Aufruf. | alle PDF-Modi | `printIpc.js` | M81 und M85 Architekturguard | fest | nicht anwendbar |
 | `PDF-V2-SATZ-014` | Die editierbare A4-Nutzfläche ist Papier minus die tatsächlich gesetzten vier Inhaltsränder. Bei 210 × 297 mm und O/R/U/L = 5/12/0/12 mm gilt X 12–198 mm, Y 5–297 mm. Kein normales PDF-Layoutziel darf diese Fläche verlassen. Verletzungen werden vor der Zustandsübernahme mit horizontaler oder vertikaler Randmeldung atomar abgewiesen; eine Randänderung wird gegen alle registrierten Ziele geprüft. | Protokoll-PDF-Editor | `bbmPdfAdapter.cjs` | M81 Nutzflächentest, M85 Print-DOM | fest | Ränder editierbar; Papierformat gesperrt |
 | `PDF-V2-SATZ-015` | Editor-Vorschau, normaler Vorabzug und Produkt-PDF der Protokollfamilie verwenden denselben bestehenden Layoutvertrag. Die Editor-Vorschau liest den aktuellen Arbeitszustand; `preview` und `protocol` lesen den gespeicherten Zustand desselben Profils. Nach `Speichern` müssen Seitenränder, Tabellenbreiten, Tracks, Textpositionen, Sichtbarkeit und Schriftgrößen in allen drei Ausgaben geometrisch identisch sein. | Protokoll/Preview/Vorabzug | `printIpc.js`, `printApp.js`, `pdfEditorLayout.js` | M81 Modusguard, M85 Print-DOM und reale Drei-PDF-Bounding-Box-Abnahme | fest | keine zweite Profilquelle; Satz- und Fachoperationen gesperrt |
+| `PDF-V2-SATZ-016` | Der Standard-FullHeader zeigt im vorhandenen rechten Adressbereich ausschließlich die Bauvorhabenadresse aus `data.project`: zuerst `street`, danach die vorhandenen Bestandteile aus `zip` und `city` mit genau einem Leerzeichen. Leere Bestandteile und Zeilen entfallen. Bei fehlender Projektadresse bleibt der Bereich leer; Profil-, Benutzer- oder Firmendaten und Ersatztexte sind keine Fallbackquelle. Dokumentartspezifische FullHeader-Inhaltsslots, insbesondere Rechnung und Provider mit eigenem Slot, bleiben unverändert. | Protokoll, Preview/Vorabzug, Firmenliste, ToDo-Liste, TOP-Liste, Restarbeiten und weitere Standard-FullHeader-Nutzer | `FullHeader.js` | gezielter Electron-DOM-Guardrail und sichtbare Protokoll-/Restarbeiten-PDF-Abnahme | fest | Adresswerte sind Fachdaten und nicht editorfähig; bestehende Kopfmetadaten-Geometrie bleibt editierbar |
 
 ## B1. Dokumentartspezifische Regeln: Protokoll
 

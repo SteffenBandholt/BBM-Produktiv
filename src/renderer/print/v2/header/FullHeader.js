@@ -17,7 +17,6 @@ export function renderV2FullHeader({ data, pageNo, totalPages, modeLabel, conten
   }
   const settings = data?.settings || {};
   const meeting = data?.meeting || {};
-  const useUserData = headerUtils.parseBool(settings["pdf.footerUseUserData"], false);
   const titleText = headerUtils.resolveHeaderTitle({ data, settings, meeting, modeLabel });
   const listStandLine = headerUtils.listStandLine({ data, meeting });
   const brandingText = headerUtils.resolveBranding({ data });
@@ -41,31 +40,15 @@ export function renderV2FullHeader({ data, pageNo, totalPages, modeLabel, conten
     );
     right.appendChild(pageCounter);
   }
-  const name1 = String(settings["pdf.footerName1"] || "").trim();
-  const name2 = String(settings["pdf.footerName2"] || "").trim();
-  const street = String(settings["pdf.footerStreet"] || "").trim();
-  const zip = String(settings["pdf.footerZip"] || "").trim();
-  const city = String(settings["pdf.footerCity"] || "").trim();
-  const hasAnyUserField = !!(name1 || name2 || street || zip || city);
+  const project = data?.project || null;
+  const street = String(project?.street || "").trim();
+  const zipCity = [project?.zip, project?.city]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .join(" ");
   const userBox = headerUtils.el("div", "v2UserBox");
-  const userHint = "Keine Angaben - Projekt > Bearbeiten > Einstellungen";
-
-  if (!useUserData && !hasAnyUserField) {
-    userBox.appendChild(headerUtils.el("div", "v2UserPlaceholder", userHint));
-  } else {
-    if (name1) userBox.appendChild(headerUtils.el("div", "v2UserRow", name1));
-    if (name2) userBox.appendChild(headerUtils.el("div", "v2UserRow", name2));
-    if (street) userBox.appendChild(headerUtils.el("div", "v2UserRow", street));
-    if (zip || city) {
-      const zipCityRow = headerUtils.el("div", "v2UserRowZipCity");
-      zipCityRow.appendChild(headerUtils.el("span", "v2UserZip", zip));
-      zipCityRow.appendChild(headerUtils.el("span", "v2UserCity", city));
-      userBox.appendChild(zipCityRow);
-    }
-    if (!userBox.childNodes.length) {
-      userBox.appendChild(headerUtils.el("div", "v2UserPlaceholder", userHint));
-    }
-  }
+  if (street) userBox.appendChild(headerUtils.el("div", "v2UserRow v2ProjectAddressStreet", street));
+  if (zipCity) userBox.appendChild(headerUtils.el("div", "v2UserRow", zipCity));
   right.appendChild(userBox);
 
   const textBlock = headerUtils.el("div", "v2FullTextBlock");

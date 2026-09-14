@@ -42,6 +42,7 @@ const CONTRACT = Object.freeze({
   singlePagination: "PDF-V2-ARCH-002",
   singleProfile: "PDF-V2-ARCH-003",
   historical: "PDF-V2-ARCH-004",
+  standardAddress: "PDF-V2-SATZ-016",
 });
 const M85_1_PROTOCOL_MANIFEST_SHA256 = "8b522de3097c67770088ceaed7bdfa5def7c85034e64b2c393005d1233a92049";
 
@@ -125,6 +126,12 @@ function editorBoundsOnPage(result, elementId, pageNumber, part) {
     .filter((entry) => entry.elementId === elementId && entry.pageNumber === pageNumber && (!part || entry.part === part));
 }
 
+function addressCaseRun(caseNames, fixtureIds = ["p02-one-page", "r20-one-page"]) {
+  const args = ["--include-editor-layout", ...fixtureIds.flatMap((fixtureId) => ["--fixture", fixtureId])];
+  for (const caseName of caseNames) args.push("--project-address-case", caseName);
+  return runGoldenHarness(args);
+}
+
 async function runM85PdfSatzvertragTests(run) {
   let rendered = null;
 
@@ -172,6 +179,67 @@ async function runM85PdfSatzvertragTests(run) {
         assert.equal(page.footerReservePresent, true, `${CONTRACT.reserve}:${id}:${index + 1}`);
         assert.equal(page.blockOrder.at(-1), "footerReserve", `${CONTRACT.reserve}:${id}:${index + 1}`);
       });
+    }
+  });
+
+  await run("PDF-V2-SATZ-016 / PDF-V2-SATZ-002 / PDF-V2-REST-003: Standard-FullHeader verwendet ausschließlich die Projektadresse", () => {
+    const cases = resultMap(addressCaseRun(["full", "partial", "empty", "missing", "long"]));
+    const expected = {
+      full: ["Musterstraße 12 A", "12345 Musterstadt"],
+      partial: ["Teilweg 7", "Teilort"],
+      empty: [],
+      missing: [],
+      long: [
+        "Außergewöhnlich lange Straße des gemeinsamen Bauvorhabens mit ergänzender Lagebezeichnung 123 A",
+        "98765 Langstraßenhausen",
+      ],
+    };
+    for (const fixtureId of ["p02-one-page", "r20-one-page"]) {
+      for (const [caseName, lines] of Object.entries(expected)) {
+        const result = cases.get(`${fixtureId}--address-${caseName}`);
+        const address = result?.standardHeaderAddress;
+        assert.ok(address, `${CONTRACT.standardAddress}:${fixtureId}:${caseName}:Adressbereich fehlt`);
+        assert.deepEqual(address.lines, lines, `${CONTRACT.standardAddress}:${fixtureId}:${caseName}:Adresszeilen`);
+        assert.equal(address.placeholderPresent, false, `${CONTRACT.standardAddress}:${fixtureId}:${caseName}:Ersatztext`);
+        assert.equal(address.legacyProfilePresent, false, `${CONTRACT.standardAddress}:${fixtureId}:${caseName}:Profilfallback`);
+        assert.equal(address.withinFullHeader, true, `${CONTRACT.standardAddress}:${fixtureId}:${caseName}:Kopfgrenze`);
+        assert.equal(address.contentOverflow, false, `${CONTRACT.standardAddress}:${fixtureId}:${caseName}:Textüberlauf`);
+        assert.equal(result.snapshot.pages[0].headerKind, "full", `${CONTRACT.first}:${fixtureId}:${caseName}:Kopfart`);
+        assert.equal(result.snapshot.pages[0].globalHeaderPresent, true, `${CONTRACT.first}:${fixtureId}:${caseName}:GlobalHeader`);
+        assert.equal(result.snapshot.pages[0].fullHeaderPresent, true, `${CONTRACT.first}:${fixtureId}:${caseName}:FullHeader`);
+        assert.equal(result.snapshot.pages.every((page) => page.remainingHeightMm >= -1), true, `${CONTRACT.restMeasure}:${fixtureId}:${caseName}:Überlauf`);
+      }
+    }
+    const protocolFull = cases.get("p02-one-page--address-full").standardHeaderAddress;
+    assert.deepEqual(protocolFull.editorTarget, {
+      id: "pdf.bbm.protocol.header.meta",
+      kind: "group",
+      label: "Kopfmetadaten",
+      parent: "pdf.bbm.protocol.header",
+      editable: "true",
+      operations: "move,resizeWidth,resizeHeight",
+    });
+    const missingGeometry = cases.get("p02-one-page--address-missing").standardHeaderAddress.geometry;
+    const longGeometry = cases.get("p02-one-page--address-long").standardHeaderAddress.geometry;
+    for (const key of ["fullHeader", "left", "divider", "pageCounter"]) {
+      assert.deepEqual(longGeometry[key], missingGeometry[key], `${CONTRACT.standardAddress}:${key}:Geometrieverschiebung`);
+    }
+    const invoiceResults = resultMap(rendered || runGoldenHarness([
+      "--fixture", "i48-invoice-final",
+      "--fixture", "i49-invoice-preview",
+    ]));
+    assert.equal(invoiceResults.get("i48-invoice-final")?.standardHeaderAddress, null, "PDF-V2-INVOICE-002: eigener FullHeader-Slot");
+    assert.equal(invoiceResults.get("i49-invoice-preview")?.standardHeaderAddress, null, "PDF-V2-INVOICE-002: eigener Preview-FullHeader-Slot");
+  });
+
+  await run("PDF-V2-SATZ-015/-016: alle Standardausgaben übernehmen denselben Projektadresskopf", () => {
+    const modes = ["protocol", "preview", "vorabzug", "firms", "todo", "topsAll", "restarbeiten"];
+    const args = ["--include-editor-layout", "--fixture", "p02-one-page", "--project-address-case", "full"];
+    for (const mode of modes) args.push("--mode", mode);
+    const results = resultMap(runGoldenHarness(args));
+    for (const mode of modes) {
+      const address = results.get(`p02-one-page--mode-${mode}--address-full`)?.standardHeaderAddress;
+      assert.deepEqual(address?.lines, ["Musterstraße 12 A", "12345 Musterstadt"], `${CONTRACT.standardAddress}:${mode}`);
     }
   });
 
@@ -686,7 +754,9 @@ async function runM85PdfSatzvertragTests(run) {
 
 if (require.main === module) {
   let failed = false;
+  const onlyStandardAddress = process.argv.includes("--only-standard-address");
   const standaloneRun = async (name, task) => {
+    if (onlyStandardAddress && !name.includes("SATZ-016") && !name.includes("SATZ-015/-016")) return;
     try {
       await task();
       console.log(`ok - ${name}`);

@@ -28,7 +28,8 @@
     "fix:electron-deps": "node scripts/nativeDepsAbi.cjs electron",
     "postinstall": "node scripts/nativeDepsAbi.cjs electron",
     "test:node": "node scripts/runNodeTestsWithAbi.cjs",
-    "test:m85:pdf": "node scripts/tests/m85PdfSatzvertrag.test.cjs"
+    "test:m85:pdf": "node scripts/tests/m85PdfSatzvertrag.test.cjs",
+    "test:v2:standard-header-address": "node scripts/tests/m85PdfSatzvertrag.test.cjs --only-standard-address"
   },
   "devDependencies": {
     "electron": "^30.0.0",

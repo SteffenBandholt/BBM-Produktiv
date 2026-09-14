@@ -5081,3 +5081,47 @@ ausstehenden IPC-Antwort offen; Service-/DB-Neustarttests sind grün. Native
 Computer Use war wegen fehlender Pipe nicht verfügbar. Kein RE-S1.2, keine
 PDF-/Buchungs-/Navigationsänderung, kein Merge. Paket bleibt auf PR #348; Commit-
 und Pushnachweis folgen im Abschluss.
+## 2026-09-14 – Bauvorhabenadresse im gemeinsamen V2-Standardkopf
+
+Der Standardzweig von `FullHeader.js` zeigt im bestehenden rechten Kopfbereich
+nur noch `data.project.street` sowie die vorhandenen Bestandteile aus
+`data.project.zip` und `data.project.city`. Leere Bestandteile beziehungsweise
+Zeilen entfallen; bei fehlendem Projekt bleibt der Adressbereich leer. Die
+frühere Profil-/Firmenadressquelle und ihr Ersatztext werden in diesem Kopf nicht
+mehr verwendet. Rechnungs-/Provider-Slots, Logo, Trennlinien, Seitenzähler und
+die gleichlautenden Protokoll-Abschlussplatzhalter bleiben unverändert.
+
+Die Entwurfsentscheidung steht in
+`docs/V2_STANDARDKOPF_BAUVORHABENADRESSE_ENTWURFSENTSCHEIDUNG.md`; der neue
+Inhaltsvertrag ist als `PDF-V2-SATZ-016` dokumentiert.
+
+### Adressbezogene Prüfungen (bestanden)
+
+- `npm run test:v2:standard-header-address` ist für `PDF-V2-SATZ-002`,
+  `PDF-V2-SATZ-015`, `PDF-V2-SATZ-016` und `PDF-V2-REST-003` vollständig grün.
+- Vollständige, teilweise, leere, fehlende und lange Projektadressen sind in
+  Protokoll und befüllten Restarbeiten geprüft; Profil-/Firmenfallback,
+  Ersatztext, Überlauf und unzulässige Geometrieverschiebung werden verneint.
+- Der Modus-Sweep bestätigt Protokoll, Preview, Vorabzug, Firmen-, ToDo-, TOP-
+  und Restarbeitenausgabe.
+- Zwölf echte Protokoll-/Restarbeiten-PDFs wurden vollständig gerendert und
+  visuell ohne Überlappung oder Verschiebung des übrigen Kopfes geprüft.
+- Ein kontrollierter Vorher-/Nachher-Lauf bestätigt für alle 49 Fixtures
+  identische Seitenzahlen und Strukturhashes. Es war keine Golden-Änderung
+  erforderlich.
+
+### Bekannte Blocker der M85-Gesamtsuite (nicht Teil des Adresspakets)
+
+Der vollständige M85-Lauf bleibt in vier bereits im Ausgangsstand vorhandenen
+Vertragsabweichungen rot:
+
+- Restarbeiten-Golden `r19-empty` weicht vom hinterlegten Referenzhash ab.
+- Restarbeiten-Spaltenzahl ist 9 statt der erwarteten 13.
+- Registryzahl ist 37 statt der erwarteten 35.
+- Der Profilpfad-Guard `PDF-V2-ARCH-003` schlägt fehl.
+
+Diese Abweichungen wurden nicht durch Golden-Updates maskiert, nicht erneut
+identisch geprüft und entsprechend dem Paketumfang nicht repariert. Das
+Adresspaket ist technisch abgeschlossen; der Commit erfolgt im Abschlusslauf.
+
+---

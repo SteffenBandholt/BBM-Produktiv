@@ -837,3 +837,32 @@ Dabei gilt:
 - Im aktuellen Rechnungsscope mit 131 Zielen sind exakt 16 registrierte Buttons effektiv in Breite und Höhe entgrenzt. Globale Mindesthöhen nehmen `.invoice-button` aus; Grid- und Flex-Refs geben einer expliziten Editorbreite/-höhe Vorrang. Standardtracks und Standardhöhe bleiben ohne Editoroperation optisch unverändert.
 - Der reale Chromium-Guard prüft alle 16 Buttons bei `6 x 6 px` und deutlich größeren Sollwerten gegen die BoundingBox sowie einen Nicht-Button als Vertragsreferenz. Die Produktabnahme prüft sieben Buttonklassen im normalen Router/RechnungScreen mit sichtbarem Save, Rechnung-Reopen und vollständig neuem Electron-Prozess.
 - Fachfunktion, PDF/Druck, Navigation, Handler, Registry-IDs und Parentstruktur blieben unverändert. Kein Commit, kein Push; für dieses Paket ist kein weiterer Implementierungsschritt offen.
+## 2026-09-14 – Gemeinsamer V2-Standardkopf: Bauvorhabenadresse
+
+Der gemeinsame Standard-FullHeader bindet im vorhandenen rechten Kopfbereich
+jetzt ausschließlich die Bauvorhabenadresse aus `data.project`. Der Änderung ist
+die verpflichtende PDF-Entwurfsentscheidung vorausgegangen; bestehende
+Editor-IDs, Parents und Operationen bleiben unverändert. Rechnung und Provider
+mit eigenem FullHeader-Slot sowie die Protokoll-Abschlussbereiche sind nicht Teil
+des Pakets.
+
+### Adressbezogene Prüfungen (bestanden)
+
+Der separate Lauf `npm run test:v2:standard-header-address` schließt die
+Adressabnahme reproduzierbar grün für `PDF-V2-SATZ-002`, `-015`, `-016` und
+`PDF-V2-REST-003`. Er deckt Normalisierung, Leerzustand, fehlendes Projekt,
+Profil-Fallback-Sperre, lange Straßen und alle Standardausgaben ab. Zwölf echte
+Protokoll-/Restarbeiten-PDFs einschließlich der befüllten Einseiten-Fixture
+`r20-one-page` wurden visuell geprüft. Die 49 Struktur-Snapshots sind gegenüber
+dem Ausgangs-Header vollständig unverändert; eine Golden-Änderung war nicht
+erforderlich.
+
+### Bekannte Blocker der M85-Gesamtsuite (getrennt)
+
+Der vollständige M85-Lauf bleibt unabhängig vom Adresspaket rot: Golden-Hash der
+Restarbeiten-Fixture `r19-empty`, Restarbeiten-Spaltenzahl 9 statt 13,
+Registryzahl 37 statt 35 und Profilpfad-Guard `PDF-V2-ARCH-003`. Diese bekannten
+Baselineabweichungen werden in diesem Mini-Paket weder erneut identisch geprüft
+noch repariert oder durch Golden-Updates maskiert.
+
+---

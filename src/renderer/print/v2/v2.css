@@ -318,6 +318,12 @@
   text-overflow: ellipsis;
 }
 
+.printV2Root .v2ProjectAddressStreet {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .printV2Root .v2UserRowZipCity {
   display: flex;
   justify-content: flex-start;

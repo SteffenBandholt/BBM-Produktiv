@@ -14,7 +14,7 @@ const IS_ELECTRON_PROCESS = Boolean(process.versions.electron);
 const { app, BrowserWindow, ipcMain } = IS_ELECTRON_PROCESS ? electronModule : {};
 
 function parseArgs(argv) {
-  const result = { output: "", pdfDir: "", fixtureIds: [], isolatedRoot: "", editorElement: "", editorX: null, editorY: null, editorWidth: null, editorTextOffsetX: null, editorTextOffsetY: null, editorFontSize: null, editorVisible: null, boundaryTable: "pdf.bbm.protocol.tops", boundaryLeft: "", boundaryRight: "", boundaryDelta: null };
+  const result = { output: "", pdfDir: "", fixtureIds: [], isolatedRoot: "", modeOverrides: [], projectAddressCases: [], includeEditorLayout: false, editorElement: "", editorX: null, editorY: null, editorWidth: null, editorTextOffsetX: null, editorTextOffsetY: null, editorFontSize: null, editorVisible: null, boundaryTable: "pdf.bbm.protocol.tops", boundaryLeft: "", boundaryRight: "", boundaryDelta: null };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = String(argv[index] || "");
     if (arg === "--output") result.output = path.resolve(String(argv[++index] || ""));
@@ -22,6 +22,9 @@ function parseArgs(argv) {
     else if (arg === "--isolated-root") result.isolatedRoot = path.resolve(String(argv[++index] || ""));
     else if (arg === "--fixture") result.fixtureIds.push(String(argv[++index] || ""));
     else if (arg.startsWith("--fixture=")) result.fixtureIds.push(arg.slice("--fixture=".length));
+    else if (arg === "--mode") result.modeOverrides.push(String(argv[++index] || ""));
+    else if (arg === "--project-address-case") result.projectAddressCases.push(String(argv[++index] || ""));
+    else if (arg === "--include-editor-layout") result.includeEditorLayout = true;
     else if (arg === "--editor-element") result.editorElement = String(argv[++index] || "");
     else if (arg === "--editor-x") result.editorX = Number(argv[++index]);
     else if (arg === "--editor-y") result.editorY = Number(argv[++index]);
@@ -41,6 +44,42 @@ function parseArgs(argv) {
   if (Number.isFinite(result.boundaryDelta) && (!result.boundaryLeft || !result.boundaryRight))
     throw new Error("M85-Grenzencheck benoetigt linke und rechte Nachbarspalte.");
   return result;
+}
+
+const PROJECT_ADDRESS_CASES = Object.freeze({
+  full: Object.freeze({ street: "Musterstraße 12 A", zip: "12345", city: "Musterstadt" }),
+  partial: Object.freeze({ street: "Teilweg 7", zip: "", city: "Teilort" }),
+  empty: Object.freeze({ street: "   ", zip: "", city: null }),
+  missing: null,
+  long: Object.freeze({
+    street: "Außergewöhnlich lange Straße des gemeinsamen Bauvorhabens mit ergänzender Lagebezeichnung 123 A",
+    zip: "98765",
+    city: "Langstraßenhausen",
+  }),
+});
+
+function expandFixtureVariants(sourceFixtures, args) {
+  const modes = args.modeOverrides.length ? args.modeOverrides : [null];
+  const addressCases = args.projectAddressCases.length ? args.projectAddressCases : [null];
+  for (const caseName of addressCases) {
+    if (caseName !== null && !Object.prototype.hasOwnProperty.call(PROJECT_ADDRESS_CASES, caseName)) {
+      throw new Error(`Unbekannter Projektadressfall: ${caseName}`);
+    }
+  }
+  return sourceFixtures.flatMap((fixture) => modes.flatMap((mode) => addressCases.map((caseName) => {
+    const variant = clone(fixture);
+    const suffixes = [];
+    if (mode) {
+      variant.data.mode = mode;
+      suffixes.push(`mode-${mode}`);
+    }
+    if (caseName) {
+      variant.projectAddressCase = caseName;
+      suffixes.push(`address-${caseName}`);
+    }
+    if (suffixes.length) variant.id = `${fixture.id}--${suffixes.join("--")}`;
+    return variant;
+  })));
 }
 
 function runNodeLauncher() {
@@ -67,9 +106,36 @@ function clone(value) {
 
 function dataForFixture(fixture, args) {
   const data = clone(fixture.data);
+  if (fixture.projectAddressCase) {
+    const address = PROJECT_ADDRESS_CASES[fixture.projectAddressCase];
+    data.project = address === null
+      ? null
+      : { ...(data.project || {}), ...address };
+    data.settings = {
+      ...(data.settings || {}),
+      "pdf.footerUseUserData": "true",
+      "pdf.footerName1": "Nicht verwenden: Profilname",
+      "pdf.footerName2": "Nicht verwenden: Firmenprofil",
+      "pdf.footerStreet": "Nicht verwenden: Profilweg 99",
+      "pdf.footerZip": "00000",
+      "pdf.footerCity": "Profilort",
+    };
+    data.userData = {
+      name1: "Nicht verwenden: Benutzername",
+      street: "Nicht verwenden: Benutzerweg 1",
+      zip: "11111",
+      city: "Benutzerort",
+    };
+  }
+  let adapter = null;
+  if (args.includeEditorLayout && fixture.kind === "protocol") {
+    adapter = createBbmPdfAdapter();
+    data.pdfEditorRegistry = adapter.getPdfRegistry();
+    data.pdfEditorLayoutState = adapter.getCurrentPdfLayoutState();
+  }
   if (!args.editorElement && !Number.isFinite(args.boundaryDelta)) return data;
   if (fixture.kind !== "protocol") throw new Error("M85-Editorcheck ist nur fuer Protokoll-Fixtures erlaubt.");
-  const adapter = createBbmPdfAdapter();
+  adapter = adapter || createBbmPdfAdapter();
   const submit = (operation, payload, elementId = args.editorElement) => {
     const result = adapter.submitPdfChangeRequest({
       changeId: `editor-check-${operation}-${elementId}`,
@@ -178,6 +244,60 @@ async function readMetaColumnGeometry(win, fixture) {
   })()`, true);
 }
 
+async function readStandardHeaderAddress(win) {
+  return win.webContents.executeJavaScript(`(() => {
+    const header = document.querySelector(".v2HeaderFull:not(.v2HeaderFullSlot)");
+    const right = header?.querySelector(":scope .v2HeaderRight") || null;
+    const userBox = right?.querySelector(":scope > .v2UserBox") || null;
+    if (!header || !right || !userBox) return null;
+    const page = header.closest(".page");
+    const orientation = String(document.querySelector(".printV2Root")?.dataset?.orientation || "portrait");
+    const pageWidthMm = orientation === "landscape" ? 297 : 210;
+    const pageHeightMm = orientation === "landscape" ? 210 : 297;
+    const pageRect = page?.getBoundingClientRect?.() || {};
+    const rect = (element) => {
+      if (!element || !(pageRect.width > 0 && pageRect.height > 0)) return null;
+      const value = element.getBoundingClientRect();
+      const round = (number) => Math.round(Number(number || 0) * 1000) / 1000;
+      return {
+        x: round((value.left - pageRect.left) * pageWidthMm / pageRect.width),
+        y: round((value.top - pageRect.top) * pageHeightMm / pageRect.height),
+        width: round(value.width * pageWidthMm / pageRect.width),
+        height: round(value.height * pageHeightMm / pageRect.height),
+        right: round((value.right - pageRect.left) * pageWidthMm / pageRect.width),
+        bottom: round((value.bottom - pageRect.top) * pageHeightMm / pageRect.height),
+      };
+    };
+    const rows = Array.from(userBox.children || []);
+    const headerRect = header.getBoundingClientRect();
+    const boxRect = userBox.getBoundingClientRect();
+    return {
+      lines: rows.map((row) => String(row.textContent || "").trim()),
+      text: String(userBox.textContent || "").trim(),
+      placeholderPresent: String(userBox.textContent || "").includes("Projekt > Bearbeiten > Einstellungen"),
+      legacyProfilePresent: String(userBox.textContent || "").includes("Nicht verwenden:"),
+      withinFullHeader: boxRect.left >= headerRect.left - 1 && boxRect.right <= headerRect.right + 1 && boxRect.top >= headerRect.top - 1 && boxRect.bottom <= headerRect.bottom + 1,
+      contentOverflow: rows.some((row) => row.scrollWidth > row.clientWidth + 1 || row.scrollHeight > row.clientHeight + 1),
+      geometry: {
+        fullHeader: rect(header),
+        left: rect(header.querySelector(":scope .v2HeaderLeft")),
+        right: rect(right),
+        userBox: rect(userBox),
+        pageCounter: rect(right.querySelector(":scope > .v2FullPageCounter")),
+        divider: rect(header.querySelector(":scope > .v2FullDivider")),
+      },
+      editorTarget: {
+        id: right.getAttribute("data-ui-inspector-id"),
+        kind: right.getAttribute("data-ui-editor-kind"),
+        label: right.getAttribute("data-ui-editor-label"),
+        parent: right.getAttribute("data-ui-editor-parent"),
+        editable: right.getAttribute("data-ui-editor-editable"),
+        operations: right.getAttribute("data-ui-editor-ops"),
+      },
+    };
+  })()`, true);
+}
+
 async function renderFixture(win, fixture, { pdfDir } = {}) {
   const jobId = `m85-${fixture.id}`;
   const ready = new Promise((resolve, reject) => {
@@ -209,6 +329,7 @@ async function renderFixture(win, fixture, { pdfDir } = {}) {
   );
   if (!snapshot) throw new Error(`M85-Struktursnapshot fehlt: ${fixture.id}`);
   const metaColumnGeometry = await readMetaColumnGeometry(win, fixture);
+  const standardHeaderAddress = await readStandardHeaderAddress(win);
 
   let pdf = null;
   if (pdfDir) {
@@ -219,12 +340,12 @@ async function renderFixture(win, fixture, { pdfDir } = {}) {
     pdf = { fileName: path.basename(filePath), bytes: buffer.length };
   }
   return { id: fixture.id, number: fixture.number, title: fixture.title, kind: fixture.kind, snapshot,
-    previewMetadata: readyMessage?.previewMetadata || null, metaColumnGeometry, pdf };
+    previewMetadata: readyMessage?.previewMetadata || null, metaColumnGeometry, standardHeaderAddress, pdf };
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const fixtures = getM85Fixtures(args.fixtureIds);
+  const fixtures = expandFixtureVariants(getM85Fixtures(args.fixtureIds), args);
   if (!fixtures.length) throw new Error("Keine M85-Fixtures ausgewählt.");
 
   if (!args.isolatedRoot) throw new Error("M85-Isolationsprofil fehlt (--isolated-root).");
