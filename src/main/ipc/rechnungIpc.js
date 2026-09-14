@@ -11,6 +11,7 @@ const { getFirmDirectoryService } = require("../domain/firms/FirmDirectoryServic
 const { getInvoiceService } = require("../domain/rechnung/InvoiceService");
 const { getBillingOrderService } = require("../domain/rechnung/BillingOrderService");
 const { InvoicePdfFinalizer } = require("../domain/rechnung/InvoicePdfFinalizer");
+const { getInvoiceMasterDataService } = require("../domain/rechnung/InvoiceMasterDataService");
 
 function failure(error) { return { ok: false, error: error?.message || String(error), code: error?.code || null }; }
 
@@ -23,6 +24,7 @@ function registerRechnungIpc({
   app = electronApp,
   shell = electronShell,
   pdfFinalizer = null,
+  masterDataService = getInvoiceMasterDataService(),
 } = {}) {
   const finalizer = pdfFinalizer || new InvoicePdfFinalizer({
     repository: service.repository,
@@ -41,6 +43,10 @@ function registerRechnungIpc({
   handle("rechnung:order:amendment:createDraft", (data) => billingOrderService.createDraftAmendment(data));
   handle("rechnung:order:amendment:confirm", (data) => billingOrderService.confirmAmendment(data));
   handle("rechnung:list", () => service.list(), "list");
+  handle("rechnung:catalog:list", () => masterDataService.listCatalog(), "list");
+  handle("rechnung:catalog:defaults", () => masterDataService.getCatalogDefaults());
+  handle("rechnung:catalog:create", (data) => masterDataService.createCatalogEntry(data), "entry");
+  handle("rechnung:catalog:update", (data) => masterDataService.updateCatalogEntry(data), "entry");
   handle("rechnung:get", (data) => service.get(data.id));
   handle("rechnung:createDraft", (data) => service.createDraft(data));
   handle("rechnung:createDraftFromOrder", (data) => service.createDraftFromOrder(data));

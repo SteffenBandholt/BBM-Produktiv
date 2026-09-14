@@ -1,5 +1,78 @@
 # Rechnungsscreen – UI-/PDF-Entwurfsentscheidung
 
+## RE-S1.1 – abschließende Korrektur für PR #348 (13.09.2026)
+
+### A. Art der Ausgabe
+
+- UI
+- keine PDF-Änderung
+
+### B. Editorfähigkeit
+
+- editorfähig: ja, innerhalb des vorhandenen Scopes `rechnung.screen`
+- Die zusätzliche Stammdatenseite wird entfernt. Der Leistungskatalog erhält einen
+  direkten Übersichtseinstieg und einen eigenen expliziten UI-Teilbaum.
+
+### C. Editorfähige Elemente
+
+Alle folgenden Elemente besitzen im Komponentenvertrag `id`, `name`, `type`,
+`role`, `parentId`, `order`, `visible`, `editable`, `allowedOps` und `lockedOps`.
+Die ID ist zugleich `data-ui-inspector-id`; Typ, Name, Parent, Editierbarkeit und
+Operationen werden als `data-ui-editor-kind`, `data-ui-editor-label`,
+`data-ui-editor-parent`, `data-ui-editor-editable` und `data-ui-editor-ops`
+dynamisch an das echte DOM-Ziel gebunden.
+
+| IDs | Typ / Rolle | Parent | Erlaubte Operationen |
+| --- | --- | --- | --- |
+| `rechnung.overview.catalog` | button / domainActionLayout | `rechnung.overview.header` | move, resizeWidth, resizeHeight, setVisibility, textResize |
+| `rechnung.catalog` | area / layout | `rechnung.screen.content` | move, resizeWidth, resizeHeight, setVisibility |
+| `rechnung.catalog.header` | group / layout | `rechnung.catalog` | move, resizeWidth, resizeHeight, setVisibility |
+| `rechnung.catalog.title` | label / content | `rechnung.catalog.header` | move, resizeWidth, resizeHeight, setVisibility, textResize |
+| `rechnung.catalog.close` | button / domainActionLayout | `rechnung.catalog.header` | move, resizeWidth, resizeHeight, setVisibility, textResize |
+| `rechnung.catalog.form` | group / layout | `rechnung.catalog` | move, resizeWidth, resizeHeight, setVisibility |
+| `rechnung.catalog.select`, `.shortText`, `.longText`, `.unit`, `.unitPrice`, `.vatRate` | field / content | `rechnung.catalog.form` | move, resizeWidth, resizeHeight, setVisibility, textResize |
+| `rechnung.catalog.select.label`, `.shortText.label`, `.longText.label`, `.unit.label`, `.unitPrice.label`, `.vatRate.label` | label / fieldLabel | `rechnung.catalog.form` | move, resizeWidth, resizeHeight, setVisibility, textResize |
+| `rechnung.catalog.create`, `rechnung.catalog.save` | button / domainActionLayout | `rechnung.catalog.form` | move, resizeWidth, resizeHeight, setVisibility, textResize |
+
+Die Feldarten sind `select`, `singleLineText`, `multilineText`, `currency` und
+für die feste Mehrwertsteuer `readOnlyText`. Der vollständige Scope umfasst 107
+Ziele. Die genaue Reihenfolge 25 bis 38 steht im Komponentenvertrag.
+
+### D. Nicht editorfähige Elemente und verbotene Editor-Ziele
+
+Entfernt werden `rechnung.overview.masterData` und der gesamte Teilbaum
+`rechnung.masterData*`, also auch Rechnungsteller- und Kundenpflege. Die weiterhin
+vorhandene Kundenauswahl `rechnung.editor.customerPicker` ist eine Bedienliste,
+keine Inhaltstabelle.
+
+Bei allen sichtbaren Buttons sind `executeTargetAction`, `modifyDomainData`,
+`createRecord` und `deleteRecord` gesperrt. Fachliches Speichern, Anlegen, Löschen,
+Upload, Import, Export, Autosave sowie IPC-/Datenbankaktionen sind keine
+Editoroperationen. Die fachliche Mehrwertsteuer ist nicht auswählbar.
+
+### E. Parent-/Strukturregel
+
+Jedes Element außer dem bestehenden Scope-Root besitzt den oben genannten,
+ebenfalls registrierten Parent. Es gibt keine verwaisten `rechnung.masterData*`-
+Referenzen. Tabellen, Spalten, Tabellen-Registry und PDF-Strukturen bleiben
+unverändert.
+
+### F. Prüfung
+
+- `scripts/tests/rechnungReS11.test.cjs` prüft Quelle, Bestandsschutz,
+  Kunden-/Katalogpersistenz, feste 19 Prozent und die UI-Grenze.
+- `scripts/tests/m83-0ComponentContracts.test.cjs` mountet die 107 realen Ziele
+  und vergleicht Komponentenvertrag und Ref-Bindung.
+- `scripts/tests/m82AppStarterPackage.test.cjs` und
+  `scripts/tests/sigekoEditorManifest.test.cjs` leiten Zielzahl sowie Scope- und
+  Registry-Fingerprint aus dem realen Vertrag ab.
+- `scripts/ui-editor-contract-check.cjs --self-test` sichert den Grundvertrag.
+- Der tatsächliche Windows-/Electron-Ablauf und etwaige Kit-/Umgebungsgrenzen
+  werden nur dann als bedient gemeldet, wenn sie im Arbeitslauf ausgeführt wurden.
+
+Der bisherige RE-S1.1-Zwischenstand mit eigener Rechnungstellerpflege, der
+`rechnung.masterData*`-Struktur und 146 Zielen ist überholt und nicht mehr gültig.
+
 Stand: 24.08.2026
 Scope: `rechnung.screen`
 Komponente: `bbm.rechnung.screen`

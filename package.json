@@ -22,6 +22,7 @@
     "test:sigeko:s2.4:form:manual": "node scripts/runSigekoProjectFormAcceptance.cjs --manual",
     "test:sigeko:s1.4": "node scripts/runSigekoPdfAcceptance.cjs",
     "test:sigeko:s1.3:windows": "node scripts/runSigekoStorageAcceptance.cjs",
+    "test:rechnung:re-s1.1:pdf": "node scripts/runRechnungReS11PdfAcceptance.cjs",
     "lint": "eslint \"src/**/*.js\"",
     "lint:fix": "eslint \"src/**/*.js\" --fix",
     "fix:electron-deps": "node scripts/nativeDepsAbi.cjs electron",

@@ -69,7 +69,7 @@ async function runM830ComponentContractTests(run) {
     assert.doesNotMatch(source, /data-bbm-restarbeiten-record-id|app\.db|item\.id|databaseId|recordId/); assert.ok(contractIds.every((id) => !/(?:^|\.)\d{4,}(?:\.|$)|[0-9a-f]{8}-[0-9a-f-]{27,}/i.test(id)));
   });
   await run("M83.0 BBM 05: Restarbeiten, Protokoll und Rechnung sind vollstaendig gebuendelt", () => {
-    assert.deepEqual(Object.fromEntries(contracts.map((component) => [component.componentId, component.slots.length])), { "bbm.projektverwaltung.plannedStart": 5, "bbm.restarbeiten.filterbar": 31, "bbm.restarbeiten.quicklane": 12, "bbm.restarbeiten.list": 32, "bbm.restarbeiten.editbox": 53, "bbm.restarbeiten.mainHeaderLauncher": 1, "bbm.protokoll.screen": 9, "bbm.protokoll.quicklane": 24, "bbm.protokoll.mainHeaderLauncher": 1, "bbm.protokoll.list.shell": 6, "bbm.protokoll.list.columns": 26, "bbm.protokoll.editbox": 38, "bbm.rechnung.screen": 131, "bbm.sigeko.screen": 11, "bbm.sigeko.mainHeaderLauncher": 1 });
+    assert.deepEqual(Object.fromEntries(contracts.map((component) => [component.componentId, component.slots.length])), { "bbm.projektverwaltung.plannedStart": 5, "bbm.restarbeiten.filterbar": 31, "bbm.restarbeiten.quicklane": 12, "bbm.restarbeiten.list": 32, "bbm.restarbeiten.editbox": 53, "bbm.restarbeiten.mainHeaderLauncher": 1, "bbm.protokoll.screen": 9, "bbm.protokoll.quicklane": 24, "bbm.protokoll.mainHeaderLauncher": 1, "bbm.protokoll.list.shell": 6, "bbm.protokoll.list.columns": 26, "bbm.protokoll.editbox": 38, "bbm.rechnung.screen": 107, "bbm.sigeko.screen": 11, "bbm.sigeko.mainHeaderLauncher": 1 });
     assert.deepEqual(contracts.flatMap((component) => component.slots.filter((slot) => !Number.isSafeInteger(slot.element.order)).map((slot) => slot.slotId)), []);
   });
 
@@ -97,15 +97,31 @@ async function runM830ComponentContractTests(run) {
     const invoiceRoot = invoiceScreen.render();
     body.appendChild(invoiceRoot);
     await Promise.resolve();
-    await run("M83.0 Rechnung 01: echter Rechnungsscreen mountet alle 131 Einzel-Refs mit vollstaendigem DOM-Vertrag", () => {
+    await run("M83.0 Rechnung RE-S1.1: direkte Katalogansicht und 107 aktuelle Einzel-Refs sind vollständig gebunden", () => {
       const component = contracts.find((entry) => entry.componentId === "bbm.rechnung.screen");
       const scope = scopes.find((entry) => entry.scopeId === "rechnung.screen");
       const expectedIds = scope.elements.map((entry) => entry.id);
       const rendered = collectEditorElements(invoiceRoot);
       const renderedIds = rendered.map((element) => element.getAttribute("data-ui-inspector-id"));
-      assert.equal(expectedIds.length, 131);
-      assert.equal(component.slots.length, 131);
-      assert.equal(new Set(renderedIds).size, 131);
+      assert.equal(expectedIds.length, 107);
+      assert.equal(component.slots.length, 107);
+      assert.equal(new Set(renderedIds).size, 107);
+      assert.deepEqual([...renderedIds].sort(), [...expectedIds].sort());
+      assert.equal(renderedIds.some((id) => id.startsWith("rechnung.masterData")), false);
+      assert.equal(renderedIds.includes("rechnung.overview.catalog"), true);
+      assert.equal(renderedIds.includes("rechnung.catalog.save"), true);
+      assert.equal(renderedIds.includes("rechnung.editor.customerPicker"), true);
+      assert.equal(refs.validateM83ComponentReferences([component.componentId]).ok, true);
+    });
+    await run("M83.0 Rechnung 01: echter Rechnungsscreen mountet alle 107 Einzel-Refs mit vollstaendigem DOM-Vertrag", () => {
+      const component = contracts.find((entry) => entry.componentId === "bbm.rechnung.screen");
+      const scope = scopes.find((entry) => entry.scopeId === "rechnung.screen");
+      const expectedIds = scope.elements.map((entry) => entry.id);
+      const rendered = collectEditorElements(invoiceRoot);
+      const renderedIds = rendered.map((element) => element.getAttribute("data-ui-inspector-id"));
+      assert.equal(expectedIds.length, 107);
+      assert.equal(component.slots.length, 107);
+      assert.equal(new Set(renderedIds).size, 107);
       assert.deepEqual([...renderedIds].sort(), [...expectedIds].sort());
       assert.equal(refs.validateM83ComponentReferences([component.componentId]).ok, true);
       const byId = new Map(scope.elements.map((entry) => [entry.id, entry]));

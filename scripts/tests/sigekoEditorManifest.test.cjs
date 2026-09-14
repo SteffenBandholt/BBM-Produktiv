@@ -16,7 +16,7 @@ const EXISTING_SCOPE_FINGERPRINTS = Object.freeze({
   'protokoll.screen.root': 'sha256:7251a69f8243bb21a4768170d75ea0d51a4a43a48db0cb4b06caaca565185029',
   'protokoll.list.root': 'sha256:3bf84a38e4db80d49102e9fd0e8e80202c354d451df63e77242a4f899b8c8e53',
   'protokoll.edit.root': 'sha256:e53adb228924f283bf1158613f70bd6a6b927065c9ca24eb528caded776c0005',
-  'rechnung.screen': 'sha256:fe69b5db1f605d7817d2d28ef0913c84508424932785a76888902208daafda17',
+  'rechnung.screen': 'sha256:0eaa9315cedabd5eae9b64f04db083941e4b945b1ffedd930ddcd8e83f84d459',
 });
 
 function savedElement(scopeId, entry) {
@@ -62,7 +62,7 @@ async function runSigekoEditorManifestTests(run) {
     assert.deepEqual(manifest.scopes.filter(s => !['sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.builder'].includes(s.scopeId)).map(s => [s.scopeId, s.status, s.elementCount]), [
       ['restarbeiten.header.root', 'complete', 44], ['restarbeiten.list.root', 'complete', 32], ['restarbeiten.edit.root', 'complete', 53],
       ['protokoll.screen.root', 'complete', 34], ['protokoll.list.root', 'complete', 32], ['protokoll.edit.root', 'complete', 38],
-      ['rechnung.screen', 'complete', 87], ['bbm.remaining', 'blocked', 0], ['pdf.bbm.protocol', 'complete', 28],
+      ['rechnung.screen', 'complete', 107], ['bbm.remaining', 'blocked', 0], ['pdf.bbm.protocol', 'complete', 28],
     ]);
   });
   const registryScopes = scopes.map(scope => scope.status === 'complete' ? {

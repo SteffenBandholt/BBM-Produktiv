@@ -150,6 +150,10 @@ contextBridge.exposeInMainWorld("bbmDb", {
   rechnungOpenPdf: (id) => ipcRenderer.invoke("rechnung:openPdf", { id }),
   rechnungListCustomers: () => ipcRenderer.invoke("rechnung:listCustomers"),
   rechnungListProjects: () => ipcRenderer.invoke("rechnung:listProjects"),
+  rechnungCatalogList: () => ipcRenderer.invoke("rechnung:catalog:list"),
+  rechnungCatalogDefaults: () => ipcRenderer.invoke("rechnung:catalog:defaults"),
+  rechnungCatalogCreate: (entry) => ipcRenderer.invoke("rechnung:catalog:create", entry),
+  rechnungCatalogUpdate: (id, entry) => ipcRenderer.invoke("rechnung:catalog:update", { id, entry }),
 
   // ============================================================
   // GLOBAL Mitarbeiter (Persons) je Firma

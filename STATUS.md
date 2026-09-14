@@ -1,3 +1,56 @@
+## 2026-09-14 – Rechnung RE-S1.1 / PR #348: technischer Abschluss
+
+Branch `codex/setze-bbm-rechnung-re-s1.1-um`, Basis `9997910f`, Ausgangs-Head
+`e8bb36f9`. Der neue gezielte Electron-Lauf verwendet eine frisch erzeugte
+isolierte `app.db`, deaktivierten Legacy-Import und ausschließlich Pfade im
+Temp-Profil. Buchung `2026-0001` enthält die alten Unternehmens- und Bankdaten;
+ihre echte PDF besitzt 20.971 Bytes und Hash
+`4de3cb9c71caa0f0f8878ffb742e5f2cff4885a1bfd51a199ec618610e9c6f4d`.
+Nach Änderung der Daten enthält Buchung `2026-0002` die neuen Werte; ihre echte
+PDF besitzt 20.923 Bytes und Hash
+`4e66c2787c35e54b918f8b530c864db1e85d4d42fad1d933a0fe6d01fc4281c1`.
+Nach Datenbank-Wiederöffnung blieben erster Snapshot, PDF-Referenz, Bytes und
+Hash unverändert; der READY-Pfad renderte nicht neu. Bericht:
+`C:\Users\Steffen\AppData\Local\Temp\bbm-ui-editor-acceptance-Ar0ugW\rechnung-re-s1.1-pdf-result.json`.
+
+Run 34774197021 / Job 103769166990: fehlende Dateien der lokalen
+`file:../UI-Editor-kit`-Abhängigkeit sind CI-/Umgebungsfehler. Die drei Popup- und
+vier echten Lizenzfehler laufen auf Basis und Head identisch rot; die fünfte
+Lizenzmeldung (`moduleAccessState`) ist ein weiterer fehlender-Kit-Fehler und mit
+vorhandenem Kit grün. Kein PR-Diff in den betroffenen Bereichen, keine allgemeine
+Reparatur. Bereits bestandene Bedienprüfungen wurden nicht wiederholt. RE-S1.2,
+Produkt-PDF-Satz, Popup, Lizenzierung, Kit und Merge blieben unverändert.
+
+Prüfung: echter Electron-PDF-Abschluss grün; gezielte Rechnungstests,
+Syntaxprüfung, Vertragscheck und `git diff --check` werden im Abschlussbericht
+festgehalten. Nächster Schritt: kontrollierte Integration von PR #348.
+
+---
+
+## 2026-09-13 – Rechnung RE-S1.1: abschließende Korrektur in PR #348
+
+Branch `codex/setze-bbm-rechnung-re-s1.1-um`, Basis `9997910f`, Weiterarbeit auf
+dem veröffentlichten PR-Stand. Die vorhandene Eigene Organisation ist nun die
+einzige aktive Ausstellerquelle für Entwurf, Vorschau und neue Buchung. Die
+historische Rechnungsteller-Tabelle bleibt unverändert als Altbestand erhalten;
+gebuchte Snapshots und bestehende PDF-Dateien werden nicht nachgeführt.
+
+Die zusätzliche Rechnungsstammdatenseite mit Rechnungsteller- und Kundenpflege
+ist entfernt. Der gemeinsame Firmenbestand und der Kundenpicker bleiben; der
+Leistungskatalog ist direkt erreichbar und innerhalb der verfügbaren Fensterhöhe
+lokal scrollbar. Vertrag, Runtime-Refs und Manifest stehen auf 107 real
+abgeleiteten Zielen (Registry 38). RE-S1.2 sowie neue DB-, IPC-, Buchungs- oder
+PDF-Arbeit sind ausdrücklich nicht enthalten.
+
+Die fünf gezielten RE-S1.1-Prüfungen, die fünf historischen Profil-/Snapshot-
+Prüfungen, die aktualisierten Buchungs-/PDF-Vertragschecks, der neue 107-Ref-Check,
+Manifest-/Fingerprint-Checks, Vertrags-Selbsttest, fokussierter ESLint und
+`git diff --check` sind grün. Die breite Rechnungsgruppe behält ausschließlich
+ihre dokumentierten Altfehler (unter anderem alte Screen-/87-Ziele-/Routerchecks).
+Eine sichtbare Windows-Bedienabnahme ist offen: Die native Computer-Use-Pipe war
+nach Wiederholung und Neuinitialisierung nicht verfügbar. Nächster Schritt ist
+nur diese fachliche Nutzerabnahme; keine automatische Fortsetzung.
+
 ## 2026-09-10 – SiGeKo S5.4: Abnahme abgeschlossen, Integrationsnachweis (PR #339)
 
 Basis main `676713aa`; Ergebnisbranch `codex/sigeko-s54-ruecklauf-outlook`.
@@ -4972,3 +5025,59 @@ kein Merge und kein S1.3. Nachweise: `docs/SIGEKO_S1_2.md` und
 - 6/6 neue und 11/11 bisherige S1.3-Prüfungen grün. Volltest 1499/99 gegenüber 1493/99, identische Fehlernamen und keine fehlenden Fälle.
 - Branch und PR #320 werden weiterverwendet; Commit-Nachweis in #274.
 - Windows-/Explorer-Abnahme bleibt offen; kein Merge, kein S1.4, keine Rechnung.
+## 2026-09-13 – Rechnung RE-S1.1: Stammdaten/Katalog, Kit-Abnahme offen
+
+Auf Basis `9997910f519d9be0e81567dc3a7f5a65d28102d0` ergänzt das begrenzte
+Rechnungspaket die Bedienung des eigenständigen Rechnungstellerprofils, nutzt für
+zwei gemeinsame Kunden weiterhin globale Firmen und führt einen additiven
+rechnungsspezifischen Leistungskatalog ein. Drei persistente Katalogidentitäten,
+eine Änderung, DB-Neustart und unveränderter Belegbestand sind gezielt grün.
+
+Die tatsächliche Electron-/Windows-Bedienprüfung und der vollständige M83-/
+Manifestcheck bleiben offen: Linux fehlt `libatk-1.0.so.0`, der verlinkte
+vertrauenswürdige `../UI-Editor-kit`-Quellpfad fehlt. Deshalb kein grüner UI-
+Abschluss und keine unbelegte Manifest-Fingerprintänderung. RE-S1.2, Belege,
+Buchung, PDF, Aufträge und Nachträge wurden nicht begonnen. Nächster Schritt ist
+ausschließlich die Kit-/UI-Abnahme und gegebenenfalls eine gezielte Vertrags-
+Synchronisierung, nicht RE-S1.2.
+## 2026-09-13 – Rechnung RE-S1.1 / PR #348: gezielte Korrekturrunde
+
+Die feste 19-Prozent-Katalogbeschränkung ist entfernt. Da kein persistierter
+zentraler MwSt.-Setting-Key existiert, verwendet der Katalog ohne neue
+Konkurrenzquelle die vorhandene zentrale Rechnungsregel
+`DEFAULT_VAT_RATE_PERCENT` (19 als Standard, gültig 0 bis 100). Die additive
+Kompatibilitätsmigration erhält vorhandene Katalogzeilen; Belege bleiben
+unverändert. Kundenanlage/-änderung lädt nur noch Kunden neu und bewahrt
+ungespeicherte Profil-/Katalogfelder sowie die Katalogauswahl.
+
+Gezielte Verhaltenstests mit abweichender Vorgabe 7 Prozent, alter 19-Prozent-
+Katalogtabelle, DB-Neustart, unverändertem Beleg und isoliertem Kundenrefresh sind
+grün. Kit-/Windows-/sichtbare Electron-Prüfungen bleiben wie im Zwischenstand
+offen. Kein RE-S1.2, kein Merge; danach Stopp.
+
+## 2026-09-13 – Rechnung RE-S1.1 / PR #348: Bedienkorrektur
+
+Die zweite Kundenpflege ist aus den Rechnungsstammdaten entfernt. Kunden bleiben
+ausschließlich Eigentum der gemeinsamen Firmen-/Kundenverwaltung; der vorhandene
+Kundenpicker im Rechnungsentwurf und seine typisierte globale Identität bleiben
+unverändert. Die Stammdaten zeigen nur Rechnungstellerprofil und
+Leistungskatalog. Der Bereich ist mit `height: 100%` an den vorhandenen
+`rechnung-live-content` gebunden und besitzt bei begrenzter Fensterhöhe einen
+nutzbaren eigenen Scrollweg.
+
+Fünf Kundenpflege-Ziele wurden aus dem expliziten Komponentenvertrag entfernt;
+`rechnung.screen` umfasst nun 146 Ziele. Target-Manifest, Scope-Fingerprint und
+Registry-Fingerprint wurden mit dem vorhandenen Kit synchronisiert. Gezielter
+RE-S1.1-Test, Manifesttests, Vertrags-Selbsttest und der neue reale Rechnung-Ref-
+Mount sind grün. Der breite Rechnungsblock bleibt ausschließlich an bereits
+dokumentierten Altfehlern rot; diese wurden nicht repariert.
+
+Im isolierten Windows-/Electron-Lauf bei 1155 × 575 sind Profil und Katalog über
+338 px Scrollweg erreichbar; Kundenpflege fehlt und der Entwurfs-Kundenpicker ist
+vorhanden. Das Rechnungstellerprofil wurde per UI-Klick gespeichert und aus der
+isolierten SQLite-Datei bestätigt. Der erneute sichtbare Katalog-Speichernachweis
+blieb nach der einzigen Reparaturrunde an einer schon in der Startnavigation
+ausstehenden IPC-Antwort offen; Service-/DB-Neustarttests sind grün. Native
+Computer Use war wegen fehlender Pipe nicht verfügbar. Kein RE-S1.2, keine
+PDF-/Buchungs-/Navigationsänderung, kein Merge. Paket bleibt auf PR #348; Commit-
+und Pushnachweis folgen im Abschluss.

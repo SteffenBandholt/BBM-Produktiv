@@ -350,10 +350,12 @@ select.invoice-control { padding-right: 28px; }
 .bbm-rechnung-live { height: 100%; min-height: 0; overflow: hidden; }
 .rechnung-live-content { height: 100%; min-height: 0; }
 .rechnung-live-overview,
-.rechnung-live-editor { height: 100%; min-height: 0; overflow: auto; }
+.rechnung-live-editor,
+.rechnung-catalog { height: 100%; min-height: 0; overflow: auto; }
 .rechnung-live-overview { display: grid; align-content: start; gap: 14px; }
 .rechnung-live-overview[hidden],
-.rechnung-live-editor[hidden] { display: none; }
+.rechnung-live-editor[hidden],
+.rechnung-catalog[hidden] { display: none; }
 .rechnung-live-list { display: grid; gap: 8px; }
 .rechnung-live-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--invoice-color-border); border-radius: var(--invoice-radius-card); background: var(--invoice-color-surface); }
 .rechnung-live-card__body { display: grid; gap: 2px; min-width: 0; }
@@ -691,3 +693,8 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-screen__sheet-area { padding: 0; background: #fff; scrollbar-gutter: stable both-edges; }
 .rechnung-screen__sheet-canvas { min-height: 0; background: #fff; }
 .rechnung-live-editor__body.rechnung-sheet { flex: 0 0 auto; min-height: 0; box-sizing: border-box; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.rechnung-catalog { position: relative; display: grid; align-content: start; gap: 14px; padding: 18px; box-sizing: border-box; }
+.rechnung-catalog-form { display: grid; gap: 10px; padding: 14px; border: 1px solid #d8dee8; border-radius: 10px; background: #fff; }
+.rechnung-catalog-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.rechnung-catalog-form > .invoice-button { justify-self: start; }
+@media (max-width: 900px) { .rechnung-catalog-grid { grid-template-columns: minmax(0, 1fr); } }
