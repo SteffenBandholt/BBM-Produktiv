@@ -1,3 +1,11 @@
+import {
+  cleanupPopupHandlers,
+  createPopupOverlay,
+  registerPopupCloseHandlers,
+  stylePopupCard,
+} from "../ui/popupCommon.js";
+import { applyPopupButtonStyle } from "../ui/popupButtonStyles.js";
+
 function text(value) {
   return String(value == null ? "" : value).trim();
 }
@@ -235,40 +243,56 @@ export default class ProjectFirmsView {
     container.append(box);
   }
 
-  async _openAssignDialog() {
-    const assignedIds = new Set(this.assignedGlobalFirms.map((firm) => String(firm?.id || "")));
-    const available = this.allGlobalFirms.filter((firm) => !assignedIds.has(String(firm?.id || "")));
+  _getAssignableGlobalFirms() {
+    return Array.isArray(this.allGlobalFirms) ? this.allGlobalFirms : [];
+  }
 
-    if (!available.length) {
-      alert("Alle Firmen aus dem Firmenstamm sind diesem Projekt bereits zugeordnet.");
+  _resolveAssignDialogState() {
+    const allGlobalFirms = Array.isArray(this.allGlobalFirms) ? this.allGlobalFirms : [];
+    const eligibleFirms = this._getAssignableGlobalFirms();
+    const assignedIds = new Set(this.assignedGlobalFirms.map((firm) => String(firm?.id || "")));
+    const available = eligibleFirms.filter((firm) => !assignedIds.has(String(firm?.id || "")));
+
+    let emptyMessage = "";
+    if (!allGlobalFirms.length) {
+      emptyMessage = "Im Firmenstamm sind keine Firmen vorhanden.";
+    } else if (!eligibleFirms.length) {
+      emptyMessage = "Im Firmenstamm sind Firmen vorhanden, aber keine ist als Projektteilnehmer freigegeben.";
+    } else if (!available.length) {
+      emptyMessage = "Alle als Projektteilnehmer freigegebenen Firmen aus dem Firmenstamm sind diesem Projekt bereits zugeordnet.";
+    }
+
+    return { available, emptyMessage };
+  }
+
+  async _openAssignDialog() {
+    const { available, emptyMessage } = this._resolveAssignDialogState();
+
+    if (emptyMessage) {
+      alert(emptyMessage);
       return;
     }
 
     let selectedFirmId = "";
     let searchValue = "";
+    const previouslyFocused = document.activeElement || null;
 
-    const overlay = style(document.createElement("div"), {
-      position: "fixed",
-      inset: "0",
-      background: "rgba(15,23,42,.38)",
-      display: "grid",
-      placeItems: "center",
-      zIndex: "10000",
-      padding: "20px",
-    });
+    const overlay = createPopupOverlay({ background: "rgba(15,23,42,.38)", zIndex: 10000 });
+    overlay.style.display = "flex";
 
-    const modal = style(document.createElement("div"), {
-      width: "min(760px, calc(100vw - 40px))",
-      maxHeight: "calc(100vh - 40px)",
-      overflow: "hidden",
-      background: "#fff",
-      borderRadius: "14px",
-      boxShadow: "0 22px 60px rgba(15,23,42,.22)",
-      padding: "18px",
-      display: "grid",
-      gridTemplateRows: "auto auto auto minmax(220px, 1fr) auto",
+    const modal = document.createElement("div");
+    modal.className = "bbm-popup-standard bbm-popup-dialog";
+    stylePopupCard(modal, { width: "min(760px, 100%)", maxHeight: "100%" });
+    modal.style.boxShadow = "0 22px 60px rgba(15,23,42,.22)";
+    modal.style.padding = "0";
+
+    const header = style(document.createElement("div"), {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
       gap: "12px",
     });
+    header.className = "bbm-popup-header";
 
     const title = style(document.createElement("div"), {
       fontSize: "18px",
@@ -276,6 +300,21 @@ export default class ProjectFirmsView {
       color: "#172033",
     });
     title.textContent = "Firma aus Firmenstamm zuordnen";
+
+    const closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.textContent = "×";
+    closeButton.setAttribute("aria-label", "Dialog schließen");
+    closeButton.title = "Schließen";
+    applyPopupButtonStyle(closeButton, { variant: "ghost" });
+    style(closeButton, {
+      flex: "0 0 auto",
+      width: "30px",
+      padding: "0",
+      fontSize: "20px",
+      lineHeight: "1",
+    });
+    header.append(title, closeButton);
 
     const hint = style(document.createElement("div"), {
       fontSize: "12px",
@@ -290,28 +329,23 @@ export default class ProjectFirmsView {
     search.autocomplete = "off";
     style(search, {
       width: "100%",
-      minHeight: "42px",
-      border: "1px solid #cfd7e3",
-      borderRadius: "8px",
-      padding: "0 12px",
-      fontSize: "13px",
-      boxSizing: "border-box",
-      outline: "none",
+      flex: "0 0 auto",
     });
 
     const listWrap = style(document.createElement("div"), {
-      border: "1px solid #dfe5ec",
-      borderRadius: "10px",
+      border: "1px solid var(--bbm-popup-border)",
+      borderRadius: "var(--bbm-popup-control-radius)",
       overflow: "auto",
-      background: "#fff",
-      minHeight: "220px",
+      background: "var(--bbm-popup-surface)",
+      flex: "1 1 auto",
+      minHeight: "0",
       maxHeight: "420px",
     });
 
     const status = style(document.createElement("div"), {
       fontSize: "11.5px",
       color: "#667085",
-      marginBottom: "6px",
+      flex: "0 0 auto",
     });
 
     const list = style(document.createElement("div"), {
@@ -319,17 +353,37 @@ export default class ProjectFirmsView {
     });
     listWrap.append(list);
 
-    const cancel = button("Abbrechen");
-    const assign = button("Zuordnen", { primary: true });
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = "Abbrechen";
+    const assign = document.createElement("button");
+    assign.type = "button";
+    assign.textContent = "Zuordnen";
+    applyPopupButtonStyle(cancel, { variant: "neutral" });
+    applyPopupButtonStyle(assign, { variant: "primary" });
     assign.disabled = true;
-    assign.style.opacity = ".55";
 
-    const close = () => overlay.remove();
+    let closed = false;
+    let focusTimer = null;
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      if (focusTimer !== null) clearTimeout(focusTimer);
+      cleanupPopupHandlers(overlay);
+      overlay.remove();
+      if (previouslyFocused && previouslyFocused.isConnected !== false && typeof previouslyFocused.focus === "function") {
+        try {
+          previouslyFocused.focus({ preventScroll: true });
+        } catch (_error) {
+          previouslyFocused.focus();
+        }
+      }
+    };
+    registerPopupCloseHandlers(overlay, close);
 
     const setSelected = (firmId) => {
       selectedFirmId = text(firmId);
       assign.disabled = !selectedFirmId;
-      assign.style.opacity = selectedFirmId ? "1" : ".55";
       for (const row of list.querySelectorAll("[data-firm-id]")) {
         const active = row.dataset.firmId === selectedFirmId;
         row.style.background = active ? "#eef4ff" : "#fff";
@@ -413,10 +467,8 @@ export default class ProjectFirmsView {
       renderList();
     });
 
+    closeButton.addEventListener("click", close);
     cancel.addEventListener("click", close);
-    overlay.addEventListener("mousedown", (event) => {
-      if (event.target === overlay) close();
-    });
 
     assign.addEventListener("click", async () => {
       const firmId = text(selectedFirmId);
@@ -433,19 +485,33 @@ export default class ProjectFirmsView {
       await this.reload();
     });
 
+    const body = style(document.createElement("div"), {
+      display: "flex",
+      flexDirection: "column",
+      flex: "0 1 auto",
+      minHeight: "0",
+      overflow: "hidden",
+      gap: "8px",
+    });
+    body.className = "bbm-popup-body bbm-form-content";
+    body.append(hint, search, status, listWrap);
+
     const actions = style(document.createElement("div"), {
       display: "flex",
       justifyContent: "flex-end",
-      gap: "8px",
-      marginTop: "4px",
+      gap: "var(--bbm-popup-footer-gap)",
     });
+    actions.className = "bbm-popup-footer";
     actions.append(cancel, assign);
 
-    modal.append(title, hint, search, status, listWrap, actions);
+    modal.append(header, body, actions);
     overlay.append(modal);
     document.body.append(overlay);
     renderList();
-    setTimeout(() => search.focus(), 0);
+    overlay.focus();
+    focusTimer = setTimeout(() => {
+      if (!closed) search.focus();
+    }, 0);
   }
 
   async _unassignFirm(firm) {

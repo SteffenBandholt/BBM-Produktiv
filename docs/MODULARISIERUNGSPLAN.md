@@ -866,3 +866,29 @@ Baselineabweichungen werden in diesem Mini-Paket weder erneut identisch geprüft
 noch repariert oder durch Golden-Updates maskiert.
 
 ---
+
+## 2026-09-15 – Mini-Paket Projektfirmen-Zuordnung (abgenommen)
+
+- Der bestehende Projektfirmen-Dialog nutzt für globale Firmen vorrangig
+  `uses.projectParticipant`; `usages`, `use_project_participant` und
+  `project_participant` bleiben reine Lese-Fallbacks für Altformate.
+- Reine Rechnungskunden bleiben ausgeschlossen und bereits zugeordnete Firmen
+  werden nicht erneut angeboten.
+- Die drei fachlichen Leerzustände des Firmenstamms sind getrennt; Ladefehler
+  bleiben unverändert Fehler.
+- Die Zuordnung verwendet lokal den bestehenden BBM-Popupstandard. Kopf mit
+  Schließen-X und Footer bleiben bei geringer Höhe sichtbar; nur die Firmenliste
+  scrollt. X, Abbrechen und Escape räumen Handler auf und geben den Fokus zurück.
+- Keine Datenmigration, Firmenkopie, PDF-, Registry-, Editor- oder
+  Modularisierungsänderung. `bbm.project-firms` bleibt gesperrt und nicht
+  inventarisiert.
+- Automatisierte gezielte Prüfungen sowie ein echter Electron-/Chromium-Lauf mit
+  tatsächlichen App-Styles, vier und 40 Firmen und 760 × 360 sind grün. Der Nutzer
+  hat am 2026-09-15 bestätigt, dass Firmenauswahl, Zuordnungsdialog und Schließen
+  funktionieren. Die zuvor offene manuelle Abnahme ist damit erbracht; Codex
+  behauptet keine eigene native Bedienprüfung.
+- Commit, Integration und Push sind beauftragt; nächster Schritt ist die gezielte
+  Integrationsprüfung. Die zwei bekannten Layout-Altfehler bleiben getrennt;
+  keine Layout-Bereinigung und keine weitere Modularisierung.
+
+---
