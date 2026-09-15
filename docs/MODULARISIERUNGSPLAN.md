@@ -865,4 +865,22 @@ Registryzahl 37 statt 35 und Profilpfad-Guard `PDF-V2-ARCH-003`. Diese bekannten
 Baselineabweichungen werden in diesem Mini-Paket weder erneut identisch geprüft
 noch repariert oder durch Golden-Updates maskiert.
 
+### Protokoll-PDF-Kontext beim Editorstart (2026-09-15, abgenommen)
+
+- `TopsScreen.load` übergibt dem vorhandenen PDF-Resolver jetzt den registrierten
+  Dokumenttyp `protocol` zusammen mit `projectId` und `meetingId`.
+- Der gemeinsame Launcher bereitet nur explizite Dokumenttypen vor, erhält deren
+  Dokumentidentitäten und setzt andere Dokumentarten nicht pauschal auf
+  `protocol`; ein bereits vorbereiteter Kontext wird bei fehlender Kennung nicht
+  überschrieben.
+- Registrierung, Schutzprüfungen, Profile, Layout, PDF-Satz und die 37
+  vorhandenen Protokoll-PDF-Elemente bleiben unverändert.
+- Gezielte Laufzeit- und Vertragstests sind grün. Der Nutzer hat am 2026-09-15
+  bestätigt, dass Protokoll-PDF-Editor und Vorschau einschließlich
+  Bauvorhabenadresse funktionieren. Die zuvor offene manuelle Abnahme ist damit
+  erbracht; Codex behauptet keine eigene native Bedienprüfung.
+- Das Paket eröffnet keine neue Modularisierungsachse. Commit, Integration und
+  Push sind beauftragt; nächster Schritt ist die gezielte Integrationsprüfung.
+  M85-Bereinigung und weitere Editorarbeiten bleiben ausgeschlossen.
+
 ---

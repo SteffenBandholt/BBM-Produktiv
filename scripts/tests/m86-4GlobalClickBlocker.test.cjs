@@ -106,6 +106,91 @@ async function runM864GlobalClickBlockerTests(run) {
   const navigation = await importEsmFromFile(path.join(ROOT, "src/renderer/app/coreShellNavigation.js"));
   const popupCommon = await importEsmFromFile(path.join(ROOT, "src/renderer/ui/popupCommon.js"));
 
+  await run("M86.4 PDF-Kontext: Protokoll-Screen übergibt den registrierten Dokumenttyp", async () => {
+    const previousWindow = globalThis.window;
+    const preparedContexts = [];
+    globalThis.window = {
+      uiEditor: {
+        async preparePdfContext(context) {
+          preparedContexts.push(context);
+          return { ok: true, documentTypeId: context.documentTypeId };
+        },
+      },
+    };
+    const screen = {
+      projectId: "project-protocol",
+      meetingId: "meeting-protocol",
+      store: createStore(),
+      async _loadTextLimits() {},
+      _bindTextLimitSettings() {},
+      async _loadDisplaySetting({ fallback }) { return fallback; },
+      async _reloadTops() {},
+      async _loadAudioLicenseState() {},
+      _syncScreenState() {},
+    };
+
+    try {
+      await TopsScreen.prototype.load.call(screen);
+      assert.deepEqual(preparedContexts, [{
+        documentTypeId: "protocol",
+        projectId: "project-protocol",
+        meetingId: "meeting-protocol",
+      }]);
+    } finally {
+      globalThis.window = previousWindow;
+    }
+  });
+
+  await run("M86.4 PDF-Kontext: gemeinsamer Launcher erhält den tatsächlichen Dokumenttyp", async () => {
+    const preparedContexts = [];
+    let openCount = 0;
+    const api = {
+      async preparePdfContext(context) {
+        preparedContexts.push(context);
+        return { ok: true, documentTypeId: context.documentTypeId };
+      },
+      async open() {
+        openCount += 1;
+        return { ok: true, registryRefreshStatus: "current" };
+      },
+    };
+
+    await navigation.openNativeUiEditor({
+      api,
+      documentTypeId: "protocol",
+      projectId: "project-protocol",
+      meetingId: "meeting-protocol",
+    });
+    const providerRequest = { moduleId: "sigeko", providerId: "sigeko-vorankuendigung" };
+    await navigation.openNativeUiEditor({
+      api,
+      documentTypeId: "sigeko-vorankuendigung",
+      projectId: "project-sigeko",
+      documentId: "document-sigeko",
+      providerRequest,
+    });
+    await navigation.openNativeUiEditor({
+      api,
+      projectId: "already-prepared-project",
+      meetingId: "already-prepared-meeting",
+    });
+
+    assert.equal(openCount, 3);
+    assert.deepEqual(preparedContexts, [
+      {
+        documentTypeId: "protocol",
+        projectId: "project-protocol",
+        meetingId: "meeting-protocol",
+      },
+      {
+        documentTypeId: "sigeko-vorankuendigung",
+        projectId: "project-sigeko",
+        documentId: "document-sigeko",
+        providerRequest,
+      },
+    ]);
+  });
+
   await run("M86.4 Protokoll: Loeschen synchronisiert die UI nach Ende des Schreibzustands", async () => {
     const deletedTop = {
       id: 101,

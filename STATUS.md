@@ -5124,4 +5124,27 @@ Diese Abweichungen wurden nicht durch Golden-Updates maskiert, nicht erneut
 identisch geprüft und entsprechend dem Paketumfang nicht repariert. Das
 Adresspaket ist technisch abgeschlossen; der Commit erfolgt im Abschlusslauf.
 
+## 2026-09-14 – Protokoll-PDF-Kontext beim Editorstart korrigiert
+
+Die beiden Protokoll-Einstiege bereiten den bereits registrierten PDF-Typ
+`protocol` jetzt mit Projekt- und Besprechungsidentität vor. Der gemeinsame
+Launcher verwendet ausschließlich eine explizit gelieferte `documentTypeId`,
+reicht die zugehörigen Dokumentidentitäten weiter und führt ohne Dokumenttyp
+keine überschreibende Kontextvorbereitung aus. Fremde Dokumenttypen werden
+nicht auf Protokoll umgedeutet. Registry, Profile, Editorziele, Parents,
+Operationen und PDF-Layout bleiben unverändert.
+
+Gezielte M86.4-, M86.2.2-, M86.3-, M80- und SiGeKo-Regressionen, der
+UI-Editor-Vertrags-Selbsttest, der Standardkopf-Adresstest, ESLint und
+`git diff --check` sind grün; ESLint meldet nur neun bereits vorhandene
+Warnungen in `TopsScreen.js`. Die native Bedienprüfung war im Reparaturlauf
+mangels Computerzugriff offen; dort erfolgten noch kein Commit und kein Push.
+
+Nutzerabnahme am 2026-09-15: Protokoll-PDF-Editor und Vorschau einschließlich
+Bauvorhabenadresse funktionieren. Damit ist der manuelle Nachweis durch den
+Nutzer erbracht; eine eigene native Bedienprüfung wird hier nicht behauptet.
+Commit, Integration in `main` und Push sind ausdrücklich beauftragt. Nächster
+Schritt ist die gezielte Integrationsprüfung; M85- und Layout-Bereinigung bleiben
+ausgeschlossen.
+
 ---
