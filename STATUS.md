@@ -1,3 +1,42 @@
+## 2026-09-14 – Projektfirmen: Firmenstamm-Zuordnung repariert
+
+Branch `repair/project-firms-directory`, Basis `main` / `3dda17d4`. Der
+Zuordnungsdialog wertet vorrangig den kanonischen Firmenvertrag
+`uses.projectParticipant` aus und unterstützt die vorhandenen Altformate nur als
+Fallback. Reine Rechnungskunden bleiben ausgeschlossen; bereits zugeordnete
+Projektteilnehmer werden nicht erneut angeboten. Die Roh-Liste des Firmenstamms
+bleibt erhalten, damit die drei Leerzustände „Firmenstamm leer“, „keine Firma
+freigegeben“ und „alle geeigneten Firmen zugeordnet“ korrekt unterschieden
+werden. Ladefehler bleiben Fehlermeldungen.
+
+Die UI-Entwurfsentscheidung steht in
+`docs/PROJECT_FIRMS_DIRECTORY_ASSIGNMENT_ENTWURFSENTSCHEIDUNG.md`. Der Scope
+`bbm.project-firms` bleibt `blocked`/`notInventoried`; Editorziele und
+Fachaktionen wurden nicht verändert. Nach der Nutzerabnahme wurde die fehlerhafte
+Sechs-Blöcke-/Fünf-Grid-Zeilen-Hülle lokal durch den vorhandenen
+BBM-Popupstandard mit festem Kopf und Footer ersetzt. X, `Abbrechen` und `Escape`
+schließen über denselben bereinigenden Fokus-Rückgabepfad. Nur die Firmenliste
+scrollt.
+
+Gezielte Filter-, Dialog-, Zuordnungs-, Reload-, Leerzustands-,
+Firmenvertrags-, Projektfirmen- und Vertragschecks sind grün. Ein echter
+Electron-/Chromium-Lauf mit produktiver View und tatsächlichen App-Styles prüft
+vier Firmen ohne Leerraum sowie 40 Firmen bei 760 × 360 mit sichtbarem Kopf und
+Footer; X, Abbrechen, natives Escape, Suche, Zuordnung und erneutes Öffnen sind
+grün. Die vollständige vorhandene Layout-Suite enthält weiterhin zwei auf
+unverändertem `main` reproduzierte Altfehler. Die vollständige native
+Windows-BBM-Bedienabnahme war im Reparaturlauf mangels Computer-Use-Oberfläche
+offen. Dort erfolgten noch kein Commit, Merge oder Push.
+
+Nutzerabnahme am 2026-09-15: Firmenauswahl, Zuordnungsdialog und Schließen
+funktionieren. Damit ist der manuelle Nachweis durch den Nutzer erbracht; eine
+eigene native Bedienprüfung wird hier nicht behauptet. Commit, Integration in
+`main` und Push sind ausdrücklich beauftragt. Nächster Schritt ist die gezielte
+Integrationsprüfung; die zwei bekannten Layout-Altfehler bleiben außerhalb des
+Pakets.
+
+---
+
 ## 2026-09-14 – Rechnung RE-S1.1 / PR #348: technischer Abschluss
 
 Branch `codex/setze-bbm-rechnung-re-s1.1-um`, Basis `9997910f`, Ausgangs-Head

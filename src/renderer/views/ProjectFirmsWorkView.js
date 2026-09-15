@@ -6,9 +6,22 @@ function text(value) {
   return String(value == null ? "" : value).trim();
 }
 
+function enabled(value) {
+  return value === true || Number(value) === 1;
+}
+
 function hasProjectUsage(firm) {
-  const usages = Array.isArray(firm?.usages) ? firm.usages : [];
-  return usages.map((value) => text(value)).includes(PROJECT_USAGE);
+  const normalizedUses = firm?.uses;
+  if (normalizedUses && typeof normalizedUses === "object") {
+    const normalizedValue = normalizedUses.projectParticipant
+      ?? normalizedUses.project_participant
+      ?? normalizedUses.use_project_participant;
+    if (normalizedValue !== undefined) return enabled(normalizedValue);
+  }
+  if (Array.isArray(firm?.usages)) {
+    return firm.usages.map((value) => text(value)).includes(PROJECT_USAGE);
+  }
+  return enabled(firm?.use_project_participant ?? firm?.project_participant);
 }
 
 function firmName(firm) {
@@ -61,7 +74,6 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     await super._loadData();
 
     this.projectLocalFirms = (this.projectCandidates || []).filter((item) => item?.kind === "project_firm");
-    this.allGlobalFirms = (this.allGlobalFirms || []).filter((firm) => hasProjectUsage(firm));
 
     const api = window.bbmDb || {};
     this.contactsByKey = new Map();
@@ -95,6 +107,10 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
       const current = pool.find((firm) => text(firm?.id) === text(this.selectedEntry?.firm?.id));
       this.selectedEntry = current ? { ...this.selectedEntry, firm: current } : null;
     }
+  }
+
+  _getAssignableGlobalFirms() {
+    return (this.allGlobalFirms || []).filter((firm) => hasProjectUsage(firm));
   }
 
   _createFirmRow(firm, kind) {
