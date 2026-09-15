@@ -1,3 +1,57 @@
+## 2026-09-15 – Abgenommene Firmen- und PDF-Reparaturen integriert
+
+Ausgangsbasis beider Worktrees und des frisch abgefragten `origin/main`:
+`3dda17d4c9dd953bb11e26033cc3f7d9d5b063f5`. Die Nutzerabnahmen vom 2026-09-15
+sind in beiden Paketdokumenten erfasst. Separate Reparaturcommits:
+
+- Firmenauswahl, Zuordnungsdialog und Schließen:
+  `88b7f7c9b979dfd1355518ac5bce1cbfd5b01799`.
+- Protokoll-PDF-Editor und Vorschau einschließlich Bauvorhabenadresse:
+  `14e7abe9d63ed94e1a109016ab3ba1b49f88d63c`.
+
+Beide Pakete wurden kontrolliert nach `main` übernommen. Die automatische
+Zusammenführung von `STATUS.md` und `docs/MODULARISIERUNGSPLAN.md` erhielt beide
+Ergebnisse vollständig; es gab keine Konflikte und keine neue Codekorrektur.
+
+### Integrationsprüfung (bestanden)
+
+- Firmenregressionen: Zuordnungsdialog 6/6, FirmDirectory 12/12, Firmen-IPC 1/1,
+  Aktivierungsablauf 1/1 und Core-Zuständigkeit 6/6, insgesamt 26/26.
+- PDF-/Editor-Kontext: M86.4 8/8, M86.2.2 4/4, M86.3 8/8, M80 17/17 und
+  SiGeKo-Fremdtyp-/Providergrenze 11/11, insgesamt 48/48.
+- `npm run test:v2:standard-header-address`: beide Prüfungen grün, einschließlich
+  `PDF-V2-SATZ-002`, `-015`, `-016` und `PDF-V2-REST-003`.
+- `node scripts/ui-editor-contract-check.cjs --self-test` und
+  `git diff --check` einschließlich des gestagten Integrationsdiffs: grün.
+- Die 31 vorhandenen unversionierten PDF-/PNG-/JSON-Prüfartefakte sind per
+  SHA-256 unverändert und wurden nicht committed. `UI-Editor-kit` bleibt sauber;
+  produktive Datenbanken wurden nicht geändert. Der Integrationslauf ergänzt
+  keine PDF-Satz- oder Layoutänderung. Die Datenbanktests verwenden ausschließlich
+  isolierte temporäre Testdatenbanken.
+
+### Auftragsfremde Abweichungen (getrennt, nicht repariert)
+
+Die beiden alten Layouttests in `scripts/tests/projectFirmsLayout.test.cjs`
+wurden separat erneut ausgeführt und bleiben rot: „laedt project_firms per IPC
+und wendet gespeicherte UI-Breiten an“ erwartet eine historische Tabellenstruktur
+(`false !== true`); „fehlender Layout-Payload faellt auf Standardlayout zurueck“
+erwartet `projectFirmsLayoutSource === 'default'` und erhält `undefined`. Diese
+bereits auf der unveränderten Basis reproduzierten Fehler gehören nicht zu den
+26 gezielten Firmenregressionen. Die vollständige Layout-Suite ist damit 6/8,
+nicht grün.
+
+Die dokumentierten M85-Baselineabweichungen bleiben ebenfalls offen:
+`r19-empty`-Golden-Hash, Restarbeiten-Spaltenzahl 9 statt 13, Registryzahl 37
+statt 35 und `PDF-V2-ARCH-003`. Die M85-Gesamtsuite wurde in diesem Git-Abschluss
+nicht erneut ausgeführt; keine Golden-Updates oder Layout-Bereinigung.
+
+Nächster Schritt dieses Abschlusslaufs: Merge-Commit sichern, `main` normal
+pushen, Remote-Gleichstand und sichere Branch-/Worktree-Bereinigung prüfen. Der
+finale Main-Commit und Pushnachweis stehen im Git-Abschlussbericht. Für beide
+Reparaturen ist kein weiterer Funktionsschritt offen.
+
+---
+
 ## 2026-09-14 – Projektfirmen: Firmenstamm-Zuordnung repariert
 
 Branch `repair/project-firms-directory`, Basis `main` / `3dda17d4`. Der
@@ -5162,5 +5216,28 @@ Vertragsabweichungen rot:
 Diese Abweichungen wurden nicht durch Golden-Updates maskiert, nicht erneut
 identisch geprüft und entsprechend dem Paketumfang nicht repariert. Das
 Adresspaket ist technisch abgeschlossen; der Commit erfolgt im Abschlusslauf.
+
+## 2026-09-14 – Protokoll-PDF-Kontext beim Editorstart korrigiert
+
+Die beiden Protokoll-Einstiege bereiten den bereits registrierten PDF-Typ
+`protocol` jetzt mit Projekt- und Besprechungsidentität vor. Der gemeinsame
+Launcher verwendet ausschließlich eine explizit gelieferte `documentTypeId`,
+reicht die zugehörigen Dokumentidentitäten weiter und führt ohne Dokumenttyp
+keine überschreibende Kontextvorbereitung aus. Fremde Dokumenttypen werden
+nicht auf Protokoll umgedeutet. Registry, Profile, Editorziele, Parents,
+Operationen und PDF-Layout bleiben unverändert.
+
+Gezielte M86.4-, M86.2.2-, M86.3-, M80- und SiGeKo-Regressionen, der
+UI-Editor-Vertrags-Selbsttest, der Standardkopf-Adresstest, ESLint und
+`git diff --check` sind grün; ESLint meldet nur neun bereits vorhandene
+Warnungen in `TopsScreen.js`. Die native Bedienprüfung war im Reparaturlauf
+mangels Computerzugriff offen; dort erfolgten noch kein Commit und kein Push.
+
+Nutzerabnahme am 2026-09-15: Protokoll-PDF-Editor und Vorschau einschließlich
+Bauvorhabenadresse funktionieren. Damit ist der manuelle Nachweis durch den
+Nutzer erbracht; eine eigene native Bedienprüfung wird hier nicht behauptet.
+Commit, Integration in `main` und Push sind ausdrücklich beauftragt. Nächster
+Schritt ist die gezielte Integrationsprüfung; M85- und Layout-Bereinigung bleiben
+ausgeschlossen.
 
 ---

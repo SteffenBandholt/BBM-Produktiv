@@ -58,6 +58,14 @@ function isRegisteredMainHeaderLauncher(scopeId) {
   return Boolean(launcher && MAIN_HEADER_LAUNCHER_COMPONENT_IDS.includes(launcher.componentId));
 }
 
+function resolvePdfDocumentContext(context = {}) {
+  const documentTypeId = String(context?.documentTypeId || "").trim();
+  if (!documentTypeId) return null;
+  return Object.fromEntries(Object.entries(context).filter(([key]) =>
+    !["api", "scopeId", "launcherButton"].includes(key)
+  ).map(([key, value]) => [key, key === "documentTypeId" ? documentTypeId : value]));
+}
+
 export function clearDevelopmentUiEditorOpenButtonRefs() {
   MAIN_HEADER_LAUNCHER_COMPONENT_IDS.forEach((componentId) => beginM83ComponentBinding(componentId));
 }
@@ -87,8 +95,9 @@ export async function openNativeUiEditor(context = {}) {
     alert("Der separate UI-Editor ist nicht installiert oder die sichere BBM-Brücke ist nicht verfügbar.");
     return { ok: false, errorCode: "electron_editor_not_installed" };
   }
-  if (typeof api.preparePdfContext === "function" && context?.projectId && context?.meetingId) {
-    await api.preparePdfContext({ projectId: context?.projectId || null, meetingId: context?.meetingId || null });
+  const pdfDocumentContext = resolvePdfDocumentContext(context);
+  if (typeof api.preparePdfContext === "function" && pdfDocumentContext) {
+    await api.preparePdfContext(pdfDocumentContext);
   }
   const activeScopeId = String(context?.scopeId || "").trim();
   if (activeScopeId && context?.launcherButton && isRegisteredMainHeaderLauncher(activeScopeId)) {

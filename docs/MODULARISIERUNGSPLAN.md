@@ -865,6 +865,24 @@ Registryzahl 37 statt 35 und Profilpfad-Guard `PDF-V2-ARCH-003`. Diese bekannten
 Baselineabweichungen werden in diesem Mini-Paket weder erneut identisch geprüft
 noch repariert oder durch Golden-Updates maskiert.
 
+### Protokoll-PDF-Kontext beim Editorstart (2026-09-15, abgenommen)
+
+- `TopsScreen.load` übergibt dem vorhandenen PDF-Resolver jetzt den registrierten
+  Dokumenttyp `protocol` zusammen mit `projectId` und `meetingId`.
+- Der gemeinsame Launcher bereitet nur explizite Dokumenttypen vor, erhält deren
+  Dokumentidentitäten und setzt andere Dokumentarten nicht pauschal auf
+  `protocol`; ein bereits vorbereiteter Kontext wird bei fehlender Kennung nicht
+  überschrieben.
+- Registrierung, Schutzprüfungen, Profile, Layout, PDF-Satz und die 37
+  vorhandenen Protokoll-PDF-Elemente bleiben unverändert.
+- Gezielte Laufzeit- und Vertragstests sind grün. Der Nutzer hat am 2026-09-15
+  bestätigt, dass Protokoll-PDF-Editor und Vorschau einschließlich
+  Bauvorhabenadresse funktionieren. Die zuvor offene manuelle Abnahme ist damit
+  erbracht; Codex behauptet keine eigene native Bedienprüfung.
+- Das Paket eröffnet keine neue Modularisierungsachse. Commit, Integration und
+  Push sind beauftragt; nächster Schritt ist die gezielte Integrationsprüfung.
+  M85-Bereinigung und weitere Editorarbeiten bleiben ausgeschlossen.
+
 ---
 
 ## 2026-09-15 – Mini-Paket Projektfirmen-Zuordnung (abgenommen)
@@ -890,5 +908,30 @@ noch repariert oder durch Golden-Updates maskiert.
 - Commit, Integration und Push sind beauftragt; nächster Schritt ist die gezielte
   Integrationsprüfung. Die zwei bekannten Layout-Altfehler bleiben getrennt;
   keine Layout-Bereinigung und keine weitere Modularisierung.
+
+---
+
+## 2026-09-15 – Git-Abschluss beider abgenommenen Reparaturen
+
+- Basis nach Fetch: `main` und `origin/main` sowie beide Reparaturworktrees auf
+  `3dda17d4c9dd953bb11e26033cc3f7d9d5b063f5`.
+- Firmenpaket separat gesichert:
+  `88b7f7c9b979dfd1355518ac5bce1cbfd5b01799`.
+- Protokoll-PDF-Kontext separat gesichert:
+  `14e7abe9d63ed94e1a109016ab3ba1b49f88d63c`.
+- Beide Nutzerabnahmen sind dokumentiert; die Integration in `main` erhielt
+  beide Dokumentationsstände konfliktfrei und erforderte keine Codeänderung.
+- Im integrierten Stand 26/26 gezielte Firmenregressionen und 48/48
+  PDF-/Editor-Kontextregressionen grün; beide Standardkopf-Adressprüfungen,
+  UI-Editor-Vertrags-Selbsttest und `git diff --check` grün.
+- Die zwei separat ausgeführten Firmen-Layout-Altfehler bleiben rot (vollständige
+  Layout-Suite 6/8). Bekannte M85-Abweichungen bleiben unverändert offen; die
+  M85-Gesamtsuite wurde nicht erneut ausgeführt. Einzelheiten stehen in
+  `STATUS.md`; keine M85-, Golden- oder Layout-Bereinigung.
+- 31 vorhandene unversionierte Prüfartefakte bleiben unverändert erhalten und
+  außerhalb der Commits. Kein Eingriff in UI-Editor-kit oder produktive DBs.
+- Nächster Schritt nur Git-Abschluss: Merge-Commit, normaler Main-Push,
+  Remote-Gleichstand und sichere Bereinigung. Der finale Commit und Pushnachweis
+  werden im Abschlussbericht genannt; keine neue Entwicklungsachse.
 
 ---
