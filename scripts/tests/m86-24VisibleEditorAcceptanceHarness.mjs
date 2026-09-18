@@ -17,20 +17,25 @@ let activeRechnungScreen = null;
 let layoutGuardChangeSequence = 0;
 const RECHNUNG_BUTTON_TARGET_IDS = Object.freeze([
   "rechnung.overview.new",
+  "rechnung.overview.catalog",
+  "rechnung.catalog.close",
+  "rechnung.catalog.create",
+  "rechnung.catalog.save",
   "rechnung.editor.headToggle",
   "rechnung.editor.customerPicker",
   "rechnung.editor.servicePeriodToggle",
-  "rechnung.editor.positionQuantityDecimals.decrease",
-  "rechnung.editor.positionQuantityDecimals.increase",
   "rechnung.editor.positionCreateTitle",
-  "rechnung.editor.positionCreate",
+  "rechnung.editor.positionCreateFree",
+  "rechnung.editor.positionCatalogOpen",
   "rechnung.editor.positionMove",
   "rechnung.editor.positionDelete",
-  "rechnung.editor.positionMoveRoot",
+  "rechnung.editor.positionLongToggle",
   "rechnung.editor.preview",
   "rechnung.editor.book",
   "rechnung.editor.delete",
   "rechnung.editor.close",
+  "rechnung.catalogPicker.cancel",
+  "rechnung.catalogPicker.accept",
   "rechnung.preview.close",
 ]);
 const RECHNUNG_REFERENCE_TARGET_ID = "rechnung.editor.headerCanvas";
@@ -201,6 +206,7 @@ async function mountRechnung() {
     positions: [{ id: "m86-24-position", type: "service", short_text: "Kurztext sichtbar", long_text: "Langtext sichtbar", quantity: "1", unit: "Stk.", unit_price_cents: 10000, vat_rate_percent: 19, is_nep: false }],
   });
   screen._selectPosition(screen.positions[0]);
+  screen._renderPositions();
   activeRechnungScreen = screen;
   await waitForStyle('link[data-bbm-rechnungen-design-styles="true"]');
   await waitForStyle('link[data-bbm-popup-form-standard-styles="true"]');
@@ -268,13 +274,16 @@ export function measureVisibleAcceptanceTargets(elementIds = RECHNUNG_BUTTON_TAR
 function activateRechnungTarget(elementId) {
   const screen = activeRechnungScreen;
   if (!screen) throw new Error("Rechnungs-Abnahmescreen fehlt.");
-  const overviewTarget = elementId === "rechnung.overview.new";
+  const overviewTarget = elementId.startsWith("rechnung.overview.");
+  const catalogTarget = elementId.startsWith("rechnung.catalog.");
+  const catalogPickerTarget = elementId.startsWith("rechnung.catalogPicker.");
   const previewTarget = elementId === "rechnung.preview.close";
   screen.overview.hidden = !overviewTarget;
-  screen.editor.hidden = overviewTarget;
+  screen.catalog.hidden = !catalogTarget;
+  screen.editor.hidden = overviewTarget || catalogTarget || previewTarget;
+  screen.catalogPicker.hidden = !catalogPickerTarget;
   screen.preview.hidden = !previewTarget;
   if (screen.servicePeriodContainer) screen.servicePeriodContainer.hidden = elementId !== "rechnung.editor.servicePeriodToggle";
-  if (screen.positionMoveRootButton) screen.positionMoveRootButton.hidden = elementId !== "rechnung.editor.positionMoveRoot";
   activeTargetId = elementId;
   return measureTarget(elementId);
 }
@@ -334,7 +343,7 @@ export async function runRechnungEffectiveGeometryDomGuard() {
   const buttons = [];
   for (const elementId of RECHNUNG_BUTTON_TARGET_IDS) buttons.push(await exerciseEffectiveGeometry(elementId));
   const reference = await exerciseEffectiveGeometry(RECHNUNG_REFERENCE_TARGET_ID);
-  activateRechnungTarget("rechnung.editor.positionCreate");
+  activateRechnungTarget("rechnung.editor.positionCreateFree");
   return { buttonTargetIds: [...RECHNUNG_BUTTON_TARGET_IDS], referenceTargetId: RECHNUNG_REFERENCE_TARGET_ID, buttons, reference };
 }
 

@@ -69,7 +69,7 @@ async function runM830ComponentContractTests(run) {
     assert.doesNotMatch(source, /data-bbm-restarbeiten-record-id|app\.db|item\.id|databaseId|recordId/); assert.ok(contractIds.every((id) => !/(?:^|\.)\d{4,}(?:\.|$)|[0-9a-f]{8}-[0-9a-f-]{27,}/i.test(id)));
   });
   await run("M83.0 BBM 05: Restarbeiten, Protokoll und Rechnung sind vollstaendig gebuendelt", () => {
-    assert.deepEqual(Object.fromEntries(contracts.map((component) => [component.componentId, component.slots.length])), { "bbm.projektverwaltung.plannedStart": 5, "bbm.restarbeiten.filterbar": 31, "bbm.restarbeiten.quicklane": 12, "bbm.restarbeiten.list": 32, "bbm.restarbeiten.editbox": 53, "bbm.restarbeiten.mainHeaderLauncher": 1, "bbm.protokoll.screen": 9, "bbm.protokoll.quicklane": 24, "bbm.protokoll.mainHeaderLauncher": 1, "bbm.protokoll.list.shell": 6, "bbm.protokoll.list.columns": 26, "bbm.protokoll.editbox": 38, "bbm.rechnung.screen": 107, "bbm.sigeko.screen": 11, "bbm.sigeko.mainHeaderLauncher": 1 });
+    assert.deepEqual(Object.fromEntries(contracts.map((component) => [component.componentId, component.slots.length])), { "bbm.projektverwaltung.plannedStart": 5, "bbm.restarbeiten.filterbar": 31, "bbm.restarbeiten.quicklane": 12, "bbm.restarbeiten.list": 32, "bbm.restarbeiten.editbox": 53, "bbm.restarbeiten.mainHeaderLauncher": 1, "bbm.protokoll.screen": 9, "bbm.protokoll.quicklane": 24, "bbm.protokoll.mainHeaderLauncher": 1, "bbm.protokoll.list.shell": 6, "bbm.protokoll.list.columns": 26, "bbm.protokoll.editbox": 38, "bbm.rechnung.screen": 140, "bbm.sigeko.screen": 11, "bbm.sigeko.mainHeaderLauncher": 1 });
     assert.deepEqual(contracts.flatMap((component) => component.slots.filter((slot) => !Number.isSafeInteger(slot.element.order)).map((slot) => slot.slotId)), []);
   });
 
@@ -97,15 +97,15 @@ async function runM830ComponentContractTests(run) {
     const invoiceRoot = invoiceScreen.render();
     body.appendChild(invoiceRoot);
     await Promise.resolve();
-    await run("M83.0 Rechnung RE-S1.1: direkte Katalogansicht und 107 aktuelle Einzel-Refs sind vollständig gebunden", () => {
+    await run("M83.0 Rechnung RE-S1.2a: Katalogauswahl und 140 aktuelle Einzel-Refs sind vollständig gebunden", () => {
       const component = contracts.find((entry) => entry.componentId === "bbm.rechnung.screen");
       const scope = scopes.find((entry) => entry.scopeId === "rechnung.screen");
       const expectedIds = scope.elements.map((entry) => entry.id);
       const rendered = collectEditorElements(invoiceRoot);
       const renderedIds = rendered.map((element) => element.getAttribute("data-ui-inspector-id"));
-      assert.equal(expectedIds.length, 107);
-      assert.equal(component.slots.length, 107);
-      assert.equal(new Set(renderedIds).size, 107);
+      assert.equal(expectedIds.length, 140);
+      assert.equal(component.slots.length, 140);
+      assert.equal(new Set(renderedIds).size, 140);
       assert.deepEqual([...renderedIds].sort(), [...expectedIds].sort());
       assert.equal(renderedIds.some((id) => id.startsWith("rechnung.masterData")), false);
       assert.equal(renderedIds.includes("rechnung.overview.catalog"), true);
@@ -113,15 +113,15 @@ async function runM830ComponentContractTests(run) {
       assert.equal(renderedIds.includes("rechnung.editor.customerPicker"), true);
       assert.equal(refs.validateM83ComponentReferences([component.componentId]).ok, true);
     });
-    await run("M83.0 Rechnung 01: echter Rechnungsscreen mountet alle 107 Einzel-Refs mit vollstaendigem DOM-Vertrag", () => {
+    await run("M83.0 Rechnung 01: echter Rechnungsscreen mountet alle 140 Einzel-Refs mit vollstaendigem DOM-Vertrag", () => {
       const component = contracts.find((entry) => entry.componentId === "bbm.rechnung.screen");
       const scope = scopes.find((entry) => entry.scopeId === "rechnung.screen");
       const expectedIds = scope.elements.map((entry) => entry.id);
       const rendered = collectEditorElements(invoiceRoot);
       const renderedIds = rendered.map((element) => element.getAttribute("data-ui-inspector-id"));
-      assert.equal(expectedIds.length, 107);
-      assert.equal(component.slots.length, 107);
-      assert.equal(new Set(renderedIds).size, 107);
+      assert.equal(expectedIds.length, 140);
+      assert.equal(component.slots.length, 140);
+      assert.equal(new Set(renderedIds).size, 140);
       assert.deepEqual([...renderedIds].sort(), [...expectedIds].sort());
       assert.equal(refs.validateM83ComponentReferences([component.componentId]).ok, true);
       const byId = new Map(scope.elements.map((entry) => [entry.id, entry]));
@@ -138,70 +138,11 @@ async function runM830ComponentContractTests(run) {
         assert.equal(element.getAttribute("data-ui-editor-editable"), String(entry.editable), `${id}: editable`);
         assert.equal(element.getAttribute("data-ui-editor-ops"), entry.allowedOps.join(","), `${id}: ops`);
       }
-      const decrease = refs.getM80Ref("rechnung.editor.positionQuantityDecimals.decrease").element;
-      const increase = refs.getM80Ref("rechnung.editor.positionQuantityDecimals.increase").element;
-      assert.equal(decrease.classList.contains("invoice-button--secondary"), true);
-      assert.equal(increase.classList.contains("invoice-button--secondary"), true);
-      assert.equal(decrease.tagName, "BUTTON");
-      assert.equal(increase.tagName, "BUTTON");
-      assert.equal(decrease.getAttribute("aria-label"), "Nachkommastellen verringern");
-      assert.equal(decrease.getAttribute("title"), "Nachkommastellen verringern");
-      assert.equal(increase.getAttribute("aria-label"), "Nachkommastellen erhöhen");
-      assert.equal(increase.getAttribute("title"), "Nachkommastellen erhöhen");
-      assert.equal(decrease.children.length, 1);
-      assert.equal(increase.children.length, 1);
-      assert.equal(decrease.children[0].tagName, "IMG");
-      assert.equal(increase.children[0].tagName, "IMG");
-      assert.match(decrease.children[0].src, /decimal-decrease\.svg$/);
-      assert.match(increase.children[0].src, /decimal-increase\.svg$/);
-      assert.equal(decrease.children[0].style.display, "block");
-      assert.equal(increase.children[0].style.display, "block");
-      assert.equal(decrease.children[0].getAttribute("aria-hidden"), "true");
-      assert.equal(increase.children[0].getAttribute("aria-hidden"), "true");
-      assert.equal(typeof decrease.onclick, "function");
-      assert.equal(typeof increase.onclick, "function");
-      const position = { id: "decimal", position_number: "01", type: "service", is_title: false, parent_id: null, short_text: "Dezimalmenge", long_text: "", quantity: "1234.5678", unit: "m", unit_price_cents: 1082500, vat_rate_percent: 19, price_input_mode: "NET", is_nep: false };
-      invoiceScreen.current = { id: "decimal-test", status: "DRAFT" };
-      invoiceScreen.source.value = "FREE";
-      invoiceScreen.positions = [position];
-      invoiceScreen._selectPosition(position);
-      invoiceScreen._renderPositions();
-      const listQuantity = () => {
-        const row = invoiceScreen.positionsList.children.find((element) => element.classList.contains("rechnung-lv-position"));
-        const pricing = row.children.find((element) => element.classList.contains("rechnung-lv-position__pricing"));
-        return pricing.children[0].textContent;
-      };
-      const listPrice = (index) => {
-        const row = invoiceScreen.positionsList.children.find((element) => element.classList.contains("rechnung-lv-position"));
-        const pricing = row.children.find((element) => element.classList.contains("rechnung-lv-position__pricing"));
-        return pricing.children[index].textContent;
-      };
-      assert.equal(invoiceScreen.positionVatRate.textContent, "19 %");
-      assert.equal(invoiceScreen.positionVatRate.hidden, true);
-      assert.equal(invoiceScreen.positionVatRate.style.display, "none");
-      assert.equal(invoiceScreen.positionVatRateField.hidden, true);
-      assert.equal(invoiceScreen.positionVatRateField.style.display, "none");
-      assert.equal(refs.getM80Ref("rechnung.editor.positionVatRate.label").element.hidden, true);
-      assert.equal(refs.getM80Ref("rechnung.editor.positionVatRate.label").element.style.display, "none");
-      const decimalLabel = refs.getM80Ref("rechnung.editor.positionQuantityDecimals.label").element;
-      assert.equal(decimalLabel.hidden, true);
-      assert.equal(decimalLabel.style.display, "none");
-      assert.equal(refs.getM80Ref("rechnung.editor.positionEditor.title.label").element.textContent, "Position 01 bearbeiten");
-      assert.equal(invoiceScreen.positionQuantityDecimalsValue.textContent, "2");
-      assert.equal(invoiceScreen.positionQuantity.value, "1234,57");
-      assert.equal(listQuantity(), "1.234,57 m");
-      assert.equal(listPrice(1), "10.825,00 €");
-      assert.match(listPrice(2), /^\d{1,3}(?:\.\d{3})*,\d{2} €$/);
-      for (const [fieldValue, listValue] of [["1234,6", "1.234,6 m"], ["1235", "1.235 m"]]) { decrease.onclick(); assert.equal(invoiceScreen.positionQuantity.value, fieldValue); assert.equal(listQuantity(), listValue); }
-      assert.equal(decrease.disabled, true);
-      for (const [fieldValue, listValue] of [["1234,6", "1.234,6 m"], ["1234,57", "1.234,57 m"], ["1234,568", "1.234,568 m"], ["1234,5678", "1.234,5678 m"]]) { increase.onclick(); assert.equal(invoiceScreen.positionQuantity.value, fieldValue); assert.equal(listQuantity(), listValue); }
-      assert.equal(increase.disabled, true);
-      decrease.onclick(); decrease.onclick();
-      assert.equal(invoiceScreen.positionQuantityDecimalsValue.textContent, "2");
-      assert.equal(invoiceScreen.positionQuantity.value, "1234,57");
-      invoiceScreen._clearPositionEditor();
-      assert.equal(refs.getM80Ref("rechnung.editor.positionEditor.title.label").element.textContent, "Position bearbeiten");
-      assert.equal(invoiceScreen.positionQuantityDecimalsValue.textContent, "2");
+      for (const id of ["rechnung.editor.positionDetails", "rechnung.editor.positionCreateFree", "rechnung.editor.positionShort", "rechnung.editor.positionNep", "rechnung.catalogPicker", "rechnung.catalogPicker.search", "rechnung.catalogPicker.accept"]) {
+        assert.ok(refs.getM80Ref(id)?.element, `${id}: neuer RE-S1.2a-Ref`);
+      }
+      assert.equal(refs.getM80Ref("rechnung.editor.positionDetails").element.classList.contains("rechnung-position-details"), true);
+      assert.equal(refs.getM80Ref("rechnung.catalogPicker").element.getAttribute("role"), "dialog");
     });
 
     refs.resetM80PilotWorkingStatesForDiagnostic(); refs.beginM80PilotRender();

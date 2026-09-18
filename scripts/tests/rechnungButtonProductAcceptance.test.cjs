@@ -20,9 +20,9 @@ const ROOT = path.resolve(__dirname, "../..");
 // pixel from the requested 6 px.
 const EPSILON = 0.55;
 const TARGET_IDS = Object.freeze([
-  "rechnung.editor.positionQuantityDecimals.increase",
   "rechnung.editor.positionCreateTitle",
-  "rechnung.editor.positionCreate",
+  "rechnung.editor.positionCreateFree",
+  "rechnung.editor.positionCatalogOpen",
   "rechnung.editor.positionMove",
   "rechnung.editor.positionDelete",
   "rechnung.editor.preview",

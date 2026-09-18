@@ -82,7 +82,7 @@ async function runM82AppStarterPackageTests(run) {
     const invoiceScope = registryScopes.find((scope) => scope.scopeId === "rechnung.screen");
     const invoiceTarget = manifest.scopes.find((scope) => scope.scopeId === "rechnung.screen");
 
-    assert.equal(invoiceContract.slots.length, 107);
+    assert.equal(invoiceContract.slots.length, 140);
     assert.equal(invoiceScope.elements.length, invoiceContract.slots.length);
     assert.equal(invoiceTarget.elementCount, invoiceScope.elements.length);
     assert.deepEqual(compareManifestScopeCounts(manifest, registryScopes), []);
@@ -93,7 +93,7 @@ async function runM82AppStarterPackageTests(run) {
       code: "target_manifest_element_count_mismatch",
       scopeId: "rechnung.screen",
       manifestElementCount: 112,
-      registryElementCount: 107,
+      registryElementCount: 140,
     }]);
   });
 

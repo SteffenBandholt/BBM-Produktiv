@@ -1,5 +1,5 @@
 import { addCalendarDays, draftPreviewIdentifier, formatDocumentType } from "../../../../shared/rechnung/invoiceHeaderRules.mjs";
-import { calculateInvoiceTotalsCents, calculatePositionTotalCents, normalizeInvoicePositions, POSITION_TYPES, PRICE_INPUT_MODES } from "../../../../shared/rechnung/rechnungPositions.mjs";
+import { calculateInvoiceTotalsCents, calculatePositionInputPriceCents, calculatePositionTotalCents, normalizeInvoicePositions, POSITION_TYPES, PRICE_INPUT_MODES } from "../../../../shared/rechnung/rechnungPositions.mjs";
 import { m80EditorAttributes } from "../../../ui-editor/m80Registry.js";
 import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from "../../../ui-editor/m80Refs.js";
 import { ensureRechnungenDesignStyles } from "../styles.js";
@@ -77,10 +77,70 @@ function formatQuantity(value, decimalPlaces, useGrouping) {
 }
 export function formatQuantityForInput(value, decimalPlaces) { return formatQuantity(value, decimalPlaces, false); }
 export function formatQuantityForDisplay(value, decimalPlaces) { return formatQuantity(value, decimalPlaces, true); }
+export function parseInvoiceQuantityInput(value) {
+  const normalized = String(value ?? "").trim().replace(",", ".");
+  if (!/^\d+(?:\.\d{1,4})?$/.test(normalized)) throw new Error("Bitte eine gueltige Menge mit maximal vier Nachkommastellen eingeben.");
+  return String(Number(normalized));
+}
+export function parseInvoicePriceCents(value) {
+  const normalized = String(value ?? "").trim().replace(",", ".");
+  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) throw new Error("Bitte einen gueltigen Einzelpreis mit maximal zwei Nachkommastellen eingeben.");
+  const cents = Math.round(Number(normalized) * 100);
+  if (!Number.isSafeInteger(cents) || cents < 0) throw new Error("Bitte einen gueltigen Einzelpreis eingeben.");
+  return cents;
+}
+export function resolveInvoicePositionInsertion(positions = [], selectedPositionId = null) {
+  const list = Array.isArray(positions) ? positions : [];
+  const selectedIndex = list.findIndex((entry) => entry.id === selectedPositionId);
+  const selected = selectedIndex >= 0 ? list[selectedIndex] : null;
+  const rootTitles = list.filter((entry) => entry.is_title && !entry.parent_id);
+  const afterTitle = (title) => {
+    let index = list.findIndex((entry) => entry.id === title.id) + 1;
+    while (index < list.length && list[index].parent_id === title.id) index += 1;
+    return index;
+  };
+  if (selected) {
+    if (selected.is_title && !selected.parent_id) return Object.freeze({ index: afterTitle(selected), parentId: selected.id });
+    if (selected.parent_id) return Object.freeze({ index: selectedIndex + 1, parentId: selected.parent_id });
+    if (selected.type === POSITION_TYPES.SERVICE && rootTitles.length) return Object.freeze({ blocked: true, reason: "Leistungen ohne Titel koennen nicht mit Titeln gemischt werden." });
+    if (selected.type === POSITION_TYPES.SERVICE) return Object.freeze({ index: selectedIndex + 1, parentId: null });
+    return Object.freeze({ blocked: true, reason: "Weitere Unterebenen sind nicht freigegeben." });
+  }
+  if (rootTitles.length) {
+    const lastTitle = rootTitles[rootTitles.length - 1];
+    return Object.freeze({ index: afterTitle(lastTitle), parentId: lastTitle.id });
+  }
+  return Object.freeze({ index: list.length, parentId: null });
+}
+export function insertInvoicePositionCopies(positions, copies, selectedPositionId = null) {
+  const target = resolveInvoicePositionInsertion(positions, selectedPositionId);
+  if (target.blocked) return Object.freeze({ ok: false, error: target.reason, positions: [...positions] });
+  const inserted = copies.map((entry) => ({ ...entry, parent_id: target.parentId }));
+  const next = [...positions];
+  next.splice(target.index, 0, ...inserted);
+  return Object.freeze({ ok: true, positions: next, insertedIds: Object.freeze(inserted.map((entry) => entry.id)), parentId: target.parentId });
+}
+export function copyCatalogEntryToInvoicePosition(entry, id) {
+  return {
+    id,
+    type: POSITION_TYPES.SERVICE,
+    is_title: false,
+    parent_id: null,
+    short_text: text(entry?.shortText) || "(ohne Bezeichnung)",
+    long_text: text(entry?.longText),
+    quantity: "1",
+    unit: text(entry?.unit),
+    unit_price_cents: Number(entry?.unitPriceCents || 0),
+    is_nep: false,
+    vat_rate_percent: Number(entry?.vatRatePercent ?? 19),
+    price_input_mode: PRICE_INPUT_MODES.NET,
+    price_input_cents: null,
+  };
+}
 export { draftPreviewIdentifier };
 
 export default class RechnungScreen {
-  constructor({ router = null } = {}) { this.invoices = []; this.customers = []; this.projects = []; this.positions = []; this.selectedPositionId = null; this.positionCreateParentId = null; this.positionSequence = 0; this.isPositionMoveMode = false; this.quantityDecimalPlaces = DEFAULT_QUANTITY_DECIMAL_PLACES; this.current = null; this.root = null; this.router = router; this.draftSaveChain = Promise.resolve(true); }
+  constructor({ router = null } = {}) { this.invoices = []; this.customers = []; this.projects = []; this.positions = []; this.selectedPositionId = null; this.positionCreateParentId = null; this.positionSequence = 0; this.isPositionMoveMode = false; this.hiddenLongTextPositionIds = new Set(); this.catalogPickerSelection = new Set(); this.quantityDecimalPlaces = DEFAULT_QUANTITY_DECIMAL_PLACES; this.current = null; this.root = null; this.router = router; this.draftSaveChain = Promise.resolve(true); }
 
   render() {
     ensureRechnungenDesignStyles();
@@ -88,7 +148,7 @@ export default class RechnungScreen {
     const root = bind(node("section", "bbm-invoice-design bbm-popup-standard bbm-rechnung-live"), RECHNUNG_SCOPE_ID);
     root.dataset.invoiceLiveScreen = "step-2";
     const content = bind(node("div", "rechnung-live-content"), "rechnung.screen.content");
-    content.append(this._overview(), this._catalog(), this._editor(), this._preview());
+    content.append(this._overview(), this._catalog(), this._editor(), this._catalogPicker(), this._preview());
     root.append(content); this.root = root;
     completeM80PilotRender();
     this._setEditorSidebarState(false);
@@ -142,6 +202,84 @@ export default class RechnungScreen {
   _newCatalogEntry() { this.catalogSelect.value = ""; this._selectCatalogEntry(); this.catalogInputs.shortText.focus(); }
   async _saveCatalogEntry() { const price = Number(String(this.catalogInputs.unitPrice.value).replace(",", ".")); if (!Number.isFinite(price) || price < 0) return this._catalogError("Bitte einen gültigen Einzelpreis eingeben."); const entry = { shortText: this.catalogInputs.shortText.value, longText: this.catalogInputs.longText.value, unit: this.catalogInputs.unit.value, unitPriceCents: Math.round(price * 100) }; const id = this.catalogSelect.value; const result = id ? await api().rechnungCatalogUpdate?.(id, entry) : await api().rechnungCatalogCreate?.(entry); if (!result?.ok) return this._catalogError(result?.error); const list = await api().rechnungCatalogList?.(); this.catalogEntries = list?.ok ? list.list || [] : this.catalogEntries; this._renderCatalogOptions(result.entry.id); this.catalogMessage.textContent = "Katalogleistung gespeichert."; }
   _catalogError(message) { this.catalogMessage.textContent = message || "Aktion fehlgeschlagen."; this.catalogMessage.dataset.tone = "error"; }
+
+  _catalogPicker() {
+    const picker = bind(node("section", "rechnung-catalog-picker"), "rechnung.catalogPicker");
+    picker.hidden = true; picker.setAttribute("role", "dialog"); picker.setAttribute("aria-modal", "true");
+    const dialog = node("div", "rechnung-catalog-picker__dialog");
+    const header = bind(node("header", "rechnung-catalog-picker__header"), "rechnung.catalogPicker.header");
+    header.append(bind(node("h2", "invoice-page-title", "Aus Leistungskatalog"), "rechnung.catalogPicker.title"));
+    this.catalogPickerSearch = control("input", "rechnung.catalogPicker.search", "search");
+    this.catalogPickerSearch.placeholder = "Kurztext, Langtext oder Einheit";
+    this.catalogPickerSearch.addEventListener("input", () => this._renderCatalogPickerResults());
+    this.catalogPickerResults = bind(node("div", "rechnung-catalog-picker__results"), "rechnung.catalogPicker.results");
+    this.catalogPickerStatus = bind(node("div", "rechnung-catalog-picker__status", "0 Leistungen ausgewählt"), "rechnung.catalogPicker.selectionStatus");
+    this.catalogPickerStatus.setAttribute("role", "status");
+    const footer = bind(node("footer", "rechnung-catalog-picker__footer"), "rechnung.catalogPicker.footer");
+    this.catalogPickerCancel = button("Abbrechen", "rechnung.catalogPicker.cancel", () => this._closeCatalogPicker());
+    this.catalogPickerAccept = button("Auswahl übernehmen", "rechnung.catalogPicker.accept", () => this._acceptCatalogSelection(), "primary");
+    footer.append(this.catalogPickerCancel, this.catalogPickerAccept);
+    dialog.append(header, field("Leistungen suchen", this.catalogPickerSearch), this.catalogPickerResults, this.catalogPickerStatus, footer);
+    picker.append(dialog); this.catalogPicker = picker; return picker;
+  }
+
+  async _openCatalogPicker() {
+    if (!this._isFreeDraft()) return this._error("Katalogleistungen koennen nur in freie Entwuerfe uebernommen werden.");
+    const result = await api().rechnungCatalogList?.();
+    if (!result?.ok) return this._error(result?.error || "Leistungskatalog konnte nicht geladen werden.");
+    this.catalogEntries = result.list || [];
+    this.catalogPickerSelection.clear();
+    this.catalogPickerSearch.value = "";
+    this._renderCatalogPickerResults();
+    this.catalogPicker.hidden = false;
+    this.catalogPickerSearch.focus?.();
+  }
+
+  _closeCatalogPicker() {
+    if (!this.catalogPicker) return;
+    this.catalogPicker.hidden = true;
+    this.catalogPickerSelection.clear();
+    this._renderCatalogPickerStatus();
+  }
+
+  _renderCatalogPickerStatus() {
+    const count = this.catalogPickerSelection.size;
+    this.catalogPickerStatus.textContent = `${count} ${count === 1 ? "Leistung" : "Leistungen"} ausgewählt`;
+    this.catalogPickerAccept.disabled = count === 0;
+  }
+
+  _renderCatalogPickerResults() {
+    if (!this.catalogPickerResults) return;
+    const query = text(this.catalogPickerSearch?.value).toLocaleLowerCase("de-DE");
+    const entries = (this.catalogEntries || []).filter((entry) => !query || [entry.shortText, entry.longText, entry.unit].some((value) => String(value || "").toLocaleLowerCase("de-DE").includes(query)));
+    this.catalogPickerResults.replaceChildren();
+    if (!entries.length) this.catalogPickerResults.append(node("div", "invoice-empty", "Keine passende Katalogleistung gefunden."));
+    for (const entry of entries) {
+      const row = node("label", "rechnung-catalog-picker__row");
+      const checkbox = node("input"); checkbox.type = "checkbox"; checkbox.checked = this.catalogPickerSelection.has(entry.id);
+      checkbox.addEventListener("change", () => { if (checkbox.checked) this.catalogPickerSelection.add(entry.id); else this.catalogPickerSelection.delete(entry.id); this._renderCatalogPickerStatus(); });
+      const content = node("span", "rechnung-catalog-picker__row-content");
+      content.append(node("strong", "", entry.shortText), node("span", "", [entry.longText, entry.unit, formatEuroCents(entry.unitPriceCents)].filter(Boolean).join(" | ")));
+      row.append(checkbox, content); this.catalogPickerResults.append(row);
+    }
+    this._renderCatalogPickerStatus();
+  }
+
+  _acceptCatalogSelection() {
+    if (!this._isFreeDraft()) return this._error("Katalogleistungen koennen nur in freie Entwuerfe uebernommen werden.");
+    const selected = (this.catalogEntries || []).filter((entry) => this.catalogPickerSelection.has(entry.id));
+    if (!selected.length) return;
+    const copies = selected.map((entry) => copyCatalogEntryToInvoicePosition(entry, this._nextPositionId()));
+    const insertion = insertInvoicePositionCopies(this.positions, copies, this.selectedPositionId);
+    if (!insertion.ok) return this._error(insertion.error);
+    this.positions = insertion.positions;
+    this._normalizePositions();
+    this._selectPosition(this.positions.find((entry) => entry.id === insertion.insertedIds[insertion.insertedIds.length - 1]), { setCreateContext: false });
+    this._setPositionCreateParentId(insertion.parentId);
+    this._closeCatalogPicker();
+    this._renderPositions();
+    void this._queueDraftSave();
+  }
 
   _sheetEditor() {
     const editor = bind(node("section", "rechnung-live-editor"), "rechnung.editor"); editor.hidden = true;
@@ -214,14 +352,46 @@ export default class RechnungScreen {
     this.constructionProject = control("input", "rechnung.editor.constructionProject", "text"); this.constructionProject.maxLength = 200;
     this.project = control("select", "rechnung.editor.project");
     this.source = control("select", "rechnung.editor.source"); this.source.append(option("FREE", "Freie Rechnung"), option("FROM_ORDER", "Rechnung aus Auftrag")); this.source.value = "FREE";
-    context.append(field("Bauvorhaben / Leistungsbezug", this.reference, "invoice-field--wide"), field("Bauvorhaben", this.constructionProject), field("Projektbezug", this.project), field("Herkunft", this.source));
+    context.append(field("Bauvorhaben", this.constructionProject, "rechnung-sheet__construction-project"), field("Betreff", this.reference, "invoice-field--wide"), field("Projektbezug", this.project, "rechnung-sheet__project-reference"), field("Herkunft", this.source, "rechnung-sheet__source"));
     this.introText = control("textarea", "rechnung.editor.introText"); this.introText.maxLength = 4000; this.introText.placeholder = "Optionaler Einleitungstext";
     details.append(context, field("Freitext", this.introText, "invoice-field--wide rechnung-sheet__intro"));
     this.headContent.append(sheetHead, details);
 
     const positions = bind(node("section", "rechnung-live-positions rechnung-sheet__positions"), "rechnung.editor.positions");
+    const positionToolbar = bind(node("div", "rechnung-position-toolbar"), "rechnung.editor.positionToolbar");
+    this.positionCreateTitleButton = button("Titel anlegen", "rechnung.editor.positionCreateTitle", () => this._createTitle());
+    this.positionCreateButton = button("Freie Position", "rechnung.editor.positionCreateFree", () => this._createPosition());
+    this.positionCatalogButton = button("Aus Leistungskatalog", "rechnung.editor.positionCatalogOpen", () => void this._openCatalogPicker());
+    this.positionMoveButton = button("Position verschieben", "rechnung.editor.positionMove", () => this._togglePositionMove());
+    this.positionDeleteButton = button("Position löschen", "rechnung.editor.positionDelete", () => this._deletePosition());
+    positionToolbar.append(this.positionCreateTitleButton, this.positionCreateButton, this.positionCatalogButton, this.positionMoveButton, this.positionDeleteButton);
     this.positionsList = bind(node("div", "rechnung-live-positions__list rechnung-lv-list"), "rechnung.editor.positions.list");
-    positions.append(this.positionsList);
+    const positionDetails = bind(node("section", "rechnung-position-details"), "rechnung.editor.positionDetails");
+    this.positionDetailsTitle = bind(node("h3", "rechnung-position-details__title", "Positionsdetails"), "rechnung.editor.positionDetails.title");
+    this.positionLongToggleButton = button("Langtext ausblenden", "rechnung.editor.positionLongToggle", () => this._toggleSelectedLongText(), "quiet");
+    const detailsHeader = node("header", "rechnung-position-details__header"); detailsHeader.append(this.positionDetailsTitle, this.positionLongToggleButton);
+    this.positionShort = control("input", "rechnung.editor.positionShort", "text");
+    this.positionLong = control("textarea", "rechnung.editor.positionLong"); this.positionLong.rows = 4;
+    this.positionQuantity = control("input", "rechnung.editor.positionQuantity", "text"); this.positionQuantity.inputMode = "decimal";
+    this.positionUnit = control("input", "rechnung.editor.positionUnit", "text");
+    this.positionPrice = control("input", "rechnung.editor.positionPrice", "text"); this.positionPrice.inputMode = "decimal";
+    this.positionVatRate = control("input", "rechnung.editor.positionVatRate", "text"); this.positionVatRate.readOnly = true;
+    this.positionNep = control("input", "rechnung.editor.positionNep", "checkbox");
+    this.positionDetailFields = {
+      short: field("Kurztext", this.positionShort, "invoice-field--wide"),
+      long: field("Langtext", this.positionLong, "invoice-field--wide"),
+      quantity: field("Menge", this.positionQuantity),
+      unit: field("Einheit", this.positionUnit),
+      price: field("Einzelpreis (EUR)", this.positionPrice),
+      vat: field("Mehrwertsteuer", this.positionVatRate),
+      nep: field("NEP", this.positionNep, "rechnung-position-details__nep"),
+    };
+    const detailsGrid = node("div", "rechnung-position-details__grid"); detailsGrid.append(...Object.values(this.positionDetailFields));
+    positionDetails.append(detailsHeader, detailsGrid); this.positionDetails = positionDetails;
+    const updatePosition = () => this._updateSelectedPositionFromDetails();
+    [this.positionShort, this.positionLong, this.positionUnit].forEach((element) => { element.addEventListener("input", updatePosition); element.addEventListener("change", updatePosition); });
+    [this.positionQuantity, this.positionPrice, this.positionNep].forEach((element) => element.addEventListener("change", updatePosition));
+    positions.append(positionToolbar, this.positionsList, positionDetails);
 
     const payment = bind(node("section", "rechnung-sheet__payment"), "rechnung.editor.payment");
     this.paymentTerm = control("input", "rechnung.editor.paymentTermDays", "number"); this.paymentTerm.min = "0"; this.paymentTerm.max = "3650";
@@ -350,6 +520,7 @@ export default class RechnungScreen {
 
   _open(invoice) {
     this.current = invoice; this.overview.hidden = true; this.editor.hidden = false; this.message.textContent = "";
+    this._closeCatalogPicker(); this.hiddenLongTextPositionIds.clear();
     this._setEditorSidebarState(true);
     this.source.value = invoice.source_type || "FREE"; this.documentType.value = invoice.document_type || "INVOICE"; this.installmentNumber.value = invoice.installment_number || "";
     this.invoiceNumber.value = invoice.invoice_number || "wird bei Buchung vergeben"; this.invoiceDate.value = invoice.invoice_date || "";
@@ -380,11 +551,7 @@ export default class RechnungScreen {
   _getSelectedPosition() { return this.positions.find((entry) => entry.id === this.selectedPositionId) || null; }
   _isFreeDraft() { return this.current?.status === "DRAFT" && this.current?.order_binding_state !== "BOUND" && this.source?.value === "FREE"; }
   _resolvePositionCreateParent() {
-    const context = this.positions.find((entry) => entry.id === this.positionCreateParentId) || null;
-    if (!context) return { parentId: null };
-    if (context.is_title && !context.parent_id) return { parentId: context.id };
-    if (context.parent_id) return { blocked: true };
-    return { parentId: null };
+    return resolveInvoicePositionInsertion(this.positions, this.selectedPositionId);
   }
   _orderedPositions() {
     if (this.current?.order_binding_state === "BOUND") return [...this.positions];
@@ -398,17 +565,107 @@ export default class RechnungScreen {
   _positionDepth(entry) { let depth = 0; let current = entry; const seen = new Set(); while (current?.parent_id && !seen.has(current.parent_id)) { seen.add(current.parent_id); current = this.positions.find((item) => item.id === current.parent_id) || null; depth += 1; } return depth; }
   _clearPositionSelection() { this.selectedPositionId = null; this._setPositionCreateParentId(null); this.isPositionMoveMode = false; }
   _selectPosition(entry, { setCreateContext = true } = {}) { if (!entry) return; this.selectedPositionId = entry.id; if (setCreateContext) this._setPositionCreateParentId(entry.id); }
-  _createTitle() { if (!this._isFreeDraft()) return this._error("Titel sind nur in freien Entwuerfen verfuegbar."); this._createPositionEntry({ type: POSITION_TYPES.HEADING, is_title: true, parent_id: null }); }
-  _createPosition() { if (!this._isFreeDraft()) return this._error("Positionen sind nur in freien Entwuerfen verfuegbar."); const target = this._resolvePositionCreateParent(); if (target.blocked) return this._error("Weitere Unterebenen werden erst ab Meilenstein 3 freigegeben."); this._createPositionEntry({ type: POSITION_TYPES.SERVICE, is_title: false, parent_id: target.parentId }); }
-  _createPositionEntry({ type, is_title, parent_id }) { const id = this._nextPositionId(); this.positions.push({ id, type, is_title, parent_id, short_text: "(ohne Bezeichnung)", long_text: "", quantity: "1", unit: "", unit_price_cents: 0, is_nep: false, vat_rate_percent: is_title ? null : 19, price_input_mode: is_title ? null : PRICE_INPUT_MODES.NET, price_input_cents: null }); this._normalizePositions(); const created = this.positions.find((entry) => entry.id === id); this._setPositionCreateParentId(parent_id); this._selectPosition(created, { setCreateContext: false }); this._renderPositions(); void this._queueDraftSave(); }
-  _deletePosition() { if (this.current?.order_binding_state === "BOUND") return; const selected = this._getSelectedPosition(); if (!selected) return; if (this.positions.some((entry) => entry.parent_id === selected.id)) return this._error("Titel mit Unterpositionen koennen nicht geloescht werden."); this.positions = this.positions.filter((entry) => entry.id !== selected.id); this._clearPositionSelection(); this._renderPositions(); void this._queueDraftSave(); }
+  _createTitle() {
+    if (!this._isFreeDraft()) return this._error("Titel sind nur in freien Entwuerfen verfuegbar.");
+    if (this.positions.some((entry) => entry.type === POSITION_TYPES.SERVICE && !entry.parent_id)) return this._error("Ein Titel kann nicht angelegt werden, solange Leistungen ohne Titel vorhanden sind.");
+    this._createPositionEntry({ type: POSITION_TYPES.HEADING, is_title: true, parent_id: null });
+  }
+  _createPosition() {
+    if (!this._isFreeDraft()) return this._error("Positionen sind nur in freien Entwuerfen verfuegbar.");
+    this._createPositionEntry({ type: POSITION_TYPES.SERVICE, is_title: false, parent_id: null });
+  }
+  _createPositionEntry({ type, is_title }) {
+    const id = this._nextPositionId();
+    const entry = { id, type, is_title, parent_id: null, short_text: is_title ? "(neuer Titel)" : "(ohne Bezeichnung)", long_text: "", quantity: "1", unit: "", unit_price_cents: 0, is_nep: false, vat_rate_percent: is_title ? null : 19, price_input_mode: is_title ? null : PRICE_INPUT_MODES.NET, price_input_cents: null };
+    if (is_title) this.positions = [...this.positions, entry];
+    else {
+      const insertion = insertInvoicePositionCopies(this.positions, [entry], this.selectedPositionId);
+      if (!insertion.ok) return this._error(insertion.error);
+      this.positions = insertion.positions;
+      this._setPositionCreateParentId(insertion.parentId);
+    }
+    this._normalizePositions();
+    const created = this.positions.find((position) => position.id === id);
+    this._selectPosition(created, { setCreateContext: false });
+    this._renderPositions();
+    void this._queueDraftSave();
+  }
+  _deletePosition() { if (!this._isFreeDraft()) return; const selected = this._getSelectedPosition(); if (!selected) return; if (this.positions.some((entry) => entry.parent_id === selected.id)) return this._error("Titel mit Unterpositionen koennen nicht geloescht werden."); this.positions = this.positions.filter((entry) => entry.id !== selected.id); this._clearPositionSelection(); this._renderPositions(); void this._queueDraftSave(); }
   _togglePositionMove() { const selected = this._getSelectedPosition(); if (!this._isFreeDraft() || !selected || selected.is_title) return; this.isPositionMoveMode = !this.isPositionMoveMode; this._renderPositions(); }
   _isPositionDescendant(entryId, ancestorId) { let current = this.positions.find((entry) => entry.id === entryId) || null; const seen = new Set(); while (current?.parent_id && !seen.has(current.parent_id)) { if (current.parent_id === ancestorId) return true; seen.add(current.parent_id); current = this.positions.find((entry) => entry.id === current.parent_id) || null; } return false; }
   _isPositionMoveTarget(target, moving = this._getSelectedPosition()) { if (!moving || moving.id === target.id || moving.is_title || this._isPositionDescendant(target.id, moving.id)) return false; if (target.is_title && !target.parent_id) return true; return (target.parent_id || null) === (moving.parent_id || null); }
   _handlePositionRowClick(entry) { if (this.isPositionMoveMode) { if (this._isPositionMoveTarget(entry)) this._moveSelectedPositionTo(entry); return; } this._selectPosition(entry); this._renderPositions(); }
-  _moveSelectedPositionTo(target) { const moving = this._getSelectedPosition(); if (!this._isPositionMoveTarget(target, moving)) return; const next = this.positions.filter((entry) => entry.id !== moving.id); const moved = { ...moving, parent_id: target.is_title ? target.id : target.parent_id || null }; let index; if (target.is_title) { index = next.reduce((last, entry, currentIndex) => entry.parent_id === target.id ? currentIndex + 1 : last, next.findIndex((entry) => entry.id === target.id) + 1); } else index = next.findIndex((entry) => entry.id === target.id); next.splice(index < 0 ? next.length : index, 0, moved); this.positions = next; this._normalizePositions(); this.isPositionMoveMode = false; this._setPositionCreateParentId(moved.parent_id); this._selectPosition(this.positions.find((entry) => entry.id === moved.id), { setCreateContext: false }); this._renderPositions(); void this._queueDraftSave(); }
-  _moveSelectedPositionToRoot() { const moving = this._getSelectedPosition(); if (!moving || moving.is_title || !moving.parent_id || !this._isFreeDraft()) return; const next = this.positions.filter((entry) => entry.id !== moving.id); const moved = { ...moving, parent_id: null }; const firstTitleIndex = next.findIndex((entry) => entry.is_title && !entry.parent_id); next.splice(firstTitleIndex < 0 ? next.length : firstTitleIndex, 0, moved); this.positions = next; this._normalizePositions(); this.isPositionMoveMode = false; this._setPositionCreateParentId(null); this._selectPosition(this.positions.find((entry) => entry.id === moved.id), { setCreateContext: false }); this._renderPositions(); void this._queueDraftSave(); }
-  _renderPositions() { return this._renderLvPositions(); }
+  _moveSelectedPositionTo(target) { const moving = this._getSelectedPosition(); if (!this._isFreeDraft() || !this._isPositionMoveTarget(target, moving)) return; const next = this.positions.filter((entry) => entry.id !== moving.id); const moved = { ...moving, parent_id: target.is_title ? target.id : target.parent_id || null }; let index; if (target.is_title) { index = next.reduce((last, entry, currentIndex) => entry.parent_id === target.id ? currentIndex + 1 : last, next.findIndex((entry) => entry.id === target.id) + 1); } else index = next.findIndex((entry) => entry.id === target.id); next.splice(index < 0 ? next.length : index, 0, moved); this.positions = next; this._normalizePositions(); this.isPositionMoveMode = false; this._setPositionCreateParentId(moved.parent_id); this._selectPosition(this.positions.find((entry) => entry.id === moved.id), { setCreateContext: false }); this._renderPositions(); void this._queueDraftSave(); }
+  _moveSelectedPositionToRoot() { const moving = this._getSelectedPosition(); if (!moving || moving.is_title || !moving.parent_id || !this._isFreeDraft()) return; if (this.positions.some((entry) => entry.is_title && !entry.parent_id)) return this._error("Leistungen ohne Titel koennen nicht mit Titeln gemischt werden."); const next = this.positions.filter((entry) => entry.id !== moving.id); const moved = { ...moving, parent_id: null }; next.push(moved); this.positions = next; this._normalizePositions(); this.isPositionMoveMode = false; this._setPositionCreateParentId(null); this._selectPosition(this.positions.find((entry) => entry.id === moved.id), { setCreateContext: false }); this._renderPositions(); void this._queueDraftSave(); }
+  _toggleSelectedLongText() {
+    const selected = this._getSelectedPosition();
+    if (!selected) return;
+    if (this.hiddenLongTextPositionIds.has(selected.id)) this.hiddenLongTextPositionIds.delete(selected.id);
+    else this.hiddenLongTextPositionIds.add(selected.id);
+    this._renderPositions();
+  }
+
+  _updateSelectedPositionFromDetails() {
+    const selected = this._getSelectedPosition();
+    if (!selected || !this._isFreeDraft()) return;
+    try {
+      const shortText = text(this.positionShort.value);
+      if (!shortText) throw new Error("Bitte einen Kurztext eingeben.");
+      const updated = { ...selected, short_text: shortText, long_text: this.positionLong.value };
+      if (selected.type === POSITION_TYPES.SERVICE) {
+        updated.quantity = parseInvoiceQuantityInput(this.positionQuantity.value);
+        updated.unit = this.positionUnit.value;
+        const priceCents = parseInvoicePriceCents(this.positionPrice.value);
+        updated.is_nep = Boolean(this.positionNep.checked);
+        if (selected.price_input_mode === PRICE_INPUT_MODES.GROSS) updated.price_input_cents = priceCents;
+        else updated.unit_price_cents = priceCents;
+      }
+      const next = this.positions.map((entry) => entry.id === selected.id ? updated : entry);
+      this.positions = [...normalizeInvoicePositions(next, { idFactory: () => this._nextPositionId() })];
+      if (this.message) { this.message.textContent = ""; this.message.dataset.tone = ""; }
+      this._renderPositions();
+      void this._queueDraftSave();
+    } catch (error) {
+      this._error(error?.message || "Position konnte nicht geaendert werden.");
+    }
+  }
+
+  _syncPositionDetails() {
+    if (!this.positionDetails) return;
+    const selected = this._getSelectedPosition();
+    this.positionDetails.hidden = !selected;
+    if (!selected) return;
+    const isService = selected.type === POSITION_TYPES.SERVICE;
+    this.positionDetailsTitle.textContent = `${selected.is_title ? "Titel" : "Position"} ${selected.position_number || ""} bearbeiten`.trim();
+    this.positionShort.value = selected.short_text || "";
+    this.positionLong.value = selected.long_text || "";
+    this.positionQuantity.value = isService ? formatQuantityForInput(selected.quantity, this.quantityDecimalPlaces) : "";
+    this.positionUnit.value = isService ? selected.unit || "" : "";
+    this.positionPrice.value = isService ? (calculatePositionInputPriceCents(selected) / 100).toFixed(2).replace(".", ",") : "";
+    this.positionVatRate.value = isService ? `${selected.vat_rate_percent ?? 19} %` : "";
+    this.positionNep.checked = isService && Boolean(selected.is_nep);
+    for (const key of ["quantity", "unit", "price", "vat", "nep"]) this.positionDetailFields[key].hidden = !isService;
+    const editable = this._isFreeDraft();
+    [this.positionShort, this.positionLong, this.positionQuantity, this.positionUnit, this.positionPrice, this.positionNep].forEach((element) => { element.disabled = !editable; });
+    this.positionLongToggleButton.disabled = !selected.long_text;
+    this.positionLongToggleButton.textContent = this.hiddenLongTextPositionIds.has(selected.id) ? "Langtext einblenden" : "Langtext ausblenden";
+  }
+
+  _syncPositionControls() {
+    const selected = this._getSelectedPosition();
+    const editable = this._isFreeDraft();
+    if (this.positionCreateTitleButton) this.positionCreateTitleButton.disabled = !editable;
+    if (this.positionCreateButton) this.positionCreateButton.disabled = !editable;
+    if (this.positionCatalogButton) this.positionCatalogButton.disabled = !editable;
+    if (this.positionDeleteButton) this.positionDeleteButton.disabled = !editable || !selected;
+    if (this.positionMoveButton) {
+      this.positionMoveButton.disabled = !editable || !selected || selected.is_title;
+      this.positionMoveButton.textContent = this.isPositionMoveMode ? "Verschieben abbrechen" : "Position verschieben";
+      this.positionMoveButton.setAttribute("aria-pressed", String(this.isPositionMoveMode));
+    }
+  }
+
+  _renderPositions() { this._renderLvPositions(); this._syncPositionDetails(); this._syncPositionControls(); }
 
   _renderLvPositions() {
     this.positionsList.replaceChildren();
@@ -425,7 +682,7 @@ export default class RechnungScreen {
       const select = node("button", "rechnung-lv-position__select"); select.type = "button"; select.onclick = () => this._handlePositionRowClick(entry);
       const amount = calculatePositionTotalCents(entry);
       select.append(node("span", "rechnung-lv-position__number", entry.position_origin === "CONTRACT" ? entry.position_number : entry.type === POSITION_TYPES.NOTE ? "Hinweis" : entry.type === POSITION_TYPES.HEADING && !entry.is_title ? "Text" : entry.position_number || ""), node("strong", "rechnung-lv-position__short", entry.short_text)); row.append(select);
-      if (entry.long_text) row.append(node("p", "rechnung-lv-position__long", entry.long_text));
+      if (entry.long_text && !this.hiddenLongTextPositionIds.has(entry.id)) row.append(node("p", "rechnung-lv-position__long", entry.long_text));
       if (entry.type === POSITION_TYPES.SERVICE) {
         const quantity = entry.quantity === null || entry.quantity === undefined || entry.quantity === "" ? "" : formatQuantityForDisplay(entry.quantity, this.quantityDecimalPlaces);
         const pricing = node("div", "rechnung-lv-position__pricing");
@@ -488,6 +745,7 @@ export default class RechnungScreen {
           ? "PDF öffnen"
           : "PDF erneut erzeugen";
     }
+    this._syncPositionDetails(); this._syncPositionControls();
   }
 
   _queueDraftSave() { if (this.current?.status !== "DRAFT" || typeof api().rechnungUpdateDraft !== "function") return Promise.resolve(true); const id = this.current.id; const payload = this._payload(); this.draftSaveChain = this.draftSaveChain.catch(() => false).then(async () => { const result = await api().rechnungUpdateDraft(id, payload); if (!result?.ok) { this._error(result?.error); return false; } if (this.current?.id === id) this.current = result.data; await this._refreshList(); return true; }); return this.draftSaveChain; }
@@ -496,7 +754,7 @@ export default class RechnungScreen {
   async _showPreview() { if ((await this.draftSaveChain) === false) return; if (this.current?.status === "BOOKED") { let invoice = this.current; if (invoice.pdf_finalization_status !== "READY") { const finalized = await api().rechnungFinalizePdf?.(invoice.id); if (!finalized?.ok) return this._error(finalized?.error); invoice = finalized.data; this.current = invoice; this._open(invoice); await this._refreshList(); } const opened = await api().rechnungOpenPdf?.(invoice.id); if (!opened?.ok) return this._error(opened?.error); this.message.textContent = `Finale PDF der Rechnung ${invoice.invoice_number} wurde geöffnet.`; return; } const result = await api().rechnungPreviewDraft?.(this.current.id, this._payload()); if (!result?.ok) return this._error(result?.error); const invoice = result.data; const identifier = invoice.preview_identifier || draftPreviewIdentifier(invoice.id); const draftLines = [`Kennung: ${identifier}`, "Diese Kennung ist keine Rechnungsnummer."]; this.previewBody.textContent = ["PROBERECHNUNG · ENTWURF", ...draftLines, formatDocumentType(invoice), "Rechnungs-Nr.: wird erst bei Buchung vergeben", invoice.service_reference || "Ohne Leistungsbezug", `Rechnungsdatum: ${invoice.invoice_date}`, `Fällig am: ${invoice.due_date}`].join("\n"); const printPreview = globalThis.window?.bbmPrint?.printPdfAndPreviewInternal; if (typeof printPreview !== "function") return this._error("PDF-Vorschau ist nicht verfügbar."); const pdf = await printPreview({ mode: "invoice", documentTypeId: "invoice", invoiceId: invoice.id, invoicePreview: true, orientation: "portrait", targetDir: "temp", fileName: `Proberechnung-${identifier}.pdf`, overwrite: true, previewTitle: `Proberechnung ${identifier}` }); if (!pdf?.ok) return this._error(pdf?.error); this.preview.hidden = false; this.message.textContent = `Proberechnung ${identifier} wurde geöffnet.`; }
   async _refreshList() { const result = await api().rechnungList?.(); if (result?.ok) { this.invoices = result.list || []; this._renderList(); } }
   _setEditorSidebarState(editorOpen) { this.router?._setSidebarVisibility?.(!editorOpen); }
-  _close() { this.editor.hidden = true; this.preview.hidden = true; this.overview.hidden = false; this.current = null; this._setEditorSidebarState(false); }
+  _close() { this._closeCatalogPicker(); this.editor.hidden = true; this.preview.hidden = true; this.overview.hidden = false; this.current = null; this._clearPositionSelection(); this._setEditorSidebarState(false); }
   destroy() { this._setEditorSidebarState(false); }
   _error(message) { this.message.textContent = message || "Aktion fehlgeschlagen."; this.message.dataset.tone = "error"; }
   _overviewMessage(message) { this.list.replaceChildren(node("div", "rechnung-live-message", message || "Aktion fehlgeschlagen.")); }

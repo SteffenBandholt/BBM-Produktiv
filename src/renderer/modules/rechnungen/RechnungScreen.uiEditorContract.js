@@ -1,12 +1,12 @@
-import { FIELD_LAYOUT, GROUP_LAYOUT, TEXT_LAYOUT, ZONE_HEIGHT_LAYOUT, m83Component, m83DomainButton, m83Element, m83Slot } from "../../ui-editor/m83ComponentContract.js";
+import { DOMAIN_LOCKS, FIELD_LAYOUT, GROUP_LAYOUT, TEXT_LAYOUT, ZONE_HEIGHT_LAYOUT, m83Component, m83DomainButton, m83Element, m83Slot } from "../../ui-editor/m83ComponentContract.js";
 
 export const RECHNUNG_SCOPE_ID = "rechnung.screen";
 export const RECHNUNG_COMPONENT_ID = "bbm.rechnung.screen";
 const invoiceElement = (values) => m83Element({ ...values, unboundedGeometry: true });
 const area = (id, name, parentId, order, componentKind, options = {}) => invoiceElement({ id, name, type: "area", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind, ...options });
-const group = (id, name, parentId, order, componentKind) => invoiceElement({ id, name, type: "group", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind });
-const label = (id, name, parentId, order, role = "content", componentKind = "label") => invoiceElement({ id, name, type: "label", role, parentId, order, allowedOps: TEXT_LAYOUT, componentKind });
-const field = (id, name, parentId, order, fieldKind) => invoiceElement({ id, name, type: "field", role: "content", parentId, order, allowedOps: FIELD_LAYOUT, fieldKind });
+const group = (id, name, parentId, order, componentKind, options = {}) => invoiceElement({ id, name, type: "group", role: "layout", parentId, order, allowedOps: GROUP_LAYOUT, componentKind, ...options });
+const label = (id, name, parentId, order, role = "content", componentKind = "label", options = {}) => invoiceElement({ id, name, type: "label", role, parentId, order, allowedOps: TEXT_LAYOUT, componentKind, ...options });
+const field = (id, name, parentId, order, fieldKind, options = {}) => invoiceElement({ id, name, type: "field", role: "content", parentId, order, allowedOps: FIELD_LAYOUT, fieldKind, ...options });
 const buttonReflowIdsByParent = Object.freeze({
   "rechnung.overview.header": Object.freeze(["rechnung.overview.title", "rechnung.overview.subtitle", "rechnung.overview.catalog", "rechnung.overview.new"]),
   "rechnung.catalog.header": Object.freeze(["rechnung.catalog.title", "rechnung.catalog.close"]),
@@ -14,6 +14,9 @@ const buttonReflowIdsByParent = Object.freeze({
   "rechnung.editor.header": Object.freeze(["rechnung.editor.status", "rechnung.editor.headToggle", "rechnung.editor.preview", "rechnung.editor.book", "rechnung.editor.delete", "rechnung.editor.close"]),
   "rechnung.editor.parties": Object.freeze(["rechnung.editor.customerPicker", "rechnung.editor.customerAddress", "rechnung.editor.issuerBlock", "rechnung.editor.invoiceMetaBlock", "rechnung.editor.introText"]),
   "rechnung.editor.servicePeriod": Object.freeze(["rechnung.editor.servicePeriodToggle", "rechnung.editor.servicePeriodType", "rechnung.editor.serviceDate", "rechnung.editor.serviceMonth", "rechnung.editor.serviceStart", "rechnung.editor.serviceEnd"]),
+  "rechnung.editor.positionToolbar": Object.freeze(["rechnung.editor.positionCreateTitle", "rechnung.editor.positionCreateFree", "rechnung.editor.positionCatalogOpen", "rechnung.editor.positionMove", "rechnung.editor.positionDelete"]),
+  "rechnung.editor.positionDetails": Object.freeze(["rechnung.editor.positionDetails.title", "rechnung.editor.positionLongToggle"]),
+  "rechnung.catalogPicker.footer": Object.freeze(["rechnung.catalogPicker.cancel", "rechnung.catalogPicker.accept"]),
   "rechnung.preview": Object.freeze(["rechnung.preview.title", "rechnung.preview.body", "rechnung.preview.close"]),
 });
 const action = (id, name, parentId, order, actionKind) => {
@@ -90,10 +93,26 @@ const baseElements = Object.freeze([
   field("rechnung.editor.serviceMonth", "Leistungsmonat", "rechnung.editor.servicePeriod", 63, "month"),
   field("rechnung.editor.serviceStart", "Leistungszeitraum von", "rechnung.editor.servicePeriod", 64, "date"),
   field("rechnung.editor.serviceEnd", "Leistungszeitraum bis", "rechnung.editor.servicePeriod", 65, "date"),
-  field("rechnung.editor.reference", "Bauvorhaben / Leistungsbezug", "rechnung.editor.body", 70, "singleLineText"),
+  field("rechnung.editor.reference", "Betreff", "rechnung.editor.body", 70, "singleLineText"),
   field("rechnung.editor.constructionProject", "Bauvorhaben", "rechnung.editor.body", 71, "singleLineText"),
   field("rechnung.editor.introText", "Optionaler Freitext", "rechnung.editor.parties", 72, "multilineText"),
   group("rechnung.editor.positions", "Bau-LV", "rechnung.editor.body", 72, "constructionLv"),
+  group("rechnung.editor.positionToolbar", "Positionswerkzeuge", "rechnung.editor.positions", 73, "actionGroup", { lockedOps: DOMAIN_LOCKS }),
+  action("rechnung.editor.positionCreateTitle", "Titel anlegen", "rechnung.editor.positionToolbar", 731, "createPositionTitle"),
+  action("rechnung.editor.positionCreateFree", "Freie Position", "rechnung.editor.positionToolbar", 732, "createFreePosition"),
+  action("rechnung.editor.positionCatalogOpen", "Aus Leistungskatalog", "rechnung.editor.positionToolbar", 733, "openCatalogPicker"),
+  action("rechnung.editor.positionMove", "Position verschieben", "rechnung.editor.positionToolbar", 734, "movePosition"),
+  action("rechnung.editor.positionDelete", "Position löschen", "rechnung.editor.positionToolbar", 735, "deletePosition"),
+  group("rechnung.editor.positionDetails", "Positionsdetails", "rechnung.editor.positions", 75, "positionDetails", { lockedOps: DOMAIN_LOCKS }),
+  label("rechnung.editor.positionDetails.title", "Positionsdetails Überschrift", "rechnung.editor.positionDetails", 751, "content", "label", { lockedOps: DOMAIN_LOCKS }),
+  action("rechnung.editor.positionLongToggle", "Langtext ein- oder ausblenden", "rechnung.editor.positionDetails", 752, "toggleLongTextVisibility"),
+  field("rechnung.editor.positionShort", "Kurztext", "rechnung.editor.positionDetails", 760, "singleLineText", { lockedOps: DOMAIN_LOCKS }),
+  field("rechnung.editor.positionLong", "Langtext", "rechnung.editor.positionDetails", 761, "multilineText", { lockedOps: DOMAIN_LOCKS }),
+  field("rechnung.editor.positionQuantity", "Menge", "rechnung.editor.positionDetails", 762, "decimal", { lockedOps: DOMAIN_LOCKS }),
+  field("rechnung.editor.positionUnit", "Einheit", "rechnung.editor.positionDetails", 763, "singleLineText", { lockedOps: DOMAIN_LOCKS }),
+  field("rechnung.editor.positionPrice", "Einzelpreis", "rechnung.editor.positionDetails", 764, "currency", { lockedOps: DOMAIN_LOCKS }),
+  field("rechnung.editor.positionVatRate", "Mehrwertsteuer", "rechnung.editor.positionDetails", 765, "readOnlyText", { lockedOps: DOMAIN_LOCKS }),
+  field("rechnung.editor.positionNep", "NEP", "rechnung.editor.positionDetails", 766, "checkbox", { lockedOps: DOMAIN_LOCKS }),
   label("rechnung.editor.positions.total", "Nettosumme", "rechnung.editor.payment", 83),
   label("rechnung.editor.positions.total.label", "Summe Netto Bezeichnung", "rechnung.editor.payment", 83, "fieldLabel", "fieldLabel"),
   label("rechnung.editor.invoiceVat.label", "Mehrwertsteuer Bezeichnung", "rechnung.editor.payment", 84, "fieldLabel", "fieldLabel"),
@@ -113,6 +132,15 @@ const baseElements = Object.freeze([
   action("rechnung.editor.book", "Rechnung buchen", "rechnung.editor.header", 103, "bookDraft"),
   action("rechnung.editor.delete", "Entwurf verwerfen", "rechnung.editor.header", 104, "deleteDraft"),
   action("rechnung.editor.close", "Schließen", "rechnung.editor.header", 105, "close"),
+  area("rechnung.catalogPicker", "Leistungen aus Katalog auswählen", "rechnung.screen.content", 28, "modalDialog", { lockedOps: DOMAIN_LOCKS }),
+  group("rechnung.catalogPicker.header", "Kopf Katalogauswahl", "rechnung.catalogPicker", 281, "header", { lockedOps: DOMAIN_LOCKS }),
+  label("rechnung.catalogPicker.title", "Aus Leistungskatalog", "rechnung.catalogPicker.header", 282, "content", "label", { lockedOps: DOMAIN_LOCKS }),
+  field("rechnung.catalogPicker.search", "Leistungen suchen", "rechnung.catalogPicker", 283, "search", { lockedOps: DOMAIN_LOCKS }),
+  group("rechnung.catalogPicker.results", "Katalogleistungen", "rechnung.catalogPicker", 284, "selectionList", { role: "content", lockedOps: DOMAIN_LOCKS }),
+  invoiceElement({ id: "rechnung.catalogPicker.selectionStatus", name: "Auswahlstatus", type: "statusIndicator", role: "status", parentId: "rechnung.catalogPicker", order: 285, allowedOps: TEXT_LAYOUT, componentKind: "liveMessage", lockedOps: DOMAIN_LOCKS }),
+  group("rechnung.catalogPicker.footer", "Aktionen Katalogauswahl", "rechnung.catalogPicker", 286, "actionGroup", { lockedOps: DOMAIN_LOCKS }),
+  action("rechnung.catalogPicker.cancel", "Katalogauswahl abbrechen", "rechnung.catalogPicker.footer", 287, "cancelCatalogSelection"),
+  action("rechnung.catalogPicker.accept", "Ausgewählte Leistungen übernehmen", "rechnung.catalogPicker.footer", 288, "acceptCatalogSelection"),
   invoiceElement({ id: "rechnung.preview", name: "Proberechnung", type: "area", role: "layout", parentId: "rechnung.screen.content", order: 110, allowedOps: GROUP_LAYOUT, componentKind: "previewDialog" }),
   label("rechnung.preview.title", "Proberechnung / Entwurf", "rechnung.preview", 111),
   area("rechnung.preview.body", "Vorschau Belegkopf", "rechnung.preview", 112, "previewBody"),
@@ -128,7 +156,8 @@ const fieldLabelElements = Object.freeze(
       entry.parentId,
       entry.order,
       "fieldLabel",
-      "fieldLabel"
+      "fieldLabel",
+      { lockedOps: entry.lockedOps }
     ))
 );
 

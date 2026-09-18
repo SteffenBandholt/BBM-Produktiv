@@ -12,20 +12,25 @@ const RUNNER = path.join(__dirname, "m86-24VisibleEditorAcceptanceRunner.cjs");
 const EPSILON = 0.2;
 const EXPECTED_BUTTON_IDS = Object.freeze([
   "rechnung.overview.new",
+  "rechnung.overview.catalog",
+  "rechnung.catalog.close",
+  "rechnung.catalog.create",
+  "rechnung.catalog.save",
   "rechnung.editor.headToggle",
   "rechnung.editor.customerPicker",
   "rechnung.editor.servicePeriodToggle",
-  "rechnung.editor.positionQuantityDecimals.decrease",
-  "rechnung.editor.positionQuantityDecimals.increase",
   "rechnung.editor.positionCreateTitle",
-  "rechnung.editor.positionCreate",
+  "rechnung.editor.positionCreateFree",
+  "rechnung.editor.positionCatalogOpen",
   "rechnung.editor.positionMove",
   "rechnung.editor.positionDelete",
-  "rechnung.editor.positionMoveRoot",
+  "rechnung.editor.positionLongToggle",
   "rechnung.editor.preview",
   "rechnung.editor.book",
   "rechnung.editor.delete",
   "rechnung.editor.close",
+  "rechnung.catalogPicker.cancel",
+  "rechnung.catalogPicker.accept",
   "rechnung.preview.close",
 ]);
 
@@ -60,7 +65,7 @@ function runDomLayoutAudit(temporaryRoot) {
   const artifactRoot = process.env.BBM_RECHNUNG_ACCEPTANCE_ARTIFACT_ROOT;
   if (artifactRoot) {
     fs.mkdirSync(artifactRoot, { recursive: true });
-    fs.copyFileSync(resultFile, path.join(artifactRoot, "rechnung-button-all-16-dom-layout.json"));
+    fs.copyFileSync(resultFile, path.join(artifactRoot, "rechnung-button-all-21-dom-layout.json"));
   }
   return report.automation;
 }
@@ -97,7 +102,7 @@ function assertEffectiveGeometry(exercise, label) {
 }
 
 async function runRechnungButtonEffectiveGeometryTests(run) {
-  await run("Rechnungsbuttons: reale Chromium-BoundingBox folgt fuer alle 16 Ziele der angeforderten Breite und Hoehe", () => {
+  await run("Rechnungsbuttons: reale Chromium-BoundingBox folgt fuer alle 21 Ziele der angeforderten Breite und Hoehe", () => {
     const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-rechnung-button-dom-"));
     let completed = false;
     try {

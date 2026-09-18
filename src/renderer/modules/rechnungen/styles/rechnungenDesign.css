@@ -698,3 +698,44 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-catalog-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .rechnung-catalog-form > .invoice-button { justify-self: start; }
 @media (max-width: 900px) { .rechnung-catalog-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* RE-S1.2a: Positionsbedienung bleibt Bestandteil des laufenden Rechnungsblatts. */
+.rechnung-sheet__context > .invoice-field { display: grid; }
+.rechnung-sheet__context > .rechnung-sheet__project-reference,
+.rechnung-sheet__context > .rechnung-sheet__source { display: none; }
+.rechnung-position-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; padding: 4px 0 10px; border-bottom: 1px solid #dce3eb; }
+.rechnung-position-toolbar .invoice-button { padding: 5px 9px; font-size: 11px; }
+.rechnung-position-details { display: grid; gap: 10px; margin-top: 8px; padding: 14px; border: 1px solid #d8e0e9; border-radius: 8px; background: #f8fafc; }
+.rechnung-position-details[hidden] { display: none; }
+.rechnung-position-details__header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.rechnung-position-details__title { margin: 0; color: var(--invoice-color-text); font-size: 13px; }
+.rechnung-position-details__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.rechnung-position-details__grid > .invoice-field--wide { grid-column: 1 / -1; }
+.rechnung-position-details__grid textarea { resize: vertical; }
+.rechnung-position-details__nep { align-content: end; }
+.rechnung-position-details__nep .invoice-control { justify-self: start; }
+
+/* Der Katalogpicker ist der ausdruecklich freigegebene fachliche Auswahldialog. */
+.rechnung-catalog-picker { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 20px; background: rgba(20, 30, 43, .48); }
+.rechnung-catalog-picker[hidden] { display: none; }
+.rechnung-catalog-picker__dialog { display: grid; gap: 12px; width: min(720px, 100%); max-height: min(760px, calc(100vh - 40px)); padding: 18px; overflow: hidden; border: 1px solid #cbd5e1; border-radius: 12px; background: #fff; box-shadow: 0 22px 60px rgba(15, 23, 42, .26); }
+.rechnung-catalog-picker__header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.rechnung-catalog-picker__results { display: grid; align-content: start; gap: 6px; overflow: auto; border-block: 1px solid #e1e7ee; padding-block: 8px; }
+.rechnung-catalog-picker__row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 10px; padding: 9px; border-radius: 7px; cursor: pointer; }
+.rechnung-catalog-picker__row:hover { background: #f2f6fa; }
+.rechnung-catalog-picker__row-content { display: grid; gap: 3px; min-width: 0; }
+.rechnung-catalog-picker__row-content span { color: var(--invoice-color-muted); font-size: 11px; overflow-wrap: anywhere; }
+.rechnung-catalog-picker__status { color: var(--invoice-color-muted); font-size: 12px; }
+.rechnung-catalog-picker__footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+
+@media (max-width: 780px) {
+  .rechnung-position-details__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rechnung-catalog-picker { padding: 8px; }
+  .rechnung-catalog-picker__dialog { max-height: calc(100vh - 16px); padding: 12px; }
+}
+
+@media (max-width: 520px) {
+  .rechnung-position-details__grid { grid-template-columns: minmax(0, 1fr); }
+  .rechnung-position-details__grid > .invoice-field--wide { grid-column: auto; }
+  .rechnung-position-toolbar { align-items: stretch; }
+}

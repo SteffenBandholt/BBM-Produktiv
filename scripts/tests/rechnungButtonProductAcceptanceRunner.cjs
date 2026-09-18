@@ -7,10 +7,10 @@ const { spawn } = require("node:child_process");
 const ROOT = path.resolve(__dirname, "../..");
 const UI_AUTOMATION = path.join(__dirname, "m86-24UiAutomation.ps1");
 const TARGETS = Object.freeze([
-  Object.freeze({ id: "rechnung.editor.positionQuantityDecimals.increase", selectionPrefix: "Nachkommastellen erh" }),
-  Object.freeze({ id: "rechnung.editor.positionCreateTitle", selectionPrefix: "+Titel" }),
-  Object.freeze({ id: "rechnung.editor.positionCreate", selectionPrefix: "+Position" }),
-  Object.freeze({ id: "rechnung.editor.positionMove", selectionPrefix: "Schieben" }),
+  Object.freeze({ id: "rechnung.editor.positionCreateTitle", selectionPrefix: "Titel anlegen" }),
+  Object.freeze({ id: "rechnung.editor.positionCreateFree", selectionPrefix: "Freie Position" }),
+  Object.freeze({ id: "rechnung.editor.positionCatalogOpen", selectionPrefix: "Aus Leistungskatalog" }),
+  Object.freeze({ id: "rechnung.editor.positionMove", selectionPrefix: "Position verschieben" }),
   Object.freeze({ id: "rechnung.editor.positionDelete", selectionMatch: "schen" }),
   Object.freeze({ id: "rechnung.editor.preview", selectionPrefix: "Proberechnung" }),
   Object.freeze({ id: "rechnung.editor.headToggle", selectionPrefix: "Kopf" }),

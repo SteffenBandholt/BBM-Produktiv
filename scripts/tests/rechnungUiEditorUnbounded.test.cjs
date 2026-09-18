@@ -168,9 +168,9 @@ async function main() {
   const RechnungScreen = (await importEsmFromFile(path.join(ROOT, "src/renderer/modules/rechnungen/screens/RechnungScreen.js"))).default;
   const scope = registry.listM80RegistryScopes().find((entry) => entry.scopeId === SCOPE_ID);
   assert.ok(scope);
-  assert.equal(scope.elements.length, 87);
+  assert.equal(scope.elements.length, 140);
   const buttonEntries = scope.elements.filter((entry) => entry.type === "button");
-  assert.equal(buttonEntries.length, 9);
+  assert.equal(buttonEntries.length, 21);
 
   for (const entry of scope.elements) {
     REQUIRED_OPS.forEach((operation) => assert.ok(entry.allowedOps.includes(operation), `${entry.id}: ${operation}`));
@@ -301,7 +301,7 @@ async function main() {
     assert.equal(loaded.ok, true, JSON.stringify(loaded));
     assert.equal(loaded.found, true);
     const loadedScope = loaded.scopes.find((entry) => entry.scopeId === SCOPE_ID);
-    assert.equal(loadedScope.elements.length, 87);
+    assert.equal(loadedScope.elements.length, 140);
 
     refs.resetM80PilotWorkingStatesForDiagnostic();
     body.replaceChildren(new RechnungScreen().render());
@@ -342,7 +342,7 @@ async function main() {
     global.CustomEvent = previous.CustomEvent;
   }
 
-  console.log("TESTS OK: 87 Rechnungselemente, 9 Buttons ohne CSS-/Registry-/Inline-Grenzen, Host +/-2501, exakter Neustart-Restore");
+  console.log("TESTS OK: 140 Rechnungselemente, 21 Buttons ohne CSS-/Registry-/Inline-Grenzen, Host +/-2501, exakter Neustart-Restore");
 }
 
 async function runRechnungUiEditorUnboundedTests(run) {

@@ -15,11 +15,7 @@ const REMOVED_IDS = Object.freeze([
   "rechnung.editor.positionEditor.title.label",
   "rechnung.editor.positionType",
   "rechnung.editor.positionType.label",
-  "rechnung.editor.positionShort",
-  "rechnung.editor.positionShort.label",
   "rechnung.editor.positionShortRemaining",
-  "rechnung.editor.positionLong",
-  "rechnung.editor.positionLong.label",
   "rechnung.editor.positionLongRemaining",
   "rechnung.editor.positionQuantityBlock",
   "rechnung.editor.positionQuantityDecimals",
@@ -27,23 +23,10 @@ const REMOVED_IDS = Object.freeze([
   "rechnung.editor.positionQuantityDecimals.decrease",
   "rechnung.editor.positionQuantityDecimals.value",
   "rechnung.editor.positionQuantityDecimals.increase",
-  "rechnung.editor.positionQuantity",
-  "rechnung.editor.positionQuantity.label",
-  "rechnung.editor.positionUnit",
-  "rechnung.editor.positionUnit.label",
-  "rechnung.editor.positionPrice",
-  "rechnung.editor.positionPrice.label",
-  "rechnung.editor.positionVatRate",
-  "rechnung.editor.positionVatRate.label",
   "rechnung.editor.positionPriceGross",
   "rechnung.editor.positionPriceGross.label",
-  "rechnung.editor.positionNep",
-  "rechnung.editor.positionNep.label",
   "rechnung.editor.positionActions",
-  "rechnung.editor.positionCreateTitle",
   "rechnung.editor.positionCreate",
-  "rechnung.editor.positionMove",
-  "rechnung.editor.positionDelete",
   "rechnung.editor.positionMoveRoot",
   "rechnung.editor.editboxTotals",
   "rechnung.editor.editboxTotals.title",
@@ -69,25 +52,37 @@ async function runRechnungEditboxRemovalTests(run) {
     }
   });
 
-  await run("Rechnungsscope besitzt exakt 87 gueltige Ziele ohne alte Editbox-IDs", async () => {
+  await run("Rechnungsscope besitzt exakt 140 gueltige Ziele ohne alte Editbox-Struktur", async () => {
     const contract = await importEsmFromFile(path.join(ROOT, "src/renderer/modules/rechnungen/RechnungScreen.uiEditorContract.js"));
     const elements = contract.rechnungUiEditorContract.slots.map((slot) => slot.element);
     const byId = new Map(elements.map((entry) => [entry.id, entry]));
-    assert.equal(elements.length, 87);
-    assert.equal(new Set(elements.map((entry) => entry.id)).size, 87);
+    assert.equal(elements.length, 140);
+    assert.equal(new Set(elements.map((entry) => entry.id)).size, 140);
     assert.deepEqual(REMOVED_IDS.filter((id) => byId.has(id)), []);
     for (const entry of elements) {
       if (entry.parentId !== null) assert.ok(byId.has(entry.parentId), `${entry.id}: Parent fehlt (${entry.parentId})`);
     }
     assert.deepEqual(elements.filter((entry) => entry.type === "button").map((entry) => entry.id), [
       "rechnung.overview.new",
+      "rechnung.overview.catalog",
+      "rechnung.catalog.close",
+      "rechnung.catalog.create",
+      "rechnung.catalog.save",
       "rechnung.editor.headToggle",
       "rechnung.editor.customerPicker",
       "rechnung.editor.servicePeriodToggle",
+      "rechnung.editor.positionCreateTitle",
+      "rechnung.editor.positionCreateFree",
+      "rechnung.editor.positionCatalogOpen",
+      "rechnung.editor.positionMove",
+      "rechnung.editor.positionDelete",
+      "rechnung.editor.positionLongToggle",
       "rechnung.editor.preview",
       "rechnung.editor.book",
       "rechnung.editor.delete",
       "rechnung.editor.close",
+      "rechnung.catalogPicker.cancel",
+      "rechnung.catalogPicker.accept",
       "rechnung.preview.close",
     ]);
   });

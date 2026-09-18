@@ -1,3 +1,45 @@
+## 2026-09-18 – Rechnung RE-S1.2a: Positionsbedienung als begrenztes Teilpaket
+
+Im separaten Worktree `C:\01_Projekte\BBM-Rechnung-RE-S1-2a`, Branch
+`rechnung/re-s1-2a-positionen`, wurde auf `origin/main` / `0a91ca8c` die
+Positionsbedienung für freie Rechnungsentwürfe ergänzt. Das Paket nutzt die
+vorhandenen Rechnungs-, Kunden-, Katalog-, Positions-, Summen- und
+Autosave-Wege. Neu sind ausschließlich die sichtbare Werkzeugleiste,
+integrierte Positionsdetails und der freigegebene Katalogauswahldialog.
+DB-Schema, IPC/Preload, Nummernkreis, Buchung, PDF/Druck, Tabelleneditor,
+Editor-Core sowie Protokoll, Restarbeiten und SiGeKo bleiben unverändert.
+
+Die bestätigte UI-Entscheidung umfasst 107 vorhandene plus genau 33 neue Ziele:
+140 Ziele und 21 Buttons im Scope `rechnung.screen`, Registryversion 39. Die
+neuen Ziele sperren alle Fachoperationen; dynamische Positionen und
+Katalogtreffer erhalten keine Editor-IDs. Bau-LV und Katalogauswahl bleiben
+Bedienlisten ohne Tabellenlayout-Registrierung. Die alte RechnungsEditbox wird
+nicht wiederhergestellt.
+
+Gezielte Fach- und Vertragsprüfungen sowie der bereits bestandene isolierte echte
+Electron-/Chromium-Neustartablauf sind grün. Nach ausdrücklicher Scope-Erweiterung
+wurde die Rechnungs-Navigationssuite an Bauvorhaben, Betreff, integrierte
+Positionsdetails und aktuelle Positionsaktionen angepasst; alle 20 Einzeltests
+sind grün. Das rechnungsspezifische M86.24-Harness verwendet jetzt die 21
+tatsächlich registrierten Button-IDs und weist deren wirksame Geometrie im realen
+Chromium-DOM nach. Ein isolierter manueller Startmodus bereitet Testkunden und
+Katalogleistungen vor und sperrt Buchung sowie PDF-Ausgabe.
+
+Der einmalige Volltest bleibt wegen breiter bekannter Baselinefehler rot und
+wurde nicht wiederholt. Diese fremden Baselines sind nicht Teil des Pakets.
+
+RE-S1.2a wird vor der fachlichen Nutzerabnahme pausiert. Im letzten manuellen
+Test waren noch sichtbare Darstellungsfehler vorhanden. Der gesicherte Stand
+enthält keine danach belegte Reparatur und keine erneute manuelle Freigabe; die
+Nutzerabnahme ist daher ausdrücklich offen. Bei Wiederaufnahme sind zuerst die
+sichtbaren Fehler im isolierten Handtest zu reproduzieren und festzuhalten.
+Danach soll die Gestaltung an von Codex selbst entworfenen Test-UIs ausgerichtet
+werden: kompakte Felder, Blau/Grau/Weiß und klare Gliederung. Dieser
+Sicherungslauf enthält keine Gestaltung und keine Reparatur. Issue #343 bleibt
+über dieses Teilpaket hinaus offen; kein Merge in `main`.
+
+---
+
 ## 2026-09-14 – Rechnung RE-S1.1 / PR #348: technischer Abschluss
 
 Der fehlende Bestandsschutz-Nachweis läuft nun reproduzierbar mit einer frisch

@@ -1,3 +1,70 @@
+## 2026-09-18 – Rechnung RE-S1.2a: Entwicklungspause vor Nutzerabnahme
+
+Auf Basis `0a91ca8c10d94fa8055b7ad6f2eef9161bdd7cdc` wurde im separaten
+Worktree `C:\01_Projekte\BBM-Rechnung-RE-S1-2a` auf Branch
+`rechnung/re-s1-2a-positionen` die Bedienung freier Rechnungspositionen
+umgesetzt. Der normale Rechnungsfluss enthält jetzt Bauvorhaben und Betreff,
+eine Positionswerkzeugleiste, integrierte Positionsdetails, freie Titel und
+Leistungen sowie eine durchsuchbare Mehrfachauswahl des vorhandenen
+Leistungskatalogs. Katalogleistungen werden als unabhängige Positionskopien
+übernommen. Das serielle vorhandene Autosave bleibt der einzige Speicherweg.
+NEP nimmt eine Position ausschließlich im eingeschalteten Zustand aus Netto,
+Umsatzsteuer und Brutto; mehrfaches Umschalten erhält Menge und Einzelpreis.
+
+Der Rechnungsscope umfasst 140 Ziele und 21 Buttons. Registryversion 39,
+Registryfingerprint
+`sha256:c03e8afac02cd5df67319e817a9a01c666f1e7718b7786c521959984ef8e461c`
+und Scope-Fingerprint
+`sha256:c7e6f13e72e598cca9187275042681e7f40cb66383a3ed951b0fae04115161ea`
+sind aus der echten Registry berechnet. Die alte Editbox-/Workbench-/Overlay-
+und Sonderpfadstruktur bleibt entfernt; die ausdrücklich freigegebenen neuen
+Positions-IDs sind nicht mehr pauschal als Altbestand verboten.
+
+Fachtests, Altstruktur-Guard, unbegrenzter UI-Editor-Vertrag und
+`ui-editor-contract-check --self-test` sind grün. Ein automatisierter echter
+Electron-/Chromium-Lauf mit isolierter frischer SQLite-Datenbank bestand den
+vollständigen Entwurfsablauf einschließlich Abbrechen und Mehrfachübernahme,
+Bearbeiten, Löschen, Klick-Ziel-Verschieben, vier NEP-Wechseln, Titelstruktur,
+breitem und schmalem Fenster sowie vollständigem Prozessneustart. Prozesse:
+12852 und 45768. Temporäre Wurzel
+`C:\Users\Steffen\AppData\Local\Temp\bbm-ui-editor-acceptance-5WZcbm` mit
+getrennten `userData`, `sessionData`, `files` und `pdf` wurde anschließend
+entfernt; keine PDF und keine Nutzdatei entstand.
+
+Der genau einmal ausgeführte Volltest blieb mit 1/10 grünen Gruppen rot; er wurde
+nicht erneut ausgeführt. Die anschließend ausdrücklich freigegebenen Altprüfungen
+wurden auf den aktuellen Bedienweg umgestellt. Die Rechnungs-Navigationssuite ist
+mit 20 Einzelprüfungen grün. Der reale Chromium-Geometrienachweis ist für alle
+21 tatsächlich registrierten Rechnungsbuttons grün. Der erste Geometrielauf
+zeigte lediglich, dass das Harness nach der Positionsauswahl nicht erneut
+gerendert hatte; nach dieser rechnungsspezifischen Harnesskorrektur bestand die
+einmalige Wiederholung. Die bekannten fremden Popup-, HomeView-, PDF-, Lizenz-,
+Restarbeiten-, SiGeKo- und Editor-Baselinefehler bleiben ausdrücklich bestehen;
+ein insgesamt grüner `npm test` wird nicht behauptet.
+
+Für die fachliche Nutzerabnahme steht im vorhandenen isolierten Runner ein
+manueller Startmodus mit zwei Testkunden und drei Katalogleistungen bereit.
+Buchung und PDF-Ausgabe sind dort gesperrt; Datenbank-, Datei- und PDF-Pfade
+liegen unter einer eigenen temporären Profilwurzel und werden nach dem Schließen
+entfernt.
+
+Die fachliche Nutzerabnahme ist ausdrücklich **nicht abgeschlossen**. Im zuletzt
+ausgeführten manuellen Test wurden sichtbare Darstellungsfehler festgestellt.
+Der vorhandene Arbeitsstand enthält danach keine nachgewiesene Reparaturrunde und
+keine erneute manuelle Freigabe; die grünen automatisierten Layout- und
+Geometrieprüfungen ersetzen diese Sichtprüfung nicht. Konkrete Fehlerbilder
+müssen bei Wiederaufnahme zunächst im gesicherten isolierten Handtest erneut
+aufgenommen und abgegrenzt werden.
+
+Als Gestaltungsrichtung für die spätere Wiederaufnahme sollen von Codex selbst
+entworfene Test-UIs als Vorlage dienen: kompakte Felder, Blau/Grau/Weiß und eine
+klare Gliederung. In diesem Sicherungslauf wurde weder eine neue Gestaltung noch
+eine Reparatur vorgenommen. Issue #343 bleibt über RE-S1.2a hinaus offen; der
+gesicherte Branch ist der Wiederaufnahmeort. Kein Merge und keine Kennzeichnung
+als fachlich fertig.
+
+---
+
 ## 2026-09-15 – Abgenommene Firmen- und PDF-Reparaturen integriert
 
 Ausgangsbasis beider Worktrees und des frisch abgefragten `origin/main`:

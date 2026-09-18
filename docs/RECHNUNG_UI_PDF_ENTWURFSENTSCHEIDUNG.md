@@ -1,5 +1,19 @@
 # Rechnungsscreen – UI-/PDF-Entwurfsentscheidung
 
+> Aktueller verbindlicher Stand ist **RE-S1.2a (18.09.2026)** im gleichnamigen
+> Abschnitt dieses Dokuments: 140 Ziele, 21 Buttons und integrierte
+> Positionsdetails. Alle vorhergehenden 87-/107-/131-Ziele- und
+> Editbox-Abschnitte sind historische Zwischenstände.
+>
+> **Pausenstand:** Die technische Umsetzung und die dokumentierten
+> automatisierten Prüfungen sind vorhanden, die fachliche Nutzerabnahme ist aber
+> nicht abgeschlossen. Im letzten manuellen Test waren sichtbare
+> Darstellungsfehler vorhanden; eine anschließende Reparatur und erneute visuelle
+> Freigabe sind in diesem Stand nicht nachgewiesen. Der Gestaltungswunsch für
+> eine spätere Fortsetzung lautet: von Codex selbst entworfene Test-UIs als
+> Vorlage, kompakte Felder, Blau/Grau/Weiß und klare Gliederung. Diese Notiz ist
+> keine neue UI-Entwurfsfreigabe und dieser Sicherungslauf ändert keine UI.
+
 ## RE-S1.1 – abschließende Korrektur für PR #348 (13.09.2026)
 
 ### A. Art der Ausgabe
@@ -934,3 +948,106 @@ Die Entscheidung wird abgesichert durch:
 Der Scope darf nur bei grünen Vertrags- und Runtime-Nachweisen als `complete`
 veröffentlicht werden. Der globale Registrystatus bleibt wegen bewusst
 blockierter, nicht inventarisierter BBM-Bereiche `incomplete`.
+
+# RE-S1.2a - Positionsbedienung und Kataloguebernahme (18.09.2026)
+
+Dieser Abschnitt ist die aktuelle UI-Entwurfsentscheidung. Vorhergehende
+RE-S1.1-, 131-Ziele- und Editbox-Abschnitte bleiben historische Dokumentation
+und ersetzen den hier festgelegten Stand nicht.
+
+## A. Art der Ausgabe
+
+- UI
+- keine PDF-Aenderung, kein Druckumbau, kein Tabellenlayout-Editor
+
+## B. Editorfaehigkeit
+
+- editorfaehig: ja, bestehender Scope `rechnung.screen`
+- ausschliesslich Layout und Darstellung
+- 107 bestehende Ziele bleiben erhalten, genau 33 Ziele kommen hinzu
+- Sollumfang: 140 eindeutige statische Ziele
+- `rechnung.editor.reference` traegt jetzt den Namen `Betreff`
+- keine datensatzabhaengigen Editor-IDs
+
+Operationen: `G = move, resizeWidth, resizeHeight, setVisibility` und
+`T = G + textResize`. Fuer jedes neue Ziel sind
+`executeTargetAction`, `modifyDomainData`, `createRecord` und `deleteRecord`
+gesperrt. Alle Ziele sind sichtbar und editorfaehig. ID, Typ, Name, Parent,
+Editierbarkeit und Operationen werden ueber die sechs `data-ui-*`-Attribute an
+das echte DOM-Ziel gebunden.
+
+## C. Neue editorfaehige Ziele
+
+| ID | Name | Typ / Rolle | Parent | Order | Klassifizierung | Ops |
+| --- | --- | --- | --- | ---: | --- | --- |
+| `rechnung.editor.positionToolbar` | Positionswerkzeuge | group / layout | `rechnung.editor.positions` | 73 | actionGroup | G |
+| `rechnung.editor.positionCreateTitle` | Titel anlegen | button / domainActionLayout | `rechnung.editor.positionToolbar` | 731 | createPositionTitle | T |
+| `rechnung.editor.positionCreateFree` | Freie Position | button / domainActionLayout | `rechnung.editor.positionToolbar` | 732 | createFreePosition | T |
+| `rechnung.editor.positionCatalogOpen` | Aus Leistungskatalog | button / domainActionLayout | `rechnung.editor.positionToolbar` | 733 | openCatalogPicker | T |
+| `rechnung.editor.positionMove` | Position verschieben | button / domainActionLayout | `rechnung.editor.positionToolbar` | 734 | movePosition | T |
+| `rechnung.editor.positionDelete` | Position löschen | button / domainActionLayout | `rechnung.editor.positionToolbar` | 735 | deletePosition | T |
+| `rechnung.editor.positionDetails` | Positionsdetails | group / layout | `rechnung.editor.positions` | 75 | positionDetails | G |
+| `rechnung.editor.positionDetails.title` | Positionsdetails Überschrift | label / content | `rechnung.editor.positionDetails` | 751 | label | T |
+| `rechnung.editor.positionLongToggle` | Langtext ein- oder ausblenden | button / domainActionLayout | `rechnung.editor.positionDetails` | 752 | toggleLongTextVisibility | T |
+| `rechnung.editor.positionShort` | Kurztext | field / content | `rechnung.editor.positionDetails` | 760 | singleLineText | T |
+| `rechnung.editor.positionShort.label` | Kurztext Bezeichnung | label / fieldLabel | `rechnung.editor.positionDetails` | 760 | fieldLabel | T |
+| `rechnung.editor.positionLong` | Langtext | field / content | `rechnung.editor.positionDetails` | 761 | multilineText | T |
+| `rechnung.editor.positionLong.label` | Langtext Bezeichnung | label / fieldLabel | `rechnung.editor.positionDetails` | 761 | fieldLabel | T |
+| `rechnung.editor.positionQuantity` | Menge | field / content | `rechnung.editor.positionDetails` | 762 | decimal | T |
+| `rechnung.editor.positionQuantity.label` | Menge Bezeichnung | label / fieldLabel | `rechnung.editor.positionDetails` | 762 | fieldLabel | T |
+| `rechnung.editor.positionUnit` | Einheit | field / content | `rechnung.editor.positionDetails` | 763 | singleLineText | T |
+| `rechnung.editor.positionUnit.label` | Einheit Bezeichnung | label / fieldLabel | `rechnung.editor.positionDetails` | 763 | fieldLabel | T |
+| `rechnung.editor.positionPrice` | Einzelpreis | field / content | `rechnung.editor.positionDetails` | 764 | currency | T |
+| `rechnung.editor.positionPrice.label` | Einzelpreis Bezeichnung | label / fieldLabel | `rechnung.editor.positionDetails` | 764 | fieldLabel | T |
+| `rechnung.editor.positionVatRate` | Mehrwertsteuer | field / content | `rechnung.editor.positionDetails` | 765 | readOnlyText | T |
+| `rechnung.editor.positionVatRate.label` | Mehrwertsteuer Bezeichnung | label / fieldLabel | `rechnung.editor.positionDetails` | 765 | fieldLabel | T |
+| `rechnung.editor.positionNep` | NEP | field / content | `rechnung.editor.positionDetails` | 766 | checkbox | T |
+| `rechnung.editor.positionNep.label` | NEP Bezeichnung | label / fieldLabel | `rechnung.editor.positionDetails` | 766 | fieldLabel | T |
+| `rechnung.catalogPicker` | Leistungen aus Katalog auswählen | area / layout | `rechnung.screen.content` | 28 | modalDialog | G |
+| `rechnung.catalogPicker.header` | Kopf Katalogauswahl | group / layout | `rechnung.catalogPicker` | 281 | header | G |
+| `rechnung.catalogPicker.title` | Aus Leistungskatalog | label / content | `rechnung.catalogPicker.header` | 282 | label | T |
+| `rechnung.catalogPicker.search` | Leistungen suchen | field / content | `rechnung.catalogPicker` | 283 | search | T |
+| `rechnung.catalogPicker.search.label` | Leistungen suchen Bezeichnung | label / fieldLabel | `rechnung.catalogPicker` | 283 | fieldLabel | T |
+| `rechnung.catalogPicker.results` | Katalogleistungen | group / content | `rechnung.catalogPicker` | 284 | selectionList | G |
+| `rechnung.catalogPicker.selectionStatus` | Auswahlstatus | statusIndicator / status | `rechnung.catalogPicker` | 285 | liveMessage | T |
+| `rechnung.catalogPicker.footer` | Aktionen Katalogauswahl | group / layout | `rechnung.catalogPicker` | 286 | actionGroup | G |
+| `rechnung.catalogPicker.cancel` | Katalogauswahl abbrechen | button / domainActionLayout | `rechnung.catalogPicker.footer` | 287 | cancelCatalogSelection | T |
+| `rechnung.catalogPicker.accept` | Ausgewählte Leistungen übernehmen | button / domainActionLayout | `rechnung.catalogPicker.footer` | 288 | acceptCatalogSelection | T |
+
+## D. Nicht editorfaehige Ziele
+
+Fachwerte, Such- und Auswahlzustaende, Autosave, Positionsanlage, -aenderung,
+-loeschung und -verschiebung, Kataloguebernahme, Kunden- und Belegdaten,
+IPC-/Datenbankaktionen, Buchung, Nummernvergabe, Vorschau, PDF, Druck und die
+fachliche Ausfuehrung aller Buttons bleiben gesperrt.
+
+## E. Struktur- und Tabellenregel
+
+`rechnung.screen` bleibt der einzige Root; jeder neue Parent ist selbst als
+Ziel registriert. Dynamische LV-Zeilen und Katalogtreffer sind Fachdaten und
+erhalten keine Editor-ID. Bau-LV und Katalogauswahl bleiben Bedienlisten: kein
+`tableKey`, keine Tabellenregistry und kein Editor-1-Zugang. Die alte
+Editbox-/Workbench-/Overlay-/Profilstruktur bleibt verboten.
+
+## F. Pruefung
+
+- `scripts/tests/rechnungReS12a.test.cjs`: Einfuegen, Kopien, NEP,
+  Normalisierung und 140-Ziele-Vertrag
+- `scripts/tests/rechnungEditboxRemoval.test.cjs`: verbotene Altstruktur und
+  erlaubte neue Positions-IDs
+- `scripts/tests/m83-0ComponentContracts.test.cjs`: echte Mounted-Refs und alle
+  sechs `data-ui-*`-Attribute
+- `scripts/ui-editor-contract-check.cjs --self-test`: Grundvertrag
+- `scripts/runRechnungReS12aAcceptance.cjs`: isolierter echter
+  Electron-/Chromium-Ablauf mit Prozessneustart
+- `scripts/tests/rechnungNavigation.test.cjs`: aktueller Navigations- und
+  Positionsbedienweg einschließlich Bauvorhaben, Betreff, integrierter Details
+  und wiederholtem NEP-Umschalten
+- `scripts/tests/rechnungButtonEffectiveGeometry.test.cjs` mit
+  `scripts/tests/m86-24VisibleEditorAcceptanceHarness.mjs`: reale
+  Chromium-Geometrie aller 21 registrierten Rechnungsbuttons
+- `scripts/runRechnungReS12aAcceptance.cjs --manual`: isolierter Handtest mit
+  Testkunden und Katalogleistungen; Buchung und PDF-Ausgabe sind gesperrt
+
+Der einmal ausgeführte vollständige Repository-Test bleibt durch bekannte
+fremde Baselinefehler rot und wurde für diesen Abschluss nicht wiederholt.
