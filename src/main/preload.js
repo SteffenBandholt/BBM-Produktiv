@@ -68,6 +68,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   meetingsCreate: (data) => ipcRenderer.invoke("meetings:create", data),
   meetingsClose: (meetingId) => ipcRenderer.invoke("meetings:close", meetingId),
   meetingsUpdateTitle: (data) => ipcRenderer.invoke("meetings:updateTitle", data),
+  meetingsUpdateNextMeeting: (data) => ipcRenderer.invoke("meetings:updateNextMeeting", data),
   meetingsListProjectTasks: (payload) => {
     if (payload && typeof payload === "object") {
       return ipcRenderer.invoke("meetings:listProjectTasks", payload);

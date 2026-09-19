@@ -37,6 +37,9 @@ function _extractNextMeeting(arg) {
   if (!src || typeof src !== "object") return null;
   return {
     enabled: src.enabled,
+    optionAEnabled: src.optionAEnabled,
+    optionBEnabled: src.optionBEnabled,
+    optionBText: src.optionBText,
     date: src.date,
     time: src.time,
     place: src.place,

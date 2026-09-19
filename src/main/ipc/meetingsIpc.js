@@ -37,6 +37,14 @@ function registerMeetingsIpc({ ipcMain = electronIpcMain } = {}) {
     }
   });
 
+  ipcMain.handle("meetings:updateNextMeeting", (_e, payload) => {
+    try {
+      return { ok: true, meeting: meetingsRepo.updateNextMeeting(payload || {}) };
+    } catch (err) {
+      return { ok: false, error: err?.stack || err?.message || String(err) };
+    }
+  });
+
   // akzeptiert:
   // - invoke("meetings:close", "<id>")
   // - invoke("meetings:close", { meetingId: "<id>" })

@@ -624,6 +624,56 @@ export default class PrintModal {
     }
   }
 
+  async _getNextMeetingValues({ meeting = null, meetingId = null } = {}) {
+    const api = window.bbmDb || {};
+    const id = meetingId || meeting?.id || this.selectedMeetingId || this.router?.currentMeetingId || null;
+    let current = meeting || this.meetings.find((item) => item.id === id) || null;
+    if (!current && id && typeof api.topsListByMeeting === "function") {
+      const result = await api.topsListByMeeting(id);
+      if (!result?.ok || !result.meeting) {
+        throw new Error(result?.error || "Besprechung konnte nicht geladen werden.");
+      }
+      current = result.meeting;
+    }
+    if (!current || !id || current.id !== id) {
+      throw new Error("Besprechungskontext für Folgetermin fehlt.");
+    }
+
+    let values = {
+      enabled: this._parseBool(current.next_meeting_enabled, false),
+      optionAEnabled: current.next_meeting_option_a_enabled == null
+        ? true
+        : this._parseBool(current.next_meeting_option_a_enabled, true),
+      optionBEnabled: this._parseBool(current.next_meeting_option_b_enabled, false),
+      optionBText: String(current.next_meeting_option_b_text || ""),
+      date: String(current.next_meeting_date || "").trim(),
+      time: String(current.next_meeting_time || "").trim(),
+      place: String(current.next_meeting_place || "").trim(),
+      extra: String(current.next_meeting_extra || "").trim(),
+    };
+
+    if (current.next_meeting_enabled == null && Number(current.is_closed) !== 1 &&
+        typeof api.appSettingsGetMany === "function") {
+      const result = await api.appSettingsGetMany([
+        "print.nextMeeting.enabled", "print.nextMeeting.date", "print.nextMeeting.time",
+        "print.nextMeeting.place", "print.nextMeeting.extra",
+        "print.nextMeeting.optionAEnabled", "print.nextMeeting.optionBEnabled", "print.nextMeeting.optionBText",
+      ]);
+      if (!result?.ok) throw new Error(result?.error || "Folgetermin-Vorgaben konnten nicht geladen werden.");
+      values = {
+        enabled: this._parseBool(result.data?.["print.nextMeeting.enabled"], false),
+        optionAEnabled: this._parseBool(result.data?.["print.nextMeeting.optionAEnabled"], true),
+        optionBEnabled: this._parseBool(result.data?.["print.nextMeeting.optionBEnabled"], false),
+        optionBText: String(result.data?.["print.nextMeeting.optionBText"] || ""),
+        date: String(result.data?.["print.nextMeeting.date"] || "").trim(),
+        time: String(result.data?.["print.nextMeeting.time"] || "").trim(),
+        place: String(result.data?.["print.nextMeeting.place"] || "").trim(),
+        extra: String(result.data?.["print.nextMeeting.extra"] || "").trim(),
+      };
+    }
+    return { meeting: current, values };
+  }
+
   async _loadNextMeetingSettings() {
     if (!this.nextMeetingEnabled) return;
     const api = window.bbmDb || {};
@@ -699,55 +749,29 @@ export default class PrintModal {
     this._setNextMeetingMsg("Gespeichert");
   }
 
-  async promptNextMeetingSettings({ defaultDateIso } = {}) {
+  async promptNextMeetingSettings({ defaultDateIso, meeting = null, meetingId = null } = {}) {
     const api = window.bbmDb || {};
-    const defaults = {
-      enabled: true,
-      date: "",
-      time: "",
-      place: "",
-      extra: "",
-    };
-
-    const hasSettingsApi =
-      typeof api.appSettingsGetMany === "function" && typeof api.appSettingsSetMany === "function";
-
-    let loaded = { ...defaults };
-    let hasSavedEnabled = false;
-    if (typeof api.appSettingsGetMany === "function") {
-      const res = await api.appSettingsGetMany([
-        "print.nextMeeting.enabled",
-        "print.nextMeeting.date",
-        "print.nextMeeting.time",
-        "print.nextMeeting.place",
-        "print.nextMeeting.extra",
-      ]);
-      if (res?.ok) {
-        const data = res.data || {};
-        const enabledRaw = data["print.nextMeeting.enabled"];
-        hasSavedEnabled = enabledRaw != null && String(enabledRaw).trim() !== "";
-        loaded = {
-          enabled: hasSavedEnabled ? this._parseBool(enabledRaw, false) : defaults.enabled,
-          date: String(data["print.nextMeeting.date"] || "").trim(),
-          time: String(data["print.nextMeeting.time"] || "").trim(),
-          place: String(data["print.nextMeeting.place"] || "").trim(),
-          extra: String(data["print.nextMeeting.extra"] || "").trim(),
-        };
-      }
+    let current;
+    let loaded;
+    try {
+      const context = await this._getNextMeetingValues({
+        meeting,
+        meetingId: meetingId || meeting?.id || this.router?.currentMeetingId,
+      });
+      current = context.meeting;
+      loaded = context.values;
+    } catch (error) {
+      alert(error?.message || "Folgetermin konnte nicht geladen werden.");
+      return { ok: false, cancelled: true };
     }
-    if (this._nextMeetingCache) {
-      loaded = {
-        enabled: this._parseBool(this._nextMeetingCache["print.nextMeeting.enabled"], loaded.enabled),
-        date: String(this._nextMeetingCache["print.nextMeeting.date"] || loaded.date || "").trim(),
-        time: String(this._nextMeetingCache["print.nextMeeting.time"] || loaded.time || "").trim(),
-        place: String(this._nextMeetingCache["print.nextMeeting.place"] || loaded.place || "").trim(),
-        extra: String(this._nextMeetingCache["print.nextMeeting.extra"] || loaded.extra || "").trim(),
-      };
+    if (Number(current.is_closed) === 1 || typeof api.meetingsUpdateNextMeeting !== "function") {
+      alert("Folgetermin kann nur für ein offenes Protokoll mit verfügbarer Besprechungs-API geändert werden.");
+      return { ok: false, cancelled: true };
     }
 
     const isIsoDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v || "");
     const loadedDate = isIsoDate(loaded.date) ? loaded.date : "";
-    const defaultDate = isIsoDate(defaultDateIso) ? defaultDateIso : loadedDate;
+    const defaultDate = loadedDate || (isIsoDate(defaultDateIso) ? defaultDateIso : "");
 
     return new Promise((resolve) => {
       const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 10001 });
@@ -777,9 +801,7 @@ export default class PrintModal {
       const hint = document.createElement("div");
       hint.style.fontSize = "12px";
       hint.style.opacity = "0.75";
-      hint.textContent = hasSettingsApi
-        ? "Wird auf der letzten Seite des Protokolls gedruckt."
-        : "Settings-API fehlt (IPC noch nicht aktiv). Druck läuft trotzdem.";
+      hint.textContent = "Wird auf der letzten Seite dieses Protokolls gedruckt.";
 
       const mkRow = (labelText, inputEl) => {
         const wrap = document.createElement("div");
@@ -803,6 +825,7 @@ export default class PrintModal {
       const chkShow = document.createElement("input");
       chkShow.type = "checkbox";
       chkShow.checked = !!loaded.enabled;
+      chkShow.setAttribute("data-bbm-next-meeting-field", "print-enabled");
       const chkWrap = document.createElement("label");
       chkWrap.style.display = "inline-flex";
       chkWrap.style.alignItems = "center";
@@ -812,23 +835,73 @@ export default class PrintModal {
       chkText.textContent = "Drucken";
       chkWrap.append(chkShow, chkText);
 
+      const makeOptionCheckbox = (label, checked, marker) => {
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = !!checked;
+        input.setAttribute("data-bbm-next-meeting-field", marker);
+        const wrap = document.createElement("label");
+        wrap.style.display = "inline-flex";
+        wrap.style.alignItems = "center";
+        wrap.style.gap = "var(--bbm-popup-label-field-gap)";
+        wrap.style.cursor = "pointer";
+        const text = document.createElement("span");
+        text.textContent = label;
+        text.style.fontWeight = "700";
+        wrap.append(input, text);
+        return { input, wrap };
+      };
+
+      const optionA = makeOptionCheckbox("Option A", loaded.optionAEnabled, "option-a");
+      const optionB = makeOptionCheckbox("Option B", loaded.optionBEnabled, "option-b");
+
       const inpDate = document.createElement("input");
       inpDate.type = "date";
       inpDate.value = defaultDate;
+      inpDate.setAttribute("data-bbm-next-meeting-field", "option-a-date");
 
       const inpTime = document.createElement("input");
       inpTime.type = "time";
       inpTime.value = loaded.time;
+      inpTime.setAttribute("data-bbm-next-meeting-field", "option-a-time");
 
       const inpPlace = document.createElement("input");
       inpPlace.type = "text";
       inpPlace.placeholder = "Meetingort";
       inpPlace.value = loaded.place;
+      inpPlace.setAttribute("data-bbm-next-meeting-field", "option-a-place");
 
       const inpExtra = document.createElement("input");
       inpExtra.type = "text";
       inpExtra.placeholder = "Zusatz (optional)";
       inpExtra.value = loaded.extra;
+      inpExtra.setAttribute("data-bbm-next-meeting-field", "option-a-extra");
+
+      const inpOptionBText = document.createElement("textarea");
+      inpOptionBText.rows = 4;
+      inpOptionBText.placeholder = "Freitext für die nächste Besprechung";
+      inpOptionBText.value = loaded.optionBText;
+      inpOptionBText.setAttribute("data-bbm-next-meeting-field", "option-b-text");
+      inpOptionBText.style.width = "100%";
+      inpOptionBText.style.resize = "vertical";
+
+      const optionAGroup = document.createElement("div");
+      optionAGroup.className = "bbm-form-card bbm-form-group";
+      optionAGroup.style.display = "grid";
+      optionAGroup.style.gap = "8px";
+      optionAGroup.append(
+        optionA.wrap,
+        mkRow("Datum", inpDate),
+        mkRow("Uhrzeit", inpTime),
+        mkRow("Meetingort", inpPlace),
+        mkRow("Zusatz", inpExtra)
+      );
+
+      const optionBGroup = document.createElement("div");
+      optionBGroup.className = "bbm-form-card bbm-form-group";
+      optionBGroup.style.display = "grid";
+      optionBGroup.style.gap = "8px";
+      optionBGroup.append(optionB.wrap, inpOptionBText);
 
       const actions = document.createElement("div");
       actions.className = "bbm-popup-footer";
@@ -855,10 +928,8 @@ export default class PrintModal {
       body.style.overflow = "auto";
       body.append(
         chkWrap,
-        mkRow("Datum", inpDate),
-        mkRow("Uhrzeit", inpTime),
-        mkRow("Meetingort", inpPlace),
-        mkRow("Zusatz", inpExtra),
+        optionAGroup,
+        optionBGroup,
         hint
       );
 
@@ -898,27 +969,43 @@ export default class PrintModal {
       const onOk = async () => {
         const payload = {
           "print.nextMeeting.enabled": chkShow.checked ? "true" : "false",
+          "print.nextMeeting.optionAEnabled": optionA.input.checked ? "true" : "false",
+          "print.nextMeeting.optionBEnabled": optionB.input.checked ? "true" : "false",
+          "print.nextMeeting.optionBText": String(inpOptionBText.value || ""),
           "print.nextMeeting.date": String(inpDate.value || "").trim(),
           "print.nextMeeting.time": String(inpTime.value || "").trim(),
           "print.nextMeeting.place": String(inpPlace.value || "").trim(),
           "print.nextMeeting.extra": String(inpExtra.value || "").trim(),
         };
 
-        cleanup();
+        btnOk.disabled = true;
+        let result;
+        try {
+          result = await api.meetingsUpdateNextMeeting({
+            meetingId: current.id,
+            nextMeeting: {
+              enabled: chkShow.checked,
+              optionAEnabled: optionA.input.checked,
+              optionBEnabled: optionB.input.checked,
+              optionBText: payload["print.nextMeeting.optionBText"],
+              date: payload["print.nextMeeting.date"],
+              time: payload["print.nextMeeting.time"],
+              place: payload["print.nextMeeting.place"],
+              extra: payload["print.nextMeeting.extra"],
+            },
+          });
+        } catch (error) {
+          result = { ok: false, error: error?.message || "Folgetermin konnte nicht gespeichert werden." };
+        }
+        btnOk.disabled = false;
+        if (!result?.ok) {
+          hint.textContent = result?.error || "Folgetermin konnte nicht gespeichert werden.";
+          return;
+        }
         this._nextMeetingOverride = payload;
         this._nextMeetingCache = payload;
-        resolve({ ok: true, data: payload });
-
-        if (typeof api.appSettingsSetMany !== "function") {
-          alert("Settings-API fehlt (IPC noch nicht aktiv).");
-          return;
-        }
-        const res = await api.appSettingsSetMany(payload);
-        if (!res?.ok) {
-          alert(res?.error || "Speichern fehlgeschlagen");
-          return;
-        }
-        this._nextMeetingCache = payload;
+        cleanup();
+        resolve({ ok: true, data: payload, meeting: result.meeting || current });
       };
 
       overlay.addEventListener("mousedown", onOverlayClick);
@@ -3984,6 +4071,9 @@ export default class PrintModal {
       if (typeof api.appSettingsGetMany === "function") {
         const resNext = await api.appSettingsGetMany([
           "print.nextMeeting.enabled",
+          "print.nextMeeting.optionAEnabled",
+          "print.nextMeeting.optionBEnabled",
+          "print.nextMeeting.optionBText",
           "print.nextMeeting.date",
           "print.nextMeeting.time",
           "print.nextMeeting.place",
@@ -4029,7 +4119,7 @@ export default class PrintModal {
         const defaultDateIso = /^\d{4}-\d{2}-\d{2}$/.test(String(meetingDateRawForPrompt).slice(0, 10))
           ? String(meetingDateRawForPrompt).slice(0, 10)
           : new Date().toISOString().slice(0, 10);
-        const promptRes = await this.promptNextMeetingSettings({ defaultDateIso });
+        const promptRes = await this.promptNextMeetingSettings({ defaultDateIso, meeting, meetingId });
         if (promptRes?.cancelled) return;
         if (promptRes?.ok && promptRes?.data) {
           settings = { ...settings, ...(promptRes.data || {}) };
@@ -4124,6 +4214,9 @@ export default class PrintModal {
 
       const nextMeetingSettingsForPrint = {
         "print.nextMeeting.enabled": String(settings?.["print.nextMeeting.enabled"] ?? "").trim(),
+        "print.nextMeeting.optionAEnabled": String(settings?.["print.nextMeeting.optionAEnabled"] ?? "true").trim(),
+        "print.nextMeeting.optionBEnabled": String(settings?.["print.nextMeeting.optionBEnabled"] ?? "false").trim(),
+        "print.nextMeeting.optionBText": String(settings?.["print.nextMeeting.optionBText"] || ""),
         "print.nextMeeting.date": String(settings?.["print.nextMeeting.date"] || "").trim(),
         "print.nextMeeting.time": String(settings?.["print.nextMeeting.time"] || "").trim(),
         "print.nextMeeting.place": String(settings?.["print.nextMeeting.place"] || "").trim(),

@@ -309,6 +309,9 @@ function ensureMeetingsNextMeetingColumns(dbConn) {
     }
   };
   addCol("next_meeting_enabled", "INTEGER");
+  addCol("next_meeting_option_a_enabled", "INTEGER NOT NULL DEFAULT 1");
+  addCol("next_meeting_option_b_enabled", "INTEGER NOT NULL DEFAULT 0");
+  addCol("next_meeting_option_b_text", "TEXT");
   addCol("next_meeting_date", "TEXT");
   addCol("next_meeting_time", "TEXT");
   addCol("next_meeting_place", "TEXT");
@@ -1816,6 +1819,9 @@ function ensureProtokollSchema(dbConn) {
         pdf_show_ampel INTEGER,
         todo_snapshot_json TEXT,
         next_meeting_enabled INTEGER,
+        next_meeting_option_a_enabled INTEGER NOT NULL DEFAULT 1,
+        next_meeting_option_b_enabled INTEGER NOT NULL DEFAULT 0,
+        next_meeting_option_b_text TEXT,
         next_meeting_date TEXT,
         next_meeting_time TEXT,
         next_meeting_place TEXT,

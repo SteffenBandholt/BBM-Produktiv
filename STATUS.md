@@ -1,3 +1,21 @@
+## 2026-09-19 – Nächste Besprechung A/B fachlich abgenommen
+
+- Steffen hat den erweiterten Dialog mit Hauptschalter, unabhängigen Optionen
+  A/B, mehrzeiligem Freitext, Speicherung, Wiederöffnen, Abbrechen sowie der
+  PDF-Ausgabe erfolgreich geprüft und abgenommen.
+- Hauptschalter, Optionsauswahl und B-Text werden je Besprechung gespeichert;
+  Bestandsdaten starten mit A an/B aus, ohne die bisherige Drucken-Einstellung
+  zu verändern. Vorschau und endgültiges Protokoll verwenden dieselbe Auswahl.
+- Die sechs PDF-Fälle p50–p55 sichern Drucken aus, nur A, nur B, A+B, keine
+  Auswahl und mehrseitigen Freitext. Die gezielten Daten-, Close-Flow-,
+  Vertrags- und PDF-Prüfungen gehören zum Git-Abschluss auf
+  `feature/next-meeting-options`.
+- Bekannte rote M85-Gesamtprüfungen außerhalb dieses Pakets bleiben ausdrücklich
+  offen und werden weder korrigiert noch durch Golden-Updates verdeckt.
+- Kein Merge, Versionswechsel, Setup-Bau oder Installation.
+
+---
+
 ## 2026-09-15 – Abgenommene Firmen- und PDF-Reparaturen integriert
 
 Ausgangsbasis beider Worktrees und des frisch abgefragten `origin/main`:

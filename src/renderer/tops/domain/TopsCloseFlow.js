@@ -99,6 +99,9 @@ export class TopsCloseFlow {
       pdf_show_ampel: this.showAmpelInList ? 1 : 0,
       nextMeeting: {
         enabled: String(nextMeetingInput["print.nextMeeting.enabled"] ?? "").trim(),
+        optionAEnabled: String(nextMeetingInput["print.nextMeeting.optionAEnabled"] ?? "true").trim(),
+        optionBEnabled: String(nextMeetingInput["print.nextMeeting.optionBEnabled"] ?? "false").trim(),
+        optionBText: String(nextMeetingInput["print.nextMeeting.optionBText"] ?? ""),
         date: String(nextMeetingInput["print.nextMeeting.date"] || "").trim(),
         time: String(nextMeetingInput["print.nextMeeting.time"] || "").trim(),
         place: String(nextMeetingInput["print.nextMeeting.place"] || "").trim(),
