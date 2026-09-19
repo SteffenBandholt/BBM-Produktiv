@@ -4,6 +4,24 @@ Diese Datei ist der verbindliche Einstieg für ChatGPT-Arbeit am Repository `BBM
 
 Sie gilt zusammen mit `AGENTS.md` und `ZUERST_LESEN_Codex.md` für neue Chats, Fortsetzungs-Chats und Codex-Läufe.
 
+
+
+## Verbindliche Kosten- und Nutzungsregel für ChatGPT / Work / Codex / API
+
+Stand: 2026-09-19
+
+Für alle BBM-Chats und Umsetzungsaufträge gilt:
+
+- Das vorhandene ChatGPT-Abonnement und dessen enthaltene Nutzung werden zuerst ausgeschöpft.
+- Planung, Abstimmung, fachliche Klärung und kleinere Analysen erfolgen standardmäßig im normalen Chat.
+- Work/Codex/Agenten werden gezielt eingesetzt, wenn echte Repository-, Browser-, Datei- oder App-Arbeit nötig ist; unnötige lange oder wiederholte Agentenläufe sind zu vermeiden.
+- **Automatische Credit-Aufladung bleibt ausgeschaltet.** Sie darf nicht ohne ausdrücklichen Auftrag des Nutzers aktiviert werden.
+- Zusätzliche Credits dürfen nicht ohne ausdrückliche Nutzerfreigabe gekauft oder bewusst als Standard-Arbeitsweg eingeplant werden.
+- Wenn ein enthaltenes Tariflimit für eine Aufgabe voraussichtlich erreicht ist, wird angehalten und der Nutzer informiert, statt ungefragt kostenpflichtige Zusatznutzung auszulösen.
+- Die OpenAI-API ist ein getrenntes Abrechnungssystem. BBM darf keine neue OpenAI-API-Nutzung, keinen API-Key und keine kostenpflichtige API-Integration erhalten, solange der Nutzer dies nicht ausdrücklich beauftragt.
+- Lokale Lösungen sind bei gleicher Eignung vorzuziehen; insbesondere bleibt die bestehende lokale Whisper-/Diktat-Verarbeitung ohne OpenAI-API.
+- Diese Kostenregel ist eine Arbeitsregel, keine Produktarchitekturentscheidung: fachlich notwendige Cloud-/API-Nutzung kann später ausdrücklich beschlossen werden.
+
 ## Vor jeder BBM-Arbeit lesen
 
 1. `ZUERST_LESEN_Codex.md`
