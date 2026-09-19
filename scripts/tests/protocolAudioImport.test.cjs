@@ -16,6 +16,10 @@ const { TranscriptionService } = require("../../src/main/services/audio/Transcri
 const { AudioImportService } = require("../../src/main/services/audio/AudioImportService");
 const { TopService } = require("../../src/main/domain/TopService");
 const { filterImportAreaForPrint } = require("../../src/main/print/printData");
+const {
+  createUiScopeFingerprint,
+  validateTargetStartupLayoutProfile,
+} = require("ui-editor-kit");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 function createHarness({ transcriptText = "Erster Satz. Rest.", shortTextLimit = 100 } = {}) {
@@ -474,38 +478,108 @@ async function runProtocolAudioImportTests(run) {
     }
   });
 
-  await run("#349 UI-Editor: Registry-38-Bestandsprofil bleibt werte- und reihenfolgegleich; Migration ist idempotent", async () => {
+  await run("#349 UI-Editor: schema-gültiges Registry-38-Bestandsprofil bleibt vollständig erhalten; produktiver Restore ist idempotent", async () => {
     const [{ createM80RegistrationDescriptor }, registry, session] = await Promise.all([
       importEsmFromFile(path.join(process.cwd(), "src/renderer/ui-editor/m80HostAdapter.js")),
       importEsmFromFile(path.join(process.cwd(), "src/renderer/ui-editor/m80Registry.js")),
       Promise.resolve(require("../../src/main/ui-editor/electronUiEditorSession")),
     ]);
-    const registration = createM80RegistrationDescriptor();
+    const unmountedRegistration = createM80RegistrationDescriptor();
     const migration = registry.BBM_M80_PROFILE_MIGRATIONS.find(
       (entry) => entry.addedElementId === "protokoll.topsScreen.quicklane.action.importAudio"
     );
-    const scope = registry.listM80RegistryScopes().find((entry) => entry.scopeId === migration.scopeId);
+    const declaredScopes = registry.listM80RegistryScopes();
+    const activeScopes = registry.BBM_M80_ACTIVE_SCOPE_GROUPS.find((scopeIds) => scopeIds.includes(migration.scopeId));
+    const activeScopeIds = new Set(activeScopes);
+    const declaredById = new Map(declaredScopes.map((entry) => [entry.scopeId, entry]));
+    const resolvedScope = (entry) => ({
+      ...entry,
+      elements: entry.elements.map((element) => ({
+        ...element,
+        refKey: String(element.refKey || element.id),
+        referenceResolved: true,
+        targetCount: 1,
+        mountedInstanceCount: 1,
+        capturedBaseline: {
+          width: Number(element.baseline?.width) || 640,
+          height: Number(element.baseline?.height) || 64,
+        },
+      })),
+    });
+    const registration = {
+      ...unmountedRegistration,
+      activeScopes: [...activeScopes],
+      registryScopes: unmountedRegistration.registryScopes.map((entry) => (
+        activeScopeIds.has(entry.scopeId) ? resolvedScope(declaredById.get(entry.scopeId)) : entry
+      )),
+    };
+    const scope = registration.registryScopes.find((entry) => entry.scopeId === migration.scopeId);
     const addedElement = scope.elements.find((entry) => entry.id === migration.addedElementId);
     assert.equal(Number.isSafeInteger(addedElement.order), true);
     assert.equal(addedElement.parentId, migration.expectedParentId);
-    const migrationRegistration = {
-      profileMigrations: registration.profileMigrations,
-      registryScopes: [scope],
+    const oldTargetScope = {
+      ...scope,
+      elements: scope.elements.filter((entry) => entry.id !== migration.addedElementId),
+    };
+    assert.equal(createUiScopeFingerprint(oldTargetScope), migration.fromFingerprint);
+    const oldRegistryScopes = registration.registryScopes.map((entry) => (
+      entry.scopeId === oldTargetScope.scopeId ? oldTargetScope : entry
+    ));
+    const savedElement = (scopeId, entry, index, { individual = false } = {}) => {
+      const saved = { elementId: entry.id, scopeId };
+      const operations = new Set(entry.allowedOps);
+      const bounded = (value, minimum, maximum) => Math.min(
+        Number.isFinite(maximum) ? maximum : value,
+        Math.max(Number.isFinite(minimum) ? minimum : value, value)
+      );
+      if (operations.has("move")) {
+        saved.x = individual ? index * 1.375 + 0.25 : Number(entry.baseline?.x) || 0;
+        saved.y = individual ? index * 2.625 + 0.125 : Number(entry.baseline?.y) || 0;
+      }
+      if (operations.has("resize") || operations.has("resizeWidth")) {
+        saved.width = individual
+          ? bounded(120.5 + index * 3.75, entry.baseline?.minWidth, entry.baseline?.maxWidth)
+          : bounded(Number(entry.baseline?.width) || 640, entry.baseline?.minWidth, entry.baseline?.maxWidth);
+      }
+      if (operations.has("resize") || operations.has("resizeHeight")) {
+        saved.height = individual
+          ? bounded(24.25 + index * 0.875, entry.baseline?.minHeight, entry.baseline?.maxHeight)
+          : bounded(Number(entry.baseline?.height) || 64, entry.baseline?.minHeight, entry.baseline?.maxHeight);
+      }
+      if (operations.has("textMove")) {
+        saved.textOffsetX = individual ? index * 0.125 : Number(entry.baseline?.textOffsetX) || 0;
+        saved.textOffsetY = individual ? index * 0.25 : Number(entry.baseline?.textOffsetY) || 0;
+      }
+      if (operations.has("textResize")) {
+        saved.fontSize = individual
+          ? bounded(9.5 + (index % 7) * 0.625, entry.baseline?.minFontSize, entry.baseline?.maxFontSize)
+          : Number(entry.baseline?.fontSize) || 12;
+      }
+      if (operations.has("setVisibility")) saved.visible = individual ? index % 6 !== 0 : entry.baseline?.visible !== false;
+      if (["spacingIncrease", "spacingDecrease", "spacingSet", "spacingReset"].some((operation) => operations.has(operation))) {
+        saved.spacing = structuredClone(entry.baseline?.spacing || {});
+      }
+      if (entry.tableColumnLayout) {
+        saved.table = {
+          tableId: entry.tableBinding.tableId,
+          columnId: entry.tableColumnLayout.columnId,
+          widthMode: entry.tableColumnLayout.widthMode,
+          wrapMode: entry.tableColumnLayout.wrapMode,
+          overflowMode: entry.tableColumnLayout.overflowMode,
+        };
+      }
+      if (entry.tableLayout) {
+        saved.table = {
+          tableId: entry.tableLayout.tableId,
+          horizontalOverflowMode: entry.tableLayout.horizontalOverflowMode,
+          rowHeightMode: entry.tableLayout.rowHeightMode,
+        };
+      }
+      return saved;
     };
     const previousElementsInRegistryOrder = scope.elements
       .filter((entry) => entry.id !== migration.addedElementId)
-      .map((entry, index) => ({
-        elementId: entry.id,
-        scopeId: scope.scopeId,
-        x: index * 1.375 - 8.25,
-        y: index * 2.625 + 0.125,
-        width: 120.5 + index * 3.75,
-        height: 24.25 + index * 0.875,
-        ...(Number.isFinite(Number(entry.baseline?.fontSize))
-          ? { fontSize: 9.5 + (index % 7) * 0.625 }
-          : {}),
-        visible: index % 6 !== 0,
-      }));
+      .map((entry, index) => savedElement(scope.scopeId, entry, index, { individual: true }));
     const previousById = new Map(previousElementsInRegistryOrder.map((entry) => [entry.elementId, entry]));
     const storedPriority = [
       "protokoll.screen.root",
@@ -532,45 +606,75 @@ async function runProtocolAudioImportTests(run) {
       previousElements.map((entry) => entry.elementId),
       previousElementsInRegistryOrder.map((entry) => entry.elementId)
     );
-    const profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-349-profile-"));
-    const profilePath = path.join(profileRoot, "standard.layout-profile.json");
+    const baseProfileRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-349-isolated-userdata-"));
     try {
-      const unchangedSiblingScope = {
-        scopeId: "protokoll.list.root",
-        registryFingerprint: `sha256:${"a".repeat(64)}`,
-        layoutState: {
-          elements: [{
-            elementId: "protokoll.topsScreen.list",
-            scopeId: "protokoll.list.root",
-            x: 17.25,
-            y: -4.5,
-            width: 711.75,
-            height: 388.125,
-            visible: false,
-          }],
-        },
-        explicitOperations: ["move", "resize", "setVisibility"],
-      };
+      const profileRoot = session.resolveBbmModuleLayoutProfileRoot(baseProfileRoot, registration).profileRoot;
+      const profilePath = path.join(profileRoot, "standard.layout-profile.json");
       const profileDocument = {
         schemaVersion: 2,
         applicationId: session.APPLICATION_ID,
         profileId: "standard",
         savedAt: "2026-08-31T18:48:18.113Z",
-        scopes: [{
-          scopeId: scope.scopeId,
-          registryFingerprint: migration.fromFingerprint,
-          layoutState: { elements: previousElements },
-          explicitOperations: ["move", "resize", "textResize", "setVisibility"],
-        }, unchangedSiblingScope],
+        scopes: registration.activeScopes.map((scopeId) => {
+          const registryScope = oldRegistryScopes.find((entry) => entry.scopeId === scopeId);
+          assert.ok(registryScope, `Alter Registry-Scope fehlt: ${scopeId}`);
+          if (scopeId === migration.scopeId) {
+            return {
+              scopeId,
+              registryFingerprint: migration.fromFingerprint,
+              layoutState: { elements: previousElements },
+              explicitOperations: {
+                "protokoll.header.title": ["textResize"],
+                "protokoll.topsScreen.quicklane": ["move"],
+              },
+            };
+          }
+          return {
+            scopeId,
+            registryFingerprint: createUiScopeFingerprint(registryScope),
+            layoutState: {
+              elements: registryScope.elements.map((entry, index) => savedElement(scopeId, entry, index)),
+            },
+          };
+        }),
       };
+      const oldValidation = validateTargetStartupLayoutProfile(profileDocument, {
+        applicationId: session.APPLICATION_ID,
+        profileId: "standard",
+        activeScopes: registration.activeScopes,
+        registryScopes: oldRegistryScopes,
+      });
+      assert.equal(oldValidation.ok, true, JSON.stringify(oldValidation.errors));
+      fs.mkdirSync(profileRoot, { recursive: true });
       fs.writeFileSync(profilePath, `${JSON.stringify(profileDocument, null, 2)}\n`, "utf8");
       const beforeBytes = fs.readFileSync(profilePath);
-      const beforeTargetScope = structuredClone(profileDocument.scopes[0]);
-      const beforeSiblingScope = structuredClone(unchangedSiblingScope);
+      const beforeScopes = new Map(profileDocument.scopes.map((entry) => [entry.scopeId, structuredClone(entry)]));
+      const beforeTargetScope = beforeScopes.get(migration.scopeId);
 
-      assert.equal(session.applyRegisteredProfileMigrations(profileRoot, migrationRegistration), 1);
+      let spawned = 0;
+      const controller = new session.ElectronUiEditorSessionController({
+        app: {
+          isPackaged: false,
+          getAppPath: () => process.cwd(),
+          getVersion: () => "1.5.0",
+          getPath: () => baseProfileRoot,
+        },
+        ipcMain: { handle() {} },
+        getMainWindow: () => null,
+        profileRootResolver: () => baseProfileRoot,
+        spawnProcess: () => {
+          spawned += 1;
+          throw new Error("Der isolierte Start-Restore darf keinen Editorprozess starten.");
+        },
+      });
+      const loaded = controller.loadStartupLayout(registration);
+      assert.equal(loaded.ok, true, JSON.stringify(loaded));
+      assert.equal(loaded.found, true);
+      assert.equal(loaded.state, "compatible");
+      assert.equal(loaded.editorProcessRequired, false);
+      assert.equal(spawned, 0);
       const migrated = JSON.parse(fs.readFileSync(profilePath, "utf8"));
-      const migratedScope = migrated.scopes[0];
+      const migratedScope = migrated.scopes.find((entry) => entry.scopeId === migration.scopeId);
       const migratedExistingElements = migratedScope.layoutState.elements.filter(
         (entry) => entry.elementId !== migration.addedElementId
       );
@@ -580,23 +684,49 @@ async function runProtocolAudioImportTests(run) {
       assert.equal(migratedScope.registryFingerprint, migration.toFingerprint);
       assert.deepEqual(migratedExistingElements, beforeTargetScope.layoutState.elements);
       assert.deepEqual(migratedScope.explicitOperations, beforeTargetScope.explicitOperations);
-      assert.deepEqual(migrated.scopes[1], beforeSiblingScope);
+      for (const migratedSibling of migrated.scopes.filter((entry) => entry.scopeId !== migration.scopeId)) {
+        assert.deepEqual(migratedSibling, beforeScopes.get(migratedSibling.scopeId));
+      }
       assert.equal(migratedScope.layoutState.elements.length, previousElements.length + 1);
       assert.equal(new Set(migratedScope.layoutState.elements.map((entry) => entry.elementId)).size, migratedScope.layoutState.elements.length);
       assert.equal(addedElements.length, 1);
       assert.equal(addedElements[0].visible, true);
       assert.equal(migratedScope.layoutState.elements.at(-1).elementId, migration.addedElementId);
+      const currentValidation = validateTargetStartupLayoutProfile(migrated, {
+        applicationId: session.APPLICATION_ID,
+        profileId: "standard",
+        activeScopes: registration.activeScopes,
+        registryScopes: registration.registryScopes,
+      });
+      assert.equal(currentValidation.ok, true, JSON.stringify(currentValidation.errors));
+      const loadedScope = loaded.scopes.find((entry) => entry.scopeId === migration.scopeId);
+      assert.deepEqual(
+        loadedScope.elements.filter((entry) => entry.elementId !== migration.addedElementId),
+        beforeTargetScope.layoutState.elements
+      );
+      assert.equal(controller.completeStartupLayout({
+        ok: true,
+        profileSha256: loaded.profileSha256,
+        layoutStorageKey: loaded.layoutStorageKey,
+      }).ok, true);
       const archiveDir = path.join(profileRoot, "archive", session.APPLICATION_ID);
       const archivesAfterFirstRun = fs.readdirSync(archiveDir);
       assert.equal(archivesAfterFirstRun.length, 1);
       assert.deepEqual(fs.readFileSync(path.join(archiveDir, archivesAfterFirstRun[0])), beforeBytes);
 
       const firstMigrationBytes = fs.readFileSync(profilePath);
-      assert.equal(session.applyRegisteredProfileMigrations(profileRoot, migrationRegistration), 0);
+      const loadedAgain = controller.loadStartupLayout(registration);
+      assert.equal(loadedAgain.ok, true, JSON.stringify(loadedAgain));
+      assert.equal(loadedAgain.found, true);
+      assert.equal(controller.completeStartupLayout({
+        ok: true,
+        profileSha256: loadedAgain.profileSha256,
+        layoutStorageKey: loadedAgain.layoutStorageKey,
+      }).ok, true);
       assert.deepEqual(fs.readFileSync(profilePath), firstMigrationBytes);
       assert.deepEqual(fs.readdirSync(archiveDir), archivesAfterFirstRun);
     } finally {
-      fs.rmSync(profileRoot, { recursive: true, force: true });
+      fs.rmSync(baseProfileRoot, { recursive: true, force: true });
     }
   });
 

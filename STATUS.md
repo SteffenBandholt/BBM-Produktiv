@@ -1,3 +1,32 @@
+## 2026-09-19 – #349 Profilmigration vollständig isoliert nachgeprüft
+
+Der nach dem Nutzerstopp verschärfte Nachweis verwendet ausschließlich ein
+temporäres Profilroot und kein reales BBM-userData. Der #349-Regressionstest
+erzeugt jetzt ein schema-gültiges Registry-38-Profil für alle drei aktiven
+Protokoll-Scopes. Individuelle Positionen, Größen, Schriftgrößen und
+Sichtbarkeiten, eine von der Registry abweichende Elementreihenfolge sowie
+gültige zusätzliche `explicitOperations` werden vor der Migration durch den
+UI-Editor-Kit-Validator geprüft.
+
+Die Migration läuft anschließend über den produktiven
+`ElectronUiEditorSessionController.loadStartupLayout`-Pfad. Das resultierende
+Registry-39-Profil ist ebenfalls schema-gültig, alle bisherigen Elementzustände
+und Geschwister-Scopes bleiben vollständig identisch, und nur der sichtbare
+Import-Button kommt einmal hinzu. Ein zweiter produktiver Restore lässt
+Profilbytes und Archivbestand unverändert. Der Produktfix aus `f070d161` musste
+nicht erweitert werden; nachgeschärft wurden ausschließlich Regressionstest und
+Nachweisdokumentation. Kein normaler DEV-Start und kein Zugriff auf Steffens
+reales Profil in diesem Lauf.
+
+Der vorhandene isolierte Electron-Acceptance-Starter wurde zusätzlich mit
+`--module=protokoll` zweimal gegen dasselbe temporäre userData ausgeführt. Beide
+Starts erreichten Protokoll, Registry und nativen Editor und endeten regulär mit
+Exit 0; anschließend entfernte der Harness sein temporäres Profilroot. Da
+Computer Use keine steuerbare App-Oberfläche lieferte, ist dies ausdrücklich
+keine optische Nutzerabnahme.
+
+---
+
 ## 2026-09-19 – #349 Profilmigration: Bestandsschutz repariert
 
 Auf Branch `protokoll/audio-import-v1` wurde die Ursache der beim ersten

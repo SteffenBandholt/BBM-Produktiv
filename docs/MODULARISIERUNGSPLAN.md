@@ -1,3 +1,16 @@
+## 2026-09-19 – #349 isolierter Sicherheitsnachweis der Profilmigration
+
+Der vorhandene Reparaturstand wird nach dem Nutzerstopp ausschließlich mit
+temporärem Profilroot nachgeprüft. Ein schema-gültiges Registry-38-Profil mit
+allen drei aktiven Protokoll-Scopes, individuellen Layoutwerten, abweichender
+Speicherreihenfolge und gültigen Zusatzoperationen durchläuft denselben
+produktiven Startup-Restore wie die Anwendung. Registry-39-Validierung,
+vollständiger Bestandserhalt, genau eine Ergänzung, einmalige Archivierung und
+ein byte-identischer zweiter Lauf sind Testpflicht. Reales BBM-userData und ein
+normaler DEV-Start bleiben bis zur ausdrücklichen Nutzerfreigabe ausgeschlossen.
+
+---
+
 ## 2026-09-19 – #349 Bestandsschutz der Protokoll-Profilmigration
 
 Die additive Registry-38-auf-39-Migration des Audioimport-Buttons wird im
