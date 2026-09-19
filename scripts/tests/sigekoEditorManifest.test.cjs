@@ -13,7 +13,7 @@ const EXISTING_SCOPE_FINGERPRINTS = Object.freeze({
   'restarbeiten.header.root': 'sha256:fe9f86e5e6bc19c1371b80d4b7efe97df2a7d9aa3771cda3c8a3d2e49c4ce7d2',
   'restarbeiten.list.root': 'sha256:8c0be7e2b3aeaa4792f3e9d5e8a542f6bbd961cf7416314d7c7d840cccbb309b',
   'restarbeiten.edit.root': 'sha256:c83909172064d65e3229ecfcab6e99ac5d45980c24d990ecd67c60a5c8125442',
-  'protokoll.screen.root': 'sha256:7251a69f8243bb21a4768170d75ea0d51a4a43a48db0cb4b06caaca565185029',
+  'protokoll.screen.root': 'sha256:2119244285c139c1013197702f3a49a810da472850b629e8cb91a09f18719398',
   'protokoll.list.root': 'sha256:3bf84a38e4db80d49102e9fd0e8e80202c354d451df63e77242a4f899b8c8e53',
   'protokoll.edit.root': 'sha256:e53adb228924f283bf1158613f70bd6a6b927065c9ca24eb528caded776c0005',
   'rechnung.screen': 'sha256:0eaa9315cedabd5eae9b64f04db083941e4b945b1ffedd930ddcd8e83f84d459',
@@ -61,7 +61,7 @@ async function runSigekoEditorManifestTests(run) {
     assert.equal(createUiScopeFingerprint(scopes.find(s => s.scopeId === 'projektverwaltung.plannedStart')), 'sha256:a3959a7358504a1a26f6b303de8929e6dab722b5835aa586be573646c04485a5');
     assert.deepEqual(manifest.scopes.filter(s => !['sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.builder'].includes(s.scopeId)).map(s => [s.scopeId, s.status, s.elementCount]), [
       ['restarbeiten.header.root', 'complete', 44], ['restarbeiten.list.root', 'complete', 32], ['restarbeiten.edit.root', 'complete', 53],
-      ['protokoll.screen.root', 'complete', 34], ['protokoll.list.root', 'complete', 32], ['protokoll.edit.root', 'complete', 38],
+      ['protokoll.screen.root', 'complete', 35], ['protokoll.list.root', 'complete', 32], ['protokoll.edit.root', 'complete', 38],
       ['rechnung.screen', 'complete', 107], ['bbm.remaining', 'blocked', 0], ['pdf.bbm.protocol', 'complete', 28],
     ]);
   });

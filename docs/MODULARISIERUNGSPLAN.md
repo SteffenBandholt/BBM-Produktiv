@@ -1,3 +1,28 @@
+## 2026-09-19 – Abgegrenztes Funktionspaket: Protokoll-Audioimport V1 (#349)
+
+Der Arbeitsbranch `protokoll/audio-import-v1` ergänzt ausschließlich den
+Protokoll-Audioimport aus #349. Er bindet den vorhandenen lokalen
+Audio-/Whisper-Weg an die produktive Quicklane an, zerlegt das Transkript nur
+an `neuer Punkt` und `nächster Punkt` und legt den typisierten, unnummerierten
+Importbereich nach erfolgreicher Transkription atomar an. Der Bereich steht in
+der offenen Ansicht am Ende und wird über seine fachliche Typ-/Elternkette aus
+dem vorhandenen Druckdatenweg entfernt. Verschobene Punkte werden wieder wie
+normale TOPs behandelt. Allgemeines PDF-Layout, Live-Diktat, Suggestions,
+Mapping, Modellwahl und andere Module bleiben unverändert.
+
+Die gezielten Fach-, Audio-, Renderer-, UI-Editor- und Vertragsprüfungen sind
+grün. Ein isolierter Lauf über echten lokalen `whisper-cli`, Main-Service,
+SQLite, TOP-Dienst und `getPrintData` sowie ein echter Prozessabbruch sind
+erfolgreich. `PDF-V2-PROT-003` bleibt mit unveränderter Seite und identischem
+Golden-Struktursnapshot bestehen. Rote breite Bestandsprüfungen sind in
+`STATUS.md` ausdrücklich abgegrenzt; sie werden nicht als grün maskiert.
+
+Die native Windows-Klickabnahme ist mangels verfügbarer Computer-Use-App offen.
+Nach Branch-Commit und Push folgt ausschließlich Steffens Nutzerprüfung im
+gestarteten DEV-Stand; keine automatische Erweiterung oder Integration.
+
+---
+
 ## 2026-09-14 – Rechnung RE-S1.1 / PR #348: technischer Abschluss
 
 Der fehlende Bestandsschutz-Nachweis läuft nun reproduzierbar mit einer frisch

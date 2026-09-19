@@ -1,3 +1,64 @@
+## 2026-09-19 – Protokoll-Audioimport V1 (#349): technischer Arbeitsbranch
+
+Branch `protokoll/audio-import-v1`, Basis `origin/main` /
+`6c9944562eb00d9fbb32f91a965fdca08cadf5da`. Die Protokoll-Quicklane besitzt
+die lizenz-, Projekt-, Besprechungs- und Read-only-gebundene Aktion `Import`.
+Sie verwendet den vorhandenen nativen Ein-Datei-Dialog und unverändert den
+lokalen Weg `AudioImportService -> TranscriptionService -> WhisperCppEngine`
+mit vorhandenem FFmpeg, whisper.cpp und `ggml-small.bin`. Cloud, OpenAI-API,
+zweite Engine, neue Abhängigkeit und Änderung des Live-Diktats sind nicht
+enthalten.
+
+Der Arbeitsbereich wird durch die additive nullable Spalte
+`tops.special_type = 'audio_import'` fachlich identifiziert. Sein Titel ist
+Level 1, unnummeriert und in der offenen Ansicht zuletzt sortiert; normale
+Titelnummern bleiben unberührt. Neue Punkte entstehen erst nach erfolgreicher
+Transkription gemeinsam in einer SQLite-Transaktion. Abbruch beendet nur die
+HTTP-Anfrage beziehungsweise den zugehörigen gestarteten CLI-/FFmpeg-Kindprozess.
+Der typisierte Import-Unterbaum wird vor der vorhandenen Vorschau-/PDF-
+Datenzusammenstellung entfernt; ein unter einen normalen Titel verschobener
+Punkt wird wieder normal gedruckt. PDF-V2-Layout und Satzlogik bleiben
+unverändert (`PDF-V2-PROT-003`).
+
+### Nachweise
+
+- Der gezielte #349-Test deckt die 24 fachlichen Abnahmepunkte einschließlich
+  Dateiformaten, Parser, Satz-/Längenfallback, Migration, Wiederverwendung,
+  Nummerierung, Atomarität, Abbruch, Sprung/Selektion, Druck und Live-Diktat ab:
+  vollständig grün.
+- Audio-Modul, produktiver `TopsScreen`-Ablauf, M86.7-Buttonvertrag,
+  M86.8-Protokollvertrag, Protokoll-Elementliste, Manifestprüfungen,
+  UI-Editor-Vertrags-Selbsttest, Syntaxprüfung, fokussierter ESLint (0 Fehler)
+  und `git diff --check`: grün.
+- Ein isolierter produktiver Offline-Lauf verwendete eine echte lokale WAV,
+  den echten `whisper-cli`, den Main-`TranscriptionService`, den neuen
+  Orchestrator, die echte SQLite-/TOP-Schicht und `getPrintData`: zwei Befehle
+  wurden zu zwei Importpunkten; der Import-Unterbaum blieb druckfrei, der unter
+  einen normalen Titel verschobene Punkt wurde gedruckt. Ein separater echter
+  Abbruchlauf beendete den gestarteten Whisper-Prozess nach 66 ms und ließ
+  keinen neuen Whisper-Prozess zurück.
+- Golden-Fixture `p02-one-page`: 1 erwartete/1 tatsächliche Seite und
+  unveränderter Struktursnapshot
+  `8e39dfd0a42cdcb71040c6bf94b09526e617ec8b62c39fa127b46738bdaf92a`;
+  die gerenderte Seite wurde visuell geprüft.
+
+### Bewusst offene beziehungsweise rote Bestandsprüfungen
+
+Die breite Gruppe `core-protokoll` bleibt wegen bereits vorhandener
+Abweichungen in `projectFirmsLayout`, `protokollRouterFallback` und
+`protokollProjectEntryRouting` rot. Breite UI-Editor-Tests erwarten teilweise
+weiter Registry-Version 26, obwohl bereits die Basis Version 38 besitzt;
+zusätzlich bleiben der vorhandene Compact-Workspace-, `docs/licensing.md`-,
+Komponenteninventar- und Rechnungs-Fake-Ref-Stand rot. Diese fremden Baselines
+wurden weder als grün ausgegeben noch im Audioimport-Paket repariert.
+
+Computer Use meldete keine verfügbare native Windows-App-Oberfläche. Deshalb
+ist keine eigene echte Klickabnahme behauptet. Nächster und einziger offener
+Funktionsschritt: Steffen prüft den gestarteten DEV-Stand mit einer realen
+Sprachdatei über `Protokoll -> Quicklane -> Import`.
+
+---
+
 ## 2026-09-15 – Abgenommene Firmen- und PDF-Reparaturen integriert
 
 Ausgangsbasis beider Worktrees und des frisch abgefragten `origin/main`:

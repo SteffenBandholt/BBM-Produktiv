@@ -294,6 +294,13 @@ function ensureTopsSoftDeleteColumns(dbConn) {
   addCol("trashed_at", "INTEGER");
 }
 
+function ensureTopsSpecialTypeColumn(dbConn) {
+  if (!tableExists(dbConn, "tops")) return;
+  if (!columnExists(dbConn, "tops", "special_type")) {
+    dbConn.exec(`ALTER TABLE tops ADD COLUMN special_type TEXT;`);
+  }
+}
+
 function ensureMeetingsTodoSnapshotColumn(dbConn) {
   if (!tableExists(dbConn, "meetings")) return;
   if (!columnExists(dbConn, "meetings", "todo_snapshot_json")) {
@@ -1683,6 +1690,7 @@ function migrateLegacyTopsToMeetingTops(dbConn) {
       level INTEGER NOT NULL,
       number INTEGER NOT NULL,
       title TEXT NOT NULL,
+      special_type TEXT,
       is_hidden INTEGER NOT NULL DEFAULT 0,
       is_trashed INTEGER NOT NULL DEFAULT 0,
       trashed_at INTEGER,
@@ -1783,6 +1791,7 @@ function migrateLegacyTopsToMeetingTops(dbConn) {
   ensureMeetingTopsContactColumns(dbConn);
   ensureMeetingTopsTaskFlagColumns(dbConn);
   ensureTopsSoftDeleteColumns(dbConn);
+  ensureTopsSpecialTypeColumn(dbConn);
 }
 
 function ensureCoreSchema(dbConn) {
@@ -1858,6 +1867,7 @@ function ensureProtokollSchema(dbConn) {
         level INTEGER NOT NULL,
         number INTEGER NOT NULL,
         title TEXT NOT NULL,
+        special_type TEXT,
         is_hidden INTEGER NOT NULL DEFAULT 0,
         is_trashed INTEGER NOT NULL DEFAULT 0,
         trashed_at INTEGER,
@@ -1914,6 +1924,7 @@ function ensureProtokollSchema(dbConn) {
   ensureMeetingTopsContactColumns(dbConn);
   ensureMeetingTopsTaskFlagColumns(dbConn);
   ensureTopsSoftDeleteColumns(dbConn);
+  ensureTopsSpecialTypeColumn(dbConn);
   ensureMeetingParticipantsSchema(dbConn);
   ensureAudioImportsSchema(dbConn);
   ensureTranscriptsSchema(dbConn);

@@ -61,6 +61,28 @@ function createFilterIcon(mode) {
   return iconWrap;
 }
 
+function createImportIcon() {
+  const iconWrap = document.createElement("span");
+  iconWrap.className = `${ICON_CLASS} bbm-tops-screen-quicklane-icon--import`;
+  iconWrap.setAttribute("aria-hidden", "true");
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "1.8");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+
+  const documentPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  documentPath.setAttribute("d", "M6 3.5h7l4 4V20H6z M13 3.5V8h4");
+  const arrowPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  arrowPath.setAttribute("d", "M3 13h8 M8 10l3 3-3 3");
+  svg.append(documentPath, arrowPath);
+  iconWrap.appendChild(svg);
+  return iconWrap;
+}
+
 function createButton({ id, icon, title, ariaLabel = title, pressed = null, disabled = false, onClick = null }) {
   const btn = document.createElement("button");
   btn.type = "button";
@@ -114,9 +136,10 @@ export class TopsScreenQuicklane {
     hasProject = true,
     hasMeeting = true,
     isReadOnly = false,
+    audioAvailable = false,
     isBusy = false,
   } = {}) {
-    this.lastState = { topFilter, showAmpel, showLongtext, hasProject, hasMeeting, isReadOnly, isBusy };
+    this.lastState = { topFilter, showAmpel, showLongtext, hasProject, hasMeeting, isReadOnly, audioAvailable, isBusy };
     const mode = normalizeTopFilterMode(topFilter);
     const disabled = !!isBusy;
     this.root.replaceChildren();
@@ -153,6 +176,14 @@ export class TopsScreenQuicklane {
         title: "Teilnehmer",
         disabled: disabled || !hasProject || !hasMeeting,
         onClick: () => this.callbacks.onParticipants?.(),
+      }),
+      createButton({
+        id: "protokoll.topsScreen.quicklane.action.importAudio",
+        icon: createImportIcon(),
+        title: "Import",
+        ariaLabel: "Sprachdatei importieren",
+        disabled: disabled || !hasProject || !hasMeeting || isReadOnly || !audioAvailable,
+        onClick: () => this.callbacks.onImportAudio?.(),
       })
     );
 
@@ -228,6 +259,7 @@ export class TopsScreenQuicklane {
         "protokoll.topsScreen.quicklane.action.project",
         "protokoll.topsScreen.quicklane.action.firms",
         "protokoll.topsScreen.quicklane.action.participants",
+        "protokoll.topsScreen.quicklane.action.importAudio",
       ]],
       ["protokoll.topsScreen.quicklane.group.visibility", visibility, [
         "protokoll.topsScreen.quicklane.action.ampel",

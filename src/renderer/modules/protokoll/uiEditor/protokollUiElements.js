@@ -188,6 +188,16 @@ const PROTOKOLL_UI_EDITOR_ELEMENTS = Object.freeze([
     lockedOps: Object.freeze(["delete", "executeTargetAction", "modifyDomainData"]),
   }),
   Object.freeze({
+    id: "protokoll.topsScreen.quicklane.action.importAudio",
+    type: "button",
+    role: "navigation-action",
+    parentId: "protokoll.topsScreen.quicklane.group.navigation",
+    order: 50,
+    editable: true,
+    allowedOps: Object.freeze(["move", "hide", "show"]),
+    lockedOps: Object.freeze(["delete", "executeTargetAction", "modifyDomainData"]),
+  }),
+  Object.freeze({
     id: "protokoll.topsScreen.quicklane.group.visibility",
     type: "group",
     role: "visibility",

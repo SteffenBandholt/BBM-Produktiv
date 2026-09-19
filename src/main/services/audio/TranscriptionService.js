@@ -6,6 +6,8 @@ function _audioLog(message, extra = null) {
   console.info("[AUDIO] Transcribe", message);
 }
 
+const { isAbortError, throwIfAborted } = require("./audioAbort");
+
 const MODEL_SETTING_KEY = "audio.whisper.quality";
 const DEFAULT_MODEL_FILE_NAME = "ggml-small.bin";
 const MODEL_FILE_BY_QUALITY = Object.freeze({
@@ -83,8 +85,9 @@ class TranscriptionService {
     return meeting;
   }
 
-  async transcribe({ audioImportId, language = "de" }) {
+  async transcribe({ audioImportId, language = "de", signal = null }) {
     if (!audioImportId) throw new Error("audioImportId required");
+    throwIfAborted(signal);
 
     _audioLog("start", { audioImportId, language });
     const audioImport = this.audioImportsRepo.getById(audioImportId);
@@ -105,7 +108,9 @@ class TranscriptionService {
         language,
         modelFileName: resolvedModelFileName,
         audioImport,
+        signal,
       });
+      throwIfAborted(signal);
 
       const transcript = this.transcriptsRepo.upsertTranscript({
         audioImportId,
@@ -137,8 +142,8 @@ class TranscriptionService {
     } catch (err) {
       this.audioImportsRepo.updateStatus({
         audioImportId,
-        status: "failed",
-        errorMessage: err?.message || String(err),
+        status: isAbortError(err) ? "canceled" : "failed",
+        errorMessage: isAbortError(err) ? null : err?.message || String(err),
       });
       _audioLog("failed", { audioImportId, error: err?.message || String(err) });
       throw err;

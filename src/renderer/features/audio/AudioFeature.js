@@ -71,6 +71,7 @@ export function attachAudioFeature(view) {
         ? ""
         : (String(message || "").trim() || "Audio-Funktion ist fuer diese Lizenz nicht freigeschaltet.");
       this.dictationController?.updateButtons();
+      this._syncQuicklaneState?.();
 
       if (this.root) {
         this.applyEditBoxState();

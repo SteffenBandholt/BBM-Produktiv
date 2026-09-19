@@ -5,6 +5,7 @@ const path = require("path");
 
 const meetingsRepo = require("../db/meetingsRepo");
 const meetingTopsRepo = require("../db/meetingTopsRepo");
+const topsRepo = require("../db/topsRepo");
 const audioImportsRepo = require("../db/audioImportsRepo");
 const transcriptsRepo = require("../db/transcriptsRepo");
 const audioSuggestionsRepo = require("../db/audioSuggestionsRepo");
@@ -12,6 +13,10 @@ const audioTermCorrectionsRepo = require("../db/audioTermCorrectionsRepo");
 const appSettingsRepo = require("../db/appSettingsRepo");
 const { createAudioImportService } = require("../services/audio/AudioImportService");
 const { createTranscriptionService } = require("../services/audio/TranscriptionService");
+const {
+  createProtocolAudioImportService,
+} = require("../services/audio/ProtocolAudioImportService");
+const { isAbortError } = require("../services/audio/audioAbort");
 const {
   createTranscriptSegmentationService,
 } = require("../services/audio/TranscriptSegmentationService");
@@ -32,7 +37,7 @@ const dictionaryService = createDictionaryService();
 const AUDIO_FILE_FILTER = [
   {
     name: "Audio",
-    extensions: ["mp3", "mp4", "wav", "m4a", "aac", "ogg", "flac", "wma"],
+    extensions: ["mp3", "mp4", "wav", "m4a", "aac", "ogg", "webm", "flac", "wma"],
   },
 ];
 
@@ -110,14 +115,23 @@ function _buildWhisperModelState(fileName, availability) {
 
 function _createAudioAddonServices() {
   const transcriptionEngine = createWhisperCppEngine();
+  const transcriptionService = createTranscriptionService({
+    meetingsRepo,
+    audioImportsRepo,
+    transcriptsRepo,
+    engine: transcriptionEngine,
+    appSettingsRepo,
+  });
   return {
     transcriptionEngine,
     audioImportService: createAudioImportService({ meetingsRepo, audioImportsRepo }),
-    transcriptionService: createTranscriptionService({
+    transcriptionService,
+    protocolAudioImportService: createProtocolAudioImportService({
       meetingsRepo,
+      topsRepo,
+      meetingTopsRepo,
       audioImportsRepo,
-      transcriptsRepo,
-      engine: transcriptionEngine,
+      transcriptionService,
       appSettingsRepo,
     }),
     segmentationService: createTranscriptSegmentationService(),
@@ -127,8 +141,16 @@ function _createAudioAddonServices() {
 function registerAudioIpc() {
   // Gemeinsamer technischer Audio-/Whisper-Dienst:
   // Import, Transkription und Modellstatus werden hier zentral verdrahtet.
-  const { transcriptionEngine, audioImportService, transcriptionService, segmentationService } =
+  const {
+    transcriptionEngine,
+    audioImportService,
+    transcriptionService,
+    protocolAudioImportService,
+    segmentationService,
+  } =
     _createAudioAddonServices();
+  const protocolImportControllers = new Map();
+  const operationKey = (event, operationId) => `${event?.sender?.id || "unknown"}:${operationId}`;
   const mappingService = createMeetingMappingService({
     meetingsRepo,
     meetingTopsRepo,
@@ -155,7 +177,9 @@ function registerAudioIpc() {
         const res = await dialog.showOpenDialog(win || null, {
           properties: ["openFile"],
           filters: AUDIO_FILE_FILTER,
-          title: "Sprachdatei auswählen",
+          title: data.processingMode === "protocol_import"
+            ? "Sprachdatei für Import auswählen"
+            : "Sprachdatei auswählen",
         });
         if (res.canceled || !Array.isArray(res.filePaths) || !res.filePaths[0]) {
           return { ok: true, canceled: true };
@@ -217,6 +241,63 @@ function registerAudioIpc() {
       }
       return _toAudioErrorPayload(err);
     }
+  });
+
+  ipcMain.handle("audio:importToProtocol", async (event, payload) => {
+    const operationId = String(payload?.operationId || "").trim();
+    const audioImportId = String(payload?.audioImportId || "").trim();
+    const meetingId = String(payload?.meetingId || "").trim();
+    const projectId = String(payload?.projectId || "").trim();
+    if (!operationId) return { ok: false, error: "operationId fehlt" };
+    if (!audioImportId) return { ok: false, error: "audioImportId fehlt" };
+    if (!meetingId) return { ok: false, error: "meetingId fehlt" };
+    if (!projectId) return { ok: false, error: "projectId fehlt" };
+
+    const key = operationKey(event, operationId);
+    if (protocolImportControllers.has(key)) {
+      return { ok: false, error: "Dieser Sprachimport läuft bereits." };
+    }
+
+    const controller = new AbortController();
+    protocolImportControllers.set(key, controller);
+    try {
+      _ensureAudioLicensed();
+      const result = await protocolAudioImportService.importFromAudio({
+        audioImportId,
+        meetingId,
+        projectId,
+        signal: controller.signal,
+      });
+      return { ok: true, ...result };
+    } catch (err) {
+      if (isAbortError(err)) {
+        try {
+          audioImportsRepo.updateStatus({
+            audioImportId,
+            status: "canceled",
+            errorMessage: null,
+          });
+        } catch (_ignore) {
+          // Der Abbruch darf nicht durch eine nachgelagerte Statusmeldung scheitern.
+        }
+        return { ok: false, canceled: true, error: "Sprachimport wurde abgebrochen." };
+      }
+      if (err?.licenseError || String(err?.message || "").startsWith("LICENSE_")) {
+        return toLicenseErrorPayload(err);
+      }
+      return { ok: false, error: err?.message || String(err) };
+    } finally {
+      protocolImportControllers.delete(key);
+    }
+  });
+
+  ipcMain.handle("audio:cancelProtocolImport", async (event, payload) => {
+    const operationId = String(payload?.operationId || "").trim();
+    if (!operationId) return { ok: false, error: "operationId fehlt" };
+    const controller = protocolImportControllers.get(operationKey(event, operationId));
+    if (!controller) return { ok: true, canceled: false };
+    controller.abort();
+    return { ok: true, canceled: true };
   });
 
   ipcMain.handle("audio:transcribeBlob", async (_evt, payload) => {

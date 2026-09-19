@@ -29,9 +29,10 @@ const quicklaneElements = [
   ...[["navigation", "Navigation", 41], ["visibility", "Sichtbarkeit", 42], ["filter", "TOP-Filter", 43], ["output", "Ausgabe", 44]].map(([key, name, order]) => m83Element({ id: `protokoll.topsScreen.quicklane.group.${key}`, name: `Gruppe ${name}`, type: "group", role: "layoutGroup", parentId: "protokoll.topsScreen.quicklane", order, allowedOps: GROUP_LAYOUT, componentKind: "toolbarGroup" })),
   ...[
     ["pin", "Fixieren", "navigation", 50], ["action.project", "Projekt", "navigation", 51], ["action.firms", "Firmen", "navigation", 52], ["action.participants", "Teilnehmer", "navigation", 53],
+    ["action.importAudio", "Import", "navigation", 54, "importAudioFile"],
     ["action.ampel", "Ampel", "visibility", 54], ["action.longtext", "Langtext", "visibility", 55], ["action.topFilter", "TOP-Filter", "filter", 56],
     ["action.preview", "PDF-Vorschau", "output", 57], ["action.print", "Drucken", "output", 58], ["action.mail", "E-Mail", "output", 59],
-  ].map(([key, name, group, order]) => m83DomainButton({ id: `protokoll.topsScreen.quicklane.${key}`, name, parentId: `protokoll.topsScreen.quicklane.group.${group}`, order, actionKind: "domainAction" })),
+  ].map(([key, name, group, order, actionKind = "domainAction"]) => m83DomainButton({ id: `protokoll.topsScreen.quicklane.${key}`, name, parentId: `protokoll.topsScreen.quicklane.group.${group}`, order, actionKind })),
   m83Element({ id: "protokoll.topsScreen.quicklane.filter.menu", name: "TOP-Filterauswahl", type: "group", role: "layoutGroup", parentId: "protokoll.topsScreen.quicklane", order: 60, allowedOps: GROUP_LAYOUT, componentKind: "transientMenu" }),
   ...TOP_FILTER_OPTIONS.map((option, index) => m83DomainButton({ id: `protokoll.topsScreen.quicklane.filter.option.${option.contractKey}`, name: option.label, parentId: "protokoll.topsScreen.quicklane.filter.menu", order: 61 + index, actionKind: "filter" })),
 ];
@@ -51,6 +52,7 @@ export const PROTOKOLL_QUICKLANE_REQUIRED_SLOTS = Object.freeze([
   "protokoll.topsScreen.quicklane",
   ...["navigation", "visibility", "filter", "output"].map((key) => `protokoll.topsScreen.quicklane.group.${key}`),
   "protokoll.topsScreen.quicklane.pin", "protokoll.topsScreen.quicklane.action.project", "protokoll.topsScreen.quicklane.action.firms", "protokoll.topsScreen.quicklane.action.participants",
+  "protokoll.topsScreen.quicklane.action.importAudio",
   "protokoll.topsScreen.quicklane.action.ampel", "protokoll.topsScreen.quicklane.action.longtext", "protokoll.topsScreen.quicklane.action.topFilter",
   "protokoll.topsScreen.quicklane.action.preview", "protokoll.topsScreen.quicklane.action.print", "protokoll.topsScreen.quicklane.action.mail",
 ]);

@@ -1630,6 +1630,7 @@ async function runTopsScreenIntegrationTests(run) {
         "protokoll.topsScreen.quicklane.action.project",
         "protokoll.topsScreen.quicklane.action.firms",
         "protokoll.topsScreen.quicklane.action.participants",
+        "protokoll.topsScreen.quicklane.action.importAudio",
         "protokoll.topsScreen.quicklane.action.ampel",
         "protokoll.topsScreen.quicklane.action.longtext",
         "protokoll.topsScreen.quicklane.action.topFilter",
@@ -1644,6 +1645,7 @@ async function runTopsScreenIntegrationTests(run) {
       const projectButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.project");
       const firmsButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.firms");
       const participantsButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.participants");
+      const importButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.importAudio");
       const ampelButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.ampel");
       const longtextButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.longtext");
       const filterButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.topFilter");
@@ -1658,6 +1660,10 @@ async function runTopsScreenIntegrationTests(run) {
       assert.equal(String(ampelButton.children[0].src || "").endsWith("assets/icons/ampel-status.svg"), true);
       assert.equal(longtextButton.children[0].className, "bbm-tops-screen-quicklane-icon bbm-tops-screen-quicklane-icon--longtext");
       assert.equal(filterButton.children[0].className, "bbm-tops-screen-quicklane-icon bbm-tops-screen-quicklane-icon--filter");
+      assert.equal(importButton.disabled, true);
+      assert.equal(importButton.children[0].className, "bbm-tops-screen-quicklane-icon bbm-tops-screen-quicklane-icon--import");
+      assert.equal(importButton.children[0].children[0].tagName, "SVG");
+      assert.equal(importButton.children[0].children[0].children.length, 2);
 
       pinButton.dispatchEvent({ type: "click", preventDefault() {} });
       assert.equal(quicklane.dataset.pinned, "true");
@@ -1722,10 +1728,93 @@ async function runTopsScreenIntegrationTests(run) {
       assert.ok(todoItem);
       todoItem.dispatchEvent({ type: "click", preventDefault() {} });
       assert.equal(screen.getTopFilter(), "todo");
+
+      screen._audioLicensed = true;
+      screen._syncQuicklaneState();
+      const licensedImportButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.importAudio");
+      assert.equal(licensedImportButton.disabled, false);
+
+      screen.store.setState({ isReadOnly: true });
+      screen._syncQuicklaneState();
+      const readOnlyImportButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.importAudio");
+      assert.equal(readOnlyImportButton.disabled, true);
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;
     }
+  });
+
+  await run("#349: produktiver TopsScreen-Import springt zum ersten neu erzeugten Importpunkt", async () => {
+    const state = { isReadOnly: false, selectedTopId: null };
+    const calls = [];
+    const screen = Object.create(TopsScreen.prototype);
+    screen.store = {
+      getState: () => state,
+    };
+    screen._protocolAudioImportBusy = false;
+    screen._protocolAudioImportOperationId = null;
+    screen._getQuicklaneMeetingId = () => "21";
+    screen._getQuicklaneProjectId = () => "17";
+    screen._ensureAudioAvailable = async () => true;
+    screen._createProtocolAudioImportOperationId = () => "operation-349";
+    screen._syncQuicklaneState = () => calls.push(["sync"]);
+    screen._showProtocolAudioImportProgress = (payload) => calls.push(["progress", payload]);
+    screen._closeProtocolAudioImportProgress = () => calls.push(["close-progress"]);
+    screen._setTopFilter = (value) => calls.push(["filter", value]);
+    screen._getCollapsedLevel1Ids = () => ["70", "71"];
+    screen._setCollapsedLevel1Ids = (value) => calls.push(["collapsed", value]);
+    screen._setCreateParentTopId = (value) => calls.push(["parent", value]);
+    screen._reloadTops = async (payload) => {
+      calls.push(["reload", payload]);
+      state.selectedTopId = payload.selectTopId;
+    };
+    screen._syncScreenState = () => calls.push(["screen-state"]);
+    screen._awaitNextPaint = async () => {};
+    screen.topsList = { root: { querySelector: () => null } };
+    screen.workbench = { focusShortText: () => true };
+    screen.protocolAudioTranscriptionService = {
+      async importAudio(payload) {
+        calls.push(["select", payload]);
+        return {
+          ok: true,
+          audioImport: { id: "audio-349", original_file_name: "baustelle.webm" },
+        };
+      },
+      async importToProtocol(payload) {
+        calls.push(["import", payload]);
+        return {
+          ok: true,
+          importTitleId: "71",
+          firstCreatedTopId: "72",
+          createdTopIds: ["72", "73"],
+        };
+      },
+    };
+
+    const result = await screen._openQuicklaneImportAudio();
+
+    assert.equal(result, true);
+    assert.deepEqual(calls.find(([name]) => name === "select"), [
+      "select",
+      { meetingId: "21", projectId: "17", processingMode: "protocol_import" },
+    ]);
+    assert.deepEqual(calls.find(([name]) => name === "import"), [
+      "import",
+      {
+        audioImportId: "audio-349",
+        meetingId: "21",
+        projectId: "17",
+        operationId: "operation-349",
+      },
+    ]);
+    assert.deepEqual(calls.find(([name]) => name === "collapsed"), ["collapsed", ["70"]]);
+    assert.deepEqual(calls.find(([name]) => name === "reload"), [
+      "reload",
+      { keepSelection: false, selectTopId: "72" },
+    ]);
+    assert.equal(state.selectedTopId, "72");
+    assert.equal(screen._protocolAudioImportBusy, false);
+    assert.equal(screen._protocolAudioImportOperationId, null);
   });
 
   await run("Tops v2 Integration: Diktat-Buttons bleiben ohne Freischaltung verborgen", () => {

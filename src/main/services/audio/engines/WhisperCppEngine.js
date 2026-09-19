@@ -4,6 +4,7 @@ const path = require("path");
 const http = require("http");
 const { app } = require("electron");
 const { spawn } = require("child_process");
+const { createAbortError, isAbortError, throwIfAborted } = require("../audioAbort");
 
 function _fileExists(filePath) {
   if (!filePath) return false;
@@ -65,8 +66,12 @@ function _getUserModelRoot() {
   }
 }
 
-function _runProcess(command, args, { cwd } = {}) {
+function _runProcess(command, args, { cwd, signal = null } = {}) {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(createAbortError());
+      return;
+    }
     const child = spawn(command, args, {
       cwd: cwd || process.cwd(),
       stdio: ["ignore", "pipe", "pipe"],
@@ -75,6 +80,23 @@ function _runProcess(command, args, { cwd } = {}) {
 
     let stdout = "";
     let stderr = "";
+    let settled = false;
+
+    const finish = (callback, value) => {
+      if (settled) return;
+      settled = true;
+      signal?.removeEventListener?.("abort", handleAbort);
+      callback(value);
+    };
+    const handleAbort = () => {
+      try {
+        child.kill();
+      } catch (_ignore) {
+        // Der einzelne Kindprozess kann bereits beendet sein.
+      }
+      finish(reject, createAbortError());
+    };
+    signal?.addEventListener?.("abort", handleAbort, { once: true });
 
     child.stdout.on("data", (chunk) => {
       stdout += String(chunk || "");
@@ -82,22 +104,35 @@ function _runProcess(command, args, { cwd } = {}) {
     child.stderr.on("data", (chunk) => {
       stderr += String(chunk || "");
     });
-    child.on("error", (err) => reject(err));
+    child.on("error", (err) => finish(reject, err));
     child.on("close", (code) => {
       if (code === 0) {
-        resolve({ stdout, stderr, code });
+        finish(resolve, { stdout, stderr, code });
         return;
       }
-      reject(new Error(stderr.trim() || stdout.trim() || `Prozess fehlgeschlagen (${code})`));
+      finish(reject, new Error(stderr.trim() || stdout.trim() || `Prozess fehlgeschlagen (${code})`));
     });
   });
 }
 
-function _postMultipart({ host, port, path: requestPath, fields = {}, file }) {
+function _postMultipart({ host, port, path: requestPath, fields = {}, file, signal = null }) {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(createAbortError());
+      return;
+    }
     const boundary = `----bbm-whisper-${Date.now().toString(16)}-${Math.random()
       .toString(16)
       .slice(2)}`;
+    let settled = false;
+    let stream = null;
+
+    const finish = (callback, value) => {
+      if (settled) return;
+      settled = true;
+      signal?.removeEventListener?.("abort", handleAbort);
+      callback(value);
+    };
 
     const req = http.request(
       {
@@ -116,12 +151,20 @@ function _postMultipart({ host, port, path: requestPath, fields = {}, file }) {
           body += String(chunk || "");
         });
         res.on("end", () => {
-          resolve({ status: res.statusCode || 0, body });
+          finish(resolve, { status: res.statusCode || 0, body });
         });
       }
     );
 
-    req.on("error", (err) => reject(err));
+    const handleAbort = () => {
+      const error = createAbortError();
+      stream?.destroy?.(error);
+      req.destroy(error);
+      finish(reject, error);
+    };
+    signal?.addEventListener?.("abort", handleAbort, { once: true });
+
+    req.on("error", (err) => finish(reject, err));
 
     const writeField = (name, value) => {
       req.write(`--${boundary}\r\n`);
@@ -151,8 +194,8 @@ function _postMultipart({ host, port, path: requestPath, fields = {}, file }) {
     );
     req.write("Content-Type: application/octet-stream\r\n\r\n");
 
-    const stream = fs.createReadStream(file.filePath);
-    stream.on("error", (err) => reject(err));
+    stream = fs.createReadStream(file.filePath);
+    stream.on("error", (err) => finish(reject, err));
     stream.on("end", () => {
       req.write("\r\n");
       finalize();
@@ -161,11 +204,31 @@ function _postMultipart({ host, port, path: requestPath, fields = {}, file }) {
   });
 }
 
-function _waitForHttp({ host, port, timeoutMs = 6000 }) {
+function _waitForHttp({ host, port, timeoutMs = 6000, signal = null }) {
   const start = Date.now();
   return new Promise((resolve, reject) => {
+    let request = null;
+    let retryTimer = null;
+    let settled = false;
+    const finish = (callback, value) => {
+      if (settled) return;
+      settled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      signal?.removeEventListener?.("abort", handleAbort);
+      callback(value);
+    };
+    const handleAbort = () => {
+      request?.destroy?.();
+      finish(reject, createAbortError());
+    };
+    if (signal?.aborted) {
+      finish(reject, createAbortError());
+      return;
+    }
+    signal?.addEventListener?.("abort", handleAbort, { once: true });
     const tryOnce = () => {
-      const req = http.request(
+      if (settled) return;
+      request = http.request(
         {
           host,
           port,
@@ -174,17 +237,18 @@ function _waitForHttp({ host, port, timeoutMs = 6000 }) {
         },
         (res) => {
           res.resume();
-          resolve(true);
+          finish(resolve, true);
         }
       );
-      req.on("error", () => {
+      request.on("error", () => {
+        if (settled) return;
         if (Date.now() - start >= timeoutMs) {
-          reject(new Error("whisper-server nicht erreichbar"));
+          finish(reject, new Error("whisper-server nicht erreichbar"));
           return;
         }
-        setTimeout(tryOnce, 200);
+        retryTimer = setTimeout(tryOnce, 200);
       });
-      req.end();
+      request.end();
     };
     tryOnce();
   });
@@ -287,7 +351,8 @@ class WhisperCppEngine {
     ]);
   }
 
-  async _ensureServerRunning({ serverPath, modelPath }) {
+  async _ensureServerRunning({ serverPath, modelPath, signal = null }) {
+    throwIfAborted(signal);
     if (this._serverState.process && !this._serverState.process.killed) {
       if (this._serverState.modelPath !== modelPath) {
         try {
@@ -296,10 +361,12 @@ class WhisperCppEngine {
             port: this.serverPort,
             path: "/load",
             fields: { model: modelPath },
+            signal,
           });
           this._serverState.modelPath = modelPath;
           _audioLog("server model switch", { modelPath });
         } catch (err) {
+          if (isAbortError(err)) throw err;
           _audioLog("server model switch failed", { error: err?.message || String(err) });
           return false;
         }
@@ -333,7 +400,7 @@ class WhisperCppEngine {
     this._serverState.process = child;
     this._serverState.modelPath = modelPath;
     try {
-      await _waitForHttp({ host: this.serverHost, port: this.serverPort });
+      await _waitForHttp({ host: this.serverHost, port: this.serverPort, signal });
       _audioLog("server ready", { host: this.serverHost, port: this.serverPort, modelPath });
       return true;
     } catch (err) {
@@ -345,12 +412,13 @@ class WhisperCppEngine {
       }
       this._serverState.process = null;
       this._serverState.modelPath = null;
+      if (isAbortError(err)) throw err;
       return false;
     }
   }
 
-  async _transcribeViaServer({ modelPath, preparedPath, effectiveLanguage, serverPath }) {
-    const ok = await this._ensureServerRunning({ serverPath, modelPath });
+  async _transcribeViaServer({ modelPath, preparedPath, effectiveLanguage, serverPath, signal = null }) {
+    const ok = await this._ensureServerRunning({ serverPath, modelPath, signal });
     if (!ok) {
       throw new Error("whisper-server nicht verfuegbar");
     }
@@ -366,6 +434,7 @@ class WhisperCppEngine {
         language: effectiveLanguage,
       },
       file: { fieldName: "file", filePath: preparedPath },
+      signal,
     });
 
     if (response.status < 200 || response.status >= 300) {
@@ -470,7 +539,8 @@ class WhisperCppEngine {
     );
   }
 
-  async _prepareInput(filePath, ffmpegPath) {
+  async _prepareInput(filePath, ffmpegPath, signal = null) {
+    throwIfAborted(signal);
     const ext = path.extname(String(filePath || "")).toLowerCase();
     if (ext === ".wav") {
       return { preparedPath: filePath, cleanup: async () => {} };
@@ -497,8 +567,14 @@ class WhisperCppEngine {
         "-c:a",
         "pcm_s16le",
         preparedPath,
-      ]);
+      ], { signal });
     } catch (err) {
+      try {
+        await fs.promises.rm(tempDir, { recursive: true, force: true });
+      } catch (_cleanupError) {
+        // Ein Cleanup-Fehler darf den eigentlichen ffmpeg-Fehler nicht verdecken.
+      }
+      if (isAbortError(err)) throw err;
       throw new Error(`Audio-Vorverarbeitung mit ffmpeg fehlgeschlagen: ${err?.message || err}`);
     }
 
@@ -514,7 +590,8 @@ class WhisperCppEngine {
     };
   }
 
-  async transcribe({ filePath, language, modelFileName } = {}) {
+  async transcribe({ filePath, language, modelFileName, signal = null } = {}) {
+    throwIfAborted(signal);
     const sourcePath = String(filePath || "").trim();
     if (!sourcePath) throw new Error("filePath required");
     if (!_fileExists(sourcePath)) {
@@ -527,7 +604,7 @@ class WhisperCppEngine {
 
     let prepared = null;
     try {
-      prepared = await this._prepareInput(sourcePath, availability.ffmpegPath);
+      prepared = await this._prepareInput(sourcePath, availability.ffmpegPath, signal);
       const serverPath = this._getServerExecutablePath();
       let fullText = "";
       let segments = [];
@@ -544,10 +621,12 @@ class WhisperCppEngine {
             preparedPath: prepared.preparedPath,
             effectiveLanguage,
             serverPath,
+            signal,
           });
           fullText = serverResult.text;
           segments = serverResult.segments || [];
         } catch (err) {
+          if (isAbortError(err)) throw err;
           _audioLog("server fallback to cli", { error: err?.message || String(err) });
           const outputBase = path.join(outputDir, "transcript");
 
@@ -561,7 +640,7 @@ class WhisperCppEngine {
             "-otxt",
             "-of",
             outputBase,
-          ]);
+          ], { signal });
 
           const transcriptFile = `${outputBase}.txt`;
           if (!_fileExists(transcriptFile)) {
@@ -586,7 +665,7 @@ class WhisperCppEngine {
           "-otxt",
           "-of",
           outputBase,
-        ]);
+        ], { signal });
 
         const transcriptFile = `${outputBase}.txt`;
         if (!_fileExists(transcriptFile)) {

@@ -38,6 +38,27 @@ export class TranscriptionService {
     return this._requireAudioMethod("audioTranscribe")({ audioImportId });
   }
 
+  async importAudio({ meetingId, projectId, processingMode = "protocol_import" }) {
+    return this._requireAudioMethod(
+      "audioImport",
+      "Audio-Dateiauswahl ist nicht verfuegbar."
+    )({ meetingId, projectId, processingMode });
+  }
+
+  async importToProtocol({ audioImportId, meetingId, projectId, operationId }) {
+    return this._requireAudioMethod(
+      "audioImportToProtocol",
+      "Sprachimport ist nicht verfuegbar."
+    )({ audioImportId, meetingId, projectId, operationId });
+  }
+
+  async cancelProtocolImport({ operationId }) {
+    return this._requireAudioMethod(
+      "audioCancelProtocolImport",
+      "Abbruch des Sprachimports ist nicht verfuegbar."
+    )({ operationId });
+  }
+
   async analyze({ audioImportId, processingMode }) {
     return this._requireAudioMethod("audioAnalyze")({ audioImportId, processingMode });
   }

@@ -18,8 +18,19 @@ import {
 } from "../ui/MainHeader.uiEditorContract.js";
 import { aggregateBbmM83Components } from "./m83ComponentContract.js";
 
-export const BBM_M80_REGISTRY_VERSION = 38;
+export const BBM_M80_REGISTRY_VERSION = 39;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
+export const BBM_M80_PROFILE_MIGRATIONS = Object.freeze([
+  Object.freeze({
+    kind: "additiveElement",
+    scopeId: "protokoll.screen.root",
+    addedElementId: "protokoll.topsScreen.quicklane.action.importAudio",
+    expectedParentId: "protokoll.topsScreen.quicklane.group.navigation",
+    fromFingerprint: "sha256:7251a69f8243bb21a4768170d75ea0d51a4a43a48db0cb4b06caaca565185029",
+    toFingerprint: "sha256:2119244285c139c1013197702f3a49a810da472850b629e8cb91a09f18719398",
+    archiveLabel: "protokoll-audio-import-button",
+  }),
+]);
 
 export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
   projectPlannedStartUiEditorContract,

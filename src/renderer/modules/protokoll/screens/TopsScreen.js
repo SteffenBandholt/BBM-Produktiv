@@ -31,6 +31,7 @@ import { focusCreatedTopAfterReload } from "../topCreateFocus.js";
 import { normalizeTopFilterMode } from "../topFilterMode.js";
 import { attachAudioFeature } from "../../../features/audio/AudioFeature.js";
 import { DictationController } from "../../../features/audio-dictation/DictationController.js";
+import { TranscriptionService } from "../../audio/TranscriptionService.js";
 import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
 import {
   createPopupOverlay,
@@ -125,6 +126,9 @@ export default class TopsScreen {
     this.dialogs = null;
     this._dialogViewAdapter = this._createDialogViewAdapter();
     this._topRulesOverlay = null;
+    this._protocolAudioImportProgress = null;
+    this._protocolAudioImportOperationId = null;
+    this._protocolAudioImportBusy = false;
     this.textLimitSettingsService =
       options.textLimitSettingsService || new TextLimitSettingsService();
     this.textLimits = { ...DEFAULT_TEXT_LIMITS };
@@ -143,6 +147,8 @@ export default class TopsScreen {
     this.topsRepository = options.topsRepository || new TopsRepository();
     this.assigneeDataSource = options.assigneeDataSource || new TopsAssigneeDataSource();
     attachAudioFeature(this);
+    this.protocolAudioTranscriptionService =
+      options.protocolAudioTranscriptionService || new TranscriptionService();
     this.dictationController = new DictationController({
       view: this,
       ensureAudioAvailable: (opts) => this._ensureAudioAvailable?.(opts),
@@ -297,6 +303,7 @@ export default class TopsScreen {
       onProject: () => this._openQuicklaneProject(),
       onFirms: () => this._openQuicklaneFirms(),
       onParticipants: () => this._openQuicklaneParticipants(),
+      onImportAudio: () => this._openQuicklaneImportAudio(),
       onAmpelToggle: () => this.toggleAmpelDisplay(),
       onLongtextToggle: () => this.toggleLongtextDisplay(),
       onTopFilterChange: (mode) => this.setTopFilter(mode),
@@ -658,6 +665,167 @@ export default class TopsScreen {
     return true;
   }
 
+  _createProtocolAudioImportOperationId() {
+    if (typeof globalThis.crypto?.randomUUID === "function") {
+      return globalThis.crypto.randomUUID();
+    }
+    return `protocol-audio-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  _showProtocolAudioImportProgress({ fileName, operationId }) {
+    this._closeProtocolAudioImportProgress();
+    const overlay = createPopupOverlay({ zIndex: OVERLAY_TOP + 2 });
+    overlay.dataset.bbmProtocolAudioImportProgress = "true";
+    registerPopupCloseHandlers(
+      overlay,
+      () => void this._cancelProtocolAudioImport(),
+      { closeOnBackdrop: false }
+    );
+
+    const card = document.createElement("div");
+    stylePopupCard(card, { width: "min(480px, calc(100vw - 24px))" });
+    card.style.padding = "22px";
+    card.style.gap = "14px";
+
+    const title = document.createElement("div");
+    title.textContent = "Sprachdatei wird transkribiert …";
+    title.style.fontSize = "17px";
+    title.style.fontWeight = "800";
+
+    const name = document.createElement("div");
+    name.textContent = String(fileName || "Sprachdatei");
+    name.style.overflowWrap = "anywhere";
+    name.style.color = "var(--text-muted, #5d6a7a)";
+
+    const status = document.createElement("div");
+    status.textContent = "Lokale Verarbeitung mit Whisper läuft.";
+    status.style.fontSize = "13px";
+
+    const actions = document.createElement("div");
+    actions.style.display = "flex";
+    actions.style.justifyContent = "flex-end";
+
+    const cancelButton = document.createElement("button");
+    cancelButton.type = "button";
+    cancelButton.textContent = "Abbrechen";
+    applyPopupButtonStyle(cancelButton, { variant: "neutral" });
+    cancelButton.onclick = () => void this._cancelProtocolAudioImport();
+    actions.appendChild(cancelButton);
+
+    card.append(title, name, status, actions);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+    overlay.style.display = "flex";
+    overlay.focus?.();
+
+    this._protocolAudioImportProgress = { overlay, status, cancelButton, operationId };
+  }
+
+  _closeProtocolAudioImportProgress() {
+    const progress = this._protocolAudioImportProgress;
+    if (!progress) return;
+    cleanupPopupHandlers(progress.overlay);
+    progress.overlay.remove?.();
+    if (progress.overlay.parentElement?.removeChild) {
+      progress.overlay.parentElement.removeChild(progress.overlay);
+    }
+    this._protocolAudioImportProgress = null;
+  }
+
+  async _cancelProtocolAudioImport({ silent = false } = {}) {
+    const operationId = this._protocolAudioImportOperationId;
+    if (!operationId) return false;
+    const progress = this._protocolAudioImportProgress;
+    if (progress) {
+      progress.status.textContent = "Sprachimport wird abgebrochen …";
+      progress.cancelButton.disabled = true;
+    }
+    try {
+      await this.protocolAudioTranscriptionService.cancelProtocolImport({ operationId });
+      return true;
+    } catch (error) {
+      if (!silent) alert(error?.message || "Sprachimport konnte nicht abgebrochen werden.");
+      return false;
+    }
+  }
+
+  async _openQuicklaneImportAudio() {
+    const initialState = this.store.getState();
+    const meetingId = this._getQuicklaneMeetingId();
+    const projectId = this._getQuicklaneProjectId();
+    if (!meetingId || !projectId || initialState.isReadOnly || this._protocolAudioImportBusy) return false;
+    if (!(await this._ensureAudioAvailable({ alertOnFailure: true }))) return false;
+
+    const currentState = this.store.getState();
+    if (currentState.isReadOnly || !this._getQuicklaneMeetingId()) return false;
+
+    let selected;
+    try {
+      selected = await this.protocolAudioTranscriptionService.importAudio({
+        meetingId,
+        projectId,
+        processingMode: "protocol_import",
+      });
+    } catch (error) {
+      alert(error?.message || "Sprachdatei konnte nicht ausgewählt werden.");
+      return false;
+    }
+    if (selected?.canceled) return false;
+    if (!selected?.ok || !selected?.audioImport?.id) {
+      alert(selected?.error || "Sprachdatei konnte nicht importiert werden.");
+      return false;
+    }
+
+    const operationId = this._createProtocolAudioImportOperationId();
+    this._protocolAudioImportOperationId = operationId;
+    this._protocolAudioImportBusy = true;
+    this._syncQuicklaneState();
+    this._showProtocolAudioImportProgress({
+      fileName: selected.audioImport.original_file_name || "Sprachdatei",
+      operationId,
+    });
+
+    try {
+      const result = await this.protocolAudioTranscriptionService.importToProtocol({
+        audioImportId: selected.audioImport.id,
+        meetingId,
+        projectId,
+        operationId,
+      });
+      if (result?.canceled) return false;
+      if (!result?.ok || !result?.firstCreatedTopId || !result?.importTitleId) {
+        alert(result?.error || "Sprachimport konnte nicht übernommen werden.");
+        return false;
+      }
+
+      this._setTopFilter("all");
+      this._setCollapsedLevel1Ids(
+        this._getCollapsedLevel1Ids().filter(
+          (id) => String(id) !== String(result.importTitleId)
+        )
+      );
+      this._setCreateParentTopId(result.importTitleId);
+      await this._reloadTops({ keepSelection: false, selectTopId: result.firstCreatedTopId });
+      this._syncScreenState();
+      await focusCreatedTopAfterReload({
+        createdTopId: result.firstCreatedTopId,
+        selectedTopId: this.store.getState().selectedTopId,
+        topsListRoot: this.topsList?.root,
+        workbench: this.workbench,
+        awaitNextPaint: () => this._awaitNextPaint(),
+      });
+      return true;
+    } catch (error) {
+      alert(error?.message || "Sprachimport ist fehlgeschlagen.");
+      return false;
+    } finally {
+      this._protocolAudioImportOperationId = null;
+      this._protocolAudioImportBusy = false;
+      this._closeProtocolAudioImportProgress();
+      this._syncQuicklaneState();
+    }
+  }
+
   async _openQuicklanePreview() {
     const projectId = this._getQuicklaneProjectId();
     const meetingId = this._getQuicklaneMeetingId();
@@ -694,7 +862,8 @@ export default class TopsScreen {
       hasProject: !!this._getQuicklaneProjectId(),
       hasMeeting: !!this._getQuicklaneMeetingId(),
       isReadOnly: !!state.isReadOnly,
-      isBusy: !!state.isLoading || !!state.isWriting,
+      audioAvailable: !!this._audioLicensed || !!this._audioDevOverride,
+      isBusy: !!state.isLoading || !!state.isWriting || this._protocolAudioImportBusy,
     });
   }
 
@@ -1825,6 +1994,8 @@ export default class TopsScreen {
     }
     this._onTableLayoutChanged = null;
     await this.closeFlow?.destroy?.();
+    await this._cancelProtocolAudioImport({ silent: true });
+    this._closeProtocolAudioImportProgress();
     this._destroyAudioFeature?.();
     this._destroyDictationController?.();
     this._showSidebar();

@@ -85,6 +85,16 @@ const PROTOKOLL_TOPS_UI_REGISTRY = Object.freeze([
     allowedOps: BUTTON_OPS,
   }),
   createRegistryEntry({
+    id: "protokoll.topsScreen.quicklane.action.importAudio",
+    name: "Import",
+    type: "button",
+    role: "navigation",
+    parentId: "protokoll.topsScreen.quicklane.group.navigation",
+    order: 50,
+    allowedOps: BUTTON_OPS,
+    lockedOps: ["executeTargetAction", "modifyDomainData", "createRecord", "deleteRecord"],
+  }),
+  createRegistryEntry({
     id: "protokoll.topsScreen.quicklane.group.visibility",
     name: "Quicklane Anzeige",
     type: "group",

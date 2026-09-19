@@ -46,7 +46,7 @@ function hasChildren(topId) {
   return !!row;
 }
 
-function createTop({ projectId, parentTopId, level, number, title }) {
+function createTop({ projectId, parentTopId, level, number, title, specialType = null }) {
   const db = initDatabase();
 
   if (!projectId) throw new Error("projectId required");
@@ -66,12 +66,13 @@ function createTop({ projectId, parentTopId, level, number, title }) {
       level,
       number,
       title,
+      special_type,
       is_hidden,
       removed_at,
       created_at,
       updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, 0, NULL, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?)
   `).run(
     id,
     projectId,
@@ -79,11 +80,30 @@ function createTop({ projectId, parentTopId, level, number, title }) {
     Number(level),
     Number(number),
     t,
+    specialType ? String(specialType) : null,
     now,
     now
   );
 
   return getTopById(id);
+}
+
+function findSpecialTopByMeeting({ meetingId, specialType }) {
+  const db = initDatabase();
+  if (!meetingId) throw new Error("meetingId required");
+  if (!specialType) throw new Error("specialType required");
+
+  return db.prepare(`
+    SELECT t.*
+    FROM meeting_tops mt
+    JOIN tops t ON t.id = mt.top_id
+    WHERE mt.meeting_id = ?
+      AND t.special_type = ?
+      AND t.removed_at IS NULL
+      AND COALESCE(t.is_trashed, 0) = 0
+    ORDER BY t.created_at ASC, t.id ASC
+    LIMIT 1
+  `).get(meetingId, String(specialType));
 }
 
 /**
@@ -307,6 +327,7 @@ module.exports = {
   getNextNumber,
   hasChildren,
   createTop,
+  findSpecialTopByMeeting,
   moveTop,
   updateTitle,
   setHidden,

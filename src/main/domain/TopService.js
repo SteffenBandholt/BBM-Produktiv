@@ -38,6 +38,7 @@ class TopService {
           level: r.level,
           number: r.number,
           title: r.title,
+          special_type: r.special_type ?? null,
           is_hidden: r.is_hidden,
 
           // ✅ TOP angelegt am (aus tops.created_at, alias top_created_at)
@@ -110,6 +111,7 @@ class TopService {
           level: lvl,
           number: num,
           title: title,
+          special_type: r.special_type ?? null,
           is_hidden: isHidden,
 
           // ✅ TOP angelegt am (aus tops.created_at, alias top_created_at)
@@ -156,6 +158,20 @@ class TopService {
 
     // ---------- Nummernanzeige (DisplayNumber) ----------
     const cache = new Map();
+    const importAreaCache = new Map();
+
+    const isImportArea = (top) => {
+      if (!top) return false;
+      if (importAreaCache.has(top.id)) return importAreaCache.get(top.id);
+      if (String(top.special_type || "") === "audio_import") {
+        importAreaCache.set(top.id, true);
+        return true;
+      }
+      const parent = top.parent_top_id ? baseById.get(top.parent_top_id) : null;
+      const result = parent ? isImportArea(parent) : false;
+      importAreaCache.set(top.id, result);
+      return result;
+    };
 
     const isHierString = (v) => {
       if (v === null || v === undefined) return false;
@@ -177,6 +193,11 @@ class TopService {
     const buildDisplay = (top) => {
       if (!top) return "";
 
+      if (String(top.special_type || "") === "audio_import") {
+        cache.set(top.id, "");
+        return "";
+      }
+
       // ✅ frozen_display_number nur akzeptieren, wenn es zur Ebene passt
       if (!isOpen && top.frozen_display_number && isGoodHierForNode(top, top.frozen_display_number)) {
         return String(top.frozen_display_number);
@@ -191,7 +212,8 @@ class TopService {
       }
 
       const parent = baseById.get(top.parent_top_id);
-      const val = parent ? `${buildDisplay(parent)}.${own}` : own;
+      const parentDisplay = parent ? buildDisplay(parent) : "";
+      const val = parentDisplay ? `${parentDisplay}.${own}` : own;
       cache.set(top.id, val);
       return val;
     };
@@ -231,6 +253,7 @@ class TopService {
       return {
         ...t,
         displayNumber: buildDisplay(t),
+        isImportArea: isImportArea(t),
 
         ampelColor: a.color,
         ampelReason: a.reason,
@@ -238,6 +261,7 @@ class TopService {
     });
 
     withDisplay.sort((a, b) => {
+      if (a.isImportArea !== b.isImportArea) return a.isImportArea ? 1 : -1;
       const as = String(a.displayNumber).split(".").map((x) => Number(x));
       const bs = String(b.displayNumber).split(".").map((x) => Number(x));
       const n = Math.max(as.length, bs.length);
@@ -320,6 +344,9 @@ class TopService {
 
     const top = this.topsRepo.getTopById(topId);
     if (!top) throw new Error("TOP nicht gefunden");
+    if (String(top.special_type || "") === "audio_import") {
+      throw new Error("Der Import-Bereich darf nicht verschoben werden");
+    }
 
     const openMeeting = this.meetingsRepo.getOpenMeetingByProject(top.project_id);
     if (!openMeeting) {

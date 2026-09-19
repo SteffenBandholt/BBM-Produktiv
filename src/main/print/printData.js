@@ -211,6 +211,35 @@ function _applyPrintFlagsAndFilter(tops, { includeHidden = false } = {}) {
   });
 }
 
+function filterImportAreaForPrint(tops) {
+  const list = Array.isArray(tops) ? tops : [];
+  const byId = new Map(list.filter((row) => row?.id != null).map((row) => [String(row.id), row]));
+  const cache = new Map();
+
+  const belongsToImportArea = (row, seen = new Set()) => {
+    if (!row) return false;
+    const id = String(row.id ?? "");
+    if (id && cache.has(id)) return cache.get(id);
+    if (String(row.special_type || "") === "audio_import") {
+      if (id) cache.set(id, true);
+      return true;
+    }
+
+    const parentId = String(row.parent_top_id ?? "");
+    if (!parentId || seen.has(parentId)) {
+      if (id) cache.set(id, false);
+      return false;
+    }
+    const nextSeen = new Set(seen);
+    if (id) nextSeen.add(id);
+    const result = belongsToImportArea(byId.get(parentId), nextSeen);
+    if (id) cache.set(id, result);
+    return result;
+  };
+
+  return list.filter((row) => !belongsToImportArea(row));
+}
+
 function _parseHierSegments(v) {
   const s = String(v || "").trim();
   if (!s) return null;
@@ -973,12 +1002,14 @@ function _loadPrintDocumentContent({
     participants = _listMeetingParticipants(db, meetingId);
     tops = meetingId ? meetingTopsRepo.listJoinedByMeeting(meetingId) : [];
     tops = (tops || []).map(_mapTopRow);
+    tops = filterImportAreaForPrint(tops);
     _applyHierDisplayNumbers(tops, Number(meeting?.is_closed) !== 1);
     tops = _applyPrintFlagsAndFilter(tops);
     _sortTopsByNumber(tops);
   } else if (mode === "topsAll") {
     tops = projectId ? meetingTopsRepo.listLatestByProject(projectId) : [];
     tops = (tops || []).map(_mapTopRow);
+    tops = filterImportAreaForPrint(tops);
     _applyHierDisplayNumbers(tops, false);
     tops = _applyPrintFlagsAndFilter(tops, { includeHidden: true });
     _sortTopsByNumber(tops);
@@ -990,7 +1021,7 @@ function _loadPrintDocumentContent({
     firms = _enrichFirmsForCards({ db, firms, settings });
   } else if (mode === "todo") {
     const rowsRaw = projectId ? meetingTopsRepo.listLatestByProject(projectId) : [];
-    const rows = (rowsRaw || []).map(_mapTopRow);
+    const rows = filterImportAreaForPrint((rowsRaw || []).map(_mapTopRow));
     _applyHierDisplayNumbers(rows, false);
     todoRows = _buildTodoRows(db, rows);
     const filter = _normalizeTodoResponsibleFilter(todoResponsibleFilter);
@@ -1149,4 +1180,4 @@ async function getPrintData({
   }; 
 } 
 
-module.exports = { getPrintData, getPrintRuntimeContext };
+module.exports = { getPrintData, getPrintRuntimeContext, filterImportAreaForPrint };

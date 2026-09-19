@@ -125,13 +125,13 @@ async function runM8272GenericTextResizeTests(run) {
       return { lower, higher, direct };
     };
 
-    await run("M82.7.2/M83.0 BBM: Inventar umfasst alle 187 textResize-Ziele in sieben produktiven Scopes", () => {
-      assert.equal(textEntries.length, 187);
+    await run("M82.7.2/M83.0 BBM: Inventar umfasst alle 188 textResize-Ziele in sieben produktiven Scopes", () => {
+      assert.equal(textEntries.length, 188);
       assert.deepEqual(Object.fromEntries(scopes.map((scope) => [scope.scopeId, scope.elements.filter((entry) => entry.allowedOps.includes("textResize")).length]).filter(([, count]) => count)), {
         "restarbeiten.header.root": 27,
         "restarbeiten.list.root": 21,
         "restarbeiten.edit.root": 31,
-        "protokoll.screen.root": 24,
+        "protokoll.screen.root": 25,
         "protokoll.list.root": 19,
         "protokoll.edit.root": 23,
         "rechnung.screen": 42,

@@ -567,6 +567,11 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   block-size: 20px;
 }
 
+.bbm-tops-screen-quicklane-icon--import svg {
+  inline-size: 21px;
+  block-size: 21px;
+}
+
 .bbm-tops-screen-quicklane-filter-badge {
   position: absolute;
   inset-block-end: -5px;

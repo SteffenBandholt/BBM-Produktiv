@@ -7,8 +7,8 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 38,
-  "registryFingerprint": "sha256:73b57cd403ff39a4bb4c43e452c229b44218a956e2638ec282250ca24a0b690f",
+  "registryVersion": 39,
+  "registryFingerprint": "sha256:12964b8c9628b4e0d5a8f48b16230f3a223fd82da189e69b4038cf27834153cc",
   "registryStatus": "incomplete",
   "activeScopes": [
     "restarbeiten.header.root",
@@ -55,7 +55,7 @@
     { "scopeId": "restarbeiten.header.root", "status": "complete", "reason": null, "elementCount": 44, "missingReferenceCount": 0 },
     { "scopeId": "restarbeiten.list.root", "status": "complete", "reason": null, "elementCount": 32, "missingReferenceCount": 0 },
     { "scopeId": "restarbeiten.edit.root", "status": "complete", "reason": null, "elementCount": 53, "missingReferenceCount": 0 },
-    { "scopeId": "protokoll.screen.root", "status": "complete", "reason": null, "elementCount": 34, "missingReferenceCount": 0 },
+    { "scopeId": "protokoll.screen.root", "status": "complete", "reason": null, "elementCount": 35, "missingReferenceCount": 0 },
     { "scopeId": "protokoll.list.root", "status": "complete", "reason": null, "elementCount": 32, "missingReferenceCount": 0 },
     { "scopeId": "protokoll.edit.root", "status": "complete", "reason": null, "elementCount": 38, "missingReferenceCount": 0 },
     { "scopeId": "rechnung.screen", "status": "complete", "reason": null, "elementCount": 107, "missingReferenceCount": 0 },
@@ -75,5 +75,5 @@
     ]
   },
   "installedAt": "2026-07-27T00:00:00+00:00",
-  "updatedAt": "2026-08-09T00:00:00+00:00"
+  "updatedAt": "2026-09-19T00:00:00+00:00"
 }

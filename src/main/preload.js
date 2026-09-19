@@ -96,6 +96,8 @@ contextBridge.exposeInMainWorld("bbmDb", {
   // ============================================================
   audioImport: (data) => ipcRenderer.invoke("audio:import", data),
   audioTranscribe: (data) => ipcRenderer.invoke("audio:transcribe", data),
+  audioImportToProtocol: (data) => ipcRenderer.invoke("audio:importToProtocol", data),
+  audioCancelProtocolImport: (data) => ipcRenderer.invoke("audio:cancelProtocolImport", data),
   audioTranscribeBlob: (data) => ipcRenderer.invoke("audio:transcribeBlob", data),
   audioAnalyze: (data) => ipcRenderer.invoke("audio:analyze", data),
   audioGetSuggestions: (data) => ipcRenderer.invoke("audio:getSuggestions", data),
