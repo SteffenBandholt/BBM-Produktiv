@@ -53,3 +53,13 @@ Kurz-/Langtext, Wiederverwendung, Sortierung, Migration, Transaktion, Abbruch,
 Sprung/Selektion, Druckfilter und unveränderter Live-Diktatweg geprüft. Die
 abschließende Bedienprüfung mit einer realen lokalen Sprachdatei bleibt eine
 Nutzerprüfung im Arbeitsbranch.
+
+## Bestandsschutz der Registry-38-Profilmigration
+
+Die additive Migration auf Registry 39 übernimmt die gespeicherte Reihenfolge
+und sämtliche vorhandenen Zustände unverändert. Sie hängt nur den neuen Zustand
+für `protokoll.topsScreen.quicklane.action.importAudio` an und aktualisiert den
+Scope-Fingerprint. Ein zweiter Lauf ist wirkungslos und erzeugt weder einen
+zweiten Button noch ein weiteres Archiv. Damit darf die Migration individuelle
+Positionen, Größen, Schriftgrößen und Sichtbarkeiten eines bestehenden
+Protokollprofils nicht normalisieren oder neu sortieren.

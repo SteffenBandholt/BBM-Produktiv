@@ -1,3 +1,39 @@
+## 2026-09-19 – #349 Profilmigration: Bestandsschutz repariert
+
+Auf Branch `protokoll/audio-import-v1` wurde die Ursache der beim ersten
+Audio-Branch-Start veränderten Protokoll-UI exakt reproduziert. Aus der realen
+Vorher-Sicherung mit SHA-256 `70F38D4F...F4BF4F` erzeugte der Stand
+`d1ac15bc` isoliert exakt den gemeldeten fehlerhaften Hash
+`1669008A...18724F`. Die additive Migration ersetzte zwar keine einzelnen
+Layoutwerte, baute aber die 34 gespeicherten Elemente in aktueller
+Registry-Reihenfolge neu auf. Dadurch wechselten 26 Elemente ihre Position im
+Array; der sequenzielle Start-Restore wandte verschachtelte Layoutzustände in
+einer anderen Reihenfolge an.
+
+Die Migration bewahrt nun die vorhandene Elementliste unverändert in ihrer
+gespeicherten Reihenfolge und hängt ausschließlich den neuen Import-Button an.
+Zusätzlich blockiert sie uneindeutige Altprofile mit doppelten Element-IDs.
+Der Regressionstest verwendet individuelle Geometrie-, Schrift- und
+Sichtbarkeitswerte sowie eine realistische, von der Registry abweichende
+Speicherreihenfolge. Er prüft 34/34 bestehende Zustände einschließlich
+Reihenfolge, den einmaligen sichtbaren Import-Button, Fingerprint, Archivinhalt,
+fremden Scope und einen vollständig wirkungslosen zweiten Lauf.
+
+Der echte produktive `ElectronUiEditorSessionController.loadStartupLayout`-Weg
+wurde mit einer temporären Kopie der realen Vorher-Sicherung geprüft: Profil
+kompatibel geladen, drei Protokoll-Scopes wiederhergestellt, 34 bestehende
+Elemente unverändert, Import-Button genau einmal sichtbar ergänzt und
+Start-Restore erfolgreich bestätigt. Das reale Nutzerprofil blieb während der
+Analyse unverändert auf dem zurückgespielten Vorher-Hash.
+
+Gezielte #349-, M80-, M81.1-, M82-Starter-, M86.7-, M86.14-, Manifest-,
+Protokoll-Element-, Renderer- und Audio-/Live-Diktat-Regressionsprüfungen sind
+grün. Keine Audio-, TOP-, Druck-, PDF-, CSS-, Registry- oder Buttonänderung.
+Nächster Schritt: Commit/Push und anschließend ausschließlich Steffens sichtbare
+DEV-Prüfung des erhaltenen Protokolllayouts und des vorhandenen Import-Buttons.
+
+---
+
 ## 2026-09-19 – Protokoll-Audioimport V1 (#349): technischer Arbeitsbranch
 
 Branch `protokoll/audio-import-v1`, Basis `origin/main` /

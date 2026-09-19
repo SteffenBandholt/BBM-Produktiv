@@ -185,7 +185,13 @@ function applyAdditiveElementProfileMigration(profileRoot, registration, migrati
     const savedElements = savedScope?.layoutState?.elements;
     if (savedScope?.registryFingerprint !== migration.fromFingerprint || !Array.isArray(savedElements)) continue;
     const savedIds = savedElements.map((entry) => entry?.elementId);
-    if (savedIds.includes(migration.addedElementId) || savedIds.length !== previousIds.size || savedIds.some((elementId) => !previousIds.has(elementId))) continue;
+    const savedIdSet = new Set(savedIds);
+    if (
+      savedIds.includes(migration.addedElementId) ||
+      savedIds.length !== previousIds.size ||
+      savedIdSet.size !== savedIds.length ||
+      savedIds.some((elementId) => !previousIds.has(elementId))
+    ) continue;
 
     const addedState = {
       elementId: migration.addedElementId,
@@ -199,9 +205,7 @@ function applyAdditiveElementProfileMigration(profileRoot, registration, migrati
     };
     if (![addedState.width, addedState.height, addedState.fontSize].every(Number.isFinite)) continue;
 
-    const statesById = new Map(savedElements.map((entry) => [entry.elementId, entry]));
-    statesById.set(migration.addedElementId, addedState);
-    savedScope.layoutState.elements = currentIds.map((elementId) => statesById.get(elementId));
+    savedScope.layoutState.elements = [...savedElements, addedState];
     savedScope.registryFingerprint = migration.toFingerprint;
 
     const archiveDirectory = path.join(profileRoot, "archive", APPLICATION_ID);

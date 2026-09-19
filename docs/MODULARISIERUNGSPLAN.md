@@ -1,3 +1,21 @@
+## 2026-09-19 – #349 Bestandsschutz der Protokoll-Profilmigration
+
+Die additive Registry-38-auf-39-Migration des Audioimport-Buttons wird im
+laufenden Branch minimal repariert. Ursache war keine Änderung einzelner
+Geometriewerte, sondern die vollständige Neuordnung der gespeicherten
+Elementliste nach aktueller Registry-Reihenfolge. Der sequenzielle Start-Restore
+änderte dadurch bei verschachtelten Elementen das sichtbare Ergebnis.
+
+Die Migration erhält nun Werte und Reihenfolge aller vorhandenen Elemente und
+hängt genau einen neuen Buttonzustand an. Realitätsnahe Regression und der
+produktive Start-Restore-Weg mit einer temporären Kopie der bestätigten
+Vorher-Sicherung belegen Bestandserhalt, korrekten Fingerprint, Idempotenz und
+einmalige Archivierung. Das Paket enthält keine weitere Audio-, Protokoll-,
+Layout-, CSS-, PDF- oder Registryänderung. Nach Commit/Push folgt nur die
+manuelle Sichtprüfung im DEV-Stand; keine automatische Fortsetzung.
+
+---
+
 ## 2026-09-19 – Abgegrenztes Funktionspaket: Protokoll-Audioimport V1 (#349)
 
 Der Arbeitsbranch `protokoll/audio-import-v1` ergänzt ausschließlich den

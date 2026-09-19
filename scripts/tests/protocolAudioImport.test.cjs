@@ -474,7 +474,7 @@ async function runProtocolAudioImportTests(run) {
     }
   });
 
-  await run("#349 UI-Editor: bestehende Protokollprofile werden additiv um den Importbutton ergänzt", async () => {
+  await run("#349 UI-Editor: Registry-38-Bestandsprofil bleibt werte- und reihenfolgegleich; Migration ist idempotent", async () => {
     const [{ createM80RegistrationDescriptor }, registry, session] = await Promise.all([
       importEsmFromFile(path.join(process.cwd(), "src/renderer/ui-editor/m80HostAdapter.js")),
       importEsmFromFile(path.join(process.cwd(), "src/renderer/ui-editor/m80Registry.js")),
@@ -492,42 +492,109 @@ async function runProtocolAudioImportTests(run) {
       profileMigrations: registration.profileMigrations,
       registryScopes: [scope],
     };
-    const previousElements = scope.elements
+    const previousElementsInRegistryOrder = scope.elements
       .filter((entry) => entry.id !== migration.addedElementId)
-      .map((entry) => ({
+      .map((entry, index) => ({
         elementId: entry.id,
         scopeId: scope.scopeId,
-        x: 0,
-        y: 0,
-        width: 100,
-        height: 30,
-        fontSize: 12,
-        visible: true,
+        x: index * 1.375 - 8.25,
+        y: index * 2.625 + 0.125,
+        width: 120.5 + index * 3.75,
+        height: 24.25 + index * 0.875,
+        ...(Number.isFinite(Number(entry.baseline?.fontSize))
+          ? { fontSize: 9.5 + (index % 7) * 0.625 }
+          : {}),
+        visible: index % 6 !== 0,
       }));
+    const previousById = new Map(previousElementsInRegistryOrder.map((entry) => [entry.elementId, entry]));
+    const storedPriority = [
+      "protokoll.screen.root",
+      "protokoll.header",
+      "protokoll.header.titleGroup",
+      "protokoll.header.title",
+      "protokoll.header.keyword",
+      "protokoll.header.context",
+      "protokoll.header.actions",
+      "protokoll.topsScreen.quicklane",
+      "protokoll.header.action.endMeeting",
+      "protokoll.topsScreen.quicklane.group.navigation",
+      "protokoll.header.action.close",
+      "protokoll.topsScreen.quicklane.group.visibility",
+      "protokoll.header.action.openUiEditor",
+    ];
+    const priorityIds = new Set(storedPriority);
+    const previousElements = [
+      ...storedPriority.map((elementId) => previousById.get(elementId)),
+      ...previousElementsInRegistryOrder.filter((entry) => !priorityIds.has(entry.elementId)),
+    ];
+    assert.equal(previousElements.every(Boolean), true);
+    assert.notDeepEqual(
+      previousElements.map((entry) => entry.elementId),
+      previousElementsInRegistryOrder.map((entry) => entry.elementId)
+    );
     const profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-349-profile-"));
     const profilePath = path.join(profileRoot, "standard.layout-profile.json");
     try {
-      fs.writeFileSync(profilePath, `${JSON.stringify({
+      const unchangedSiblingScope = {
+        scopeId: "protokoll.list.root",
+        registryFingerprint: `sha256:${"a".repeat(64)}`,
+        layoutState: {
+          elements: [{
+            elementId: "protokoll.topsScreen.list",
+            scopeId: "protokoll.list.root",
+            x: 17.25,
+            y: -4.5,
+            width: 711.75,
+            height: 388.125,
+            visible: false,
+          }],
+        },
+        explicitOperations: ["move", "resize", "setVisibility"],
+      };
+      const profileDocument = {
         schemaVersion: 2,
         applicationId: session.APPLICATION_ID,
         profileId: "standard",
+        savedAt: "2026-08-31T18:48:18.113Z",
         scopes: [{
           scopeId: scope.scopeId,
           registryFingerprint: migration.fromFingerprint,
           layoutState: { elements: previousElements },
-        }],
-      }, null, 2)}\n`, "utf8");
+          explicitOperations: ["move", "resize", "textResize", "setVisibility"],
+        }, unchangedSiblingScope],
+      };
+      fs.writeFileSync(profilePath, `${JSON.stringify(profileDocument, null, 2)}\n`, "utf8");
+      const beforeBytes = fs.readFileSync(profilePath);
+      const beforeTargetScope = structuredClone(profileDocument.scopes[0]);
+      const beforeSiblingScope = structuredClone(unchangedSiblingScope);
 
       assert.equal(session.applyRegisteredProfileMigrations(profileRoot, migrationRegistration), 1);
       const migrated = JSON.parse(fs.readFileSync(profilePath, "utf8"));
       const migratedScope = migrated.scopes[0];
-      assert.equal(migratedScope.registryFingerprint, migration.toFingerprint);
-      assert.equal(
-        migratedScope.layoutState.elements.some((entry) => entry.elementId === migration.addedElementId),
-        true
+      const migratedExistingElements = migratedScope.layoutState.elements.filter(
+        (entry) => entry.elementId !== migration.addedElementId
       );
+      const addedElements = migratedScope.layoutState.elements.filter(
+        (entry) => entry.elementId === migration.addedElementId
+      );
+      assert.equal(migratedScope.registryFingerprint, migration.toFingerprint);
+      assert.deepEqual(migratedExistingElements, beforeTargetScope.layoutState.elements);
+      assert.deepEqual(migratedScope.explicitOperations, beforeTargetScope.explicitOperations);
+      assert.deepEqual(migrated.scopes[1], beforeSiblingScope);
+      assert.equal(migratedScope.layoutState.elements.length, previousElements.length + 1);
+      assert.equal(new Set(migratedScope.layoutState.elements.map((entry) => entry.elementId)).size, migratedScope.layoutState.elements.length);
+      assert.equal(addedElements.length, 1);
+      assert.equal(addedElements[0].visible, true);
+      assert.equal(migratedScope.layoutState.elements.at(-1).elementId, migration.addedElementId);
       const archiveDir = path.join(profileRoot, "archive", session.APPLICATION_ID);
-      assert.equal(fs.readdirSync(archiveDir).length, 1);
+      const archivesAfterFirstRun = fs.readdirSync(archiveDir);
+      assert.equal(archivesAfterFirstRun.length, 1);
+      assert.deepEqual(fs.readFileSync(path.join(archiveDir, archivesAfterFirstRun[0])), beforeBytes);
+
+      const firstMigrationBytes = fs.readFileSync(profilePath);
+      assert.equal(session.applyRegisteredProfileMigrations(profileRoot, migrationRegistration), 0);
+      assert.deepEqual(fs.readFileSync(profilePath), firstMigrationBytes);
+      assert.deepEqual(fs.readdirSync(archiveDir), archivesAfterFirstRun);
     } finally {
       fs.rmSync(profileRoot, { recursive: true, force: true });
     }
