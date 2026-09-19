@@ -145,6 +145,9 @@ function migrateCompatibleLegacyLayoutProfile(baseProfileRoot, moduleProfileRoot
   const selectedProfiles = ["standard", "compact"];
   if (selectedProfiles.some((profileId) => fs.existsSync(path.join(moduleProfileRoot, `${profileId}.layout-profile.json`)))) return;
   if (!fs.existsSync(baseProfileRoot)) return;
+  // A registered additive migration must run before the current-registry
+  // compatibility gate can copy a legacy profile into its module root.
+  applyRegisteredProfileMigrations(baseProfileRoot, registration);
   const legacy = loadTargetStartupLayout({
     profileRoot: baseProfileRoot,
     applicationId: APPLICATION_ID,

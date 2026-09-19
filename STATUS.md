@@ -1,3 +1,34 @@
+## 2026-09-19 – #349 Startup-Restore des Registry-38-Legacyprofils repariert
+
+Die verbliebene Ursache lag vor der bereits vorhandenen additiven
+Registry-38-auf-39-Migration: Der produktive Start prüfte das Legacyprofil im
+alten gemeinsamen Profilroot zuerst gegen Registry 39. Diese Prüfung endete mit
+`incompatible_registry`; deshalb wurde das Profil nicht nach
+`module-protokoll` übernommen. Die danach ausgeführte Migration sah nur das
+noch leere Modulroot. Der Renderer erhielt folglich
+`layout_profile_not_found` und blieb auf der App-Baseline.
+
+Der Startpfad führt registrierte additive Migrationen jetzt am Legacyprofil aus,
+bevor dessen Kompatibilität für die einmalige Modulkopie geprüft wird. Ein
+Regressionstest verwendet den normalen `userData/ui-editor/profiles`-Resolver
+mit ausschließlich temporärem `userData`. Er belegt zwei getrennte Starts mit
+`layout_profile_loaded` und `startup_layout_applied`, unveränderte Profilbytes
+und unveränderten Archivbestand beim zweiten Start sowie die weiterhin harte
+Ablehnung eines wirklich inkompatiblen Profils mit `incompatible_registry`.
+Das reale BBM-Benutzerprofil wurde nicht gelesen oder verändert.
+
+Gezielte #349-, M81.1-, M86.7-, M86.8-, M86.14-, M86.20/M86.25- und
+Protokoll-Elementprüfungen, Syntax, ESLint, Vertrags-Selbsttest und
+`git diff --check` sind grün. Die breiten Gruppen `core-protokoll` und
+`ui-editor-m51-m80` bleiben wegen vorhandener, paketfremder Bestandsfehler rot;
+diese liegen unter anderem in Projekt-/Routing-, Rechnung-, Restarbeiten-,
+alten Registry-Sollwert- und sichtbaren Fensterprüfungen und wurden nicht
+verändert. Nächster Schritt: Commit und Push auf `protokoll/audio-import-v1`,
+danach ausschließlich die kontrollierte Nutzerprüfung mit Sicherung und zwei
+Starts.
+
+---
+
 ## 2026-09-19 – #349 Profilmigration vollständig isoliert nachgeprüft
 
 Der nach dem Nutzerstopp verschärfte Nachweis verwendet ausschließlich ein

@@ -1,3 +1,22 @@
+## 2026-09-19 – #349 Meilenstein: produktiver Legacy-Startup-Restore
+
+Der nächste offene Mini-Meilenstein des Audioimport-Branches ist auf die
+Wiederherstellung eines vorhandenen Registry-38-Protokollprofils beim normalen
+Registry-39-Start begrenzt. Die bereits registrierte additive Migration wird im
+produktiven Startpfad vor der aktuellen Kompatibilitätsprüfung des gemeinsamen
+Legacyprofilroots ausgeführt. Erst danach darf der bestehende Modulroot-Umzug
+nach `module-protokoll` stattfinden.
+
+Abnahme: temporäres `userData`, erster und zweiter vollständiger Loader-Start,
+jeweils `layout_profile_loaded` und bestätigtes `startup_layout_applied`, beim
+zweiten Start keine weitere Profil- oder Archivänderung sowie unveränderte
+Ablehnung eines tatsächlich inkompatiblen Profils mit
+`incompatible_registry`. Keine Registry-, HostAdapter-, UI-, Audio-, TOP-,
+PDF-, CSS- oder Editor-Core-Erweiterung; kein Zugriff auf das reale
+BBM-Benutzerprofil. Danach endet das Paket ohne automatische Fortsetzung.
+
+---
+
 ## 2026-09-19 – #349 isolierter Sicherheitsnachweis der Profilmigration
 
 Der vorhandene Reparaturstand wird nach dem Nutzerstopp ausschließlich mit
