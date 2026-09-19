@@ -6,6 +6,22 @@ Diese Datei legt die dauerhaften Arbeitsregeln fÃ¼r Codex in diesem Repository
 Codex soll in diesem Repo vorsichtig, kleinrÃ¤umig und nachvollziehbar arbeiten.
 Ziel ist die weitere Modularisierung und Konsolidierung, ohne unnÃ¶tige VerhaltensÃ¤nderungen.
 
+
+
+## Verbindliche Kostenregel für Codex / Work / Agenten / API
+
+Für BBM gilt dauerhaft:
+
+- enthaltene ChatGPT-Nutzung vor zusätzlicher Pay-as-you-go-Nutzung ausschöpfen,
+- Work/Codex/Agenten nur für tatsächliche Ausführungsarbeit einsetzen, nicht unnötig für reine Abstimmung,
+- automatische Credit-Aufladung nicht aktivieren,
+- keine Credits kaufen oder zusätzliche kostenpflichtige Nutzung auslösen, solange der Nutzer dies nicht ausdrücklich freigibt,
+- bei absehbarem Tariflimit stoppen und den Nutzer informieren,
+- keine neue OpenAI-API-Nutzung, API-Keys oder kostenpflichtige API-Integration in BBM ohne ausdrücklichen Nutzerauftrag,
+- vorhandene lokale Dienste wie Whisper bevorzugt lokal weiterverwenden, solange fachlich ausreichend.
+
+Diese Regel gilt auch dann, wenn eine technisch mögliche Cloud-/API-Lösung bequemer wäre.
+
 ## Vor jeder Arbeit lesen
 Lies zuerst diese Dateien, soweit vorhanden und fÃ¼r die Aufgabe relevant:
 
