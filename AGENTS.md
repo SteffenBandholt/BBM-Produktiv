@@ -22,6 +22,18 @@ Für BBM gilt dauerhaft:
 
 Diese Regel gilt auch dann, wenn eine technisch mögliche Cloud-/API-Lösung bequemer wäre.
 
+
+
+## Einstufung vor Codex-Einsatz
+
+Für die Wahl des Arbeitswegs gilt:
+
+- **Mikro-Fix:** kleine, eindeutig lokalisierte und risikoarme UI-/Text-/CSS-Korrektur kann nach ausdrücklichem Umsetzungsauftrag direkt im normalen Chat erledigt werden; dafür ist kein Codex-Lauf nötig.
+- **Arbeits-Paket:** mehrere Dateien, Logik, Datenfluss, IPC/DB, nichttriviales UI-Verhalten, Druck/PDF, Editor, Lizenz, Core oder unklare Seiteneffekte -> Codex/Work.
+- **Goal-Lauf:** größere Fachfunktion, Architektur-, Modul- oder Migrationsarbeit -> klarer Meilenstein-/Abnahmeauftrag und Codex/Work.
+
+Ein Mikro-Fix darf keine fachliche oder technische Erweiterung tarnen. Sobald der Scope während der Arbeit wächst, ist zu stoppen und hochzustufen.
+
 ## Vor jeder Arbeit lesen
 Lies zuerst diese Dateien, soweit vorhanden und fÃ¼r die Aufgabe relevant:
 

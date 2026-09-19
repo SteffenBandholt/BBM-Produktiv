@@ -22,6 +22,52 @@ Für alle BBM-Chats und Umsetzungsaufträge gilt:
 - Lokale Lösungen sind bei gleicher Eignung vorzuziehen; insbesondere bleibt die bestehende lokale Whisper-/Diktat-Verarbeitung ohne OpenAI-API.
 - Diese Kostenregel ist eine Arbeitsregel, keine Produktarchitekturentscheidung: fachlich notwendige Cloud-/API-Nutzung kann später ausdrücklich beschlossen werden.
 
+
+
+## Verbindliche Einordnung: Mikro-Fix / Arbeits-Paket / Goal-Lauf
+
+Vor jeder Umsetzung ist die Aufgabe in genau eine dieser drei Klassen einzuordnen:
+
+### Mikro-Fix
+
+Direkte Umsetzung aus dem normalen Chat ist zulässig, wenn **alle** folgenden Punkte erfüllt sind:
+
+- die gewünschte Änderung ist vom Nutzer eindeutig als Umsetzung beauftragt, nicht nur besprochen oder als Idee formuliert,
+- der Sollzustand ist eindeutig,
+- die Änderung ist klein, lokal und leicht rückgängig zu machen,
+- nur sehr wenige, klar betroffene Dateien werden geändert,
+- keine neue Fachlogik, Datenlogik, DB-/IPC-Logik, Lizenzlogik, Architektur oder neue Abhängigkeit,
+- keine Änderung an Druck-/PDF-Verträgen, Editor-Verträgen oder gemeinsamen Core-Verträgen,
+- keine unbekannten oder schwer abschätzbaren Seiteneffekte.
+
+Typische Mikro-Fixes:
+- Schriftgröße/-gewicht oder kleine CSS-Korrektur,
+- Text/Beschriftung ändern,
+- vorhandenen Button ausblenden/entfernen,
+- kleinen Abstand oder eine klar definierte Position korrigieren.
+
+Auch ein Mikro-Fix muss den vorhandenen Bestandsschutz beachten und mindestens passend geprüft werden. Wird während der Arbeit erkennbar, dass die Änderung größer oder riskanter ist, wird **gestoppt und auf Arbeits-Paket hochgestuft**.
+
+### Arbeits-Paket
+
+Über Codex/Work mit klarem Auftrag, Branch, Scope und Tests bearbeiten, wenn mindestens eines zutrifft:
+
+- mehrere zusammenhängende Dateien oder Komponenten,
+- Verhaltenslogik,
+- Datenfluss, Speicherung, IPC oder DB,
+- neue oder geänderte Fachfunktion,
+- nichttriviale UI-Interaktion,
+- Druck/PDF, Editor-Vertrag, Lizenz, Core oder gemeinsame Dienste,
+- Ursache oder Seiteneffekte sind nicht vollständig klar.
+
+### Goal-Lauf
+
+Größere Fachfunktion, Architekturarbeit, Modulumbau, Migration oder repoübergreifende Änderung. Immer mit eigenem Ziel, Abgrenzung, Meilenstein-/Abnahmekriterien und Codex/Work-Arbeitsweg.
+
+### Harte Grenze
+
+Ein normaler Chat darf eine besprochene Idee **nicht allein deshalb direkt im Produktcode umsetzen**, weil sie technisch klein erscheint. Direkte Umsetzung setzt einen eindeutigen Umsetzungsauftrag voraus.
+
 ## Vor jeder BBM-Arbeit lesen
 
 1. `ZUERST_LESEN_Codex.md`
