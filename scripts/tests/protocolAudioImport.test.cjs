@@ -1,6 +1,7 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -21,6 +22,32 @@ const {
   validateTargetStartupLayoutProfile,
 } = require("ui-editor-kit");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
+
+const REAL_PROTOCOL_PROFILE_PATH = "C:\\Temp\\BBM-Audio-Test\\real-standard.layout-profile.json";
+const REAL_PROTOCOL_PROFILE_SHA256 = "70F38D4FF84D5A8C1A45391FA01F6F6B1080F424286E7DB9E1C1EC0A28F4BF4F";
+// Base64 preserves the original CRLF bytes so the committed regression fixture
+// has the same confirmed hash on every checkout.
+const REAL_PROTOCOL_PROFILE_SNAPSHOT = path.join(
+  __dirname,
+  "fixtures",
+  "protocol-registry38-real-standard.layout-profile.json.base64"
+);
+
+function sha256(bytes) {
+  return crypto.createHash("sha256").update(bytes).digest("hex").toUpperCase();
+}
+
+function readRealProtocolProfileFixture() {
+  const snapshotBytes = Buffer.from(fs.readFileSync(REAL_PROTOCOL_PROFILE_SNAPSHOT, "utf8").replace(/\s+/g, ""), "base64");
+  assert.equal(sha256(snapshotBytes), REAL_PROTOCOL_PROFILE_SHA256);
+  if (fs.existsSync(REAL_PROTOCOL_PROFILE_PATH)) {
+    const sourceBytes = fs.readFileSync(REAL_PROTOCOL_PROFILE_PATH);
+    assert.equal(sha256(sourceBytes), REAL_PROTOCOL_PROFILE_SHA256);
+    assert.deepEqual(sourceBytes, snapshotBytes);
+    return sourceBytes;
+  }
+  return snapshotBytes;
+}
 
 function createHarness({ transcriptText = "Erster Satz. Rest.", shortTextLimit = 100 } = {}) {
   const state = {
@@ -769,6 +796,199 @@ async function runProtocolAudioImportTests(run) {
       assert.deepEqual(fs.readdirSync(archiveDir), archivesAfterFirstRun);
     } finally {
       fs.rmSync(isolatedUserData, { recursive: true, force: true });
+    }
+  });
+
+  await run("#349 UI-Editor: echtes Registry-38-Profil repariert das historisch falsch sortierte Modulprofil", async () => {
+    const [{ createM80RegistrationDescriptor }, registry, session] = await Promise.all([
+      importEsmFromFile(path.join(process.cwd(), "src/renderer/ui-editor/m80HostAdapter.js")),
+      importEsmFromFile(path.join(process.cwd(), "src/renderer/ui-editor/m80Registry.js")),
+      Promise.resolve(require("../../src/main/ui-editor/electronUiEditorSession")),
+    ]);
+    const sourceBytes = readRealProtocolProfileFixture();
+    const sourceDocument = JSON.parse(sourceBytes.toString("utf8"));
+    const migration = registry.BBM_M80_PROFILE_MIGRATIONS.find(
+      (entry) => entry.addedElementId === "protokoll.topsScreen.quicklane.action.importAudio"
+    );
+    const activeScopes = registry.BBM_M80_ACTIVE_SCOPE_GROUPS.find((scopeIds) => scopeIds.includes(migration.scopeId));
+    const activeScopeIds = new Set(activeScopes);
+    const declaredById = new Map(registry.listM80RegistryScopes().map((entry) => [entry.scopeId, entry]));
+    const unmountedRegistration = createM80RegistrationDescriptor();
+    const resolvedScope = (entry) => ({
+      ...entry,
+      elements: entry.elements.map((element) => ({
+        ...element,
+        refKey: String(element.refKey || element.id),
+        referenceResolved: true,
+        targetCount: 1,
+        mountedInstanceCount: 1,
+        capturedBaseline: {
+          width: Number(element.baseline?.width) || 640,
+          height: Number(element.baseline?.height) || 64,
+        },
+      })),
+    });
+    const registration = {
+      ...unmountedRegistration,
+      activeScopes: [...activeScopes],
+      registryScopes: unmountedRegistration.registryScopes.map((entry) => (
+        activeScopeIds.has(entry.scopeId) ? resolvedScope(declaredById.get(entry.scopeId)) : entry
+      )),
+    };
+    const currentScope = registration.registryScopes.find((entry) => entry.scopeId === migration.scopeId);
+    const oldScope = { ...currentScope, elements: currentScope.elements.filter((entry) => entry.id !== migration.addedElementId) };
+    const oldRegistryScopes = registration.registryScopes.map((entry) => entry.scopeId === migration.scopeId ? oldScope : entry);
+    assert.deepEqual(sourceDocument.scopes.map((scope) => [scope.scopeId, scope.registryFingerprint, scope.layoutState.elements.length]), [
+      ["protokoll.edit.root", "sha256:e53adb228924f283bf1158613f70bd6a6b927065c9ca24eb528caded776c0005", 38],
+      ["protokoll.list.root", "sha256:3bf84a38e4db80d49102e9fd0e8e80202c354d451df63e77242a4f899b8c8e53", 32],
+      ["protokoll.screen.root", migration.fromFingerprint, 34],
+    ]);
+    assert.equal(validateTargetStartupLayoutProfile(sourceDocument, {
+      applicationId: session.APPLICATION_ID,
+      profileId: "standard",
+      activeScopes: registration.activeScopes,
+      registryScopes: oldRegistryScopes,
+    }).ok, true);
+
+    const addedEntry = currentScope.elements.find((entry) => entry.id === migration.addedElementId);
+    const addedState = {
+      elementId: migration.addedElementId,
+      scopeId: migration.scopeId,
+      x: Number(addedEntry.baseline?.x) || 0,
+      y: Number(addedEntry.baseline?.y) || 0,
+      width: Number(addedEntry.baseline?.width) || Number(addedEntry.baseline?.minWidth),
+      height: Number(addedEntry.baseline?.height) || Number(addedEntry.baseline?.minHeight),
+      fontSize: Number(addedEntry.baseline?.fontSize),
+      visible: addedEntry.baseline?.visible !== false,
+    };
+    const historicalDocument = structuredClone(sourceDocument);
+    const historicalScope = historicalDocument.scopes.find((entry) => entry.scopeId === migration.scopeId);
+    const sourceStatesById = new Map(historicalScope.layoutState.elements.map((entry) => [entry.elementId, entry]));
+    sourceStatesById.set(migration.addedElementId, addedState);
+    const sourceOrder = historicalScope.layoutState.elements.map((entry) => entry.elementId);
+    historicalScope.layoutState.elements = currentScope.elements.map((entry) => sourceStatesById.get(entry.id));
+    historicalScope.registryFingerprint = migration.toFingerprint;
+    const historicalBytes = Buffer.from(`${JSON.stringify(historicalDocument, null, 2)}\n`, "utf8");
+    const historicalOrder = historicalScope.layoutState.elements.map((entry) => entry.elementId);
+    assert.equal(sourceOrder.filter((elementId, index) => historicalOrder.indexOf(elementId) !== index).length, 11);
+    assert.equal(sha256(historicalBytes), "1669008A7A935948677B45BC0736F7DBF3314A716AF740C3DDBFC2E80318724F");
+
+    const createEnvironment = () => {
+      const isolatedUserData = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-349-real-profile-"));
+      const baseProfileRoot = path.join(isolatedUserData, "ui-editor", "profiles");
+      const profileRoot = session.resolveBbmModuleLayoutProfileRoot(baseProfileRoot, registration).profileRoot;
+      fs.mkdirSync(profileRoot, { recursive: true });
+      const profilePath = path.join(profileRoot, "standard.layout-profile.json");
+      const legacyProfilePath = path.join(baseProfileRoot, "standard.layout-profile.json");
+      const archiveDirectory = path.join(profileRoot, "archive", session.APPLICATION_ID);
+      const archives = () => fs.existsSync(archiveDirectory) ? fs.readdirSync(archiveDirectory) : [];
+      const createController = () => new session.ElectronUiEditorSessionController({
+        app: {
+          isPackaged: false,
+          getAppPath: () => process.cwd(),
+          getVersion: () => "1.5.0",
+          getPath: (name) => {
+            assert.equal(name, "userData");
+            return isolatedUserData;
+          },
+        },
+        ipcMain: { handle() {} },
+        getMainWindow: () => null,
+        spawnProcess: () => { throw new Error("Start-Restore darf keinen Editorprozess starten."); },
+      });
+      return { isolatedUserData, baseProfileRoot, profileRoot, profilePath, legacyProfilePath, archiveDirectory, archives, createController };
+    };
+    const complete = (controller, loaded) => controller.completeStartupLayout({
+      ok: true,
+      profileSha256: loaded.profileSha256,
+      layoutStorageKey: loaded.layoutStorageKey,
+    });
+    const assertSuccessfulLoad = (loaded, completed) => {
+      assert.equal(loaded.ok, true, JSON.stringify(loaded));
+      assert.equal(loaded.found, true);
+      assert.equal(loaded.applied, false);
+      assert.equal(loaded.state, "compatible");
+      assert.equal(loaded.code, "layout_profile_loaded");
+      assert.equal(loaded.layoutStorageKey, "module-protokoll");
+      assert.equal(completed.ok, true);
+      assert.equal(completed.receipt.applied, true);
+      assert.equal(completed.receipt.state, "compatible");
+      assert.equal(completed.receipt.code, "startup_layout_applied");
+    };
+    const assertPreservedProfile = (document) => {
+      for (const sourceScope of sourceDocument.scopes) {
+        const actualScope = document.scopes.find((entry) => entry.scopeId === sourceScope.scopeId);
+        if (sourceScope.scopeId !== migration.scopeId) assert.deepEqual(actualScope, sourceScope);
+        else {
+          assert.deepEqual(actualScope.layoutState.elements.slice(0, -1), sourceScope.layoutState.elements);
+          assert.deepEqual(actualScope.explicitOperations, sourceScope.explicitOperations);
+          assert.equal(actualScope.registryFingerprint, migration.toFingerprint);
+          assert.equal(actualScope.layoutState.elements.filter((entry) => entry.elementId === migration.addedElementId).length, 1);
+          assert.deepEqual(actualScope.layoutState.elements.at(-1), addedState);
+        }
+      }
+    };
+
+    const direct = createEnvironment();
+    try {
+      fs.writeFileSync(direct.profilePath, sourceBytes);
+      const firstController = direct.createController();
+      const first = firstController.loadStartupLayout(registration);
+      assertSuccessfulLoad(first, complete(firstController, first));
+      assert.equal(sha256(fs.readFileSync(direct.profilePath)), "D72DDB8E4DD3C9D25F788F7B78AC408BED22F070EDF80C6176882CBBF812BA7C");
+      assertPreservedProfile(JSON.parse(fs.readFileSync(direct.profilePath, "utf8")));
+      const firstBytes = fs.readFileSync(direct.profilePath);
+      const firstArchives = direct.archives();
+      assert.equal(firstArchives.length, 1);
+      assert.deepEqual(fs.readFileSync(path.join(direct.archiveDirectory, firstArchives[0])), sourceBytes);
+      const secondController = direct.createController();
+      const second = secondController.loadStartupLayout(registration);
+      assertSuccessfulLoad(second, complete(secondController, second));
+      assert.deepEqual(fs.readFileSync(direct.profilePath), firstBytes);
+      assert.deepEqual(direct.archives(), firstArchives);
+    } finally {
+      fs.rmSync(direct.isolatedUserData, { recursive: true, force: true });
+    }
+
+    const shadowed = createEnvironment();
+    try {
+      fs.writeFileSync(shadowed.legacyProfilePath, sourceBytes);
+      fs.writeFileSync(shadowed.profilePath, historicalBytes);
+      const firstController = shadowed.createController();
+      const first = firstController.loadStartupLayout(registration);
+      assertSuccessfulLoad(first, complete(firstController, first));
+      assert.equal(sha256(fs.readFileSync(shadowed.legacyProfilePath)), REAL_PROTOCOL_PROFILE_SHA256);
+      assert.equal(sha256(fs.readFileSync(shadowed.profilePath)), "D72DDB8E4DD3C9D25F788F7B78AC408BED22F070EDF80C6176882CBBF812BA7C");
+      assertPreservedProfile(JSON.parse(fs.readFileSync(shadowed.profilePath, "utf8")));
+      const repairedBytes = fs.readFileSync(shadowed.profilePath);
+      const repairArchives = shadowed.archives();
+      assert.equal(repairArchives.length, 1);
+      assert.deepEqual(fs.readFileSync(path.join(shadowed.archiveDirectory, repairArchives[0])), historicalBytes);
+      const secondController = shadowed.createController();
+      const second = secondController.loadStartupLayout(registration);
+      assertSuccessfulLoad(second, complete(secondController, second));
+      assert.deepEqual(fs.readFileSync(shadowed.profilePath), repairedBytes);
+      assert.deepEqual(shadowed.archives(), repairArchives);
+
+      const incompatibleDocument = JSON.parse(repairedBytes.toString("utf8"));
+      const incompatibleScope = incompatibleDocument.scopes.find((entry) => entry.scopeId === migration.scopeId);
+      incompatibleScope.registryFingerprint = migration.fromFingerprint;
+      incompatibleScope.layoutState.elements.push({ elementId: "protokoll.screen.root.incompatible", scopeId: migration.scopeId });
+      fs.writeFileSync(shadowed.profilePath, `${JSON.stringify(incompatibleDocument, null, 2)}\n`, "utf8");
+      const incompatibleBytes = fs.readFileSync(shadowed.profilePath);
+      const rejected = shadowed.createController().loadStartupLayout(registration);
+      assert.equal(rejected.ok, false);
+      assert.equal(rejected.found, true);
+      assert.equal(rejected.applied, false);
+      assert.equal(rejected.state, "incompatible");
+      assert.equal(rejected.code, "incompatible_registry");
+      assert.deepEqual(fs.readFileSync(shadowed.profilePath), incompatibleBytes);
+      assert.deepEqual(shadowed.archives(), repairArchives);
+    } finally {
+      fs.rmSync(shadowed.isolatedUserData, { recursive: true, force: true });
+    }
+    if (fs.existsSync(REAL_PROTOCOL_PROFILE_PATH)) {
+      assert.equal(sha256(fs.readFileSync(REAL_PROTOCOL_PROFILE_PATH)), REAL_PROTOCOL_PROFILE_SHA256);
     }
   });
 

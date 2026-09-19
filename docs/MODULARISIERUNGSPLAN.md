@@ -1,3 +1,23 @@
+## 2026-09-19 – #349 Meilenstein: historisches Reorder-Modulprofil heilen
+
+Der mit der echten Registry-38-Fixture nachgewiesene Restfehler ist auf den
+bereits vorhandenen Übergangszustand `Rootprofil korrekt / Modulprofil durch die
+erste #349-Migration falsch sortiert` begrenzt. Weil das Modulprofil formal
+Registry 39 entspricht, verdrängt es das Rootprofil und überspringt jede weitere
+Migration. Frische Temp-Profile konnten diesen Zustand bisher nicht abbilden.
+
+Der Produktpfad darf ausschließlich ein Modulprofil reparieren, das byteunabhängig
+strukturell exakt aus demselben Rootprofil, der registrierten additiven Migration
+und der historischen Registry-Neusortierung ableitbar ist. Vor der Ersetzung wird
+das falsche Modulprofil archiviert. Beliebige aktuelle, manuell bearbeitete oder
+inkompatible Profile bleiben unverändert. Abnahme erfolgen mit dem bytegenauen
+realen Profil-Snapshot, zwei isolierten Starts, Hash-/Archivvergleich,
+vollständigem Bestandserhalt, genau einem Importbutton und einem weiterhin
+blockierten Negativfall. Danach endet das Paket ohne weitere Audio-, UI-,
+Registry-, TOP-, PDF- oder CSS-Arbeit.
+
+---
+
 ## 2026-09-19 – #349 Meilenstein: produktiver Legacy-Startup-Restore
 
 Der nächste offene Mini-Meilenstein des Audioimport-Branches ist auf die

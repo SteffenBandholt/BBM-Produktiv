@@ -1,3 +1,42 @@
+## 2026-09-19 – #349 reales Profil: historisches Modulprofil gezielt repariert
+
+Die echte Profilkopie
+`C:\Temp\BBM-Audio-Test\real-standard.layout-profile.json` wurde ausschließlich
+lesend verwendet und mit SHA-256
+`70F38D4FF84D5A8C1A45391FA01F6F6B1080F424286E7DB9E1C1EC0A28F4BF4F`
+bestätigt. Direkt im isolierten `module-protokoll`-Pfad migriert sie korrekt zu
+`D72DDB8E4DD3C9D25F788F7B78AC408BED22F070EDF80C6176882CBBF812BA7C`:
+alle 104 bestehenden Elementzustände bleiben in ihrer gespeicherten Reihenfolge
+erhalten, der Importbutton kommt genau einmal hinzu und ein zweiter Start ist
+byte- und archivstabil.
+
+Der reale Fehler entstand durch einen bereits vorhandenen Modulprofilbestand aus
+der ersten fehlerhaften #349-Migration. Aus der echten Fixture lässt sich dessen
+Hash exakt als
+`1669008A7A935948677B45BC0736F7DBF3314A716AF740C3DDBFC2E80318724F`
+reproduzieren. Dieses Profil besitzt schon den Registry-39-Fingerprint und wird
+daher nicht erneut migriert. Gleichzeitig beendet der Modulroot-Vorrang die
+Legacyübernahme, sodass das korrekte Root-Profil unverändert bleibt und dort
+kein Archiv entsteht. Das erklärt vollständig das gemeldete Verhalten.
+
+Der Startpfad erkennt nun nur diesen strukturell exakt nachweisbaren historischen
+Reorder-Zustand: Er muss aus demselben vorhandenen Registry-38-Rootprofil und
+dem registrierten additiven Vertrag reproduzierbar sein. Dann wird das falsche
+Modulprofil archiviert und aus dem unveränderten Rootprofil mit bestandserhaltender
+Reihenfolge neu erzeugt. Andere gültige, geänderte oder inkompatible Modulprofile
+bleiben unangetastet. Der Test enthält einen bytegenauen Base64-Snapshot der
+echten Fixture und vergleicht ihn lokal zusätzlich mit der Datei unter
+`C:\Temp`; das reale BBM-AppData wurde nicht gelesen oder verändert.
+
+Gezielte #349-, M80-Controller-, M81.1-, M82.1-, M82.6-, M86.7-, M86.8-,
+M86.14-, M86.20/M86.25-, SiGeKo-Manifest- und Protokoll-Elementtests sowie
+Syntax, ESLint, UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün.
+Der bekannte paketfremde Rechnungstest erwartet weiterhin 87 statt aktuell 107
+Elementen; M80.1 erwartet weiterhin Registry 26 statt 39. Beide Bestandsfehler
+liegen außerhalb dieses Pakets.
+
+---
+
 ## 2026-09-19 – #349 Startup-Restore des Registry-38-Legacyprofils repariert
 
 Die verbliebene Ursache lag vor der bereits vorhandenen additiven
