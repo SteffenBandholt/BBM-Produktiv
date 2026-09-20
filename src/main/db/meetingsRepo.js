@@ -16,6 +16,9 @@ function getMeetingById(meetingId) {
       pdf_show_ampel,
       todo_snapshot_json,
       next_meeting_enabled,
+      next_meeting_option_a_enabled,
+      next_meeting_option_b_enabled,
+      next_meeting_option_b_text,
       next_meeting_date,
       next_meeting_time,
       next_meeting_place,
@@ -41,6 +44,9 @@ function listByProject(projectId, seriesKey) {
       pdf_show_ampel,
       todo_snapshot_json,
       next_meeting_enabled,
+      next_meeting_option_a_enabled,
+      next_meeting_option_b_enabled,
+      next_meeting_option_b_text,
       next_meeting_date,
       next_meeting_time,
       next_meeting_place,
@@ -67,6 +73,9 @@ function getOpenMeetingByProject(projectId, seriesKey) {
       pdf_show_ampel,
       todo_snapshot_json,
       next_meeting_enabled,
+      next_meeting_option_a_enabled,
+      next_meeting_option_b_enabled,
+      next_meeting_option_b_text,
       next_meeting_date,
       next_meeting_time,
       next_meeting_place,
@@ -95,6 +104,9 @@ function getLastClosedMeetingByProject(projectId, seriesKey) {
       pdf_show_ampel,
       todo_snapshot_json,
       next_meeting_enabled,
+      next_meeting_option_a_enabled,
+      next_meeting_option_b_enabled,
+      next_meeting_option_b_text,
       next_meeting_date,
       next_meeting_time,
       next_meeting_place,
@@ -200,11 +212,66 @@ function assertMeetingWritable(meetingId) {
   return meeting;
 }
 
+function updateNextMeeting({ meetingId, nextMeeting = {} }) {
+  const existing = assertMeetingWritable(meetingId);
+  const text = (value) => value == null ? null : String(value).trim() || null;
+  const flag = (value, fallback) => value === undefined
+    ? fallback
+    : [true, 1, "1", "true", "yes", "ja", "on"].includes(value);
+  const valueOrExisting = (key, column) => nextMeeting[key] === undefined
+    ? existing[column]
+    : text(nextMeeting[key]);
+  const multilineOrExisting = (key, column) => nextMeeting[key] === undefined
+    ? existing[column]
+    : nextMeeting[key] == null ? null : String(nextMeeting[key]);
+
+  initDatabase().prepare(`
+    UPDATE meetings SET
+      next_meeting_enabled = @enabled,
+      next_meeting_option_a_enabled = @optionAEnabled,
+      next_meeting_option_b_enabled = @optionBEnabled,
+      next_meeting_option_b_text = @optionBText,
+      next_meeting_date = @date,
+      next_meeting_time = @time,
+      next_meeting_place = @place,
+      next_meeting_extra = @extra,
+      updated_at = @now
+    WHERE id = @meetingId
+  `).run({
+    meetingId,
+    enabled: flag(nextMeeting.enabled, existing.next_meeting_enabled) ? 1 : 0,
+    optionAEnabled: flag(nextMeeting.optionAEnabled, existing.next_meeting_option_a_enabled ?? 1) ? 1 : 0,
+    optionBEnabled: flag(nextMeeting.optionBEnabled, existing.next_meeting_option_b_enabled ?? 0) ? 1 : 0,
+    optionBText: multilineOrExisting("optionBText", "next_meeting_option_b_text"),
+    date: valueOrExisting("date", "next_meeting_date"),
+    time: valueOrExisting("time", "next_meeting_time"),
+    place: valueOrExisting("place", "next_meeting_place"),
+    extra: valueOrExisting("extra", "next_meeting_extra"),
+    now: new Date().toISOString(),
+  });
+  return getMeetingById(meetingId);
+}
+
 function runInTransaction(fn) { return initDatabase().transaction(fn)(); }
 
 function closeMeeting(meetingId, { pdfShowAmpel, todoSnapshotJson, nextMeeting } = {}) {
   const db = initDatabase();
   if (!meetingId) throw new Error("meetingId required");
+  if (nextMeeting == null) {
+    const existing = getMeetingById(meetingId);
+    if (existing) {
+      nextMeeting = {
+        enabled: existing.next_meeting_enabled,
+        optionAEnabled: existing.next_meeting_option_a_enabled,
+        optionBEnabled: existing.next_meeting_option_b_enabled,
+        optionBText: existing.next_meeting_option_b_text,
+        date: existing.next_meeting_date,
+        time: existing.next_meeting_time,
+        place: existing.next_meeting_place,
+        extra: existing.next_meeting_extra,
+      };
+    }
+  }
 
   const now = new Date().toISOString();
   const frozenAmpel = pdfShowAmpel === undefined ? null : (pdfShowAmpel ? 1 : 0);
@@ -231,6 +298,25 @@ function closeMeeting(meetingId, { pdfShowAmpel, todoSnapshotJson, nextMeeting }
     nextMeeting?.place === undefined || nextMeeting?.place === null ? null : String(nextMeeting.place).trim();
   const nextMeetingExtra =
     nextMeeting?.extra === undefined || nextMeeting?.extra === null ? null : String(nextMeeting.extra).trim();
+  const parseNextMeetingFlag = (value, fallback) => value === undefined || value === null
+    ? fallback
+    : (String(value).trim().toLowerCase() === "1" ||
+        String(value).trim().toLowerCase() === "true" ||
+        String(value).trim().toLowerCase() === "yes" ||
+        String(value).trim().toLowerCase() === "ja" ||
+        String(value).trim().toLowerCase() === "on") ? 1 : 0;
+  const existingMeeting = getMeetingById(meetingId);
+  const nextMeetingOptionAEnabled = parseNextMeetingFlag(
+    nextMeeting?.optionAEnabled,
+    existingMeeting?.next_meeting_option_a_enabled ?? 1
+  );
+  const nextMeetingOptionBEnabled = parseNextMeetingFlag(
+    nextMeeting?.optionBEnabled,
+    existingMeeting?.next_meeting_option_b_enabled ?? 0
+  );
+  const nextMeetingOptionBText = nextMeeting?.optionBText === undefined
+    ? existingMeeting?.next_meeting_option_b_text ?? null
+    : nextMeeting?.optionBText === null ? null : String(nextMeeting.optionBText);
 
   const info = db.prepare(`
     UPDATE meetings
@@ -240,6 +326,9 @@ function closeMeeting(meetingId, { pdfShowAmpel, todoSnapshotJson, nextMeeting }
       pdf_show_ampel = @pdfShowAmpel,
       todo_snapshot_json = @todoSnapshotJson,
       next_meeting_enabled = @nextMeetingEnabled,
+      next_meeting_option_a_enabled = @nextMeetingOptionAEnabled,
+      next_meeting_option_b_enabled = @nextMeetingOptionBEnabled,
+      next_meeting_option_b_text = @nextMeetingOptionBText,
       next_meeting_date = @nextMeetingDate,
       next_meeting_time = @nextMeetingTime,
       next_meeting_place = @nextMeetingPlace,
@@ -251,6 +340,9 @@ function closeMeeting(meetingId, { pdfShowAmpel, todoSnapshotJson, nextMeeting }
     pdfShowAmpel: frozenAmpel,
     todoSnapshotJson: snapshotRaw,
     nextMeetingEnabled,
+    nextMeetingOptionAEnabled,
+    nextMeetingOptionBEnabled,
+    nextMeetingOptionBText,
     nextMeetingDate,
     nextMeetingTime,
     nextMeetingPlace,
@@ -284,6 +376,7 @@ function updateMeetingTitle({ meetingId, title }) {
 
 module.exports = {
   assertMeetingWritable,
+  updateNextMeeting,
   runInTransaction,
   getMeetingById,
   listByProject,

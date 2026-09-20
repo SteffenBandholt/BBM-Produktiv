@@ -1008,7 +1008,7 @@ function _buildProtocolFooterElement(data) {
   return wrap;
 }
 
-function _resolveInterludeText(data) {
+function _resolveNextMeetingContent(data) {
   const settings = data?.settings || {};
 
   const nextMeeting = data?.nextMeeting || {};
@@ -1016,7 +1016,18 @@ function _resolveInterludeText(data) {
     nextMeeting.enabled != null ? nextMeeting.enabled : settings["print.nextMeeting.enabled"],
     false
   );
-  if (!enabledRaw) return "";
+  if (!enabledRaw) return { optionAText: "", optionBText: "" };
+  const optionAEnabled = _parseBoolSetting(
+    nextMeeting.optionAEnabled != null ? nextMeeting.optionAEnabled : settings["print.nextMeeting.optionAEnabled"],
+    true
+  );
+  const optionBEnabled = _parseBoolSetting(
+    nextMeeting.optionBEnabled != null ? nextMeeting.optionBEnabled : settings["print.nextMeeting.optionBEnabled"],
+    false
+  );
+  const optionBText = String(
+    nextMeeting.optionBText != null ? nextMeeting.optionBText : settings["print.nextMeeting.optionBText"] || ""
+  );
   const dateRaw = String(nextMeeting.date != null ? nextMeeting.date : settings["print.nextMeeting.date"] || "").trim();
   const timeRaw = String(nextMeeting.time != null ? nextMeeting.time : settings["print.nextMeeting.time"] || "").trim();
   const placeRaw = String(nextMeeting.place != null ? nextMeeting.place : settings["print.nextMeeting.place"] || "").trim();
@@ -1032,35 +1043,91 @@ function _resolveInterludeText(data) {
     }
   }
   const timeOut = timeRaw || "-";
-  let text = "Die nächste Besprechung findet am ";
-  if (weekday) text += `${weekday}, den ${dateOut} um ${timeOut} Uhr`;
-  else text += `${dateOut} um ${timeOut} Uhr`;
-  if (extraRaw) text += ` ${extraRaw}`;
-  if (placeRaw) text += ` ${placeRaw}`;
-  text += " statt.";
-  return text.trim();
+  let optionAText = "";
+  if (optionAEnabled) {
+    optionAText = "Die nächste Besprechung findet am ";
+    if (weekday) optionAText += `${weekday}, den ${dateOut} um ${timeOut} Uhr`;
+    else optionAText += `${dateOut} um ${timeOut} Uhr`;
+    if (extraRaw) optionAText += ` ${extraRaw}`;
+    if (placeRaw) optionAText += ` ${placeRaw}`;
+    optionAText += " statt.";
+  }
+  return {
+    optionAText: optionAText.trim(),
+    optionBText: optionBEnabled && optionBText.trim() ? optionBText : "",
+  };
 }
 
-function _buildTopsTailElement(data) {
+function _resolveInterludeText(data) {
+  const content = _resolveNextMeetingContent(data);
+  return [content.optionAText, content.optionBText]
+    .filter((value) => String(value || "").trim())
+    .join("\n");
+}
+
+function _buildFullTopsTailModel(data) {
+  const content = _resolveNextMeetingContent(data);
+  return {
+    showLegend: true,
+    optionAText: content.optionAText,
+    optionBText: content.optionBText,
+    showFooter: true,
+  };
+}
+
+function _buildTopsTailElement(data, tailModel = null) {
+  const tail = tailModel || _buildFullTopsTailModel(data);
   const wrap = _el("div", "v2TopsTail");
-  wrap.appendChild(_buildTopsLegendElement());
-  const interlude = _resolveInterludeText(data);
-  if (interlude) wrap.appendChild(_el("div", "v2TopsInterlude", interlude));
-  const footer = _buildProtocolFooterElement(data);
-  if (footer) wrap.appendChild(footer);
+  if (tail.showLegend) wrap.appendChild(_buildTopsLegendElement());
+  if (String(tail.optionAText || "").trim()) {
+    wrap.appendChild(_el("div", "v2TopsInterlude v2NextMeetingOptionA", tail.optionAText));
+  }
+  if (String(tail.optionBText || "").trim()) {
+    wrap.appendChild(_el("div", "v2TopsInterlude v2NextMeetingOptionB", tail.optionBText));
+  }
+  if (tail.showFooter) {
+    const footer = _buildProtocolFooterElement(data);
+    if (footer) wrap.appendChild(footer);
+  }
   return wrap;
 }
 
-function _measureTopsTailHeight(data) {
+function _measureTopsTailHeight(data, tailModel = null) {
   const root = _buildMeasureRoot();
   const page = _el("div", "page");
-  const tail = _buildTopsTailElement(data);
+  const tail = _buildTopsTailElement(data, tailModel);
   page.appendChild(tail);
   root.appendChild(page);
   applyBbmPdfEditorLayout(root, data);
   const h = Math.ceil(tail.getBoundingClientRect().height || 0);
   root.remove();
   return h;
+}
+
+function _fitTopsTailOptionB({ data, tailBase, text, maxHeight }) {
+  const source = String(text || "");
+  if (!source || maxHeight <= 0) return null;
+  let low = 1;
+  let high = source.length;
+  let best = 0;
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    const candidate = { ...tailBase, optionBText: source.slice(0, mid), showFooter: false };
+    if (_measureTopsTailHeight(data, candidate) <= maxHeight) {
+      best = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  if (best <= 0) return null;
+  let cut = best;
+  if (best < source.length) {
+    const prefix = source.slice(0, best);
+    const whitespace = Math.max(prefix.lastIndexOf(" "), prefix.lastIndexOf("\n"), prefix.lastIndexOf("\t"));
+    if (whitespace > 0) cut = whitespace + 1;
+  }
+  return { chunk: source.slice(0, cut), remainingText: source.slice(cut) };
 }
 
 function _buildParticipantsIntroData(data) {
@@ -1774,7 +1841,8 @@ function _paginateTops(data) {
     });
   }
 
-  const tailHeight = _measureTopsTailHeight(data);
+  const fullTailModel = _buildFullTopsTailModel(data);
+  const tailHeight = _measureTopsTailHeight(data, fullTailModel);
   const pageCapAt = (idx) => (idx === 0 ? firstCap : nextCap);
   const introHeightAt = (idx, page) => {
     if (!page?.intro) return 0;
@@ -1803,48 +1871,105 @@ function _paginateTops(data) {
     preRemarks: null,
     table: { type: "tops", rows: [] },
   });
+  const pageAvailableForTail = (idx, page) => {
+    const cap = pageCapAt(idx);
+    const introH = introHeightAt(idx, page);
+    const measureCtx = idx === 0 ? ctxFirst : ctxNext || ctxFirst;
+    const preRemarksH = page?.preRemarks ? _measurePreRemarksHeight(measureCtx, page.preRemarks) : 0;
+    return Math.max(0, cap - introH - preRemarksH - rowsHeightAt(page));
+  };
 
   let lastTopsIdx = findLastTopsIdx();
-  while (lastTopsIdx >= 0) {
-    const page = pages[lastTopsIdx];
-    const cap = pageCapAt(lastTopsIdx);
-    const introH = introHeightAt(lastTopsIdx, page);
-    const measureCtx = lastTopsIdx === 0 ? ctxFirst : ctxNext || ctxFirst;
-    const preRemarksH = page?.preRemarks ? _measurePreRemarksHeight(measureCtx, page.preRemarks) : 0;
-    const usedWithTail = rowsHeightAt(page) + tailHeight;
-    const allowed = Math.max(0, cap - introH - preRemarksH);
-    if (usedWithTail <= allowed) break;
+  if (tailHeight <= nextCap) {
+    while (lastTopsIdx >= 0) {
+      const page = pages[lastTopsIdx];
+      if (tailHeight <= pageAvailableForTail(lastTopsIdx, page)) break;
 
-    if ((page?.table?.rows || []).length === 0) {
-      pages.splice(lastTopsIdx + 1, 0, makeEmptyTopsPage());
-      break;
-    }
+      if ((page?.table?.rows || []).length === 0) {
+        pages.splice(lastTopsIdx + 1, 0, makeEmptyTopsPage());
+        break;
+      }
 
-    const movedRows = [page.table.rows.pop()];
-    if (Number(page.table.rows.at(-1)?.level || 0) === 1) {
-      movedRows.unshift(page.table.rows.pop());
+      const movedRows = [page.table.rows.pop()];
+      if (Number(page.table.rows.at(-1)?.level || 0) === 1) {
+        movedRows.unshift(page.table.rows.pop());
+      }
+      const insertIdx = lastTopsIdx + 1;
+      let nextPage = pages[insertIdx];
+      if (String(nextPage?.table?.type || "") !== "tops") {
+        nextPage = makeEmptyTopsPage();
+        pages.splice(insertIdx, 0, nextPage);
+      }
+      nextPage.table.rows.unshift(...movedRows);
+      lastTopsIdx = findLastTopsIdx();
     }
-    const insertIdx = lastTopsIdx + 1;
-    let nextPage = pages[insertIdx];
-    if (String(nextPage?.table?.type || "") !== "tops") {
-      nextPage = makeEmptyTopsPage();
-      pages.splice(insertIdx, 0, nextPage);
+    const target = findLastTopsIdx();
+    pages[target].topsTail = {
+      ...fullTailModel,
+      interludeText: _resolveInterludeText(data),
+    };
+  } else {
+    let target = lastTopsIdx;
+    let firstSegment = true;
+    let remainingOptionBText = String(fullTailModel.optionBText || "");
+    let completed = false;
+    for (let guard = 0; guard < 100 && !completed; guard += 1) {
+      const page = pages[target];
+      const available = pageAvailableForTail(target, page);
+      const base = {
+        showLegend: firstSegment,
+        optionAText: firstSegment ? fullTailModel.optionAText : "",
+        optionBText: "",
+        showFooter: false,
+      };
+      const finalCandidate = { ...base, optionBText: remainingOptionBText, showFooter: true };
+      if (_measureTopsTailHeight(data, finalCandidate) <= available) {
+        page.topsTail = {
+          ...finalCandidate,
+          interludeText: [finalCandidate.optionAText, finalCandidate.optionBText]
+            .filter((value) => String(value || "").trim()).join("\n"),
+        };
+        completed = true;
+        break;
+      }
+
+      const fitted = _fitTopsTailOptionB({
+        data,
+        tailBase: base,
+        text: remainingOptionBText,
+        maxHeight: available,
+      });
+      if (fitted?.chunk) {
+        page.topsTail = {
+          ...base,
+          optionBText: fitted.chunk,
+          interludeText: [base.optionAText, fitted.chunk]
+            .filter((value) => String(value || "").trim()).join("\n"),
+        };
+        remainingOptionBText = fitted.remainingText;
+        firstSegment = false;
+      } else {
+        const baseHeight = _measureTopsTailHeight(data, base);
+        if (baseHeight > 0 && baseHeight <= available) {
+          page.topsTail = {
+            ...base,
+            interludeText: String(base.optionAText || ""),
+          };
+          firstSegment = false;
+        } else if ((page?.table?.rows || []).length === 0 && !page.intro && !page.preRemarks) {
+          throw new Error("PDF-V2-PROT-009: Abschlusssegment passt nicht in die Seitenkapazität.");
+        }
+      }
+
+      pages.splice(target + 1, 0, makeEmptyTopsPage());
+      target += 1;
     }
-    nextPage.table.rows.unshift(...movedRows);
-    lastTopsIdx = findLastTopsIdx();
+    if (!completed) {
+      throw new Error("PDF-V2-PROT-009: Mehrseitiger Freitext konnte nicht vollständig paginiert werden.");
+    }
   }
 
   const total = pages.length || 1;
-  const interludeText = _resolveInterludeText(data);
-  for (let i = pages.length - 1; i >= 0; i -= 1) {
-    const p = pages[i];
-    if (String(p?.table?.type || "") !== "tops") continue;
-    p.topsTail = {
-      showLegend: true,
-      interludeText,
-    };
-    break;
-  }
   pages.forEach((p, idx) => {
     p.header.pageNo = idx + 1;
     p.header.totalPages = total;

@@ -35,6 +35,9 @@ async function runTopsCloseFlowTests(run) {
             cancelled: false,
             data: {
               "print.nextMeeting.enabled": "1",
+              "print.nextMeeting.optionAEnabled": "0",
+              "print.nextMeeting.optionBEnabled": "1",
+              "print.nextMeeting.optionBText": "Freitext Zeile 1\nFreitext Zeile 2",
               "print.nextMeeting.date": "2026-05-01",
               "print.nextMeeting.time": "09:00",
               "print.nextMeeting.place": "Baubude",
@@ -81,6 +84,9 @@ async function runTopsCloseFlowTests(run) {
       assert.equal(meetingsCloseCalls.length, 1);
       assert.equal(meetingsCloseCalls[0].meetingId, 44);
       assert.equal(meetingsCloseCalls[0].nextMeeting.date, "2026-05-01");
+      assert.equal(meetingsCloseCalls[0].nextMeeting.optionAEnabled, "0");
+      assert.equal(meetingsCloseCalls[0].nextMeeting.optionBEnabled, "1");
+      assert.equal(meetingsCloseCalls[0].nextMeeting.optionBText, "Freitext Zeile 1\nFreitext Zeile 2");
       assert.equal(printCalls.length, 4);
       assert.equal(mailCalled, 1);
     } finally {

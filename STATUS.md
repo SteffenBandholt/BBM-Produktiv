@@ -5309,3 +5309,60 @@ Lizenztool, Versionsanhebung, PDF-Satzänderungen oder Paket 3. Nächster offene
 Konsolidierungsschritt bleibt Paket 3; es wurde nicht begonnen.
 
 ---
+
+## 2026-09-20 – BBM 1.5.1 Konsolidierung: Paket 3 Folgetermin Optionen A/B
+
+Auf Branch `integration/bbm-1.5.1-consolidation` wurde Paket 3 hunkweise auf
+dem abgeschlossenen Paket-1-/Paket-2-Stand umgesetzt. Referenzcommit `8aef3aee`
+lieferte das ursprüngliche A/B-Datenmodell, den Dialog und die PDF-Fortsetzung;
+Snapshot `77b8028c` enthielt darüber hinaus die führenden Korrekturen für
+besprechungsbezogene Werte, globale Vorgaben nur bei unberührten offenen
+Baubesprechungen, getrennte Reihen und den Schreibschutz geschlossener
+Besprechungen. Diese spätere Snapshot-Variante wurde semantisch übernommen,
+ohne komplette Altdateien oder sachfremde Snapshot-Änderungen einzuspielen.
+
+Die Migration ergänzt ausschließlich `next_meeting_option_a_enabled` mit
+Bestandsdefault 1, `next_meeting_option_b_enabled` mit Bestandsdefault 0 und
+`next_meeting_option_b_text`. Hauptschalter, A, B und mehrzeiliger B-Text werden
+je Besprechung gespeichert; das Abschalten löscht die Inhalte nicht. Zusätzliche
+Besprechungsreihen verwenden keine globalen Baubesprechungsvorgaben. Die
+Paket-1-Reihen- und Paket-2-Routinglogik sowie Registry 40 bleiben unverändert.
+
+Die UI-/PDF-Entwurfsentscheidung lautet: UI und PDF, nicht editorfähig für die
+neuen Bedienelemente und Fachwerte. Hauptschalter, Optionen A/B und B-Freitext
+sind fachliche Meeting-/DB-/IPC-Aktionen und deshalb keine Editorziele. Es wurden
+keine Inspector-IDs, Parents oder Operationen ergänzt. Der vorhandene
+Protokoll-Abschluss bleibt editorseitig unverändert. Der PDF-Vertrag ergänzt
+`PDF-V2-PROT-009`; `PDF-V2-PROT-004` beschreibt nun A/B. Lange B-Texte werden
+vollständig in Abschlusssegmente paginiert, während „Aufgestellt“ ausschließlich
+auf der letzten Seite erscheint.
+
+Die fokussierten Folgeterminprüfungen sind 6/6 grün: Vorschau/Protokoll,
+Persistenz und Inhaltserhalt, additive Bestandsmigration, Dialogvorgaben,
+IPC/Preload und MeetingService. TopsCloseFlow ist 2/2 grün. Die sechs neuen
+PDF-Fixtures p50–p55 bestehen den Folgetermin-Guardrail; p55 umfasst vier Seiten,
+enthält den vollständigen B-Text und den Abschlussfuß nur auf Seite 4. Alle sechs
+PDFs wurden erzeugt, p50/p53/p54 sowie alle vier Seiten von p55 gerendert und
+visuell ohne Abschneiden oder Überlagerung geprüft.
+
+Der Reihen-/Paket-1-/Paket-2-Lauf bleibt bei 187/195. Die acht bekannten roten
+Prüfungen sind unverändert: zwei `projectFirmsLayout`, zwei
+`protokollProjectEntryRouting`, eine `protokollRouterFallback` sowie drei
+M83-Baselineabweichungen. Der vollständige M85-Lauf enthält zusätzlich exakt die
+vier bereits im sauberen Ausgangsstand reproduzierten Baselineabweichungen:
+`r19-empty`-Hash, Restarbeiten-Spaltenzahl 9 statt 13, Registryzahl 37 statt 35
+und `PDF-V2-ARCH-003`. Der neue Folgetermin-Guardrail ist grün. Syntax,
+UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün. Der relevante
+ESLint-Lauf reproduziert ausschließlich die zwei schon am Ausgangs-HEAD
+vorhandenen `printApp.js`-Fehler und vorhandene Warnungen.
+
+Ein isolierter Electron-Start mit neutralem temporärem Protokollprofil hat
+Datenbankmigration, Seed und Protokollroute erfolgreich durchlaufen. Native
+Computer Use stellte keine App- oder Browseroberfläche bereit; eine eigene
+Klickprüfung des Dialogs wird deshalb nicht behauptet. Das temporäre Profil
+wurde gelöscht. Audio/Diktat, Distribution/Setup, Lizenztool/Kundenbindung,
+Versionsanhebung und sonstige Protokollkorrekturen wurden nicht verändert.
+Nächster offener Konsolidierungsschritt ist Paket 4; dessen Umfang bleibt vor
+Beginn getrennt zu bestimmen.
+
+---

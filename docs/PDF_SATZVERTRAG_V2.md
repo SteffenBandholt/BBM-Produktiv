@@ -2,7 +2,7 @@
 
 Stand: 2026-09-14
 Inventarbasis: `rechnung-integration` / `2d9dcc113af89a3b1005e9b8d9ba41416108dbff`
-Vertragsversion: `m85.2-v6-standard-header-address`
+Vertragsversion: `m85.2-v7-next-meeting-options`
 
 ## Zweck und Geltungsgrenze
 
@@ -121,11 +121,12 @@ keinen zweiten Renderer und keine zweite Paginierung.
 | `PDF-V2-PROT-001` | Teilnehmer stehen vor Vorbemerkung/TOPs und werden ausschließlich an vollständigen Tabellenzeilen auf Seiten verteilt. Teilnehmerüberschrift und Tabellenkopf werden auf jeder Teilnehmer-Folgeseite wiederholt. Nur eine einzelne Zeile, die selbst höher als eine leere Seite ist, wird deterministisch an Wortgrenzen segmentiert; alle Segmente behalten dieselbe synthetische Quellidentität und Folgefragmente sind als `Fortsetzung:` gekennzeichnet. | `_buildParticipantsIntroPlan`, `_splitOversizedParticipantRow`, p11/p12/p28–p31 | fest |
 | `PDF-V2-PROT-002` | Vorbemerkung steht nach Teilnehmern und vor TOPs. Passt sie nicht in den Restplatz, wird ihr Text deterministisch an Wortgrenzen auf weitere Seiten verteilt. Folgeblöcke tragen `Vorbemerkung (Fortsetzung):`; kein Wort geht verloren oder wird doppelt ausgegeben. | `_fitPreRemarksSegment`, `_paginateTops`, p13/p14/p32–p34 | fest |
 | `PDF-V2-PROT-003` | TOP-Reihenfolge entspricht den in `printData` normalisierten/sortierten Druckdaten. Level 1 nutzt eine eigene unteilbare Zeile mit Keep-with-next; Unterpunkte besitzen Nummer, Kurz-/Langtext und Meta. | `printData`, `_buildTopRowData`, PrintShell | fest |
-| `PDF-V2-PROT-004` | Abschlussreihenfolge: Legende, optionaler Nächster-Termin-Text, danach `Aufgestellt:` mit Footerzeilen. Der gesamte Block liegt auf der letzten TOP-Seite. | `_buildTopsTailElement`, `_buildProtocolFooterElement`, p15 | fest für getestete Größen |
+| `PDF-V2-PROT-004` | Abschlussreihenfolge: Legende, optionale Angaben der nächsten Besprechung, danach `Aufgestellt:` mit Footerzeilen. Ein normal hoher Abschluss liegt auf der letzten TOP-Seite. Nur ein überhoher Freitext darf den Abschluss auf unmittelbar folgende TOP-Abschlussseiten erweitern; `Aufgestellt:` folgt erst nach seinem letzten Segment. | `_buildTopsTailElement`, `_buildProtocolFooterElement`, p15, p50–p55 | fest |
 | `PDF-V2-PROT-005` | Ein Protokoll ohne TOPs rendert keine leere TOP-Tabelle, aber Teilnehmer-Leerzustand und Abschlussblock. | p01, `PrintShell.renderPrint` | fest |
 | `PDF-V2-PROT-006` | „Neu“, „übernommen/berührt“, „wichtig“, Status, Termin, Verantwortlich und Ampel beeinflussen Darstellung, nicht Satzsteuerung durch den Editor. | Zeilenrenderer, Ampelregel | fest, Farben nicht visuell golden-verriegelt |
 | `PDF-V2-PROT-007` | Eine registrierte TOP-`TableColumn` ist eine geometrische Einheit aus Spaltentrack, Tabellenkopf und sämtlichen Datenzellen. Ihre horizontale Geometrie wird nicht frei verschoben: `resizeColumnBoundary` verschiebt ausschließlich eine innere Grenze und ändert die Breiten der beiden direkten Nachbarspalten atomar und gegenläufig. Tabellensumme und beide Außenkanten bleiben unverändert; Header- und Datentracks bleiben lückenlos. Sichtbarkeit wirkt auf die vollständige Spalte. Der registrierte Tabellenkopf ist Kind seiner Spalte und darf nur seinen Text innerhalb der unveränderten Spaltengeometrie verschieben, skalieren, ausrichten oder ausblenden. | `bbmPdfAdapter.cjs`, `PrintShell._buildTableHead`, `pdfEditorLayout.js`, M81 und M85-Print-DOM-Nachweise | fest |
 | `PDF-V2-PROT-008` | Die bestehende Teilnehmertabelle ist ein explizites Tabellenziel mit den Tracks Name 34, Funktion 32, Firma 30, Telefon/E-Mail 72 und Anwesend/Verteiler 18 mm. Eine innere Grenze verändert nur direkte Nachbarn gegenläufig bei fester 186-mm-Gesamtsumme. Eine Änderung der Tabellenaußenbreite verändert atomar den äußersten rechten Track. Kein Track, Kopf, Zellhintergrund oder Text darf die Nutzflächenkante X = 198 mm überschreiten. Der Kopf Anwesend/Verteiler bleibt als Kind der rechten Spalte separat textpositionierbar. | vorhandene Teilnehmer-DOM-/CSS-Struktur, `bbmPdfAdapter.cjs`, `pdfEditorLayout.js` | M81 und M85 mit realem Header-/Datenzellen-Readback | fest |
+| `PDF-V2-PROT-009` | Der Hauptschalter `Drucken` unterdrückt beide Nächste-Besprechung-Optionen. Bei aktivem Hauptschalter werden A und B unabhängig ausgegeben; A steht vor B, Bedienlabels werden nicht gedruckt, und ohne gewählte Option entsteht kein leerer Termintext. B erhält vorhandene Zeilenumbrüche und wird bei Überhöhe verlustfrei über aufeinanderfolgende Abschlussseiten geteilt. Vorschau und Protokoll verwenden dasselbe `nextMeeting`-Datenobjekt. | `printData._resolveNextMeetingForPrint`, `printApp._resolveNextMeetingContent`, `_fitTopsTailOptionB`, `PrintShell._buildTopsTail`, p50–p55 | fest |
 
 ## B2. Dokumentartspezifische Regeln: Restarbeiten
 
@@ -250,14 +251,17 @@ Für jedes Element sind außerdem `setPageBreakRule`, Seitenzuweisung, manuelle 
 
 ## Strukturelle Golden-Fixtures
 
-Die 49 neutralen Fälle liegen in `scripts/pdf-v2/m85Fixtures.cjs`. Der isolierte
+Die 55 neutralen Fälle liegen in `scripts/pdf-v2/m85Fixtures.cjs`. Der isolierte
 Electron-Harness verwendet ausschließlich diese Objekte, eigenes temporäres
-`userData`/`sessionData` und die echten Renderer-CSS-Dateien. Die 25
-Protokollfälle behalten einschließlich p01–p34 ihre M85.1-Goldenwerte; 22
+`userData`/`sessionData` und die echten Renderer-CSS-Dateien. Die bisherigen 25
+Protokollfälle behalten einschließlich p01–p34 ihre Seitenzahlen und ihr
+Satzverhalten; der p15-Hash enthält nun zusätzlich den expliziten A-Text. 22
 Restarbeiten-Fälle decken Leerzustand, Grenzfälle, Mehrseitenlisten, alle drei
 teilbaren Textfelder, einen Datensatz über mehrere Seiten, alle 13 Spalten,
 Status/Ampel, lange Verortung, sichtbare Filterreihenfolge, Löschfilter,
-Kopfwiederholung, Fußreserve, Querformat und gemischte Datensätze ab. Zwei
+Kopfwiederholung, Fußreserve, Querformat und gemischte Datensätze ab. Die sechs
+Fälle p50–p55 verriegeln Hauptschalter aus, nur A, nur B, A+B, keine Auswahl
+sowie einen mehrseitigen Freitext mit erhaltenen Zeilenumbrüchen. Zwei
 Invoice-Fälle i48/i49 verriegeln finale Rechnung und Proberechnung über fünf
 Seiten mit FullHeader-Slot, MiniHeader, Vorabzug, Bau-LV, NEP, Hinweis,
 Mehrfach-MwSt., Abschluss und echtem Seitenfooter innerhalb der Fußreserve.

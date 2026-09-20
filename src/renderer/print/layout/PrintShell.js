@@ -632,13 +632,20 @@ function _buildProtocolFooter(data) {
 
 function _buildTopsTail(page, data) {
   const tail = page?.topsTail || null;
-  if (!tail?.showLegend) return null;
+  if (!tail) return null;
   const wrap = _el("div", "v2TopsTail");
-  wrap.appendChild(_buildTopsLegend());
-  const interludeText = String(tail?.interludeText || "").trim();
-  if (interludeText) wrap.appendChild(_el("div", "v2TopsInterlude", interludeText));
-  const footer = _buildProtocolFooter(data);
-  if (footer) wrap.appendChild(footer);
+  if (tail.showLegend) wrap.appendChild(_buildTopsLegend());
+  const hasStructuredOptions = Object.hasOwn(tail, "optionAText") || Object.hasOwn(tail, "optionBText");
+  const optionAText = hasStructuredOptions
+    ? String(tail.optionAText || "")
+    : String(tail.interludeText || "");
+  const optionBText = hasStructuredOptions ? String(tail.optionBText || "") : "";
+  if (optionAText.trim()) wrap.appendChild(_el("div", "v2TopsInterlude v2NextMeetingOptionA", optionAText));
+  if (optionBText.trim()) wrap.appendChild(_el("div", "v2TopsInterlude v2NextMeetingOptionB", optionBText));
+  if (tail.showFooter !== false) {
+    const footer = _buildProtocolFooter(data);
+    if (footer) wrap.appendChild(footer);
+  }
   return wrap;
 }
 
@@ -788,17 +795,6 @@ export function renderPrint({ pages, data, contentSlots = null } = {}) {
   _applyV2Vars(root, runtimeData);
   const totalPages = Array.isArray(pages) ? pages.length : 0;
   const modeLabel = String(runtimeData?.printProfile?.documentLabel || "").trim() || "Dokument";
-  const lastTopsPageIdx = (pages || []).reduce((last, p, idx) => {
-    const isTops = String(p?.table?.type || "") === "tops";
-    return isTops ? idx : last;
-  }, -1);
-  const lastTopsWithRowsIdx = (pages || []).reduce((last, p, idx) => {
-    const isTops = String(p?.table?.type || "") === "tops";
-    const hasRows = (p?.table?.rows || []).length > 0;
-    return isTops && hasRows ? idx : last;
-  }, -1);
-  const tailPageIdx = lastTopsWithRowsIdx >= 0 ? lastTopsWithRowsIdx : lastTopsPageIdx;
-
   (pages || []).forEach((page, idx) => {
     const pageEl = _el("div", "page");
     if (normalizedMode === "invoice") {
@@ -867,7 +863,7 @@ export function renderPrint({ pages, data, contentSlots = null } = {}) {
     if (renderTable) {
       pageBody.appendChild(_buildTable(page, runtimeData));
     }
-    if (isTops && idx === tailPageIdx) {
+    if (isTops && page?.topsTail) {
       const tail = _buildTopsTail(page, runtimeData);
       if (tail) pageBody.appendChild(tail);
     }

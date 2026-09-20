@@ -1238,7 +1238,7 @@ export default class Router {
     await pm.openPrint({ projectId: effectiveProjectId, seriesKey });
   }
 
-  async promptNextMeetingSettings({ defaultDateIso } = {}) {
+  async promptNextMeetingSettings({ defaultDateIso, meetingId = this.currentMeetingId, meeting } = {}) {
     const pm = await this._ensurePrintModal();
     try {
       if (typeof pm.close === "function") {
@@ -1252,7 +1252,7 @@ export default class Router {
     if (typeof pm?.promptNextMeetingSettings !== "function") {
       return { ok: false, cancelled: true };
     }
-    return await pm.promptNextMeetingSettings({ defaultDateIso });
+    return await pm.promptNextMeetingSettings({ defaultDateIso, meetingId, meeting });
   }
 
   async openMeetingPrintPreview({ projectId, meetingId, mode } = {}) {

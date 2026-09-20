@@ -135,15 +135,20 @@ Gesamt-S5 offen; Rechnung #275 eingefroren.
 
 - [x] Paket 1: Besprechungsreihen – Daten, Domain, Migration, IPC/Preload,
   Projekttransfer und Tests auf `integration/bbm-1.5.1-consolidation`.
-- [ ] Paket 2: Projektübersicht, Besprechungsreihen-UI und Registry-40-Scopes.
-- [ ] Paket 3: Folgetermin Optionen A/B.
+- [x] Paket 2: Projektübersicht, Besprechungsreihen-UI und Registry-40-Scopes.
+- [x] Paket 3: Folgetermin Optionen A/B – additive Bestandsmigration,
+  besprechungs- und reihengebundene Persistenz, Dialog, Vorschau/Protokoll sowie
+  verlustfreie mehrseitige PDF-Ausgabe mit Abschlussfuß auf der letzten Seite.
 - [ ] Paket 4: getrennte Protokollkorrekturen.
 - [ ] Paket 5: Protokoll-Distribution/Setup.
 - [ ] Paket 6: Lizenztool/Kundenbindung.
 - [ ] Paket 7: Version 1.5.1/Kundenupdate zuletzt.
 
-Paket 1 stammt kontrolliert aus Snapshot `77b8028c`; der Snapshot wurde weder
-gemergt noch vollständig übernommen. Paket 2 ist der nächste offene Meilenstein.
+Pakete 1 bis 3 stammen kontrolliert aus Snapshot `77b8028c`; für Paket 3 wurde
+zusätzlich Referenzcommit `8aef3aee` ausgewertet. Weder Snapshot noch
+Referenzcommit wurden gemergt oder vollständig übernommen. Paket 4 ist der
+nächste offene Meilenstein; seine getrennten Protokollkorrekturen sind noch
+nicht analysiert oder vorgezogen.
 Audio bleibt außerhalb dieser Konsolidierungsfolge, bis es ausdrücklich separat
 beauftragt wird.
 

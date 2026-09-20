@@ -2,6 +2,7 @@
 const { initDatabase } = require("../db/database");
 const projectsRepo = require("../db/projectsRepo");
 const meetingsRepo = require("../db/meetingsRepo");
+const { normalizeSeriesKey } = require("../../shared/meetingSeries.cjs");
 const projectSettingsRepo = require("../db/projectSettingsRepo");
 const meetingTopsRepo = require("../db/meetingTopsRepo"); 
 const { getFirmDirectoryService } = require("../domain/firms/FirmDirectoryService");
@@ -714,6 +715,9 @@ const PRINT_SETTINGS_KEYS = [
     "print.v2.pagePadBottomMm",
     "print.v2.footerReserveMm",
     "print.nextMeeting.enabled",
+    "print.nextMeeting.optionAEnabled",
+    "print.nextMeeting.optionBEnabled",
+    "print.nextMeeting.optionBText",
     "print.nextMeeting.date",
     "print.nextMeeting.time",
     "print.nextMeeting.place",
@@ -845,23 +849,33 @@ function _buildLogos(settings) {
 
 function _resolveNextMeetingForPrint({ mode, meeting, settings } = {}) {
   const normalizedMode = String(mode || "").trim().toLowerCase();
+  const parseOptionFlag = (value, fallback) => value == null ? fallback : _parseBool(value);
   const meetingNextMeeting = {
     enabled: _parseBool(meeting?.next_meeting_enabled),
+    optionAEnabled: parseOptionFlag(meeting?.next_meeting_option_a_enabled, true),
+    optionBEnabled: parseOptionFlag(meeting?.next_meeting_option_b_enabled, false),
+    optionBText: String(meeting?.next_meeting_option_b_text || ""),
     date: String(meeting?.next_meeting_date || "").trim(),
     time: String(meeting?.next_meeting_time || "").trim(),
     place: String(meeting?.next_meeting_place || "").trim(),
     extra: String(meeting?.next_meeting_extra || "").trim(),
   };
   const hasMeetingNextMeeting =
+    meeting?.next_meeting_enabled != null ||
     meetingNextMeeting.enabled ||
     !!(
       meetingNextMeeting.date ||
       meetingNextMeeting.time ||
       meetingNextMeeting.place ||
-      meetingNextMeeting.extra
+      meetingNextMeeting.extra ||
+      meetingNextMeeting.optionBEnabled ||
+      meetingNextMeeting.optionBText.trim()
     );
   const settingsNextMeeting = {
     enabled: _parseBool(settings?.["print.nextMeeting.enabled"]),
+    optionAEnabled: parseOptionFlag(settings?.["print.nextMeeting.optionAEnabled"], true),
+    optionBEnabled: parseOptionFlag(settings?.["print.nextMeeting.optionBEnabled"], false),
+    optionBText: String(settings?.["print.nextMeeting.optionBText"] || ""),
     date: String(settings?.["print.nextMeeting.date"] || "").trim(),
     time: String(settings?.["print.nextMeeting.time"] || "").trim(),
     place: String(settings?.["print.nextMeeting.place"] || "").trim(),
@@ -871,9 +885,12 @@ function _resolveNextMeetingForPrint({ mode, meeting, settings } = {}) {
   if (normalizedMode === "protocol") {
     return hasMeetingNextMeeting
       ? meetingNextMeeting
-      : { enabled: false, date: "", time: "", place: "", extra: "" };
+      : { enabled: false, optionAEnabled: true, optionBEnabled: false, optionBText: "", date: "", time: "", place: "", extra: "" };
   }
 
+  if (normalizeSeriesKey(meeting?.series_key) !== "construction" || Number(meeting?.is_closed) === 1) {
+    return meetingNextMeeting;
+  }
   return hasMeetingNextMeeting ? meetingNextMeeting : settingsNextMeeting;
 }
 
