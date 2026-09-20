@@ -83,13 +83,13 @@ function createImportIcon() {
   return iconWrap;
 }
 
-function createButton({ id, icon, title, ariaLabel = title, pressed = null, disabled = false, onClick = null }) {
+function createButton({ id = null, icon, title, ariaLabel = title, pressed = null, disabled = false, onClick = null }) {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = "bbm-tops-screen-quicklane__button";
   btn.title = title;
   btn.setAttribute("aria-label", ariaLabel);
-  btn.setAttribute("data-ui-editor-id", id);
+  if (id) btn.setAttribute("data-ui-editor-id", id);
   if (pressed !== null) btn.setAttribute("aria-pressed", pressed ? "true" : "false");
   btn.appendChild(typeof icon === "string" ? createTextIcon(icon) : icon);
   if (disabled) {
@@ -146,6 +146,14 @@ export class TopsScreenQuicklane {
     this._syncPinnedState();
 
     const navigation = createGroup("protokoll.topsScreen.quicklane.group.navigation", "Navigation");
+    const importButton = createButton({
+      icon: createImportIcon(),
+      title: "Import",
+      ariaLabel: "Sprachdatei importieren",
+      disabled: disabled || !hasProject || !hasMeeting || isReadOnly || !audioAvailable,
+      onClick: () => this.callbacks.onImportAudio?.(),
+    });
+    importButton.dataset.quicklaneAction = "audio-import";
     navigation.append(
       createButton({
         id: "protokoll.topsScreen.quicklane.pin",
@@ -177,14 +185,7 @@ export class TopsScreenQuicklane {
         disabled: disabled || !hasProject || !hasMeeting,
         onClick: () => this.callbacks.onParticipants?.(),
       }),
-      createButton({
-        id: "protokoll.topsScreen.quicklane.action.importAudio",
-        icon: createImportIcon(),
-        title: "Import",
-        ariaLabel: "Sprachdatei importieren",
-        disabled: disabled || !hasProject || !hasMeeting || isReadOnly || !audioAvailable,
-        onClick: () => this.callbacks.onImportAudio?.(),
-      })
+      importButton
     );
 
     const visibility = createGroup("protokoll.topsScreen.quicklane.group.visibility", "Sichtbarkeit");
@@ -259,7 +260,6 @@ export class TopsScreenQuicklane {
         "protokoll.topsScreen.quicklane.action.project",
         "protokoll.topsScreen.quicklane.action.firms",
         "protokoll.topsScreen.quicklane.action.participants",
-        "protokoll.topsScreen.quicklane.action.importAudio",
       ]],
       ["protokoll.topsScreen.quicklane.group.visibility", visibility, [
         "protokoll.topsScreen.quicklane.action.ampel",

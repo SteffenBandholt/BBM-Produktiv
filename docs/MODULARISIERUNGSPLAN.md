@@ -1,70 +1,18 @@
-## 2026-09-19 – #349 Meilenstein: historisches Reorder-Modulprofil heilen
+## 2026-09-20 – #349 Abschluss: Audioimport aus dem UI-Editor gelöst
 
-Der mit der echten Registry-38-Fixture nachgewiesene Restfehler ist auf den
-bereits vorhandenen Übergangszustand `Rootprofil korrekt / Modulprofil durch die
-erste #349-Migration falsch sortiert` begrenzt. Weil das Modulprofil formal
-Registry 39 entspricht, verdrängt es das Rootprofil und überspringt jede weitere
-Migration. Frische Temp-Profile konnten diesen Zustand bisher nicht abbilden.
+Die zwischenzeitliche Registry-39-, Profil-Migrations- und Startup-Reparaturlösung
+wird vollständig zurückgenommen. Registry, HostAdapter, Komponentenvertrag,
+Inventar und Target-Manifest entsprechen wieder `main` auf Registry-Version 38.
+Der Audioimport bleibt als feste Runtime-Fachaktion an fünfter Stelle der
+Protokoll-Quicklane erhalten und ist weder Editorziel noch Profilbestandteil.
 
-Der Produktpfad darf ausschließlich ein Modulprofil reparieren, das byteunabhängig
-strukturell exakt aus demselben Rootprofil, der registrierten additiven Migration
-und der historischen Registry-Neusortierung ableitbar ist. Vor der Ersetzung wird
-das falsche Modulprofil archiviert. Beliebige aktuelle, manuell bearbeitete oder
-inkompatible Profile bleiben unverändert. Abnahme erfolgen mit dem bytegenauen
-realen Profil-Snapshot, zwei isolierten Starts, Hash-/Archivvergleich,
-vollständigem Bestandserhalt, genau einem Importbutton und einem weiterhin
-blockierten Negativfall. Danach endet das Paket ohne weitere Audio-, UI-,
-Registry-, TOP-, PDF- oder CSS-Arbeit.
-
----
-
-## 2026-09-19 – #349 Meilenstein: produktiver Legacy-Startup-Restore
-
-Der nächste offene Mini-Meilenstein des Audioimport-Branches ist auf die
-Wiederherstellung eines vorhandenen Registry-38-Protokollprofils beim normalen
-Registry-39-Start begrenzt. Die bereits registrierte additive Migration wird im
-produktiven Startpfad vor der aktuellen Kompatibilitätsprüfung des gemeinsamen
-Legacyprofilroots ausgeführt. Erst danach darf der bestehende Modulroot-Umzug
-nach `module-protokoll` stattfinden.
-
-Abnahme: temporäres `userData`, erster und zweiter vollständiger Loader-Start,
-jeweils `layout_profile_loaded` und bestätigtes `startup_layout_applied`, beim
-zweiten Start keine weitere Profil- oder Archivänderung sowie unveränderte
-Ablehnung eines tatsächlich inkompatiblen Profils mit
-`incompatible_registry`. Keine Registry-, HostAdapter-, UI-, Audio-, TOP-,
-PDF-, CSS- oder Editor-Core-Erweiterung; kein Zugriff auf das reale
-BBM-Benutzerprofil. Danach endet das Paket ohne automatische Fortsetzung.
-
----
-
-## 2026-09-19 – #349 isolierter Sicherheitsnachweis der Profilmigration
-
-Der vorhandene Reparaturstand wird nach dem Nutzerstopp ausschließlich mit
-temporärem Profilroot nachgeprüft. Ein schema-gültiges Registry-38-Profil mit
-allen drei aktiven Protokoll-Scopes, individuellen Layoutwerten, abweichender
-Speicherreihenfolge und gültigen Zusatzoperationen durchläuft denselben
-produktiven Startup-Restore wie die Anwendung. Registry-39-Validierung,
-vollständiger Bestandserhalt, genau eine Ergänzung, einmalige Archivierung und
-ein byte-identischer zweiter Lauf sind Testpflicht. Reales BBM-userData und ein
-normaler DEV-Start bleiben bis zur ausdrücklichen Nutzerfreigabe ausgeschlossen.
-
----
-
-## 2026-09-19 – #349 Bestandsschutz der Protokoll-Profilmigration
-
-Die additive Registry-38-auf-39-Migration des Audioimport-Buttons wird im
-laufenden Branch minimal repariert. Ursache war keine Änderung einzelner
-Geometriewerte, sondern die vollständige Neuordnung der gespeicherten
-Elementliste nach aktueller Registry-Reihenfolge. Der sequenzielle Start-Restore
-änderte dadurch bei verschachtelten Elementen das sichtbare Ergebnis.
-
-Die Migration erhält nun Werte und Reihenfolge aller vorhandenen Elemente und
-hängt genau einen neuen Buttonzustand an. Realitätsnahe Regression und der
-produktive Start-Restore-Weg mit einer temporären Kopie der bestätigten
-Vorher-Sicherung belegen Bestandserhalt, korrekten Fingerprint, Idempotenz und
-einmalige Archivierung. Das Paket enthält keine weitere Audio-, Protokoll-,
-Layout-, CSS-, PDF- oder Registryänderung. Nach Commit/Push folgt nur die
-manuelle Sichtprüfung im DEV-Stand; keine automatische Fortsetzung.
+Der Abschlussnachweis verwendet ausschließlich den committeten bytegenauen
+Registry-38-Profilsnapshot in einem temporären Profilroot. Zwei isolierte Starts
+müssen Profilbytes und Dateibestand unverändert lassen und dürfen kein Archiv
+erzeugen. Audioimport, Abbruch, Sprachkommandos, TOP-Anlage, Druckausschluss,
+Live-Diktat, Fortschrittsdialog und Sprung zum ersten Importpunkt bleiben
+funktional unverändert. Kein realer DEV-Start und kein Zugriff auf Steffens
+BBM-AppData; nach Commit und Push folgt nur der einmalige Nutzertest.
 
 ---
 

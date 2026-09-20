@@ -23,7 +23,6 @@ const REQUIRED_IDS = [
   "protokoll.topsScreen.quicklane.action.project",
   "protokoll.topsScreen.quicklane.action.firms",
   "protokoll.topsScreen.quicklane.action.participants",
-  "protokoll.topsScreen.quicklane.action.importAudio",
   "protokoll.topsScreen.quicklane.action.ampel",
   "protokoll.topsScreen.quicklane.action.longtext",
   "protokoll.topsScreen.quicklane.action.topFilter",

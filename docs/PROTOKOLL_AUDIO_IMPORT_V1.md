@@ -37,9 +37,10 @@ HTTP-Anfrage beziehungsweise den gestarteten Kindprozess.
 
 ## UI-/PDF-Vertrag
 
-- Der Quicklane-Button ist ein bewusst registriertes UI-Element. Seine
-  Fachaktion, IPC-Aufrufe und Datenänderungen bleiben für den UI-Editor gesperrt;
-  nur die bestehenden neutralen Layoutoperationen sind erlaubt.
+- Der Quicklane-Button `Import` ist eine feste Runtime-Fachaktion direkt nach
+  `Teilnehmer`. Er besitzt bewusst keine UI-Editor-ID, keinen Registry-Eintrag,
+  keinen Komponentenvertrag und keine Layoutoperationen. Die vier bestehenden
+  Navigationsbuttons und alle vorhandenen Editorziele bleiben unverändert.
 - Fortschrittsanzeige und Abbruch sind transiente Fach-UI und keine Editorziele.
 - Der PDF-V2-Satz und das Layout bleiben unverändert. Die vorhandene
   Datenzusammenstellung entfernt ausschließlich den per Typ und Elternkette
@@ -49,17 +50,17 @@ HTTP-Anfrage beziehungsweise den gestarteten Kindprozess.
 ## Abnahmegrenze
 
 Automatisiert werden Dateidialog, Lizenz-/Read-only-Gate, Parser,
-Kurz-/Langtext, Wiederverwendung, Sortierung, Migration, Transaktion, Abbruch,
+Kurz-/Langtext, Wiederverwendung, Sortierung, Datenbankmigration, Transaktion, Abbruch,
 Sprung/Selektion, Druckfilter und unveränderter Live-Diktatweg geprüft. Die
 abschließende Bedienprüfung mit einer realen lokalen Sprachdatei bleibt eine
 Nutzerprüfung im Arbeitsbranch.
 
-## Bestandsschutz der Registry-38-Profilmigration
+## Bestandsschutz des Registry-38-Profils
 
-Die additive Migration auf Registry 39 übernimmt die gespeicherte Reihenfolge
-und sämtliche vorhandenen Zustände unverändert. Sie hängt nur den neuen Zustand
-für `protokoll.topsScreen.quicklane.action.importAudio` an und aktualisiert den
-Scope-Fingerprint. Ein zweiter Lauf ist wirkungslos und erzeugt weder einen
-zweiten Button noch ein weiteres Archiv. Damit darf die Migration individuelle
-Positionen, Größen, Schriftgrößen und Sichtbarkeiten eines bestehenden
-Protokollprofils nicht normalisieren oder neu sortieren.
+Registry, HostAdapter, Komponentenvertrag, Inventar und Target-Manifest bleiben
+main-kompatibel auf Version 38. Es gibt keine Audioimport-Profilmigration, keine
+Startup-Reparatur und keine Archivierung. Der Regressionstest lädt den
+committeten bytegenauen Snapshot eines echten Registry-38-Profils zweimal aus
+einem temporären Profilroot und belegt dabei unveränderte Bytes, den bestätigten
+SHA-256-Wert und einen unveränderten Dateibestand ohne neues Profilarchiv. Das
+reale BBM-Benutzerprofil wird nicht gelesen oder verändert.

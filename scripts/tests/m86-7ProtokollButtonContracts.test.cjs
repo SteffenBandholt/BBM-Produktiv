@@ -23,7 +23,6 @@ const BUTTONS = Object.freeze([
   ["protokoll.topsScreen.quicklane.action.project", "protokoll.topsScreen.quicklane.group.navigation", "group.children[index]"],
   ["protokoll.topsScreen.quicklane.action.firms", "protokoll.topsScreen.quicklane.group.navigation", "group.children[index]"],
   ["protokoll.topsScreen.quicklane.action.participants", "protokoll.topsScreen.quicklane.group.navigation", "group.children[index]"],
-  ["protokoll.topsScreen.quicklane.action.importAudio", "protokoll.topsScreen.quicklane.group.navigation", "group.children[index]"],
   ["protokoll.topsScreen.quicklane.action.ampel", "protokoll.topsScreen.quicklane.group.visibility", "group.children[index]"],
   ["protokoll.topsScreen.quicklane.action.longtext", "protokoll.topsScreen.quicklane.group.visibility", "group.children[index]"],
   ["protokoll.topsScreen.quicklane.action.topFilter", "protokoll.topsScreen.quicklane.group.filter", "group.children[index]"],

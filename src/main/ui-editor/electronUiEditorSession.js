@@ -3,7 +3,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
-const { isDeepStrictEqual } = require("node:util");
 const {
   ELECTRON_EDITOR_ERROR_CODES,
   ELECTRON_TARGET_ADAPTER_VERSION,
@@ -142,142 +141,36 @@ function resolveBbmModuleLayoutProfileRoot(baseProfileRoot, registration) {
   });
 }
 
-function createAdditiveElementMigrationPlan(document, registration, migration) {
-  if (!migration || migration.kind !== "additiveElement" || !Array.isArray(document?.scopes)) return null;
-  const registryScope = (Array.isArray(registration?.registryScopes) ? registration.registryScopes : [])
-    .find((scope) => scope?.scopeId === migration.scopeId && scope?.status === "complete");
-  if (!registryScope || createUiScopeFingerprint(registryScope) !== migration.toFingerprint) return null;
-
-  const addedEntry = (Array.isArray(registryScope.elements) ? registryScope.elements : [])
-    .find((entry) => entry?.id === migration.addedElementId);
-  if (!addedEntry || addedEntry.parentId !== migration.expectedParentId) return null;
-
-  const currentIds = registryScope.elements.map((entry) => entry.id);
-  const previousIds = new Set(currentIds.filter((elementId) => elementId !== migration.addedElementId));
-  const savedScope = document.scopes.find((scope) => scope?.scopeId === migration.scopeId);
-  const savedElements = savedScope?.layoutState?.elements;
-  if (savedScope?.registryFingerprint !== migration.fromFingerprint || !Array.isArray(savedElements)) return null;
-  const savedIds = savedElements.map((entry) => entry?.elementId);
-  const savedIdSet = new Set(savedIds);
-  if (
-    savedIds.includes(migration.addedElementId) ||
-    savedIds.length !== previousIds.size ||
-    savedIdSet.size !== savedIds.length ||
-    savedIds.some((elementId) => !previousIds.has(elementId))
-  ) return null;
-
-  const addedState = {
-    elementId: migration.addedElementId,
-    scopeId: migration.scopeId,
-    x: Number(addedEntry.baseline?.x) || 0,
-    y: Number(addedEntry.baseline?.y) || 0,
-    width: Number(addedEntry.baseline?.width) || Number(addedEntry.baseline?.minWidth),
-    height: Number(addedEntry.baseline?.height) || Number(addedEntry.baseline?.minHeight),
-    fontSize: Number(addedEntry.baseline?.fontSize),
-    visible: addedEntry.baseline?.visible !== false,
-  };
-  if (![addedState.width, addedState.height, addedState.fontSize].every(Number.isFinite)) return null;
-
-  const migratedDocument = structuredClone(document);
-  const migratedScope = migratedDocument.scopes.find((scope) => scope?.scopeId === migration.scopeId);
-  migratedScope.layoutState.elements = [...migratedScope.layoutState.elements, structuredClone(addedState)];
-  migratedScope.registryFingerprint = migration.toFingerprint;
-
-  const historicallyReorderedDocument = structuredClone(document);
-  const historicallyReorderedScope = historicallyReorderedDocument.scopes.find((scope) => scope?.scopeId === migration.scopeId);
-  const statesById = new Map(historicallyReorderedScope.layoutState.elements.map((entry) => [entry.elementId, entry]));
-  statesById.set(migration.addedElementId, structuredClone(addedState));
-  historicallyReorderedScope.layoutState.elements = currentIds.map((elementId) => statesById.get(elementId));
-  historicallyReorderedScope.registryFingerprint = migration.toFingerprint;
-
-  return { migratedDocument, historicallyReorderedDocument };
-}
-
-function archiveAndReplaceProfile({ profileRoot, profileId, filePath, document, archiveLabel }) {
-  const archiveDirectory = path.join(profileRoot, "archive", APPLICATION_ID);
-  const stamp = new Date().toISOString().replace(/[-:.]/g, "");
-  const safeArchiveLabel = String(archiveLabel || "profile-migration").replace(/[^a-z0-9-]+/gi, "-").slice(0, 48) || "profile-migration";
-  const archivePath = path.join(archiveDirectory, `${stamp}_${safeArchiveLabel}_${profileId}.layout-profile.json`);
-  const temporaryPath = `${filePath}.migrate-${process.pid}-${Date.now()}`;
-  try {
-    fs.mkdirSync(archiveDirectory, { recursive: true });
-    fs.copyFileSync(filePath, archivePath, fs.constants.COPYFILE_EXCL);
-    fs.writeFileSync(temporaryPath, `${JSON.stringify(document, null, 2)}\n`, { encoding: "utf8", flag: "wx" });
-    fs.renameSync(temporaryPath, filePath);
-  } catch (error) {
-    try { fs.unlinkSync(temporaryPath); } catch (cleanupError) { if (cleanupError?.code !== "ENOENT") void cleanupError; }
-    throw error;
-  }
-}
-
-function repairHistoricallyReorderedModuleProfile(baseProfileRoot, moduleProfileRoot, registration) {
-  const migrations = Array.isArray(registration?.profileMigrations) ? registration.profileMigrations : [];
-  let repairedCount = 0;
-  for (const profileId of ["standard", "compact"]) {
-    const legacyPath = path.join(baseProfileRoot, `${profileId}.layout-profile.json`);
-    const modulePath = path.join(moduleProfileRoot, `${profileId}.layout-profile.json`);
-    if (!fs.existsSync(legacyPath) || !fs.existsSync(modulePath)) continue;
-    let legacyDocument;
-    let moduleDocument;
-    try {
-      legacyDocument = JSON.parse(fs.readFileSync(legacyPath, "utf8"));
-      moduleDocument = JSON.parse(fs.readFileSync(modulePath, "utf8"));
-    } catch {
-      continue;
-    }
-    if (
-      legacyDocument?.schemaVersion !== 2 || moduleDocument?.schemaVersion !== 2 ||
-      legacyDocument?.applicationId !== APPLICATION_ID || moduleDocument?.applicationId !== APPLICATION_ID ||
-      legacyDocument?.profileId !== profileId || moduleDocument?.profileId !== profileId
-    ) continue;
-
-    const matchingPlan = migrations.map((migration) => ({
-      migration,
-      plan: createAdditiveElementMigrationPlan(legacyDocument, registration, migration),
-    })).find(({ plan }) => plan && isDeepStrictEqual(moduleDocument, plan.historicallyReorderedDocument));
-    if (!matchingPlan) continue;
-
-    archiveAndReplaceProfile({
-      profileRoot: moduleProfileRoot,
-      profileId,
-      filePath: modulePath,
-      document: matchingPlan.plan.migratedDocument,
-      archiveLabel: `${matchingPlan.migration.archiveLabel || "additive-element"}-ordering-repair`,
-    });
-    repairedCount += 1;
-  }
-  return repairedCount;
-}
-
 function migrateCompatibleLegacyLayoutProfile(baseProfileRoot, moduleProfileRoot, registration) {
   const selectedProfiles = ["standard", "compact"];
-  const repairedCount = repairHistoricallyReorderedModuleProfile(baseProfileRoot, moduleProfileRoot, registration);
-  if (selectedProfiles.some((profileId) => fs.existsSync(path.join(moduleProfileRoot, `${profileId}.layout-profile.json`)))) {
-    return { repairedCount, legacyMigratedCount: 0, copied: false };
-  }
-  if (!fs.existsSync(baseProfileRoot)) return { repairedCount, legacyMigratedCount: 0, copied: false };
-  // A registered additive migration must run before the current-registry
-  // compatibility gate can copy a legacy profile into its module root.
-  const legacyMigratedCount = applyRegisteredProfileMigrations(baseProfileRoot, registration);
+  if (selectedProfiles.some((profileId) => fs.existsSync(path.join(moduleProfileRoot, `${profileId}.layout-profile.json`)))) return;
+  if (!fs.existsSync(baseProfileRoot)) return;
   const legacy = loadTargetStartupLayout({
     profileRoot: baseProfileRoot,
     applicationId: APPLICATION_ID,
     activeScopes: registration.activeScopes,
     registryScopes: registration.registryScopes,
   });
-  if (!legacy.ok || !legacy.found || !selectedProfiles.includes(legacy.profileId)) {
-    return { repairedCount, legacyMigratedCount, copied: false };
-  }
+  if (!legacy.ok || !legacy.found || !selectedProfiles.includes(legacy.profileId)) return;
   const source = path.join(baseProfileRoot, `${legacy.profileId}.layout-profile.json`);
   const destination = path.join(moduleProfileRoot, `${legacy.profileId}.layout-profile.json`);
-  if (!fs.existsSync(source) || fs.existsSync(destination)) return { repairedCount, legacyMigratedCount, copied: false };
+  if (!fs.existsSync(source) || fs.existsSync(destination)) return;
   try { fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL); }
   catch (error) { if (error?.code !== "EEXIST") throw error; }
-  return { repairedCount, legacyMigratedCount, copied: fs.existsSync(destination) };
 }
 
 function applyAdditiveElementProfileMigration(profileRoot, registration, migration) {
   if (!migration || migration.kind !== "additiveElement") return 0;
+  const registryScope = (Array.isArray(registration?.registryScopes) ? registration.registryScopes : [])
+    .find((scope) => scope?.scopeId === migration.scopeId && scope?.status === "complete");
+  if (!registryScope || createUiScopeFingerprint(registryScope) !== migration.toFingerprint) return 0;
+
+  const addedEntry = (Array.isArray(registryScope.elements) ? registryScope.elements : [])
+    .find((entry) => entry?.id === migration.addedElementId);
+  if (!addedEntry || addedEntry.parentId !== migration.expectedParentId) return 0;
+
+  const currentIds = registryScope.elements.map((entry) => entry.id);
+  const previousIds = new Set(currentIds.filter((elementId) => elementId !== migration.addedElementId));
   let migratedCount = 0;
 
   for (const profileId of ["standard", "compact"]) {
@@ -288,16 +181,44 @@ function applyAdditiveElementProfileMigration(profileRoot, registration, migrati
     catch { continue; }
     if (document?.schemaVersion !== 2 || document?.applicationId !== APPLICATION_ID || document?.profileId !== profileId || !Array.isArray(document?.scopes)) continue;
 
-    const plan = createAdditiveElementMigrationPlan(document, registration, migration);
-    if (!plan) continue;
-    archiveAndReplaceProfile({
-      profileRoot,
-      profileId,
-      filePath,
-      document: plan.migratedDocument,
-      archiveLabel: migration.archiveLabel || "additive-element",
-    });
-    migratedCount += 1;
+    const savedScope = document.scopes.find((scope) => scope?.scopeId === migration.scopeId);
+    const savedElements = savedScope?.layoutState?.elements;
+    if (savedScope?.registryFingerprint !== migration.fromFingerprint || !Array.isArray(savedElements)) continue;
+    const savedIds = savedElements.map((entry) => entry?.elementId);
+    if (savedIds.includes(migration.addedElementId) || savedIds.length !== previousIds.size || savedIds.some((elementId) => !previousIds.has(elementId))) continue;
+
+    const addedState = {
+      elementId: migration.addedElementId,
+      scopeId: migration.scopeId,
+      x: Number(addedEntry.baseline?.x) || 0,
+      y: Number(addedEntry.baseline?.y) || 0,
+      width: Number(addedEntry.baseline?.width) || Number(addedEntry.baseline?.minWidth),
+      height: Number(addedEntry.baseline?.height) || Number(addedEntry.baseline?.minHeight),
+      fontSize: Number(addedEntry.baseline?.fontSize),
+      visible: addedEntry.baseline?.visible !== false,
+    };
+    if (![addedState.width, addedState.height, addedState.fontSize].every(Number.isFinite)) continue;
+
+    const statesById = new Map(savedElements.map((entry) => [entry.elementId, entry]));
+    statesById.set(migration.addedElementId, addedState);
+    savedScope.layoutState.elements = currentIds.map((elementId) => statesById.get(elementId));
+    savedScope.registryFingerprint = migration.toFingerprint;
+
+    const archiveDirectory = path.join(profileRoot, "archive", APPLICATION_ID);
+    const stamp = new Date().toISOString().replace(/[-:.]/g, "");
+    const archiveLabel = String(migration.archiveLabel || "additive-element").replace(/[^a-z0-9-]+/gi, "-").slice(0, 48) || "additive-element";
+    const archivePath = path.join(archiveDirectory, `${stamp}_${archiveLabel}_${profileId}.layout-profile.json`);
+    const temporaryPath = `${filePath}.migrate-${process.pid}-${Date.now()}`;
+    try {
+      fs.mkdirSync(archiveDirectory, { recursive: true });
+      fs.copyFileSync(filePath, archivePath, fs.constants.COPYFILE_EXCL);
+      fs.writeFileSync(temporaryPath, `${JSON.stringify(document, null, 2)}\n`, { encoding: "utf8", flag: "wx" });
+      fs.renameSync(temporaryPath, filePath);
+      migratedCount += 1;
+    } catch (error) {
+      try { fs.unlinkSync(temporaryPath); } catch (cleanupError) { if (cleanupError?.code !== "ENOENT") void cleanupError; }
+      throw error;
+    }
   }
   return migratedCount;
 }
@@ -507,9 +428,8 @@ class ElectronUiEditorSessionController {
       const baseProfileRoot = this.profileRootResolver(this.app);
       const { profileRoot, identity } = resolveBbmModuleLayoutProfileRoot(baseProfileRoot, registration);
       this.ensureDirectory(profileRoot);
-      const legacyMigration = migrateCompatibleLegacyLayoutProfile(baseProfileRoot, profileRoot, registration);
-      const migratedCount = applyRegisteredProfileMigrations(profileRoot, registration);
-      console.info(`[ui-editor] startup profile resolved: profileRoot=${profileRoot}, standard=${fs.existsSync(path.join(profileRoot, "standard.layout-profile.json"))}, compact=${fs.existsSync(path.join(profileRoot, "compact.layout-profile.json"))}, legacyMigrated=${legacyMigration.legacyMigratedCount}, repaired=${legacyMigration.repairedCount}, copied=${legacyMigration.copied}, migrated=${migratedCount}`);
+      migrateCompatibleLegacyLayoutProfile(baseProfileRoot, profileRoot, registration);
+      applyRegisteredProfileMigrations(profileRoot, registration);
       const snapshot = this.#registrationSnapshot(registration, { sessionId: "startup-layout", profileRoot, identity });
       const manifestPath = this.#validateTargetManifest(snapshot.contract);
       const result = loadTargetStartupLayout({
@@ -681,9 +601,8 @@ class ElectronUiEditorSessionController {
     const baseProfileRoot = this.profileRootResolver(this.app);
     const { profileRoot, identity } = resolveBbmModuleLayoutProfileRoot(baseProfileRoot, registration);
     this.ensureDirectory(profileRoot);
-    const legacyMigration = migrateCompatibleLegacyLayoutProfile(baseProfileRoot, profileRoot, registration);
-    const migratedCount = applyRegisteredProfileMigrations(profileRoot, registration);
-    console.info(`[ui-editor] editor profile resolved: profileRoot=${profileRoot}, legacyMigrated=${legacyMigration.legacyMigratedCount}, repaired=${legacyMigration.repairedCount}, copied=${legacyMigration.copied}, migrated=${migratedCount}`);
+    migrateCompatibleLegacyLayoutProfile(baseProfileRoot, profileRoot, registration);
+    applyRegisteredProfileMigrations(profileRoot, registration);
     const registrationSnapshot = this.#registrationSnapshot(registration, { sessionId: identifiers.sessionId, profileRoot, identity });
     const contract = registrationSnapshot.contract;
     console.info(`[ui-editor] editor start receipt: ${contract.startupLayout?.code || "none"}, applied=${contract.startupLayout?.applied === true}`);

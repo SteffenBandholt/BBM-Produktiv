@@ -1,3 +1,37 @@
+## 2026-09-20 – #349 Abschluss: fester Audioimport-Button, Registry 38 wiederhergestellt
+
+Die UI-Editor-/Profilintegration des Audioimport-Buttons ist vollständig
+zurückgebaut. Registry, HostAdapter, Protokoll-Komponentenvertrag,
+Protokoll-Inventar, Startup-Session und Target-Manifest entsprechen wieder
+bytegenau `origin/main`; die Registry bleibt auf Version 38. Es gibt keine
+38→39-Migration, keinen `BBM_M80_PROFILE_MIGRATIONS`-Export, keinen
+`importAudio`-Editorvertrag und keine #349-Startup-Reparatur oder Archivierung.
+
+Der vorhandene Audioimport bleibt fachlich erhalten. `Import` ist als feste,
+nicht editorfähige Runtime-Aktion an fünfter Stelle nach `Fixieren`, `Projekt`,
+`Firmen` und `Teilnehmer` eingebaut. Ohne Projekt, ohne Besprechung, im
+Read-only-Modus, ohne Audiofreigabe und während eines laufenden Imports ist der
+Button gesperrt. Die vier bestehenden Navigationsbuttons behalten ihre
+Editor-IDs und Reihenfolge.
+
+Der gezielte #349-Testlauf und die vollständige TopsScreen-Integration sind
+grün. Die committete echte Registry-38-Fixture besitzt weiterhin SHA-256
+`70F38D4FF84D5A8C1A45391FA01F6F6B1080F424286E7DB9E1C1EC0A28F4BF4F`;
+zwei isolierte Starts lassen Bytes und Dateibestand unverändert und erzeugen
+kein Archiv. M80, M81.1, M82, M86.7, M86.8, M86.14, Protokoll-Inventar und
+SiGeKo-Manifest sind gezielt grün. Der breite Bestandslauf bleibt an bekannten,
+paketfremden alten Registry-/Inventar-Sollwerten sowie Rechnung-/Lizenzprüfungen
+rot; diese wurden nicht geändert. ESM-/CJS-Syntax, ESLint (0 Fehler, eine
+bestehende Warnung im main-identischen Vertrag), Vertragscheck und
+`git diff --check` sind grün. Kein realer DEV-Start und kein Zugriff auf
+`C:\Users\Steffen\AppData\Roaming\baubesprechungs-manager`.
+
+Ergebniscommit: dieser Paketcommit (Hash im Abschlussbericht). Nächster Schritt:
+einmaliger manueller Nutzerablauf mit gesichertem Profil und kleiner Audiodatei;
+danach keine automatische Fortsetzung und kein Merge.
+
+---
+
 ## 2026-09-19 – #349 reales Profil: historisches Modulprofil gezielt repariert
 
 Die echte Profilkopie

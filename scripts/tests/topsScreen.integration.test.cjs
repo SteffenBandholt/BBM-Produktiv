@@ -242,6 +242,21 @@ async function runTopsScreenIntegrationTests(run) {
     return found;
   }
 
+  function findByDataset(root, key, value) {
+    const needle = String(value || "");
+    let found = null;
+    const walk = (current) => {
+      if (!current || found) return;
+      if (String(current.dataset?.[key] || "") === needle) {
+        found = current;
+        return;
+      }
+      for (const child of current.children || []) walk(child);
+    };
+    walk(root);
+    return found;
+  }
+
   function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
@@ -1630,7 +1645,6 @@ async function runTopsScreenIntegrationTests(run) {
         "protokoll.topsScreen.quicklane.action.project",
         "protokoll.topsScreen.quicklane.action.firms",
         "protokoll.topsScreen.quicklane.action.participants",
-        "protokoll.topsScreen.quicklane.action.importAudio",
         "protokoll.topsScreen.quicklane.action.ampel",
         "protokoll.topsScreen.quicklane.action.longtext",
         "protokoll.topsScreen.quicklane.action.topFilter",
@@ -1645,7 +1659,7 @@ async function runTopsScreenIntegrationTests(run) {
       const projectButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.project");
       const firmsButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.firms");
       const participantsButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.participants");
-      const importButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.importAudio");
+      const importButton = findByDataset(root, "quicklaneAction", "audio-import");
       const ampelButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.ampel");
       const longtextButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.longtext");
       const filterButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.topFilter");
@@ -1653,6 +1667,23 @@ async function runTopsScreenIntegrationTests(run) {
       const printButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.print");
       const mailButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.mail");
 
+      assert.ok(importButton);
+      assert.equal(findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.importAudio"), null);
+      const navigationGroup = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.group.navigation");
+      assert.deepEqual(
+        navigationGroup.children.map((button) => button.title),
+        ["Fixieren", "Projekt", "Firmen", "Teilnehmer", "Import"]
+      );
+      assert.deepEqual(
+        navigationGroup.children.slice(0, 4).map((button) => button["data-ui-editor-id"]),
+        [
+          "protokoll.topsScreen.quicklane.pin",
+          "protokoll.topsScreen.quicklane.action.project",
+          "protokoll.topsScreen.quicklane.action.firms",
+          "protokoll.topsScreen.quicklane.action.participants",
+        ]
+      );
+      assert.equal(importButton["data-ui-editor-id"], undefined);
       assert.equal(pinButton.getAttribute?.("aria-pressed") || pinButton["aria-pressed"], "false");
       assert.equal(projectButton.children[0].className, "bbm-tops-screen-quicklane-icon");
       assert.equal(ampelButton.children[0].className, "bbm-tops-screen-quicklane-icon bbm-tops-screen-quicklane-icon--ampel");
@@ -1731,13 +1762,23 @@ async function runTopsScreenIntegrationTests(run) {
 
       screen._audioLicensed = true;
       screen._syncQuicklaneState();
-      const licensedImportButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.importAudio");
+      const licensedImportButton = findByDataset(root, "quicklaneAction", "audio-import");
       assert.equal(licensedImportButton.disabled, false);
 
       screen.store.setState({ isReadOnly: true });
       screen._syncQuicklaneState();
-      const readOnlyImportButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.importAudio");
+      const readOnlyImportButton = findByDataset(root, "quicklaneAction", "audio-import");
       assert.equal(readOnlyImportButton.disabled, true);
+
+      for (const state of [
+        { hasProject: false, hasMeeting: true, isReadOnly: false, audioAvailable: true, isBusy: false },
+        { hasProject: true, hasMeeting: false, isReadOnly: false, audioAvailable: true, isBusy: false },
+        { hasProject: true, hasMeeting: true, isReadOnly: false, audioAvailable: false, isBusy: false },
+        { hasProject: true, hasMeeting: true, isReadOnly: false, audioAvailable: true, isBusy: true },
+      ]) {
+        screen.quicklane.update(state);
+        assert.equal(findByDataset(root, "quicklaneAction", "audio-import").disabled, true);
+      }
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;
