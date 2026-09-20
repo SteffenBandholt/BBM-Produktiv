@@ -5310,6 +5310,44 @@ Konsolidierungsschritt bleibt Paket 3; es wurde nicht begonnen.
 
 ---
 
+## 2026-09-20 – Gemeinsame Basis: Sidebar und V2-Seitendefaults
+
+Auf `integration/bbm-1.5.1-consolidation` wurde vor der beauftragten Übernahme
+nach `main` ein eng begrenztes Korrekturpaket umgesetzt. Das produktive
+BBM-Dev-Profil speichert die tatsächlich verwendete Sidebar mit Basisfarbe
+`#696969`, Ton 50 und deaktiviertem Default-Umschalter. Der Wert liegt in
+`app_settings`; die UI-Layoutprofile enthalten keinen entsprechenden Override.
+`#696969` bei Ton 50 ist deshalb der gemeinsame Fallback für DEV und
+Kundenversion. Keine andere lokale DEV-Einstellung wurde übernommen.
+
+Die bereits im V2-Satzvertrag und in den M85-Fixtures festgelegten
+Seitendefaults sind nun an allen Eintrittspunkten gleich: oben 5 mm, rechts
+12 mm, unten 0 mm, links 12 mm und Fußreserve 12 mm. Der Bootstrap ergänzt nur
+einzeln fehlende Werte. Einstellungsdialog, Vorschau und Produkt-PDF behandeln
+`null`, `undefined` und Leertext als fehlend, erhalten aber gespeicherte
+Kundenwerte und gültige numerische Nullwerte. Profile werden weder zurückgesetzt
+noch vollständig überschrieben.
+
+Die neuen Prüfungen decken frische Profile, einzelne Lücken, explizite
+Nullwerte, benutzerdefinierte Werte, simulierten Neustart sowie gemeinsamen
+Sidebar-Standard und gespeicherte Sidebar-Werte ab; die Gruppe
+`restarbeiten-v2` ist grün. Der UI-Editor-Vertrags-Selbsttest, gezieltes ESLint
+ohne neue Fehler und `git diff --check` sind grün. Der vollständige M85-Lauf
+reproduziert am geänderten Stand und am sauberen Ausgangscommit `616d4d4a`
+exakt dieselben vier Baselineabweichungen: `r19-empty`-Hash,
+Restarbeiten-Spaltenzahl 9 statt 13, Registryzahl 37 statt 35 und
+`PDF-V2-ARCH-003`. Der breite `npm test`-Lauf bleibt in beiden Ständen bei 2/10
+grünen Gruppen; alle Unterschiede der Einzelauflistung liegen ausschließlich in
+der paketfremden UI-Editor-Altsuite, die im isolierten Ausgangsworktree früher
+abbricht. In allen von diesem Paket berührten Gruppen entstand kein neuer roter
+Prüfname.
+
+Paket 4, Audio, Setup, Lizenzbau, Installation und Versionswechsel wurden nicht
+begonnen. Nächster Schritt dieses Auftrags ist ausschließlich Commit, Push und
+die reguläre Übernahme des geprüften Integrationsstands auf `main`.
+
+---
+
 ## 2026-09-20 – BBM 1.5.1 Konsolidierung: Paket 3 Folgetermin Optionen A/B
 
 Auf Branch `integration/bbm-1.5.1-consolidation` wurde Paket 3 hunkweise auf

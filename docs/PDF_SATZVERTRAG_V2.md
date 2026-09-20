@@ -185,6 +185,14 @@ Protokoll-TOP-Spalten verwenden bei 186 mm 24,18/120,90/40,92 mm (13/65/22).
 `setPageBreakRule`, Paginierung, Mindestzeilen und Fußreserve bleiben davon
 unberührt und gesperrt.
 
+Die gemeinsamen Anwendungsdefaults für `PDF-V2-SATZ-001`,
+`PDF-V2-SATZ-005`, `PDF-V2-SATZ-014` und `PDF-V2-SATZ-015` sind oben 5 mm,
+rechts 12 mm, unten 0 mm, links 12 mm sowie 12 mm Fußreserve. Sie gelten für
+neue Profile und für einzeln fehlende Werte in Einstellungsdialog, Vorschau und
+Produkt-PDF. Als fehlend gelten nur `null`, `undefined` und leere Zeichenfolgen;
+gespeicherte numerische Nullwerte und andere gültige Kundenwerte bleiben
+wirksam und werden bei Start oder Update nicht überschrieben.
+
 K17.8 präzisiert ausschließlich die Bedienwirkung der bereits registrierten
 TOP-Spalten: Eine horizontale `TableColumn`-Translation wird nicht angeboten.
 Stattdessen verschiebt `resizeColumnBoundary` am Tabellenparent genau eine

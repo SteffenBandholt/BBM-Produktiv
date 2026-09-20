@@ -152,6 +152,21 @@ nicht analysiert oder vorgezogen.
 Audio bleibt außerhalb dieser Konsolidierungsfolge, bis es ausdrücklich separat
 beauftragt wird.
 
+### Gemeinsame Basis vor Paket 4 (2026-09-20)
+
+Vor der Übernahme der Pakete 1 bis 3 auf `main` wurde ein getrennt beauftragtes
+Korrekturpaket für die gemeinsame Anwendungsbasis abgeschlossen. Der aus dem
+produktiven BBM-Dev-Profil ermittelte Sidebar-Istwert `#696969` bei Ton 50 ist
+nun auch der Fallback für neue oder unvollständige Profile. Der Wert stammt aus
+`app_settings` und nicht aus einem lokalen UI-Layoutprofil; weitere lokale
+DEV-Werte wurden nicht übernommen.
+
+Die dokumentierten V2-Seitendefaults gelten einheitlich in Einstellungen,
+Vorschau und Produkt-PDF: oben 5 mm, rechts 12 mm, unten 0 mm, links 12 mm und
+Fußreserve 12 mm. Nur fehlende Einzelwerte werden ergänzt. Gespeicherte
+Kundenwerte einschließlich gültiger Nullwerte bleiben unverändert. Paket 4
+wurde damit weder begonnen noch inhaltlich vorgezogen.
+
 ## Zweck
 
 Diese Datei ist die **fuehrende operative Roadmap** fuer den laufenden Modularisierungsumbau.

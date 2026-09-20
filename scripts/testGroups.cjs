@@ -167,6 +167,7 @@ const TEST_GROUPS = Object.freeze([
       ["projectSettingsIpc.test.cjs", "runProjectSettingsIpcTests"],
       ["settingsUserProfileSource.test.cjs", "runSettingsUserProfileSourceTests"],
       ["settingsPrintLayout.test.cjs", "runSettingsPrintLayoutTests"],
+      ["themeAndPrintDefaults.test.cjs", "runThemeAndPrintDefaultsTests"],
     ]),
   }),
   Object.freeze({

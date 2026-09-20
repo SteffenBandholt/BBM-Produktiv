@@ -5,7 +5,7 @@ export const DEFAULT_THEME_SETTINGS = {
   sidebarBaseColor: "#696969",
   mainBaseColor: "#F8FAFC",
   headerTone: 43, // 0 = hell, 50 = Basisfarbe, 100 = dunkel
-  sidebarTone: 38,
+  sidebarTone: 50,
   mainTone: 52,
   headerUseDefault: false,
   sidebarUseDefault: false,
@@ -26,20 +26,17 @@ function resolveThemeDefaults(raw = {}) {
       raw.defaultMainBaseColor ?? raw["defaults.ui.themeMainBaseColor"],
       DEFAULT_THEME_SETTINGS.mainBaseColor
     ),
-    headerTone: clamp(
+    headerTone: normalizeToneCandidate(
       raw.defaultHeaderTone ?? raw["defaults.ui.themeHeaderTone"],
-      0,
-      100
+      DEFAULT_THEME_SETTINGS.headerTone
     ),
-    sidebarTone: clamp(
+    sidebarTone: normalizeToneCandidate(
       raw.defaultSidebarTone ?? raw["defaults.ui.themeSidebarTone"],
-      0,
-      100
+      DEFAULT_THEME_SETTINGS.sidebarTone
     ),
-    mainTone: clamp(
+    mainTone: normalizeToneCandidate(
       raw.defaultMainTone ?? raw["defaults.ui.themeMainTone"],
-      0,
-      100
+      DEFAULT_THEME_SETTINGS.mainTone
     ),
     headerUseDefault: parseBool(
       raw.defaultHeaderUseDefault ?? raw["defaults.ui.themeHeaderUseDefault"],
@@ -62,6 +59,11 @@ function clamp(n, min, max) {
   if (v < min) return min;
   if (v > max) return max;
   return v;
+}
+
+function normalizeToneCandidate(value, fallback) {
+  if (value === null || value === undefined || String(value).trim() === "") return clamp(fallback, 0, 100);
+  return clamp(value, 0, 100);
 }
 
 function toHex2(n) {
@@ -232,9 +234,9 @@ export function normalizeThemeSettings(raw = {}) {
       raw.mainBaseColor ?? raw["ui.themeMainBaseColor"],
       def.mainBaseColor
     ),
-    headerTone: clamp(raw.headerTone ?? raw["ui.themeHeaderTone"], 0, 100),
-    sidebarTone: clamp(raw.sidebarTone ?? raw["ui.themeSidebarTone"], 0, 100),
-    mainTone: clamp(raw.mainTone ?? raw["ui.themeMainTone"], 0, 100),
+    headerTone: normalizeToneCandidate(raw.headerTone ?? raw["ui.themeHeaderTone"], def.headerTone),
+    sidebarTone: normalizeToneCandidate(raw.sidebarTone ?? raw["ui.themeSidebarTone"], def.sidebarTone),
+    mainTone: normalizeToneCandidate(raw.mainTone ?? raw["ui.themeMainTone"], def.mainTone),
     headerUseDefault,
     sidebarUseDefault,
     mainUseDefault,
