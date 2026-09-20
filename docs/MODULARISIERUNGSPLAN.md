@@ -131,6 +131,42 @@ Gesamt-S5 offen; Rechnung #275 eingefroren.
 
 # docs/MODULARISIERUNGSPLAN.md
 
+## 2026-09-20 – Konsolidierungsfolge BBM 1.5.1
+
+- [x] Paket 1: Besprechungsreihen – Daten, Domain, Migration, IPC/Preload,
+  Projekttransfer und Tests auf `integration/bbm-1.5.1-consolidation`.
+- [x] Paket 2: Projektübersicht, Besprechungsreihen-UI und Registry-40-Scopes.
+- [x] Paket 3: Folgetermin Optionen A/B – additive Bestandsmigration,
+  besprechungs- und reihengebundene Persistenz, Dialog, Vorschau/Protokoll sowie
+  verlustfreie mehrseitige PDF-Ausgabe mit Abschlussfuß auf der letzten Seite.
+- [ ] Paket 4: getrennte Protokollkorrekturen.
+- [ ] Paket 5: Protokoll-Distribution/Setup.
+- [ ] Paket 6: Lizenztool/Kundenbindung.
+- [ ] Paket 7: Version 1.5.1/Kundenupdate zuletzt.
+
+Pakete 1 bis 3 stammen kontrolliert aus Snapshot `77b8028c`; für Paket 3 wurde
+zusätzlich Referenzcommit `8aef3aee` ausgewertet. Weder Snapshot noch
+Referenzcommit wurden gemergt oder vollständig übernommen. Paket 4 ist der
+nächste offene Meilenstein; seine getrennten Protokollkorrekturen sind noch
+nicht analysiert oder vorgezogen.
+Audio bleibt außerhalb dieser Konsolidierungsfolge, bis es ausdrücklich separat
+beauftragt wird.
+
+### Gemeinsame Basis vor Paket 4 (2026-09-20)
+
+Vor der Übernahme der Pakete 1 bis 3 auf `main` wurde ein getrennt beauftragtes
+Korrekturpaket für die gemeinsame Anwendungsbasis abgeschlossen. Der aus dem
+produktiven BBM-Dev-Profil ermittelte Sidebar-Istwert `#696969` bei Ton 50 ist
+nun auch der Fallback für neue oder unvollständige Profile. Der Wert stammt aus
+`app_settings` und nicht aus einem lokalen UI-Layoutprofil; weitere lokale
+DEV-Werte wurden nicht übernommen.
+
+Die dokumentierten V2-Seitendefaults gelten einheitlich in Einstellungen,
+Vorschau und Produkt-PDF: oben 5 mm, rechts 12 mm, unten 0 mm, links 12 mm und
+Fußreserve 12 mm. Nur fehlende Einzelwerte werden ergänzt. Gespeicherte
+Kundenwerte einschließlich gültiger Nullwerte bleiben unverändert. Paket 4
+wurde damit weder begonnen noch inhaltlich vorgezogen.
+
 ## Zweck
 
 Diese Datei ist die **fuehrende operative Roadmap** fuer den laufenden Modularisierungsumbau.

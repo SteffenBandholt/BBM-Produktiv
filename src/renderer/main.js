@@ -5,23 +5,19 @@
 import Router from "./app/Router.js";
 import CoreShell from "./app/CoreShell.js";
 import { DEFAULT_THEME_SETTINGS, applyThemeForSettings } from "./theme/themes.js";
+import { buildMissingPrintLayoutDefaults } from "../shared/print/printLayoutDefaults.mjs";
 import { applyPopupButtonStyle, applyPopupCardStyle } from "./ui/popupButtonStyles.js";
 import { installBbmM80EditorBridge } from "./ui-editor/m80Bridge.js";
 import { installBbmM80DiagnosticPilot } from "./ui-editor/m80Diagnostic.js";
 
 // App-Kern-Bootstrap: zentrale Startkonstanten und lokale Storage-/Settings-Keys.
-const PRINT_V2_PAD_LEFT_KEY = "print.v2.pagePadLeftMm";
-const PRINT_V2_PAD_RIGHT_KEY = "print.v2.pagePadRightMm";
-const PRINT_V2_PAD_TOP_KEY = "print.v2.pagePadTopMm";
-const PRINT_V2_PAD_BOTTOM_KEY = "print.v2.pagePadBottomMm";
-const PRINT_V2_FOOTER_RESERVE_KEY = "print.v2.footerReserveMm";
-const PRINT_LAYOUT_DEFAULTS = {
-  [PRINT_V2_PAD_LEFT_KEY]: "19",
-  [PRINT_V2_PAD_RIGHT_KEY]: "15",
-  [PRINT_V2_PAD_TOP_KEY]: "3",
-  [PRINT_V2_PAD_BOTTOM_KEY]: "18",
-  [PRINT_V2_FOOTER_RESERVE_KEY]: "12",
-};
+const PRINT_LAYOUT_SETTING_KEYS = Object.freeze([
+  "print.v2.pagePadLeftMm",
+  "print.v2.pagePadRightMm",
+  "print.v2.pagePadTopMm",
+  "print.v2.pagePadBottomMm",
+  "print.v2.footerReserveMm",
+]);
 const WHATSNEW_KEY_PREFIX = "bbm_whatsnew_seen_";
 
 installBbmM80EditorBridge();
@@ -139,14 +135,13 @@ const ensureInitialPrintLayoutDefaults = async () => {
   if (typeof api.appSettingsGetMany !== "function") return;
   if (typeof api.appSettingsSetMany !== "function") return;
 
-  const keys = Object.keys(PRINT_LAYOUT_DEFAULTS);
+  const keys = PRINT_LAYOUT_SETTING_KEYS;
   try {
     const res = await api.appSettingsGetMany(keys);
     if (!res?.ok) return;
-    const data = res.data || {};
-    const hasAnySavedValue = keys.some((key) => String(data[key] || "").trim() !== "");
-    if (hasAnySavedValue) return;
-    await api.appSettingsSetMany(PRINT_LAYOUT_DEFAULTS);
+    const missingDefaults = buildMissingPrintLayoutDefaults(res.data || {});
+    if (Object.keys(missingDefaults).length === 0) return;
+    await api.appSettingsSetMany(missingDefaults);
   } catch (_e) {
     // ignore
   }

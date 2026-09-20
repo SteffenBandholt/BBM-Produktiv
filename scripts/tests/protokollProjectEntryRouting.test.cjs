@@ -83,6 +83,20 @@ async function runProtokollProjectEntryRoutingTests(run) {
     assert.equal(decision.openMeetings.length, 2);
   });
 
+  await run("Protokoll-Projektpfad: offene Besprechungen werden ausschließlich innerhalb der gewählten Reihe aufgelöst", () => {
+    const meetings = [
+      { id: "construction-open", series_key: "construction", is_closed: 0 },
+      { id: "owner-open", series_key: "owner", is_closed: 0 },
+      { id: "planning-closed", series_key: "planning", is_closed: 1 },
+    ];
+    const construction = resolveProjectProtocolEntry({ projectId: "9", meetings, seriesKey: "construction" });
+    const owner = resolveProjectProtocolEntry({ projectId: "9", meetings, seriesKey: "owner" });
+    const planning = resolveProjectProtocolEntry({ projectId: "9", meetings, seriesKey: "planning" });
+    assert.equal(construction.meetingId, "construction-open");
+    assert.equal(owner.meetingId, "owner-open");
+    assert.equal(planning.reason, "no-open-meeting");
+  });
+
   await run("Protokoll-Projektpfad: TopsScreen startet nicht ohne meetingId", () => {
     assert.equal(routerSource.includes("if (!effectiveMeetingId)"), true);
     assert.equal(routerSource.includes("Bitte zuerst eine Besprechung oeffnen."), true);
@@ -102,6 +116,9 @@ async function runProtokollProjectEntryRoutingTests(run) {
     assert.equal(meetingsViewSource.includes("meetingsCreate"), true);
     assert.equal(meetingsViewSource.includes("Datenintegritaetsfehler"), true);
     assert.equal(meetingsViewSource.includes("Kein offenes Protokoll vorhanden"), true);
+    assert.equal(meetingsViewSource.includes("seriesKey: this.seriesKey"), true);
+    assert.equal(meetingsViewSource.includes("historyOnly"), true);
+    assert.equal(routerSource.includes("meetingsGetById"), true);
   });
 
   await run("Protokoll-Projektpfad: Projekt-Einstiege nutzen die Projekt-Protokollauflosung", () => {

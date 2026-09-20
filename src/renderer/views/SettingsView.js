@@ -17,6 +17,7 @@ import { createDictationDevSection } from "../modules/audio/index.js";
 import { openGlobalProtocolSettings } from "../modules/protokoll/settings/openGlobalProtocolSettings.js";
 import { TEXT_LIMIT_SETTINGS } from "../core/textregeln/index.js";
 import { DEFAULT_PAYMENT_TERM_DAYS, PAYMENT_TERM_SETTING_KEY } from "../../shared/rechnung/invoiceHeaderRules.mjs";
+import { PRINT_LAYOUT_DEFAULT_VALUES } from "../../shared/print/printLayoutDefaults.mjs";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -27,13 +28,6 @@ const PRINT_LAYOUT_MM_LIMITS = {
   "print.v2.pagePadRightMm": { min: 0, max: 30, step: 1, fallback: 12 },
   "print.v2.pagePadBottomMm": { min: 0, max: 30, step: 1, fallback: 0 },
   "print.v2.footerReserveMm": { min: 0, max: 30, step: 1, fallback: 12 },
-};
-const PRINT_LAYOUT_DEFAULT_VALUES = {
-  "print.v2.pagePadTopMm": "5",
-  "print.v2.pagePadLeftMm": "12",
-  "print.v2.pagePadRightMm": "12",
-  "print.v2.pagePadBottomMm": "0",
-  "print.v2.footerReserveMm": "12",
 };
 const THEME_DEFAULT_KEYS = [
   "defaults.ui.themeHeaderBaseColor",
@@ -740,6 +734,7 @@ export default class SettingsView {
     if (!limits) return String(value ?? "");
     const fallback = Number.isFinite(Number(limits.fallback)) ? Number(limits.fallback) : 0;
     const raw = String(value ?? "").trim();
+    if (raw === "") return String(fallback);
     const n = Number(raw);
     if (!Number.isFinite(n)) return String(fallback);
     const rounded = Math.round(n);

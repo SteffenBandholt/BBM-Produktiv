@@ -196,6 +196,8 @@ export function buildPdfSatzvertragSnapshot({ fixtureId, pages, data, root } = {
       const footerReserveRect = footerReserve?.getBoundingClientRect?.() || {};
       const invoiceFooter = footerReserve?.querySelector?.(":scope > .invoicePdfFooter") || null;
       const invoiceFooterRect = invoiceFooter?.getBoundingClientRect?.() || {};
+      const nextMeetingOptionA = element?.querySelector?.(".v2NextMeetingOptionA") || null;
+      const nextMeetingOptionB = element?.querySelector?.(".v2NextMeetingOptionB") || null;
       const pageCounterWithinPage = Number(pageCounterRect.width) > 0
         && Number(pageCounterRect.height) > 0
         && Number(pageCounterRect.left) >= Number(pageRect.left)
@@ -313,6 +315,10 @@ export function buildPdfSatzvertragSnapshot({ fixtureId, pages, data, root } = {
             : 0,
         } : {}),
         closingPresent: Boolean(page?.topsTail),
+        ...(nextMeetingOptionA || nextMeetingOptionB ? {
+          nextMeetingOptionAText: nextMeetingOptionA ? String(nextMeetingOptionA.textContent || "") : null,
+          nextMeetingOptionBText: nextMeetingOptionB ? String(nextMeetingOptionB.textContent || "") : null,
+        } : {}),
         protocolFooterPresent: Boolean(element?.querySelector?.(".v2ProtocolFooter")),
         footerReservePresent: Boolean(element?.querySelector?.(".v2FooterReserveSpacer")),
         blockOrder: blocks,

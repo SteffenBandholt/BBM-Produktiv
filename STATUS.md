@@ -1,3 +1,29 @@
+## 2026-09-20 – BBM 1.5.1 Konsolidierung: Paket 1 Besprechungsreihen
+
+Auf Branch `integration/bbm-1.5.1-consolidation`, Basis `origin/main` /
+`6c9944562eb00d9fbb32f91a965fdca08cadf5da`, wurde aus dem Sicherungssnapshot
+`77b8028ca94072f2ebccc1dcc28bc6cab7813cb4` ausschließlich die technische
+Besprechungsreihen-Domain rekonstruiert. `construction`, `owner` und `planning`
+besitzen additive Persistenz/Migration, getrennte Meeting- und TOP-Nummerierung,
+reihenbezogene Service-/Repository-Regeln, IPC/Preload sowie validierten
+Projekttransfer. Altbestand wird `construction` zugeordnet; widersprüchliche
+mehrfach offene Altprotokolle brechen die Migration ohne Datenkorrektur ab.
+
+Der gezielte Electron-Prüflauf einschließlich relevanter Coretests ist mit 77/77
+grün. Die breite vorhandene Gruppe `core-protokoll` erreicht alle neuen
+Besprechungsreihenprüfungen grün, bleibt aber wegen fünf bereits im unveränderten
+UI-/Routing-Bestand liegender Assertions rot: zwei `projectFirmsLayout`, eine
+`protokollRouterFallback` und zwei `protokollProjectEntryRouting`. Diese Bereiche
+sind nicht Teil von Paket 1 und wurden nicht verändert.
+
+Nicht übernommen wurden Projektübersicht-/Besprechungsreihen-UI,
+Registry-40-Scopes, Folgetermin A/B, Protokollkorrekturen, Distribution,
+Lizenztool, Version 1.5.1 und Audio. Nächster offener Konsolidierungsschritt ist
+Paket 2: Projektübersicht, Besprechungsreihen-UI und Registry-40-Scopes, nach
+eigener UI-Entwurfsentscheidung und separatem Auftrag.
+
+---
+
 ## 2026-09-15 – Abgenommene Firmen- und PDF-Reparaturen integriert
 
 Ausgangsbasis beider Worktrees und des frisch abgefragten `origin/main`:
@@ -5239,5 +5265,142 @@ Nutzer erbracht; eine eigene native Bedienprüfung wird hier nicht behauptet.
 Commit, Integration in `main` und Push sind ausdrücklich beauftragt. Nächster
 Schritt ist die gezielte Integrationsprüfung; M85- und Layout-Bereinigung bleiben
 ausgeschlossen.
+
+---
+## 2026-09-20 – BBM 1.5.1 Konsolidierung: Paket 2 Projektübersicht und Besprechungsreihen-UI
+
+Auf Branch `integration/bbm-1.5.1-consolidation` wurde Paket 2 auf dem
+abgeschlossenen Paket-1-Stand umgesetzt. Die Projektübersicht verwendet kompakte
+Projektkarten mit getrennten Einstiegen für `construction`, `owner` und
+`planning`. Projektmaske und Historieneinstiege berücksichtigen die aktivierten
+Besprechungsreihen; die Protokollnavigation, Druckauswahl und Teilnehmerauflösung
+reichen den Reihenkontext über die in Paket 1 geschaffene API weiter. Startseite,
+Bauherr-Auswahl sowie die unmittelbar benötigten ISO-Datum-/Kalenderwochenfelder
+wurden semantisch angepasst.
+
+Die UI-/PDF-Entwurfsentscheidung lautet: UI, keine PDF-Strukturänderung,
+editorfähig. Registry-Version 40 enthält ausschließlich die neuen expliziten
+Scopes `bbm.projektverwaltung.overview` (12 Elemente),
+`bbm.projektverwaltung.meetingSeries` (14 Elemente) und
+`bbm.projektverwaltung.meetingSeriesEntry` (4 optionale Multi-Refs). Jedes
+Editorziel besitzt einen registrierten Parent, erlaubte Layoutoperationen und
+gesperrte Fach-/Datenaktionen. Das Target-Manifest wurde mit neuem Fingerprint
+abgeglichen. Es wurde keine automatische UI-Erkennung verwendet.
+
+Die gezielte Paketprüfung erreicht 187/195. Sämtliche neuen Paket-2-Prüfungen
+sind grün, darunter Besprechungsreihen-UI 8/8, Projektübersicht-Acceptance 2/2,
+ISO-KW 3/3, M80 17/17 und IPC-Registrierung 7/7. Die acht roten Prüfungen sind
+unveränderte, bereits dokumentierte Baseline-Abweichungen: zwei
+`projectFirmsLayout`, zwei `protokollProjectEntryRouting`, eine
+`protokollRouterFallback` sowie drei alte M83-Abweichungen (veraltete
+Bundle-Erwartung, Rechnung-Null-Ref und Licensing-Prüfhash). Der
+UI-Editor-Vertrags-Selbsttest ist grün. ESLint meldet für die gezielt geprüften
+neuen/angepassten Stellen keine Fehler; vorhandene Warnungen bleiben bestehen.
+
+Die echte Electron-Oberfläche wurde mit isoliertem temporärem Benutzerprofil
+technisch geprüft: kompakte 240-px-Karten ohne horizontalen Überlauf, 0/3
+Reiheneinstiege, verständliche Titel/ARIA-Texte, getrennte Erstellung je Reihe
+und vollständige UI-Editor-Attribute/Parent-Beziehungen. Native Computer Use war
+in der Umgebung nicht verbunden; die Prüfung lief über die DevTools-Schnittstelle
+der isolierten Instanz. Das Profil wurde anschließend gelöscht.
+
+Nicht umgesetzt wurden Audio/Diktat, Folgetermin A/B, Distribution,
+Lizenztool, Versionsanhebung, PDF-Satzänderungen oder Paket 3. Nächster offener
+Konsolidierungsschritt bleibt Paket 3; es wurde nicht begonnen.
+
+---
+
+## 2026-09-20 – Gemeinsame Basis: Sidebar und V2-Seitendefaults
+
+Auf `integration/bbm-1.5.1-consolidation` wurde vor der beauftragten Übernahme
+nach `main` ein eng begrenztes Korrekturpaket umgesetzt. Das produktive
+BBM-Dev-Profil speichert die tatsächlich verwendete Sidebar mit Basisfarbe
+`#696969`, Ton 50 und deaktiviertem Default-Umschalter. Der Wert liegt in
+`app_settings`; die UI-Layoutprofile enthalten keinen entsprechenden Override.
+`#696969` bei Ton 50 ist deshalb der gemeinsame Fallback für DEV und
+Kundenversion. Keine andere lokale DEV-Einstellung wurde übernommen.
+
+Die bereits im V2-Satzvertrag und in den M85-Fixtures festgelegten
+Seitendefaults sind nun an allen Eintrittspunkten gleich: oben 5 mm, rechts
+12 mm, unten 0 mm, links 12 mm und Fußreserve 12 mm. Der Bootstrap ergänzt nur
+einzeln fehlende Werte. Einstellungsdialog, Vorschau und Produkt-PDF behandeln
+`null`, `undefined` und Leertext als fehlend, erhalten aber gespeicherte
+Kundenwerte und gültige numerische Nullwerte. Profile werden weder zurückgesetzt
+noch vollständig überschrieben.
+
+Die neuen Prüfungen decken frische Profile, einzelne Lücken, explizite
+Nullwerte, benutzerdefinierte Werte, simulierten Neustart sowie gemeinsamen
+Sidebar-Standard und gespeicherte Sidebar-Werte ab; die Gruppe
+`restarbeiten-v2` ist grün. Der UI-Editor-Vertrags-Selbsttest, gezieltes ESLint
+ohne neue Fehler und `git diff --check` sind grün. Der vollständige M85-Lauf
+reproduziert am geänderten Stand und am sauberen Ausgangscommit `616d4d4a`
+exakt dieselben vier Baselineabweichungen: `r19-empty`-Hash,
+Restarbeiten-Spaltenzahl 9 statt 13, Registryzahl 37 statt 35 und
+`PDF-V2-ARCH-003`. Der breite `npm test`-Lauf bleibt in beiden Ständen bei 2/10
+grünen Gruppen; alle Unterschiede der Einzelauflistung liegen ausschließlich in
+der paketfremden UI-Editor-Altsuite, die im isolierten Ausgangsworktree früher
+abbricht. In allen von diesem Paket berührten Gruppen entstand kein neuer roter
+Prüfname.
+
+Paket 4, Audio, Setup, Lizenzbau, Installation und Versionswechsel wurden nicht
+begonnen. Nächster Schritt dieses Auftrags ist ausschließlich Commit, Push und
+die reguläre Übernahme des geprüften Integrationsstands auf `main`.
+
+---
+
+## 2026-09-20 – BBM 1.5.1 Konsolidierung: Paket 3 Folgetermin Optionen A/B
+
+Auf Branch `integration/bbm-1.5.1-consolidation` wurde Paket 3 hunkweise auf
+dem abgeschlossenen Paket-1-/Paket-2-Stand umgesetzt. Referenzcommit `8aef3aee`
+lieferte das ursprüngliche A/B-Datenmodell, den Dialog und die PDF-Fortsetzung;
+Snapshot `77b8028c` enthielt darüber hinaus die führenden Korrekturen für
+besprechungsbezogene Werte, globale Vorgaben nur bei unberührten offenen
+Baubesprechungen, getrennte Reihen und den Schreibschutz geschlossener
+Besprechungen. Diese spätere Snapshot-Variante wurde semantisch übernommen,
+ohne komplette Altdateien oder sachfremde Snapshot-Änderungen einzuspielen.
+
+Die Migration ergänzt ausschließlich `next_meeting_option_a_enabled` mit
+Bestandsdefault 1, `next_meeting_option_b_enabled` mit Bestandsdefault 0 und
+`next_meeting_option_b_text`. Hauptschalter, A, B und mehrzeiliger B-Text werden
+je Besprechung gespeichert; das Abschalten löscht die Inhalte nicht. Zusätzliche
+Besprechungsreihen verwenden keine globalen Baubesprechungsvorgaben. Die
+Paket-1-Reihen- und Paket-2-Routinglogik sowie Registry 40 bleiben unverändert.
+
+Die UI-/PDF-Entwurfsentscheidung lautet: UI und PDF, nicht editorfähig für die
+neuen Bedienelemente und Fachwerte. Hauptschalter, Optionen A/B und B-Freitext
+sind fachliche Meeting-/DB-/IPC-Aktionen und deshalb keine Editorziele. Es wurden
+keine Inspector-IDs, Parents oder Operationen ergänzt. Der vorhandene
+Protokoll-Abschluss bleibt editorseitig unverändert. Der PDF-Vertrag ergänzt
+`PDF-V2-PROT-009`; `PDF-V2-PROT-004` beschreibt nun A/B. Lange B-Texte werden
+vollständig in Abschlusssegmente paginiert, während „Aufgestellt“ ausschließlich
+auf der letzten Seite erscheint.
+
+Die fokussierten Folgeterminprüfungen sind 6/6 grün: Vorschau/Protokoll,
+Persistenz und Inhaltserhalt, additive Bestandsmigration, Dialogvorgaben,
+IPC/Preload und MeetingService. TopsCloseFlow ist 2/2 grün. Die sechs neuen
+PDF-Fixtures p50–p55 bestehen den Folgetermin-Guardrail; p55 umfasst vier Seiten,
+enthält den vollständigen B-Text und den Abschlussfuß nur auf Seite 4. Alle sechs
+PDFs wurden erzeugt, p50/p53/p54 sowie alle vier Seiten von p55 gerendert und
+visuell ohne Abschneiden oder Überlagerung geprüft.
+
+Der Reihen-/Paket-1-/Paket-2-Lauf bleibt bei 187/195. Die acht bekannten roten
+Prüfungen sind unverändert: zwei `projectFirmsLayout`, zwei
+`protokollProjectEntryRouting`, eine `protokollRouterFallback` sowie drei
+M83-Baselineabweichungen. Der vollständige M85-Lauf enthält zusätzlich exakt die
+vier bereits im sauberen Ausgangsstand reproduzierten Baselineabweichungen:
+`r19-empty`-Hash, Restarbeiten-Spaltenzahl 9 statt 13, Registryzahl 37 statt 35
+und `PDF-V2-ARCH-003`. Der neue Folgetermin-Guardrail ist grün. Syntax,
+UI-Editor-Vertrags-Selbsttest und `git diff --check` sind grün. Der relevante
+ESLint-Lauf reproduziert ausschließlich die zwei schon am Ausgangs-HEAD
+vorhandenen `printApp.js`-Fehler und vorhandene Warnungen.
+
+Ein isolierter Electron-Start mit neutralem temporärem Protokollprofil hat
+Datenbankmigration, Seed und Protokollroute erfolgreich durchlaufen. Native
+Computer Use stellte keine App- oder Browseroberfläche bereit; eine eigene
+Klickprüfung des Dialogs wird deshalb nicht behauptet. Das temporäre Profil
+wurde gelöscht. Audio/Diktat, Distribution/Setup, Lizenztool/Kundenbindung,
+Versionsanhebung und sonstige Protokollkorrekturen wurden nicht verändert.
+Nächster offener Konsolidierungsschritt ist Paket 4; dessen Umfang bleibt vor
+Beginn getrennt zu bestimmen.
 
 ---

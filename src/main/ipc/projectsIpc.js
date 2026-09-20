@@ -100,6 +100,7 @@ function registerProjectsIpc() {
         start_date: d.start_date ?? d.startDate ?? null,
         geplanter_baubeginn: d.geplanter_baubeginn ?? null,
         bauherr: d.bauherr,
+        meeting_series_mask: d.meeting_series_mask,
         end_date: d.end_date ?? d.endDate ?? null,
 
         notes: d.notes ?? null,

@@ -679,6 +679,9 @@ export default class ParticipantsModals {
   }
 
   async _ensureOpenMeetingContext() {
+    // Teilnehmer bleiben an die ausdrücklich geöffnete Besprechung gebunden,
+    // auch in einer geschlossenen oder deaktivierten Historie.
+    if (this.meetingId) return;
     try {
       const api = window.bbmDb || {};
       if (!this.projectId) return;
@@ -695,6 +698,7 @@ export default class ParticipantsModals {
       const current = meetings.find((x) => String(x?.id ?? "") === String(this.meetingId ?? ""));
       const open = meetings
         .filter((x) => Number(x?.is_closed || 0) !== 1)
+        .filter((x) => (x.series_key || "construction") === (this.router?.currentSeriesKey || "construction"))
         .sort((a, b) => Number(b?.meeting_index || 0) - Number(a?.meeting_index || 0));
 
       // Explizit gesetzte Meeting-ID nicht auf ein anderes offenes Meeting umbiegen

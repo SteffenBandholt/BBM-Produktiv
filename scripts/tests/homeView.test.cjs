@@ -10,11 +10,48 @@ function read(relPath) {
 async function runHomeViewTests(run) {
   const homeViewSource = read("src/renderer/views/HomeView.js");
 
-  await run("HomeView: zentrales Icon ist sichtbar verkleinert", () => {
-    assert.equal(homeViewSource.includes('bgImg.style.width = "clamp(55px, 7vw, 105px)";'), true);
-    assert.equal(homeViewSource.includes('bgImg.style.maxWidth = "17.5%";'), true);
-    assert.equal(homeViewSource.includes('bgImg.src = "./assets/icon-BBM.png";'), true);
+  await run("HomeView: Verlauf zeigt keine technische Projekt-ID", () => {
+    assert.equal(homeViewSource.includes("Zuletzt geöffnetes Projekt #${lastProjectId}"), false);
+    assert.equal(homeViewSource.includes('label: this.lastProject ? projectLabel(this.lastProject) : "Noch kein Projekt geöffnet"'), true);
     assert.equal(homeViewSource.includes("ensureActiveModuleAccess"), true);
+  });
+
+  await run("HomeView: gespeicherte ID wird zum tatsächlichen Projektnamen aufgelöst", async () => {
+    const { default: HomeView } = await importEsmFromFile(path.join(process.cwd(), "src/renderer/views/HomeView.js"));
+    const oldWindow = global.window;
+    global.window = {
+      localStorage: { getItem: () => "project-uuid-17", removeItem: () => assert.fail("known project must stay stored") },
+      bbmDb: { projectsList: async () => ({ list: [{ id: "project-uuid-17", project_number: "24-017", short: "Schulbau" }] }) },
+    };
+    try {
+      const view = new HomeView();
+      view._renderLastProjectTile = () => {};
+      await view._loadLastProjectTile();
+      assert.equal(view.lastProjectId, "project-uuid-17");
+      assert.equal(view.lastProject.short, "Schulbau");
+    } finally {
+      global.window = oldWindow;
+    }
+  });
+
+  await run("HomeView: leere oder veraltete Historie bleibt kundenverständlich leer", async () => {
+    const { default: HomeView } = await importEsmFromFile(path.join(process.cwd(), "src/renderer/views/HomeView.js"));
+    const oldWindow = global.window;
+    let removed = false;
+    global.window = {
+      localStorage: { getItem: () => "stale-uuid", removeItem: () => { removed = true; } },
+      bbmDb: { projectsList: async () => ({ list: [] }) },
+    };
+    try {
+      const view = new HomeView();
+      view._renderLastProjectTile = () => {};
+      await view._loadLastProjectTile();
+      assert.equal(view.lastProjectId, null);
+      assert.equal(view.lastProject, null);
+      assert.equal(removed, true);
+    } finally {
+      global.window = oldWindow;
+    }
   });
 
   await run("HomeView: letzter Projektstart fragt zuerst den Modulstatus ab", async () => {

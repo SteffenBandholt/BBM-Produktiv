@@ -28,6 +28,12 @@ async function runSettingsPrintLayoutTests(run) {
   const { default: SettingsView } = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/views/SettingsView.js")
   );
+  const {
+    PRINT_LAYOUT_DEFAULT_VALUES,
+    buildMissingPrintLayoutDefaults,
+  } = await importEsmFromFile(
+    path.join(__dirname, "../../src/shared/print/printLayoutDefaults.mjs")
+  );
   const settingsSource = read("src/renderer/views/SettingsView.js");
 
   await run("SettingsView: Print-Layout-Felder sind numerisch konfiguriert", () => {
@@ -56,8 +62,47 @@ async function runSettingsPrintLayoutTests(run) {
     assert.equal(view._normalizePrintLayoutMmValue("-5", "print.v2.pagePadBottomMm"), "0");
     assert.equal(view._normalizePrintLayoutMmValue("abc", "print.v2.footerReserveMm"), "12");
     assert.equal(view._normalizePrintLayoutMmValue("17", "print.v2.footerReserveMm"), "17");
+    assert.equal(view._normalizePrintLayoutMmValue("", "print.v2.pagePadTopMm"), "5");
+    assert.equal(view._normalizePrintLayoutMmValue("0", "print.v2.pagePadTopMm"), "0");
     assert.equal(view._isPrintLayoutMmKey("print.v2.pagePadRightMm"), true);
     assert.equal(view._isPrintLayoutMmKey("pdf.protocolTitle"), false);
+  });
+
+  await run("Drucklayout: frische und einzeln fehlende Werte erhalten nur die festgelegten Defaults", () => {
+    assert.deepEqual(PRINT_LAYOUT_DEFAULT_VALUES, {
+      "print.v2.pagePadTopMm": "5",
+      "print.v2.pagePadLeftMm": "12",
+      "print.v2.pagePadRightMm": "12",
+      "print.v2.pagePadBottomMm": "0",
+      "print.v2.footerReserveMm": "12",
+    });
+    assert.deepEqual(buildMissingPrintLayoutDefaults({}), PRINT_LAYOUT_DEFAULT_VALUES);
+    assert.deepEqual(
+      buildMissingPrintLayoutDefaults({
+        "print.v2.pagePadTopMm": "9",
+        "print.v2.pagePadLeftMm": "0",
+        "print.v2.pagePadRightMm": "  ",
+        "print.v2.pagePadBottomMm": 0,
+        "print.v2.footerReserveMm": "7",
+      }),
+      { "print.v2.pagePadRightMm": "12" }
+    );
+  });
+
+  await run("Drucklayout: initialisierte Werte bleiben nach simuliertem Neustart unveraendert", () => {
+    const stored = {
+      "print.v2.pagePadLeftMm": "19",
+      "print.v2.pagePadBottomMm": "0",
+    };
+    Object.assign(stored, buildMissingPrintLayoutDefaults(stored));
+    assert.deepEqual(buildMissingPrintLayoutDefaults(stored), {});
+    assert.deepEqual(stored, {
+      "print.v2.pagePadLeftMm": "19",
+      "print.v2.pagePadBottomMm": "0",
+      "print.v2.pagePadTopMm": "5",
+      "print.v2.pagePadRightMm": "12",
+      "print.v2.footerReserveMm": "12",
+    });
   });
 
   await run("SettingsView: Standardwerte setzen nur die Drucklayout-Felder", () => {

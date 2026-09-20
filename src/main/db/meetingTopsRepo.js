@@ -467,6 +467,7 @@ function listJoinedByMeeting(meetingId) {
       SELECT
         t.id,
         t.project_id,
+        t.series_key,
         t.parent_top_id,
         t.level,
         t.number,
@@ -556,6 +557,7 @@ function listLatestByProject(projectId) {
       SELECT
         t.id,
         t.project_id,
+        t.series_key,
         t.parent_top_id,
         t.level,
         t.number,
@@ -603,13 +605,12 @@ function listLatestByProject(projectId) {
         ${f("frozen_ampel_color")},
         ${f("frozen_ampel_reason")}
       FROM meeting_tops mt
-      JOIN (
-        SELECT mt.top_id, MAX(mt.updated_at) AS max_updated
-        FROM meeting_tops mt
-        JOIN tops t ON t.id = mt.top_id
-        WHERE t.project_id = ?
-        GROUP BY mt.top_id
-      ) latest ON latest.top_id = mt.top_id AND latest.max_updated = mt.updated_at
+      JOIN meetings m ON m.id=mt.meeting_id
+      JOIN tops t ON t.id=mt.top_id
+      WHERE t.project_id=?
+        AND NOT EXISTS (SELECT 1 FROM meeting_tops newer JOIN meetings nm ON nm.id=newer.meeting_id
+          WHERE newer.top_id=mt.top_id AND
+            (nm.meeting_index > m.meeting_index OR (nm.meeting_index=m.meeting_index AND nm.id>m.id)))
     `
     )
     .all(projectId);
@@ -667,6 +668,11 @@ function carryOverFromMeeting(arg1, arg2) {
 
   if (!fromMeetingId) throw new Error("fromMeetingId required");
   if (!toMeetingId) throw new Error("toMeetingId required");
+  const source = db.prepare("SELECT project_id,series_key,meeting_index FROM meetings WHERE id=?").get(fromMeetingId);
+  const target = db.prepare("SELECT project_id,series_key,meeting_index FROM meetings WHERE id=?").get(toMeetingId);
+  if (!source || !target || source.project_id !== target.project_id || source.series_key !== target.series_key || source.meeting_index >= target.meeting_index) {
+    throw new Error("TOP-Fortführung ist nur innerhalb derselben Besprechungsreihe zum Folgeprotokoll erlaubt.");
+  }
 
   const now = _nowIso();
 

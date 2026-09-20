@@ -34,6 +34,7 @@ class TopService {
         baseById.set(r.id, {
           id: r.id,
           project_id: r.project_id,
+          series_key: r.series_key || "construction",
           parent_top_id: r.parent_top_id,
           level: r.level,
           number: r.number,
@@ -107,6 +108,7 @@ class TopService {
           id: r.id,
           project_id: r.project_id,
           parent_top_id: parentId || null,
+          series_key: r.series_key || "construction",
           level: lvl,
           number: num,
           title: title,
@@ -267,6 +269,8 @@ class TopService {
     if (Number(meeting.is_closed) === 1) {
       throw new Error("Besprechung ist geschlossen – TOP darf nicht angelegt werden");
     }
+    this.meetingsRepo.assertMeetingWritable?.(meetingId);
+    if (String(meeting.project_id) !== String(projectId)) throw new Error("Besprechung gehört zu einem anderen Projekt.");
 
     const hasParentTopId = parentTopId !== undefined && parentTopId !== null && String(parentTopId).trim() !== "";
     let resolvedParentTopId = null;
@@ -275,6 +279,9 @@ class TopService {
     if (hasParentTopId) {
       const parent = this.topsRepo.getTopById(parentTopId);
       if (!parent) throw new Error("Parent-TOP nicht gefunden");
+      if (String(parent.project_id) !== String(projectId) || (parent.series_key || "construction") !== (meeting.series_key || "construction") || !this.meetingTopsRepo.getMeetingTop(meetingId, parent.id)) {
+        throw new Error("Parent-TOP gehört nicht zur aktuellen Besprechungsreihe.");
+      }
 
       const parentLevel = Number(parent.level);
       if (!Number.isFinite(parentLevel) || parentLevel < 1 || parentLevel > 3) {
@@ -292,10 +299,11 @@ class TopService {
       throw new Error("Ungültiges TOP-Level");
     }
 
-    const number = this.topsRepo.getNextNumber(projectId, resolvedParentTopId);
+    const number = this.topsRepo.getNextNumber(projectId, resolvedParentTopId, meeting.series_key);
 
     const created = this.topsRepo.createTop({
       projectId,
+      seriesKey: meeting.series_key,
       parentTopId: resolvedParentTopId,
       level: resolvedLevel,
       number,
@@ -321,10 +329,11 @@ class TopService {
     const top = this.topsRepo.getTopById(topId);
     if (!top) throw new Error("TOP nicht gefunden");
 
-    const openMeeting = this.meetingsRepo.getOpenMeetingByProject(top.project_id);
+    const openMeeting = this.meetingsRepo.getOpenMeetingByProject(top.project_id, top.series_key);
     if (!openMeeting) {
       throw new Error("Kein offenes Meeting – Verschieben nicht erlaubt");
     }
+    this.meetingsRepo.assertMeetingWritable?.(openMeeting.id);
 
     const mt = this.meetingTopsRepo.getMeetingTop(openMeeting.id, topId);
     if (!mt) {
@@ -346,6 +355,9 @@ class TopService {
       if (!targetParent) throw new Error("Ziel-Parent nicht gefunden");
       if (targetParent.project_id !== top.project_id) {
         throw new Error("Ziel-Parent gehört zu einem anderen Projekt");
+      }
+      if ((targetParent.series_key || "construction") !== (top.series_key || "construction") || !this.meetingTopsRepo.getMeetingTop(openMeeting.id, targetParent.id)) {
+        throw new Error("Ziel-Parent gehört zu einer anderen Besprechungsreihe.");
       }
 
       const parentLevel = Number(targetParent.level);
@@ -379,7 +391,7 @@ class TopService {
       newLevel = 1;
     }
 
-    const newNumber = this.topsRepo.getNextNumber(top.project_id, targetParentId || null);
+    const newNumber = this.topsRepo.getNextNumber(top.project_id, targetParentId || null, top.series_key);
 
     return this.topsRepo.moveTop({
       topId,
@@ -425,6 +437,7 @@ class TopService {
   }
 
   updateMeetingFields({ meetingId, topId, patch }) {
+    this.meetingsRepo.assertMeetingWritable?.(meetingId);
     if (!meetingId) throw new Error("meetingId required");
     if (!topId) throw new Error("topId required");
     if (!patch) throw new Error("patch required");
@@ -476,6 +489,16 @@ class TopService {
     for (const k of Object.keys(patch)) {
       if (!allowedKeys.has(k)) {
         throw new Error(`Feld nicht erlaubt: ${k}`);
+      }
+    }
+
+    const requestedCompletion = patch.completed_in_meeting_id !== undefined ? patch.completed_in_meeting_id : patch.completedInMeetingId;
+    if (patch.status === undefined && requestedCompletion !== null && requestedCompletion !== undefined) {
+      const completion = this.meetingsRepo.getMeetingById(requestedCompletion);
+      if (!completion || completion.project_id !== meeting.project_id || completion.series_key !== meeting.series_key ||
+          Number(completion.meeting_index) > Number(meeting.meeting_index) ||
+          !this.meetingTopsRepo.getMeetingTop(requestedCompletion, topId)) {
+        throw new Error("Erledigungsreferenz gehört nicht zur TOP-Besprechungsreihe");
       }
     }
 

@@ -309,6 +309,9 @@ function ensureMeetingsNextMeetingColumns(dbConn) {
     }
   };
   addCol("next_meeting_enabled", "INTEGER");
+  addCol("next_meeting_option_a_enabled", "INTEGER NOT NULL DEFAULT 1");
+  addCol("next_meeting_option_b_enabled", "INTEGER NOT NULL DEFAULT 0");
+  addCol("next_meeting_option_b_text", "TEXT");
   addCol("next_meeting_date", "TEXT");
   addCol("next_meeting_time", "TEXT");
   addCol("next_meeting_place", "TEXT");
@@ -1074,59 +1077,6 @@ function ensureProjectCandidatesSchema(dbConn) {
   }
 }
 
-function ensureSingleOpenMeetingPerProject(dbConn) {
-  if (!tableExists(dbConn, "meetings")) return;
-
-  const duplicates = dbConn
-    .prepare(
-      `
-      SELECT project_id
-      FROM meetings
-      WHERE COALESCE(is_closed, 0) = 0
-      GROUP BY project_id
-      HAVING COUNT(*) > 1
-    `
-    )
-    .all();
-
-  if ((duplicates || []).length) {
-    const pickOpen = dbConn.prepare(
-      `
-      SELECT id
-      FROM meetings
-      WHERE project_id = ?
-        AND COALESCE(is_closed, 0) = 0
-      ORDER BY meeting_index DESC, updated_at DESC, created_at DESC
-      LIMIT 1
-    `
-    );
-    const closeOthers = dbConn.prepare(
-      `
-      UPDATE meetings
-      SET is_closed = 1, updated_at = ?
-      WHERE project_id = ?
-        AND COALESCE(is_closed, 0) = 0
-        AND id <> ?
-    `
-    );
-    const now = new Date().toISOString();
-    const tx = dbConn.transaction(() => {
-      for (const row of duplicates) {
-        const keep = pickOpen.get(row.project_id);
-        if (!keep?.id) continue;
-        closeOthers.run(now, row.project_id, keep.id);
-      }
-    });
-    tx();
-  }
-
-  dbConn.exec(`
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_meetings_one_open_per_project
-    ON meetings(project_id)
-    WHERE is_closed = 0;
-  `);
-}
-
 // ✅ NEU: Teilnehmer je Meeting inkl. Flags (anwesend / im Verteiler)
 function ensureMeetingParticipantsSchema(dbConn) {
   if (!tableExists(dbConn, "meeting_participants")) {
@@ -1788,6 +1738,7 @@ function migrateLegacyTopsToMeetingTops(dbConn) {
 function ensureCoreSchema(dbConn) {
   // ✅ Projekte zuerst
   ensureProjectsSchema(dbConn);
+  require("./meetingSeriesMigration").ensureProjectMeetingSeries(dbConn);
   ensureUserProfileSchema(dbConn);
 
   ensureFirmsAndPersonsSchema(dbConn);
@@ -1816,6 +1767,9 @@ function ensureProtokollSchema(dbConn) {
         pdf_show_ampel INTEGER,
         todo_snapshot_json TEXT,
         next_meeting_enabled INTEGER,
+        next_meeting_option_a_enabled INTEGER NOT NULL DEFAULT 1,
+        next_meeting_option_b_enabled INTEGER NOT NULL DEFAULT 0,
+        next_meeting_option_b_text TEXT,
         next_meeting_date TEXT,
         next_meeting_time TEXT,
         next_meeting_place TEXT,
@@ -1845,7 +1799,6 @@ function ensureProtokollSchema(dbConn) {
   }
   ensureMeetingsTodoSnapshotColumn(dbConn);
   ensureMeetingsNextMeetingColumns(dbConn);
-  ensureSingleOpenMeetingPerProject(dbConn);
 
   migrateLegacyTopsToMeetingTops(dbConn);
 
@@ -1915,6 +1868,7 @@ function ensureProtokollSchema(dbConn) {
   ensureMeetingTopsTaskFlagColumns(dbConn);
   ensureTopsSoftDeleteColumns(dbConn);
   ensureMeetingParticipantsSchema(dbConn);
+  require("./meetingSeriesMigration").ensureMeetingSeries(dbConn);
   ensureAudioImportsSchema(dbConn);
   ensureTranscriptsSchema(dbConn);
   ensureAudioSuggestionsSchema(dbConn);
@@ -1985,7 +1939,8 @@ function initDatabase() {
 
   `);
 
-  ensureSchema(db);
+  try { ensureSchema(db); }
+  catch (error) { db.close(); db = null; throw error; }
 
   return db;
 }

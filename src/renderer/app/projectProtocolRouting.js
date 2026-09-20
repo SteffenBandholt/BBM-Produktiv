@@ -3,7 +3,7 @@ function normalizeProjectProtocolMeetingList(meetings) {
   return meetings.filter((item) => item && typeof item === "object");
 }
 
-export function resolveProjectProtocolEntry({ projectId, meetings } = {}) {
+export function resolveProjectProtocolEntry({ projectId, meetings, seriesKey = "construction" } = {}) {
   const effectiveProjectId = String(projectId || "").trim();
   if (!effectiveProjectId) {
     return {
@@ -17,7 +17,7 @@ export function resolveProjectProtocolEntry({ projectId, meetings } = {}) {
     };
   }
 
-  const normalizedMeetings = normalizeProjectProtocolMeetingList(meetings);
+  const normalizedMeetings = normalizeProjectProtocolMeetingList(meetings).filter(meeting => (meeting.series_key || "construction") === seriesKey);
   const openMeetings = normalizedMeetings.filter((meeting) => Number(meeting?.is_closed) !== 1);
 
   if (openMeetings.length === 1) {

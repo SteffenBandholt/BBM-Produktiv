@@ -236,13 +236,14 @@ function withMockedMeetingTopsRepo(fn) {
 async function runTopServiceHierarchyTests(run) {
   await run("TopService: Kind-TOPs werden immer als Unterpunkte mit Parent-Level angelegt", () => {
     const tops = new Map([
-      ["1", { id: "1", project_id: "p1", level: 1, title: "Titel 1" }],
+      ["1", { id: "1", project_id: "p1", series_key: "construction", level: 1, title: "Titel 1" }],
     ]);
     const created = [];
     const topsRepo = {
-      getNextNumber(projectId, parentTopId) {
+      getNextNumber(projectId, parentTopId, seriesKey) {
         assert.equal(projectId, "p1");
         assert.equal(parentTopId, "1");
+        assert.equal(seriesKey, "construction");
         return 1;
       },
       getTopById(topId) {
@@ -264,10 +265,11 @@ async function runTopServiceHierarchyTests(run) {
     };
     const meetingsRepo = {
       getMeetingById(id) {
-        return { id, project_id: "p1", is_closed: 0 };
+        return { id, project_id: "p1", series_key: "construction", is_closed: 0 };
       },
     };
     const meetingTopsRepo = {
+      getMeetingTop() { return { meeting_id: "m1", top_id: "1" }; },
       attachTopToMeeting() {
         return { id: "new-1" };
       },
@@ -382,8 +384,15 @@ async function runTopServiceHierarchyTests(run) {
     assert.equal(updateCalls[1].completed_in_meeting_id, null);
   });
 
-  await run("meetingTopsRepo: erledigte TOPs werden nur im direkten Folgeprotokoll uebernommen", () => {
-    withMockedMeetingTopsRepo((repo) => {
+  await run("meetingTopsRepo: erledigte TOPs werden nur im direkten Folgeprotokoll uebernommen", async () => {
+    await require("./meetingSeries.test.cjs").protocolFixture(({ repo: projects, db, meetingTops: repo }) => {
+      const project = projects.createProject({ name: "Erledigungsregression" });
+      for (const [id, nr] of [["P2", 2], ["P3", 3], ["P4", 4]]) {
+        db.prepare("INSERT INTO meetings(id,project_id,meeting_index,is_closed) VALUES(?,?,?,1)").run(id, project.id, nr);
+      }
+      for (const [id, nr] of [["done-1", 1], ["open-1", 2]]) {
+        db.prepare("INSERT INTO tops(id,project_id,level,number,title) VALUES(?,?,1,?,?)").run(id, project.id, nr, id);
+      }
       repo.attachTopToMeeting({
         meetingId: "P2",
         topId: "done-1",
