@@ -16,6 +16,7 @@ import { beginM83ComponentBinding, completeM80PilotRender, getM80Ref, registerM8
 import { PLANNED_START_COMPONENT, PLANNED_START_SCOPE } from "./ProjectPlannedStart.uiEditorContract.js";
 
 import ProjectBuilderField from "./ProjectBuilderField.js";
+import ProjectMeetingSeriesField from "./ProjectMeetingSeriesField.js";
 
 export default class ProjectFormScreen {
   constructor({ router, projectId, mode = "page", onClose, onSaved } = {}) {
@@ -146,6 +147,7 @@ export default class ProjectFormScreen {
   _setBusy(on) {
     this.busy = !!on;
     this.builderField?.setBusy(this.busy);
+    this.meetingSeriesField?.setBusy(this.busy);
 
     const dis = this.busy;
 
@@ -209,6 +211,7 @@ export default class ProjectFormScreen {
   _fill(p) {
     const proj = p || {};
     this.builderField?.setProject(proj);
+    this.meetingSeriesField?.setProject(proj);
 
     if (this.inpName) this.inpName.value = (proj.name || "").toString();
     if (this.inpProjectNumber)
@@ -253,7 +256,7 @@ export default class ProjectFormScreen {
       notes: this._normText(this.taNotes?.value),
     };
 
-    return { ...payload, ...this.builderField?.patch() };
+    return { ...payload, ...this.builderField?.patch(), ...this.meetingSeriesField?.patch() };
   }
 
   async _closeToProjects() {
@@ -764,7 +767,9 @@ export default class ProjectFormScreen {
 
     this.builderField?.destroy();
     this.builderField = new ProjectBuilderField({ projectId: this.projectId });
-    root.append(header, formCard, this.builderField.render());
+    this.meetingSeriesField?.destroy();
+    this.meetingSeriesField = new ProjectMeetingSeriesField({ onHistory: seriesKey => this._openSeriesHistory(seriesKey) });
+    root.append(header, formCard, this.meetingSeriesField.render(), this.builderField.render());
 
     this.root = root;
     this.msgEl = msg;
@@ -1105,6 +1110,7 @@ export default class ProjectFormScreen {
     if (!this.overlayEl) return;
     this._clearPlannedStartEditor();
     this.builderField?.destroy();
+    this.meetingSeriesField?.destroy();
     const overlay = this.overlayEl;
     cleanupPopupHandlers(overlay);
     if (this.modalBodyEl) this.modalBodyEl.innerHTML = "";
@@ -1131,6 +1137,7 @@ export default class ProjectFormScreen {
   destroy() {
     this._clearPlannedStartEditor();
     this.builderField?.destroy();
+    this.meetingSeriesField?.destroy();
     try {
       this._closeModal();
     } catch (_e) {
@@ -1156,6 +1163,7 @@ export default class ProjectFormScreen {
     this.overlayEl.style.display = "flex";
     this._bindPlannedStartEditor();
     this.builderField?.bind();
+    this.meetingSeriesField?.bind();
     this.overlayEl.focus();
     this._setBusy(this.busy);
   }
@@ -1230,6 +1238,36 @@ export default class ProjectFormScreen {
       this._setMsg("");
       this._setBusy(false);
       await this.builderField?.load();
+      this.historySavedState = this._historyFormState();
+      try {
+        const response = await api.meetingsListByProject({ projectId: this.projectId });
+        if (!response?.ok || !Array.isArray(response.list)) {
+          this._setMsg(`Bisherige Protokolle konnten nicht geladen werden: ${response?.error || "Protokolle konnten nicht geladen werden."}`);
+        } else {
+          this.meetingSeriesField?.setHistory(response.list);
+        }
+      } catch (error) {
+        this._setMsg(`Bisherige Protokolle konnten nicht geladen werden: ${error.message}`);
+      }
     }
+  }
+
+  _historyFormState() {
+    const fields = [this.inpName, this.inpProjectNumber, this.inpShort, this.inpStreet,
+      this.inpZip, this.inpCity, this.inpLead, this.inpLeadPhone, this.inpStart,
+      this.inpPlannedStart, this.inpEnd, this.taNotes, this.builderField?.input];
+    return JSON.stringify([fields.map(field => field?.value ?? ""),
+      [...(this.meetingSeriesField?.inputs.values() || [])].map(input => input.checked)]);
+  }
+
+  async _openSeriesHistory(seriesKey) {
+    if (this.busy || !this.projectId || !this.meetingSeriesField?.historyButtons.has(seriesKey)) return false;
+    if (this._historyFormState() !== this.historySavedState) {
+      this._setMsg("Ungespeicherte Änderungen: Vor der Historie bitte speichern oder mit „Abbrechen“ verwerfen.");
+      return false;
+    }
+    const projectId = this.projectId, project = this.project;
+    if (this.isModal) this._handleModalClose();
+    return this.router.openProjectModule(projectId, "protokoll", { project, seriesKey, historyOnly: true });
   }
 }

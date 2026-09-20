@@ -5267,3 +5267,45 @@ Schritt ist die gezielte Integrationsprüfung; M85- und Layout-Bereinigung bleib
 ausgeschlossen.
 
 ---
+## 2026-09-20 – BBM 1.5.1 Konsolidierung: Paket 2 Projektübersicht und Besprechungsreihen-UI
+
+Auf Branch `integration/bbm-1.5.1-consolidation` wurde Paket 2 auf dem
+abgeschlossenen Paket-1-Stand umgesetzt. Die Projektübersicht verwendet kompakte
+Projektkarten mit getrennten Einstiegen für `construction`, `owner` und
+`planning`. Projektmaske und Historieneinstiege berücksichtigen die aktivierten
+Besprechungsreihen; die Protokollnavigation, Druckauswahl und Teilnehmerauflösung
+reichen den Reihenkontext über die in Paket 1 geschaffene API weiter. Startseite,
+Bauherr-Auswahl sowie die unmittelbar benötigten ISO-Datum-/Kalenderwochenfelder
+wurden semantisch angepasst.
+
+Die UI-/PDF-Entwurfsentscheidung lautet: UI, keine PDF-Strukturänderung,
+editorfähig. Registry-Version 40 enthält ausschließlich die neuen expliziten
+Scopes `bbm.projektverwaltung.overview` (12 Elemente),
+`bbm.projektverwaltung.meetingSeries` (14 Elemente) und
+`bbm.projektverwaltung.meetingSeriesEntry` (4 optionale Multi-Refs). Jedes
+Editorziel besitzt einen registrierten Parent, erlaubte Layoutoperationen und
+gesperrte Fach-/Datenaktionen. Das Target-Manifest wurde mit neuem Fingerprint
+abgeglichen. Es wurde keine automatische UI-Erkennung verwendet.
+
+Die gezielte Paketprüfung erreicht 187/195. Sämtliche neuen Paket-2-Prüfungen
+sind grün, darunter Besprechungsreihen-UI 8/8, Projektübersicht-Acceptance 2/2,
+ISO-KW 3/3, M80 17/17 und IPC-Registrierung 7/7. Die acht roten Prüfungen sind
+unveränderte, bereits dokumentierte Baseline-Abweichungen: zwei
+`projectFirmsLayout`, zwei `protokollProjectEntryRouting`, eine
+`protokollRouterFallback` sowie drei alte M83-Abweichungen (veraltete
+Bundle-Erwartung, Rechnung-Null-Ref und Licensing-Prüfhash). Der
+UI-Editor-Vertrags-Selbsttest ist grün. ESLint meldet für die gezielt geprüften
+neuen/angepassten Stellen keine Fehler; vorhandene Warnungen bleiben bestehen.
+
+Die echte Electron-Oberfläche wurde mit isoliertem temporärem Benutzerprofil
+technisch geprüft: kompakte 240-px-Karten ohne horizontalen Überlauf, 0/3
+Reiheneinstiege, verständliche Titel/ARIA-Texte, getrennte Erstellung je Reihe
+und vollständige UI-Editor-Attribute/Parent-Beziehungen. Native Computer Use war
+in der Umgebung nicht verbunden; die Prüfung lief über die DevTools-Schnittstelle
+der isolierten Instanz. Das Profil wurde anschließend gelöscht.
+
+Nicht umgesetzt wurden Audio/Diktat, Folgetermin A/B, Distribution,
+Lizenztool, Versionsanhebung, PDF-Satzänderungen oder Paket 3. Nächster offener
+Konsolidierungsschritt bleibt Paket 3; es wurde nicht begonnen.
+
+---

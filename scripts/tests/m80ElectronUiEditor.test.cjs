@@ -72,7 +72,7 @@ async function runM80ElectronUiEditorTests(run) {
   const registration = {
     applicationId: "bbm-produktiv", displayName: "BBM", framework: "electron",
     registryVersion: registryModule.BBM_M80_REGISTRY_VERSION, registryStatus: "incomplete",
-    activeScopes: [...registryModule.BBM_M80_ACTIVE_SCOPE_GROUPS[0]],
+    activeScopes: [...registryModule.BBM_M80_ACTIVE_SCOPE_GROUPS.find(group => group.includes("restarbeiten.header.root"))],
     supportedOperations: ["move", "resize", "resizeWidth", "resizeHeight", "textMove", "textResize", "setVisibility"],
     uiCapability: "layout", pdfCapability: "unavailable", labelFieldSeparation: true, visibilityCapability: true,
     registryScopes: registrationScopes,
@@ -117,13 +117,13 @@ async function runM80ElectronUiEditorTests(run) {
   });
 
   await run("M80/M82.6 Registry: Restarbeiten, Protokoll und Rechnung sind explizit, Restbereiche bleiben gesperrt", () => {
-    assert.deepEqual(scopes.filter((scope) => scope.status === "complete").map((scope) => scope.scopeId), ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root", "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root", "rechnung.screen", "sigeko.screen", "sigeko.preNotification", "projektverwaltung.plannedStart", "projektverwaltung.builder"]);
+    assert.deepEqual(scopes.filter((scope) => scope.status === "complete").map((scope) => scope.scopeId), ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root", "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root", "rechnung.screen", "sigeko.screen", "sigeko.preNotification", "projektverwaltung.plannedStart", "projektverwaltung.builder", "projektverwaltung.meetingSeries", "projektverwaltung.meetingSeriesEntry", "projektverwaltung.overview"]);
     assert.ok(scopes.some((scope) => scope.scopeId === "restarbeiten.layout.root" && scope.status === "blocked"));
     assert.equal(entries.some((entry) => entry.id === "restarbeiten.layout.split"), false);
     assert.equal(new Set(entries.map((entry) => entry.id)).size, entries.length);
     const ids = new Set(entries.map((entry) => entry.id));
     entries.filter((entry) => entry.parentId).forEach((entry) => assert.ok(ids.has(entry.parentId), entry.id));
-    assert.equal(entries.some((entry) => /projektverwaltung|firma/i.test(entry.id) && !entry.id.startsWith("projektverwaltung.plannedStart") && !entry.id.startsWith("projektverwaltung.builder")), false);
+    assert.equal(entries.some((entry) => /projektverwaltung|firma/i.test(entry.id) && !entry.id.startsWith("projektverwaltung.plannedStart") && !entry.id.startsWith("projektverwaltung.builder") && !entry.id.startsWith("projektverwaltung.meetingSeries") && !entry.id.startsWith("projektverwaltung.overview")), false);
   });
 
   await run("M80 Registry: Label und Feld bleiben getrennte explizite Ziele", () => {
@@ -247,7 +247,7 @@ async function runM80ElectronUiEditorTests(run) {
       host.beginM80PilotRender(); host.registerM80Ref("restarbeiten.list.root", detachedRoot); host.completeM80PilotRender();
       host.beginM80PilotRender();
       const refs = new Map();
-      for (const entry of entries.filter(entry => !entry.id.startsWith("projektverwaltung.plannedStart") && !entry.id.startsWith("projektverwaltung.builder"))) { const element = new FakeElement(entry.type === "field" ? "input" : entry.type === "button" ? "button" : "div"); element.isConnected = true; refs.set(entry.id, element); host.registerM80Ref(entry.id, element); }
+      for (const entry of entries.filter(entry => !entry.id.startsWith("projektverwaltung."))) { const element = new FakeElement(entry.type === "field" ? "input" : entry.type === "button" ? "button" : "div"); element.isConnected = true; refs.set(entry.id, element); host.registerM80Ref(entry.id, element); }
       host.completeM80PilotRender();
       assert.equal(host.getM80InteractionStatus().scopeStates.flatMap((scope) => scope.elements).find((state) => state.elementId === "restarbeiten.list.root").width, 200, "Getrenntes Vorab-Rendern darf keine 1-DIP-Baseline einfrieren");
       const submit = (elementId, operation, payload, changeId = `${elementId}-${operation}`) => host.handleM80EditorRequest({
@@ -331,7 +331,7 @@ async function runM80ElectronUiEditorTests(run) {
       assert.equal(dom.document.querySelector("[data-bbm-ui-editor-overlay]"), null);
 
       host.beginM80PilotRender();
-      for (const entry of entries.filter((entry) => entry.id !== fieldId && !entry.id.startsWith("projektverwaltung.plannedStart") && !entry.id.startsWith("projektverwaltung.builder"))) host.registerM80Ref(entry.id, refs.get(entry.id));
+      for (const entry of entries.filter((entry) => entry.id !== fieldId && !entry.id.startsWith("projektverwaltung."))) host.registerM80Ref(entry.id, refs.get(entry.id));
       host.completeM80PilotRender();
       const missing = submit(fieldId, "resizeWidth", { width: 300 }, "missing-ref");
       assert.equal(missing.success, false); assert.equal(missing.errorCode, "electron_element_not_found");

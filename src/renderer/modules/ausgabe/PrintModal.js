@@ -32,6 +32,7 @@ import {
   shouldShowAmpelInPdf,
 } from "../../../shared/ampel/pdfAmpelRule.js";
 import { applyPopupButtonStyle } from "../../ui/popupButtonStyles.js";
+import { attachIsoWeekDatePicker } from "../../core/date-picker/IsoWeekDatePicker.js";
 import {
   cleanupPopupHandlers,
   createPopupOverlay,
@@ -40,6 +41,7 @@ import {
 } from "../../ui/popupCommon.js";
 import { OVERLAY_TOP } from "../../ui/zIndex.js";
 import { buildProtocolPdfFileName } from "../../utils/protocolPdfNaming.js";
+import { normalizeSeriesKey, getSeriesDefinition } from "../../../shared/meetingSeries.mjs";
 import { resolvePrintUserData } from "../../../shared/print/userDataResolver.mjs";
 import { getPrintDialogActions } from "../../../shared/print/printModes.mjs";
 
@@ -71,6 +73,7 @@ export default class PrintModal {
     this.modal = null;
 
     this.projectId = null;
+    this.seriesKey = null;
 
     this.previewRoot = null;
     this.previewFrame = null;
@@ -326,6 +329,7 @@ export default class PrintModal {
 
     const inpDate = document.createElement("input");
     inpDate.type = "date";
+    const inpDatePicker = attachIsoWeekDatePicker(inpDate, { label: "Datum der nächsten Besprechung" });
 
     const inpTime = document.createElement("input");
     inpTime.type = "time";
@@ -345,7 +349,7 @@ export default class PrintModal {
     nextMeetBox.append(
       nextMeetTitle,
       chkWrap,
-      mkRow("Datum", inpDate),
+      mkRow("Datum", inpDatePicker.root),
       mkRow("Uhrzeit", inpTime),
       mkRow("Meetingort", inpPlace),
       mkRow("Zusatz", inpExtra),
@@ -384,6 +388,7 @@ export default class PrintModal {
 
     this.nextMeetingEnabled = chkShow;
     this.nextMeetingDate = inpDate;
+    this.nextMeetingDatePicker = inpDatePicker;
     this.nextMeetingTime = inpTime;
     this.nextMeetingPlace = inpPlace;
     this.nextMeetingExtra = inpExtra;
@@ -638,6 +643,7 @@ export default class PrintModal {
     if (typeof api.appSettingsGetMany !== "function") {
       this.nextMeetingEnabled.checked = defaults.enabled;
       this.nextMeetingDate.value = defaults.date;
+      this.nextMeetingDatePicker?.refresh?.();
       this.nextMeetingTime.value = defaults.time;
       this.nextMeetingPlace.value = defaults.place;
       this.nextMeetingExtra.value = defaults.extra;
@@ -655,6 +661,7 @@ export default class PrintModal {
     if (!res?.ok) {
       this.nextMeetingEnabled.checked = defaults.enabled;
       this.nextMeetingDate.value = defaults.date;
+      this.nextMeetingDatePicker?.refresh?.();
       this.nextMeetingTime.value = defaults.time;
       this.nextMeetingPlace.value = defaults.place;
       this.nextMeetingExtra.value = defaults.extra;
@@ -665,6 +672,7 @@ export default class PrintModal {
     const data = res.data || {};
     this.nextMeetingEnabled.checked = this._parseBool(data["print.nextMeeting.enabled"], false);
     this.nextMeetingDate.value = String(data["print.nextMeeting.date"] || "").trim();
+    this.nextMeetingDatePicker?.refresh?.();
     this.nextMeetingTime.value = String(data["print.nextMeeting.time"] || "").trim();
     this.nextMeetingPlace.value = String(data["print.nextMeeting.place"] || "").trim();
     this.nextMeetingExtra.value = String(data["print.nextMeeting.extra"] || "").trim();
@@ -815,6 +823,7 @@ export default class PrintModal {
       const inpDate = document.createElement("input");
       inpDate.type = "date";
       inpDate.value = defaultDate;
+      const inpDatePicker = attachIsoWeekDatePicker(inpDate, { label: "Datum der nächsten Besprechung" });
 
       const inpTime = document.createElement("input");
       inpTime.type = "time";
@@ -855,7 +864,7 @@ export default class PrintModal {
       body.style.overflow = "auto";
       body.append(
         chkWrap,
-        mkRow("Datum", inpDate),
+        mkRow("Datum", inpDatePicker.root),
         mkRow("Uhrzeit", inpTime),
         mkRow("Meetingort", inpPlace),
         mkRow("Zusatz", inpExtra),
@@ -866,6 +875,7 @@ export default class PrintModal {
       overlay.appendChild(modal);
 
       const cleanup = () => {
+        inpDatePicker.destroy();
         cleanupPopupHandlers(overlay);
         overlay.removeEventListener("mousedown", onOverlayClick);
         overlay.removeEventListener("keydown", onOverlayKeyDown);
@@ -1010,6 +1020,7 @@ export default class PrintModal {
   }
 
   _destroyMainDom() {
+    this.nextMeetingDatePicker?.destroy?.();
     try {
       cleanupPopupHandlers(this.root);
       if (this.root && this.root.parentElement) {
@@ -1029,6 +1040,7 @@ export default class PrintModal {
 
     this.nextMeetingEnabled = null;
     this.nextMeetingDate = null;
+    this.nextMeetingDatePicker = null;
     this.nextMeetingTime = null;
     this.nextMeetingPlace = null;
     this.nextMeetingExtra = null;
@@ -1046,11 +1058,12 @@ export default class PrintModal {
   // ============================================================
 
   // Standard: Druck-Modal für geschlossene Besprechungen
-  async openPrint({ projectId } = {}) {
+  async openPrint({ projectId, seriesKey } = {}) {
     this._ensureDom();
     this._setUiMode("closed");
 
     this.projectId = projectId || this.router?.currentProjectId || null;
+    this.seriesKey = normalizeSeriesKey(seriesKey ?? this.router?.currentSeriesKey);
     if (!this.projectId) {
       alert("Bitte zuerst ein Projekt auswählen.");
       return;
@@ -1545,7 +1558,7 @@ export default class PrintModal {
         return;
       }
 
-      const res = await api.meetingsListByProject(this.projectId);
+      const res = await api.meetingsListByProject({ projectId: this.projectId, seriesKey: this.seriesKey });
       if (!res?.ok) {
         alert(res?.error || "Fehler beim Laden der Besprechungen");
         return;
@@ -1604,7 +1617,7 @@ export default class PrintModal {
 
       const idx = m.meeting_index != null ? `#${m.meeting_index}` : "#â";
       const t = (m.title || "").toString().trim() || "(ohne Titel)";
-      opt.textContent = `${idx} â ${t}`;
+      opt.textContent = `${getSeriesDefinition(m.series_key).label} · ${idx} â ${t}`;
       sel.appendChild(opt);
     }
 

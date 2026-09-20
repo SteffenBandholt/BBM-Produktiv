@@ -10,6 +10,9 @@
 // - Projektnummer: eigene Zeile
 
 import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
+import ProjectMeetingSeriesEntry from "./ProjectMeetingSeriesEntry.js";
+import ProjectOverview from "./ProjectOverview.js";
+import { MEETING_SERIES } from "../../../../shared/meetingSeries.mjs";
 import {
   cleanupPopupHandlers,
   createPopupOverlay,
@@ -17,6 +20,7 @@ import {
 } from "../../../ui/popupCommon.js";
 
 const LAST_PROJECT_KEY = "bbm.lastProjectId";
+const LAST_PROJECT_SERIES_BY_PROJECT_KEY = "bbm.lastProjectSeriesByProject";
 const CREATE_MEETING_EDIT_PARTICIPANTS_KEY = "bbm.createMeeting.editParticipants";
 
 export default class ProjectsScreen {
@@ -163,7 +167,7 @@ export default class ProjectsScreen {
       .filter(Boolean);
   }
 
-  async _openProjectModuleFromTile({ moduleId, navigationKey, project } = {}) {
+  async _openProjectModuleFromTile({ moduleId, navigationKey, project, seriesKey, historyOnly = false } = {}) {
     const normalizedModuleId = String(moduleId || "").trim();
     const normalizedNavigationKey = String(navigationKey || "").trim();
     const effectiveProjectId = String(project?.id || "").trim();
@@ -174,6 +178,8 @@ export default class ProjectsScreen {
         const result = await this.router.openProjectModule(effectiveProjectId, normalizedModuleId, {
           project: project || null,
           navigationKey: normalizedNavigationKey,
+          seriesKey,
+          historyOnly,
         });
         if (typeof result === "object") {
           if (result?.blocked) {
@@ -187,6 +193,8 @@ export default class ProjectsScreen {
       if (typeof this.router?.openProjectProtocol === "function") {
         const result = await this.router.openProjectProtocol(effectiveProjectId, {
           project: project || null,
+          seriesKey,
+          historyOnly,
         });
         if (typeof result === "object") {
           if (result?.blocked) {
@@ -944,6 +952,36 @@ export default class ProjectsScreen {
     }
   }
 
+  _lastProjectSeriesByProject() {
+    try {
+      const raw = window.localStorage?.getItem?.(LAST_PROJECT_SERIES_BY_PROJECT_KEY);
+      const saved = JSON.parse(String(raw || ""));
+      if (!saved || Array.isArray(saved) || typeof saved !== "object") return {};
+      return Object.fromEntries(Object.entries(saved).filter(([projectId, seriesKey]) =>
+        String(projectId || "").trim() && MEETING_SERIES.some(series => series.key === seriesKey)));
+    } catch (_e) {
+      return {};
+    }
+  }
+
+  _lastProjectSeries(projectId) {
+    const projectKey = String(projectId ?? "").trim();
+    return projectKey ? this._lastProjectSeriesByProject()[projectKey] || "" : "";
+  }
+
+  _rememberLastProjectSeries(projectId, seriesKey) {
+    const projectKey = String(projectId ?? "").trim();
+    const normalizedSeriesKey = String(seriesKey ?? "").trim();
+    if (!projectKey || !MEETING_SERIES.some(series => series.key === normalizedSeriesKey)) return;
+    try {
+      const saved = this._lastProjectSeriesByProject();
+      saved[projectKey] = normalizedSeriesKey;
+      window.localStorage?.setItem?.(LAST_PROJECT_SERIES_BY_PROJECT_KEY, JSON.stringify(saved));
+    } catch (_e) {
+      // Navigation stays available if the profile store is unavailable.
+    }
+  }
+
   _readCreateMeetingEditParticipantsDefault() {
     try {
       const raw = String(
@@ -1000,273 +1038,37 @@ export default class ProjectsScreen {
   // ------------------------------------------------------------
   _renderGrid() {
     if (!this.hostEl) return;
+    this.meetingSeriesEntries?.destroy();
+    this.meetingSeriesEntries = new ProjectMeetingSeriesEntry();
+    this.overview?.destroy();
 
     this.hostEl.innerHTML = "";
 
-    const grid = document.createElement("div");
-    grid.style.display = "grid";
-    grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(220px, 1fr))";
-    grid.style.gap = "10px";
-    grid.style.alignItems = "stretch";
-
-    const mkTile = () => {
-      const t = document.createElement("div");
-      t.style.border = "1px solid var(--card-border)";
-      t.style.borderRadius = "10px";
-      t.style.background = "var(--card-bg)";
-      t.style.color = "var(--text-main)";
-      t.style.padding = "12px";
-      t.style.boxSizing = "border-box";
-      t.style.cursor = "pointer";
-      t.style.userSelect = "none";
-      t.style.position = "relative";
-      t.style.display = "flex";
-      t.style.gap = "12px";
-      t.style.alignItems = "stretch";
-      t.style.justifyContent = "space-between";
-      t.tabIndex = 0;
-
-      t.onmouseenter = () => {
-        if (this.loading || this._startingProject) return;
-        t.style.borderColor = "var(--sidebar-active-indicator)";
-      };
-      t.onmouseleave = () => {
-        t.style.borderColor = "var(--card-border)";
-      };
-
-      return t;
-    };
-
-    // + Projekt anlegen
-    const createTile = mkTile();
-    createTile.style.background = "var(--card-bg)";
-    createTile.style.borderStyle = "dashed";
-
-    const createTitle = document.createElement("div");
-    createTitle.textContent = "+ Projekt anlegen";
-    createTitle.style.fontWeight = "800";
-    createTitle.style.fontSize = "16px";
-    createTitle.style.marginBottom = "6px";
-
-    const createHint = document.createElement("div");
-    createHint.textContent = "Stammdaten erfassen";
-    createHint.style.opacity = "0.8";
-    createHint.style.fontSize = "12px";
-
-    createTile.append(createTitle, createHint);
-
-    const openCreate = async () => {
-      await this.openCreateProject();
-    };
-
-    createTile.addEventListener("click", openCreate);
-    createTile.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter") return;
-      e.preventDefault();
-      e.stopPropagation();
-      openCreate();
-    });
-
-    grid.appendChild(createTile);
-
-    // Projekt Import / Export Kachel
-    const transferTile = mkTile();
-    transferTile.style.background = "var(--card-bg)";
-    transferTile.style.borderStyle = "dashed";
-
-    const transferTitle = document.createElement("div");
-    transferTitle.textContent = "Projekt Import / Export";
-    transferTitle.style.fontWeight = "800";
-    transferTitle.style.fontSize = "16px";
-    transferTitle.style.marginBottom = "6px";
-
-    const transferHint = document.createElement("div");
-    transferHint.textContent = "Projekte sichern oder aus Exporten wiederherstellen";
-    transferHint.style.opacity = "0.8";
-    transferHint.style.fontSize = "12px";
-
-    transferTile.append(transferTitle, transferHint);
-
-    const openTransfer = async () => {
-      await this._openProjectTransferModal();
-    };
-
-    transferTile.addEventListener("click", openTransfer);
-    transferTile.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter") return;
-      e.preventDefault();
-      e.stopPropagation();
-      openTransfer();
-    });
-
-    grid.appendChild(transferTile);
-
-    // Projektkacheln
-    for (const p of this.projects || []) {
-      const tile = mkTile();
-      tile.dataset.projectCard = "true";
-      tile.dataset.projectId = String(p?.id || "");
-
-      const pn = this._getProjectNumber(p);
-
-      const content = document.createElement("div");
-      content.style.flex = "1 1 auto";
-      content.style.minWidth = "0";
-      content.style.display = "flex";
-      content.style.flexDirection = "column";
-      content.style.gap = "6px";
-
-      const pnLine = document.createElement("div");
-      pnLine.style.fontSize = "12px";
-      pnLine.style.opacity = "0.9";
-      pnLine.style.whiteSpace = "nowrap";
-      pnLine.textContent = pn ? `Nr.: ${pn}` : "";
-      pnLine.style.display = pn ? "block" : "none";
-
-      const title = document.createElement("div");
-      title.textContent = this._labelForTile(p);
-      title.style.fontWeight = "900";
-      title.style.fontSize = "18px";
-
-      const subtitle = document.createElement("div");
-      subtitle.style.opacity = "0.85";
-      subtitle.style.fontSize = "12px";
-      subtitle.style.minHeight = "16px";
-
-      const hasShort = String(p.short || "").trim().length > 0;
-      const name = String(p.name || "").trim();
-      subtitle.textContent = hasShort ? name : String(p.city || "").trim();
-
-      content.append(pnLine, title, subtitle);
-
-      const actionsRail = document.createElement("div");
-      actionsRail.dataset.projectActionRail = "true";
-      actionsRail.style.display = "flex";
-      actionsRail.style.flexDirection = "column";
-      actionsRail.style.alignItems = "flex-end";
-      actionsRail.style.gap = "8px";
-      actionsRail.style.flex = "0 0 76px";
-      actionsRail.style.minWidth = "76px";
-      actionsRail.style.paddingLeft = "10px";
-      actionsRail.style.borderLeft = "1px solid rgba(15, 23, 42, 0.08)";
-
-      const stop = (e) => {
-        try {
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation?.();
-        } catch (_) {}
-      };
-      const makeRailButton = ({ text, actionType, moduleId = "", navigationKey = "", titleText = "", onClick }) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.textContent = text;
-        btn.dataset.projectAction = actionType;
-        if (moduleId) btn.dataset.moduleId = moduleId;
-        if (navigationKey) btn.dataset.navigationKey = navigationKey;
-        btn.title = titleText || text;
-        btn.style.width = "auto";
-        btn.style.padding = "0";
-        btn.style.margin = "0";
-        btn.style.border = "none";
-        btn.style.background = "transparent";
-        btn.style.boxShadow = "none";
-        btn.style.fontSize = "12px";
-        btn.style.lineHeight = "1.2";
-        btn.style.textAlign = "right";
-        btn.style.whiteSpace = "nowrap";
-        btn.style.color = "#0b61ff";
-        btn.style.fontWeight = "600";
-        btn.style.cursor = "pointer";
-        btn.style.display = "block";
-        btn.style.letterSpacing = "0.1px";
-        btn.style.textDecoration = "none";
-        btn.style.outline = "none";
-        btn.style.transition = "color 120ms ease, text-decoration-color 120ms ease, background 120ms ease";
-        btn.style.borderRadius = "4px";
-
-        btn.addEventListener("pointerdown", stop);
-        btn.addEventListener("mousedown", stop);
-
-        btn.addEventListener("mouseenter", () => {
-          btn.style.color = "#0747c9";
-          btn.style.textDecoration = "underline";
+    this.overview = new ProjectOverview();
+    this.hostEl.append(this.overview.render({
+      projects: this.projects, entries: this.meetingSeriesEntries,
+      getModuleActions: project => this._getProjectTileModuleActions(project),
+      selectedSeriesForProject: projectId => this._lastProjectSeries(projectId),
+      isBusy: () => this.loading || this._startingProject,
+      onCreate: () => this.openCreateProject(),
+      onTransfer: () => this._openProjectTransferModal(),
+      onProject: project => this.openProjectById(project?.id),
+      onEdit: async project => {
+        if (!project?.id) return;
+        this.router.currentProjectId = project.id;
+        this.router.currentMeetingId = null;
+        await this._openProjectFormModal({ projectId: project.id });
+      },
+      onSeries: async (project, action, seriesKey) => {
+        const opened = await this._openProjectModuleFromTile({
+          moduleId: "protokoll", navigationKey: action.navigationKey, project, seriesKey,
         });
-        btn.addEventListener("mouseleave", () => {
-          btn.style.color = "#0b61ff";
-          btn.style.textDecoration = "none";
-        });
-        btn.addEventListener("focus", () => {
-          btn.style.textDecoration = "underline";
-          btn.style.boxShadow = "0 0 0 2px rgba(11, 97, 255, 0.18)";
-        });
-        btn.addEventListener("blur", () => {
-          btn.style.boxShadow = "none";
-          btn.style.textDecoration = "none";
-        });
-
-        btn.addEventListener("click", async (e) => {
-          stop(e);
-          if (this.loading || this._startingProject) return;
-          await onClick?.();
-        });
-
-        return btn;
-      };
-
-      const moduleActions = this._getProjectTileModuleActions(p);
-      for (const moduleAction of moduleActions) {
-        actionsRail.appendChild(
-          makeRailButton({
-            text: moduleAction.label,
-            actionType: "module",
-            moduleId: moduleAction.moduleId,
-            navigationKey: moduleAction.navigationKey,
-            titleText: moduleAction.description,
-            onClick: moduleAction.onClick,
-          })
-        );
-      }
-
-      const btnEdit = makeRailButton({
-        text: "Edit",
-        actionType: "edit",
-        onClick: async () => {
-          const pid = p?.id || null;
-          if (!pid) {
-            this._flashMsg("Projekt hat keine ID (id fehlt).", 7000);
-            return;
-          }
-
-          this.router.currentProjectId = pid;
-          this.router.currentMeetingId = null;
-
-          await this._openProjectFormModal({ projectId: pid });
-        },
-      });
-
-      const openProject = async () => {
-        await this.openProjectById(p?.id || null);
-      };
-
-      tile.addEventListener("click", (e) => {
-        openProject();
-      });
-
-      tile.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter") return;
-        e.preventDefault();
-        e.stopPropagation();
-        openProject();
-      });
-
-      actionsRail.appendChild(btnEdit);
-
-      tile.append(content, actionsRail);
-      grid.appendChild(tile);
-    }
-
-    this.hostEl.appendChild(grid);
+        if (opened) this._rememberLastProjectSeries(project?.id, seriesKey);
+        return opened;
+      },
+    }));
+    this.overview.bind();
+    this.meetingSeriesEntries.bind(this.hostEl);
 
     if (this.loading) {
       const hint = document.createElement("div");
@@ -1476,6 +1278,8 @@ export default class ProjectsScreen {
   }
 
   destroy() {
+    this.overview?.destroy();
+    this.meetingSeriesEntries?.destroy();
     if (this._msgTimer) {
       clearTimeout(this._msgTimer);
       this._msgTimer = null;

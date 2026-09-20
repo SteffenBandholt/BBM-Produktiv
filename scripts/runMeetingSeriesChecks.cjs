@@ -6,12 +6,22 @@ const cp = require("node:child_process");
 const SUITES = [
   ["meetingSeries.test.cjs", "runMeetingSeriesTests"],
   ["meetingSeriesTransfer.test.cjs", "runMeetingSeriesTransferTests"],
+  ["meetingSeriesUiContract.test.cjs", "runMeetingSeriesUiContractTests"],
+  ["projectOverviewAcceptance.cjs", "runProjectOverviewAcceptanceTests"],
+  ["isoWeekDatePicker.test.cjs", "runIsoWeekDatePickerTests"],
   ["plannedConstructionStart.test.cjs", "runPlannedConstructionStartTests"],
   ["projectBuilder.test.cjs", "runProjectBuilderTests"],
+  ["projectBuilderForm.test.cjs", "runProjectBuilderFormTests"],
   ["projectBuilderTransfer.test.cjs", "runProjectBuilderTransferTests"],
   ["projectTransferFirmLogic.test.cjs", "runProjectTransferFirmLogicTests"],
   ["topServiceHierarchy.test.cjs", "runTopServiceHierarchyTests"],
   ["protokollParticipantOwnership.test.cjs", "runProtokollParticipantOwnershipTests"],
+  ["projectFirmsLayout.test.cjs", "runProjectFirmsLayoutTests"],
+  ["homeView.test.cjs", "runHomeViewTests"],
+  ["protokollProjectEntryRouting.test.cjs", "runProtokollProjectEntryRoutingTests"],
+  ["protokollRouterFallback.test.cjs", "runProtokollRouterFallbackTests"],
+  ["m80ElectronUiEditor.test.cjs", "runM80ElectronUiEditorTests"],
+  ["m83-0ComponentContracts.test.cjs", "runM830ComponentContractTests"],
   ["moduleIpcRegistration.test.cjs", "runModuleIpcRegistrationTests"],
 ];
 

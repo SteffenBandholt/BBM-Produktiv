@@ -65,7 +65,7 @@ export default class ProjectBuilderField {
   _options(selected) {
     this.input.textContent = "";
     const add = (value, text) => { const option = document.createElement("option"); option.value = value; option.textContent = text; this.input.append(option); };
-    add("", this.projectId ? "Kein Bauherr zugeordnet" : "Bauherr auswählen …");
+    add("", "nicht angegeben");
     for (const [key, firm] of this.firms) add(key, `${firm.kind === "global_firm" ? "Zentral" : "Projekt"}: ${firm.name || firm.label || "Ohne Name"}${firm.city ? ` – ${firm.city}` : ""}`);
     if (selected && !this.firms.has(selected)) add(selected, "Gespeicherte / gewählte Firma nicht verfügbar");
     this.input.value = selected;
@@ -105,7 +105,7 @@ export default class ProjectBuilderField {
     }
   }
   validationMessage() {
-    if (!this.projectId && (!this.ready || !this.input.value)) return "Bitte einen Bauherrn aus der Firmenauswahl wählen. Bei Ladefehlern die Auswahl aktualisieren.";
+    if ((!this.ready || this.loading || this.error) && (!this.projectId || this.input.value !== this.savedKey)) return "Firmenauswahl konnte nicht geladen werden. Bitte Auswahl aktualisieren.";
     if (this.input.value !== this.savedKey && (!this.ready || (this.input.value && !this.firms.has(this.input.value)))) return "Die gewählte Bauherrfirma ist nicht verfügbar. Bitte Auswahl aktualisieren und erneut wählen.";
     return "";
   }

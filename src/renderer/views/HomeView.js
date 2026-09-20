@@ -78,6 +78,12 @@ function svgIcon(name, size = 24) {
   return wrap;
 }
 
+function projectLabel(project) {
+  const number = String(project?.project_number ?? project?.projectNumber ?? "").trim();
+  const title = String(project?.short ?? project?.name ?? "").trim() || "Projekt";
+  return number ? `${number} - ${title}` : title;
+}
+
 export default class HomeView {
   constructor({ router } = {}) {
     this.router = router || null;
@@ -85,6 +91,10 @@ export default class HomeView {
     this.devBuild = false;
     this.licenseHintEl = null;
     this.versionEl = null;
+    this.lastProjectId = null;
+    this.lastProject = null;
+    this.recentProjectPanel = null;
+    this.recentProjectRowEl = null;
   }
 
   async _isDevBuild() {
@@ -104,6 +114,63 @@ export default class HomeView {
     } catch (_e) {
       return null;
     }
+  }
+
+  _renderLastProjectTile() {
+    if (!this.recentProjectPanel) return;
+    const row = this._createRow({
+      icon: "project",
+      label: this.lastProject ? projectLabel(this.lastProject) : "Noch kein Projekt geöffnet",
+      meta: this.lastProject ? "zuletzt" : "",
+      badge: this.lastProject ? "Projekt" : "",
+      badgeColor: COLORS.protocol,
+      onClick: this.lastProject ? async () => this._openLastProject() : null,
+    });
+    if (this.recentProjectRowEl?.isConnected) this.recentProjectRowEl.replaceWith(row);
+    else this.recentProjectPanel.append(row);
+    this.recentProjectRowEl = row;
+  }
+
+  async _loadLastProjectTile() {
+    const storedId = this._readLastProjectId();
+    this.lastProjectId = null;
+    this.lastProject = null;
+    if (!storedId) {
+      this._renderLastProjectTile();
+      return null;
+    }
+
+    const api = window.bbmDb || {};
+    if (typeof api.projectsList !== "function") {
+      this._renderLastProjectTile();
+      return null;
+    }
+    try {
+      const result = await api.projectsList();
+      const projects = Array.isArray(result) ? result : Array.isArray(result?.list) ? result.list : [];
+      const found = projects.find((project) => String(project?.id ?? "").trim() === storedId) || null;
+      if (found) {
+        this.lastProjectId = storedId;
+        this.lastProject = found;
+      } else {
+        try { window.localStorage?.removeItem?.("bbm.lastProjectId"); } catch (_e) {}
+      }
+    } catch (_e) {
+      // A technical ID is never shown as a customer-facing fallback.
+    }
+    this._renderLastProjectTile();
+    return this.lastProject;
+  }
+
+  async _openLastProject() {
+    if (!this.lastProjectId) return false;
+    await this.router?.ensureActiveModuleAccess?.({ force: true });
+    await this.router?.showProjects?.();
+    const view = this.router?.currentView || null;
+    if (typeof view?.openProjectById !== "function") return false;
+    const opened = await view.openProjectById(this.lastProjectId);
+    if (opened === false) await this._loadLastProjectTile();
+    return opened;
   }
 
   _underConstruction() {
@@ -542,27 +609,9 @@ export default class HomeView {
     });
 
     const recent = this._createInfoPanel("Zuletzt verwendet");
-    const lastProjectId = this._readLastProjectId();
-    recent.append(
-      this._createRow({
-        icon: "project",
-        label: lastProjectId ? `Zuletzt geöffnetes Projekt #${lastProjectId}` : "Noch kein Projekt geöffnet",
-        meta: lastProjectId ? "zuletzt" : "",
-        badge: lastProjectId ? "Projekt" : "",
-        badgeColor: COLORS.protocol,
-        onClick: lastProjectId ? async () => {
-          await this.router?.showProjects?.();
-          const view = this.router?.currentView || null;
-          if (typeof view?.openProjectById === "function") await view.openProjectById(lastProjectId);
-        } : null,
-      })
-    );
-    if (this.moduleCatalog.some((x) => String(x?.moduleId || "") === "protokoll")) {
-      recent.append(this._createRow({ icon: "project", label: "Protokolle", badge: "Protokoll", badgeColor: COLORS.protocol, meta: "Arbeitsbereich" }));
-    }
-    if (this.moduleCatalog.some((x) => String(x?.moduleId || "") === "restarbeiten")) {
-      recent.append(this._createRow({ icon: "project", label: "Restarbeiten", badge: "Restarbeiten", badgeColor: COLORS.restarbeiten, meta: "Arbeitsbereich" }));
-    }
+    this.recentProjectPanel = recent;
+    this.recentProjectRowEl = null;
+    this._renderLastProjectTile();
 
     const quick = this._createInfoPanel("Schnellaktionen");
     quick.append(
@@ -635,6 +684,7 @@ export default class HomeView {
   }
 
   async load() {
+    await this._loadLastProjectTile();
     try {
       const status = await window.bbmDb?.licenseGetStatus?.();
       if (this.licenseHintEl) {
