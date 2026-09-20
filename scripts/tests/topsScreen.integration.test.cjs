@@ -14,6 +14,13 @@ async function runTopsScreenIntegrationTests(run) {
   const TopsScreen = (await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/modules/protokoll/screens/TopsScreen.js")
   )).default;
+  const {
+    TopsViewDialogs,
+    getProtocolAudioImportFileName,
+    getProtocolAudioImportPhaseLabel,
+  } = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/features/dialogs/TopsViewDialogs.js")
+  );
   const { SharedEditboxCore } = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/modules/protokoll/SharedEditboxCore.js")
   );
@@ -233,6 +240,20 @@ async function runTopsScreenIntegrationTests(run) {
     const walk = (current) => {
       if (!current || found) return;
       if (String(current["data-ui-editor-id"] || "") === needle) {
+        found = current;
+        return;
+      }
+      for (const child of current.children || []) walk(child);
+    };
+    walk(root);
+    return found;
+  }
+
+  function findByDataset(root, key, value) {
+    let found = null;
+    const walk = (current) => {
+      if (!current || found) return;
+      if (String(current.dataset?.[key] || "") === String(value || "")) {
         found = current;
         return;
       }
@@ -1644,6 +1665,7 @@ async function runTopsScreenIntegrationTests(run) {
       const projectButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.project");
       const firmsButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.firms");
       const participantsButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.participants");
+      const importButton = findByDataset(root, "quicklaneAction", "audio-import");
       const ampelButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.ampel");
       const longtextButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.longtext");
       const filterButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.topFilter");
@@ -1653,6 +1675,11 @@ async function runTopsScreenIntegrationTests(run) {
 
       assert.equal(pinButton.getAttribute?.("aria-pressed") || pinButton["aria-pressed"], "false");
       assert.equal(projectButton.children[0].className, "bbm-tops-screen-quicklane-icon");
+      assert.equal(importButton.title, "Audiodatei importieren");
+      assert.equal(importButton["aria-label"], "Audiodatei importieren");
+      assert.equal(importButton.children[0].dataset.quicklaneIcon, "audio-file-import");
+      assert.equal(importButton.children[0].className, "bbm-tops-screen-quicklane-icon");
+      assert.equal(importButton.children[0].children[0].tagName, "SVG");
       assert.equal(ampelButton.children[0].className, "bbm-tops-screen-quicklane-icon bbm-tops-screen-quicklane-icon--ampel");
       assert.equal(ampelButton.children[0].tagName, "IMG");
       assert.equal(String(ampelButton.children[0].src || "").endsWith("assets/icons/ampel-status.svg"), true);
@@ -1722,6 +1749,90 @@ async function runTopsScreenIntegrationTests(run) {
       assert.ok(todoItem);
       todoItem.dispatchEvent({ type: "click", preventDefault() {} });
       assert.equal(screen.getTopFilter(), "todo");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Audioimport: Fortschrittsdialog zeigt Datei, echte Phasen, Abbruch, Erfolg und Fehler", async () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = {
+      innerHeight: 900,
+      addEventListener() {},
+      removeEventListener() {},
+    };
+    try {
+      assert.equal(getProtocolAudioImportFileName("C:\\Aufnahmen\\sprache.mp3"), "sprache.mp3");
+      assert.equal(getProtocolAudioImportPhaseLabel("preparing"), "Vorbereitung");
+      assert.equal(getProtocolAudioImportPhaseLabel("transcription"), "Spracherkennung");
+      assert.equal(getProtocolAudioImportPhaseLabel("saving"), "TOPs speichern");
+
+      let cancelCalls = 0;
+      const dialogs = new TopsViewDialogs({ view: {} });
+      const controller = dialogs.openProtocolAudioImportProgress({
+        filePath: "C:\\Aufnahmen\\sprache.mp3",
+        operationId: "audio-op-1",
+        successDurationMs: 0,
+        onCancel: async () => {
+          cancelCalls += 1;
+          return true;
+        },
+      });
+      const overlay = findByDataset(doc.body, "protocolAudioImportRole", "overlay");
+      const dialog = findByDataset(overlay, "protocolAudioImportRole", "dialog");
+      const fileName = findByDataset(dialog, "protocolAudioImportRole", "file-name");
+      const phase = findByDataset(dialog, "protocolAudioImportRole", "phase");
+      const progress = findByDataset(dialog, "protocolAudioImportRole", "progress");
+      const detail = findByDataset(dialog, "protocolAudioImportRole", "detail");
+      const cancel = findByDataset(dialog, "protocolAudioImportRole", "cancel");
+
+      assert.equal(dialog.children[0].textContent, "Audio wird importiert – bitte warten.");
+      assert.equal(fileName.textContent, "sprache.mp3");
+      assert.equal(phase.textContent, "Phase: Vorbereitung");
+      assert.equal(progress.dataset.progressMode, "indeterminate");
+      assert.equal(controller.update({ operationId: "fremd", phase: "saving" }), false);
+      assert.equal(phase.textContent, "Phase: Vorbereitung");
+      assert.equal(controller.update({ operationId: "audio-op-1", phase: "transcription", message: "Transkription läuft" }), true);
+      assert.equal(phase.textContent, "Phase: Spracherkennung");
+      assert.equal(detail.textContent, "Transkription läuft");
+
+      await cancel.onclick();
+      assert.equal(cancelCalls, 1);
+      assert.equal(controller.getState(), "canceling");
+      assert.equal(phase.textContent, "Import wird abgebrochen …");
+      assert.equal(cancel.disabled, true);
+      controller.close();
+
+      const failed = dialogs.openProtocolAudioImportProgress({
+        filePath: "C:\\Aufnahmen\\sprache.mp3",
+        operationId: "audio-op-2",
+      });
+      const failedDialog = findByDataset(doc.body, "protocolAudioImportOperationId", "audio-op-2");
+      const failedProgress = findByDataset(failedDialog, "protocolAudioImportRole", "progress");
+      const failedDetail = findByDataset(failedDialog, "protocolAudioImportRole", "detail");
+      const failedButton = findByDataset(failedDialog, "protocolAudioImportRole", "cancel");
+      failed.showError("Whisper konnte die Datei nicht erkennen.");
+      assert.equal(failed.getState(), "error");
+      assert.equal(failedProgress.hidden, true);
+      assert.equal(failedDetail.textContent, "Whisper konnte die Datei nicht erkennen.");
+      assert.equal(failedButton.textContent, "Schließen");
+      failedButton.onclick();
+      assert.equal(failed.isOpen(), false);
+
+      const succeeded = dialogs.openProtocolAudioImportProgress({
+        filePath: "C:\\Aufnahmen\\sprache.mp3",
+        operationId: "audio-op-3",
+        successDurationMs: 0,
+      });
+      const successDialog = findByDataset(doc.body, "protocolAudioImportOperationId", "audio-op-3");
+      const successPhase = findByDataset(successDialog, "protocolAudioImportRole", "phase");
+      await succeeded.showSuccess(4);
+      assert.equal(successPhase.textContent, "4 TOPs importiert");
+      assert.equal(succeeded.isOpen(), false);
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;

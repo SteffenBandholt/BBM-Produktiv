@@ -1067,6 +1067,15 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
     }
   });
 
+  ipcMain.handle("tops:moveImportBatch", (_e, data) => {
+    try {
+      const moved = topService.moveImportTops(data || {});
+      return { ok: true, ...moved };
+    } catch (err) {
+      return { ok: false, error: err?.message || String(err) };
+    }
+  });
+
   ipcMain.handle("tops:delete", (_e, data) => {
     try {
       const res = topService.deleteTop({

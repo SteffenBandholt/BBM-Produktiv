@@ -4,10 +4,12 @@ import {
   createSaveTopRequest,
   createCreateTopRequest,
   createMoveTopRequest,
+  createMoveImportTopsRequest,
   createDeleteTopRequest,
   toApiSaveTopPayload,
   toApiCreateTopPayload,
   toApiMoveTopPayload,
+  toApiMoveImportTopsPayload,
   toApiDeleteTopPayload,
   createRepositoryUnavailableResult,
 } from "./TopsDtos.js";
@@ -52,6 +54,15 @@ export class TopsRepository {
       return createRepositoryUnavailableResult("topsMove unavailable", "mutation");
     }
     const res = await this.api.topsMove(toApiMoveTopPayload(req));
+    return mapMutationResult(res);
+  }
+
+  async moveImportTops(input) {
+    const req = createMoveImportTopsRequest(input);
+    if (typeof this.api.topsMoveImportBatch !== "function") {
+      return createRepositoryUnavailableResult("topsMoveImportBatch unavailable", "mutation");
+    }
+    const res = await this.api.topsMoveImportBatch(toApiMoveImportTopsPayload(req));
     return mapMutationResult(res);
   }
 

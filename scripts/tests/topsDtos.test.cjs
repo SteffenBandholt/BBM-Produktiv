@@ -14,6 +14,17 @@ async function runTopsDtosTests(run) {
 
     const delReq = dto.createDeleteTopRequest({ topId: "44" });
     assert.deepEqual(delReq, { topId: "44" });
+
+    const importMoveReq = dto.createMoveImportTopsRequest({
+      meetingId: "m-1",
+      topIds: ["p-2", null, "p-4", "p-2"],
+      targetParentId: "title-1",
+    });
+    assert.deepEqual(importMoveReq, {
+      meetingId: "m-1",
+      topIds: ["p-2", "p-4"],
+      targetParentId: "title-1",
+    });
   });
 
   await run("TopsDtos: API-Payloads und Result-DTOs sind stabil", () => {
@@ -27,6 +38,16 @@ async function runTopsDtosTests(run) {
     assert.equal(mutResult.ok, false);
     assert.equal(mutResult.error, "bad");
     assert.equal(mutResult.detail, 5);
+
+    assert.deepEqual(dto.toApiMoveImportTopsPayload({
+      meetingId: "m-1",
+      topIds: ["p-2", "p-4"],
+      targetParentId: "title-1",
+    }), {
+      meetingId: "m-1",
+      topIds: ["p-2", "p-4"],
+      targetParentId: "title-1",
+    });
   });
 }
 

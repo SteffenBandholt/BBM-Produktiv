@@ -229,9 +229,16 @@ async function runPopupFormStandardTests(run) {
     assert.equal(mainHeader.includes('subjectField.className = "bbm-form-field"'), true);
     assert.equal(mainHeader.includes('actions.className = "bbm-popup-footer"'), true);
 
-    assert.equal((topsDialogs.match(/className = "bbm-popup-standard bbm-popup-dialog"/g) || []).length, 2);
-    assert.equal((topsDialogs.match(/createPopupOverlay\(/g) || []).length, 2);
+    assert.equal((topsDialogs.match(/className = "bbm-popup-standard bbm-popup-dialog"/g) || []).length, 4);
+    assert.equal((topsDialogs.match(/createPopupOverlay\(/g) || []).length, 4);
     assert.equal(topsDialogs.includes('body.className = "bbm-popup-body bbm-form-content"'), true);
+    assert.equal(topsDialogs.includes('header.textContent = "Audio wird importiert – bitte warten."'), true);
+    assert.equal(topsDialogs.includes('progress.dataset.progressMode = "indeterminate"'), true);
+    assert.equal(topsDialogs.includes('header.textContent = "Import-TOPs verschieben"'), true);
+    assert.equal(topsDialogs.includes('list.dataset.importMoveRole = "point-list"'), true);
+    assert.equal(topsDialogs.includes('longtextCheckbox.dataset.importMoveRole = "longtext-toggle"'), true);
+    assert.equal(topsDialogs.includes('targetSelect.dataset.importMoveRole = "target"'), true);
+    assert.equal(topsDialogs.includes('btnMove.dataset.importMoveRole = "submit"'), true);
   });
 
   await run("Popup-Standard: zentrale Dokumentation nennt Zweck, Nutzer und Abschlussstatus", () => {

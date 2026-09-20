@@ -89,6 +89,28 @@ function normalizeBuildChannel(value) {
   return raw === "DEV" ? "DEV" : "STABLE";
 }
 
+export function resolveImportMoveContext(tops = [], selectedTop = null) {
+  const rows = Array.isArray(tops) ? tops : [];
+  if (!selectedTop?.id || !selectedTop?.parent_top_id) return null;
+
+  const byId = new Map(rows.map((top) => [String(top?.id ?? ""), top]));
+  const importRoot = byId.get(String(selectedTop.parent_top_id)) || null;
+  if (String(importRoot?.special_type || "") !== "audio_import") return null;
+
+  const importRootId = String(importRoot.id);
+  const points = rows.filter(
+    (top) => String(top?.parent_top_id ?? "") === importRootId && String(top?.special_type || "") === ""
+  );
+  const targets = rows.filter((top) => (
+    Number(top?.level) === 1 &&
+    !top?.parent_top_id &&
+    String(top?.special_type || "") === "" &&
+    String(top?.id ?? "") !== importRootId
+  ));
+
+  return { importRoot, points, targets };
+}
+
 // TOPS-V2: eigenstaendiger Screen inkl. nativer Close-/Output-Flow.
 export default class TopsScreen {
   constructor(options = {}) {
@@ -114,6 +136,7 @@ export default class TopsScreen {
     this._protocolAudioImportProgress = 0;
     this._protocolAudioImportMessage = "";
     this._protocolAudioImportProgressUnsubscribe = null;
+    this._protocolAudioImportDialog = null;
 
     this._sidebarEl = null;
     this._sidebarDisplay = "";
@@ -687,12 +710,19 @@ export default class TopsScreen {
       this._protocolAudioImportOperationId = operationId;
       this._protocolAudioImportProgress = 5;
       this._protocolAudioImportMessage = "Audiodatei wird vorbereitet";
+      const progressDialog = this.dialogs?.openProtocolAudioImportProgress?.({
+        filePath: this._protocolAudioImportFilePath,
+        operationId,
+        onCancel: () => this._cancelProtocolAudioImport(),
+      }) || null;
+      this._protocolAudioImportDialog = progressDialog;
       this._protocolAudioImportProgressUnsubscribe?.();
       this._protocolAudioImportProgressUnsubscribe =
         this.audioTranscriptionService.onProtocolImportProgress((progress) => {
           if (String(progress?.operationId || "") !== operationId) return;
           this._protocolAudioImportProgress = Number(progress?.percent) || 0;
           this._protocolAudioImportMessage = String(progress?.message || "Audioimport läuft");
+          progressDialog?.update?.(progress);
           this._syncQuicklaneState();
         });
       this._syncQuicklaneState();
@@ -703,10 +733,16 @@ export default class TopsScreen {
         meetingId: this._getQuicklaneMeetingId(),
         filePath: this._protocolAudioImportFilePath,
       });
-      if (importResult?.canceled) return false;
+      if (importResult?.canceled) {
+        progressDialog?.close?.();
+        return false;
+      }
       if (!importResult?.ok) throw new Error(importResult?.error || "Audioimport fehlgeschlagen.");
 
       const firstCreatedTopId = importResult.firstCreatedTopId || null;
+      const pointCount = Number(importResult.pointCount) ||
+        (Array.isArray(importResult.createdTopIds) ? importResult.createdTopIds.length : 0);
+      const successFeedback = progressDialog?.showSuccess?.(pointCount);
       await this._reloadTops({ keepSelection: false, selectTopId: firstCreatedTopId });
       this._syncScreenState();
       if (firstCreatedTopId) {
@@ -718,10 +754,14 @@ export default class TopsScreen {
           awaitNextPaint: () => this._awaitNextPaint(),
         });
       }
+      await successFeedback;
       return true;
     } catch (error) {
-      if (typeof window !== "undefined" && typeof window.alert === "function") {
-        window.alert(error?.message || String(error));
+      const message = error?.message || String(error);
+      if (this._protocolAudioImportDialog?.isOpen?.()) {
+        this._protocolAudioImportDialog.showError?.(message);
+      } else if (typeof window !== "undefined" && typeof window.alert === "function") {
+        window.alert(message);
       }
       return false;
     } finally {
@@ -732,6 +772,9 @@ export default class TopsScreen {
       this._protocolAudioImportMessage = "";
       this._protocolAudioImportFilePath = null;
       this._protocolAudioImportBusy = false;
+      if (!this._protocolAudioImportDialog?.isOpen?.()) {
+        this._protocolAudioImportDialog = null;
+      }
       this._syncQuicklaneState();
     }
   }
@@ -740,6 +783,7 @@ export default class TopsScreen {
     const operationId = this._protocolAudioImportOperationId;
     if (!operationId) return false;
     this._protocolAudioImportMessage = "Audioimport wird abgebrochen";
+    this._protocolAudioImportDialog?.showCanceling?.();
     this._syncQuicklaneState();
     try {
       const result = await this.audioTranscriptionService.cancelProtocolImport(operationId);
@@ -1622,6 +1666,41 @@ export default class TopsScreen {
     if (!state.isMoveMode && !canMoveFromState(state, selectedTop)) return;
     const saved = await this._saveActiveDraft({ resetMoveMode: false });
     if (saved === false) return;
+
+    const importMove = resolveImportMoveContext(this.store.getState().tops, selectedTop);
+    if (importMove) {
+      const selection = await this.dialogs?.openImportMovePopup?.({
+        points: importMove.points,
+        targets: importMove.targets,
+        selectedTopId: selectedTop.id,
+      });
+      if (!selection) return;
+
+      this.store.setState({ isWriting: true, error: null });
+      try {
+        const currentState = this.store.getState();
+        const result = await this.topsRepository.moveImportTops({
+          meetingId: currentState.meetingId || this.meetingId || null,
+          topIds: selection.topIds,
+          targetParentId: selection.targetParentId,
+        });
+        if (!result?.ok) {
+          this.store.setState({ error: result?.error || "Mehrfachverschiebung fehlgeschlagen" });
+          return;
+        }
+        await this._reloadTops({ keepSelection: true, selectTopId: selectedTop.id });
+        this._syncScreenState();
+      } catch (error) {
+        this.store.setState({
+          error: error?.message ? String(error.message) : String(error || "Mehrfachverschiebung fehlgeschlagen"),
+        });
+      } finally {
+        this.store.setState({ isWriting: false });
+        this._syncScreenState();
+      }
+      return;
+    }
+
     this.commands.toggleMoveMode();
     this._syncScreenState();
   }
@@ -1922,6 +2001,8 @@ export default class TopsScreen {
     }
     this._protocolAudioImportProgressUnsubscribe?.();
     this._protocolAudioImportProgressUnsubscribe = null;
+    this._protocolAudioImportDialog?.close?.();
+    this._protocolAudioImportDialog = null;
     this._textLimitUnsubscribe?.();
     this._textLimitUnsubscribe = null;
     if (this._onTableLayoutChanged && typeof window?.removeEventListener === "function") {
