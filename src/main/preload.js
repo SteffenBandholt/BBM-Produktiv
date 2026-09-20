@@ -64,8 +64,9 @@ contextBridge.exposeInMainWorld("bbmDb", {
   // ============================================================
   // Besprechungen
   // ============================================================
-  meetingsListByProject: (projectId) => ipcRenderer.invoke("meetings:listByProject", projectId),
+  meetingsListByProject: (payload) => ipcRenderer.invoke("meetings:listByProject", payload),
   meetingsCreate: (data) => ipcRenderer.invoke("meetings:create", data),
+  meetingsGetById: (meetingId) => ipcRenderer.invoke("meetings:getById", meetingId),
   meetingsClose: (meetingId) => ipcRenderer.invoke("meetings:close", meetingId),
   meetingsUpdateTitle: (data) => ipcRenderer.invoke("meetings:updateTitle", data),
   meetingsListProjectTasks: (payload) => {

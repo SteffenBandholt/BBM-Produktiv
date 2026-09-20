@@ -11,9 +11,15 @@ const { createMeetingService } = require("../domain/MeetingService");
 function registerMeetingsIpc({ ipcMain = electronIpcMain } = {}) {
   const meetingService = createMeetingService({ meetingsRepo, meetingTopsRepo });
 
-  ipcMain.handle("meetings:listByProject", (_e, projectId) => {
+  ipcMain.handle("meetings:getById", (_e, meetingId) => {
+    try { const meeting = meetingsRepo.getMeetingById(meetingId); return meeting ? { ok: true, meeting } : { ok: false, error: "Besprechung nicht gefunden." }; }
+    catch (err) { return { ok: false, error: err?.message || String(err) }; }
+  });
+
+  ipcMain.handle("meetings:listByProject", (_e, payload) => {
     try {
-      const list = meetingsRepo.listByProject(projectId);
+      const projectId = typeof payload === "string" ? payload : payload?.projectId;
+      const list = meetingsRepo.listByProject(projectId, typeof payload === "object" ? payload?.seriesKey : undefined);
       return { ok: true, list };
     } catch (err) {
       return { ok: false, error: err?.stack || err?.message || String(err) };
@@ -24,6 +30,7 @@ function registerMeetingsIpc({ ipcMain = electronIpcMain } = {}) {
     try {
       const meeting = meetingService.createMeeting({
         projectId: data?.projectId,
+        seriesKey: data?.seriesKey,
         title: data?.title,
       });
       return { ok: true, meeting };

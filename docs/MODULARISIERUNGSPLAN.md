@@ -131,6 +131,22 @@ Gesamt-S5 offen; Rechnung #275 eingefroren.
 
 # docs/MODULARISIERUNGSPLAN.md
 
+## 2026-09-20 – Konsolidierungsfolge BBM 1.5.1
+
+- [x] Paket 1: Besprechungsreihen – Daten, Domain, Migration, IPC/Preload,
+  Projekttransfer und Tests auf `integration/bbm-1.5.1-consolidation`.
+- [ ] Paket 2: Projektübersicht, Besprechungsreihen-UI und Registry-40-Scopes.
+- [ ] Paket 3: Folgetermin Optionen A/B.
+- [ ] Paket 4: getrennte Protokollkorrekturen.
+- [ ] Paket 5: Protokoll-Distribution/Setup.
+- [ ] Paket 6: Lizenztool/Kundenbindung.
+- [ ] Paket 7: Version 1.5.1/Kundenupdate zuletzt.
+
+Paket 1 stammt kontrolliert aus Snapshot `77b8028c`; der Snapshot wurde weder
+gemergt noch vollständig übernommen. Paket 2 ist der nächste offene Meilenstein.
+Audio bleibt außerhalb dieser Konsolidierungsfolge, bis es ausdrücklich separat
+beauftragt wird.
+
 ## Zweck
 
 Diese Datei ist die **fuehrende operative Roadmap** fuer den laufenden Modularisierungsumbau.

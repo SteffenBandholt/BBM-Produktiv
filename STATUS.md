@@ -1,3 +1,29 @@
+## 2026-09-20 – BBM 1.5.1 Konsolidierung: Paket 1 Besprechungsreihen
+
+Auf Branch `integration/bbm-1.5.1-consolidation`, Basis `origin/main` /
+`6c9944562eb00d9fbb32f91a965fdca08cadf5da`, wurde aus dem Sicherungssnapshot
+`77b8028ca94072f2ebccc1dcc28bc6cab7813cb4` ausschließlich die technische
+Besprechungsreihen-Domain rekonstruiert. `construction`, `owner` und `planning`
+besitzen additive Persistenz/Migration, getrennte Meeting- und TOP-Nummerierung,
+reihenbezogene Service-/Repository-Regeln, IPC/Preload sowie validierten
+Projekttransfer. Altbestand wird `construction` zugeordnet; widersprüchliche
+mehrfach offene Altprotokolle brechen die Migration ohne Datenkorrektur ab.
+
+Der gezielte Electron-Prüflauf einschließlich relevanter Coretests ist mit 77/77
+grün. Die breite vorhandene Gruppe `core-protokoll` erreicht alle neuen
+Besprechungsreihenprüfungen grün, bleibt aber wegen fünf bereits im unveränderten
+UI-/Routing-Bestand liegender Assertions rot: zwei `projectFirmsLayout`, eine
+`protokollRouterFallback` und zwei `protokollProjectEntryRouting`. Diese Bereiche
+sind nicht Teil von Paket 1 und wurden nicht verändert.
+
+Nicht übernommen wurden Projektübersicht-/Besprechungsreihen-UI,
+Registry-40-Scopes, Folgetermin A/B, Protokollkorrekturen, Distribution,
+Lizenztool, Version 1.5.1 und Audio. Nächster offener Konsolidierungsschritt ist
+Paket 2: Projektübersicht, Besprechungsreihen-UI und Registry-40-Scopes, nach
+eigener UI-Entwurfsentscheidung und separatem Auftrag.
+
+---
+
 ## 2026-09-15 – Abgenommene Firmen- und PDF-Reparaturen integriert
 
 Ausgangsbasis beider Worktrees und des frisch abgefragten `origin/main`:

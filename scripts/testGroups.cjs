@@ -25,6 +25,8 @@ const TEST_GROUPS = Object.freeze([
       ["projectBuilderForm.test.cjs", "runProjectBuilderFormTests"],
       ["sigekoGrunddatenForm.test.cjs", "runSigekoGrunddatenFormTests"],
       ["plannedConstructionStart.test.cjs", "runPlannedConstructionStartTests"],
+      ["meetingSeries.test.cjs", "runMeetingSeriesTests"],
+      ["meetingSeriesTransfer.test.cjs", "runMeetingSeriesTransferTests"],
       ["plannedStartForm.test.cjs", "runPlannedStartFormTests"],
       ["sigekoStorageAcceptance.test.cjs", "runSigekoStorageAcceptanceTests"],
       ["sigekoStorageTargets.test.cjs", "runSigekoStorageTargetsTests"],

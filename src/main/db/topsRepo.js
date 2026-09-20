@@ -17,7 +17,8 @@ function getTopById(topId) {
  * - pro project_id
  * - pro parent_top_id (NULL = Root)
  */
-function getNextNumber(projectId, parentTopId) {
+function getNextNumber(projectId, parentTopId, seriesKey) {
+  seriesKey = require("../../shared/meetingSeries.cjs").normalizeSeriesKey(seriesKey);
   const db = initDatabase();
   if (!projectId) throw new Error("projectId required");
 
@@ -25,8 +26,9 @@ function getNextNumber(projectId, parentTopId) {
     SELECT COALESCE(MAX(number), 0) + 1 AS next
     FROM tops
     WHERE project_id = ?
+      AND series_key = ?
       AND parent_top_id IS ?
-  `).get(projectId, parentTopId ?? null);
+  `).get(projectId, seriesKey, parentTopId ?? null);
 
   return row.next;
 }
@@ -46,7 +48,8 @@ function hasChildren(topId) {
   return !!row;
 }
 
-function createTop({ projectId, parentTopId, level, number, title }) {
+function createTop({ projectId, parentTopId, level, number, title, seriesKey }) {
+  seriesKey = require("../../shared/meetingSeries.cjs").normalizeSeriesKey(seriesKey);
   const db = initDatabase();
 
   if (!projectId) throw new Error("projectId required");
@@ -62,6 +65,7 @@ function createTop({ projectId, parentTopId, level, number, title }) {
     INSERT INTO tops (
       id,
       project_id,
+      series_key,
       parent_top_id,
       level,
       number,
@@ -71,10 +75,11 @@ function createTop({ projectId, parentTopId, level, number, title }) {
       created_at,
       updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, 0, NULL, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?)
   `).run(
     id,
     projectId,
+    seriesKey,
     parentTopId ?? null,
     Number(level),
     Number(number),

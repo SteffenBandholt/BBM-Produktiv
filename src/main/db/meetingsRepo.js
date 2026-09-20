@@ -1,6 +1,7 @@
 // src/main/db/meetingsRepo.js
 const { initDatabase } = require("./database");
 const { randomUUID } = require("crypto");
+const { normalizeSeriesKey, isSeriesEnabled } = require("../../shared/meetingSeries.cjs");
 
 function getMeetingById(meetingId) {
   const db = initDatabase();
@@ -8,6 +9,7 @@ function getMeetingById(meetingId) {
     SELECT
       id,
       project_id,
+      series_key,
       meeting_index,
       title,
       is_closed,
@@ -25,12 +27,14 @@ function getMeetingById(meetingId) {
   `).get({ id: meetingId });
 }
 
-function listByProject(projectId) {
+function listByProject(projectId, seriesKey) {
+  seriesKey = seriesKey === undefined ? null : normalizeSeriesKey(seriesKey);
   const db = initDatabase();
   return db.prepare(`
     SELECT
       id,
       project_id,
+      series_key,
       meeting_index,
       title,
       is_closed,
@@ -44,17 +48,19 @@ function listByProject(projectId) {
       created_at,
       updated_at
     FROM meetings
-    WHERE project_id = @projectId
-    ORDER BY meeting_index ASC
-  `).all({ projectId });
+    WHERE project_id = @projectId AND (@seriesKey IS NULL OR series_key = @seriesKey)
+    ORDER BY series_key ASC, meeting_index ASC
+  `).all({ projectId, seriesKey });
 }
 
-function getOpenMeetingByProject(projectId) {
+function getOpenMeetingByProject(projectId, seriesKey) {
+  seriesKey = normalizeSeriesKey(seriesKey);
   const db = initDatabase();
   return db.prepare(`
     SELECT
       id,
       project_id,
+      series_key,
       meeting_index,
       title,
       is_closed,
@@ -68,19 +74,21 @@ function getOpenMeetingByProject(projectId) {
       created_at,
       updated_at
     FROM meetings
-    WHERE project_id = @projectId
+    WHERE project_id = @projectId AND series_key = @seriesKey
       AND is_closed = 0
     ORDER BY meeting_index DESC
     LIMIT 1
-  `).get({ projectId });
+  `).get({ projectId, seriesKey });
 }
 
-function getLastClosedMeetingByProject(projectId) {
+function getLastClosedMeetingByProject(projectId, seriesKey) {
+  seriesKey = normalizeSeriesKey(seriesKey);
   const db = initDatabase();
   return db.prepare(`
     SELECT
       id,
       project_id,
+      series_key,
       meeting_index,
       title,
       is_closed,
@@ -94,32 +102,36 @@ function getLastClosedMeetingByProject(projectId) {
       created_at,
       updated_at
     FROM meetings
-    WHERE project_id = @projectId
+    WHERE project_id = @projectId AND series_key = @seriesKey
       AND is_closed = 1
     ORDER BY meeting_index DESC
     LIMIT 1
-  `).get({ projectId });
+  `).get({ projectId, seriesKey });
 }
 
-function getNextMeetingIndex(projectId) {
+function getNextMeetingIndex(projectId, seriesKey) {
+  seriesKey = normalizeSeriesKey(seriesKey);
   const db = initDatabase();
   const row = db.prepare(`
     SELECT COALESCE(MAX(meeting_index), 0) + 1 AS next
     FROM meetings
-    WHERE project_id = @projectId
-  `).get({ projectId });
+    WHERE project_id = @projectId AND series_key = @seriesKey
+  `).get({ projectId, seriesKey });
   return row.next;
 }
 
-function createMeeting({ projectId, title }) {
+function createMeeting({ projectId, title, seriesKey }) {
+  seriesKey = normalizeSeriesKey(seriesKey);
   const db = initDatabase();
   if (!projectId) throw new Error("projectId required");
 
-  const existingOpen = getOpenMeetingByProject(projectId);
+  const project = db.prepare("SELECT * FROM projects WHERE id=?").get(projectId);
+  if (!project || project.archived_at || !isSeriesEnabled(project, seriesKey)) throw new Error("Besprechungsreihe ist nicht für neue Arbeit aktiviert.");
+  const existingOpen = getOpenMeetingByProject(projectId, seriesKey);
   if (existingOpen?.id) return existingOpen;
 
   const id = randomUUID();
-  const meetingIndex = getNextMeetingIndex(projectId);
+  const meetingIndex = getNextMeetingIndex(projectId, seriesKey);
   const now = new Date().toISOString();
 
   try {
@@ -127,6 +139,7 @@ function createMeeting({ projectId, title }) {
       INSERT INTO meetings (
         id,
         project_id,
+        series_key,
         meeting_index,
         title,
         is_closed,
@@ -143,6 +156,7 @@ function createMeeting({ projectId, title }) {
       VALUES (
         @id,
         @projectId,
+        @seriesKey,
         @meetingIndex,
         @title,
         0,
@@ -159,14 +173,15 @@ function createMeeting({ projectId, title }) {
     `).run({
       id,
       projectId,
+      seriesKey,
       meetingIndex,
       title: title || null,
       now,
     });
   } catch (err) {
     const msg = String(err?.message || "");
-    if (msg.toLowerCase().includes("idx_meetings_one_open_per_project")) {
-      const openAfterRace = getOpenMeetingByProject(projectId);
+    if (msg.includes("meetings.project_id, meetings.series_key")) {
+      const openAfterRace = getOpenMeetingByProject(projectId, seriesKey);
       if (openAfterRace?.id) return openAfterRace;
     }
     throw err;
@@ -174,6 +189,18 @@ function createMeeting({ projectId, title }) {
 
   return getMeetingById(id);
 }
+
+function assertMeetingWritable(meetingId) {
+  const db = initDatabase();
+  const meeting = getMeetingById(meetingId);
+  const project = meeting && db.prepare("SELECT * FROM projects WHERE id=?").get(meeting.project_id);
+  if (!meeting || Number(meeting.is_closed) === 1 || !project || project.archived_at || !isSeriesEnabled(project, meeting.series_key)) {
+    throw new Error("Besprechung ist geschlossen oder die Reihe ist nicht für neue Arbeit aktiviert.");
+  }
+  return meeting;
+}
+
+function runInTransaction(fn) { return initDatabase().transaction(fn)(); }
 
 function closeMeeting(meetingId, { pdfShowAmpel, todoSnapshotJson, nextMeeting } = {}) {
   const db = initDatabase();
@@ -234,6 +261,7 @@ function closeMeeting(meetingId, { pdfShowAmpel, todoSnapshotJson, nextMeeting }
 }
 
 function updateMeetingTitle({ meetingId, title }) {
+  assertMeetingWritable(meetingId);
   const db = initDatabase();
   if (!meetingId) throw new Error("meetingId required");
   const now = new Date().toISOString();
@@ -255,6 +283,8 @@ function updateMeetingTitle({ meetingId, title }) {
 }
 
 module.exports = {
+  assertMeetingWritable,
+  runInTransaction,
   getMeetingById,
   listByProject,
   getOpenMeetingByProject,
