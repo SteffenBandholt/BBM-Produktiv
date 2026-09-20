@@ -53,8 +53,16 @@ manuelle Klick-/Dateidialog-Nachweis wird nicht als ausgeführt behauptet.
 Die vier bekannten, unveränderten M85-Baselinefehler bleiben offen:
 `r19-empty`-Golden-Hash, Restarbeiten-Spaltenzahl 9 statt 13, Registryzahl 37
 statt 35 und `PDF-V2-ARCH-003`. Es wurden keine Golden-Dateien geändert. Das
-normal gestartete Fenster bleibt im neuen Abnahmeprotokoll geöffnet; noch kein
-Commit, Push oder Merge.
+normal gestartete Fenster blieb bis zur praktischen Freigabe im neuen
+Abnahmeprotokoll geöffnet.
+
+Steffens praktische Abnahme ist erfolgt. Der freigegebene Stand wurde mit
+Featurecommit `8956cff7` auf `protokoll/audio-import-v1-rebuild` gesichert und
+mit Mergecommit `fdc4b9c6` regulär nach `main` übernommen. Der Normalstart aus
+`C:\01_Projekte\BBM-Produktiv` bestätigt die produktive Import-Anbindung unter
+der vorhandenen Audiofreigabe; Kundenversionen erhalten sie erst über ein
+späteres Update. Der alte uncommittierte Importversuch im normalen Arbeitsordner
+bleibt getrennt in einem benannten lokalen Stash erhalten.
 
 ---
 
