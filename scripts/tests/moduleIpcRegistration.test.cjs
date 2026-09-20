@@ -37,6 +37,24 @@ async function runModuleIpcRegistrationTests(run) {
     assert.deepEqual([...handlers.keys()], ["protokoll:test"]);
   });
 
+  await run("Kundenbetrieb: Protokoll-Lizenz registriert Firmenliste ohne Rechnungsmodul", () => {
+    const { registerActiveModuleIpcs } = require(path.join(process.cwd(), "src/main/moduleIpcRegistry.js"));
+    const handlers = new Map();
+    const result = registerActiveModuleIpcs({
+      licenseStatus: status(["protokoll"]),
+      getLicenseStatus: () => status(["protokoll"]),
+      ipcMain: { handle: (channel, listener) => handlers.set(channel, listener) },
+      registrars: {
+        protokoll: ({ ipcMain }) => ipcMain.handle("firms:listGlobal", () => []),
+        rechnung: () => assert.fail("Rechnung must not be required"),
+      },
+    });
+    assert.deepEqual(result.registeredModuleIds, ["protokoll"]);
+    assert.equal(typeof handlers.get("firms:listGlobal"), "function");
+    assert.match(read("src/main/modules/protokoll/registerIpc.js"), /registerTopsIpc/);
+    assert.match(read("src/main/ipc/topsIpc.js"), /firms:listGlobal/);
+  });
+
   await run("Paket 4: Registrar wird ueber den Moduldeskriptor aufgeloest", () => {
     const registryPath = path.join(process.cwd(), "src/main/module-registry.json");
     const registry = require(registryPath);

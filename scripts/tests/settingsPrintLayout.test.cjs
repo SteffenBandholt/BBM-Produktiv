@@ -60,6 +60,40 @@ async function runSettingsPrintLayoutTests(run) {
     assert.equal(view._isPrintLayoutMmKey("pdf.protocolTitle"), false);
   });
 
+  await run("SettingsView: Kundenseitenraender nutzen das bestehende PDF-Profil und lehnen ungueltige Eingaben ab", () => {
+    const view = new SettingsView({});
+    const inputs = new Map([
+      ["print.v2.pagePadTopMm", { value: "17,5" }],
+      ["print.v2.pagePadRightMm", { value: "15" }],
+      ["print.v2.pagePadBottomMm", { value: "8" }],
+      ["print.v2.pagePadLeftMm", { value: "14" }],
+    ]);
+    assert.deepEqual(view._readProtocolPageMargins(inputs), {
+      marginTop: 17.5, marginRight: 15, marginBottom: 8, marginLeft: 14,
+    });
+    inputs.get("print.v2.pagePadLeftMm").value = "31";
+    assert.throws(() => view._readProtocolPageMargins(inputs), /Seitenrand links/);
+    assert.match(settingsSource, /protocolPdfGetPageMargins/);
+    assert.match(settingsSource, /protocolPdfSetPageMargins/);
+    assert.match(settingsSource, /wrap\.append\(footerCard, storageCard, logosCard, layoutCard\)/);
+    assert.match(read("src/main/ipc/settingsIpc.js"), /getSharedBbmPdfAdapter[\s\S]*updatePersistedPageMargins/);
+    assert.match(read("src/main/preload.js"), /protocolPdfSetPageMargins/);
+  });
+
+  await run("PDF-Profilraender ueberschreiben den V2-Satz fuer Protokoll und Vorabzug", async () => {
+    const { prepareBbmPdfEditorLayout } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/print/pdfEditorLayout.js")
+    );
+    const data = {
+      mode: "preview",
+      v2Layout: { pagePadTopMm: 5, pagePadRightMm: 12, pagePadBottomMm: 0, pagePadLeftMm: 12 },
+      pdfEditorRegistry: { elements: [{ id: "pdf.bbm.protocol.page-template", kind: "page", capabilities: ["setPageMargins"] }] },
+      pdfEditorLayoutState: { elements: [{ elementId: "pdf.bbm.protocol.page-template", marginTop: 17, marginRight: 15, marginBottom: 8, marginLeft: 14 }] },
+    };
+    prepareBbmPdfEditorLayout(data);
+    assert.deepEqual(data.v2Layout, { pagePadTopMm: 17, pagePadRightMm: 15, pagePadBottomMm: 8, pagePadLeftMm: 14 });
+  });
+
   await run("SettingsView: Standardwerte setzen nur die Drucklayout-Felder", () => {
     const view = new SettingsView({});
     const inputs = new Map([

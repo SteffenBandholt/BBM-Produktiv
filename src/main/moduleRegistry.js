@@ -1,4 +1,5 @@
 const registry = require("./module-registry.json");
+const { resolveDistributionPolicy } = require("./distributionPolicy");
 
 function normalizeId(value) {
   return String(value || "").trim().toLowerCase();
@@ -24,7 +25,8 @@ function getCanonicalModuleIds() {
 }
 
 function getModuleIds() {
-  return Object.freeze(Object.keys(registry.modules || {}));
+  const permitted = resolveDistributionPolicy().moduleIds;
+  return Object.freeze(Object.keys(registry.modules || {}).filter((id) => !permitted || permitted.includes(id)));
 }
 
 function getCapabilityIds() {
@@ -34,6 +36,7 @@ function getCapabilityIds() {
 function getModuleDefinition(moduleId) {
   const normalized = normalizeId(moduleId);
   if (!normalized) return null;
+  if (!getModuleIds().includes(normalized)) return null;
   return registry.modules?.[normalized] || null;
 }
 

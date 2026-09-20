@@ -10,6 +10,7 @@ import {
   normalizeMailTransportPayload,
 } from "../features/mail/MailTransportService.js";
 import { ProtokollMailPayloadService } from "../modules/protokoll/mail/ProtokollMailPayloadService.js";
+import { normalizeSeriesKey, getSeriesDefinition } from "../../shared/meetingSeries.mjs";
 import { openClosedProtocolSelector } from "./react/ClosedProtocolSelector.js";
 import { resolveProtocolsDir } from "../utils/pdfProtocolsDir.js";
 import { PROTOKOLL_MODULE_ID } from "../app/modules/index.js";
@@ -1264,6 +1265,8 @@ export default class MainHeader {
 
   async _resolvePrintMenuState({ force = false } = {}) {
     const projectId = this.router?.currentProjectId || null;
+    const seriesKey = normalizeSeriesKey(this.router?.currentSeriesKey);
+    const loadingKey = `${projectId || ""}\0${seriesKey}`;
     const hasProject = !!projectId;
 
     const ui = this.router?.context?.ui || {};
@@ -1273,6 +1276,7 @@ export default class MainHeader {
     const base = {
       hasProject,
       projectId,
+      seriesKey,
       isTopsView,
       currentMeetingId,
       openMeetingId: null,
@@ -1284,7 +1288,7 @@ export default class MainHeader {
 
     if (!hasProject) return base;
 
-    if (!force && this._printMenuState && this._printMenuState.projectId === projectId) {
+    if (!force && this._printMenuState && this._printMenuState.projectId === projectId && this._printMenuState.seriesKey === seriesKey) {
       const isFresh = Date.now() - Number(this._printMenuState.loadedAt || 0) < 1200;
       if (isFresh) {
         const openMeetingId = this._printMenuState.openMeetingId || null;
@@ -1302,7 +1306,7 @@ export default class MainHeader {
       }
     }
 
-    if (!force && this._printMenuStateLoading) {
+    if (!force && this._printMenuStateLoading && this._printMenuStateLoadingKey === loadingKey) {
       const pending = await this._printMenuStateLoading;
       if (!pending) return base;
       const openMeetingId = pending.openMeetingId || null;
@@ -1320,11 +1324,12 @@ export default class MainHeader {
     }
 
     const api = window.bbmDb || {};
+    this._printMenuStateLoadingKey = loadingKey;
     this._printMenuStateLoading = (async () => {
       let openMeetingId = null;
       if (typeof api.meetingsListByProject === "function") {
         try {
-          const res = await api.meetingsListByProject(projectId);
+          const res = await api.meetingsListByProject({ projectId, seriesKey });
           if (res?.ok) {
             const list = Array.isArray(res.list) ? res.list : [];
             const openMeeting = list.find((m) => Number(m?.is_closed) === 0) || null;
@@ -1338,6 +1343,7 @@ export default class MainHeader {
       return {
         hasProject,
         projectId,
+        seriesKey,
         isTopsView,
         currentMeetingId,
         openMeetingId,
@@ -1349,10 +1355,11 @@ export default class MainHeader {
       };
     })();
 
+    const loading = this._printMenuStateLoading;
     try {
-      return await this._printMenuStateLoading;
+      return await loading;
     } finally {
-      this._printMenuStateLoading = null;
+      if (this._printMenuStateLoading === loading) this._printMenuStateLoading = null;
     }
   }
 
@@ -1944,8 +1951,8 @@ _buildFallbackEmailSubject({ projectNumber, projectShortName, mailType } = {}) {
     return this._getProtokollMailPayloadService().buildInitialRecipientSelection(recOptions);
   }
 
-  _buildMailAttachmentEntries(attachmentsByKey = {}) {
-    return this._getProtokollMailPayloadService().buildAttachmentEntries(attachmentsByKey);
+  _buildMailAttachmentEntries(attachmentsByKey = {}, meeting = null) {
+    return this._getProtokollMailPayloadService().buildAttachmentEntries(attachmentsByKey, meeting);
   }
 
   async _buildMeetingMailDraft({ projectId = null, meeting = null, mailType = "", subject = "", body } = {}) {
@@ -2310,7 +2317,7 @@ async _openMailClient(mailType = "", options = {}) {
     const parts = [idx, dateTxt].filter(Boolean);
     let label = parts.join(" · ");
     if (keyword) label = label ? `${label} · ${keyword}` : keyword;
-    return label || "Protokoll";
+    return `${getSeriesDefinition(meeting?.series_key).label} · ${label || "Protokoll"}`;
   }
 
   async _promptMeetingSelection(projectId) {
@@ -2473,6 +2480,7 @@ async _openMailClient(mailType = "", options = {}) {
     const projectLabelParts = splitProjectLabel(this.router?.context?.projectLabel || "");
     const listRes = await window.bbmPrint.listStoredProjectPdfs({
       baseDir,
+      projectId: pid,
       kind: kindKey,
       project: {
         project_number: projectInfo.projectNumber || projectLabelParts.projectNumber || "",
@@ -2560,7 +2568,7 @@ async _openMailClient(mailType = "", options = {}) {
             const pm = new PrintModal({ router: this.router });
             await pm.openExistingPdfPreview({
               filePath,
-              title: `${popupTitle} (Vorschau)`,
+              title: `${this._formatStoredProjectPdfListEntry(item, kindKey, closedMeetings)} (Vorschau)`,
             });
           };
 
@@ -2624,12 +2632,16 @@ async _openMailClient(mailType = "", options = {}) {
       meetingLabel = `#${meetingIndex} - ${dateLabel}`;
     }
     if (kind === "protocol") {
+      const identifiedMeeting = item.meetingId ? meetings.find((meeting) => meeting.id === item.meetingId) : null;
+      if (identifiedMeeting) return this._formatMeetingListEntry(identifiedMeeting);
+      const seriesMeetings = item.seriesKey === "construction"
+        ? meetings.filter((meeting) => normalizeSeriesKey(meeting.series_key) === "construction") : [];
       const protocolKeyword =
-        this._extractProtocolKeywordFromMeetings(meetingIndex, meetings) ||
+        this._extractProtocolKeywordFromMeetings(meetingIndex, seriesMeetings) ||
         this._extractProtocolKeywordFromFileName(fileName);
-      return [meetingLabel, protocolKeyword].filter(Boolean).join(" - ") || fileName;
+      return [item.seriesLabel, meetingLabel, protocolKeyword].filter(Boolean).join(" - ") || fileName;
     }
-    return meetingLabel || fileName || String(item?.filePath || "").trim();
+    return [item.seriesLabel, meetingLabel].filter(Boolean).join(" - ") || fileName || String(item?.filePath || "").trim();
   }
 
   _extractProtocolKeywordFromMeetings(meetingIndex = "", meetings = []) {
@@ -2735,7 +2747,7 @@ async _openMailClient(mailType = "", options = {}) {
       alert(getBlockedTransportMessage(attachmentsFound.blocked));
       return;
     }
-    const attachments = this._buildMailAttachmentEntries(attachmentsFound);
+    const attachments = this._buildMailAttachmentEntries(attachmentsFound, meeting);
     const draft = await this._buildMeetingMailDraft({
       projectId,
       meeting,

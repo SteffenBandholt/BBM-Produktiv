@@ -151,6 +151,7 @@ function registerUiEditorIpc(options = {}) {
     ipcMain: options.ipcMain || ipcMain,
     getMainWindow: options.getMainWindow,
     pdfAdapter,
+    editingEnabled: options.editingEnabled,
   });
   controller.registerIpc();
   return controller;

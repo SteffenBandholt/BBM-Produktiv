@@ -8,6 +8,7 @@ const fs = require("fs");
 const topsRepo = require("../db/topsRepo");
 const meetingsRepo = require("../db/meetingsRepo");
 const meetingTopsRepo = require("../db/meetingTopsRepo");
+const { MEETING_SERIES, getSeriesDefinition, isSeriesEnabled } = require("../../shared/meetingSeries.cjs");
 
 const firmsRepo = require("../db/firmsRepo");
 const personsRepo = require("../db/personsRepo");
@@ -934,6 +935,8 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
     try {
       const meeting = meetingsRepo.getMeetingById(meetingId);
       if (!meeting) throw new Error("Besprechung nicht gefunden");
+      const project = initDatabase().prepare("SELECT meeting_series_mask,archived_at FROM projects WHERE id=?").get(meeting.project_id);
+      const isReadOnly = Number(meeting.is_closed) === 1 || !project || !!project.archived_at || !isSeriesEnabled(project, meeting.series_key);
       let todoSnapshot = null;
       let todoSnapshotError = null;
       const snapshotRaw = String(meeting?.todo_snapshot_json || "").trim();
@@ -989,6 +992,16 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
           meeting_index: meeting.meeting_index,
           title: meeting.title,
           is_closed: meeting.is_closed,
+          series_key: meeting.series_key,
+          is_read_only: isReadOnly,
+          next_meeting_enabled: meeting.next_meeting_enabled,
+          next_meeting_option_a_enabled: meeting.next_meeting_option_a_enabled,
+          next_meeting_option_b_enabled: meeting.next_meeting_option_b_enabled,
+          next_meeting_option_b_text: meeting.next_meeting_option_b_text,
+          next_meeting_date: meeting.next_meeting_date,
+          next_meeting_time: meeting.next_meeting_time,
+          next_meeting_place: meeting.next_meeting_place,
+          next_meeting_extra: meeting.next_meeting_extra,
           pdf_show_ampel: meeting.pdf_show_ampel,
           todo_snapshot: todoSnapshot,
           todo_snapshot_error: todoSnapshotError,
@@ -1009,7 +1022,15 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
       const rawList = meetingTopsRepo.listLatestByProject(projectId);
       const list = normalizeDisplayNumbers(rawList, null);
 
+      for (const top of list) {
+        const series = getSeriesDefinition(top.series_key);
+        top.series_label = series.label;
+        top.qualified_display_number = `${series.title} / TOP ${top.displayNumber || top.number}`;
+      }
+
       list.sort((a, b) => {
+        const seriesOrder = MEETING_SERIES.findIndex(series => series.key === a.series_key) - MEETING_SERIES.findIndex(series => series.key === b.series_key);
+        if (seriesOrder) return seriesOrder;
         const as = String(a.displayNumber || a.number || "").split(".").map((x) => Number(x));
         const bs = String(b.displayNumber || b.number || "").split(".").map((x) => Number(x));
         const n = Math.max(as.length, bs.length);
@@ -1056,12 +1077,17 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
       });
       return { ok: true, ...res };
     } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
+      return { ok: false, error: err?.message || String(err), errorCode: err?.code || "TOP_DELETE_FAILED" };
     }
   });
 
   ipcMain.handle("tops:markTrashed", (_e, data) => {
     try {
+      const top = topsRepo.getTopById(data?.topId);
+      if (!top) throw new Error("TOP nicht gefunden");
+      const meeting = meetingsRepo.getOpenMeetingByProject(top.project_id, top.series_key);
+      meetingsRepo.assertMeetingWritable(meeting?.id);
+      if (!meetingTopsRepo.getMeetingTop(meeting.id, top.id)) throw new Error("TOP gehört nicht zum offenen Protokoll dieser Reihe");
       const res = topsRepo.markTrashed({ topId: data?.topId });
       return { ok: true, ...res };
     } catch (err) {
@@ -1071,6 +1097,7 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
 
   ipcMain.handle("tops:purgeTrashedByMeeting", (_e, data) => {
     try {
+      meetingsRepo.assertMeetingWritable(data?.meetingId);
       const res = topsRepo.purgeTrashedByMeeting({ meetingId: data?.meetingId });
       return { ok: true, ...res };
     } catch (err) {
@@ -1118,6 +1145,7 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
   ipcMain.handle("meetingTops:fixNumberGap", (_e, data) => {
     try {
       const meetingId = data?.meetingId;
+      meetingsRepo.assertMeetingWritable(meetingId);
       const meeting = meetingsRepo.getMeetingById(meetingId);
       if (!meeting) return { ok: false, error: "Besprechung nicht gefunden" };
       if (Number(meeting.is_closed) === 1) {

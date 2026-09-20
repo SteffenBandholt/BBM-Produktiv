@@ -147,6 +147,20 @@ async function withPrintHarness(test) {
 }
 
 async function runPrintJobLifecycleTests(run) {
+  await run("PDF-Vorschau startet als verschiebbares, erreichbares Mehrmonitor-Fenster", () => withPrintHarness(async h => {
+    const options = h.service.createInternalPdfPreviewWindowOptions({
+      title: "Protokollvorschau",
+      workArea: { x: 1920, y: -120, width: 1280, height: 720 },
+    });
+    assert.equal(options.frame, true);
+    assert.equal(options.movable, true);
+    assert.equal(options.resizable, true);
+    assert.equal(options.maximizable, true);
+    assert.equal(options.fullscreenable, false);
+    assert.equal(options.title, "Protokollvorschau");
+    assert.ok(options.x >= 1920 && options.x + options.width <= 3200);
+    assert.ok(options.y >= -120 && options.y + options.height <= 600);
+  }));
   const preparedFirms = () => ({ mode: "firms", project: { id: "p", name: "Captured project" }, orientation: "portrait",
     firms: [{ id: "firm-a", name: "Captured firm", persons: [{ name: "Captured person" }] }] });
   await run("S1.4: shared tabular print ignores foreign and duplicate ready events", () => withPrintHarness(async (h) => {

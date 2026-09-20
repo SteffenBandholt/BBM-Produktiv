@@ -18,7 +18,7 @@ const GOLDEN_SNAPSHOT_SHA256 = Object.freeze({
   "p12-large-participants": "0d0a47366a23c9d8c02b424ad315ee47f338d9e3634b452528b7101ee1a75da1",
   "p13-short-preremarks": "612b3765e819976dbb6609ee508934d023607b6ffc6c57cb51623cd4c8dec550",
   "p14-long-preremarks": "4a3a3902fa6a1fb13b9586aafe96ab0b0d0e0d87ced0dd866682e4d4513f74e5",
-  "p15-closing-near-end": "a3850e74d0dd460a802834f7a5780c2e26b8e47e34010388c979500e46aa448c",
+  "p15-closing-near-end": "c3d3cdea0d36d5d2699082d44bf61721e5438e20c29a6c9bcedd1751e30ff5f1",
   "p16-changed-columns": "8100a4cff9f65d21fb78bc2d0dc3d084a2165d1ba36b45aa271d6110c421bfab",
   "p17-changed-font": "60a991b9e5d8c39a0b5c1b8e3e61416b0cbc9e094697c4dfbac00ce7be823c1a",
   "p18-changed-line-spacing": "4a0378443eef7e152f8736955d1e225d6ad042c92881d2158de21c214b06651d",
@@ -53,6 +53,12 @@ const GOLDEN_SNAPSHOT_SHA256 = Object.freeze({
   "r47-mixed-long-fields": "09c58ae64219c9df76f54fd889c7136989bf9b91ea69b0857967882024d5eead",
   "i48-invoice-final": "5d4311c8709a4517555c86f778c4aa53f20978a9b57036d8ecb3cb3535456105",
   "i49-invoice-preview": "1bc39b9af24272b06ab0d2f325bce80e2d1b88b23288c4f7a05db09df1882381",
+  "p50-next-meeting-print-off": "b659a1d89785786abaf80456ae903b7f685c8b33de95bdffae752cc80ad2740a",
+  "p51-next-meeting-option-a": "f6781153437337bc4ee4bf860ff0b65d4e80c6ad7393c1e80df655b53981e7a0",
+  "p52-next-meeting-option-b": "8c94488943a758ebb39e469bdaaade184067837c218641d9ffdcfdb3a7ca12f4",
+  "p53-next-meeting-options-a-b": "dcbc3a3cc3965ef7ece213a42f61747598a8301a2704f3da8ca3ed84aaa2b4f2",
+  "p54-next-meeting-no-option": "24db808b296f8abef288089ec463a27e210d82bf25f66ac5316d2683347c82da",
+  "p55-next-meeting-long-option-b": "66449f3da2681ba85e265b658cad8429eb4c975a498f0f5d68bc57961142a40c",
 });
 
 const GOLDEN_PAGE_COUNTS = Object.freeze({
@@ -105,6 +111,12 @@ const GOLDEN_PAGE_COUNTS = Object.freeze({
   "r47-mixed-long-fields": 1,
   "i48-invoice-final": 5,
   "i49-invoice-preview": 5,
+  "p50-next-meeting-print-off": 1,
+  "p51-next-meeting-option-a": 1,
+  "p52-next-meeting-option-b": 1,
+  "p53-next-meeting-options-a-b": 1,
+  "p54-next-meeting-no-option": 1,
+  "p55-next-meeting-long-option-b": 4,
 });
 
 // These fixtures record real, reproducible gaps in current main. They are not

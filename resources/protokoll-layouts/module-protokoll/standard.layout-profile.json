@@ -1,0 +1,1079 @@
+{
+  "schemaVersion": 2,
+  "applicationId": "bbm-produktiv",
+  "profileId": "standard",
+  "savedAt": "2026-08-31T18:48:18.1032992+00:00",
+  "scopes": [
+    {
+      "scopeId": "protokoll.edit.root",
+      "registryFingerprint": "sha256:e53adb228924f283bf1158613f70bd6a6b927065c9ca24eb528caded776c0005",
+      "layoutState": {
+        "elements": [
+          {
+            "elementId": "protokoll.edit.root",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 1362.5865478515625,
+            "height": 192.71054077148438,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.canvas",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 939.9925537109375,
+            "height": 177.99249267578125,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.workbench",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 939.9925537109375,
+            "height": 177.99249267578125,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.header",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 926.5489501953125,
+            "height": 26.94361114501953,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.header.label",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 697.5789794921875,
+            "height": 13.195489883422852,
+            "fontSize": 12,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.header.addActions",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 87.03384399414062,
+            "height": 19.99624252319336,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.header.action.addTitle",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 43.195491790771484,
+            "height": 19.99624252319336,
+            "fontSize": 10,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.header.action.addTop",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 40.838348388671875,
+            "height": 19.99624252319336,
+            "fontSize": 10,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.header.primaryActions",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 133.95114135742188,
+            "height": 19.99624252319336,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.header.action.move",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 60.338348388671875,
+            "height": 19.99624252319336,
+            "fontSize": 10,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.header.action.delete",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 70.61278533935547,
+            "height": 19.99624252319336,
+            "fontSize": 10,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.text",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 926.5489501953125,
+            "height": 131.3797149658203,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.short",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 914.5489501953125,
+            "height": 24.000001907348633,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.short.label",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 72.36090850830078,
+            "height": 24.000001907348633,
+            "fontSize": 11.3333,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.short.counter",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 18.30451202392578,
+            "height": 14.436091423034668,
+            "fontSize": 10.6667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.short.field",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 555.0000610351562,
+            "height": 23.424814224243164,
+            "fontSize": 13.3333,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.short.action.dictation",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 24.000001907348633,
+            "height": 24.000001907348633,
+            "fontSize": 12,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.long",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 670.5564575195312,
+            "height": 94.39850616455078,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.long.label",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 74.60527038574219,
+            "height": 51.99248504638672,
+            "fontSize": 11.3333,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.long.counter",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 18.30451202392578,
+            "height": 14.436091423034668,
+            "fontSize": 10.6667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.long.field",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 555.0000610351562,
+            "height": 84.96993255615234,
+            "fontSize": 12.6667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.long.action.dictation",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 24.000001907348633,
+            "height": 24.000001907348633,
+            "fontSize": 12,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.dictation.status",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "fontSize": 16,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.dictation.status.action.undo",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "fontSize": 12.5,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.long.correction",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 65.12030792236328,
+            "height": 24.000001907348633,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.long.correction.action.open",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 65.12030792236328,
+            "height": 24.000001907348633,
+            "fontSize": 11,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.meta",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 213.99249267578125,
+            "height": 94.39850616455078,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.flags",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 192.5639190673828,
+            "height": 17.706768035888672,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.status",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.status.label",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "fontSize": 10.1333,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.status.field",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 8,
+            "fontSize": 10.6667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.due",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.due.label",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "fontSize": 10.1333,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.due.field",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 8,
+            "fontSize": 10.6667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.responsible",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.responsible.label",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "fontSize": 10.6667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.responsible.field",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 8,
+            "fontSize": 10.6667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.edit.ampel",
+            "scopeId": "protokoll.edit.root",
+            "x": 0,
+            "y": 0,
+            "width": 15,
+            "height": 15,
+            "fontSize": 15,
+            "visible": true
+          }
+        ]
+      },
+      "explicitOperations": {
+        "protokoll.edit.long.field": [
+          "resizeHeight",
+          "resizeWidth"
+        ],
+        "protokoll.edit.short.field": [
+          "resizeWidth"
+        ]
+      }
+    },
+    {
+      "scopeId": "protokoll.list.root",
+      "registryFingerprint": "sha256:3bf84a38e4db80d49102e9fd0e8e80202c354d451df63e77242a4f899b8c8e53",
+      "layoutState": {
+        "elements": [
+          {
+            "elementId": "protokoll.list.root",
+            "scopeId": "protokoll.list.root",
+            "x": 10,
+            "y": 0,
+            "width": 1362.5865478515625,
+            "height": 358.4549255371094,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.canvas",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 939.9925537109375,
+            "height": 1600,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.paper",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 939.9925537109375,
+            "height": 1600,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.table",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 914.5489501953125,
+            "height": 2907.29345703125,
+            "visible": true,
+            "table": {
+              "tableId": "protokoll.list.table",
+              "horizontalOverflowMode": "fitViewport",
+              "rowHeightMode": "bounded"
+            }
+          },
+          {
+            "elementId": "protokoll.list.column.number",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 64.99624633789062,
+            "height": 33.09022903442383,
+            "visible": true,
+            "table": {
+              "tableId": "protokoll.list.table",
+              "columnId": "protokoll.list.column.number",
+              "widthMode": "fixed",
+              "wrapMode": "noWrap",
+              "overflowMode": "clip"
+            }
+          },
+          {
+            "elementId": "protokoll.list.column.text",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 717.5752563476562,
+            "height": 33.09022903442383,
+            "visible": true,
+            "table": {
+              "tableId": "protokoll.list.table",
+              "columnId": "protokoll.list.column.text",
+              "widthMode": "proportional",
+              "wrapMode": "wordWrap",
+              "overflowMode": "clip"
+            }
+          },
+          {
+            "elementId": "protokoll.list.column.meta",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 96.00000762939453,
+            "height": 33.09022903442383,
+            "visible": true,
+            "table": {
+              "tableId": "protokoll.list.table",
+              "columnId": "protokoll.list.column.meta",
+              "widthMode": "fixed",
+              "wrapMode": "wordWrap",
+              "overflowMode": "clip"
+            }
+          },
+          {
+            "elementId": "protokoll.list.table.header",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 914.5489501953125,
+            "height": 39.812034606933594,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.column.number.header",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 64.99624633789062,
+            "height": 33.09022903442383,
+            "fontSize": 9.73333,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.column.number.cells",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 64.99624633789062,
+            "height": 23.537595748901367,
+            "fontSize": 11.3333,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.column.text.header",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 717.5752563476562,
+            "height": 33.09022903442383,
+            "fontSize": 9.73333,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.column.text.cells",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 671.1654663085938,
+            "height": 15.293233871459961,
+            "fontSize": 11.3333,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.header.due",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 96.00000762939453,
+            "height": 9.699248313903809,
+            "fontSize": 8.66667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.column.meta.header",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 96.00000762939453,
+            "height": 33.09022903442383,
+            "fontSize": 8.66667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.header.status",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 96.00000762939453,
+            "height": 9.699248313903809,
+            "fontSize": 8.66667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.column.meta.cells",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 96.00000762939453,
+            "height": 8,
+            "fontSize": 10.6667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.header.responsible",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 96.00000762939453,
+            "height": 9.699248313903809,
+            "fontSize": 8.66667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.table.body",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 914.5489501953125,
+            "height": 1600,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.row",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 914.5489501953125,
+            "height": 54.000003814697266,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.row.level1Toggle",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 18.000001907348633,
+            "height": 27.992483139038086,
+            "fontSize": 10.6667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.row.number",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 9.676692008972168,
+            "height": 13.02631664276123,
+            "fontSize": 11.3333,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.row.createdAt",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 44.503761291503906,
+            "height": 9.518797874450684,
+            "fontSize": 8.66667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.row.class",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "fontSize": 8.66667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.row.marker",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 10,
+            "height": 12,
+            "fontSize": 10.667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.row.short",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 628.7594604492188,
+            "height": 15.293233871459961,
+            "fontSize": 11.3333,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.row.long",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 693.5752563476562,
+            "height": 15.293233871459961,
+            "fontSize": 11.3333,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.row.due",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 54.50752258300781,
+            "height": 14.436091423034668,
+            "fontSize": 10.6667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.row.status",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 26.390979766845703,
+            "height": 14.436091423034668,
+            "fontSize": 10.6667,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.row.ampel",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 9.439849853515625,
+            "height": 9.439849853515625,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.row.todo",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 14,
+            "height": 14,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.row.decision",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 13.996241569519043,
+            "height": 13.996241569519043,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.list.row.responsible",
+            "scopeId": "protokoll.list.root",
+            "x": 0,
+            "y": 0,
+            "width": 22.78195571899414,
+            "height": 14.436091423034668,
+            "fontSize": 10.6667,
+            "visible": true
+          }
+        ]
+      },
+      "explicitOperations": {
+        "protokoll.list.root": [
+          "move"
+        ]
+      }
+    },
+    {
+      "scopeId": "protokoll.screen.root",
+      "registryFingerprint": "sha256:7251a69f8243bb21a4768170d75ea0d51a4a43a48db0cb4b06caaca565185029",
+      "layoutState": {
+        "elements": [
+          {
+            "elementId": "protokoll.screen.root",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 1362.5865478515625,
+            "height": 606.0338745117188,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.header",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 939.9925537109375,
+            "height": 54.86842346191406,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.header.titleGroup",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 157.17294311523438,
+            "height": 46.16165542602539,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.header.title",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 151.17294311523438,
+            "height": 16.601505279541016,
+            "fontSize": 12,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.header.keyword",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 151.17294311523438,
+            "height": 13.590226173400879,
+            "fontSize": 11.3333,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.header.context",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 151.17294311523438,
+            "height": 12.000000953674316,
+            "fontSize": 10,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.header.actions",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 169.91729736328125,
+            "height": 14.932332038879395,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 63.99248504638672,
+            "height": 572.0526733398438,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.header.action.endMeeting",
+            "scopeId": "protokoll.screen.root",
+            "x": -10,
+            "y": 0,
+            "width": 101.8308334350586,
+            "height": 14.932332038879395,
+            "fontSize": 10,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.group.navigation",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 47.2781982421875,
+            "height": 167.70677185058594,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.header.action.close",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 64.09398651123047,
+            "height": 14.932332038879395,
+            "fontSize": 10,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.group.visibility",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 47.2781982421875,
+            "height": 85.71429443359375,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.header.action.openUiEditor",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 108.2819595336914,
+            "height": 24,
+            "fontSize": 11.3333,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.group.filter",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 47.2781982421875,
+            "height": 44.718048095703125,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.group.output",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 47.2781982421875,
+            "height": 117.99249267578125,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.pin",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 36.000003814697266,
+            "height": 36.000003814697266,
+            "fontSize": 14,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.action.project",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 36.000003814697266,
+            "height": 36.000003814697266,
+            "fontSize": 14,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.action.firms",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 36.000003814697266,
+            "height": 36.000003814697266,
+            "fontSize": 14,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.action.participants",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 36.000003814697266,
+            "height": 36.000003814697266,
+            "fontSize": 14,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.action.ampel",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 36.000003814697266,
+            "height": 36.000003814697266,
+            "fontSize": 14,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.action.longtext",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 36.000003814697266,
+            "height": 36.000003814697266,
+            "fontSize": 14,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.action.topFilter",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 36.000003814697266,
+            "height": 36.000003814697266,
+            "fontSize": 14,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.action.preview",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 36.000003814697266,
+            "height": 36.000003814697266,
+            "fontSize": 14,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.action.print",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 36.000003814697266,
+            "height": 36.000003814697266,
+            "fontSize": 14,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.action.mail",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 36.000003814697266,
+            "height": 36.000003814697266,
+            "fontSize": 14,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.filter.menu",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.filter.option.all",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "fontSize": 12,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.filter.option.important",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "fontSize": 12,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.filter.option.todo",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "fontSize": 12,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.filter.option.status.open",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "fontSize": 12,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.filter.option.status.inProgress",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "fontSize": 12,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.filter.option.status.done",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "fontSize": 12,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.filter.option.status.blocked",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "fontSize": 12,
+            "visible": true
+          },
+          {
+            "elementId": "protokoll.topsScreen.quicklane.filter.option.status.overdue",
+            "scopeId": "protokoll.screen.root",
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 8,
+            "fontSize": 12,
+            "visible": true
+          }
+        ]
+      },
+      "explicitOperations": {
+        "protokoll.header.action.endMeeting": [
+          "move"
+        ]
+      }
+    }
+  ]
+}

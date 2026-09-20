@@ -1,4 +1,5 @@
 // src/renderer/views/MeetingsView.js
+import { normalizeSeriesKey, getSeriesDefinition } from "../../shared/meetingSeries.mjs";
 
 export default class MeetingsView {
   constructor({
@@ -10,9 +11,13 @@ export default class MeetingsView {
     startReason = null,
     integrityError = false,
     projectProtocolContext = null,
+    seriesKey,
+    historyOnly = false,
   }) {
     this.router = router;
     this.projectId = projectId;
+    this.seriesKey = normalizeSeriesKey(seriesKey ?? router?.currentSeriesKey);
+    this.historyOnly = !!historyOnly;
     this.printSelectionMode = !!printSelectionMode;
     this.printKind = printKind === "todo" ? "todo" : (printKind === "firms" ? "firms" : null);
     this.startMode = !!startMode;
@@ -61,7 +66,7 @@ export default class MeetingsView {
   }
 
   async _createProtocolFromStartView() {
-    if (!this.startMode || this.printSelectionMode) return false;
+    if (!this.startMode || this.printSelectionMode || this.historyOnly) return false;
     const api = window.bbmDb || {};
     if (typeof api.meetingsCreate !== "function") {
       alert("meetingsCreate ist nicht verfuegbar (Preload/IPC fehlt).");
@@ -77,7 +82,7 @@ export default class MeetingsView {
     let nextIndex = 1;
     if (typeof api.meetingsListByProject === "function") {
       try {
-        const res = await api.meetingsListByProject(pid);
+        const res = await api.meetingsListByProject({ projectId: pid, seriesKey: this.seriesKey });
         if (res?.ok) {
           const list = Array.isArray(res.list) ? res.list : [];
           const maxIdx = list.reduce((mx, x) => Math.max(mx, Number(x?.meeting_index || 0)), 0);
@@ -90,7 +95,7 @@ export default class MeetingsView {
 
     const dateISO = this._todayISO();
     const title = `#${nextIndex} ${this._isoToDDMMYYYY(dateISO) || dateISO}`;
-    const createRes = await api.meetingsCreate({ projectId: pid, title });
+    const createRes = await api.meetingsCreate({ projectId: pid, title, seriesKey: this.seriesKey });
     if (!createRes?.ok || !createRes?.meeting?.id) {
       alert(createRes?.error || "Besprechung konnte nicht angelegt werden.");
       return false;
@@ -111,7 +116,7 @@ export default class MeetingsView {
 
   _setProjectTitle(label) {
     if (!this.projectTitleEl) return;
-    this.projectTitleEl.textContent = label || `#${this.projectId}`;
+    this.projectTitleEl.textContent = `${label || `#${this.projectId}`} · ${getSeriesDefinition(this.seriesKey).label}${this.historyOnly ? " · Historie" : ""}`;
   }
 
   _printKindLabel() {
@@ -214,6 +219,9 @@ export default class MeetingsView {
       meeting?.meeting_index ?? meeting?.meetingIndex ?? meeting?.index ?? meeting?.number ?? "";
 
     const found = await printApi.findStoredProtocolPdf({
+      projectId: this.projectId,
+      meetingId: meeting.id,
+      seriesKey: meeting.series_key,
       baseDir,
       project: {
         project_number: project?.project_number ?? project?.projectNumber ?? project?.number ?? "",
@@ -242,7 +250,7 @@ export default class MeetingsView {
 
     await this.router.openStoredProtocolPreview({
       filePath: found.filePath,
-      title: "Protokoll (Vorschau)",
+      title: `${getSeriesDefinition(meeting.series_key).title} (Vorschau)`,
     });
     return true;
   }
@@ -314,7 +322,7 @@ export default class MeetingsView {
         await this.router.showProjects();
         return;
       }
-      if (this.openMeetingId) {
+      if (this.openMeetingId && !this.historyOnly) {
         await this.router.showTops(this.openMeetingId, this.projectId);
         return;
       }
@@ -324,7 +332,7 @@ export default class MeetingsView {
     const btnCreateProtocol = document.createElement("button");
     btnCreateProtocol.type = "button";
     btnCreateProtocol.textContent = "Neues Protokoll";
-    btnCreateProtocol.style.display = this.startMode && !this.printSelectionMode ? "" : "none";
+    btnCreateProtocol.style.display = this.startMode && !this.printSelectionMode && !this.historyOnly ? "" : "none";
     btnCreateProtocol.onclick = async () => {
       if (this._printBusy) return;
       await this._createProtocolFromStartView();
@@ -452,7 +460,7 @@ export default class MeetingsView {
   }
 
   async reloadList() {
-    const res = await window.bbmDb.meetingsListByProject(this.projectId);
+    const res = await window.bbmDb.meetingsListByProject({ projectId: this.projectId, seriesKey: this.seriesKey });
     if (!res?.ok) {
       this.listEl.textContent = res?.error || "Fehler beim Laden";
       return;
@@ -475,7 +483,7 @@ export default class MeetingsView {
         (a, b) =>
           sortValue(b) - sortValue(a) || Number(b.meeting_index || 0) - Number(a.meeting_index || 0)
       );
-    this.closedMeetings = this.meetings.filter((m) => Number(m.is_closed) === 1);
+    this.closedMeetings = this.historyOnly ? this.meetings : this.meetings.filter((m) => Number(m.is_closed) === 1);
     this.openMeetingId =
       this.meetings.find((m) => Number(m.is_closed) === 0)?.id || null;
     if (!this.closedMeetings.some((m) => m.id === this.selectedMeetingId)) {

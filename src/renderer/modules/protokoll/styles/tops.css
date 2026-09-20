@@ -1576,10 +1576,16 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   min-width: 0;
 }
 
-.bbm-tops-meta-due-with-ampel .status-ampel-label {
+.bbm-tops-meta-due-with-ampel .status-ampel-label,
+.bbm-iso-week-value {
   font-size: 7.6pt;
   font-weight: 400;
   color: #5f6b7a;
+}
+
+.bbm-iso-week-value {
+  flex: 0 0 auto;
+  align-self: center;
 }
 
 .bbm-tops-meta-panel :is(.bbm-tops-input, .status-ampel-select, .status-ampel-date, .responsible-field-select) {
@@ -1827,6 +1833,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   }
 
   .bbm-tops-meta-due-with-ampel .status-ampel-label,
+  .bbm-iso-week-value,
   .bbm-tops-meta-flags .editbox-flag {
     font-size: 7pt;
   }

@@ -1,3 +1,66 @@
+## 2026-09-16 – Protokoll-Setup: Installations-/Startweg abgeschlossen
+
+Ein-Klick-Setup startet nach erfolgreicher Installation die vorhandene
+Abnahme-App. Desktop und Startmenü verwenden eindeutig
+`BBM-Protokoll-Abnahme` und zeigen auf die verifizierte per-user-Installation.
+Neuaufbau und Aktualisierung über den Bestand liefen mit Exitcode 0; das
+installierte BBM-1.5.0-Fenster blieb sichtbar und antwortend. 54 geschützte
+produktive/Abnahmedateien blieben hashidentisch. Kein Fach-, UI-, PDF- oder
+Datenumbau; kein Commit/Push. Die lizenzierte Fachabnahme aus M4 bleibt offen.
+
+---
+
+## 2026-09-15 – Protokoll-Setup M3 abgeschlossen / M4 gestoppt
+
+Lokales x64-NSIS-Setup 1.5.0/STABLE/release erzeugt und unter eigener
+Abnahmeidentität installiert. Pfad:
+`dist/protokoll-abnahme/BBM-Protokoll-1.5.0-STABLE-Abnahme-Setup.exe`.
+Normaler installierter Verknüpfungsstart, tatsächliche Main-/Preload-/Editor-
+Sperren, Projekt-/Firmenprofil-/Logo-/Ablagepersistenz nach Neustart geprüft.
+Installierte native FFmpeg/Whisper/small-Programme transkribieren deutsche
+synthetische Sprachdatei korrekt; kein Mikrofon-/lizenzierter App-Diktattest.
+26 Paketdateien geändert, vorhandene Kachel-/Reihenänderungen erhalten.
+51 ursprüngliche produktive Daten-/Lizenz-/Profildateien hashidentisch.
+Prüfläufe beendet; fünf native Dateien nachweislich entsperrt.
+
+M4 gestoppt: keine gültige signierte Testlizenz, keine native Computer Use und
+keine separate Windows-Umgebung/Testbenutzer verfügbar. Installierter positiver
+Reihen-/PDF-/Mail-/Mikrofon-/Projekttransfer-Ablauf und menschliche Abnahme offen.
+Neue Tests 7/7, Reihen-/PDF-/Mail-/M80 62/62, Protokoll-Goldens 25/25.
+M85 18/22 unveränderte bekannte Baselines; weitere alte Lizenz-/Badgeprüfungen
+nicht als grün ausgegeben. Keine Baselinereparatur, kein Git-Abschluss.
+HEAD `0a91ca8c` / `feature/project-meeting-series` unverändert.
+
+Bericht: `docs/PROTOKOLL_SETUP_PRUEFBERICHT.md`.
+Anleitung: `docs/PROTOKOLL_SETUP_ABNAHME.md`.
+Nächster offener Schritt: gültige Lizenz und native Abnahme in separater
+Windows-Testumgebung, keine weiteren Funktions-/Editorumbauten.
+
+---
+## 2026-09-15 – Protokoll-Setup M1: Auslieferungsprüfung
+
+Auftrag: lokale Setup.exe zur Nutzerabnahme, kein Git-Abschluss. Branch
+`feature/project-meeting-series`, HEAD `0a91ca8c` plus unveränderter bestehender
+Arbeitsbaum. M1 abgeschlossen: Electron/NSIS, Modul-/Lizenzgrenzen und native
+Diktatimporte geprüft. Genau zwei kompatible Protokoll-/PDF-Layoutprofile werden
+gezielt ausgeliefert; Kachelansicht ist im Code definiert. Kit-Core bleibt,
+WPF-Editor ist für normalen Layout-Restore nicht erforderlich. MSVC/OpenMP
+müssen app-lokal ergänzt werden. Separate Abnahmeidentität/Datenwurzel geplant.
+
+Nächster offener Schritt M2: Protokollumfang und Editorzugänge absichern.
+Offen: gültige signierte Testlizenz; native Computer Use/VM/Testbenutzer fehlen.
+Plan: `docs/PROTOKOLL_SETUP_PLAN.md`, Audit: `scripts/protokollSetupAudit.cjs`.
+Keine produktive DB, Lizenz, Profile oder Satzregeln geändert.
+
+---
+## 2026-09-15 – Besprechungsreihen M1–M5
+
+Die beauftragte zusammenhängende Funktion ist technisch umgesetzt und geprüft auf `feature/project-meeting-series`, Basis `0a91ca8c`. Keine allgemeine Modularisierung. Drei Reihen bleiben im vorhandenen Protokollmodul, mit getrennten Daten und gemeinsamem PDF-V2-Renderer/Editor. Projektformular/Kachel-Hülle, optionaler Bauherr, Nur-Lesen-Historie, Transfer und Ausgabe geprüft. Neue Gruppen 30/30, Windows-Electron-Ablauf grün, Protokoll-Goldens 25/25; alle 49 V2-Snapshots unverändert gegenüber HEAD. Acht rote gezielte Bestandsprüfungen und vier M85-Baselines getrennt im Bericht.
+
+Siehe `PROJEKT_BESPRECHUNGSREIHEN_PLAN.md` und `PROJEKT_BESPRECHUNGSREIHEN_PRUEFBERICHT.md`. Kein Commit/Merge/Push, produktive Datenbanken unverändert. Nächster offener Schritt: fachliche Nutzerabnahme, danach separater Git-Auftrag.
+
+---
+
 ## 2026-09-14 – Rechnung RE-S1.1 / PR #348: technischer Abschluss
 
 Der fehlende Bestandsschutz-Nachweis läuft nun reproduzierbar mit einer frisch
@@ -935,3 +998,40 @@ noch repariert oder durch Golden-Updates maskiert.
   werden im Abschlussbericht genannt; keine neue Entwicklungsachse.
 
 ---
+
+
+## Protokoll-Setup M2 – 15.09.2026
+
+Auslieferungsgrenzen/Editorzugänge und eingefrorene Layouts umgesetzt.
+Neue Tests 7/7; relevante Reihen-/PDF-/Mail-/M80-Prüfungen 62/62; Vertragscheck-Selbsttest grün.
+Genau zwei Profile, vier benannte globale Tabellenlayouts und fünf Druckabstände, keine persönliche Datenübernahme.
+Identität: de.bbm.baubesprechungsmanager.protokoll.abnahme, BBM Protokoll (Abnahme), Version 1.5.0, STABLE/release; Daten ausschließlich APPDATA/BBM-Protokoll-Abnahme.
+Nächster Schritt M3: NSIS/Paketprüfung. Offen: gültige Lizenz, native Windows-Testumgebung/Bedienung.
+Kein Commit/PR.
+
+---
+
+## 2026-09-18 – Projektübersicht/KW: gezielte Sichtnachbesserung
+
+Im laufenden Besprechungsreihenpaket wurden ausschließlich Projektkacheln und
+die abgeleitete KW-Anzeige nach Nutzerprüfung nachgebessert. Nach der erneuten
+Kartenverdichtung auf maximal 240 CSS-Pixel sind im 1390-CSS-Pixel-Electron-
+Viewport mindestens vier Kachelspalten belegt; schmale Fenster brechen ohne
+Überlauf um. Die KW bleibt berechnet wie bisher, ist neben dem
+Datumsfeld aber nur noch Text und keine Aktion. Bestehende Registry-IDs und
+Parents bleiben erhalten. Vorschau, PDF, Seitenränder, TOP-Fachlogik, Profile,
+Setup und Version sind unverändert. Technische Electron-/Screenshot-Abnahme
+PASS; menschliche Sichtabnahme bleibt der nächste Schritt. Kein Commit/Push.
+
+---
+
+## 2026-09-18 – Kundenupdate 1.5.1 vorbereitet
+
+Die abgenommenen Korrekturen sind für ein Kundenupdate vorbereitet. Die zentrale
+Paketversion und das Lockfile stehen auf `1.5.1`; Kunden-App-ID, Installer-
+Identität und `%APPDATA%\BBM-Kunden\c-…` werden nicht verändert. Der bestehende
+Kundenbuild verwendet weiterhin die stabile Kundennummer als Profilkey. Projekte,
+Firmen, Einstellungen und die lokale gültige Lizenz bleiben daher im vorhandenen
+Kundenprofil. Der Aktualisierungstest mit einer echten bestehenden Installation
+ist bewusst nicht ausgeführt; kein Setup, keine Lizenz, keine Installation und
+kein Commit/Push wurden erzeugt.

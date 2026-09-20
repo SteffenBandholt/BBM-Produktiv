@@ -2,6 +2,7 @@
 const { initDatabase } = require("../db/database");
 const projectsRepo = require("../db/projectsRepo");
 const meetingsRepo = require("../db/meetingsRepo");
+const { normalizeSeriesKey, getSeriesDefinition, resolveSeriesTitle } = require("../../shared/meetingSeries.cjs");
 const projectSettingsRepo = require("../db/projectSettingsRepo");
 const meetingTopsRepo = require("../db/meetingTopsRepo"); 
 const { getFirmDirectoryService } = require("../domain/firms/FirmDirectoryService");
@@ -339,8 +340,10 @@ function _buildTodoRows(db, rows) {
       });
       return {
         id: String(t?.id ?? "").trim(),
+        series_key: normalizeSeriesKey(t?.series_key),
+        series_label: getSeriesDefinition(t?.series_key).label,
         level: Number(t?.level ?? t?.top_level ?? 0) || 0,
-        position: _normalizeTopNumber(t),
+        position: t.project_series_number || _normalizeTopNumber(t),
         title: String(t?.title || "").trim(),
         responsible_kind: kind,
         responsible_id: id,
@@ -360,6 +363,8 @@ function _buildTodoRows(db, rows) {
         const byResp = a.responsible.localeCompare(b.responsible, "de-DE", { sensitivity: "base" });
         if (byResp !== 0) return byResp;
       }
+      const bySeries = getSeriesDefinition(a._rawTop.series_key).bit - getSeriesDefinition(b._rawTop.series_key).bit;
+      if (bySeries) return bySeries;
       return _compareTopNumbers(a._rawTop, b._rawTop);
     })
     .map(({ _rawTop, ...row }) => row);
@@ -588,6 +593,24 @@ function _mapTopRow(row) {
   };
 }
 
+// Project-wide lists retain the three existing columns. Qualify numbers only
+// when additional series occur, after hierarchy calculation and numeric sort.
+function _qualifyProjectSeriesNumbers(rows, { qualifyTopText = true } = {}) {
+  const list = Array.isArray(rows) ? rows : [];
+  const hasAdditionalSeries = list.some((row) => normalizeSeriesKey(row?.series_key) !== "construction");
+  if (hasAdditionalSeries) list.sort((a, b) =>
+    getSeriesDefinition(a.series_key).bit - getSeriesDefinition(b.series_key).bit || _compareTopNumbers(a, b));
+  for (const row of list) {
+    row.series_key = normalizeSeriesKey(row.series_key);
+    row.series_label = getSeriesDefinition(row.series_key).label;
+    if (hasAdditionalSeries) {
+      row.project_series_number = `${getSeriesDefinition(row.series_key).title} ${row.topNumberText}`;
+      if (qualifyTopText) row.topNumberText = row.project_series_number;
+    }
+  }
+  return list;
+}
+
 function _isDoneStatus(status) {
   return String(status || "").trim().toLowerCase() === "erledigt";
 }
@@ -714,6 +737,9 @@ const PRINT_SETTINGS_KEYS = [
     "print.v2.pagePadBottomMm",
     "print.v2.footerReserveMm",
     "print.nextMeeting.enabled",
+    "print.nextMeeting.optionAEnabled",
+    "print.nextMeeting.optionBEnabled",
+    "print.nextMeeting.optionBText",
     "print.nextMeeting.date",
     "print.nextMeeting.time",
     "print.nextMeeting.place",
@@ -845,23 +871,33 @@ function _buildLogos(settings) {
 
 function _resolveNextMeetingForPrint({ mode, meeting, settings } = {}) {
   const normalizedMode = String(mode || "").trim().toLowerCase();
+  const parseOptionFlag = (value, fallback) => value == null ? fallback : _parseBool(value);
   const meetingNextMeeting = {
     enabled: _parseBool(meeting?.next_meeting_enabled),
+    optionAEnabled: parseOptionFlag(meeting?.next_meeting_option_a_enabled, true),
+    optionBEnabled: parseOptionFlag(meeting?.next_meeting_option_b_enabled, false),
+    optionBText: String(meeting?.next_meeting_option_b_text || ""),
     date: String(meeting?.next_meeting_date || "").trim(),
     time: String(meeting?.next_meeting_time || "").trim(),
     place: String(meeting?.next_meeting_place || "").trim(),
     extra: String(meeting?.next_meeting_extra || "").trim(),
   };
   const hasMeetingNextMeeting =
+    meeting?.next_meeting_enabled != null ||
     meetingNextMeeting.enabled ||
     !!(
       meetingNextMeeting.date ||
       meetingNextMeeting.time ||
       meetingNextMeeting.place ||
-      meetingNextMeeting.extra
+      meetingNextMeeting.extra ||
+      meetingNextMeeting.optionBEnabled ||
+      meetingNextMeeting.optionBText.trim()
     );
   const settingsNextMeeting = {
     enabled: _parseBool(settings?.["print.nextMeeting.enabled"]),
+    optionAEnabled: parseOptionFlag(settings?.["print.nextMeeting.optionAEnabled"], true),
+    optionBEnabled: parseOptionFlag(settings?.["print.nextMeeting.optionBEnabled"], false),
+    optionBText: String(settings?.["print.nextMeeting.optionBText"] || ""),
     date: String(settings?.["print.nextMeeting.date"] || "").trim(),
     time: String(settings?.["print.nextMeeting.time"] || "").trim(),
     place: String(settings?.["print.nextMeeting.place"] || "").trim(),
@@ -871,9 +907,10 @@ function _resolveNextMeetingForPrint({ mode, meeting, settings } = {}) {
   if (normalizedMode === "protocol") {
     return hasMeetingNextMeeting
       ? meetingNextMeeting
-      : { enabled: false, date: "", time: "", place: "", extra: "" };
+      : { enabled: false, optionAEnabled: true, optionBEnabled: false, optionBText: "", date: "", time: "", place: "", extra: "" };
   }
 
+  if (normalizeSeriesKey(meeting?.series_key) !== "construction" || Number(meeting?.is_closed) === 1) return meetingNextMeeting;
   return hasMeetingNextMeeting ? meetingNextMeeting : settingsNextMeeting;
 }
 
@@ -910,6 +947,9 @@ async function _buildPrintRuntimeContext({
 } = {}) {
   const project = projectId ? projectsRepo.getById(projectId) : null;
   const meeting = meetingId ? meetingsRepo.getMeetingById(meetingId) : null;
+  if (meetingId && (!meeting || meeting.project_id !== projectId)) {
+    throw new Error("Besprechung gehört nicht zum ausgewählten Projekt oder wurde nicht gefunden.");
+  }
   const settingsBase = _loadSettings(db);
   const projectSettings = projectId
     ? projectSettingsRepo.getMany(projectId, PROJECT_PRINT_SETTINGS_KEYS)
@@ -923,7 +963,8 @@ async function _buildPrintRuntimeContext({
   const { resolvePrintUserData } = await import("../../shared/print/userDataResolver.mjs");
   const resolvedUserData = resolvePrintUserData({ settings: settingsRaw, userProfile });
   const settings = resolvedUserData.settings;
-  const protocolTitle = String(settings?.["pdf.protocolTitle"] || "").trim();
+  const seriesKey = normalizeSeriesKey(meeting?.series_key);
+  const protocolTitle = resolveSeriesTitle(seriesKey, settings?.["pdf.protocolTitle"]);
   const printProfile = _resolvePrintProfile(mode);
   const userData = resolvedUserData.footer;
   const logos = _buildLogos(settings);
@@ -935,6 +976,7 @@ async function _buildPrintRuntimeContext({
   return {
     project,
     meeting,
+    seriesKey,
     settings,
     protocolTitle,
     printProfile,
@@ -982,6 +1024,7 @@ function _loadPrintDocumentContent({
     _applyHierDisplayNumbers(tops, false);
     tops = _applyPrintFlagsAndFilter(tops, { includeHidden: true });
     _sortTopsByNumber(tops);
+    _qualifyProjectSeriesNumbers(tops);
   } else if (mode === "firms") {
     firms = projectId
       ? getFirmDirectoryService().listProjectParticipants({ projectId })
@@ -992,6 +1035,7 @@ function _loadPrintDocumentContent({
     const rowsRaw = projectId ? meetingTopsRepo.listLatestByProject(projectId) : [];
     const rows = (rowsRaw || []).map(_mapTopRow);
     _applyHierDisplayNumbers(rows, false);
+    _qualifyProjectSeriesNumbers(rows, { qualifyTopText: false });
     todoRows = _buildTodoRows(db, rows);
     const filter = _normalizeTodoResponsibleFilter(todoResponsibleFilter);
     if (filter && filter !== "all") {

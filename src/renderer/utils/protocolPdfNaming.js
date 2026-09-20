@@ -1,3 +1,5 @@
+import { normalizeSeriesKey, resolveSeriesTitle } from "../../shared/meetingSeries.mjs";
+
 function cleanPart(value) {
   return String(value || "")
     .replace(/[<>:"/\\|?*]/g, " ")
@@ -25,10 +27,12 @@ export function buildProtocolPdfFileName({
   protocolTitle = "",
   meetingIndex = "",
   meetingDate = "",
+  seriesKey,
+  meetingId = "",
 } = {}) {
   const projectNumberClean = cleanPart(projectNumber);
   const projectShortClean = cleanPart(projectShortName);
-  const protocolTitleClean = cleanPart(protocolTitle || "Protokoll");
+  const protocolTitleClean = cleanPart(resolveSeriesTitle(seriesKey, protocolTitle));
   const meetingIndexClean = cleanPart(meetingIndex);
   const meetingDateDot = formatDateDot(meetingDate);
 
@@ -36,9 +40,22 @@ export function buildProtocolPdfFileName({
     return "";
   }
 
-  return projectShortClean
+  const readable = projectShortClean
     ? `${projectNumberClean}_${projectShortClean}_${protocolTitleClean}_#${meetingIndexClean} - ${meetingDateDot}.pdf`
     : `${projectNumberClean}_${protocolTitleClean}_#${meetingIndexClean} - ${meetingDateDot}.pdf`;
+  return withMeetingPdfIdentity(readable, { seriesKey, meetingId });
+}
+
+export function withMeetingPdfIdentity(fileName, { seriesKey, meetingId } = {}) {
+  const key = normalizeSeriesKey(seriesKey);
+  const id = String(meetingId || "").trim();
+  if (!id) return fileName;
+  // Encode uppercase ASCII and delimiters explicitly: imported IDs remain
+  // distinct on case-insensitive Windows filesystems as well.
+  const encodedId = Array.from(id, (char) => /[A-Z_!'()*]/.test(char)
+    ? `%${char.charCodeAt(0).toString(16).toUpperCase()}` : encodeURIComponent(char)).join("");
+  const prefix = `${key}--${encodedId}__`;
+  return String(fileName || "").startsWith(prefix) ? String(fileName) : prefix + String(fileName || "BBM.pdf");
 }
 
 export function buildProtocolPdfFileInfo({
@@ -70,6 +87,8 @@ export function buildProtocolPdfFileInfo({
     protocolTitle,
     meetingIndex,
     meetingDate,
+    seriesKey: meeting?.series_key,
+    meetingId: meeting?.id,
   });
   if (!fileName) return null;
 

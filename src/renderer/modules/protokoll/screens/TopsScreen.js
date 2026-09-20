@@ -739,7 +739,7 @@ export default class TopsScreen {
         const nextMeta = value || null;
         owner.store.setState({
           meetingMeta: nextMeta,
-          isReadOnly: nextMeta ? Number(nextMeta.is_closed) === 1 : false,
+          isReadOnly: !nextMeta || Number(nextMeta.is_closed) === 1 || !!nextMeta.is_read_only,
         });
       },
       get meetingMeta() {
@@ -1499,7 +1499,6 @@ export default class TopsScreen {
       if (!saveRes?.ok) return;
       const res = await this.commands.deleteSelectedTop();
       if (!res?.ok) return;
-      await this._autoFixNumberGapsAfterDelete();
       const nextTop = this.store
         .getState()
         .tops.find((t) => String(t?.id) === String(nextSelectionId ?? "")) || null;
@@ -1673,99 +1672,6 @@ export default class TopsScreen {
     const index = ids.indexOf(key);
     if (index < 0) return null;
     return ids[index + 1] || ids[index - 1] || null;
-  }
-
-  _firstNumberGapFromItems(items = []) {
-    const rows = Array.isArray(items) ? items : [];
-    const groups = new Map();
-
-    for (const row of rows) {
-      const id = row?.id;
-      const level = Math.floor(Number(row?.level));
-      const number = Math.floor(Number(row?.number));
-      if (!id || !Number.isFinite(level) || level < 1 || level > 4) continue;
-      if (!Number.isFinite(number) || number < 1) continue;
-
-      const parentTopId = row?.parent_top_id ?? null;
-      const key = `${level}::${parentTopId ?? "root"}`;
-      if (!groups.has(key)) groups.set(key, { level, parentTopId, items: [] });
-      groups.get(key).items.push({ id, number });
-    }
-
-    const gaps = [];
-    for (const group of groups.values()) {
-      if (!group.items.length) continue;
-      const numbers = new Set();
-      let maxNumber = 0;
-      for (const item of group.items) {
-        numbers.add(item.number);
-        if (item.number > maxNumber) maxNumber = item.number;
-      }
-      if (maxNumber < 1) continue;
-
-      let missingNumber = null;
-      for (let i = 1; i <= maxNumber; i += 1) {
-        if (!numbers.has(i)) {
-          missingNumber = i;
-          break;
-        }
-      }
-      if (missingNumber === null) continue;
-
-      let lastTopId = null;
-      for (const item of group.items) {
-        if (item.number !== maxNumber) continue;
-        if (lastTopId === null || String(item.id) > String(lastTopId)) lastTopId = item.id;
-      }
-      if (!lastTopId) continue;
-
-      gaps.push({
-        level: group.level,
-        parentTopId: group.parentTopId,
-        missingNumber,
-        lastTopId,
-      });
-    }
-
-    gaps.sort((a, b) => {
-      if (a.level !== b.level) return a.level - b.level;
-      const ap = a.parentTopId ?? "";
-      const bp = b.parentTopId ?? "";
-      if (ap !== bp) return String(ap) < String(bp) ? -1 : 1;
-      return a.missingNumber - b.missingNumber;
-    });
-
-    return gaps[0] || null;
-  }
-
-  async _autoFixNumberGapsAfterDelete() {
-    if (this.store.getState().isReadOnly) return true;
-    if (typeof window.bbmDb?.meetingTopsFixNumberGap !== "function") return true;
-
-    const maxSteps = 20;
-    for (let i = 0; i < maxSteps; i += 1) {
-      const gap = this._firstNumberGapFromItems(this.store.getState().tops);
-      if (!gap?.lastTopId) return true;
-
-      const fixRes = await window.bbmDb.meetingTopsFixNumberGap({
-        meetingId: this.store.getState().meetingId || this.meetingId || null,
-        level: gap.level,
-        parentTopId: gap.parentTopId ?? null,
-        fromTopId: gap.lastTopId,
-        toNumber: gap.missingNumber,
-      });
-
-      if (!fixRes?.ok) {
-        this.store.setState({
-          error: fixRes?.error || fixRes?.errorCode || "Numbernluecke konnte nicht repariert werden",
-        });
-        return false;
-      }
-
-      await this._reloadTops({ keepSelection: false });
-    }
-
-    return true;
   }
 
   _awaitNextPaint() {

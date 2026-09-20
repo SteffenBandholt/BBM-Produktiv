@@ -18,6 +18,9 @@ import { openGlobalProtocolSettings } from "../modules/protokoll/settings/openGl
 import { TEXT_LIMIT_SETTINGS } from "../core/textregeln/index.js";
 import { DEFAULT_PAYMENT_TERM_DAYS, PAYMENT_TERM_SETTING_KEY } from "../../shared/rechnung/invoiceHeaderRules.mjs";
 
+const isStructuralEditingEnabled = () => globalThis.window?.bbmDistribution?.uiEditorEnabled !== false;
+const isInvoiceAvailable = () => !Array.isArray(globalThis.window?.bbmDistribution?.moduleIds) || window.bbmDistribution.moduleIds.includes("rechnung");
+
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
 const DEFAULT_V2_PRE_REMARKS_ENABLED = true;
@@ -290,6 +293,8 @@ export default class SettingsView {
       if (daysRemaining === 1) return "Lizenz laeuft in 1 Tag ab";
       return `Lizenz laeuft in ${daysRemaining} Tagen ab`;
     }
+
+    if (res?.valid) return "Lizenz ist gültig";
 
     return this._formatLicenseReason(res?.reason, fallbackReason);
   }
@@ -751,6 +756,27 @@ export default class SettingsView {
 
   _normalizePrintLayoutMmLimits(key) {
     return PRINT_LAYOUT_MM_LIMITS[String(key || "").trim()] || null;
+  }
+
+  _readProtocolPageMargins(inputs) {
+    const fields = {
+      marginTop: "print.v2.pagePadTopMm",
+      marginRight: "print.v2.pagePadRightMm",
+      marginBottom: "print.v2.pagePadBottomMm",
+      marginLeft: "print.v2.pagePadLeftMm",
+    };
+    const labels = { marginTop: "oben", marginRight: "rechts", marginBottom: "unten", marginLeft: "links" };
+    const result = {};
+    for (const [field, key] of Object.entries(fields)) {
+      const limits = this._normalizePrintLayoutMmLimits(key);
+      const raw = String(inputs.get(key)?.value ?? "").trim().replace(",", ".");
+      const value = Number(raw);
+      if (!raw || !Number.isFinite(value) || value < limits.min || value > limits.max) {
+        throw new Error(`Der Seitenrand ${labels[field]} muss zwischen ${limits.min} und ${limits.max} mm liegen.`);
+      }
+      result[field] = Math.round(value * 10) / 10;
+    }
+    return result;
   }
 
   _parseInvoicePaymentTermDays(value) {
@@ -4022,7 +4048,8 @@ export default class SettingsView {
       { key: "legal_notice", label: "Rechtlicher Hinweis" },
     ]);
 
-    wrap.append(profileCard, addressCard, invoiceCard);
+    wrap.append(profileCard, addressCard);
+    if (isInvoiceAvailable()) wrap.append(invoiceCard);
 
     let profile = null;
     if (typeof api.userProfileGet === "function") {
@@ -4355,8 +4382,10 @@ export default class SettingsView {
       { key: "print.v2.pagePadLeftMm", label: "Rand links (mm)", type: "number" },
       { key: "print.v2.pagePadRightMm", label: "Rand rechts (mm)", type: "number" },
       { key: "print.v2.pagePadBottomMm", label: "Rand unten (mm)", type: "number" },
-      { key: "print.v2.footerReserveMm", label: "Footer-Reserve (mm)", type: "number" },
     ];
+    if (isStructuralEditingEnabled()) {
+      layoutFields.push({ key: "print.v2.footerReserveMm", label: "Footer-Reserve (mm)", type: "number" });
+    }
     for (const field of layoutFields) {
       layoutCard.append(
         renderField({
@@ -4388,6 +4417,9 @@ export default class SettingsView {
         profile = resProfile.profile || null;
       }
     }
+    const footerDefaults = profile
+      ? this._normalizeUserProfileRecord(profile)
+      : this._getNormalizedUserFooterDefaults();
 
     if (typeof api.appSettingsGetMany === "function") {
       const res = await api.appSettingsGetMany([
@@ -4440,6 +4472,22 @@ export default class SettingsView {
       }
     }
 
+    if (typeof api.protocolPdfGetPageMargins === "function") {
+      const marginResult = await api.protocolPdfGetPageMargins();
+      if (marginResult?.ok) {
+        const marginValues = {
+          "print.v2.pagePadTopMm": marginResult.margins?.marginTop,
+          "print.v2.pagePadRightMm": marginResult.margins?.marginRight,
+          "print.v2.pagePadBottomMm": marginResult.margins?.marginBottom,
+          "print.v2.pagePadLeftMm": marginResult.margins?.marginLeft,
+        };
+        for (const [key, value] of Object.entries(marginValues)) {
+          const input = inputs.get(key);
+          if (input) input.value = String(value ?? PRINT_LAYOUT_DEFAULT_VALUES[key]);
+        }
+      }
+    }
+
     this.inpPdfFooterPlace = inputs.get("pdf.footerPlace") || null;
     this.inpPdfFooterDate = inputs.get("pdf.footerDate") || null;
     this.inpPdfFooterName1 = inputs.get("pdf.footerName1") || null;
@@ -4486,13 +4534,16 @@ export default class SettingsView {
           );
         }
         const protocolsDir = String(inputs.get("pdf.protocolsDir")?.value || "").trim() || this._pdfSettingsDefaults().protocolsDir;
-        const layoutValues = {
-          "print.v2.pagePadTopMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.pagePadTopMm")?.value, "print.v2.pagePadTopMm"),
-          "print.v2.pagePadLeftMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.pagePadLeftMm")?.value, "print.v2.pagePadLeftMm"),
-          "print.v2.pagePadRightMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.pagePadRightMm")?.value, "print.v2.pagePadRightMm"),
-          "print.v2.pagePadBottomMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.pagePadBottomMm")?.value, "print.v2.pagePadBottomMm"),
+        let pageMargins;
+        try {
+          pageMargins = this._readProtocolPageMargins(inputs);
+        } catch (error) {
+          alert(error?.message || "Die Seitenränder sind ungültig.");
+          return false;
+        }
+        const layoutValues = isStructuralEditingEnabled() ? {
           "print.v2.footerReserveMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.footerReserveMm")?.value, "print.v2.footerReserveMm"),
-        };
+        } : {};
 
         const payload = {
           "pdf.footerPlace": footerPlace,
@@ -4526,6 +4577,15 @@ export default class SettingsView {
           alert(res?.error || "Speichern fehlgeschlagen");
           return false;
         }
+        if (typeof api.protocolPdfSetPageMargins !== "function") {
+          alert("Die PDF-Seitenränder können in dieser Ausgabe nicht gespeichert werden.");
+          return false;
+        }
+        const marginResult = await api.protocolPdfSetPageMargins(pageMargins);
+        if (!marginResult?.ok) {
+          alert(marginResult?.error || "Die PDF-Seitenränder konnten nicht gespeichert werden.");
+          return false;
+        }
 
         if (this.router?.context) {
           this.router.context.settings = {
@@ -4541,6 +4601,7 @@ export default class SettingsView {
   }
 
   async _createInvoiceSettingsContent() {
+    if (!isInvoiceAvailable()) return;
     const api = window.bbmDb || {};
     const wrap = document.createElement("div");
     wrap.classList.add("bbm-form-content");
@@ -4665,13 +4726,13 @@ export default class SettingsView {
     note.style.fontSize = "12px";
     note.style.lineHeight = "1.45";
     note.textContent =
-      "Lizenzstatus wird hier nur angezeigt. Lizenzverwaltung und Generator sind in die externe Lizenz-App ausgelagert.";
+      "Hier sehen Sie Ihre aktuell verwendete Lizenz. Eine neue BBM-Lizenzdatei können Sie sicher importieren oder aktualisieren.";
 
     const doubleClickHint = document.createElement("div");
     doubleClickHint.style.fontSize = "12px";
     doubleClickHint.style.lineHeight = "1.45";
     doubleClickHint.style.opacity = "0.82";
-    doubleClickHint.textContent = "Hinweis: Sie koennen eine erhaltene .bbmlic-Datei direkt per Doppelklick oeffnen und importieren.";
+    doubleClickHint.textContent = "Eine erhaltene .bbmlic-Datei können Sie hier auswählen oder direkt per Doppelklick öffnen.";
 
     const status = document.createElement("div");
     status.classList.add("bbm-form-card");
@@ -4683,21 +4744,42 @@ export default class SettingsView {
     btnReload.type = "button"; 
     btnReload.textContent = "Status aktualisieren"; 
     applyPopupButtonStyle(btnReload); 
+
+    const btnImport = document.createElement("button");
+    btnImport.type = "button";
+    btnImport.textContent = "Lizenz importieren / aktualisieren";
+    applyPopupButtonStyle(btnImport, { variant: "primary" });
+
+    const feedback = document.createElement("div");
+    feedback.style.fontSize = "12px";
+    feedback.style.minHeight = "18px";
+
+    const actions = document.createElement("div");
+    actions.style.display = "flex";
+    actions.style.gap = "8px";
+    actions.style.flexWrap = "wrap";
+    actions.append(btnImport, btnReload);
+
+    const displayNames = (values, labels) => {
+      const normalized = Array.isArray(values) ? values.map((value) => String(value || "").trim().toLowerCase()).filter(Boolean) : [];
+      return normalized.length ? normalized.map((value) => labels[value] || value).join(", ") : "Keine";
+    };
  
     const renderStatus = (res, fallbackError = "") => { 
       const valid = !!res?.valid; 
       const reason = String(res?.reason || "").trim(); 
-      const licensedToText = String(res?.licensedToText || "").trim(); 
       const licenseId = String(res?.licenseId || "").trim() || "-"; 
       const customer = String(res?.customerName || "").trim() || "-"; 
-      const machineId = String(res?.machineId || "").trim() || "-"; 
+      const validFrom = this._formatLicenseDate(res?.validFrom);
       const validUntil = this._formatLicenseDate(res?.validUntil); 
+      const modules = displayNames(res?.modules, { protokoll: "Protokoll", rechnung: "Rechnung", restarbeiten: "Restarbeiten", sigeko: "SiGeKo" });
+      const features = displayNames(res?.features, { diktat: "Diktat", audio: "Audio / Diktat", pdf: "PDF", export: "Export", mail: "E-Mail" });
       const reasonText = this._formatLicenseReason(reason, fallbackError); 
       const warningText = this._formatLicenseWarning(res, fallbackError); 
  
       status.textContent = valid 
-        ? `${licensedToText ? `Lizenz: ${licensedToText}\n` : ""}Gueltig fuer: ${customer}\nLizenz-ID: ${licenseId}\nMachine-ID: ${machineId}\nGueltig bis: ${validUntil}\nHinweis: ${warningText}` 
-        : `Ungueltig\nGrund: ${reasonText}\nLizenz-ID: ${licenseId}\nMachine-ID: ${machineId}`; 
+        ? `Lizenznehmer: ${customer}\nLizenz-ID: ${licenseId}\nFreigeschaltete Module: ${modules}\nZusatzfunktionen: ${features}\nLaufzeit: ${validFrom} bis ${validUntil}\nHinweis: ${warningText}`
+        : `Lizenz nicht gültig\nGrund: ${reasonText}\nLizenz-ID: ${licenseId}`;
     }; 
 
     const loadStatus = async () => {
@@ -4707,10 +4789,6 @@ export default class SettingsView {
       }
       try {
         const res = await api.licenseGetStatus();
-        if (!res?.ok) {
-          renderStatus(res || {}, res?.error || "Lizenzstatus konnte nicht geladen werden.");
-          return;
-        }
         renderStatus(res || {});
       } catch (e) {
         renderStatus({}, e?.message || "Lizenzstatus konnte nicht geladen werden.");
@@ -4718,7 +4796,39 @@ export default class SettingsView {
     };
 
     btnReload.addEventListener("click", loadStatus);
-    card.append(title, note, doubleClickHint, status, btnReload);
+    btnImport.addEventListener("click", async () => {
+      if (typeof api.licenseImport !== "function") {
+        feedback.textContent = "Der Lizenzimport ist in dieser Ausgabe nicht verfügbar.";
+        feedback.style.color = "#b42318";
+        return;
+      }
+      btnImport.disabled = true;
+      feedback.textContent = "Lizenzdatei wird geprüft …";
+      feedback.style.color = "#475467";
+      try {
+        const result = await api.licenseImport();
+        if (result?.canceled) {
+          feedback.textContent = "Keine Lizenzdatei ausgewählt.";
+          return;
+        }
+        if (!result?.ok) {
+          feedback.textContent = `Lizenz wurde nicht übernommen: ${this._formatLicenseReason(result?.reason, result?.error)}`;
+          feedback.style.color = "#b42318";
+          await loadStatus();
+          return;
+        }
+        renderStatus(result);
+        feedback.textContent = "Lizenz wurde übernommen. Bitte BBM neu starten, damit alle freigeschalteten Funktionen aktiv werden.";
+        feedback.style.color = "#137a47";
+      } catch (error) {
+        feedback.textContent = `Lizenz wurde nicht übernommen: ${error?.message || "Import fehlgeschlagen."}`;
+        feedback.style.color = "#b42318";
+        await loadStatus();
+      } finally {
+        btnImport.disabled = false;
+      }
+    });
+    card.append(title, note, doubleClickHint, status, actions, feedback);
     wrap.append(card);
 
     void loadStatus();
@@ -4954,6 +5064,7 @@ export default class SettingsView {
 
 
   async _openDevelopmentModal() {
+    if (!isStructuralEditingEnabled()) return;
     const api = window.bbmDb || {};
     const has = (name) => typeof api?.[name] === "function";
     const DEV_AUDIO_DICTATION_UNLOCK_KEY = "dev.audioDictationUnlock";
@@ -6719,7 +6830,7 @@ export default class SettingsView {
 
     const tileOutputPrint = mkTile({
       titleText: "Ausgabe & Druck",
-      subText: "Footer, Layout, Logos und Speicherorte",
+      subText: "Footer, Seitenränder, Logos und Speicherorte",
       onClick: async () => {
         await this._createOutputPrintContent();
       },
@@ -6770,6 +6881,82 @@ export default class SettingsView {
       },
     });
 
+    const tileLicenseTool = mkTile({
+      titleText: "Lizenztool",
+      subText: "Interne Kundenlizenzen und Setups bauen",
+      onClick: async () => {
+        const api = window.bbmDb || {};
+        const wrap = document.createElement("div");
+        wrap.classList.add("bbm-form-content");
+        wrap.style.display = "grid";
+        wrap.style.gap = "12px";
+
+        const intro = document.createElement("div");
+        intro.textContent = "Startet das interne Lizenztool direkt aus dem aktuellen Entwicklungsstand. Kundendaten werden nur lesend aus dieser BBM-Dev-Datenbank übernommen.";
+        intro.style.lineHeight = "1.45";
+
+        const source = document.createElement("div");
+        source.style.fontSize = "12px";
+        source.style.color = "#475467";
+
+        const statusLine = document.createElement("div");
+        statusLine.style.minHeight = "20px";
+        statusLine.style.fontSize = "12px";
+
+        const startButton = document.createElement("button");
+        startButton.type = "button";
+        startButton.textContent = "Tool starten";
+        applyPopupButtonStyle(startButton, { variant: "primary" });
+        startButton.onclick = async () => {
+          if (startButton.disabled || typeof api.devLicenseToolLaunch !== "function") return;
+          startButton.disabled = true;
+          statusLine.textContent = "Lizenztool wird gestartet …";
+          statusLine.style.color = "#475467";
+          try {
+            const result = await api.devLicenseToolLaunch({ customerId: "" });
+            if (!result?.ok) {
+              statusLine.textContent = result?.message || result?.error || "Lizenztool konnte nicht gestartet werden.";
+              statusLine.style.color = "#b42318";
+              return;
+            }
+            statusLine.textContent = "Lizenztool wurde geöffnet.";
+            statusLine.style.color = "#137a47";
+          } catch (error) {
+            statusLine.textContent = error?.message || "Lizenztool konnte nicht gestartet werden.";
+            statusLine.style.color = "#b42318";
+          } finally {
+            startButton.disabled = false;
+          }
+        };
+
+        let status = null;
+        try {
+          status = typeof api.devLicenseToolStatus === "function" ? await api.devLicenseToolStatus() : null;
+        } catch (_error) {
+          status = null;
+        }
+        const ready = status?.ok && status?.allowed && status?.sourceReady;
+        startButton.disabled = !ready;
+        source.textContent = ready
+          ? `Quellstand: ${status.sourcePath}`
+          : status?.message || "Der interne Lizenztool-Quellstand ist nicht startbereit.";
+        if (!ready) {
+          statusLine.textContent = "Einrichtung: Im Ordner C:\\01_Projekte\\license-tool einmal npm install ausführen und BBM-Dev neu öffnen.";
+          statusLine.style.color = "#b42318";
+        }
+
+        wrap.append(intro, source, startButton, statusLine);
+        this._openSettingsModal({
+          title: "Lizenztool",
+          content: [wrap],
+          closeOnly: true,
+          standardForm: true,
+        });
+      },
+    });
+    tileLicenseTool.style.display = "none";
+    tileLicenseTool.setAttribute("data-settings-dev-entry", "license-tool");
+
     const tileArchive = mkTile({
       titleText: "Archiv",
       subText: "Archivierte Projekte",
@@ -6804,7 +6991,7 @@ export default class SettingsView {
       key: "general",
       titleText: "Allgemein",
       subText: "Persoenliche Daten und Freischaltung.",
-      tiles: [tileProfileAddress, tileLicense],
+      tiles: [tileProfileAddress, tileLicense, tileLicenseTool],
       defaultOpen: true,
     });
 
@@ -6826,7 +7013,7 @@ export default class SettingsView {
       key: "module",
       titleText: "Module",
       subText: "Fachmodule und Erweiterungen.",
-      tiles: [tileProtocol, tileInvoices],
+      tiles: isInvoiceAvailable() ? [tileProtocol, tileInvoices] : [tileProtocol],
     });
 
     const groupDev = mkGroup({
@@ -6838,16 +7025,26 @@ export default class SettingsView {
     });
     groupDev.children[1]?.append(tileInvoicesDesign);
 
-    tiles.append(groupGeneral, groupInput, groupOutput, groupModule, groupDev);
+    tiles.append(groupGeneral, groupInput, groupOutput, groupModule);
+    if (isStructuralEditingEnabled()) tiles.append(groupDev);
     root.append(head, tiles);
     this.root = root;
 
-    if (typeof this.router?.isRechnungenDesignAvailable === "function") {
+    if (isInvoiceAvailable() && typeof this.router?.isRechnungenDesignAvailable === "function") {
       void this.router.isRechnungenDesignAvailable().then((available) => {
         if (this.root !== root) return;
         tileInvoicesDesign.style.display = available ? "flex" : "none";
       }).catch(() => {
         tileInvoicesDesign.style.display = "none";
+      });
+    }
+
+    if (typeof window.bbmDb?.devLicenseToolStatus === "function") {
+      void window.bbmDb.devLicenseToolStatus().then((status) => {
+        if (this.root !== root) return;
+        tileLicenseTool.style.display = status?.ok && status?.allowed ? "flex" : "none";
+      }).catch(() => {
+        tileLicenseTool.style.display = "none";
       });
     }
 
@@ -6957,7 +7154,7 @@ export default class SettingsView {
     if (this.settingsModalEl) {
       this.settingsModalEl.classList.toggle("bbm-popup-standard", !!standardForm);
       const isCompactPopup =
-        titleNorm === "lizenz" || titleNorm === "entwicklung" || titleNorm === "adminbereich";
+        titleNorm === "lizenz" || titleNorm === "lizenztool" || titleNorm === "entwicklung" || titleNorm === "adminbereich";
       const isPrintSettingsPopup = titleNorm === "druckeinstellungen";
       const isLayoutPopup = titleNorm === "druck-layout";
       const isTableLayoutPopup = titleNorm === "tabellenlayouts";

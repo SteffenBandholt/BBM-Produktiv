@@ -53,8 +53,8 @@ async function runProjectBuilderFormTests(run) {
       assert.deepEqual(field.patch(), {}); assert.equal(field.validationMessage(), ""); assert.equal(field.firms.size, 2);
       assert.equal(field.input.children.length, 3); assert.match(field.input.children[1].textContent,/Zentral:/); assert.match(field.input.children[2].textContent,/Projekt:/);
     });
-    await run("Bauherr form: new project requires explicit existing global selection", async () => {
-      calls = []; await make(null); assert.equal(calls.length, 1); assert.equal(field.input.value, ""); assert.match(field.validationMessage(), /Bauherrn/);
+    await run("Bauherr form: new project permits missing builder and retains explicit existing selection", async () => {
+      calls = []; await make(null); assert.equal(calls.length, 1); assert.equal(field.input.value, ""); assert.equal(field.input.children[0].textContent, "nicht angegeben"); assert.equal(field.validationMessage(), ""); assert.deepEqual(field.patch(), {});
       field.input.value = key(globalFirm); field.input.onchange(); assert.equal(field.validationMessage(), ""); assert.deepEqual(field.patch(), {bauherr:{kind:"global_firm",id:"global"}}); assert.match(field.status.textContent,/Weg 1/);
     });
     await run("Bauherr form: persisted global and local references load without implicit writes; changed choice and explicit clear are distinct", async () => {
@@ -76,7 +76,7 @@ async function runProjectBuilderFormTests(run) {
     });
     await run("Bauherr form: failed directory load preserves choice and allows explicit retry without silently applying data", async () => {
       await make(); field.input.value=key(projectFirm); error=true; await field.load();
-      assert.equal(field.ready,false); assert.equal(field.input.disabled,true); assert.equal(field.refresh.disabled,false); assert.equal(field.input.value,key(projectFirm)); assert.match(field.status.textContent,/Testfehler/); assert.match(field.validationMessage(),/nicht verfügbar/);
+      assert.equal(field.ready,false); assert.equal(field.input.disabled,true); assert.equal(field.refresh.disabled,false); assert.equal(field.input.value,key(projectFirm)); assert.match(field.status.textContent,/Testfehler/); assert.match(field.validationMessage(),/nicht geladen/);
       error=false; await field.refresh.onclick(); assert.equal(field.ready,true); assert.equal(field.input.disabled,false); assert.deepEqual(field.patch(),{bauherr:{kind:"project_firm",id:"local"}});
     });
     await run("Bauherr form: saved unavailable reference is preserved even if lookup fails", async () => {

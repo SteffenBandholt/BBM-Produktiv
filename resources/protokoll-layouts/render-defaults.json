@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 1,
+  "tableLayouts": [
+    {
+      "moduleId": "protokoll",
+      "tableKey": "print.todo.todoTable",
+      "orientation": "portrait",
+      "layout": {
+        "variant": "portrait",
+        "columns": [],
+        "pdf": {
+          "rootVars": {
+            "--bbm-todo-col-top-width": "21mm",
+            "--bbm-todo-col-top-padding-inline": "0.5mm",
+            "--bbm-todo-col-top-font-size": "10pt",
+            "--bbm-todo-col-kurztext-width": "100mm",
+            "--bbm-todo-col-kurztext-padding-inline": "1mm",
+            "--bbm-todo-col-kurztext-font-size": "10pt",
+            "--bbm-todo-col-status-width": "15mm",
+            "--bbm-todo-col-status-padding-inline": "1mm",
+            "--bbm-todo-col-status-font-size": "8pt",
+            "--bbm-todo-col-fertig_bis-width": "15mm",
+            "--bbm-todo-col-fertig_bis-padding-inline": "1mm",
+            "--bbm-todo-col-fertig_bis-font-size": "8pt",
+            "--bbm-todo-col-ampel-width": "10mm",
+            "--bbm-todo-col-ampel-padding-inline": "1mm",
+            "--bbm-todo-col-ampel-font-size": "8pt"
+          }
+        }
+      }
+    },
+    {
+      "moduleId": "protokoll",
+      "tableKey": "protokoll_participants",
+      "orientation": "portrait",
+      "layout": {
+        "variant": "portrait",
+        "columns": [
+          {
+            "key": "name",
+            "label": "Name",
+            "uiWidth": "minmax(0, 1.2fr)",
+            "pdfWidth": "35mm",
+            "weight": 4,
+            "required": true,
+            "previewValue": "Anna Beispiel",
+            "previewField": "name",
+            "headerLines": [
+              "Name"
+            ]
+          },
+          {
+            "key": "firm",
+            "label": "Firma",
+            "uiWidth": "minmax(0, 1fr)",
+            "pdfWidth": "auto",
+            "weight": 3,
+            "required": true,
+            "previewValue": "Muster GmbH",
+            "previewField": "firm",
+            "headerLines": [
+              "Firma"
+            ]
+          },
+          {
+            "key": "role",
+            "label": "Funktion/Rolle",
+            "uiWidth": "minmax(0, 1fr)",
+            "pdfWidth": "auto",
+            "weight": 3,
+            "required": true,
+            "previewValue": "Bauleitung",
+            "previewField": "role",
+            "headerLines": [
+              "Funktion/Rolle"
+            ]
+          },
+          {
+            "key": "phone",
+            "label": "Telefon",
+            "uiWidth": "110px",
+            "pdfWidth": "18mm",
+            "weight": 1,
+            "required": true,
+            "previewValue": "01234 5678",
+            "previewField": "phone",
+            "headerLines": [
+              "Telefon"
+            ]
+          },
+          {
+            "key": "email",
+            "label": "E-Mail",
+            "uiWidth": "minmax(0, 1.1fr)",
+            "pdfWidth": "auto",
+            "weight": 3,
+            "required": true,
+            "previewValue": "anna.beispiel@example.de",
+            "previewField": "email",
+            "headerLines": [
+              "E-Mail"
+            ]
+          },
+          {
+            "key": "present",
+            "label": "Anwesend",
+            "uiWidth": "72px",
+            "pdfWidth": "10mm",
+            "weight": 1,
+            "required": true,
+            "previewValue": "ja",
+            "previewField": "present",
+            "headerLines": [
+              "Anwesend"
+            ]
+          },
+          {
+            "key": "distribution",
+            "label": "Verteiler",
+            "uiWidth": "72px",
+            "pdfWidth": "10mm",
+            "weight": 1,
+            "required": true,
+            "previewValue": "ja",
+            "previewField": "distribution",
+            "headerLines": [
+              "Verteiler"
+            ]
+          }
+        ],
+        "pdf": {
+          "rootVars": {
+            "--bbm-part-col-name-width": "35mm",
+            "--bbm-part-col-name-padding-inline": "2.5mm",
+            "--bbm-part-col-name-font-size": "9pt",
+            "--bbm-part-col-marks-padding-inline": "1.4mm",
+            "--bbm-part-col-marks-font-size": "8pt",
+            "--bbm-part-col-contact-padding-inline": "6mm",
+            "--bbm-part-col-contact-font-size": "9pt"
+          }
+        }
+      }
+    },
+    {
+      "moduleId": "protokoll",
+      "tableKey": "protokoll_tops",
+      "orientation": "landscape",
+      "layout": {
+        "variant": "landscape",
+        "labels": {
+          "top": "TOP",
+          "text": "Gegenstand",
+          "meta": [
+            "Status",
+            "Fertig bis",
+            "verantw"
+          ]
+        },
+        "ui": {
+          "rootVars": {
+            "--bbm-tops-list-number-col": "64px",
+            "--bbm-tops-list-text-col": "minmax(0, 1fr)",
+            "--bbm-tops-list-meta-col": "74px"
+          }
+        },
+        "pdf": {
+          "columns": {
+            "number": {
+              "key": "top",
+              "className": "colNr",
+              "width": "23mm"
+            },
+            "text": {
+              "key": "text",
+              "className": "colText",
+              "width": "auto"
+            },
+            "meta": {
+              "key": "meta",
+              "className": "colMeta",
+              "width": "15ch"
+            }
+          }
+        }
+      }
+    },
+    {
+      "moduleId": "protokoll",
+      "tableKey": "protokoll_tops",
+      "orientation": "portrait",
+      "layout": {
+        "variant": "portrait",
+        "columns": [
+          {
+            "key": "topNumber",
+            "label": "TOP",
+            "uiWidth": "65px",
+            "pdfWidth": "23mm",
+            "weight": 2,
+            "required": true,
+            "previewValue": "1",
+            "previewField": "topNumber",
+            "headerLines": [
+              "TOP"
+            ]
+          },
+          {
+            "key": "shortText",
+            "label": "Gegenstand",
+            "uiWidth": "minmax(0, 1fr)",
+            "pdfWidth": "auto",
+            "weight": 6,
+            "required": true,
+            "previewValue": "Beispielthema fuer die Vorschau",
+            "previewField": "shortText",
+            "headerLines": [
+              "Gegenstand"
+            ]
+          },
+          {
+            "key": "meta",
+            "label": "Status",
+            "uiWidth": "75px",
+            "pdfWidth": "15ch",
+            "weight": 1,
+            "required": true,
+            "previewValue": "offen",
+            "previewField": "meta",
+            "headerLines": [
+              "Status",
+              "Fertig bis",
+              "verantw"
+            ]
+          }
+        ],
+        "labels": {
+          "top": "TOP",
+          "text": "Gegenstand",
+          "meta": [
+            "Status",
+            "Fertig bis",
+            "verantw"
+          ]
+        },
+        "ui": {
+          "rootVars": {
+            "--bbm-tops-list-number-col": "65px",
+            "--bbm-tops-list-number-padding-inline": "5px",
+            "--bbm-tops-list-number-font-size": "11px",
+            "--bbm-tops-list-text-col": "minmax(0, 1fr)",
+            "--bbm-tops-list-text-padding-inline": "5px",
+            "--bbm-tops-list-text-font-size": "11px",
+            "--bbm-tops-list-meta-col": "75px",
+            "--bbm-tops-list-meta-padding-inline": "4px",
+            "--bbm-tops-list-meta-font-size": "11px"
+          }
+        },
+        "pdf": {
+          "rootVars": {
+            "--bbm-top-col-nr-padding-left": "1mm",
+            "--bbm-top-col-nr-font-size": "8.5pt",
+            "--bbm-top-col-text-padding-left": "0mm",
+            "--bbm-top-col-text-padding-right": "1.5mm",
+            "--bbm-top-col-text-font-size": "9pt",
+            "--bbm-top-col-meta-padding-left": "5mm",
+            "--bbm-top-col-meta-font-size": "6.5pt"
+          },
+          "columns": {
+            "number": {
+              "key": "top",
+              "className": "colNr",
+              "width": "23mm"
+            },
+            "text": {
+              "key": "text",
+              "className": "colText",
+              "width": "auto"
+            },
+            "meta": {
+              "key": "meta",
+              "className": "colMeta",
+              "width": "15ch"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "printLayoutSettings": {
+    "print.v2.footerReserveMm": "12",
+    "print.v2.pagePadBottomMm": "18",
+    "print.v2.pagePadLeftMm": "19",
+    "print.v2.pagePadRightMm": "15",
+    "print.v2.pagePadTopMm": "3"
+  }
+}

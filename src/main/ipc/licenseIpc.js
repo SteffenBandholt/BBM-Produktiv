@@ -56,6 +56,7 @@ function _toStatusPayload(status) {
     licensedToText: buildLicensedToText(status),
     licenseId: String(license.licenseId || "").trim(),
     edition: String(license.edition || "").trim(),
+    validFrom: String(license.validFrom || "").trim(),
     validUntil: String(license.validUntil || "").trim(),
     product: String(license.product || "").trim(),
     modules: normalizeLicensedModules(license.modules, license.features),

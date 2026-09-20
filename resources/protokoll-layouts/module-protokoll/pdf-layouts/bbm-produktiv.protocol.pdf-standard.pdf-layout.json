@@ -1,0 +1,292 @@
+{
+  "schemaVersion": 1,
+  "documentKind": "pdf-layout-profile",
+  "applicationId": "bbm-produktiv",
+  "documentType": "protocol",
+  "profileId": "pdf-standard",
+  "scopeId": "pdf.bbm.protocol",
+  "savedAt": "2026-09-14T19:35:48.6991525+00:00",
+  "registryFingerprint": "a4505d85f3840c2611215712b773a930f1f15add5e6b1762907ca9b9a3e39a9e",
+  "layoutState": {
+    "scopeId": "pdf.bbm.protocol",
+    "capturedAt": "2026-09-14T19:35:40.5292957+00:00",
+    "elements": [
+      {
+        "elementId": "pdf.bbm.protocol",
+        "scopeId": "pdf.bbm.protocol"
+      },
+      {
+        "elementId": "pdf.bbm.protocol.page-template",
+        "scopeId": "pdf.bbm.protocol",
+        "marginTop": 5,
+        "marginRight": 12,
+        "marginBottom": 0,
+        "marginLeft": 12
+      },
+      {
+        "elementId": "pdf.bbm.protocol.header",
+        "scopeId": "pdf.bbm.protocol",
+        "height": 51,
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.header.logos",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 12,
+        "y": 5,
+        "width": 186,
+        "height": 8,
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.header.project",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 12,
+        "y": 14,
+        "width": 120
+      },
+      {
+        "elementId": "pdf.bbm.protocol.header.project.label",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 16,
+        "y": 14,
+        "width": 28,
+        "fontSize": 9,
+        "textAlignment": "left",
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.header.project.value",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 16,
+        "y": 20,
+        "width": 116,
+        "fontSize": 16,
+        "textAlignment": "left",
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.header.title",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 16,
+        "y": 28,
+        "width": 116,
+        "fontSize": 12.5,
+        "textAlignment": "left",
+        "lineSpacing": 1.1,
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.header.meta",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 143,
+        "y": 14,
+        "width": 55,
+        "height": 22
+      },
+      {
+        "elementId": "pdf.bbm.protocol.header.meta.page-label",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 143,
+        "y": 14,
+        "width": 16,
+        "fontSize": 9,
+        "textAlignment": "right",
+        "visible": false
+      },
+      {
+        "elementId": "pdf.bbm.protocol.header.meta.page-value",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 159,
+        "y": 14,
+        "width": 39,
+        "fontSize": 9,
+        "textAlignment": "right",
+        "visible": false
+      },
+      {
+        "elementId": "pdf.bbm.protocol.body",
+        "scopeId": "pdf.bbm.protocol"
+      },
+      {
+        "elementId": "pdf.bbm.protocol.participants",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 12,
+        "y": 56,
+        "width": 186,
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.participants.title",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 12,
+        "y": 56,
+        "width": 186,
+        "fontSize": 10,
+        "textAlignment": "left",
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.participants.rows",
+        "scopeId": "pdf.bbm.protocol",
+        "lineSpacing": 1.1
+      },
+      {
+        "elementId": "pdf.bbm.protocol.participants.header",
+        "scopeId": "pdf.bbm.protocol"
+      },
+      {
+        "elementId": "pdf.bbm.protocol.participants.column.name",
+        "scopeId": "pdf.bbm.protocol",
+        "width": 34
+      },
+      {
+        "elementId": "pdf.bbm.protocol.participants.column.function",
+        "scopeId": "pdf.bbm.protocol",
+        "width": 32
+      },
+      {
+        "elementId": "pdf.bbm.protocol.participants.column.company",
+        "scopeId": "pdf.bbm.protocol",
+        "width": 30
+      },
+      {
+        "elementId": "pdf.bbm.protocol.participants.column.contact",
+        "scopeId": "pdf.bbm.protocol",
+        "width": 72
+      },
+      {
+        "elementId": "pdf.bbm.protocol.participants.column.attendance",
+        "scopeId": "pdf.bbm.protocol",
+        "width": 18
+      },
+      {
+        "elementId": "pdf.bbm.protocol.participants.heading.attendance",
+        "scopeId": "pdf.bbm.protocol",
+        "textOffsetX": 0,
+        "textOffsetY": 0,
+        "fontSize": 7,
+        "textAlignment": "center",
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.tops",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 12,
+        "y": 91,
+        "width": 186,
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.tops.header",
+        "scopeId": "pdf.bbm.protocol",
+        "height": 8,
+        "fontSize": 8,
+        "textAlignment": "left",
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.tops.rows",
+        "scopeId": "pdf.bbm.protocol",
+        "lineSpacing": 1.35
+      },
+      {
+        "elementId": "pdf.bbm.protocol.tops.marker.decision",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 193.2,
+        "y": 99,
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.tops.marker.todo",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 193.2,
+        "y": 99,
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.tops.column.number",
+        "scopeId": "pdf.bbm.protocol",
+        "width": 24.18,
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.tops.column.text",
+        "scopeId": "pdf.bbm.protocol",
+        "width": 120.9,
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.tops.column.meta",
+        "scopeId": "pdf.bbm.protocol",
+        "width": 40.92,
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.tops.heading.number",
+        "scopeId": "pdf.bbm.protocol",
+        "textOffsetX": 0,
+        "textOffsetY": 0,
+        "fontSize": 8,
+        "textAlignment": "left",
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.tops.heading.text",
+        "scopeId": "pdf.bbm.protocol",
+        "textOffsetX": 0,
+        "textOffsetY": 0,
+        "fontSize": 8,
+        "textAlignment": "left",
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.tops.heading.meta",
+        "scopeId": "pdf.bbm.protocol",
+        "textOffsetX": 0,
+        "textOffsetY": 0,
+        "fontSize": 8,
+        "textAlignment": "left",
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.closing",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 12,
+        "y": 225,
+        "width": 186,
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.footer",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 12,
+        "y": 260,
+        "width": 186,
+        "height": 30,
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.footer.label",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 12,
+        "y": 260,
+        "width": 40,
+        "fontSize": 9,
+        "textAlignment": "left",
+        "visible": true
+      },
+      {
+        "elementId": "pdf.bbm.protocol.footer.value",
+        "scopeId": "pdf.bbm.protocol",
+        "x": 12,
+        "y": 266,
+        "width": 186,
+        "fontSize": 8,
+        "textAlignment": "left",
+        "lineSpacing": 1.35,
+        "visible": true
+      }
+    ]
+  }
+}

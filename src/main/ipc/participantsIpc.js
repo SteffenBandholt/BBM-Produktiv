@@ -82,12 +82,15 @@ function _markParticipantsInitialized(dbConn, meetingId) {
  */
 function ensureMeetingParticipantsDefaults(dbConn, meetingId) {
   const meeting = dbConn
-    .prepare(`SELECT id, project_id, is_closed FROM meetings WHERE id = ?`)
+    .prepare(`SELECT id, project_id, series_key, meeting_index, is_closed FROM meetings WHERE id = ?`)
     .get(meetingId);
 
   if (!meeting) {
     return { ok: false, error: "Besprechung nicht gefunden." };
   }
+  const project = dbConn.prepare("SELECT * FROM projects WHERE id=?").get(meeting.project_id);
+  const enabled = project && !project.archived_at && require("../../shared/meetingSeries.cjs").isSeriesEnabled(project, meeting.series_key);
+  if (!enabled) return { ok: true, meeting, readOnly: true };
 
   if (Number(meeting.is_closed) === 1) {
     // Geschlossene Besprechung: keine Default-Initialisierung
@@ -111,15 +114,16 @@ function ensureMeetingParticipantsDefaults(dbConn, meetingId) {
       `
       SELECT id
       FROM meetings
-      WHERE project_id = ? AND is_closed = 1
+      WHERE project_id = ? AND series_key = ? AND is_closed = 1 AND meeting_index < ?
       ORDER BY meeting_index DESC
       LIMIT 1
     `
     )
-    .get(meeting.project_id);
+    .get(meeting.project_id, meeting.series_key, meeting.meeting_index);
 
   if (!lastClosed?.id) {
     // keine geschlossene Besprechung vorhanden -> initial leer
+    _markParticipantsInitialized(dbConn, meetingId);
     return { ok: true, meeting };
   }
 
@@ -143,10 +147,10 @@ function ensureMeetingParticipantsDefaults(dbConn, meetingId) {
     // falls doch irgendwas drin ist (Race), vorher sauber löschen
     dbConn.prepare(`DELETE FROM meeting_participants WHERE meeting_id = ?`).run(meetingId);
     insertFrom.run(meetingId, lastClosed.id);
+    _markParticipantsInitialized(dbConn, meetingId);
   });
 
   tx();
-  _markParticipantsInitialized(dbConn, meetingId);
 
   return { ok: true, meeting };
 }
@@ -602,7 +606,7 @@ function registerParticipantsIpc({
       const meeting = ensure.meeting;
       const items = listMeetingParticipantsEnriched(db, meetingId);
 
-      return { ok: true, items, isClosed: Number(meeting.is_closed) === 1 };
+      return { ok: true, items, isClosed: Number(meeting.is_closed) === 1 || !!ensure.readOnly };
     } catch (err) {
       return { ok: false, error: err?.message || String(err) };
     }
@@ -618,10 +622,12 @@ function registerParticipantsIpc({
       const db = initDatabase();
 
       const meeting = db
-        .prepare(`SELECT id, is_closed FROM meetings WHERE id = ?`)
+        .prepare(`SELECT id, project_id, series_key, is_closed FROM meetings WHERE id = ?`)
         .get(meetingId);
 
       if (!meeting) return { ok: false, error: "Besprechung nicht gefunden." };
+      const project = db.prepare("SELECT * FROM projects WHERE id=?").get(meeting.project_id);
+      if (!project || project.archived_at || !require("../../shared/meetingSeries.cjs").isSeriesEnabled(project, meeting.series_key)) return { ok: false, error: "Besprechungsreihe ist nicht für neue Arbeit aktiviert." };
       if (Number(meeting.is_closed) === 1) {
         return { ok: false, error: "Besprechung ist geschlossen (read-only)." };
       }

@@ -11,11 +11,14 @@
 // Der alte Name bleibt, die Implementierung nutzt jetzt die neue Print-Engine.
 // ============================================================
 
-const { ipcMain, app, shell, BrowserWindow } = require("electron");
+const { ipcMain, app, shell, BrowserWindow, screen } = require("electron");
 const fs = require("fs");
 const { createHash } = require("node:crypto");
 const { isDeepStrictEqual } = require("node:util");
 const path = require("path");
+const meetingsRepo = require("../db/meetingsRepo");
+const projectsRepo = require("../db/projectsRepo");
+const { normalizeSeriesKey, getSeriesDefinition } = require("../../shared/meetingSeries.cjs");
 const { pathToFileURL } = require("url");
 const { createPrintWindow, getPrintAppUrl } = require("../print/printWindow");
 const { getPrintData } = require("../print/printData");
@@ -125,6 +128,30 @@ function sanitizeFileName(name) {
   return safe.toLowerCase().endsWith(".pdf") ? safe : `${safe}.pdf`;
 }
 
+function meetingPdfPrefix(meeting) {
+  const key = normalizeSeriesKey(meeting?.series_key);
+  const id = String(meeting?.id || "").trim();
+  if (!id) throw new Error("Besprechungs-ID für eindeutige PDF-Ablage fehlt.");
+  const encodedId = Array.from(id, (char) => /[A-Z_!'()*]/.test(char)
+    ? `%${char.charCodeAt(0).toString(16).toUpperCase()}` : encodeURIComponent(char)).join("");
+  const prefix = `${key}--${encodedId}__`;
+  if (prefix.length > 120) throw new Error("Besprechungs-ID ist für die eindeutige PDF-Ablage zu lang.");
+  return prefix;
+}
+
+function meetingPdfFileName(fileName, meeting) {
+  const prefix = meetingPdfPrefix(meeting);
+  const readable = String(fileName || "BBM.pdf").replace(/^(construction|owner|planning)--.+?__/, "");
+  return sanitizeFileName(prefix + readable);
+}
+
+function readMeetingPdfIdentity(fileName) {
+  const match = String(fileName || "").match(/^(construction|owner|planning)--(.+?)__/);
+  if (!match) return null;
+  try { return { seriesKey: match[1], meetingId: decodeURIComponent(match[2]) }; }
+  catch (_error) { return null; }
+}
+
 function uniquePath(dir, fileName) {
   const base = sanitizeFileName(fileName);
   const full = path.join(dir, base);
@@ -222,13 +249,49 @@ async function _buildOutputPath({
     : uniquePath(outDir, fileName || "BBM.pdf");
 }
 
+function legacyMeetingDateTokens(meeting) {
+  const tokens = new Set();
+  const addDate = (year, month, day) => {
+    const iso = `${year}-${month}-${day}`;
+    const date = new Date(`${iso}T12:00:00Z`);
+    if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== iso) return;
+    tokens.add(iso);
+    tokens.add(`${day}.${month}.${year}`);
+  };
+  // Meeting dates are encoded in the title; the real repository DTO has no
+  // meeting_date column. Older filename builders instead used created_at.
+  for (const match of String(meeting.title || "").matchAll(/(?<!\d)(\d{2})\.(\d{2})\.(\d{4})(?!\d)/g)) {
+    addDate(match[3], match[2], match[1]);
+  }
+  for (const match of String(meeting.title || "").matchAll(/(?<!\d)(\d{4})-(\d{2})-(\d{2})(?!\d)/g)) {
+    addDate(match[1], match[2], match[3]);
+  }
+  const created = new Date(meeting.created_at || "");
+  if (!Number.isNaN(created.getTime())) {
+    addDate(String(created.getFullYear()), String(created.getMonth() + 1).padStart(2, "0"), String(created.getDate()).padStart(2, "0"));
+    const iso = String(meeting.created_at).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) addDate(iso[1], iso[2], iso[3]);
+  }
+  return tokens;
+}
+
 // Transitional infrastructure for already generated PDFs.
 function findStoredProtocolPdf({
   baseDir,
   project,
   expectedFileNames,
-  meetingIndex,
+  meetingId,
+  projectId,
 } = {}) {
+  const meeting = meetingId ? meetingsRepo.getMeetingById(meetingId) : null;
+  if (!meeting || !projectId || meeting.project_id !== projectId) {
+    return { ok: false, error: "Gültiger Projekt-/Besprechungskontext für PDF-Suche fehlt." };
+  }
+  const storedProject = projectsRepo.getById(projectId);
+  if (!storedProject) return { ok: false, error: "Projekt nicht gefunden." };
+  project = storedProject;
+  const seriesKey = normalizeSeriesKey(meeting.series_key);
+  const prefix = meetingPdfPrefix(meeting);
   const normalizedBaseDir = String(baseDir || "").trim();
   if (!normalizedBaseDir) {
     return { ok: false, error: "Basisordner fehlt" };
@@ -256,31 +319,35 @@ function findStoredProtocolPdf({
     ? expectedFileNames.map((name) => sanitizeFileName(name)).filter(Boolean)
     : [];
 
-  for (const expectedName of normalizedExpected) {
-    const candidate = path.join(protocolsDir, expectedName);
-    if (fs.existsSync(candidate)) {
-      return {
-        ok: true,
-        filePath: candidate,
-        dir: protocolsDir,
-        projectFolder,
-        matchedBy: "exact",
-      };
-    }
+  const identified = pdfFiles.filter((name) => name.startsWith(prefix));
+  for (const expectedName of normalizedExpected.map((name) => meetingPdfFileName(name, meeting))) {
+    if (identified.includes(expectedName)) return {
+      ok: true, filePath: path.join(protocolsDir, expectedName), dir: protocolsDir,
+      projectFolder, seriesKey, meetingId, matchedBy: "identity-exact",
+    };
   }
+  if (identified.length === 1) return {
+    ok: true, filePath: path.join(protocolsDir, identified[0]), dir: protocolsDir,
+    projectFolder, seriesKey, meetingId, matchedBy: "identity",
+  };
+  if (identified.length > 1) return { ok: false, error: "Mehrere PDFs derselben Besprechung gefunden. Bitte gezielt auswählen.", dir: protocolsDir };
 
-  const marker = String(meetingIndex == null ? "" : `#${meetingIndex}`).trim().toLowerCase();
-  if (marker) {
-    const fallbackName = pdfFiles.find((name) => String(name).toLowerCase().includes(marker));
-    if (fallbackName) {
-      return {
-        ok: true,
-        filePath: path.join(protocolsDir, fallbackName),
-        dir: protocolsDir,
-        projectFolder,
-        matchedBy: "meetingIndex",
-      };
-    }
+  // Markerless PDFs predate the additional series and belong exclusively to
+  // construction. Match the exact number and date; never choose a first hit.
+  if (seriesKey === "construction") {
+    const legacy = pdfFiles.filter((name) => !/^(construction|owner|planning)--/.test(name));
+    const dates = legacyMeetingDateTokens(meeting);
+    const matches = legacy.filter((name) => {
+      const number = name.match(/#\s*(\d+)(?!\d)/);
+      if (!number || Number(number[1]) !== Number(meeting.meeting_index)) return false;
+      const fileDates = name.match(/(?<!\d)(?:\d{2}\.\d{2}\.\d{4}|\d{4}-\d{2}-\d{2})(?!\d)/g) || [];
+      return fileDates.some((date) => dates.has(date));
+    });
+    if (matches.length === 1) return {
+      ok: true, filePath: path.join(protocolsDir, matches[0]), dir: protocolsDir,
+      projectFolder, seriesKey, meetingId, matchedBy: "legacy-number-date",
+    };
+    if (matches.length > 1) return { ok: false, error: "Mehrere historische PDFs passen zur Besprechung. Bitte gezielt auswählen.", dir: protocolsDir };
   }
 
   return {
@@ -328,7 +395,7 @@ function listStoredFirmsPdfs({ baseDir, project } = {}) {
   return { ok: true, dir: listsDir, projectFolder, files };
 }
 
-function listStoredProjectPdfs({ baseDir, project, kind } = {}) {
+function listStoredProjectPdfs({ baseDir, project, projectId, kind } = {}) {
   const normalizedBaseDir = String(baseDir || "").trim();
   const kindKey = String(kind || "").trim().toLowerCase();
   if (!normalizedBaseDir) {
@@ -367,7 +434,14 @@ function listStoredProjectPdfs({ baseDir, project, kind } = {}) {
       } catch (_err) {
         mtimeMs = 0;
       }
-      return { fileName: name, filePath, mtimeMs };
+      const identity = readMeetingPdfIdentity(name);
+      const meeting = identity && projectId ? meetingsRepo.getMeetingById(identity.meetingId) : null;
+      const validIdentity = meeting && meeting.project_id === projectId &&
+        normalizeSeriesKey(meeting.series_key) === identity.seriesKey;
+      const seriesKey = identity ? validIdentity ? identity.seriesKey : null : "construction";
+      return { fileName: name, filePath, mtimeMs, seriesKey,
+        seriesLabel: seriesKey ? getSeriesDefinition(seriesKey).title : "",
+        meetingId: validIdentity ? meeting.id : null };
     })
     .sort((a, b) => Number(b?.mtimeMs || 0) - Number(a?.mtimeMs || 0));
 
@@ -375,6 +449,46 @@ function listStoredProjectPdfs({ baseDir, project, kind } = {}) {
 }
 
 
+
+function createInternalPdfPreviewWindowOptions({ title, workArea } = {}) {
+  const area = workArea && [workArea.x, workArea.y, workArea.width, workArea.height].every(Number.isFinite)
+    ? workArea
+    : null;
+  const width = area ? Math.max(640, Math.min(1100, area.width)) : 1100;
+  const height = area ? Math.max(520, Math.min(900, area.height)) : 900;
+  return {
+    width,
+    height,
+    ...(area ? {
+      x: Math.round(area.x + Math.max(0, (area.width - width) / 2)),
+      y: Math.round(area.y + Math.max(0, (area.height - height) / 2)),
+    } : {}),
+    show: false,
+    frame: true,
+    movable: true,
+    resizable: true,
+    minimizable: true,
+    maximizable: true,
+    fullscreenable: false,
+    autoHideMenuBar: true,
+    backgroundColor: "#ffffff",
+    title: normalizeTextPreviewTitle(title),
+    webPreferences: {
+      contextIsolation: true,
+      sandbox: false,
+      nodeIntegration: false,
+    },
+  };
+}
+
+function _previewWorkArea() {
+  try {
+    const point = screen?.getCursorScreenPoint?.();
+    return (point && screen?.getDisplayNearestPoint?.(point) || screen?.getPrimaryDisplay?.())?.workArea || null;
+  } catch (_error) {
+    return null;
+  }
+}
 
 function openInternalPdfPreview({ filePath, title } = {}) {
   const rawFilePath = String(filePath || "").trim();
@@ -386,20 +500,10 @@ function openInternalPdfPreview({ filePath, title } = {}) {
     throw new Error("PDF-Datei nicht gefunden");
   }
 
-  const win = new BrowserWindow({
-    width: 1100,
-    height: 900,
-    show: false,
-    backgroundColor: "#ffffff",
-    title: normalizeTextPreviewTitle(title),
-    webPreferences: {
-      contextIsolation: true,
-      sandbox: false,
-      nodeIntegration: false,
-    },
-  });
+  const win = new BrowserWindow(createInternalPdfPreviewWindowOptions({ title, workArea: _previewWorkArea() }));
 
   try {
+    win.setMovable(true);
     win.setMenuBarVisibility(false);
   } catch (_e) {}
 
@@ -522,7 +626,9 @@ async function _printToPdf(payload = {}, includeMetadata = false, options) {
     providerOutputPath = uniquePath(dir, payload.fileName || "Technisches-Dokument.pdf");
   }
   const outPath = sharedFirmsOutputPath || providerOutputPath || await _buildOutputPath({
-    fileName: payload.fileName || null,
+    fileName: data?.meeting && ["protocol", "preview", "firms", "todo", "topsAll"].includes(mode)
+      ? meetingPdfFileName(payload.fileName, data.meeting)
+      : payload.fileName || null,
     targetDir: payload.targetDir,
     baseDir: payload.baseDir,
     projectNumber,
@@ -856,6 +962,14 @@ function registerPrintIpc() {
     })
   );
 
+  ipcMain.handle("print:openInternalPreview", async (_evt, payload) =>
+    _runIpcTask(async () => {
+      const p = payload || {};
+      _enforceFeature(_featureForPrintMode(p.mode || "protocol"));
+      return await openInternalPdfPreview({ filePath: p.filePath, title: p.title });
+    })
+  );
+
   ipcMain.handle("print:toPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
@@ -883,7 +997,8 @@ function registerPrintIpc() {
         baseDir: p.baseDir,
         project: p.project || null,
         expectedFileNames: p.expectedFileNames || [],
-        meetingIndex: p.meetingIndex,
+        meetingId: p.meetingId,
+        projectId: p.projectId,
       });
     })
   );
@@ -905,7 +1020,8 @@ function registerPrintIpc() {
       _enforceFeature(_featureForStoredProjectKind(p.kind));
       return listStoredProjectPdfs({
         baseDir: p.baseDir,
-        project: p.project || null,
+        project: p.projectId ? projectsRepo.getById(p.projectId) : p.project || null,
+        projectId: p.projectId,
         kind: p.kind || "",
       });
     })
@@ -930,4 +1046,5 @@ function registerPrintIpc() {
   );
 }
 
-module.exports = { registerPrintIpc, generatePdfForUiEditor, printToPdf, openInternalPdfPreview };
+module.exports = { registerPrintIpc, generatePdfForUiEditor, printToPdf, openInternalPdfPreview, createInternalPdfPreviewWindowOptions,
+  findStoredProtocolPdf, meetingPdfFileName, readMeetingPdfIdentity };

@@ -12,6 +12,7 @@
  */
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const { spawn } = require("child_process");
 
 const DEVELOPMENT_BUILD_FLAVOR = "development-diagnostic";
@@ -61,6 +62,16 @@ function sanitizeCustomerSlug(value) {
   return cleaned || "customer";
 }
 
+function buildCustomerProfileId(value) {
+  const stableKey = String(value || "").trim().normalize("NFKC").toLowerCase();
+  if (!stableKey) {
+    const error = new Error("BBM_CUSTOMER_PROFILE_KEY is required for customer builds.");
+    error.code = "CUSTOMER_PROFILE_KEY_REQUIRED";
+    throw error;
+  }
+  return `c-${crypto.createHash("sha256").update(stableKey, "utf8").digest("hex").slice(0, 24)}`;
+}
+
 function buildMachineSetupMetaFromEnv(env = {}) {
   return {
     schemaVersion: 1,
@@ -82,6 +93,8 @@ function buildCustomerDistConfig({
   customerSetupFile = "",
   customerSlug = "",
   customerSetupType = "",
+  customerOutputDir = "",
+  customerProfileKey = "",
 } = {}) {
   const setupType = String(customerSetupType || "").trim().toLowerCase();
   const isCustomerMode = Boolean(customerLicenseFile) || setupType === "machine";
@@ -93,10 +106,18 @@ function buildCustomerDistConfig({
     };
   }
 
+  const customerProfileId = buildCustomerProfileId(customerProfileKey);
   const safeSlug = sanitizeCustomerSlug(customerSlug);
-  const outputDir = path.join("dist", "customers", safeSlug);
+  const outputDir = String(customerOutputDir || "").trim() || path.join("dist", "customers", safeSlug);
   const artifactName = `BBM-${baseVersion}-${safeSlug}-Setup.exe`;
-  const extraResources = Array.isArray(baseBuild.extraResources) ? [...baseBuild.extraResources] : [];
+  const customerAsar = baseBuild.asar === false
+    ? false
+    : { ...(baseBuild.asar && typeof baseBuild.asar === "object" ? baseBuild.asar : {}), smartUnpack: false };
+  const extraResources = (Array.isArray(baseBuild.extraResources) ? baseBuild.extraResources : []).filter((entry) =>
+    entry?.to !== "ui-editor" &&
+    !String(entry?.to || "").startsWith("license/") &&
+    !String(entry?.to || "").startsWith("internal-development-license/")
+  );
   if (customerLicenseFile) {
     extraResources.push({
       from: customerLicenseFile,
@@ -113,6 +134,7 @@ function buildCustomerDistConfig({
   return {
     build: {
       ...baseBuild,
+      asar: customerAsar,
       npmRebuild: false,
       buildDependenciesFromSource: false,
       directories: {
@@ -122,11 +144,21 @@ function buildCustomerDistConfig({
       extraResources,
       nsis: {
         ...(baseBuild.nsis || {}),
+        include: "scripts/customer-installer.nsh",
         artifactName,
+        deleteAppDataOnUninstall: false,
+      },
+      extraMetadata: {
+        ...(baseBuild.extraMetadata || {}),
+        name: `bbm-customer-${customerProfileId}`,
+        distributionId: "customer",
+        customerProfileId,
       },
     },
     outputDir,
     artifactName,
+    customerProfileId,
+    appId: `de.bbm.baubesprechungsmanager.customer.${customerProfileId}`,
   };
 }
 
@@ -161,10 +193,11 @@ function parseCliArgs(argv = []) {
   return Object.freeze({
     diagnostic: argv.includes("--diagnostic"),
     dirOnly: argv.includes("--dir"),
+    protokoll: argv.includes("--protokoll"),
   });
 }
 
-function runDist({ cwd = process.cwd(), env = process.env, diagnostic = false, dirOnly = false } = {}) {
+function runDist({ cwd = process.cwd(), env = process.env, diagnostic = false, dirOnly = false, protokoll = false } = {}) {
   const repoRoot = findRepoRoot(cwd);
   if (!repoRoot) {
     console.error("[dist] Fehler: package.json nicht gefunden (Repo-Root).");
@@ -186,6 +219,10 @@ function runDist({ cwd = process.cwd(), env = process.env, diagnostic = false, d
   const channelJson = readJsonSafe(channelPath) || { channel: "DEV" };
   const channel = diagnostic ? "DEV" : normalizeChannel(channelJson.channel);
   const isDev = channel === "DEV";
+  if (protokoll && (diagnostic || isDev || String(env.BBM_CUSTOMER_LICENSE_FILE || "").trim() || String(env.BBM_CUSTOMER_SETUP_TYPE || "").trim())) {
+    console.error("[dist] Protokoll-Abnahme requires STABLE and no bundled customer license/setup metadata.");
+    return Promise.resolve(1);
+  }
 
   // Stable Defaults (aus package.json build/appId + productName)
   const stableAppId = String(baseBuild.appId || "").trim() || "de.bbm.protokoll";
@@ -204,6 +241,12 @@ function runDist({ cwd = process.cwd(), env = process.env, diagnostic = false, d
   const customerSetupType = String(env.BBM_CUSTOMER_SETUP_TYPE || "").trim();
   const customerSlug = sanitizeCustomerSlug(env.BBM_CUSTOMER_SLUG || env.BBM_CUSTOMER_NAME || "");
   const customerName = String(env.BBM_CUSTOMER_NAME || "").trim();
+  const customerProfileKey = String(env.BBM_CUSTOMER_PROFILE_KEY || "").trim();
+  const isCustomerMode = Boolean(customerLicenseFile) || String(customerSetupType).trim().toLowerCase() === "machine";
+  if (isCustomerMode && channel !== "STABLE") {
+    console.error("[dist] Customer builds require the STABLE channel.");
+    return Promise.resolve(1);
+  }
   const customerSetupMetaFile =
     String(customerSetupType || "").trim().toLowerCase() === "machine"
       ? path.join(repoRoot, "dist", `customer-setup-${Date.now()}.json`)
@@ -218,13 +261,15 @@ function runDist({ cwd = process.cwd(), env = process.env, diagnostic = false, d
     customerSetupFile: customerSetupMetaFile,
     customerSlug,
     customerSetupType,
+    customerOutputDir: String(env.BBM_CUSTOMER_OUTPUT_DIR || "").trim(),
+    customerProfileKey,
   });
 
   // Override-Config für electron-builder (als separate Config-Datei)
   const flavoredBuild = applyBuildFlavor({ build: customerConfig.build, channel, diagnostic });
-  const override = {
+  let override = {
     ...flavoredBuild,
-    appId,
+    appId: customerConfig.appId || appId,
     productName,
     // ✅ pro Target eigene artifactName (kein ${target})
     nsis: customerConfig.artifactName
@@ -234,6 +279,9 @@ function runDist({ cwd = process.cwd(), env = process.env, diagnostic = false, d
           artifactName: nsisName,
         },
   };
+  if (protokoll) {
+    override = require("./protokollDist.cjs").prepareProtokollBuild({ repoRoot, baseBuild: override, baseVersion, env });
+  }
 
   const tmpConfigPath = path.join(repoRoot, "dist", `builder-config-${Date.now()}.json`);
   writeJsonAtomic(tmpConfigPath, override);
@@ -242,15 +290,16 @@ function runDist({ cwd = process.cwd(), env = process.env, diagnostic = false, d
   console.log(" BBM DIST");
   console.log(" Kanal:   ", channel);
   console.log(" Version: ", baseVersion);
-  console.log(" appId:   ", appId);
-  console.log(" Name:    ", productName);
+  console.log(" appId:   ", override.appId);
+  console.log(" Name:    ", override.productName);
   console.log(" Flavor:  ", override.extraMetadata.buildFlavor);
   console.log(" Ausgabe: ", override.directories?.output || "dist");
-  console.log(" NSIS:    ", customerConfig.artifactName || nsisName);
+  console.log(" NSIS:    ", override.nsis.artifactName);
   if (customerConfig.artifactName) {
     console.log(" Kundenmodus: aktiv");
     console.log(" Setup-Typ:   ", customerSetupType || (customerLicenseFile ? "test" : "customer"));
     console.log(" Lizenzdatei: ", customerLicenseFile || "-");
+    console.log(" Kundenprofil:", customerConfig.customerProfileId);
     console.log(" Ausgabe:     ", customerConfig.outputDir);
   }
   console.log("======================================");
@@ -276,10 +325,11 @@ function runDist({ cwd = process.cwd(), env = process.env, diagnostic = false, d
   return new Promise((resolve) => {
     const childArgs = [cliJs, "--config", tmpConfigPath];
     if (dirOnly) childArgs.push("--dir");
+    if (protokoll) childArgs.push("--win", "--x64", "--publish", "never");
     const child = spawn(process.execPath, childArgs, {
       cwd: repoRoot,
       stdio: "inherit",
-      windowsHide: false,
+      windowsHide: true,
     });
 
     child.on("error", (err) => {
@@ -322,6 +372,7 @@ if (require.main === module) {
 
 module.exports = {
   sanitizeCustomerSlug,
+  buildCustomerProfileId,
   buildMachineSetupMetaFromEnv,
   buildCustomerDistConfig,
   applyBuildFlavor,

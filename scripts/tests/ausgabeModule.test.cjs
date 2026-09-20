@@ -48,6 +48,14 @@ async function runAusgabeModuleTests(run) {
     assert.equal(sendMailSource.includes("export function sendMailPayload"), true);
   });
 
+  await run("Ausgabe: normale Vorschau nutzt das frei verschiebbare native Fenster", () => {
+    assert.equal(printModalSource.includes("printPdfAndPreviewInternal"), true);
+    assert.equal(printModalSource.includes("openInternalPreview"), true);
+    assert.equal(preloadSource.includes('ipcRenderer.invoke("print:openInternalPreview"'), true);
+    assert.equal(printIpcSource.includes('ipcMain.handle("print:openInternalPreview"'), true);
+    assert.match(printIpcSource, /frame: true[\s\S]*movable: true[\s\S]*resizable: true[\s\S]*maximizable: true/);
+  });
+
   await run("Ausgabe: alte Pfade bleiben nur als Compatibility-Re-Exports", () => {
     assert.equal(
       legacyPrintModalSource.trim(),

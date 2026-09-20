@@ -27,6 +27,7 @@ async function runLicensePresentationTests(run) {
   await run("license:get-status liefert licensedToText", () => {
     const src = read("src/main/ipc/licenseIpc.js");
     assert.equal(src.includes("licensedToText: buildLicensedToText(status)"), true);
+    assert.equal(src.includes('validFrom: String(license.validFrom || "").trim()'), true);
   });
 
   await run("Print-Daten enthalten license.licensedToText", () => {
@@ -46,6 +47,22 @@ async function runLicensePresentationTests(run) {
     const preload = read("src/main/preload.js");
     assert.equal(preload.includes("licenseAdmin"), false);
     assert.equal(preload.includes("generator"), false);
+  });
+
+  await run("Kundenansicht zeigt Rechte und bietet den geprüften Lizenzimport an", () => {
+    const source = read("src/renderer/views/SettingsView.js");
+    const start = source.indexOf("_createLicenseSettingsContent()");
+    const end = source.indexOf("async _openPrintLogosPopup", start);
+    const method = source.slice(start, end);
+    assert.equal(method.includes("Lizenznehmer:"), true);
+    assert.equal(method.includes("Freigeschaltete Module:"), true);
+    assert.equal(method.includes("Zusatzfunktionen:"), true);
+    assert.equal(method.includes("Laufzeit:"), true);
+    assert.equal(method.includes("Lizenz importieren / aktualisieren"), true);
+    assert.equal(method.includes("api.licenseImport()"), true);
+    assert.equal(method.includes("await loadStatus()"), true);
+    assert.equal(method.includes("Lizenzverwaltung und Generator"), false);
+    assert.equal(method.includes("if (!res?.ok)"), false);
   });
 }
 

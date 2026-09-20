@@ -32,6 +32,7 @@ const CONTRACT = Object.freeze({
   participants: "PDF-V2-PROT-001",
   preRemarks: "PDF-V2-PROT-002",
   closing: "PDF-V2-PROT-003",
+  nextMeeting: "PDF-V2-PROT-009",
   restRecord: "PDF-V2-REST-002",
   restMeasure: "PDF-V2-REST-003",
   protocolMeta: "PDF-V2-PROT-006",
@@ -44,7 +45,7 @@ const CONTRACT = Object.freeze({
   historical: "PDF-V2-ARCH-004",
   standardAddress: "PDF-V2-SATZ-016",
 });
-const M85_1_PROTOCOL_MANIFEST_SHA256 = "8b522de3097c67770088ceaed7bdfa5def7c85034e64b2c393005d1233a92049";
+const M85_1_PROTOCOL_MANIFEST_SHA256 = "a8c16c23cf4c0c0d1ab9597821e6d2e229e1c17d8e89a159e97350bd079b7d28";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
@@ -135,14 +136,15 @@ function addressCaseRun(caseNames, fixtureIds = ["p02-one-page", "r20-one-page"]
 async function runM85PdfSatzvertragTests(run) {
   let rendered = null;
 
-  await run("M85 Satzvertrag: 49 neutrale Fixtures sind vollständig und eindeutig", () => {
-    assert.equal(FIXTURES.length, 49);
-    assert.deepEqual(FIXTURES.map((fixture) => fixture.number), Array.from({ length: 49 }, (_value, index) => index + 1));
-    assert.equal(new Set(FIXTURES.map((fixture) => fixture.id)).size, 49);
-    assert.equal(Object.keys(GOLDEN_SNAPSHOT_SHA256).length, 49);
-    assert.equal(Object.keys(GOLDEN_PAGE_COUNTS).length, 49);
+  await run("M85 Satzvertrag: 55 neutrale Fixtures sind vollständig und eindeutig", () => {
+    assert.equal(FIXTURES.length, 55);
+    assert.deepEqual(FIXTURES.map((fixture) => fixture.number), Array.from({ length: 55 }, (_value, index) => index + 1));
+    assert.equal(new Set(FIXTURES.map((fixture) => fixture.id)).size, 55);
+    assert.equal(Object.keys(GOLDEN_SNAPSHOT_SHA256).length, 55);
+    assert.equal(Object.keys(GOLDEN_PAGE_COUNTS).length, 55);
     assert.equal(JSON.stringify(FIXTURES).includes("baubesprechungs-manager"), false);
-    const protocolManifestEntries = Object.entries(GOLDEN_SNAPSHOT_SHA256).filter(([id]) => id.startsWith("p"));
+    const protocolManifestEntries = Object.entries(GOLDEN_SNAPSHOT_SHA256)
+      .filter(([id]) => id.startsWith("p") && Number(id.slice(1, 3)) <= 34);
     assert.equal(protocolManifestEntries.length, 25);
     assert.equal(snapshotHash(protocolManifestEntries), M85_1_PROTOCOL_MANIFEST_SHA256, "p01-p34 Baseline verändert");
   });
@@ -150,7 +152,7 @@ async function runM85PdfSatzvertragTests(run) {
   await run("M85 Satzvertrag: alle strukturellen Golden-Snapshots sind reproduzierbar", () => {
     rendered = runGoldenHarness();
     const byId = resultMap(rendered);
-    assert.equal(byId.size, 49);
+    assert.equal(byId.size, 55);
     for (const fixture of FIXTURES) {
       const actual = byId.get(fixture.id);
       assert.ok(actual, `Snapshot fehlt: ${fixture.id}`);
@@ -300,14 +302,73 @@ async function runM85PdfSatzvertragTests(run) {
     for (const result of byId.values()) {
       const closingPages = result.snapshot.pages.filter((page) => page.closingPresent);
       if (result.kind === "protocol") {
-        assert.equal(closingPages.length, 1, `${CONTRACT.closing}:${result.id}`);
-        assert.equal(closingPages[0].pageNumber, result.snapshot.pageCount, `${CONTRACT.closing}:${result.id}`);
+        if (result.id === "p55-next-meeting-long-option-b") {
+          assert.ok(closingPages.length > 1, `${CONTRACT.nextMeeting}:${result.id}:keine Fortsetzung`);
+        } else {
+          assert.equal(closingPages.length, 1, `${CONTRACT.closing}:${result.id}`);
+        }
+        assert.equal(closingPages.at(-1).pageNumber, result.snapshot.pageCount, `${CONTRACT.closing}:${result.id}`);
         assert.ok(
           closingPages[0].blockOrder.indexOf("closing") < closingPages[0].blockOrder.indexOf("footerReserve"),
           `${CONTRACT.closing}:${result.id}:Blockreihenfolge`
         );
       }
     }
+  });
+
+  await run("M85 Satzvertrag: Nächste Besprechung verwendet Hauptschalter, unabhängige Optionen und mehrseitigen Freitext", () => {
+    const nextMeetingFixtureIds = [
+      "p50-next-meeting-print-off",
+      "p51-next-meeting-option-a",
+      "p52-next-meeting-option-b",
+      "p53-next-meeting-options-a-b",
+      "p54-next-meeting-no-option",
+      "p55-next-meeting-long-option-b",
+    ];
+    const nextMeetingRendered = rendered || runGoldenHarness(
+      nextMeetingFixtureIds.flatMap((fixtureId) => ["--fixture", fixtureId])
+    );
+    const byId = resultMap(nextMeetingRendered);
+    const nextMeetingPages = (id) => byId.get(id).snapshot.pages.filter((page) => page.closingPresent);
+    const optionTexts = (id, key) => nextMeetingPages(id)
+      .map((page) => page[key])
+      .filter((value) => value != null)
+      .join("");
+
+    assert.equal(optionTexts("p50-next-meeting-print-off", "nextMeetingOptionAText"), "", `${CONTRACT.nextMeeting}:Drucken aus:A`);
+    assert.equal(optionTexts("p50-next-meeting-print-off", "nextMeetingOptionBText"), "", `${CONTRACT.nextMeeting}:Drucken aus:B`);
+
+    assert.match(optionTexts("p51-next-meeting-option-a", "nextMeetingOptionAText"), /Die nächste Besprechung findet am/);
+    assert.equal(optionTexts("p51-next-meeting-option-a", "nextMeetingOptionBText"), "");
+
+    assert.equal(optionTexts("p52-next-meeting-option-b", "nextMeetingOptionAText"), "");
+    assert.equal(
+      optionTexts("p52-next-meeting-option-b", "nextMeetingOptionBText"),
+      FIXTURES.find((fixture) => fixture.id === "p52-next-meeting-option-b").data.nextMeeting.optionBText
+    );
+
+    const bothPages = nextMeetingPages("p53-next-meeting-options-a-b");
+    assert.equal(bothPages.some((page) => page.nextMeetingOptionAText && page.nextMeetingOptionBText), true, `${CONTRACT.nextMeeting}:A+B-Reihenfolge`);
+    assert.equal(optionTexts("p53-next-meeting-options-a-b", "nextMeetingOptionBText"), "Freitext unterhalb der bestehenden Angaben.");
+
+    assert.equal(optionTexts("p54-next-meeting-no-option", "nextMeetingOptionAText"), "", `${CONTRACT.nextMeeting}:keine Option:A`);
+    assert.equal(optionTexts("p54-next-meeting-no-option", "nextMeetingOptionBText"), "", `${CONTRACT.nextMeeting}:keine Option:B`);
+
+    const longFixture = FIXTURES.find((fixture) => fixture.id === "p55-next-meeting-long-option-b");
+    const longPages = nextMeetingPages(longFixture.id);
+    assert.ok(longPages.length > 1, `${CONTRACT.nextMeeting}:langer Text blieb einseitig`);
+    assert.equal(optionTexts(longFixture.id, "nextMeetingOptionBText"), longFixture.data.nextMeeting.optionBText, `${CONTRACT.nextMeeting}:Textverlust`);
+    assert.equal(longPages.slice(0, -1).every((page) => page.protocolFooterPresent === false), true, `${CONTRACT.nextMeeting}:Footer vor Textende`);
+    assert.equal(longPages.at(-1).protocolFooterPresent, true, `${CONTRACT.nextMeeting}:Footer fehlt`);
+    assert.equal(longPages.every((page) => page.remainingHeightMm >= -1), true, `${CONTRACT.nextMeeting}:Überlauf`);
+
+    const allPrintedText = [
+      optionTexts("p51-next-meeting-option-a", "nextMeetingOptionAText"),
+      optionTexts("p52-next-meeting-option-b", "nextMeetingOptionBText"),
+      optionTexts("p53-next-meeting-options-a-b", "nextMeetingOptionAText"),
+      optionTexts("p53-next-meeting-options-a-b", "nextMeetingOptionBText"),
+    ].join("\n");
+    assert.doesNotMatch(allPrintedText, /Option A|Option B/, `${CONTRACT.nextMeeting}:Bedienlabel gedruckt`);
   });
 
   await run("M85 Satzvertrag: Protokoll- und Restarbeiten-Überläufe sind geschlossen", () => {
@@ -755,8 +816,10 @@ async function runM85PdfSatzvertragTests(run) {
 if (require.main === module) {
   let failed = false;
   const onlyStandardAddress = process.argv.includes("--only-standard-address");
+  const onlyNextMeeting = process.argv.includes("--only-next-meeting");
   const standaloneRun = async (name, task) => {
     if (onlyStandardAddress && !name.includes("SATZ-016") && !name.includes("SATZ-015/-016")) return;
+    if (onlyNextMeeting && !name.includes("Nächste Besprechung")) return;
     try {
       await task();
       console.log(`ok - ${name}`);

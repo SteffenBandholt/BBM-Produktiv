@@ -275,6 +275,38 @@ async function runM81BbmPdfAdapterTests(run) {
     }
   });
 
+  await run("M81 Kundenseitenraender werden im bestehenden PDF-Profil dauerhaft gespeichert", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-pdf-page-margins-"));
+    try {
+      const adapter = createBbmPdfAdapter();
+      const profilePath = adapter.configureProfileRoot(root);
+      const first = adapter.updatePersistedPageMargins({ marginTop: 18, marginRight: 16, marginBottom: 14, marginLeft: 15 });
+      assert.deepEqual(
+        { top: first.marginTop, right: first.marginRight, bottom: first.marginBottom, left: first.marginLeft },
+        { top: 18, right: 16, bottom: 14, left: 15 }
+      );
+      const document = JSON.parse(fs.readFileSync(profilePath, "utf8"));
+      const title = document.layoutState.elements.find((entry) => entry.elementId === `${SCOPE_ID}.header.title`);
+      title.fontSize = 15;
+      fs.writeFileSync(profilePath, JSON.stringify(document), "utf8");
+
+      adapter.updatePersistedPageMargins({ marginTop: 17, marginRight: 15, marginBottom: 13, marginLeft: 14 });
+      const reloaded = createBbmPdfAdapter();
+      reloaded.configureProfileRoot(root);
+      assert.deepEqual(reloaded.getPersistedPageMargins(), {
+        marginTop: 17, marginRight: 15, marginBottom: 13, marginLeft: 14, persisted: true,
+      });
+      assert.equal(reloaded.readPersistedPdfLayoutState().elements.find((entry) => entry.elementId === `${SCOPE_ID}.header.title`).fontSize, 15);
+      assert.throws(
+        () => reloaded.updatePersistedPageMargins({ marginTop: 41, marginRight: 15, marginBottom: 13, marginLeft: 14 }),
+        (error) => error?.code === "pdf_invalid_page_margins"
+      );
+      assert.equal(reloaded.getPersistedPageMargins().marginTop, 17);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   await run("M81 inkompatibles gespeichertes PDF-Profil wird nicht stillschweigend gedruckt", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-pdf-invalid-profile-"));
     try {

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="de">
+<head><meta charset="utf-8"><title>BBM – isolierte Besprechungsreihen-Abnahme</title></head>
+<body>
+<main id="content"></main>
+<script type="module">
+  import Router from "../../src/renderer/app/Router.js";
+  import CoreShell from "../../src/renderer/app/CoreShell.js";
+  import { ProjectFormScreen } from "../../src/renderer/modules/projektverwaltung/index.js";
+  import { installBbmM80EditorBridge } from "../../src/renderer/ui-editor/m80Bridge.js";
+  import * as refs from "../../src/renderer/ui-editor/m80Refs.js";
+  import { createM80RegistrationDescriptor } from "../../src/renderer/ui-editor/m80HostAdapter.js";
+  import { ProtokollMailPayloadService } from "../../src/renderer/modules/protokoll/mail/ProtokollMailPayloadService.js";
+  import PrintModal from "../../src/renderer/modules/ausgabe/PrintModal.js";
+  const tick = () => new Promise(resolve => setTimeout(resolve, 25));
+  window.msAcceptance = {
+    refs,
+    alerts: [],
+    async boot(productionIndexStyles) {
+      // Copy the actual app entry's style blocks; do not approximate them.
+      const style = document.createElement("style");
+      style.dataset.meetingSeriesProductionIndexStyles = "true";
+      style.textContent = productionIndexStyles;
+      document.head.append(style);
+      window.alert = message => { this.alerts.push(String(message)); };
+      installBbmM80EditorBridge();
+      this.router = new Router();
+      await this.router.ensureActiveModuleAccess({ force: true });
+      this.shell = new CoreShell({ router: this.router, version: "isolierte Abnahme" });
+      this.shell.start();
+      for (let attempt = 0; !this.router.currentView; attempt++) {
+        if (attempt > 400) throw new Error("CoreShell did not mount its initial screen");
+        await tick();
+      }
+      await this.projects();
+      return true;
+    },
+    async projects() {
+      await this.router.showProjects();
+      this.form = null;
+      this.projectsScreen = this.router.currentView;
+      return true;
+    },
+    async formPage(projectId = null) {
+      this.form = new ProjectFormScreen({ router: this.router, projectId });
+      await this.router.show(this.form, { section: "projects" });
+      return true;
+    },
+    currentForm() { return this.projectsScreen?._projectFormModal || this.form; },
+    element(key) {
+      const form = this.currentForm();
+      if (key === "save") return form?.btnSave;
+      if (key === "builder") return form?.builderField?.input;
+      if (key === "builderRefresh") return form?.builderField?.refresh;
+      if (key === "name") return form?.inpName;
+      if (key === "street") return form?.inpStreet;
+      if (key === "zip") return form?.inpZip;
+      if (key === "city") return form?.inpCity;
+      if (key === "short") return form?.inpShort;
+      if (key === "projectNumber") return form?.inpProjectNumber;
+      if (key === "cancel") return form?.btnModalCancel;
+      if (key === "create") return document.querySelector('[data-project-action="create"]');
+      if (key === "transfer") return document.querySelector('[data-project-action="transfer"]');
+      if (key === "transferClose") return [...(this.projectsScreen?._transferModalEl?.querySelectorAll('button') || [])].find(button => button.textContent === "X");
+      if (key.startsWith("history.")) return form?.meetingSeriesField?.historyButtons.get(key.slice(8));
+      if (key.startsWith("series.")) return form?.meetingSeriesField?.inputs.get(key.slice(7));
+      if (key.startsWith("ref.")) return refs.getM80Ref(key.slice(4))?.element;
+      throw new Error("Unknown acceptance element: " + key);
+    },
+    fill(key, value) {
+      const element = this.element(key);
+      if (!element) throw new Error("Element missing: " + key);
+      element.value = value;
+      element.dispatchEvent(new Event("input", { bubbles: true }));
+      element.dispatchEvent(new Event("change", { bubbles: true }));
+    },
+    async bounds(key) {
+      const element = this.element(key);
+      if (!element) throw new Error("Element missing: " + key);
+      element.scrollIntoView({ block: "center", inline: "nearest" });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const box = element.getBoundingClientRect();
+      return { x: box.x, y: box.y, width: box.width, height: box.height,
+        disabled: !!element.disabled, visible: !!element.getClientRects().length };
+    },
+    card(projectId) {
+      return [...document.querySelectorAll('[data-project-card="true"]')]
+        .find(card => card.dataset.projectId === projectId);
+    },
+    cardButtons(projectId) {
+      return [...(this.card(projectId)?.querySelectorAll("button[data-series-key]") || [])]
+        .map(button => ({ seriesKey: button.dataset.seriesKey, text: button.textContent,
+          historyOnly: button.dataset.historyOnly === "true" || /Historie/.test(button.textContent),
+          selected: button.dataset.projectSeriesSelected === "true",
+          editorId: button.getAttribute("data-ui-inspector-id") }));
+    },
+    async cardBounds(projectId, action, seriesKey = "") {
+      const card = this.card(projectId);
+      const button = action === "edit"
+        ? card?.querySelector('[data-project-action="edit"]')
+        : [...(card?.querySelectorAll("button[data-series-key]") || [])].find(button =>
+          button.dataset.seriesKey === seriesKey &&
+          (action === "history" ? /Historie/.test(button.textContent) : !/Historie/.test(button.textContent)));
+      if (!button) throw new Error("Card action missing: " + action + "/" + seriesKey);
+      button.scrollIntoView({ block: "center", inline: "nearest" });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const box = button.getBoundingClientRect();
+      return { x: box.x, y: box.y, width: box.width, height: box.height, disabled: button.disabled };
+    },
+    formState() {
+      const form = this.currentForm();
+      return form ? {
+        projectId: form.projectId, busy: form.busy, builderValue: form.builderField?.input.value,
+        builderDefault: form.builderField?.input.options[0]?.textContent,
+        builderRefresh: form.builderField?.refresh.textContent,
+        series: Object.fromEntries([...form.meetingSeriesField.inputs].map(([key, input]) => [key, input.checked])),
+      } : null;
+    },
+    historyButtons() { return [...(this.currentForm()?.meetingSeriesField?.historyButtons || [])].map(([seriesKey, button]) => ({ seriesKey, text: button.textContent, editorId: button.getAttribute("data-ui-inspector-id") })); },
+    contractState(componentIds) {
+      return { references: refs.validateM83ComponentReferences(componentIds),
+        descriptor: createM80RegistrationDescriptor() };
+    },
+    async participantEvidence(projectId, meetingId) {
+      await this.router.openParticipantsModal({ projectId, meetingId });
+      const modal = this.router._participantsModals;
+      return { meetingId: modal.meetingId, pool: modal.pool.map(person => ({ kind: person.kind, personId: person.personId, name: person.name })),
+        visibleText: modal.modalEl.textContent };
+    },
+    async participantCancelBounds() {
+      const modal = this.router._participantsModals;
+      const cancel = [...modal.footerEl.querySelectorAll("button")].find(button => button.textContent.trim() === "Abbrechen");
+      if (!cancel) throw new Error("Participants cancel button missing");
+      cancel.scrollIntoView({ block: "center" });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const box = cancel.getBoundingClientRect();
+      return { x: box.x, y: box.y, width: box.width, height: box.height, disabled: cancel.disabled };
+    },
+    async historyRowBounds(meetingId) {
+      const view = this.router.currentView;
+      const index = view.closedMeetings.findIndex(meeting => meeting.id === meetingId);
+      if (index < 0) throw new Error("Meeting not present in actual history list");
+      const row = view.listEl.children[index];
+      row.scrollIntoView({ block: "center" });
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const box = row.getBoundingClientRect();
+      return { x: box.x, y: box.y, width: box.width, height: box.height, disabled: false };
+    },
+    async geometry() {
+      const form = this.currentForm();
+      const targets = form
+        ? ["name", "builder", "builderRefresh", "series.construction", "series.owner", "series.planning", "save"]
+          .map(key => [key, this.element(key)])
+        : [...document.querySelectorAll('button[data-series-key]')].map((element, index) => ["entry." + index, element]);
+      const geometry = [];
+      for (const [key, element] of targets.filter(([, element]) => element)) {
+        element.scrollIntoView({ block: "center", inline: "nearest" });
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const box = element.getBoundingClientRect();
+        geometry.push({ key, width: box.width, height: box.height, left: box.left, right: box.right,
+          top: box.top, bottom: box.bottom, viewportWidth: innerWidth, viewportHeight: innerHeight,
+          withinWidth: box.left >= -1 && box.right <= innerWidth + 1,
+          reachableVertically: box.bottom > 0 && box.top < innerHeight,
+          visible: !!element.getClientRects().length, disabled: !!element.disabled });
+      }
+      return geometry;
+    },
+    async mailEvidence(projectId, meeting) {
+      const service = new ProtokollMailPayloadService({ router: this.router });
+      this.router.currentProjectId = projectId;
+      this.router.currentMeetingId = meeting.id;
+      const draft = await service.buildDraft({ projectId, meeting, mailType: "protocol" });
+      const lookup = await service.buildProtocolPdfLookupPayload(meeting, projectId);
+      const stored = lookup ? await window.bbmPrint.findStoredProtocolPdf(lookup) : null;
+      return { draft, lookup, stored };
+    },
+    async openProtocolPreview(projectId, meetingId) {
+      const modal = new PrintModal({ router: this.router });
+      return await modal.printMeetingPreview({ projectId, meetingId, mode: "closed" });
+    },
+  };
+</script>
+</body>
+</html>

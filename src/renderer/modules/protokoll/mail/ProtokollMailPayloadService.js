@@ -1,3 +1,6 @@
+import { normalizeSeriesKey, getSeriesDefinition, resolveSeriesTitle } from "../../../../shared/meetingSeries.mjs";
+import { withMeetingPdfIdentity } from "../../../utils/protocolPdfNaming.js";
+
 export class ProtokollMailPayloadService {
   constructor({ router, getActiveProjectLabel } = {}) {
     this.router = router || null;
@@ -59,7 +62,9 @@ export class ProtokollMailPayloadService {
     return `${dd}.${mm}.${date.getFullYear()}`;
   }
 
-  async resolveProtocolTitle(projectId = null) {
+  async resolveProtocolTitle(projectId = null, seriesKey = null) {
+    const key = normalizeSeriesKey(seriesKey);
+    if (key !== "construction") return resolveSeriesTitle(key);
     const api = window.bbmDb || {};
     try {
       if (projectId && typeof api.projectSettingsGetMany === "function") {
@@ -181,18 +186,26 @@ export class ProtokollMailPayloadService {
     return [...all];
   }
 
-  buildAttachmentEntries(attachmentsByKey = {}) {
-    return [
+  buildAttachmentEntries(attachmentsByKey = {}, meeting = null) {
+    const entries = [
       { key: "protocol", label: "Protokoll", path: String(attachmentsByKey?.protocol || "").trim(), selected: true },
       { key: "firms", label: "Firmenliste", path: String(attachmentsByKey?.firms || "").trim(), selected: true },
       { key: "todo", label: "ToDo-Liste", path: String(attachmentsByKey?.todo || "").trim(), selected: true },
       { key: "tops", label: "Top-Liste", path: String(attachmentsByKey?.tops || "").trim(), selected: true },
     ];
+    const marker = String(attachmentsByKey?.protocol || "").match(/(?:^|[\\/])(construction|owner|planning)--/);
+    const seriesKey = meeting?.series_key ?? marker?.[1] ?? null;
+    if (seriesKey != null) {
+      const title = getSeriesDefinition(seriesKey).title;
+      const nr = meeting?.meeting_index;
+      entries[0].label = `${title}${nr != null ? ` #${nr}` : ""}`;
+    }
+    return entries;
   }
 
   async buildDraft({ projectId = null, meeting = null, mailType = "", subject = "", body } = {}) {
     const { projectNumber, projectShortName } = await this.getCurrentProjectContext();
-    const protocolTitle = await this.resolveProtocolTitle(projectId);
+    const protocolTitle = await this.resolveProtocolTitle(projectId, meeting?.series_key);
     const emailTemplate = await this.getStoredTemplate();
     const templateContext = this.buildTemplateContext({
       projectNumber,
@@ -200,12 +213,16 @@ export class ProtokollMailPayloadService {
       protocolTitle,
       meeting,
     });
-    const nextSubject =
+    let nextSubject =
       String(subject || "").trim() ||
       this.applySubjectTemplate(emailTemplate.subject || "", templateContext) ||
       this.buildFallbackSubject({ projectNumber, projectShortName, mailType }) ||
       this.defaultSubject(templateContext) ||
       "Protokoll";
+    if (!String(subject || "").trim() && normalizeSeriesKey(meeting?.series_key) !== "construction" &&
+        !nextSubject.includes(protocolTitle)) {
+      nextSubject += `  |  ${protocolTitle}${templateContext.meetingIndex ? ` #${templateContext.meetingIndex}` : ""}`;
+    }
     let nextBody = typeof body === "string" ? body : String(emailTemplate.body || "");
     if (!nextBody.trim()) nextBody = this.getDefaultBody();
     return { subject: nextSubject, body: nextBody, templateContext };
@@ -312,8 +329,8 @@ export class ProtokollMailPayloadService {
       }
       const project = projectsResult.list.find((item) => item && item.id === projectId) || null;
       const baseDir = String(settingsResult.data?.["pdf.protocolsDir"] || "").trim();
-      const protocolTitle =
-        String(settingsResult.data?.["pdf.protocolTitle"] || "").trim() || "Baubesprechung";
+      const seriesKey = normalizeSeriesKey(selectedMeeting.series_key);
+      const protocolTitle = await this.resolveProtocolTitle(projectId, seriesKey);
       if (!project || !baseDir) return null;
       const cleanPart = (value) =>
         String(value || "")
@@ -358,12 +375,17 @@ export class ProtokollMailPayloadService {
       }
       return {
         baseDir,
+        projectId,
+        meetingId: selectedMeeting.id || null,
+        seriesKey,
         project: {
           project_number: project?.project_number ?? project?.projectNumber ?? project?.number ?? "",
           short: project?.short || "",
           name: project?.name || "",
         },
-        expectedFileNames,
+        expectedFileNames: expectedFileNames.map((name) => withMeetingPdfIdentity(name, {
+          seriesKey, meetingId: selectedMeeting.id,
+        })),
         meetingIndex: String(meetingIndex || "").trim(),
       };
     } catch (err) {

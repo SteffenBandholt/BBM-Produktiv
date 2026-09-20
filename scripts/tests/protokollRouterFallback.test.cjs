@@ -173,7 +173,7 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes("await this.router.showProjectWorkspace(projectId, projectOptions);"), false);
   });
 
-  await run("Protokoll Delete-Handler: TopsScreen repariert Nummernluecken nach Delete", () => {
+  await run("Protokoll Delete-Handler: Nummernluecken werden atomar im Main-Service repariert", () => {
     const screenFile = path.join(
       __dirname,
       "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
@@ -181,9 +181,12 @@ async function runProtokollRouterFallbackTests(run) {
     const screenSource = fs.readFileSync(screenFile, "utf8");
 
     assert.equal(screenSource.includes("_getDeleteSelectionCandidateId("), true);
-    assert.equal(screenSource.includes("_firstNumberGapFromItems("), true);
-    assert.equal(screenSource.includes("_autoFixNumberGapsAfterDelete("), true);
-    assert.equal(screenSource.includes("meetingTopsFixNumberGap"), true);
+    assert.equal(screenSource.includes("_firstNumberGapFromItems("), false);
+    assert.equal(screenSource.includes("_autoFixNumberGapsAfterDelete("), false);
+    assert.equal(screenSource.includes("meetingTopsFixNumberGap"), false);
+    const serviceSource = fs.readFileSync(path.join(__dirname, "../../src/main/domain/TopService.js"), "utf8");
+    assert.match(serviceSource, /markTrashed[\s\S]*_checkNumberGaps[\s\S]*fixNumberGap/);
+    assert.match(serviceSource, /runInTransaction\(execute\)/);
     assert.equal(screenSource.includes("this.commands.deleteSelectedTop();"), true);
     assert.equal(screenSource.includes("this.commands.selectTop(nextTop?.id ?? null);"), true);
     assert.equal(screenSource.includes("this.commands.updateDraft(editorFromTop(nextTop));"), true);

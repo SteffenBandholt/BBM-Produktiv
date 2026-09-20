@@ -57,14 +57,14 @@ export class TopsRepository {
 
   async deleteTop(input) {
     const req = createDeleteTopRequest(input);
-    if (typeof this.api.topsMarkTrashed !== "function") {
-      return createRepositoryUnavailableResult("topsMarkTrashed unavailable", "mutation");
+    if (typeof this.api.topsDelete !== "function") {
+      return createRepositoryUnavailableResult("topsDelete unavailable", "mutation");
     }
-    const res = await this.api.topsMarkTrashed(toApiDeleteTopPayload(req));
+    const res = await this.api.topsDelete(toApiDeleteTopPayload(req));
     return mapMutationResult(res);
   }
 
   canDeleteTop() {
-    return typeof this.api.topsMarkTrashed === "function";
+    return typeof this.api.topsDelete === "function";
   }
 }

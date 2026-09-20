@@ -12,6 +12,7 @@ import {
 } from "./modules/moduleAccessState.js";
 import { openModuleEntry } from "./modules/moduleRouteRuntime.js";
 import { resolveProjectProtocolEntry } from "./projectProtocolRouting.js";
+import { normalizeSeriesKey, isSeriesEnabled } from "../../shared/meetingSeries.mjs";
 import { createEditorLabScreen } from "../uiV2/editorLab/EditorLabScreen.js";
 import { createEditorLabRegistry } from "../uiV2/editorLab/editorLabRegistry.js";
 import { createEditorV2Core } from "../uiV2/editorV2/editorV2Core.js";
@@ -715,11 +716,13 @@ export default class Router {
       startReason = null,
       integrityError = false,
       projectProtocolContext = null,
+      seriesKey = this.currentSeriesKey || "construction",
+      historyOnly = false,
     } = {}
   ) {
     const mod = await import("../views/MeetingsView.js");
     const V = mod.default;
-
+    this.currentSeriesKey = normalizeSeriesKey(seriesKey);
     this._setProjectRuntimeContext({ projectId: projectId || null, meetingId: null });
     await this.show(
       new V({
@@ -731,6 +734,8 @@ export default class Router {
         startReason: startReason || null,
         integrityError: !!integrityError,
         projectProtocolContext: projectProtocolContext || null,
+        seriesKey: this.currentSeriesKey,
+        historyOnly,
       }),
       { section: "meetings", isTopsView: false }
     );
@@ -764,7 +769,15 @@ export default class Router {
       ProtokollTopsScreen;
 
     const opts = options && typeof options === "object" ? options : {};
-    const readOnly = !!opts.readOnly;
+    const meetingResult = await window.bbmDb.meetingsGetById(effectiveMeetingId);
+    if (!meetingResult?.ok) { alert(meetingResult?.error || "Besprechung konnte nicht geladen werden."); return false; }
+    const meeting = meetingResult.meeting;
+    if (!meeting || meeting.project_id !== effectiveProjectId) { alert("Besprechung gehört nicht zum gewählten Projekt."); return false; }
+    this.currentSeriesKey = normalizeSeriesKey(meeting.series_key);
+    const projectsResult = await window.bbmDb.projectsList();
+    if (!projectsResult?.ok) { alert(projectsResult?.error || "Projekt konnte nicht geladen werden."); return false; }
+    const project = projectsResult.list.find(row => row.id === effectiveProjectId);
+    const readOnly = !!opts.readOnly || Number(meeting.is_closed) === 1 || !project || !isSeriesEnabled(project, this.currentSeriesKey);
     const returnContext = opts.returnContext || null;
 
     this._setProjectRuntimeContext({
@@ -812,17 +825,25 @@ export default class Router {
     }
 
     const api = window.bbmDb || {};
+    const seriesKey = normalizeSeriesKey(options.seriesKey);
+    this.currentSeriesKey = seriesKey;
+    const projectResult = typeof api.projectsList === "function" ? await api.projectsList() : null;
+    if (projectResult && !projectResult.ok) return { ok: false, reason: "project-load-failed", error: projectResult.error };
+    const project = projectResult?.list?.find(row => row.id === effectiveProjectId) || options.project;
+    const historyOnly = !!options.historyOnly || (project && !isSeriesEnabled(project, seriesKey));
     const meetingsRes =
       typeof api.meetingsListByProject === "function"
-        ? await api.meetingsListByProject(effectiveProjectId)
+        ? await api.meetingsListByProject({ projectId: effectiveProjectId, seriesKey })
         : { ok: false, error: "meetingsListByProject unavailable", list: [] };
     const meetings = meetingsRes?.ok ? meetingsRes.list || [] : [];
+    if (!meetingsRes?.ok) return { ok: false, reason: "meetings-load-failed", error: meetingsRes?.error };
     const decision = resolveProjectProtocolEntry({
       projectId: effectiveProjectId,
       meetings,
+      seriesKey,
     });
 
-    if (decision.target === "tops" && decision.meetingId) {
+    if (!historyOnly && decision.target === "tops" && decision.meetingId) {
       const returnContext =
         options?.returnContext ||
         {
@@ -847,6 +868,8 @@ export default class Router {
       printSelectionMode: false,
       printKind: null,
       startMode: true,
+      seriesKey,
+      historyOnly,
       startReason: decision.reason,
       integrityError: decision.reason === "multiple-open-meetings",
       projectProtocolContext: {
@@ -916,6 +939,7 @@ export default class Router {
   }
 
   async showBbmUiEditorDemo() {
+    if (globalThis.window?.bbmDistribution?.uiEditorEnabled === false) return { ok: false, reason: "UI_EDITOR_DISABLED_IN_DISTRIBUTION" };
     const ui = {
       node(tag) {
         return document.createElement(tag);
@@ -930,6 +954,7 @@ export default class Router {
   }
 
   async showUiEditor() {
+    if (globalThis.window?.bbmDistribution?.uiEditorEnabled === false) return { ok: false, reason: "UI_EDITOR_DISABLED_IN_DISTRIBUTION" };
     injectBbmUiEditorStatusPanelStyles();
     const panel = createBbmUiEditorStatusPanel({ router: this });
     await this.show(panel, {
@@ -1056,6 +1081,7 @@ export default class Router {
       isTopsView: !!this.context?.ui?.isTopsView,
       projectId: this.currentProjectId || null,
       meetingId: this.currentMeetingId || null,
+      seriesKey: this.currentSeriesKey || "construction",
     };
   }
 
@@ -1101,7 +1127,7 @@ export default class Router {
         return;
       }
       if (c.section === "meetings") {
-        await this.showMeetings(c.projectId || fallbackProject);
+        await this.showMeetings(c.projectId || fallbackProject, { seriesKey: c.seriesKey || "construction" });
         return;
       }
       if (fallbackProject) {
@@ -1200,7 +1226,7 @@ export default class Router {
     await pm.openPrint({ projectId: effectiveProjectId });
   }
 
-  async promptNextMeetingSettings({ defaultDateIso } = {}) {
+  async promptNextMeetingSettings({ defaultDateIso, meetingId = this.currentMeetingId, meeting } = {}) {
     const pm = await this._ensurePrintModal();
     try {
       if (typeof pm.close === "function") {
@@ -1214,7 +1240,7 @@ export default class Router {
     if (typeof pm?.promptNextMeetingSettings !== "function") {
       return { ok: false, cancelled: true };
     }
-    return await pm.promptNextMeetingSettings({ defaultDateIso });
+    return await pm.promptNextMeetingSettings({ defaultDateIso, meetingId, meeting });
   }
 
   async openMeetingPrintPreview({ projectId, meetingId, mode } = {}) {

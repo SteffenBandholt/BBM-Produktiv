@@ -17,7 +17,8 @@ function getTopById(topId) {
  * - pro project_id
  * - pro parent_top_id (NULL = Root)
  */
-function getNextNumber(projectId, parentTopId) {
+function getNextNumber(projectId, parentTopId, seriesKey) {
+  seriesKey = require("../../shared/meetingSeries.cjs").normalizeSeriesKey(seriesKey);
   const db = initDatabase();
   if (!projectId) throw new Error("projectId required");
 
@@ -25,8 +26,9 @@ function getNextNumber(projectId, parentTopId) {
     SELECT COALESCE(MAX(number), 0) + 1 AS next
     FROM tops
     WHERE project_id = ?
+      AND series_key = ?
       AND parent_top_id IS ?
-  `).get(projectId, parentTopId ?? null);
+  `).get(projectId, seriesKey, parentTopId ?? null);
 
   return row.next;
 }
@@ -46,7 +48,8 @@ function hasChildren(topId) {
   return !!row;
 }
 
-function createTop({ projectId, parentTopId, level, number, title }) {
+function createTop({ projectId, parentTopId, level, number, title, seriesKey }) {
+  seriesKey = require("../../shared/meetingSeries.cjs").normalizeSeriesKey(seriesKey);
   const db = initDatabase();
 
   if (!projectId) throw new Error("projectId required");
@@ -62,6 +65,7 @@ function createTop({ projectId, parentTopId, level, number, title }) {
     INSERT INTO tops (
       id,
       project_id,
+      series_key,
       parent_top_id,
       level,
       number,
@@ -71,10 +75,11 @@ function createTop({ projectId, parentTopId, level, number, title }) {
       created_at,
       updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, 0, NULL, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?)
   `).run(
     id,
     projectId,
+    seriesKey,
     parentTopId ?? null,
     Number(level),
     Number(number),
@@ -237,7 +242,7 @@ function fixNumberGap({ meetingId, level, parentTopId, fromTopId, toNumber }) {
     const rows = db
       .prepare(
         `
-        SELECT t.id, t.number
+        SELECT t.id, t.number, mt.is_carried_over
         FROM meeting_tops mt
         JOIN tops t ON t.id = mt.top_id
         WHERE mt.meeting_id = ?
@@ -264,7 +269,7 @@ function fixNumberGap({ meetingId, level, parentTopId, fromTopId, toNumber }) {
         if (num > maxNumber) maxNumber = num;
       }
       if (String(row.id) === String(fromTopId)) {
-        fromItem = { id: row.id, number: num };
+        fromItem = { id: row.id, number: num, isCarriedOver: Number(row.is_carried_over) === 1 };
       }
     }
 
@@ -273,6 +278,9 @@ function fixNumberGap({ meetingId, level, parentTopId, fromTopId, toNumber }) {
     }
     if (!Number.isFinite(fromItem.number) || fromItem.number < 1) {
       return { ok: false, errorCode: "INVALID_FROM", error: "TOP-Nummer ist ungültig." };
+    }
+    if (fromItem.isCarriedOver) {
+      return { ok: false, errorCode: "CARRIED_OVER_LOCKED", error: "Übernommene TOPs dürfen nicht umnummeriert werden." };
     }
     if (numbers.has(target)) {
       return { ok: false, errorCode: "TARGET_TAKEN", error: "Zielnummer ist belegt." };

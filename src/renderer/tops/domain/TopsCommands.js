@@ -41,7 +41,7 @@ export class TopsCommands {
     try {
       const res = await this.repository.loadByMeeting(loadReq);
       const list = Array.isArray(res?.list) ? res.list : [];
-      const isReadOnly = Number(res?.meeting?.is_closed) === 1;
+      const isReadOnly = !res?.ok || Number(res?.meeting?.is_closed) === 1 || !!res?.meeting?.is_read_only;
       const selectedStillExists =
         previousSelectedTopId !== null &&
         previousSelectedTopId !== undefined &&
@@ -119,9 +119,9 @@ export class TopsCommands {
   async deleteSelectedTop() {
     const state = this._getState();
     this._setState({ error: null });
-    const req = createDeleteTopRequest({ topId: state.selectedTopId ?? null });
-    if (!req.topId) {
-      const error = "selectedTopId missing";
+    const req = createDeleteTopRequest({ meetingId: state.meetingId ?? null, topId: state.selectedTopId ?? null });
+    if (!req.meetingId || !req.topId) {
+      const error = !req.meetingId ? "meetingId missing" : "selectedTopId missing";
       this._setState({ error });
       return { ok: false, error };
     }

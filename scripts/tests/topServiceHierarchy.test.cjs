@@ -268,6 +268,7 @@ async function runTopServiceHierarchyTests(run) {
       },
     };
     const meetingTopsRepo = {
+      getMeetingTop() { return { meeting_id: "m1", top_id: "1" }; },
       attachTopToMeeting() {
         return { id: "new-1" };
       },
@@ -382,8 +383,135 @@ async function runTopServiceHierarchyTests(run) {
     assert.equal(updateCalls[1].completed_in_meeting_id, null);
   });
 
-  await run("meetingTopsRepo: erledigte TOPs werden nur im direkten Folgeprotokoll uebernommen", () => {
-    withMockedMeetingTopsRepo((repo) => {
+  await run("TopService: Delete schliesst die Nummernluecke atomar nur mit einem neuen TOP", () => {
+    const tops = new Map([
+      ["t1", { id: "t1", project_id: "p1", series_key: "construction", parent_top_id: null, level: 1, number: 1, trashed: false }],
+      ["t2", { id: "t2", project_id: "p1", series_key: "construction", parent_top_id: null, level: 1, number: 2, trashed: false }],
+      ["t3", { id: "t3", project_id: "p1", series_key: "construction", parent_top_id: null, level: 1, number: 3, trashed: false }],
+      ["foreign", { id: "foreign", project_id: "p1", series_key: "planning", parent_top_id: null, level: 1, number: 2, trashed: false }],
+    ]);
+    const attachments = new Map([
+      ["t1", { meeting_id: "m1", top_id: "t1", is_carried_over: 0 }],
+      ["t2", { meeting_id: "m1", top_id: "t2", is_carried_over: 0 }],
+      ["t3", { meeting_id: "m1", top_id: "t3", is_carried_over: 0 }],
+    ]);
+    const fixes = [];
+    const topsRepo = {
+      getTopById: (id) => tops.get(id) || null,
+      hasChildren: () => false,
+      markTrashed({ topId }) { tops.get(topId).trashed = true; },
+      fixNumberGap(payload) {
+        fixes.push(payload);
+        tops.get(payload.fromTopId).number = payload.toNumber;
+        return { ok: true };
+      },
+    };
+    const meetingsRepo = {
+      assertMeetingWritable() {},
+      getMeetingById: (id) => ({ id, project_id: "p1", series_key: "construction", is_closed: 0 }),
+      runInTransaction(fn) { return fn(); },
+    };
+    const meetingTopsRepo = {
+      getMeetingTop: (_meetingId, topId) => attachments.get(topId) || null,
+      listJoinedByMeeting: () => [...attachments.values()].map((mt) => ({ ...tops.get(mt.top_id), is_carried_over: mt.is_carried_over })).filter((row) => !row.trashed),
+    };
+    const service = createTopService({ topsRepo, meetingsRepo, meetingTopsRepo });
+    const result = service.deleteTop({ meetingId: "m1", topId: "t2" });
+    assert.equal(tops.get("t2").trashed, true);
+    assert.equal(tops.get("t3").number, 2);
+    assert.equal(tops.get("foreign").number, 2);
+    assert.deepEqual(result.renumbered, { topId: "t3", toNumber: 2 });
+    assert.deepEqual(fixes, [{ meetingId: "m1", level: 1, parentTopId: null, fromTopId: "t3", toNumber: 2 }]);
+  });
+
+  await run("TopService: Delete des letzten TOPs braucht keine Umnummerierung", () => {
+    const tops = new Map([
+      ["t1", { id: "t1", project_id: "p1", series_key: "construction", parent_top_id: null, level: 1, number: 1, trashed: false }],
+      ["t2", { id: "t2", project_id: "p1", series_key: "construction", parent_top_id: null, level: 1, number: 2, trashed: false }],
+    ]);
+    let fixed = false;
+    const topsRepo = { getTopById: (id) => tops.get(id), hasChildren: () => false,
+      markTrashed({ topId }) { tops.get(topId).trashed = true; }, fixNumberGap() { fixed = true; return { ok: true }; } };
+    const meetingsRepo = { assertMeetingWritable() {}, getMeetingById: (id) => ({ id, project_id: "p1", series_key: "construction", is_closed: 0 }), runInTransaction: (fn) => fn() };
+    const meetingTopsRepo = { getMeetingTop: (_id, topId) => ({ top_id: topId, is_carried_over: 0 }),
+      listJoinedByMeeting: () => [...tops.values()].filter((top) => !top.trashed).map((top) => ({ ...top, is_carried_over: 0 })) };
+    const result = createTopService({ topsRepo, meetingsRepo, meetingTopsRepo }).deleteTop({ meetingId: "m1", topId: "t2" });
+    assert.equal(result.renumbered, null);
+    assert.equal(fixed, false);
+  });
+
+  await run("TopService: uebernommene TOPs bleiben geschuetzt und ein Reparaturfehler rollt Delete zurueck", () => {
+    const tops = new Map([
+      ["old1", { id: "old1", project_id: "p1", series_key: "construction", parent_top_id: null, level: 1, number: 1, trashed: false }],
+      ["new2", { id: "new2", project_id: "p1", series_key: "construction", parent_top_id: null, level: 1, number: 2, trashed: false }],
+      ["old3", { id: "old3", project_id: "p1", series_key: "construction", parent_top_id: null, level: 1, number: 3, trashed: false }],
+    ]);
+    const carried = { old1: 1, new2: 0, old3: 1 };
+    const topsRepo = { getTopById: (id) => tops.get(id), hasChildren: () => false,
+      markTrashed({ topId }) { tops.get(topId).trashed = true; }, fixNumberGap() { throw new Error("darf nicht aufgerufen werden"); } };
+    const meetingsRepo = {
+      assertMeetingWritable() {},
+      getMeetingById: (id) => ({ id, project_id: "p1", series_key: "construction", is_closed: 0 }),
+      runInTransaction(fn) {
+        const before = new Map([...tops].map(([id, top]) => [id, { ...top }]));
+        try { return fn(); } catch (error) { for (const [id, top] of before) tops.set(id, top); throw error; }
+      },
+    };
+    const meetingTopsRepo = {
+      getMeetingTop: (_id, topId) => ({ top_id: topId, is_carried_over: carried[topId] }),
+      listJoinedByMeeting: () => [...tops.values()].filter((top) => !top.trashed).map((top) => ({ ...top, is_carried_over: carried[top.id] })),
+    };
+    const service = createTopService({ topsRepo, meetingsRepo, meetingTopsRepo });
+    assert.throws(() => service.deleteTop({ meetingId: "m1", topId: "old1" }), /übernommen/);
+    assert.equal(tops.get("old1").trashed, false);
+    assert.throws(() => service.deleteTop({ meetingId: "m1", topId: "new2" }), (error) => error?.code === "NUM_GAP_NO_NEW_TOP");
+    assert.equal(tops.get("new2").trashed, false);
+    assert.deepEqual([...tops.values()].map((top) => top.number), [1, 2, 3]);
+  });
+
+  await run("TopService: reale DB schliesst mittlere Luecke dauerhaft und isoliert Meeting sowie Reihe", () => {
+    return require("./meetingSeries.test.cjs").protocolFixture((f) => {
+      const project = f.repo.createProject({ name: "Delete-Lueckenregression", meeting_series_mask: 7 });
+      const meeting1 = f.meetingService.createMeeting({ projectId: project.id, seriesKey: "construction" });
+      const first = f.topService.createTop({ projectId: project.id, meetingId: meeting1.id, level: 1, title: "Eins" });
+      const middle = f.topService.createTop({ projectId: project.id, meetingId: meeting1.id, level: 1, title: "Mitte" });
+      const last = f.topService.createTop({ projectId: project.id, meetingId: meeting1.id, level: 1, title: "Drei bleibt" });
+      f.topService.updateMeetingFields({ meetingId: meeting1.id, topId: last.id, patch: { longtext: "Inhalt und Historie bleiben" } });
+      const planning = f.meetingService.createMeeting({ projectId: project.id, seriesKey: "planning" });
+      const planningTop = f.topService.createTop({ projectId: project.id, meetingId: planning.id, level: 1, title: "Andere Reihe" });
+
+      const deletion = f.topService.deleteTop({ meetingId: meeting1.id, topId: middle.id });
+      assert.deepEqual(deletion.renumbered, { topId: last.id, toNumber: 2 });
+      assert.deepEqual(f.topService.listByMeeting(meeting1.id).map((top) => [top.id, top.number, top.title]), [
+        [first.id, 1, "Eins"], [last.id, 2, "Drei bleibt"],
+      ]);
+      assert.equal(f.meetingTops.getMeetingTop(meeting1.id, middle.id).top_id, middle.id, "Papierkorb darf den Meeting-Link nicht vernichten");
+      assert.equal(f.meetingTops.getMeetingTop(meeting1.id, last.id).longtext, "Inhalt und Historie bleiben");
+      assert.equal(f.tops.getTopById(planningTop.id).number, 1);
+
+      f.meetingService.closeMeeting(meeting1.id);
+      const meeting2 = f.meetingService.createMeeting({ projectId: project.id, seriesKey: "construction" });
+      assert.throws(() => f.topService.deleteTop({ meetingId: meeting2.id, topId: first.id }), /übernommen/);
+      const newMiddle = f.topService.createTop({ projectId: project.id, meetingId: meeting2.id, level: 1, title: "Neu drei" });
+      const newLast = f.topService.createTop({ projectId: project.id, meetingId: meeting2.id, level: 1, title: "Neu vier" });
+      f.topService.deleteTop({ meetingId: meeting2.id, topId: newMiddle.id });
+      assert.deepEqual(f.topService.listByMeeting(meeting2.id).map((top) => [top.id, top.number, Number(top.is_carried_over)]), [
+        [first.id, 1, 1], [last.id, 2, 1], [newLast.id, 3, 0],
+      ]);
+      assert.deepEqual(f.topService.listByMeeting(meeting1.id).map((top) => [top.id, top.number]), [[first.id, 1], [last.id, 2]]);
+
+      f.database.closeDatabase();
+      f.database.initDatabase();
+      assert.deepEqual(f.topService.listByMeeting(meeting2.id).map((top) => [top.id, top.number]), [[first.id, 1], [last.id, 2], [newLast.id, 3]]);
+      assert.equal(f.database.initDatabase().pragma("integrity_check", { simple: true }), "ok");
+    });
+  });
+
+  await run("meetingTopsRepo: erledigte TOPs werden nur im direkten Folgeprotokoll uebernommen", async () => {
+    await require("./meetingSeries.test.cjs").protocolFixture(({ repo: projects, db, meetingTops: repo }) => {
+      const project = projects.createProject({ name: "Erledigungsregression" });
+      for (const [id, nr] of [["P2",2],["P3",3],["P4",4]]) db.prepare("INSERT INTO meetings(id,project_id,meeting_index,is_closed) VALUES(?,?,?,1)").run(id, project.id, nr);
+      for (const [id, nr] of [["done-1",1],["open-1",2]]) db.prepare("INSERT INTO tops(id,project_id,level,number,title) VALUES(?,?,1,?,?)").run(id, project.id, nr, id);
       repo.attachTopToMeeting({
         meetingId: "P2",
         topId: "done-1",

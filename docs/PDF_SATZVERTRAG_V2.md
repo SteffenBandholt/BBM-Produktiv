@@ -2,7 +2,7 @@
 
 Stand: 2026-09-14
 Inventarbasis: `rechnung-integration` / `2d9dcc113af89a3b1005e9b8d9ba41416108dbff`
-Vertragsversion: `m85.2-v6-standard-header-address`
+Vertragsversion: `m85.2-v7-next-meeting-options`
 
 ## Zweck und Geltungsgrenze
 
@@ -110,8 +110,8 @@ keinen zweiten Renderer und keine zweite Paginierung.
 | `PDF-V2-SATZ-011` | Der Abschlussblock wird nur an die letzte TOP-Seite angehängt. Vorher werden letzte TOP-Zeilen seitenweise nach hinten verschoben, bis der gemessene Abschluss passt. | Protokoll/Preview/Vorabzug; Legende auch TOP-Liste | `_measureTopsTailHeight`, Tail-Schleife, `PrintShell._buildTopsTail` | p15 | fest für Fixture; übergroßer Abschluss ungetestet | Position/Größe/Sichtbarkeit derzeit explizit editierbar, Satzzuordnung gesperrt |
 | `PDF-V2-SATZ-012` | Druckfarben werden mit `print-color-adjust: exact` erhalten; neue TOPs blau, wichtige rot, berührte übernommene Langtexte blau. | Protokoll/TOP | `PrintShell`, `print.css`, `v2.css` | bestehende Ampel-/Printtests | dokumentiert, aber ohne Pixel-Golden | Fachfarbe gesperrt |
 | `PDF-V2-SATZ-013` | PDF-Erzeugung erfolgt nur über das dedizierte Print-Fenster und genau einen `webContents.printToPDF`-Aufruf. | alle PDF-Modi | `printIpc.js` | M81 und M85 Architekturguard | fest | nicht anwendbar |
-| `PDF-V2-SATZ-014` | Die editierbare A4-Nutzfläche ist Papier minus die tatsächlich gesetzten vier Inhaltsränder. Bei 210 × 297 mm und O/R/U/L = 5/12/0/12 mm gilt X 12–198 mm, Y 5–297 mm. Kein normales PDF-Layoutziel darf diese Fläche verlassen. Verletzungen werden vor der Zustandsübernahme mit horizontaler oder vertikaler Randmeldung atomar abgewiesen; eine Randänderung wird gegen alle registrierten Ziele geprüft. | Protokoll-PDF-Editor | `bbmPdfAdapter.cjs` | M81 Nutzflächentest, M85 Print-DOM | fest | Ränder editierbar; Papierformat gesperrt |
-| `PDF-V2-SATZ-015` | Editor-Vorschau, normaler Vorabzug und Produkt-PDF der Protokollfamilie verwenden denselben bestehenden Layoutvertrag. Die Editor-Vorschau liest den aktuellen Arbeitszustand; `preview` und `protocol` lesen den gespeicherten Zustand desselben Profils. Nach `Speichern` müssen Seitenränder, Tabellenbreiten, Tracks, Textpositionen, Sichtbarkeit und Schriftgrößen in allen drei Ausgaben geometrisch identisch sein. | Protokoll/Preview/Vorabzug | `printIpc.js`, `printApp.js`, `pdfEditorLayout.js` | M81 Modusguard, M85 Print-DOM und reale Drei-PDF-Bounding-Box-Abnahme | fest | keine zweite Profilquelle; Satz- und Fachoperationen gesperrt |
+| `PDF-V2-SATZ-014` | Die A4-Nutzfläche ist Papier minus die tatsächlich gesetzten vier Inhaltsränder. Bei 210 × 297 mm und O/R/U/L = 5/12/0/12 mm gilt X 12–198 mm, Y 5–297 mm. Randänderungen des PDF-Editors werden weiterhin gegen alle registrierten absoluten Layoutziele geprüft und bei einer Verletzung atomar abgewiesen. Die Benutzereinstellung für Produkt-PDFs schreibt ausschließlich dieselben vier Profilwerte (je Rand 0–40 mm; Oberfläche zusätzlich mit feldspezifisch engeren Grenzen) und wird unabhängig von den absoluten Editor-Overlay-Zielen validiert. Papierformat, Paginierung und Zielkoordinaten bleiben dabei unverändert. | Protokoll-PDF-Editor und Protokoll-Einstellungen | `bbmPdfAdapter.cjs`, `settingsIpc.js` | M81 Nutzflächen-/Persistenztest, Einstellungen-Layouttest, M85 Print-DOM | fest; Benutzer-Randpfad am 18.09.2026 ergänzt | Ränder editierbar; Papierformat gesperrt |
+| `PDF-V2-SATZ-015` | Editor-Vorschau, normaler Vorabzug und Produkt-PDF der Protokollfamilie verwenden denselben bestehenden Layoutvertrag und dasselbe Profil. Die Editor-Vorschau liest den aktuellen Arbeitszustand; `preview` und `protocol` lesen den gespeicherten Zustand desselben Profils. Auch die vier Benutzerränder werden ohne zweiten Speicher in diesem Profil dauerhaft abgelegt. Nach `Speichern` müssen Seitenränder, Tabellenbreiten, Tracks, Textpositionen, Sichtbarkeit und Schriftgrößen in allen drei Ausgaben geometrisch identisch sein. | Protokoll/Preview/Vorabzug | `printIpc.js`, `printApp.js`, `pdfEditorLayout.js`, `settingsIpc.js` | M81 Modus-/Persistenzguard, M85 Print-DOM und reale PDF-Bounding-Box-Abnahme | fest; Einstellungszugriff am 18.09.2026 ergänzt | keine zweite Profilquelle; Satz- und Fachoperationen gesperrt |
 | `PDF-V2-SATZ-016` | Der Standard-FullHeader zeigt im vorhandenen rechten Adressbereich ausschließlich die Bauvorhabenadresse aus `data.project`: zuerst `street`, danach die vorhandenen Bestandteile aus `zip` und `city` mit genau einem Leerzeichen. Leere Bestandteile und Zeilen entfallen. Bei fehlender Projektadresse bleibt der Bereich leer; Profil-, Benutzer- oder Firmendaten und Ersatztexte sind keine Fallbackquelle. Dokumentartspezifische FullHeader-Inhaltsslots, insbesondere Rechnung und Provider mit eigenem Slot, bleiben unverändert. | Protokoll, Preview/Vorabzug, Firmenliste, ToDo-Liste, TOP-Liste, Restarbeiten und weitere Standard-FullHeader-Nutzer | `FullHeader.js` | gezielter Electron-DOM-Guardrail und sichtbare Protokoll-/Restarbeiten-PDF-Abnahme | fest | Adresswerte sind Fachdaten und nicht editorfähig; bestehende Kopfmetadaten-Geometrie bleibt editierbar |
 
 ## B1. Dokumentartspezifische Regeln: Protokoll
@@ -121,11 +121,12 @@ keinen zweiten Renderer und keine zweite Paginierung.
 | `PDF-V2-PROT-001` | Teilnehmer stehen vor Vorbemerkung/TOPs und werden ausschließlich an vollständigen Tabellenzeilen auf Seiten verteilt. Teilnehmerüberschrift und Tabellenkopf werden auf jeder Teilnehmer-Folgeseite wiederholt. Nur eine einzelne Zeile, die selbst höher als eine leere Seite ist, wird deterministisch an Wortgrenzen segmentiert; alle Segmente behalten dieselbe synthetische Quellidentität und Folgefragmente sind als `Fortsetzung:` gekennzeichnet. | `_buildParticipantsIntroPlan`, `_splitOversizedParticipantRow`, p11/p12/p28–p31 | fest |
 | `PDF-V2-PROT-002` | Vorbemerkung steht nach Teilnehmern und vor TOPs. Passt sie nicht in den Restplatz, wird ihr Text deterministisch an Wortgrenzen auf weitere Seiten verteilt. Folgeblöcke tragen `Vorbemerkung (Fortsetzung):`; kein Wort geht verloren oder wird doppelt ausgegeben. | `_fitPreRemarksSegment`, `_paginateTops`, p13/p14/p32–p34 | fest |
 | `PDF-V2-PROT-003` | TOP-Reihenfolge entspricht den in `printData` normalisierten/sortierten Druckdaten. Level 1 nutzt eine eigene unteilbare Zeile mit Keep-with-next; Unterpunkte besitzen Nummer, Kurz-/Langtext und Meta. | `printData`, `_buildTopRowData`, PrintShell | fest |
-| `PDF-V2-PROT-004` | Abschlussreihenfolge: Legende, optionaler Nächster-Termin-Text, danach `Aufgestellt:` mit Footerzeilen. Der gesamte Block liegt auf der letzten TOP-Seite. | `_buildTopsTailElement`, `_buildProtocolFooterElement`, p15 | fest für getestete Größen |
+| `PDF-V2-PROT-004` | Abschlussreihenfolge: Legende, optionale Angaben der nächsten Besprechung, danach `Aufgestellt:` mit Footerzeilen. Ein normal hoher Abschluss liegt auf der letzten TOP-Seite. Nur ein überhoher Freitext darf den Abschluss auf unmittelbar folgende TOP-Abschlussseiten erweitern; `Aufgestellt:` folgt erst nach seinem letzten Segment. | `_buildTopsTailElement`, `_buildProtocolFooterElement`, p15, p50–p55 | fest |
 | `PDF-V2-PROT-005` | Ein Protokoll ohne TOPs rendert keine leere TOP-Tabelle, aber Teilnehmer-Leerzustand und Abschlussblock. | p01, `PrintShell.renderPrint` | fest |
 | `PDF-V2-PROT-006` | „Neu“, „übernommen/berührt“, „wichtig“, Status, Termin, Verantwortlich und Ampel beeinflussen Darstellung, nicht Satzsteuerung durch den Editor. | Zeilenrenderer, Ampelregel | fest, Farben nicht visuell golden-verriegelt |
 | `PDF-V2-PROT-007` | Eine registrierte TOP-`TableColumn` ist eine geometrische Einheit aus Spaltentrack, Tabellenkopf und sämtlichen Datenzellen. Ihre horizontale Geometrie wird nicht frei verschoben: `resizeColumnBoundary` verschiebt ausschließlich eine innere Grenze und ändert die Breiten der beiden direkten Nachbarspalten atomar und gegenläufig. Tabellensumme und beide Außenkanten bleiben unverändert; Header- und Datentracks bleiben lückenlos. Sichtbarkeit wirkt auf die vollständige Spalte. Der registrierte Tabellenkopf ist Kind seiner Spalte und darf nur seinen Text innerhalb der unveränderten Spaltengeometrie verschieben, skalieren, ausrichten oder ausblenden. | `bbmPdfAdapter.cjs`, `PrintShell._buildTableHead`, `pdfEditorLayout.js`, M81 und M85-Print-DOM-Nachweise | fest |
 | `PDF-V2-PROT-008` | Die bestehende Teilnehmertabelle ist ein explizites Tabellenziel mit den Tracks Name 34, Funktion 32, Firma 30, Telefon/E-Mail 72 und Anwesend/Verteiler 18 mm. Eine innere Grenze verändert nur direkte Nachbarn gegenläufig bei fester 186-mm-Gesamtsumme. Eine Änderung der Tabellenaußenbreite verändert atomar den äußersten rechten Track. Kein Track, Kopf, Zellhintergrund oder Text darf die Nutzflächenkante X = 198 mm überschreiten. Der Kopf Anwesend/Verteiler bleibt als Kind der rechten Spalte separat textpositionierbar. | vorhandene Teilnehmer-DOM-/CSS-Struktur, `bbmPdfAdapter.cjs`, `pdfEditorLayout.js` | M81 und M85 mit realem Header-/Datenzellen-Readback | fest |
+| `PDF-V2-PROT-009` | Der Hauptschalter `Drucken` unterdrückt beide Nächste-Besprechung-Optionen. Bei aktivem Hauptschalter werden A und B unabhängig ausgegeben; A steht vor B, Bedienlabels werden nicht gedruckt, und ohne gewählte Option entsteht kein leerer Termintext. B erhält vorhandene Zeilenumbrüche und wird bei Überhöhe verlustfrei über aufeinanderfolgende Abschlussseiten geteilt. Vorschau und Protokoll verwenden dasselbe `nextMeeting`-Datenobjekt. | `printData._resolveNextMeetingForPrint`, `printApp._resolveNextMeetingContent`, `_fitTopsTailOptionB`, `PrintShell._buildTopsTail`, p50–p55 | fest |
 
 ## B2. Dokumentartspezifische Regeln: Restarbeiten
 
@@ -250,14 +251,17 @@ Für jedes Element sind außerdem `setPageBreakRule`, Seitenzuweisung, manuelle 
 
 ## Strukturelle Golden-Fixtures
 
-Die 49 neutralen Fälle liegen in `scripts/pdf-v2/m85Fixtures.cjs`. Der isolierte
+Die 55 neutralen Fälle liegen in `scripts/pdf-v2/m85Fixtures.cjs`. Der isolierte
 Electron-Harness verwendet ausschließlich diese Objekte, eigenes temporäres
-`userData`/`sessionData` und die echten Renderer-CSS-Dateien. Die 25
-Protokollfälle behalten einschließlich p01–p34 ihre M85.1-Goldenwerte; 22
+`userData`/`sessionData` und die echten Renderer-CSS-Dateien. Die bisherigen 25
+Protokollfälle behalten einschließlich p01–p34 ihre Seitenzahlen und ihr
+Satzverhalten; der p15-Hash enthält nun zusätzlich den expliziten A-Text. 22
 Restarbeiten-Fälle decken Leerzustand, Grenzfälle, Mehrseitenlisten, alle drei
 teilbaren Textfelder, einen Datensatz über mehrere Seiten, alle 13 Spalten,
 Status/Ampel, lange Verortung, sichtbare Filterreihenfolge, Löschfilter,
-Kopfwiederholung, Fußreserve, Querformat und gemischte Datensätze ab. Zwei
+Kopfwiederholung, Fußreserve, Querformat und gemischte Datensätze ab. Die sechs
+Fälle p50–p55 verriegeln Hauptschalter aus, nur A, nur B, A+B, keine Auswahl
+sowie einen mehrseitigen Freitext mit erhaltenen Zeilenumbrüchen. Zwei
 Invoice-Fälle i48/i49 verriegeln finale Rechnung und Proberechnung über fünf
 Seiten mit FullHeader-Slot, MiniHeader, Vorabzug, Bau-LV, NEP, Hinweis,
 Mehrfach-MwSt., Abschluss und echtem Seitenfooter innerhalb der Fußreserve.
@@ -285,6 +289,10 @@ Editor-Layout-Fixtures p16 bis p18: Die Tabellenkopf-Inhalte besitzen nun
 explizite Label-Wrapper und die tatsächliche Tabellensumme folgt der
 gespeicherten Spaltensumme. Seitenzahlen, Datensatzzuweisung, Fortsetzungen und
 alle übrigen 44 Strukturhashes bleiben unverändert.
+
+Die Nächste-Besprechung-Erweiterung aktualisiert außerdem den p15-Hash ohne
+Seitenzahländerung, weil der Snapshot den bestehenden A-Text nun ausdrücklich
+erfasst. Neu hinzu kommen ausschließlich die sechs Goldenwerte p50–p55.
 
 ## Harte Sperren und derzeit offene Guardrails
 

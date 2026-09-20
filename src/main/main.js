@@ -8,7 +8,10 @@ const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
 const { configureUiEditorAcceptanceProfile } = require("./startup/uiEditorAcceptanceProfile");
+const { resolveDistributionPolicy, configureDistributionProfile, seedDistributionLayouts, seedDistributionRenderDefaults } = require("./distributionPolicy");
 
+const distributionPolicy = resolveDistributionPolicy({ electronApp: app });
+configureDistributionProfile({ electronApp: app, policy: distributionPolicy });
 const uiEditorAcceptanceProfile = configureUiEditorAcceptanceProfile({ electronApp: app });
 const UI_EDITOR_ACCEPTANCE_MODULE_SWITCH = "--bbm-ui-editor-acceptance-module=";
 const UI_EDITOR_ACCEPTANCE_MODULES = new Set(["restarbeiten", "protokoll", "rechnung", "sigeko"]);
@@ -46,6 +49,7 @@ const { registerSettingsIpc } = require("./ipc/settingsIpc");
 const { registerEditorIpc } = require("./ipc/editorIpc");
 const { registerProjectTransferIpc } = require("./ipc/projectTransferIpc");
 const { registerLicenseIpc, importLicenseFromFilePath } = require("./ipc/licenseIpc");
+const { registerLicenseToolIntegrationIpc } = require("./ipc/licenseToolIntegrationIpc");
 const { registerAudioIpc } = require("./ipc/audioIpc");
 const { registerUiEditorIpc } = require("./ipc/uiEditorIpc");
 const { registerActiveModuleIpcs } = require("./moduleIpcRegistry");
@@ -66,7 +70,7 @@ const { resolveBuildIdentity } = require("./buildIdentity");
 let mainWindow;
 let uiEditorSessionController;
 let uiEditorShutdownComplete = false;
-const WINDOWS_APP_ID = "de.bbm.baubesprechungsmanager";
+const WINDOWS_APP_ID = distributionPolicy.appId;
 const LICENSE_FILE_EXTENSION = ".bbmlic";
 const pendingLicenseImportPaths = [];
 let licenseImportDrainRunning = false;
@@ -309,6 +313,7 @@ function createWindow() {
       webSecurity: true,
       allowRunningInsecureContent: false,
       devTools: !isProd,
+      additionalArguments: distributionPolicy.id !== "full" ? [`--bbm-distribution=${distributionPolicy.id}`] : [],
     },
   };
 
@@ -506,12 +511,23 @@ async function maybePromptLegacyMigration(win) {
 }
 
 app.whenReady().then(async () => {
+  seedDistributionLayouts({ electronApp: app, policy: distributionPolicy });
   // ✅ IPCs zuerst registrieren (verhindert "No handler registered" beim invoke)
   const licenseStatus = checkLicense();
-  configureDatabaseMigrations(licenseStatus, { allowLegacyImport: !uiEditorAcceptanceProfile.enabled });
+  configureDatabaseMigrations(licenseStatus, { allowLegacyImport: distributionPolicy.allowLegacyImport && !uiEditorAcceptanceProfile.enabled });
+  await seedDistributionRenderDefaults({ electronApp: app, policy: distributionPolicy });
   registerProjectsIpc();
   registerCoreProjectFirmsIpc();
   registerFirmDirectoryIpc();
+  registerLicenseToolIntegrationIpc({
+    ipcMain,
+    getMainWindow: () => mainWindow,
+    integration: require("./integrations/licenseToolIntegration").createLicenseToolIntegration({
+      electronApp: app,
+      distributionPolicy,
+      acceptanceProfile: uiEditorAcceptanceProfile,
+    }),
+  });
   registerProjectParticipantsIpc();
   registerPrintIpc();
   registerTableLayoutsIpc();
@@ -526,13 +542,13 @@ app.whenReady().then(async () => {
     ipcMain,
     registrars: moduleIpcRegistrars,
   });
-  uiEditorSessionController = registerUiEditorIpc({ app, ipcMain, getMainWindow: () => mainWindow });
+  uiEditorSessionController = registerUiEditorIpc({ app, ipcMain, getMainWindow: () => mainWindow, editingEnabled: distributionPolicy.uiEditorEnabled });
   ipcMain.handle("uiEditor:getDiagnosticMode", () => {
     const result = {
       ok: true,
-      enabled: process.env.BBM_M80_EDITOR_DIAGNOSTIC === "1" ||
+      enabled: distributionPolicy.uiEditorEnabled && (process.env.BBM_M80_EDITOR_DIAGNOSTIC === "1" ||
         process.argv.includes("--bbm-electron-editor-diagnostic") ||
-        app.commandLine.hasSwitch("bbm-electron-editor-diagnostic"),
+        app.commandLine.hasSwitch("bbm-electron-editor-diagnostic")),
       startModule: uiEditorAcceptanceModule,
       isolatedAcceptance: uiEditorAcceptanceProfile.enabled === true,
     };
@@ -775,7 +791,7 @@ app.whenReady().then(async () => {
           app.quit();
         });
       }
-      if (process.argv.includes("--open-ui-editor") || app.commandLine.hasSwitch("open-ui-editor")) {
+      if (distributionPolicy.uiEditorEnabled && (process.argv.includes("--open-ui-editor") || app.commandLine.hasSwitch("open-ui-editor"))) {
         const openExistingEditor = "import('./app/coreShellNavigation.js').then((module) => module.openNativeUiEditor({}))";
         mainWindow.webContents.executeJavaScript(openExistingEditor).catch((error) => {
           console.error("[ui-editor] M82 starter launch failed", error?.code || error?.message || error);

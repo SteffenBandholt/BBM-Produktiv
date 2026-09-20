@@ -1,8 +1,9 @@
 // src/main/ipc/settingsIpc.js
-const { ipcMain, dialog, BrowserWindow, shell } = require("electron");
+const { ipcMain, app, dialog, BrowserWindow, shell } = require("electron");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+const { resolveDistributionPolicy, DISABLED_EDITOR_RESULT } = require("../distributionPolicy");
 const {
   initDatabase,
   getDatabaseDiagnostics,
@@ -17,6 +18,44 @@ const projectFirmsRepo = require("../db/projectFirmsRepo");
 const {
   PROTOKOLL_GLOBAL_SETTING_KEYS,
 } = require("../modules/protokoll/settingsKeys");
+const { getSharedBbmPdfAdapter } = require("../ui-editor/bbmPdfAdapter.cjs");
+
+const PROTOCOL_PAGE_MARGIN_KEYS = Object.freeze({
+  marginTop: "print.v2.pagePadTopMm",
+  marginRight: "print.v2.pagePadRightMm",
+  marginBottom: "print.v2.pagePadBottomMm",
+  marginLeft: "print.v2.pagePadLeftMm",
+});
+const PROTOCOL_PAGE_MARGIN_DEFAULTS = Object.freeze({ marginTop: 5, marginRight: 12, marginBottom: 0, marginLeft: 12 });
+
+function _protocolPdfAdapter() {
+  const adapter = getSharedBbmPdfAdapter();
+  adapter.configureProfileRoot(path.join(app.getPath("userData"), "ui-editor", "profiles", "module-protokoll"));
+  return adapter;
+}
+
+function _legacyProtocolPageMargins() {
+  const settings = appSettingsGetMany(Object.values(PROTOCOL_PAGE_MARGIN_KEYS));
+  return Object.fromEntries(Object.entries(PROTOCOL_PAGE_MARGIN_KEYS).map(([field, key]) => {
+    const value = Number(settings?.[key]);
+    return [field, Number.isFinite(value) && value >= 0 ? value : PROTOCOL_PAGE_MARGIN_DEFAULTS[field]];
+  }));
+}
+
+function _normalizeProtocolPageMargins(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Seitenränder fehlen.");
+  const labels = { marginTop: "oben", marginRight: "rechts", marginBottom: "unten", marginLeft: "links" };
+  const result = {};
+  for (const field of Object.keys(PROTOCOL_PAGE_MARGIN_KEYS)) {
+    const raw = String(payload[field] ?? "").trim().replace(",", ".");
+    const value = Number(raw);
+    if (!raw || !Number.isFinite(value) || value < 0 || value > 40) {
+      throw new Error(`Der Seitenrand ${labels[field]} muss eine Zahl zwischen 0 und 40 mm sein.`);
+    }
+    result[field] = Math.round(value * 10) / 10;
+  }
+  return result;
+}
 
 const DEFAULT_ROLE_LABELS = {
   10: "Bauherr",
@@ -656,6 +695,9 @@ function registerSettingsIpc() {
       if (!payload || typeof payload !== "object") {
         return { ok: false, error: "payload muss ein Objekt sein" };
       }
+      if (!resolveDistributionPolicy().uiEditorEnabled && Object.keys(payload).some((key) => /^print\.v2\.(pagePad|footerReserve|footerReserveMm|footerReservePx|font|row|column)/.test(key))) {
+        return DISABLED_EDITOR_RESULT;
+      }
       const data = _cleanGlobalAppSettingPatch(payload);
 
       appSettingsSetMany(data);
@@ -670,6 +712,36 @@ function registerSettingsIpc() {
       return { ok: true };
     } catch (err) {
       return { ok: false, error: err?.message || String(err) };
+    }
+  });
+
+  ipcMain.handle("protocolPdf:getPageMargins", async () => {
+    try {
+      const persisted = _protocolPdfAdapter().getPersistedPageMargins();
+      const margins = persisted.persisted ? persisted : _legacyProtocolPageMargins();
+      return { ok: true, margins: {
+        marginTop: margins.marginTop,
+        marginRight: margins.marginRight,
+        marginBottom: margins.marginBottom,
+        marginLeft: margins.marginLeft,
+      }, source: persisted.persisted ? "pdf-profile" : "legacy-settings" };
+    } catch (err) {
+      return { ok: false, error: err?.message || String(err), errorCode: err?.code || "PDF_PAGE_MARGINS_READ_FAILED" };
+    }
+  });
+
+  ipcMain.handle("protocolPdf:setPageMargins", async (_evt, payload) => {
+    try {
+      const margins = _normalizeProtocolPageMargins(payload);
+      const page = _protocolPdfAdapter().updatePersistedPageMargins(margins);
+      return { ok: true, margins: {
+        marginTop: page.marginTop,
+        marginRight: page.marginRight,
+        marginBottom: page.marginBottom,
+        marginLeft: page.marginLeft,
+      } };
+    } catch (err) {
+      return { ok: false, error: err?.message || String(err), errorCode: err?.code || "PDF_PAGE_MARGINS_SAVE_FAILED" };
     }
   });
 

@@ -105,7 +105,16 @@ function baseData(mode = "protocol") {
       pagePadBottomMm: 0,
       footerReserveMm: 12,
     },
-    nextMeeting: { enabled: false, date: "", time: "", place: "", extra: "" },
+    nextMeeting: {
+      enabled: false,
+      optionAEnabled: true,
+      optionBEnabled: false,
+      optionBText: "",
+      date: "",
+      time: "",
+      place: "",
+      extra: "",
+    },
     appVersion: "0.0.0-m85-fixture",
     buildChannel: "TEST",
   };
@@ -415,6 +424,82 @@ const FIXTURES = Object.freeze([
   }),
   invoiceFixture("i48-invoice-final", "Finale Rechnung im V2-Satz"),
   invoiceFixture("i49-invoice-preview", "Proberechnung im V2-Satz", { preview: true }),
+  protocolFixture("p50-next-meeting-print-off", "Nächste Besprechung: Drucken aus", (data) => {
+    data.nextMeeting = {
+      enabled: false,
+      optionAEnabled: true,
+      optionBEnabled: true,
+      optionBText: "Dieser Text darf nicht erscheinen.",
+      date: "2026-10-01",
+      time: "09:00",
+      place: "Testort",
+      extra: "neutral",
+    };
+  }),
+  protocolFixture("p51-next-meeting-option-a", "Nächste Besprechung: nur Option A", (data) => {
+    data.nextMeeting = {
+      enabled: true,
+      optionAEnabled: true,
+      optionBEnabled: false,
+      optionBText: "Dieser Text darf nicht erscheinen.",
+      date: "2026-10-01",
+      time: "09:00",
+      place: "Testort",
+      extra: "neutral",
+    };
+  }),
+  protocolFixture("p52-next-meeting-option-b", "Nächste Besprechung: nur Option B", (data) => {
+    data.nextMeeting = {
+      enabled: true,
+      optionAEnabled: false,
+      optionBEnabled: true,
+      optionBText: "Erste Freitextzeile.\nZweite Freitextzeile.",
+      date: "",
+      time: "",
+      place: "",
+      extra: "",
+    };
+  }),
+  protocolFixture("p53-next-meeting-options-a-b", "Nächste Besprechung: Option A und B", (data) => {
+    data.nextMeeting = {
+      enabled: true,
+      optionAEnabled: true,
+      optionBEnabled: true,
+      optionBText: "Freitext unterhalb der bestehenden Angaben.",
+      date: "2026-10-01",
+      time: "09:00",
+      place: "Testort",
+      extra: "neutral",
+    };
+  }),
+  protocolFixture("p54-next-meeting-no-option", "Nächste Besprechung: keine Option", (data) => {
+    data.nextMeeting = {
+      enabled: true,
+      optionAEnabled: false,
+      optionBEnabled: false,
+      optionBText: "Dieser Text darf nicht erscheinen.",
+      date: "2026-10-01",
+      time: "09:00",
+      place: "Testort",
+      extra: "neutral",
+    };
+  }),
+  protocolFixture("p55-next-meeting-long-option-b", "Nächste Besprechung: langer mehrseitiger Freitext", (data) => {
+    data.nextMeeting = {
+      enabled: true,
+      optionAEnabled: false,
+      optionBEnabled: true,
+      optionBText: [
+        "Absatz eins bleibt als eigene Zeile erhalten.",
+        words(1600, "freitext"),
+        "Absatz drei markiert das vollständige Ende.",
+      ].join("\n"),
+      date: "",
+      time: "",
+      place: "",
+      extra: "",
+    };
+  }),
 ]);
 
 function getM85Fixtures(ids = []) {

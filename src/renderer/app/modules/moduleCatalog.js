@@ -120,9 +120,11 @@ const CURRENT_RELEASE_STATE_ACCESS = createReleaseStateAccess((releaseState) =>
 
 function deriveActiveModuleEntries(moduleIds) {
   const normalizedModuleIds = normalizeModuleIds(moduleIds);
+  const permitted = globalThis.window?.bbmDistribution?.moduleIds;
   return Object.freeze(
     AVAILABLE_MODULE_ENTRIES.filter((definition) =>
-      normalizedModuleIds.includes(String(definition?.moduleId || "").trim())
+      normalizedModuleIds.includes(String(definition?.moduleId || "").trim()) &&
+      (!Array.isArray(permitted) || permitted.includes(definition.moduleId))
     )
       .map((definition) => definition?.entry)
       .filter(Boolean)

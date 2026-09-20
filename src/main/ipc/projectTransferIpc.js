@@ -10,6 +10,7 @@ const archiver = require("archiver");
 const yauzl = require("yauzl");
 const extract = require("extract-zip");
 const { isDeepStrictEqual } = require("node:util");
+const { normalizeSeriesKey, normalizeSeriesMask } = require("../../shared/meetingSeries.cjs");
 
 const { initDatabase } = require("../db/database");
 const { PROJECT_AUTHORITY_COLUMNS, validateProjectAuthorityRow } = require("../../shared/sigeko/projectAuthorities.cjs");
@@ -47,6 +48,7 @@ function _buildProjectTransferManifest({ projectId, project, storage, data, expo
       : project.bauherr_firm_kind != null || project.bauherr_firm_id != null ? 5
       : data.sigekoProjects?.length ? 4 : 3,
     firmLogicSchemaVersion: 1,
+    meetingSeriesSchemaVersion: 1,
     exportDate: exportedAt,
     appVersion: app.getVersion ? app.getVersion() : "",
     projectId,
@@ -565,6 +567,107 @@ function _withLegacyFirmUseDefaults(rows = []) {
   }));
 }
 
+// Meeting series are independent of the overall archive version and its optional
+// module payloads. Validate every relationship before rebinding/inserting rows.
+function _validateMeetingSeriesPayload(payload, manifest) {
+  const marked = Object.hasOwn(manifest, "meetingSeriesSchemaVersion");
+  if (marked && manifest.meetingSeriesSchemaVersion !== 1) {
+    throw new Error("Nicht unterstützte Besprechungsreihen-Version im Projektarchiv.");
+  }
+  const project = payload.project;
+  const validId = (value) => typeof value === "string" && !!value.trim() && value === value.trim();
+  if (!project || !validId(project.id)) throw new Error("Ungültige Projekt-ID im Besprechungsreihen-Archiv.");
+  if (marked && manifest.projectId !== project.id) throw new Error("Fremder Projektbezug im Besprechungsreihen-Manifest.");
+  const mask = project.meeting_series_mask;
+  if (marked) {
+    if (typeof mask !== "number" || !Number.isInteger(mask) || mask < 0 || mask > 7 || normalizeSeriesMask(mask) !== mask) {
+      throw new Error("Ungültige Aktivierung der Besprechungsreihen im Projektarchiv.");
+    }
+  } else {
+    if (Object.hasOwn(project, "meeting_series_mask") && mask !== 1) {
+      throw new Error("Besprechungsreihen-Aktivierung ohne Versionskennung im Altarchiv.");
+    }
+    project.meeting_series_mask = 1;
+  }
+  const rowMap = (name) => {
+    const rows = payload[name] ?? [];
+    if (!Array.isArray(rows)) throw new Error(`Ungültige Besprechungsreihen-Daten: ${name}.`);
+    const byId = new Map();
+    for (const row of rows) {
+      if (!row || typeof row !== "object" || Array.isArray(row) || !validId(row.id) || byId.has(row.id)) {
+        throw new Error(`Ungültige oder doppelte ID in ${name}.`);
+      }
+      if (row.project_id !== project.id) throw new Error(`Fremder Projektbezug in ${name}.`);
+      if (marked) {
+        if (typeof row.series_key !== "string" || normalizeSeriesKey(row.series_key) !== row.series_key) {
+          throw new Error(`Ungültige Besprechungsreihe in ${name}.`);
+        }
+      } else {
+        if (Object.hasOwn(row, "series_key") && row.series_key !== "construction") {
+          throw new Error(`Besprechungsreihe ohne Versionskennung in ${name}.`);
+        }
+        row.series_key = "construction";
+      }
+      byId.set(row.id, row);
+    }
+    return byId;
+  };
+  const meetings = rowMap("meetings");
+  const tops = rowMap("tops");
+  const openSeries = new Set();
+  const meetingNumbers = new Set();
+  for (const row of meetings.values()) {
+    if (!Number.isSafeInteger(row.meeting_index) || row.meeting_index < 1 ||
+        (row.is_closed !== undefined && row.is_closed !== 0 && row.is_closed !== 1)) {
+      throw new Error("Ungültige Protokollnummer oder Abschlussstatus im Projektarchiv.");
+    }
+    const numberKey = `${row.series_key}:${row.meeting_index}`;
+    if (meetingNumbers.has(numberKey)) throw new Error("Doppelte Protokollnummer innerhalb einer Besprechungsreihe.");
+    meetingNumbers.add(numberKey);
+    if ((row.is_closed ?? 0) === 0) {
+      if (openSeries.has(row.series_key)) throw new Error("Mehrere offene Protokolle innerhalb einer Besprechungsreihe.");
+      openSeries.add(row.series_key);
+    }
+  }
+  for (const row of tops.values()) {
+    if (!Number.isSafeInteger(row.number) || row.number < 1) throw new Error("Ungültige TOP-Nummer im Projektarchiv.");
+    if (row.parent_top_id != null) {
+      const parent = tops.get(row.parent_top_id);
+      if (!parent || parent.series_key !== row.series_key) throw new Error("TOP-Parent fehlt oder gehört zu einer anderen Besprechungsreihe.");
+      const ancestors = new Set([row.id]);
+      let current = parent;
+      while (current) {
+        if (ancestors.has(current.id)) throw new Error("Zyklische TOP-Hierarchie im Projektarchiv.");
+        ancestors.add(current.id);
+        current = current.parent_top_id == null ? null : tops.get(current.parent_top_id);
+      }
+    }
+  }
+  const meetingTops = payload.meetingTops ?? [];
+  const participants = payload.meetingParticipants ?? [];
+  if (!Array.isArray(meetingTops) || !Array.isArray(participants)) throw new Error("Ungültige Protokollzuordnungen im Projektarchiv.");
+  const attached = new Map();
+  for (const row of meetingTops) {
+    const meeting = meetings.get(row?.meeting_id);
+    const top = tops.get(row?.top_id);
+    if (!meeting || !top || meeting.series_key !== top.series_key ||
+        (Object.hasOwn(row, "project_id") && row.project_id !== project.id)) {
+      throw new Error("TOP und Protokoll gehören nicht zur selben Projekt-/Besprechungsreihe.");
+    }
+    if (!attached.has(meeting.id)) attached.set(meeting.id, new Set());
+    if (attached.get(meeting.id).has(top.id)) throw new Error("Doppelte TOP-Zuordnung im Projektarchiv.");
+    attached.get(meeting.id).add(top.id);
+    if (row.completed_in_meeting_id != null) {
+      const completed = meetings.get(row.completed_in_meeting_id);
+      if (!completed || completed.series_key !== meeting.series_key) throw new Error("Erledigungsprotokoll fehlt oder gehört zu einer anderen Besprechungsreihe.");
+    }
+  }
+  for (const row of participants) {
+    if (!meetings.has(row?.meeting_id)) throw new Error("Teilnehmer verweist auf ein fremdes Protokoll.");
+  }
+  return payload;
+}
+
 function _sanitizeProjectRow(project) {
   if (!project || typeof project !== "object") return null;
   const map = {
@@ -581,6 +684,7 @@ function _sanitizeProjectRow(project) {
     geplanter_baubeginn: project.geplanter_baubeginn ?? null,
     end_date: project.end_date ?? project.endDate ?? null,
     notes: project.notes ?? null,
+    meeting_series_mask: project.meeting_series_mask,
     archived_at: project.archived_at ?? project.archivedAt ?? null,
   };
   // Entferne undefined, damit INSERT nur vorhandene Spalten schreibt
@@ -649,7 +753,9 @@ async function _importProjectZip(filePath) {
     }
     const readPayload = async (file, label) => {
       const result = await _readJsonIfExists(file, label);
-      if (formatVersion >= 6) {
+      const requiredSeriesPayload = manifest.meetingSeriesSchemaVersion === 1 &&
+        Object.hasOwn(completePayloadKeys, label) && !label.startsWith("sigeko_");
+      if (formatVersion >= 6 || requiredSeriesPayload) {
         if (!result.ok) throw new Error(result.error);
         const keys = completePayloadKeys[label] ||
           (label === "sigeko_projects.json" && fs.existsSync(file) ? ["sigeko_projects"] : null);
@@ -762,6 +868,8 @@ async function _importProjectZip(filePath) {
     const project = payload.project;
     if (!project?.id) return { ok: false, error: "Projekt-ID fehlt im Export." };
 
+    _validateMeetingSeriesPayload(payload, manifest);
+
     _validateProjectAuthorities(payload.sigekoProjectAuthorities, project.id);
     _validatePreNotifications(payload.sigekoPreNotifications || [], project.id);
     _validateSigekoDocuments(payload.sigekoDocuments || [], project.id);
@@ -786,6 +894,11 @@ async function _importProjectZip(filePath) {
     const projectShortName = project.short ?? project.projectShortName ?? manifest.projectShortName ?? null;
 
     const db = initDatabase();
+    for (const [table, rows] of [["meetings", payload.meetings], ["tops", payload.tops]]) {
+      if ((rows || []).some(row => _rowExists(db, table, row.id))) {
+        return { ok: false, error: `Bestehende ID in ${table}; Projektarchiv wird nicht eingefügt.` };
+      }
+    }
     if (payload.sigekoPreNotificationWorkflows?.length) {
       const columns = db.prepare("PRAGMA table_info(sigeko_pre_notification_workflows)").all().map(row => row.name);
       if (columns.length !== SIGEKO_PRE_NOTIFICATION_WORKFLOW_COLUMNS.length || SIGEKO_PRE_NOTIFICATION_WORKFLOW_COLUMNS.some(key => !columns.includes(key))) {
@@ -896,6 +1009,17 @@ async function _importProjectZip(filePath) {
       _insertRows(db, "tops", withPid(payload.tops || []));
       _insertRows(db, "meeting_tops", payload.meetingTops || []);
       _insertRows(db, "meeting_participants", payload.meetingParticipants || []);
+      // An imported participant snapshot is authoritative, including an empty
+      // selection. Do not lazily seed it again from a historical predecessor.
+      const markParticipants = db.prepare(`
+        INSERT INTO app_settings (key, value, created_at, updated_at)
+        VALUES (?, '1', ?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = '1', updated_at = excluded.updated_at
+      `);
+      const importedAt = new Date().toISOString();
+      for (const meeting of payload.meetings || []) {
+        markParticipants.run(`meetingParticipants.initialized.${meeting.id}`, importedAt, importedAt);
+      }
       _insertRows(db, "restarbeiten_items", withPid(payload.restarbeitenItems || []));
       _insertRows(db, "restarbeiten_attachments", withPid(payload.restarbeitenAttachments || []));
       _insertRows(db, "restarbeiten_notes", payload.restarbeitenNotes || []);
@@ -965,6 +1089,7 @@ function registerProjectTransferIpc() {
       const exportPath = path.join(exportRoot, exportName);
 
       const data = _fetchProjectData(projectId, project);
+      _validateMeetingSeriesPayload({ project, ...data }, { meetingSeriesSchemaVersion: 1, projectId });
       if (data.sigekoDocuments.length) _validateSigekoDocumentFiles(projectDir, data.sigekoDocuments, data.sigekoPreNotificationWorkflows);
       const builderVersion = project.bauherr_firm_kind != null || project.bauherr_firm_id != null ? 5 : 3;
       const builder = _validateProjectBuilderReference({ project, projectFirms: data.projectFirms }, { formatVersion: builderVersion });

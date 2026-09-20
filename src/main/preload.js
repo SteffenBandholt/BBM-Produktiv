@@ -1,5 +1,16 @@
 // src/main/preload.js
 const { contextBridge, ipcRenderer } = require("electron");
+// Sandboxed preload receives this constraint from the trusted main process.
+// Main IPC/module gates independently enforce the packaged distribution.
+const distributionArgument = process.argv.find((value) => String(value || "").startsWith("--bbm-distribution="));
+const distributionId = String(distributionArgument || "").slice("--bbm-distribution=".length);
+if (distributionId === "protokoll-acceptance" || distributionId === "customer") {
+  contextBridge.exposeInMainWorld("bbmDistribution", Object.freeze({
+    id: distributionId,
+    moduleIds: distributionId === "protokoll-acceptance" ? Object.freeze(["protokoll"]) : null,
+    uiEditorEnabled: false,
+  }));
+}
 
 // kleine Helper: erlaubt beide Signaturen (id) oder ({...})
 function _wrapIdArg(name, objKey) {
@@ -66,8 +77,10 @@ contextBridge.exposeInMainWorld("bbmDb", {
   // ============================================================
   meetingsListByProject: (projectId) => ipcRenderer.invoke("meetings:listByProject", projectId),
   meetingsCreate: (data) => ipcRenderer.invoke("meetings:create", data),
+  meetingsGetById: (meetingId) => ipcRenderer.invoke("meetings:getById", meetingId),
   meetingsClose: (meetingId) => ipcRenderer.invoke("meetings:close", meetingId),
   meetingsUpdateTitle: (data) => ipcRenderer.invoke("meetings:updateTitle", data),
+  meetingsUpdateNextMeeting: (data) => ipcRenderer.invoke("meetings:updateNextMeeting", data),
   meetingsListProjectTasks: (payload) => {
     if (payload && typeof payload === "object") {
       return ipcRenderer.invoke("meetings:listProjectTasks", payload);
@@ -204,6 +217,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   printPdf: (data) => ipcRenderer.invoke("print:toPdf", data),
   printPdfAndOpen: (data) => ipcRenderer.invoke("print:toPdfAndOpen", data),
   printPdfAndPreviewInternal: (data) => ipcRenderer.invoke("print:toPdfAndPreviewInternal", data),
+  openInternalPreview: (data) => ipcRenderer.invoke("print:openInternalPreview", data),
 
   // ============================================================
   // Tabellenlayouts (intern)
@@ -235,12 +249,18 @@ contextBridge.exposeInMainWorld("bbmDb", {
   devVersionBump: (payload) => ipcRenderer.invoke("dev:versionBump", payload),
   devVersionSet: (payload) => ipcRenderer.invoke("dev:versionSet", payload),
   devGetStoragePreview: (payload) => ipcRenderer.invoke("dev:getStoragePreview", payload),
+  devLicenseToolStatus: () => ipcRenderer.invoke("dev:licenseToolStatus"),
+  devLicenseToolLaunch: (payload) => ipcRenderer.invoke("dev:licenseToolLaunch", {
+    customerId: String(payload?.customerId || "").trim(),
+  }),
 
   // ============================================================
   // App-Kern: globale App-Settings
   // ============================================================
   appSettingsGetMany: (keys) => ipcRenderer.invoke("appSettings:getMany", keys),
   appSettingsSetMany: (data) => ipcRenderer.invoke("appSettings:setMany", data),
+  protocolPdfGetPageMargins: () => ipcRenderer.invoke("protocolPdf:getPageMargins"),
+  protocolPdfSetPageMargins: (data) => ipcRenderer.invoke("protocolPdf:setPageMargins", data),
   appSettingsOnChanged: (callback) => {
     if (typeof callback !== "function") return () => {};
     const handler = (_event, payload) => callback(payload || {});
@@ -374,6 +394,7 @@ contextBridge.exposeInMainWorld("bbmPrint", {
   printPdf: (data) => ipcRenderer.invoke("print:toPdf", data),
   printPdfAndOpen: (data) => ipcRenderer.invoke("print:toPdfAndOpen", data),
   printPdfAndPreviewInternal: (data) => ipcRenderer.invoke("print:toPdfAndPreviewInternal", data),
+  openInternalPreview: (data) => ipcRenderer.invoke("print:openInternalPreview", data),
   findStoredProtocolPdf: (data) => ipcRenderer.invoke("protocol:findStoredPdf", data),
   listStoredFirmsPdfs: (data) => ipcRenderer.invoke("firms:listStoredPdfs", data),
   listStoredProjectPdfs: (data) => ipcRenderer.invoke("print:listStoredProjectPdfs", data),

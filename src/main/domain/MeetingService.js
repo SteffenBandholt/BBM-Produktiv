@@ -37,6 +37,9 @@ function _extractNextMeeting(arg) {
   if (!src || typeof src !== "object") return null;
   return {
     enabled: src.enabled,
+    optionAEnabled: src.optionAEnabled,
+    optionBEnabled: src.optionBEnabled,
+    optionBText: src.optionBText,
     date: src.date,
     time: src.time,
     place: src.place,
@@ -144,7 +147,7 @@ class MeetingService {
       if (!groups.has(key)) {
         groups.set(key, { level, parentTopId, items: [] });
       }
-      groups.get(key).items.push({ id: String(r.id), number });
+      groups.get(key).items.push({ id: String(r.id), number, isCarriedOver: Number(r.is_carried_over) === 1 });
     }
 
     const gaps = [];
@@ -173,11 +176,13 @@ class MeetingService {
       if (missingNumber !== null) {
         let lastTopId = null;
         for (const item of group.items) {
+          if (item.isCarriedOver) continue;
           if (item.number !== lastNumber) continue;
           if (lastTopId === null || String(item.id) > String(lastTopId)) lastTopId = item.id;
         }
         if (lastTopId === null) {
           for (const item of group.items) {
+            if (item.isCarriedOver) continue;
             if (lastTopId === null || String(item.id) > String(lastTopId)) lastTopId = item.id;
           }
         }
@@ -206,17 +211,24 @@ class MeetingService {
     return { gaps, markTopIds: Array.from(markTopIds) };
   }
 
-  createMeeting({ projectId, title }) {
+  createMeeting({ projectId, title, seriesKey }) {
+    const key = require("../../shared/meetingSeries.cjs").normalizeSeriesKey(seriesKey);
+    const execute = () => this._createMeetingInTransaction({ projectId, title, seriesKey: key });
+    return this.meetingsRepo.runInTransaction ? this.meetingsRepo.runInTransaction(execute) : execute();
+  }
+
+  _createMeetingInTransaction({ projectId, title, seriesKey }) {
     if (!projectId) throw new Error("projectId required");
 
-    const openMeeting = this.meetingsRepo.getOpenMeetingByProject(projectId);
+    const openMeeting = this.meetingsRepo.getOpenMeetingByProject(projectId, seriesKey);
+    if (openMeeting?.id) this.meetingsRepo.assertMeetingWritable?.(openMeeting.id);
     if (openMeeting?.id) return openMeeting;
 
     // 1) Meeting anlegen
-    const meeting = this.meetingsRepo.createMeeting({ projectId, title: title || null });
+    const meeting = this.meetingsRepo.createMeeting({ projectId, title: title || null, seriesKey });
 
     // 2) Letztes geschlossenes Meeting finden und TOPs übernehmen (schwarz)
-    const lastClosed = this.meetingsRepo.getLastClosedMeetingByProject(projectId);
+    const lastClosed = this.meetingsRepo.getLastClosedMeetingByProject(projectId, seriesKey);
     if (lastClosed && lastClosed.id) {
       // meetingTopsRepo unterstützt beide Signaturen
       this.meetingTopsRepo.carryOverFromMeeting(lastClosed.id, meeting.id);
@@ -359,6 +371,7 @@ class MeetingService {
       created_at: new Date().toISOString(),
       meeting_id: meetingId,
       project_id: meeting.project_id || null,
+      series_key: meeting.series_key || "construction",
       items: outItems,
     };
   }
@@ -376,6 +389,7 @@ class MeetingService {
       // already closed -> idempotent
       return { changed: 0, meeting };
     }
+    this.meetingsRepo.assertMeetingWritable?.(meetingId);
 
     const gapCheck = this._checkNumberGaps(meetingId);
     if (gapCheck.gaps.length > 0) {

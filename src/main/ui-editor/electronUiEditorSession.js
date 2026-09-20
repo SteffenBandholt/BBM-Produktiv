@@ -3,6 +3,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
+const { DISABLED_EDITOR_RESULT } = require("../distributionPolicy");
 const {
   ELECTRON_EDITOR_ERROR_CODES,
   ELECTRON_TARGET_ADAPTER_VERSION,
@@ -356,9 +357,10 @@ function applyRegisteredProfileMigrations(profileRoot, registration) {
 }
 
 class ElectronUiEditorSessionController {
-  constructor({ app, ipcMain, getMainWindow, pdfAdapter = null, spawnProcess = spawn, clientFactory, pathOptions = {}, executableResolver, runtimeRootResolver, sessionIdentifiersFactory, profileRootResolver, ensureDirectory }) {
+  constructor({ app, ipcMain, getMainWindow, pdfAdapter = null, spawnProcess = spawn, clientFactory, pathOptions = {}, executableResolver, runtimeRootResolver, sessionIdentifiersFactory, profileRootResolver, ensureDirectory, editingEnabled = true }) {
     this.app = app;
     this.ipcMain = ipcMain;
+    this.editingEnabled = editingEnabled;
     this.getMainWindow = getMainWindow;
     this.pdfAdapter = pdfAdapter;
     this.spawnProcess = spawnProcess;
@@ -384,14 +386,15 @@ class ElectronUiEditorSessionController {
   registerIpc() {
     if (this.registered) return;
     this.registered = true;
-    this.ipcMain.handle("uiEditor:open", (_event, registration) => this.open(registration));
-    this.ipcMain.handle("uiEditor:close", () => this.close());
-    this.ipcMain.handle("uiEditor:getStatus", () => this.status());
-    this.ipcMain.handle("uiEditor:respond", (_event, message) => this.respondFromRenderer(message));
-    this.ipcMain.handle("uiEditor:targetEvent", (_event, message) => this.forwardTargetEvent(message));
-    this.ipcMain.handle("uiEditor:preparePdfContext", (_event, context) => this.preparePdfContext(context));
-    this.ipcMain.handle("uiEditor:getPdfDocumentTypeStatus", (_event, context) => this.getPdfDocumentTypeStatus(context));
-    this.ipcMain.handle("uiEditor:registerPdfDocumentType", (_event, context) => this.registerPdfDocumentType(context));
+    const registerEditorAction = (channel, action) => this.ipcMain.handle(channel, this.editingEnabled ? action : () => DISABLED_EDITOR_RESULT);
+    registerEditorAction("uiEditor:open", (_event, registration) => this.open(registration));
+    registerEditorAction("uiEditor:close", () => this.close());
+    registerEditorAction("uiEditor:getStatus", () => this.status());
+    registerEditorAction("uiEditor:respond", (_event, message) => this.respondFromRenderer(message));
+    registerEditorAction("uiEditor:targetEvent", (_event, message) => this.forwardTargetEvent(message));
+    registerEditorAction("uiEditor:preparePdfContext", (_event, context) => this.preparePdfContext(context));
+    registerEditorAction("uiEditor:getPdfDocumentTypeStatus", (_event, context) => this.getPdfDocumentTypeStatus(context));
+    registerEditorAction("uiEditor:registerPdfDocumentType", (_event, context) => this.registerPdfDocumentType(context));
     this.ipcMain.handle("uiEditor:loadStartupLayout", (_event, registration) => this.loadStartupLayout(registration));
     this.ipcMain.handle("uiEditor:completeStartupLayout", (_event, result) => this.completeStartupLayout(result));
   }
@@ -507,6 +510,7 @@ class ElectronUiEditorSessionController {
   }
 
   async open(registration, reason = "open") {
+    if (!this.editingEnabled) return DISABLED_EDITOR_RESULT;
     if (this.startPromise) return this.startPromise;
     this.startPromise = this.#openAfterRefresh(registration, reason)
       .catch((error) => publicError(error))

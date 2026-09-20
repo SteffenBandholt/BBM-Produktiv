@@ -1,6 +1,7 @@
 const { ipcMain } = require("electron");
 const tableLayoutsRepo = require("../db/tableLayoutsRepo");
 const { listTableLayoutDefinitions } = require("../../shared/tableLayouts/tableLayoutRegistry");
+const { resolveDistributionPolicy, DISABLED_EDITOR_RESULT } = require("../distributionPolicy");
 
 function registerTableLayoutsIpc() {
   ipcMain.handle("tableLayouts:getMany", async (_evt, payload) => {
@@ -28,6 +29,7 @@ function registerTableLayoutsIpc() {
   });
 
   ipcMain.handle("tableLayouts:save", async (_evt, payload) => {
+    if (!resolveDistributionPolicy().uiEditorEnabled) return DISABLED_EDITOR_RESULT;
     try {
       return { ok: true, data: await tableLayoutsRepo.saveTableLayout(payload || {}) };
     } catch (err) {
@@ -36,6 +38,7 @@ function registerTableLayoutsIpc() {
   });
 
   ipcMain.handle("tableLayouts:reset", async (_evt, payload) => {
+    if (!resolveDistributionPolicy().uiEditorEnabled) return DISABLED_EDITOR_RESULT;
     try {
       return { ok: true, data: tableLayoutsRepo.resetTableLayout(payload || {}) };
     } catch (err) {

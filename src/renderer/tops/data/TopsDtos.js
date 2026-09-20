@@ -44,11 +44,8 @@ export function createMoveTopRequest(input = {}) {
 }
 
 export function createDeleteTopRequest(input) {
-  const topId =
-    input && typeof input === "object" && !Array.isArray(input)
-      ? toIdOrNull(input.topId)
-      : toIdOrNull(input);
-  return { topId };
+  const src = input && typeof input === "object" && !Array.isArray(input) ? input : { topId: input };
+  return { meetingId: toIdOrNull(src.meetingId), topId: toIdOrNull(src.topId) };
 }
 
 export function toApiSaveTopPayload(req = {}) {
@@ -78,6 +75,7 @@ export function toApiMoveTopPayload(req = {}) {
 
 export function toApiDeleteTopPayload(req = {}) {
   return {
+    meetingId: req.meetingId ?? null,
     topId: req.topId ?? null,
   };
 }

@@ -329,7 +329,7 @@ function validatePersistedProfileDocument(document) {
   }
   const normalizedState = { scopeId: SCOPE_ID, capturedAt: state.capturedAt, elements: normalized };
   const states = new Map(normalized.map((entry) => [entry.elementId, entry]));
-  for (const definition of ELEMENTS) validateState(definition, states.get(definition.id), states);
+  for (const definition of ELEMENTS) validateState(definition, states.get(definition.id), states, { checkUsableBounds: false });
   return normalizedState;
 }
 
@@ -464,10 +464,10 @@ function validateAllStates(allStates) {
   for (const definition of ELEMENTS) validateState(definition, allStates.get(definition.id), allStates);
 }
 
-function validateState(entry, state, allStates) {
+function validateState(entry, state, allStates, { checkUsableBounds = true } = {}) {
   const limit = entry.layoutBounds;
   const geometry = effectiveGeometry(entry, state, allStates);
-  if (!["document", "page"].includes(entry.kind)) {
+  if (checkUsableBounds && !["document", "page"].includes(entry.kind)) {
     const usable = usablePageBounds(allStates);
     if (geometry.x < usable.left - 0.000001 || geometry.x + geometry.width > usable.right + 0.000001) {
       throw Object.assign(new Error("Maximale Seitenbreite erreicht. Bitte zuerst in den PDF-Einstellungen den linken oder rechten Seitenrand verkleinern."), { code: "pdf_out_of_usable_width" });
@@ -549,6 +549,78 @@ function createBbmPdfAdapter({ regenerate } = {}) {
     if (!filePath) throw pdfProfileError("pdf_profile_unavailable", "Der bestehende PDF-Profilpfad ist nicht konfiguriert.");
     if (!fs.existsSync(filePath)) return null;
     return getPersistedPdfLayoutState();
+  }
+  function persistPdfLayoutState(state) {
+    const filePath = getPdfProfilePath();
+    if (!filePath) throw pdfProfileError("pdf_profile_unavailable", "Der bestehende PDF-Profilpfad ist nicht konfiguriert.");
+    const capturedAt = new Date().toISOString();
+    const requested = new Map((state?.elements || []).map((entry) => [entry.elementId, entry]));
+    const normalized = stateFromRegistry();
+    normalized.capturedAt = capturedAt;
+    normalized.elements = normalized.elements.map((baseline) => requested.has(baseline.elementId)
+      ? { ...baseline, ...clone(requested.get(baseline.elementId)), elementId: baseline.elementId, scopeId: SCOPE_ID }
+      : baseline);
+    const states = new Map(normalized.elements.map((entry) => [entry.elementId, entry]));
+    for (const definition of ELEMENTS) validateState(definition, states.get(definition.id), states, { checkUsableBounds: false });
+    const persistedState = {
+      scopeId: SCOPE_ID,
+      capturedAt,
+      elements: normalized.elements.map((current) => {
+        const definition = ELEMENTS.find((entry) => entry.id === current.elementId);
+        return Object.fromEntries(["elementId", "scopeId", ...persistedLayoutFields(definition)]
+          .map((field) => [field, current[field]]));
+      }),
+    };
+    const document = {
+      schemaVersion: 1,
+      documentKind: "pdf-layout-profile",
+      applicationId: APPLICATION_ID,
+      documentType: DOCUMENT_TYPE_ID,
+      profileId: "pdf-standard",
+      scopeId: SCOPE_ID,
+      savedAt: capturedAt,
+      registryFingerprint: PERSISTED_REGISTRY_FINGERPRINT,
+      layoutState: persistedState,
+    };
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    const temporaryPath = `${filePath}.save-${process.pid}-${Date.now()}`;
+    try {
+      fs.writeFileSync(temporaryPath, JSON.stringify(document), { encoding: "utf8", flag: "wx" });
+      fs.renameSync(temporaryPath, filePath);
+    } finally {
+      if (fs.existsSync(temporaryPath)) fs.rmSync(temporaryPath, { force: true });
+    }
+    working = normalized;
+    preview = { ...preview, state: preview.controlledOutputPath ? "stale" : "missing", stale: true };
+    return getCurrentPdfLayoutState();
+  }
+  function getPersistedPageMargins() {
+    const persistedState = readPersistedPdfLayoutState();
+    const state = persistedState || stateFromRegistry();
+    const page = state.elements.find((entry) => entry.elementId === `${SCOPE_ID}.page-template`);
+    return clone({
+      marginTop: page.marginTop,
+      marginRight: page.marginRight,
+      marginBottom: page.marginBottom,
+      marginLeft: page.marginLeft,
+      persisted: persistedState !== null,
+    });
+  }
+  function updatePersistedPageMargins(margins = {}) {
+    for (const field of ["marginTop", "marginRight", "marginBottom", "marginLeft"]) {
+      const value = Number(margins[field]);
+      if (!Number.isFinite(value) || value < 0 || value > 40) {
+        throw pdfProfileError("pdf_invalid_page_margins", `Der PDF-Seitenrand ${field} muss zwischen 0 und 40 mm liegen.`);
+      }
+    }
+    const source = readPersistedPdfLayoutState() || stateFromRegistry();
+    const pageId = `${SCOPE_ID}.page-template`;
+    const current = source.elements.find((entry) => entry.elementId === pageId);
+    const next = desiredState(current, "setPageMargins", margins);
+    return persistPdfLayoutState({
+      ...source,
+      elements: source.elements.map((entry) => entry.elementId === pageId ? next : entry),
+    }).elements.find((entry) => entry.elementId === pageId);
   }
   function activeDocumentId() { return safeDocumentId(context?.projectId, context?.meetingId); }
   function setActiveDocumentContext(value = {}) {
@@ -716,7 +788,7 @@ function createBbmPdfAdapter({ regenerate } = {}) {
     regenerateHandler = handler;
   }
 
-  return Object.freeze({ getPdfRegistry, getCurrentPdfLayoutState, getPersistedPdfLayoutState, readPersistedPdfLayoutState, getPdfProfilePath, submitPdfChangeRequest, regeneratePdfPreview, getPreviewMetadata,
+  return Object.freeze({ getPdfRegistry, getCurrentPdfLayoutState, getPersistedPdfLayoutState, readPersistedPdfLayoutState, getPersistedPageMargins, updatePersistedPageMargins, getPdfProfilePath, submitPdfChangeRequest, regeneratePdfPreview, getPreviewMetadata,
     getPdfContract, setActiveDocumentContext, replaceCurrentPdfLayoutState, resetForDiagnostic, failNextApply, configureRegenerate, configureProfileRoot });
 }
 

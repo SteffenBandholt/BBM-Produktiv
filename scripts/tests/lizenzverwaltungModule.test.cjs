@@ -1674,10 +1674,13 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("licenseOpenOutputDir"), true);
   });
 
-  await run("SettingsView: Lizenzstatusbereich fuehrt Antwortlizenz-Import ohne neuen Mechanismus", () => {
-    assert.equal(settingsViewSource.includes("Antwortlizenz erhalten?"), true);
-    assert.equal(settingsViewSource.includes("Importieren Sie hier die .bbmlic-Datei"), true);
-    assert.equal(settingsViewSource.includes("Lizenz importieren"), true);
+  await run("SettingsView: Kunden-Lizenzstatus zeigt Rechte und nutzt den vorhandenen Import", () => {
+    assert.equal(settingsViewSource.includes("Lizenz importieren / aktualisieren"), true);
+    assert.equal(settingsViewSource.includes("api.licenseImport()"), true);
+    assert.equal(settingsViewSource.includes("Freigeschaltete Module:"), true);
+    assert.equal(settingsViewSource.includes("Zusatzfunktionen:"), true);
+    assert.equal(settingsViewSource.includes("Laufzeit:"), true);
+    assert.equal(settingsViewSource.includes("Lizenzverwaltung und Generator sind in die externe Lizenz-App ausgelagert"), false);
   });
 
   await run("Kundendetail: nach Kunde speichern ist Neue Lizenz direkt nutzbar", () => {

@@ -1,3 +1,159 @@
+## 2026-09-19 – Nächste Besprechung: Optionen A/B in Dialog, Speicherung und PDF
+
+- Der bestehende Dialog besitzt unter dem Hauptschalter `Drucken` zwei
+  unabhängige Checkboxen: Option A für die bisherigen Terminfelder und Option B
+  für mehrzeiligen Freitext. Abwählen löscht keine Inhalte; `Übernehmen`
+  speichert, `Abbrechen` verwirft.
+- Hauptschalter, beide Optionen und B-Text werden je Besprechung gespeichert.
+  Die Migration setzt Bestandsdaten auf A an/B aus und lässt die bisherige
+  Drucken-Einstellung unverändert.
+- Der produktive V2-PDF-Weg gibt nur gewählte, nicht leere Optionen aus. A steht
+  vor B; lange B-Texte werden mit erhaltenen Zeilenumbrüchen über mehrere
+  Abschlussseiten fortgesetzt, `Aufgestellt` bleibt auf der letzten Seite.
+- Gezielte Daten-/Close-Flow-Prüfungen 14/14, sechs neue PDF-Kombinationsfälle,
+  UI-Vertrags-Selftest und echte Electron-PDFs einschließlich vierseitigem
+  B-Text sind grün. Der isolierte produktive DEV-Dialog wurde für A+B,
+  Wiederöffnen, Abbrechen und nur B praktisch geprüft und bleibt geöffnet.
+- Der vollständige M85-Lauf bleibt wegen vier bereits vorhandener, fachfremder
+  Abweichungen rot (`r19-empty`, Restarbeiten-Spaltenzahl, Registry-Anzahl,
+  `PDF-V2-ARCH-003`). Kein Setup, keine Installation, Version, Lizenz,
+  Commit oder Push geändert.
+
+Nächster Schritt: Steffen prüft im geöffneten DEV-Dialog die sichtbare
+Anordnung und schließt mit `Abbrechen`, ohne den isolierten Testdatensatz zu
+ändern.
+
+---
+
+## 2026-09-17 – Erstes Kundenpaket: Profil-, Lizenz- und Erststartfehler repariert
+
+Der installierte Stand wurde ausschließlich lesend untersucht. Die tatsächlich
+gestartete `BBM.exe` und ihr ASAR entsprechen dem aktuellen Quellstand; das
+Paket enthält die gültige Lizenz `BBM-20260917-SBB`, aber keine Datenbank. Die
+alte Lizenz `LIC-20260428-212144`, sieben Projekte und 15 Firmen stammen aus
+dem wiederverwendeten allgemeinen `%APPDATA%\baubesprechungs-manager`-Profil.
+Dadurch blieb Protokoll beim Start inaktiv und `firms:listGlobal` unregistriert.
+
+Kundenpakete erhalten nun aus der stabilen Kundennummer eine nicht lesbare,
+kundenspezifische Paket-/App-/Profilidentität unter `BBM-Kunden`. Kundenmodus
+ist nur im STABLE-Kanal zulässig, importiert keine Altprofile und liefert weder
+Entwicklerlizenz noch nativen UI-Editor aus. Ein frisches Profil übernimmt die
+eingebettete Lizenz; bei Updates haben vorhandene Kunden-DB und Kundenlizenz
+weiterhin Vorrang und werden nicht überschrieben. Der Startverlauf löst die
+gespeicherte ID zum Projektnamen auf oder zeigt „Noch kein Projekt geöffnet“.
+Die Lizenzansicht zeigt Lizenznehmer, Rechte und Laufzeit und nutzt den
+vorhandenen verifizierenden Importweg ohne Generatorhinweis.
+
+Gezielte BBM-Prüfungen 38/38, Lizenztool 31/31 plus nativer SQLite-Test und
+UI-Editor-Vertrags-Selftest grün. Die vorhandene Lizenz
+`BBM-20260917-SBB` wurde mit dem BBM-Verifier gültig für Protokoll/Diktat
+bestätigt. Die größere alte Lizenzverwaltungs-Suite startet wegen einer bereits
+vorhandenen doppelten Deklaration in `licenseStorageService.js` nicht; der neue
+Lizenzdarstellungs-Test ist separat grün. Computer Use meldete keine verfügbare
+App-Oberfläche. Kein Setup gebaut, keine Installation, keine echte Lizenz
+erstellt, keine produktiven Daten/Schlüssel geändert, kein Commit/Push.
+
+Nächster Schritt: Steffen startet selbst „Lizenz und Setup bauen“, installiert
+das neue Paket und prüft den vollständigen Kundenablauf. Diese reale
+Installer-/Update-/UI-Abnahme bleibt ausdrücklich offen.
+
+---
+
+## 2026-09-17 – Auftrag 1: BBM-Kundenanbindung und Lizenztool-Oberfläche abgeschlossen
+
+BBM-Dev ist die einzige Kundenpflege. Der DEV-exklusive Firmenverwaltungsbutton
+startet die ausdrücklich konfigurierte Lizenztool-EXE mit kanonischem,
+main-seitig validiertem Quellen-/Kundenkontext. Quellen-ID, Rolle
+`development-master` und Vertragsversion werden beim ersten Start konfliktfest
+in `app_settings` registriert; Kunden- und Abnahmeverteilung bleiben gesperrt.
+Das Lizenztool liest ausschließlich aktive globale `invoice_customer` per
+`firms.id` und direktem SQLite-Readonly-Zugriff (`fileMustExist`, `query_only`,
+begrenzte Busy-Retries). Standalone- und Single-Instance-Weitergabestart sind
+mit isolierter Datenbank praktisch geprüft; die Datenbank blieb bytegleich.
+
+Die Oberfläche ist bei der gemessenen Windows-Skalierung ohne Seiten-Scrollen
+vollständig sichtbar. Die portable EXE wurde nach den letzten Quellen gebaut
+und geöffnet: `C:\01_Projekte\license-tool\dist\bbm-license-tool 1.0.0.exe`,
+SHA-256 `63245C77473F971254D0F2E0AC8017F26DC55F66E5783AEB7DAB6AC847CC5D3A`.
+Lizenztool 26/26 Grundtests plus 18/18 abschließende Policy-/Vertragstests,
+BBM-Integration 6/6 und UI-Editor-Selftest grün. Paket enthält weder `input`,
+Tests noch PEM-Dateien; native SQLite-Binärdatei ist entpackt enthalten.
+Keine Lizenz-/Schlüssel-/Setup-/Transfer-/M85-Änderung, kein Commit oder Push.
+Entscheidung und Abnahmevertrag:
+`docs/LIZENZTOOL_KUNDENANBINDUNG_AUFTRAG1.md`.
+
+---
+
+## 2026-09-16 – Protokoll-Setup: Installation und Verknüpfungen repariert
+
+Die scheinbar fensterlose Installation war durch das Ein-Klick-Setup mit
+`runAfterFinish: false` verursacht. Das Setup startet die installierte App nun
+automatisch und erzeugt Desktop-/Startmenülinks namens
+`BBM-Protokoll-Abnahme`. Neu gebautes Setup: 594.320.214 Bytes, SHA-256
+`1BF2B7701F2863BD21EF531470E7BC09CB19CADC4A9B0688D7697E8DEA821B63`.
+Vorhandene Installation ohne Deinstallation aktualisiert; tatsächliche EXE unter
+`C:\Users\Steffen\AppData\Local\Programs\BBM-Protokoll-Abnahme-Test\BBM Protokoll (Abnahme).exe`.
+Setup- und Desktoplink-Start ergaben jeweils ein sichtbares, antwortendes
+BBM-1.5.0-Fenster. Installiertes/paketiertes EXE und ASAR sind hashgleich.
+54 geschützte produktive und Abnahme-Daten-/Profildateien blieben bytegenau
+unverändert. Distributionstest 7/7 grün. Keine Fachänderung, kein Commit/Push.
+Die lizenzierte fachliche M4-Abnahme bleibt getrennt offen.
+
+## 2026-09-15 – Protokoll-Setup M3 abgeschlossen / M4 gestoppt
+
+Lokales x64-NSIS-Setup 1.5.0/STABLE/release erzeugt und unter eigener
+Abnahmeidentität installiert. Pfad:
+`dist/protokoll-abnahme/BBM-Protokoll-1.5.0-STABLE-Abnahme-Setup.exe`.
+Normaler installierter Verknüpfungsstart, tatsächliche Main-/Preload-/Editor-
+Sperren, Projekt-/Firmenprofil-/Logo-/Ablagepersistenz nach Neustart geprüft.
+Installierte native FFmpeg/Whisper/small-Programme transkribieren deutsche
+synthetische Sprachdatei korrekt; kein Mikrofon-/lizenzierter App-Diktattest.
+26 Paketdateien geändert, vorhandene Kachel-/Reihenänderungen erhalten.
+51 ursprüngliche produktive Daten-/Lizenz-/Profildateien hashidentisch.
+Prüfläufe beendet; fünf native Dateien nachweislich entsperrt.
+
+M4 gestoppt: keine gültige signierte Testlizenz, keine native Computer Use und
+keine separate Windows-Umgebung/Testbenutzer verfügbar. Installierter positiver
+Reihen-/PDF-/Mail-/Mikrofon-/Projekttransfer-Ablauf und menschliche Abnahme offen.
+Neue Tests 7/7, Reihen-/PDF-/Mail-/M80 62/62, Protokoll-Goldens 25/25.
+M85 18/22 unveränderte bekannte Baselines; weitere alte Lizenz-/Badgeprüfungen
+nicht als grün ausgegeben. Keine Baselinereparatur, kein Git-Abschluss.
+HEAD `0a91ca8c` / `feature/project-meeting-series` unverändert.
+
+Bericht: `docs/PROTOKOLL_SETUP_PRUEFBERICHT.md`.
+Anleitung: `docs/PROTOKOLL_SETUP_ABNAHME.md`.
+Nächster offener Schritt: gültige Lizenz und native Abnahme in separater
+Windows-Testumgebung, keine weiteren Funktions-/Editorumbauten.
+
+---
+## 2026-09-15 – Protokoll-Setup M1: Auslieferungsprüfung
+
+Auftrag: lokale Setup.exe zur Nutzerabnahme, kein Git-Abschluss. Branch
+`feature/project-meeting-series`, HEAD `0a91ca8c` plus unveränderter bestehender
+Arbeitsbaum. M1 abgeschlossen: Electron/NSIS, Modul-/Lizenzgrenzen und native
+Diktatimporte geprüft. Genau zwei kompatible Protokoll-/PDF-Layoutprofile werden
+gezielt ausgeliefert; Kachelansicht ist im Code definiert. Kit-Core bleibt,
+WPF-Editor ist für normalen Layout-Restore nicht erforderlich. MSVC/OpenMP
+müssen app-lokal ergänzt werden. Separate Abnahmeidentität/Datenwurzel geplant.
+
+Nächster offener Schritt M2: Protokollumfang und Editorzugänge absichern.
+Offen: gültige signierte Testlizenz; native Computer Use/VM/Testbenutzer fehlen.
+Plan: `docs/PROTOKOLL_SETUP_PLAN.md`, Audit: `scripts/protokollSetupAudit.cjs`.
+Keine produktive DB, Lizenz, Profile oder Satzregeln geändert.
+
+---
+## 2026-09-15 – Drei Besprechungsreihen technisch umgesetzt und geprüft
+
+Branch `feature/project-meeting-series`, Basis `origin/main` / `0a91ca8c`. M1–M5 abgeschlossen: stabile Reihenidentität, additive wiederholbare Migration ohne Offen-Bereinigung, getrennte Nummerierung/TOP-Fortführung/Teilnehmer/Folgetermine, Häkchen und unmittelbare lizenzgeprüfte Kachelbuttons in der produktiven Projekt-Hülle, optionaler Bauherr, lesbare deaktivierte Historie, eindeutige PDFs/Mailanhänge und ZIP-Transfer. Keine produktive DB geändert; kein Commit, Merge oder Push.
+
+Neue Prüfgruppen 30/30; gesamter gezielter Electron-Node-Lauf 252/260. Acht bestätigte Bestandsfehler betreffen zwei alte Firmenlayouttests, zwei Einstiegs-Guards, einen Quicklane-Guard und drei alte M83-Guards. Firmenregressionen 26/26, TOP-Screen 53/53, M80 17/17, frühere PDF-/Editor-Kontextgruppen 48/48 und Standardkopf-Adresse 2/2 grün. Protokoll-Goldens 25/25; alle 49 V2-Snapshots identisch zu HEAD. M85 aktuell/HEAD jeweils 18/22 mit denselben vier Bestandsfehlern; keine Golden-/Satzänderung.
+
+Windows-Electron-Abnahme mit produktiven Komponenten/App-Styles mehrfach vollständig grün: reale Mausabläufe, drei offene Nr.1/TOP1/1.1, gleicher Personenpool, Inaktivierung/Read-only/Reaktivierung, Bauherr setzen/behalten/leeren, Editorrefs/Layout ohne Datenänderung, drei Fenstergrößen, DB-Wiederöffnung und drei reale PDFs/Mail-Anhangzuordnungen. Native Computer Use einmal geprüft und nicht verfügbar. Isolierter manueller Prüflauf geöffnet; Nutzerabnahme bleibt offen.
+
+Plan/Entscheidung: `docs/PROJEKT_BESPRECHUNGSREIHEN_PLAN.md`. Vollständiger Prüfbericht, Dateiliste, Grenzen und manueller Start: `docs/PROJEKT_BESPRECHUNGSREIHEN_PRUEFBERICHT.md`. Nächster offener Schritt: fachliche Nutzerabnahme; Git-Abschluss nur nach separatem Auftrag.
+
+---
+
 ## 2026-09-15 – Abgenommene Firmen- und PDF-Reparaturen integriert
 
 Ausgangsbasis beider Worktrees und des frisch abgefragten `origin/main`:
@@ -5241,3 +5397,158 @@ Schritt ist die gezielte Integrationsprüfung; M85- und Layout-Bereinigung bleib
 ausgeschlossen.
 
 ---
+# Besprechungsreihen im Projekt – 15.09.2026
+
+Arbeitsbranch `feature/project-meeting-series`, Basis `origin/main` / `0a91ca8c`. Auftrag vollständig zusammenhängend, noch ohne Commit/Merge/Push. Plan und vorab dokumentierte Daten-/UI-/PDF-Entscheidung: `docs/PROJEKT_BESPRECHUNGSREIHEN_PLAN.md`.
+
+M1 Daten/Migration umgesetzt und 7 isolierte Electron-/SQLite-Testgruppen grün: Altbestand/Reopen, widersprüchliche offene Altdaten ohne Schließen, drei gleichzeitig offene Nr.1, getrennte TOP-Hierarchien/Fremdreihengrenzen, einmalige Erledigungsfortführung, Teilnehmer/Verteiler und Aktivierung/Bauherr-NULL. Projektweiter Offen-Index und Startbereinigung ersetzt. Nächster Schritt: M2 Projektformular/Kachelbuttons/Read-only/Editorrefs. Ausgabe und Archiv laufen in koordinierten getrennten Dateibereichen; Abschlussnachweise noch offen. Native Computer-Use-Pipe einmal geprüft und nicht vorhanden; technische Windows-Electron-Abnahme folgt. Produktive Nutzdaten unverändert.
+
+
+## 2026-09-15 ? Projekt?bersicht / Historie, M1?M2
+
+- Vorhandener Branch `feature/project-meeting-series` und alle bisherigen
+  Feature?nderungen erhalten; Ausgangshashes unter
+  `output/project-overview-2026-09-15/before-hashes.json`.
+- Entwurfsentscheidung und Grenzen vor Umsetzung in
+  `docs/PROJEKTUEBERSICHT_PLAN.md`; vollst?ndige neue ?bersichts-Komponente und
+  angepasste bestehende Reihenvertr?ge, Registry/Manifest Version 40.
+- Anlegen/Transfer als Buttons oberhalb des reinen Projektrasters; kompakte
+  Kacheln mit Namen, abweichender Kurzbezeichnung, Teiladresse, Bearbeiten und
+  ausschlie?lich aktivierten direkten Reihenbuttons.
+- Historie im Bearbeitungsdialog nur f?r deaktivierte Reihen mit Protokollen.
+  Offene Eingaben bleiben mit ausdr?cklicher Meldung erhalten. Bestehender
+  lizenzierter History-/Read-only-Router wiederverwendet, keine DB-/Satz?nderung.
+- Zielvertr?ge 6/6, M80 17/17 und echter Electron-Ablauf mit 25 Checks gr?n.
+  Bestehende allgemeine M83-/Routing-Testfehler getrennt; keine M85-Reparatur.
+- N?chster Schritt M3: finale Screenshots pr?fen, Prozess-/Profil-Cleanup beim
+  manuellen Schlie?en nachweisen, sichtbare isolierte Sichtabnahme bereitstellen.
+- Kein Commit, Merge oder Push. Menschliche Sichtabnahme offen.
+
+
+## 2026-09-15 ? Projekt?bersicht / Historie, M3 technisch gepr?ft
+
+- Finale echte Electron-Abnahme: 25 Checkgruppen PASS, keine Rendererfehler;
+  automatische L?ufe beendet und markierte Profile entfernt. Lange Namen,
+  Projektnummern, Teil-/Leeradressen, 0/1/3 Reihen und schmale/niedrige Fenster
+  mit produktiven Styles und echten Mausereignissen gepr?ft und screenshot-basiert
+  tats?chlich visuell kontrolliert.
+- Zielvertr?ge/M80 final 23/23 gr?n, relevante Regressionen 120/123 mit drei
+  namengleich best?tigten Baselinefehlern; allgemeine M83-Suite 16/19 mit drei
+  best?tigten Bestandsfehlern. Keine neuen Zielvertrags-/Mounted-Ref-Fehler.
+- Separater manueller Lebensdauertest: Edit/Cancel nach PASS, 20 Sekunden offen,
+  regul?res Schlie?en, Exit 0, Profil entfernt, alle f?nf beobachteten eigenen
+  Launcher-/Electron-Prozesse beendet.
+- Neuer manueller Lauf sichtbar/reagierend ge?ffnet (PID 32032, HWND 5112784),
+  isolierte DB; kein Timeout, Cleanup erst beim Nutzer-Schlie?en. Vorhandene
+  fremde/pr?existente Pr?ffenster nicht beendet.
+- Alle nicht betroffenen Manifest-Scopes einschlie?lich PDF-Summaries erhalten.
+  41 der 55 vorhandenen Featuredateien bytegenau unver?ndert; die ?brigen 14
+  ?nderungen liegen in den ausdr?cklich geplanten UI-/Vertrags-/Pr?f-/Statusdateien.
+- Details und vollst?ndige Paket-Dateiliste:
+  `docs/PROJEKTUEBERSICHT_PRUEFBERICHT.md`; Entwurf:
+  `docs/PROJEKTUEBERSICHT_PLAN.md`.
+- N?chster offener Schritt ausschlie?lich menschliche Sichtabnahme. Bekannte
+  Bestandsfehler bleiben getrennt; kein Commit, Merge oder Push erfolgt.
+
+
+## Protokoll-Setup M2 – 15.09.2026
+
+Auslieferungsgrenzen/Editorzugänge und eingefrorene Layouts umgesetzt.
+Neue Tests 7/7; relevante Reihen-/PDF-/Mail-/M80-Prüfungen 62/62; Vertragscheck-Selbsttest grün.
+Genau zwei Profile, vier benannte globale Tabellenlayouts und fünf Druckabstände, keine persönliche Datenübernahme.
+Identität: de.bbm.baubesprechungsmanager.protokoll.abnahme, BBM Protokoll (Abnahme), Version 1.5.0, STABLE/release; Daten ausschließlich APPDATA/BBM-Protokoll-Abnahme.
+Nächster Schritt M3: NSIS/Paketprüfung. Offen: gültige Lizenz, native Windows-Testumgebung/Bedienung.
+Kein Commit/PR.
+
+## 2026-09-17 – Internes Lizenztool: vollständiger Bedienablauf
+
+- DEV-Einstieg auf `Einstellungen → Lizenztool → Tool starten` verlegt; Firmenverwaltung enthält keinen Lizenztool-Button mehr. Gestartet wird direkt der aktuelle Quellstand unter `C:\01_Projekte\license-tool`, nicht eine separate EXE.
+- Einziger Hauptablauf im Tool: `Lizenz und Setup bauen`. Kunden werden weiterhin nur lesend aus der zentralen BBM-Firmenverwaltung gewählt.
+- Eindeutige Paketordner unter `Dokumente\BBM-Lizenzpakete`, Statusmanifest, getrennte interne/Kunden-Dateien, Pakethistorie sowie „Ordner öffnen“ und „Anleitung öffnen“ umgesetzt. Frühere Ergebnisse werden nicht überschrieben.
+- Zwei dateinamenspezifische HTML-Anleitungen werden je fertigem Paket erzeugt. Private Schlüssel, interne Lizenzdatei und interne Anleitung bleiben aus dem Kundenordner ausgeschlossen.
+- Fortschritt, Doppelstartschutz, unvollständiger Fehlerstatus und konkrete nächste Schritte umgesetzt. BBM-Build erhält dafür einen expliziten eindeutigen Ausgabeordner.
+- Lizenztool-Prüfungen 29/29 plus nativer Electron-SQLite-Smoke-Test grün; isolierter Electron-Bedienablauf bei 1024×680 einschließlich Doppelklickschutz grün; BBM-Start-/IPC- und Dist-Tests 12/12 grün; UI-Editor-Vertragscheck grün. Der Teststarter trennt reine Node-Tests und den nativen Electron-ABI-Lauf. Die echte Oberfläche liest ebenfalls die BBM-Dev-Kundenquelle erfolgreich.
+- `npm start` erfolgreich; BBM-Dev und das interne Lizenztool bleiben für die Bedienabnahme geöffnet. Kein echter Lizenz-/Setup-Lauf, kein Commit, Merge oder Push.
+- Nächster Schritt: Steffen prüft den sichtbaren Ablauf und löst anschließend den ersten echten Paketlauf selbst aus.
+
+## 2026-09-18 – Nachbesserung der fünf Protokoll-Korrekturen
+
+- Normalen Startweg nachgewiesen: `npm start` startet Electron aus diesem
+  Quellordner; der Renderer lädt `src/renderer/index.html`. Der tatsächliche
+  Projekt-, Protokoll-, Druck- und Einstellungsweg wurde bis zu seinen
+  produktiven Komponenten verfolgt.
+- Projektkacheln auf maximal 340 CSS-Pixel begrenzt. Auch vorhandene
+  UI-Layoutprofile bleiben erhalten, können die Kachelbreite aber nicht mehr
+  über diese Obergrenze strecken.
+- Der normale Protokoll-Vorschauweg öffnet jetzt das vorhandene native,
+  verschiebbare Electron-Fenster statt der eingebetteten Inhaltsvorschau.
+  Auch gespeicherte Protokoll-PDFs verwenden diesen Fensterweg.
+- Klick und Tastaturbedienung auf dem tatsächlich sichtbaren Feld
+  `Fertig bis` öffnen den vorhandenen ISO-Wochenkalender direkt; Montag als
+  Wochenanfang, KW 53 und der Jahreswechsel sind technisch geprüft.
+- Die vorhandenen vier PDF-Seitenrandfelder, Standardwerte und der kanonische
+  Speicherweg bleiben unverändert. Der Bereich `Ausgabe & Druck` ist auch ohne
+  DEV-/UI-Editor-Modus bei Protokollfreigabe erreichbar. Nach Speichern und
+  erneutem Öffnen der SQLite-Verbindung waren die Werte erhalten; zwei echte
+  Protokoll-PDFs zeigten unterschiedliche Textgeometrie.
+- Die bereits funktionierende TOP-Lückenschließung blieb unverändert und ihre
+  gezielten Prüfungen bleiben grün.
+- Aktualisierter Electron-End-to-End-Lauf über `ProjectOverview`, das reale
+  Datumsfeld, `PrintModal`, den nativen Vorschau-IPC und echte PDF-Erzeugung:
+  PASS. Kachelbreite 340 CSS-Pixel, native Fensterbewegung und Randwirkung sind
+  im Ergebnisbericht belegt.
+- Kein Commit, Merge, Push, Setup-Bau, Installation oder Versionswechsel.
+  Bekannte paketfremde M85- sowie weitere Bestandsfehler im vollständigen
+  `npm test` wurden nicht verändert.
+- Nächster Schritt: fachliche Sichtabnahme im geöffneten DEV-Stand. Eine eigene
+  native Computer-Use-Abnahme war mangels verfügbarer Windows-Oberfläche nicht
+  möglich und wird nicht behauptet.
+
+## 2026-09-18 – Nutzer-Nachbesserung Projektkacheln / KW-Anzeige
+
+- Projektkacheln vollständig kompakter abgestimmt: maximal 240 CSS-Pixel,
+  8-Pixel-Innenabstand, 14-CSS-Pixel-Projektname in Fettschrift,
+  Nummer/Bearbeiten in einer Zeile sowie umbrechende Kartenaktionen. Keine
+  Mindesthöhe, kein Inhaltsbeschnitt.
+- Im echten Electron-Lauf zeigt der 1390-CSS-Pixel-Viewport vier Kachelspalten;
+  bei 750 CSS-Pixeln erfolgt ein sauberer Einspaltenumbruch. Der 2311-Pixel-
+  Screenshot belegt zugleich den Skalierungsunterschied bei DPR 1,6625.
+- `KW 53` ist reiner, nicht fokussierbarer Text (`SPAN`) ohne Rolle, Rahmen,
+  Hintergrund oder Innenabstand. Seine gemessene Schriftgröße 10,1333 px stimmt
+  mit der Feldbezeichnung `Status` überein. Die Ampel bleibt vollständig im
+  vorgesehenen Bereich; der Kalender öffnet weiter über das Datumsfeld.
+- Aktualisierter produktiver Komponentenlauf PASS; ISO-, M83-/Manifest- und
+  UI-Vertragsprüfungen grün. Screenshots und JSON-Bericht bleiben im ausgegebenen
+  temporären Abnahmeordner erhalten.
+- Vorschaufenster, PDF-Seitenränder, Kalenderberechnung, TOP-Lückenschließung,
+  Profile, Setup, Version und produktive Daten unverändert. Kein Commit/Push.
+
+## 2026-09-18 – Nachbesserung Reihenaktionen in Projektkacheln
+
+- Die drei vorhandenen Reihenaktionen sind als rahmenlose 12-CSS-Pixel-
+  Textaktionen verdichtet und behalten Maus-, Tastatur- und sichtbaren
+  Tastaturfokus. Die fachliche Reihenöffnung bleibt unverändert.
+- Nach erfolgreicher Öffnung wird der Reihenkey projektbezogen im vorhandenen
+  lokalen Profilstore gespeichert. Nach Navigation und frischem Renderer-Start
+  ist nur diese Aktion blau; ohne gespeicherte Auswahl bleibt alles neutral.
+- Kachelgeometrie, Projektbezeichnung, Kalender/KW, PDF, Seitenränder und
+  TOP-Lückenschließung sind nicht angefasst. Kein Setup-Bau, keine Installation,
+  Versionsänderung, Commit oder Push.
+
+## 2026-09-18 – Kundenupdate 1.5.1 vorbereitet
+
+- Die zentrale Paket- und Lockfile-Version ist auf `1.5.1` vorbereitet.
+- Der Kundenbuild leitet App-ID und Datenprofil weiterhin ausschließlich aus
+  dem stabilen Kundenprofilkey ab. Derselbe Kunde ergibt weiterhin dieselbe
+  App-ID und denselben Ordner `%APPDATA%\BBM-Kunden\c-…`; bestehende Daten und
+  `license.json` bleiben erhalten.
+- Die Kundenänderungsliste und der manuelle Updatevertrag stehen in
+  `docs/KUNDENUPDATE_1.5.1.md`. Vier Seitenränder bleiben in der Kundenversion
+  unter `Einstellungen` → `Ausgabe & Druck` erreichbar.
+- Kein Setup-Bau, keine Lizenzgenerierung, keine Installation, kein Commit und
+  kein Push. Der echte Aktualisierungslauf ist ausdrücklich noch offen.
+- Gezielte Nachweise: Kunden-Distributionscheck 9/9, externer
+  Lizenztool-Ablauf 31/31 sowie Paket-/Lockfile-Abgleich grün. Der frühere
+  `licenseIpcCustomerSetup`-Test bleibt mit 18 Fehlschlägen offen: Er erwartet
+  nicht mehr vorhandene Lizenz-IPC-Hilfsfunktionen, obwohl der aktuelle
+  Kundenbau im separaten Lizenztool liegt. Nicht im Paket geändert.

@@ -54,7 +54,7 @@ async function runTopsCommandsTests(run) {
     });
 
     let savedPayload = null;
-    let deletedId = null;
+    let deletedPayload = null;
     const reloadedMeetingIds = [];
 
     const repository = {
@@ -62,8 +62,8 @@ async function runTopsCommandsTests(run) {
         savedPayload = payload;
         return { ok: true };
       },
-      async deleteTop(topId) {
-        deletedId = topId && typeof topId === "object" ? topId.topId : topId;
+      async deleteTop(payload) {
+        deletedPayload = payload;
         return { ok: true };
       },
       async loadByMeeting(payload) {
@@ -90,7 +90,7 @@ async function runTopsCommandsTests(run) {
       topId: 33,
       patch: { title: "B" },
     });
-    assert.equal(deletedId, 33);
+    assert.deepEqual(deletedPayload, { meetingId: 9, topId: 33 });
     assert.equal(store.getState().selectedTopId, null);
     assert.deepEqual(reloadedMeetingIds, [9, 9]);
   });

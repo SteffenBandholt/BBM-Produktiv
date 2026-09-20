@@ -1000,3 +1000,20 @@ Für die M64-Testfläche bedeutet „Auf Standard zurücksetzen“ nicht das Sch
 - Reale native Produktabnahme: Nachkommastellen, `+Titel`, `+Position`, Schieben, Löschen, Proberechnung und Kopfbutton wurden auf etwa `6 x 6 px`, danach auf etwa `116-126 x 86 px` und erneut klein gestellt. Sichtbares Speichern, Rechnung-Reopen und ein zweiter Electron-Prozess erhielten die kleinen Werte innerhalb der nativen halben DPI-Pixelstufe.
 - Guardrails: `rechnungUiEditorUnbounded.test.cjs` prüft Vertrag und Persistenz, `rechnungButtonEffectiveGeometry.test.cjs` alle 16 realen Chromium-BoundingBoxes samt Nicht-Button-Referenz und `rechnungButtonProductAcceptance.test.cjs` den normalen Produktpfad. Der korrigierte M86.24-Rechnungslauf ist ebenfalls grün. Vollständige Messwerte: `docs/RECHNUNG_UI_EDITOR_ENTGRENZUNG_117.md`.
 - Nicht geändert: Fachfunktionen, PDF/Druck, Navigation, Button-Handler, Registry-IDs und Parentstruktur. Commit, Push, PR und Merge: keiner.
+
+## 2026-09-15 – Protokoll-Abnahmeausgabe: Editor nur in Entwicklung
+
+Separates Auslieferungspaket auf `feature/project-meeting-series`, kein neuer
+Inspektor-/Editor-Meilenstein. Vorhandene Editorverträge und Parents bleiben
+unverändert. Die installierte STABLE-Protokoll-Abnahmeausgabe sperrt native
+Editor-/PDF-Registrierungsaktionen, Diagnose-/CLI-Starter und Tabellenlayout-
+Schreibaktionen; nichtinteraktiver Startlayout-Restore und PDF-Core bleiben.
+Die Einstellungen bieten dort keine Entwicklung/Rechnung/Druckstruktur an.
+Source-/DEV-Betrieb bleibt unverändert editorfähig. Genau zwei kompatible
+Layoutprofile, vier benannte globale Tabellenlayouts und fünf Druckabstände
+werden als reine Auslieferungsdefinitionen eingefroren, keine persönlichen Daten.
+Prüfung M2: neue Auslieferungstests 7/7, Reihen-/PDF-/Mail-/M80-Gruppen 62/62,
+UI-Vertragscheck-Selbsttest grün. Native Kundenabnahme nicht behauptet.
+Plan: `PROTOKOLL_SETUP_PLAN.md`; nächster Schritt: Paket-/Installerprüfung.
+
+Protokoll-Abnahmeausgabe M3/M4: tatsächliches Setup erstellt/installiert; Editor-/Diagnosestart/Router/Strukturschreiben aus installierter App nachweislich gesperrt. Layout-Core erhalten, keine neuen Inspektorziele oder Satzänderungen. Native lizenzierte PDF-/Fachabnahme offen. Vollständiger Abschluss: PROTOKOLL_SETUP_PRUEFBERICHT.md. Kein weiterer Editor-Meilenstein begonnen.

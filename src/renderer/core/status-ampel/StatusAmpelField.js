@@ -1,3 +1,5 @@
+import { attachIsoWeekDatePicker } from "../date-picker/IsoWeekDatePicker.js";
+
 function mkEl(doc, tag, className, text) {
   const el = doc.createElement(tag);
   if (className) el.className = className;
@@ -58,7 +60,8 @@ export class StatusAmpelField {
     this.dueLabel = mkEl(doc, "span", "status-ampel-label", labels.dueDate || "Fertig bis");
     this.dueInput = mkEl(doc, "input", "status-ampel-date");
     this.dueInput.type = "date";
-    this.dueWrap.append(this.dueLabel, this.dueInput);
+    this.duePicker = attachIsoWeekDatePicker(this.dueInput, { documentRef: doc, label: this.dueLabel.textContent });
+    this.dueWrap.append(this.dueLabel, this.duePicker.root);
 
     this.trafficWrap = mkEl(doc, "div", "status-ampel-traffic");
     this.trafficLabel = mkEl(doc, "span", "status-ampel-label", labels.trafficLight || "Ampel");
@@ -104,6 +107,7 @@ export class StatusAmpelField {
   setValue(value = {}) {
     if (value.status !== undefined) this.statusSelect.value = String(value.status ?? "");
     if (value.dueDate !== undefined) this.dueInput.value = String(value.dueDate ?? "");
+    this.duePicker.refresh();
     if (value.trafficLight !== undefined) this.setTrafficLight(value.trafficLight);
   }
 

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "applicationId": "bbm-produktiv",
+  "registryVersion": 40,
+  "files": [
+    {
+      "path": "module-protokoll/standard.layout-profile.json",
+      "sha256": "70f38d4ff84d5a8c1a45391fa01f6f6b1080f424286e7db9e1c1ec0a28f4bf4f"
+    },
+    {
+      "path": "module-protokoll/pdf-layouts/bbm-produktiv.protocol.pdf-standard.pdf-layout.json",
+      "sha256": "4025d6f5af74d7c22fe3907723100af311b3089c1d3307b96919fea66da2c2a7"
+    },
+    {
+      "path": "render-defaults.json",
+      "sha256": "03e47dd32b8296c280441eb196a49c6e599f642a72235325c6187cccd9dcb72f"
+    }
+  ]
+}

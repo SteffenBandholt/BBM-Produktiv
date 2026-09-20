@@ -11,6 +11,11 @@ function runPrintIpcInternalPdfPreviewTests() {
   assert.match(source, /const \{ pathToFileURL \} = require\("url"\);/);
   assert.match(source, /const pdfUrl = pathToFileURL\(normalizedPath\)\.toString\(\);/);
   assert.doesNotMatch(source, /print:toPdfAndPreviewInternal[\s\S]*shell\.openPath/);
+  assert.match(source, /ipcMain\.handle\("print:openInternalPreview"/);
+  assert.match(source, /frame: true/);
+  assert.match(source, /movable: true/);
+  assert.match(source, /resizable: true/);
+  assert.match(source, /maximizable: true/);
 
   assert.match(source, /ipcMain\.handle\("print:toPdfAndOpen"/);
   assert.match(source, /const openError = await shell\.openPath\(outPath\);/);

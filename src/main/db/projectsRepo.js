@@ -1,6 +1,7 @@
 // src/main/db/projectsRepo.js
 const { initDatabase } = require("./database");
 const { randomUUID } = require("crypto");
+const { normalizeSeriesMask } = require("../../shared/meetingSeries.cjs");
 const { validateBuilder, resolveBuilder } = require("../domain/projects/projectBuilder");
 
 let _ensuredProjectNumberColumn = false;
@@ -94,6 +95,7 @@ function _safeGetById(db, projectId) {
           geplanter_baubeginn,
           bauherr_firm_kind,
           bauherr_firm_id,
+          meeting_series_mask,
           end_date,
           notes,
           archived_at
@@ -124,6 +126,7 @@ function _safeGetById(db, projectId) {
             geplanter_baubeginn,
             bauherr_firm_kind,
             bauherr_firm_id,
+            meeting_series_mask,
             end_date,
             notes
           FROM projects
@@ -151,6 +154,7 @@ function _safeGetById(db, projectId) {
             geplanter_baubeginn,
             bauherr_firm_kind,
             bauherr_firm_id,
+            meeting_series_mask,
             end_date,
             notes
           FROM projects
@@ -220,6 +224,7 @@ function listAll() {
           geplanter_baubeginn,
           bauherr_firm_kind,
           bauherr_firm_id,
+          meeting_series_mask,
           end_date,
           notes,
           archived_at
@@ -251,6 +256,7 @@ function listAll() {
             geplanter_baubeginn,
             bauherr_firm_kind,
             bauherr_firm_id,
+            meeting_series_mask,
             end_date,
             notes
           FROM projects
@@ -277,6 +283,7 @@ function listAll() {
             geplanter_baubeginn,
             bauherr_firm_kind,
             bauherr_firm_id,
+            meeting_series_mask,
             end_date,
             notes
           FROM projects
@@ -315,6 +322,7 @@ function listArchived() {
           geplanter_baubeginn,
           bauherr_firm_kind,
           bauherr_firm_id,
+          meeting_series_mask,
           end_date,
           notes,
           archived_at
@@ -352,6 +360,7 @@ function createProject(data) {
   const builder = validateBuilder(d.bauherr, id, db);
   const bauherr_firm_kind = builder?.kind ?? null;
   const bauherr_firm_id = builder?.id ?? null;
+  const meeting_series_mask = normalizeSeriesMask(d.meeting_series_mask);
 
   const project_number = _normText(d.project_number ?? d.projectNumber);
 
@@ -390,11 +399,12 @@ function createProject(data) {
         geplanter_baubeginn,
         bauherr_firm_kind,
         bauherr_firm_id,
+        meeting_series_mask,
         end_date,
         notes,
         archived_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     ).run(
       id,
@@ -410,6 +420,7 @@ function createProject(data) {
       geplanter_baubeginn,
       bauherr_firm_kind,
       bauherr_firm_id,
+      meeting_series_mask,
       end_date,
       notes,
       archived_at
@@ -432,10 +443,11 @@ function createProject(data) {
           geplanter_baubeginn,
           bauherr_firm_kind,
           bauherr_firm_id,
+          meeting_series_mask,
           end_date,
           notes
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
       ).run(
         id,
@@ -451,6 +463,7 @@ function createProject(data) {
         geplanter_baubeginn,
         bauherr_firm_kind,
         bauherr_firm_id,
+        meeting_series_mask,
         end_date,
         notes
       );
@@ -470,10 +483,11 @@ function createProject(data) {
           geplanter_baubeginn,
           bauherr_firm_kind,
           bauherr_firm_id,
+          meeting_series_mask,
           end_date,
           notes
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
       ).run(
         id,
@@ -488,6 +502,7 @@ function createProject(data) {
         geplanter_baubeginn,
         bauherr_firm_kind,
         bauherr_firm_id,
+        meeting_series_mask,
         end_date,
         notes
       );
@@ -529,6 +544,7 @@ function updateProject(data) {
 
     start_date: rawPatch.start_date ?? rawPatch.startDate,
     geplanter_baubeginn: rawPatch.geplanter_baubeginn,
+    meeting_series_mask: rawPatch.meeting_series_mask,
     end_date: rawPatch.end_date ?? rawPatch.endDate,
 
     notes: rawPatch.notes,
@@ -545,6 +561,7 @@ function updateProject(data) {
     "project_lead_phone",
     "start_date",
     "geplanter_baubeginn",
+    "meeting_series_mask",
     "end_date",
     "notes",
   ]);
@@ -572,7 +589,7 @@ function updateProject(data) {
       continue;
     }
     sets.push(`${k} = ?`);
-    vals.push(_normText(patch[k]));
+    vals.push(k === "meeting_series_mask" ? normalizeSeriesMask(patch[k]) : _normText(patch[k]));
   }
 
   if (changesBuilder) {

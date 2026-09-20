@@ -38,7 +38,7 @@ export class ProtokollMailFlow {
       firms: printResults?.firms?.filePath || "",
       todo: printResults?.todo?.filePath || "",
       tops: printResults?.tops?.filePath || "",
-    });
+    }, meetingRef);
 
     if (!attachments[0].path) {
       try {
