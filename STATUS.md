@@ -88,7 +88,8 @@ Rollback, Doppelausführung, Wiederöffnen und normales Einzelverschieben sind
 grün. Audioimport-Regression und UI-Editor-Vertragscheck sind ebenfalls grün.
 Die drei bereits vorhandenen roten Erwartungen der Gruppe
 `popup-form-standard` außerhalb der TOP-Dialoge bleiben unverändert; die
-direkte TOP-Dialog-Prüfung ist grün. Der Arbeitsstand ist noch nicht committed.
+direkte TOP-Dialog-Prüfung ist grün. Der gemeinsam abgenommene Stand wurde mit
+Featurecommit `765c19e4` gesichert.
 
 Der vom Nutzer abgenommene Mehrfachverschiebe-Stand und das neue Importsymbol
 blieben unverändert. Ergänzt wurde ausschließlich ein kompakter, mittiger
@@ -108,7 +109,10 @@ animiertem Wartebalken sichtbar. Das Transkript hatte 2.056 Zeichen; der Import
 speicherte neun TOPs, und die kurze Erfolgsmeldung wurde angezeigt. Die native
 Dateiauswahl wurde im Prüfgerüst bestätigt. Computer Use stellte weiterhin
 keine App-Oberfläche bereit; eine zusätzliche manuelle Windows-Klickprüfung
-wird daher nicht behauptet. Auch dieser Stand ist noch nicht committed.
+wird daher nicht behauptet. Der fachliche Stand wurde regulär mit Mergecommit
+`d7da434b` nach `main` übernommen. Der normale Start aus
+`C:\01_Projekte\BBM-Produktiv` öffnete anschließend das antwortende Fenster
+`BBM` mit dem regulären Benutzerprofil.
 
 ---
 
