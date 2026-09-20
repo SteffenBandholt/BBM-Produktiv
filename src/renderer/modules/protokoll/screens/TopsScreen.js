@@ -31,6 +31,7 @@ import { focusCreatedTopAfterReload } from "../topCreateFocus.js";
 import { normalizeTopFilterMode } from "../topFilterMode.js";
 import { attachAudioFeature } from "../../../features/audio/AudioFeature.js";
 import { DictationController } from "../../../features/audio-dictation/DictationController.js";
+import { TranscriptionService as AudioTranscriptionService } from "../../audio/TranscriptionService.js";
 import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
 import {
   createPopupOverlay,
@@ -107,6 +108,12 @@ export default class TopsScreen {
     this.btnTitleDictate = null;
     this.btnLongDictate = null;
     this.quicklane = null;
+    this._protocolAudioImportBusy = false;
+    this._protocolAudioImportFilePath = null;
+    this._protocolAudioImportOperationId = null;
+    this._protocolAudioImportProgress = 0;
+    this._protocolAudioImportMessage = "";
+    this._protocolAudioImportProgressUnsubscribe = null;
 
     this._sidebarEl = null;
     this._sidebarDisplay = "";
@@ -143,6 +150,8 @@ export default class TopsScreen {
     this.topsRepository = options.topsRepository || new TopsRepository();
     this.assigneeDataSource = options.assigneeDataSource || new TopsAssigneeDataSource();
     attachAudioFeature(this);
+    this.audioTranscriptionService =
+      options.audioTranscriptionService || new AudioTranscriptionService();
     this.dictationController = new DictationController({
       view: this,
       ensureAudioAvailable: (opts) => this._ensureAudioAvailable?.(opts),
@@ -297,6 +306,8 @@ export default class TopsScreen {
       onProject: () => this._openQuicklaneProject(),
       onFirms: () => this._openQuicklaneFirms(),
       onParticipants: () => this._openQuicklaneParticipants(),
+      onImport: () => this._chooseProtocolAudioImportFile(),
+      onImportCancel: () => this._cancelProtocolAudioImport(),
       onAmpelToggle: () => this.toggleAmpelDisplay(),
       onLongtextToggle: () => this.toggleLongtextDisplay(),
       onTopFilterChange: (mode) => this.setTopFilter(mode),
@@ -658,6 +669,86 @@ export default class TopsScreen {
     return true;
   }
 
+  async _chooseProtocolAudioImportFile() {
+    const state = this.store.getState();
+    if (this._protocolAudioImportBusy || state.isReadOnly || !this._getQuicklaneMeetingId()) return false;
+    if (!(await this._ensureAudioAvailable({ alertOnFailure: true, force: true }))) return false;
+
+    this._protocolAudioImportBusy = true;
+    this._protocolAudioImportFilePath = null;
+    this._syncQuicklaneState();
+    try {
+      const result = await this.audioTranscriptionService.chooseProtocolImportFile();
+      if (!result?.ok) throw new Error(result?.error || "Dateiauswahl fehlgeschlagen.");
+      if (result.canceled || !result.filePath) return false;
+      this._protocolAudioImportFilePath = String(result.filePath);
+      const operationId = globalThis.crypto?.randomUUID?.() ||
+        `protocol-audio-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      this._protocolAudioImportOperationId = operationId;
+      this._protocolAudioImportProgress = 5;
+      this._protocolAudioImportMessage = "Audiodatei wird vorbereitet";
+      this._protocolAudioImportProgressUnsubscribe?.();
+      this._protocolAudioImportProgressUnsubscribe =
+        this.audioTranscriptionService.onProtocolImportProgress((progress) => {
+          if (String(progress?.operationId || "") !== operationId) return;
+          this._protocolAudioImportProgress = Number(progress?.percent) || 0;
+          this._protocolAudioImportMessage = String(progress?.message || "Audioimport läuft");
+          this._syncQuicklaneState();
+        });
+      this._syncQuicklaneState();
+
+      const importResult = await this.audioTranscriptionService.runProtocolImport({
+        operationId,
+        projectId: this._getQuicklaneProjectId(),
+        meetingId: this._getQuicklaneMeetingId(),
+        filePath: this._protocolAudioImportFilePath,
+      });
+      if (importResult?.canceled) return false;
+      if (!importResult?.ok) throw new Error(importResult?.error || "Audioimport fehlgeschlagen.");
+
+      const firstCreatedTopId = importResult.firstCreatedTopId || null;
+      await this._reloadTops({ keepSelection: false, selectTopId: firstCreatedTopId });
+      this._syncScreenState();
+      if (firstCreatedTopId) {
+        await focusCreatedTopAfterReload({
+          createdTopId: firstCreatedTopId,
+          selectedTopId: this.store.getState().selectedTopId,
+          topsListRoot: this.topsList?.root,
+          workbench: this.workbench,
+          awaitNextPaint: () => this._awaitNextPaint(),
+        });
+      }
+      return true;
+    } catch (error) {
+      if (typeof window !== "undefined" && typeof window.alert === "function") {
+        window.alert(error?.message || String(error));
+      }
+      return false;
+    } finally {
+      this._protocolAudioImportProgressUnsubscribe?.();
+      this._protocolAudioImportProgressUnsubscribe = null;
+      this._protocolAudioImportOperationId = null;
+      this._protocolAudioImportProgress = 0;
+      this._protocolAudioImportMessage = "";
+      this._protocolAudioImportFilePath = null;
+      this._protocolAudioImportBusy = false;
+      this._syncQuicklaneState();
+    }
+  }
+
+  async _cancelProtocolAudioImport() {
+    const operationId = this._protocolAudioImportOperationId;
+    if (!operationId) return false;
+    this._protocolAudioImportMessage = "Audioimport wird abgebrochen";
+    this._syncQuicklaneState();
+    try {
+      const result = await this.audioTranscriptionService.cancelProtocolImport(operationId);
+      return result?.ok === true;
+    } catch (_error) {
+      return false;
+    }
+  }
+
   async _openQuicklanePreview() {
     const projectId = this._getQuicklaneProjectId();
     const meetingId = this._getQuicklaneMeetingId();
@@ -694,7 +785,15 @@ export default class TopsScreen {
       hasProject: !!this._getQuicklaneProjectId(),
       hasMeeting: !!this._getQuicklaneMeetingId(),
       isReadOnly: !!state.isReadOnly,
-      isBusy: !!state.isLoading || !!state.isWriting,
+      isBusy: !!state.isLoading || !!state.isWriting || this._protocolAudioImportBusy,
+      canImport:
+        !!this._getQuicklaneMeetingId() &&
+        !state.isReadOnly &&
+        this._audioLicenseChecked === true &&
+        this._audioLicensed === true,
+      importRunning: !!this._protocolAudioImportOperationId,
+      importProgress: this._protocolAudioImportProgress,
+      importMessage: this._protocolAudioImportMessage,
     });
   }
 
@@ -1818,6 +1917,11 @@ export default class TopsScreen {
   // ---------------------------------------------------------------------------
 
   async destroy() {
+    if (this._protocolAudioImportOperationId) {
+      await this._cancelProtocolAudioImport();
+    }
+    this._protocolAudioImportProgressUnsubscribe?.();
+    this._protocolAudioImportProgressUnsubscribe = null;
     this._textLimitUnsubscribe?.();
     this._textLimitUnsubscribe = null;
     if (this._onTableLayoutChanged && typeof window?.removeEventListener === "function") {

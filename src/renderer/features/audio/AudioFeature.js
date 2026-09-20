@@ -71,6 +71,7 @@ export function attachAudioFeature(view) {
         ? ""
         : (String(message || "").trim() || "Audio-Funktion ist fuer diese Lizenz nicht freigeschaltet.");
       this.dictationController?.updateButtons();
+      this._syncQuicklaneState?.();
 
       if (this.root) {
         this.applyEditBoxState();
@@ -103,7 +104,7 @@ export function attachAudioFeature(view) {
             ? res.features.map((value) => String(value || "").trim().toLowerCase())
             : [];
           const licensed =
-            !!res?.ok && !!res?.valid && (features.includes("audio") || features.includes("diktat"));
+            res?.valid === true && (features.includes("audio") || features.includes("diktat"));
           this._setAudioLicenseState(licensed, this._formatAudioLicenseMessage(res));
           return licensed;
         } catch (_err) {

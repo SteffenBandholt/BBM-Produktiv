@@ -96,6 +96,15 @@ contextBridge.exposeInMainWorld("bbmDb", {
   // ============================================================
   // Audio / KI
   // ============================================================
+  audioChooseProtocolImportFile: () => ipcRenderer.invoke("audio:chooseProtocolImportFile"),
+  audioRunProtocolImport: (data) => ipcRenderer.invoke("audio:runProtocolImport", data),
+  audioCancelProtocolImport: (data) => ipcRenderer.invoke("audio:cancelProtocolImport", data),
+  audioOnProtocolImportProgress: (callback) => {
+    if (typeof callback !== "function") return () => {};
+    const listener = (_event, payload) => callback(payload);
+    ipcRenderer.on("audio:protocolImportProgress", listener);
+    return () => ipcRenderer.removeListener("audio:protocolImportProgress", listener);
+  },
   audioImport: (data) => ipcRenderer.invoke("audio:import", data),
   audioTranscribe: (data) => ipcRenderer.invoke("audio:transcribe", data),
   audioTranscribeBlob: (data) => ipcRenderer.invoke("audio:transcribeBlob", data),

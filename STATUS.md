@@ -1,3 +1,63 @@
+## 2026-09-20 – Protokoll-Audioimport V1 (#349), reale Verarbeitung nachgewiesen
+
+Auf Branch `protokoll/audio-import-v1-rebuild`, Basis `a64d74b3`, wurde der
+nicht abgenommene Altversuch nicht weiter repariert, sondern der V1-Umfang neu
+an die aktuelle Main-Architektur angebunden. Der echte Electron-Renderer-Klick
+erreicht den produktiven Preload-/IPC-Weg und den nativen Dateidialog. Die
+Dateiauswahl selbst ist nicht automatisiert und bleibt Teil der Nutzerabnahme.
+
+Die vorhandene lokale FFmpeg-/Whisper.cpp-Kette verarbeitet Dateien mit
+Fortschritt und operationsbezogenem Abbruch. Der Parser beginnt TOPs
+ausschließlich mit `neuer Punkt`/`nächster Punkt`; `Absatz` trennt
+Kurz-/Langtext und erzeugt weitere Langtextabsätze, während TOPs ohne `Absatz`
+vollständig im Kurztext bleiben. Er speichert den unnummerierten, typisierten
+Titel `Import` samt Punkten atomar. Druck/Vorschau,
+TOP-/ToDo-Ausgabe und Folgebesprechung schließen nur den aktuellen
+Import-Unterbaum aus; verschobene Punkte werden regulär behandelt. Registry 40,
+Folgetermin A/B und Live-Diktat bleiben erhalten.
+
+Produktiver Nachweis in einem isolierten temporären Abnahmeprofil:
+Die synthetische WAV erzeugte über die echte lokale Engine drei Punkte; ein
+zweiter Lauf wurde gezielt abgebrochen und ließ die Punktzahl unverändert.
+Parser-/Transaktions-/Gate-/Verschiebe-/Druck-/Folgetermin-, Diktat-, Lizenz-
+und Registry-40-Prüfungen sind grün. Der UI-Vertragscheck meldet 0 Fehler.
+
+Der normale Startweg `npm start` aus diesem Worktree verwendet das reguläre
+BBM-DEV-Profil. Ursache der
+zuvor vergrößerten Darstellung war der von Electron je `file://`-Origin
+gespeicherte Zoom: der neue Worktree startete ohne den BBM-DEV-Wert zunächst mit
+Stufe 0. Das nicht paketierte normale Hauptfenster setzt nun beim Laden den
+bereits abgenommenen DEV-Wert -1 (Faktor 0,833333); CSS, Schriftgrößen,
+Bedienelemente und Layoutprofile blieben unverändert. Ein kontrollierter
+Reload von Stufe 0 stellte Stufe -1 wieder her.
+
+Im selben normal gestarteten Fenster wurde die echte Diktiergerätaufnahme
+`260920_012.MP3` über den produktiven
+`audio:runProtocolImport`-Handler verarbeitet. Dafür wurde ausschließlich das
+neue Projekt `AUDIO-ABNAHME-20260920` mit dem neuen Protokoll
+`Audioimport Abnahme - echte Sprachaufnahme` verwendet; vorhandene Protokolle
+erhielten keine Testpunkte. Whisper.cpp lieferte ein deutsches Transkript mit
+`Neuer Punkt`- und `Absatz`-Markern. Der Import speicherte 11 Punkte atomar. Die
+gespeicherten Kurz-/Langtexte stimmen exakt mit dem Parserergebnis überein,
+enthalten keine Marker, erhalten Punkte ohne `Absatz` vollständig im Kurztext
+und erzeugen bei weiteren `Absatz`-Markern doppelte Langtextumbrüche. Nach dem
+Wechsel zur Projektübersicht und erneutem Öffnen waren alle Texte sichtbar;
+der erste Punkt wurde geöffnet und fokussiert.
+
+Die native Dateiauswahl im normalen Fenster konnte in diesem Lauf nicht erneut
+bedient werden, weil Computer Use keine App-Oberfläche bereitstellte. Die reale
+Datei wurde deshalb nach Öffnen des neuen Protokolls direkt über denselben
+produktiven Preload-/IPC-Verarbeitungshandler übergeben. Dieser verbleibende
+manuelle Klick-/Dateidialog-Nachweis wird nicht als ausgeführt behauptet.
+
+Die vier bekannten, unveränderten M85-Baselinefehler bleiben offen:
+`r19-empty`-Golden-Hash, Restarbeiten-Spaltenzahl 9 statt 13, Registryzahl 37
+statt 35 und `PDF-V2-ARCH-003`. Es wurden keine Golden-Dateien geändert. Das
+normal gestartete Fenster bleibt im neuen Abnahmeprotokoll geöffnet; noch kein
+Commit, Push oder Merge.
+
+---
+
 ## 2026-09-20 – BBM 1.5.1 Konsolidierung: Paket 1 Besprechungsreihen
 
 Auf Branch `integration/bbm-1.5.1-consolidation`, Basis `origin/main` /

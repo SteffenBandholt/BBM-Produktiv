@@ -68,6 +68,7 @@ let uiEditorSessionController;
 let uiEditorShutdownComplete = false;
 const WINDOWS_APP_ID = "de.bbm.baubesprechungsmanager";
 const LICENSE_FILE_EXTENSION = ".bbmlic";
+const DEV_MAIN_WINDOW_ZOOM_LEVEL = -1;
 const pendingLicenseImportPaths = [];
 let licenseImportDrainRunning = false;
 
@@ -320,6 +321,12 @@ function createWindow() {
     ...windowOptions,
   });
   mainWindow.maximize();
+
+  if (!isProd && !uiEditorAcceptanceProfile.enabled) {
+    mainWindow.webContents.on("did-finish-load", () => {
+      mainWindow.webContents.setZoomLevel(DEV_MAIN_WINDOW_ZOOM_LEVEL);
+    });
+  }
 
   if (isProd) {
     if (process.platform === "win32" || process.platform === "linux") {

@@ -822,6 +822,7 @@ function normalizeDisplayNumbers(list, meeting) {
     t.__num = num;
     t.__lvl = lvl;
     t.__pre = typeof pre === "string" ? pre.trim() : pre;
+    t.__importRoot = String(t.special_type || "") === "audio_import";
   }
 
   const byId = new Map(items.map((t) => [t.id, t]));
@@ -860,6 +861,11 @@ function normalizeDisplayNumbers(list, meeting) {
     const node = byId.get(id);
     if (!node) return null;
 
+    if (node.__importRoot) {
+      memo.set(id, "");
+      return "";
+    }
+
     if (visiting.has(id)) return null;
     visiting.add(id);
 
@@ -897,6 +903,10 @@ function normalizeDisplayNumbers(list, meeting) {
 
   for (const t of items) {
     const node = byId.get(t.id) || t;
+    if (node.__importRoot) {
+      t.displayNumber = "";
+      continue;
+    }
     const current = t.displayNumber ?? t.display_number ?? null;
 
     // Wenn current schon korrekt ist (und zur Ebene passt) -> lassen
@@ -919,6 +929,7 @@ function normalizeDisplayNumbers(list, meeting) {
     delete t.__num;
     delete t.__lvl;
     delete t.__pre;
+    delete t.__importRoot;
   }
 
   return items;
