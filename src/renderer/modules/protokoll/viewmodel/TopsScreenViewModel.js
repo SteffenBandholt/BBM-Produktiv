@@ -291,6 +291,7 @@ export function buildListItemsFromState(state, options = {}) {
       }
     }
 
+    const displayNumber = cleanString(top?.displayNumber ?? top?.number ?? "");
     rows.push({
       id: top?.id,
       level,
@@ -299,7 +300,7 @@ export function buildListItemsFromState(state, options = {}) {
       isLevel1Collapsed: isTitle ? collapsedLevel1Ids.has(topId) : false,
       canToggleLevel1: isTitle && !state?.isMoveMode,
       title: normalizeTopShortText(top?.previewTitle ?? top?.title),
-      number: `${top?.displayNumber ?? top?.number ?? ""}.`,
+      number: displayNumber ? `${displayNumber}.` : "",
       preview: showLongtextInList ? normalizeTopLongText(top?.longtext) : "",
       createdAt,
       itemClass: isTitle ? "Titel" : "TOP",

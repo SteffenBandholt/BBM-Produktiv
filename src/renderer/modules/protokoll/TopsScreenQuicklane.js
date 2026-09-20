@@ -67,7 +67,7 @@ function createButton({ id, icon, title, ariaLabel = title, pressed = null, disa
   btn.className = "bbm-tops-screen-quicklane__button";
   btn.title = title;
   btn.setAttribute("aria-label", ariaLabel);
-  btn.setAttribute("data-ui-editor-id", id);
+  if (id) btn.setAttribute("data-ui-editor-id", id);
   if (pressed !== null) btn.setAttribute("aria-pressed", pressed ? "true" : "false");
   btn.appendChild(typeof icon === "string" ? createTextIcon(icon) : icon);
   if (disabled) {
@@ -115,8 +115,24 @@ export class TopsScreenQuicklane {
     hasMeeting = true,
     isReadOnly = false,
     isBusy = false,
+    canImport = false,
+    importRunning = false,
+    importProgress = 0,
+    importMessage = "",
   } = {}) {
-    this.lastState = { topFilter, showAmpel, showLongtext, hasProject, hasMeeting, isReadOnly, isBusy };
+    this.lastState = {
+      topFilter,
+      showAmpel,
+      showLongtext,
+      hasProject,
+      hasMeeting,
+      isReadOnly,
+      isBusy,
+      canImport,
+      importRunning,
+      importProgress,
+      importMessage,
+    };
     const mode = normalizeTopFilterMode(topFilter);
     const disabled = !!isBusy;
     this.root.replaceChildren();
@@ -153,8 +169,21 @@ export class TopsScreenQuicklane {
         title: "Teilnehmer",
         disabled: disabled || !hasProject || !hasMeeting,
         onClick: () => this.callbacks.onParticipants?.(),
+      }),
+      createButton({
+        id: null,
+        icon: importRunning ? `${Math.max(0, Math.min(100, Math.round(importProgress || 0)))}%` : "↥",
+        title: importRunning ? (importMessage || "Audioimport abbrechen") : "Import",
+        ariaLabel: importRunning
+          ? `Audioimport abbrechen. ${importMessage || "Verarbeitung läuft"}`
+          : "Audio oder Video importieren",
+        disabled: importRunning ? false : disabled || !canImport,
+        onClick: () => importRunning
+          ? this.callbacks.onImportCancel?.()
+          : this.callbacks.onImport?.(),
       })
     );
+    navigation.children[navigation.children.length - 1].dataset.quicklaneAction = "audio-import";
 
     const visibility = createGroup("protokoll.topsScreen.quicklane.group.visibility", "Sichtbarkeit");
     visibility.append(

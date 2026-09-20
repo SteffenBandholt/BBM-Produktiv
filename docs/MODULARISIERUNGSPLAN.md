@@ -152,6 +152,22 @@ nicht analysiert oder vorgezogen.
 Audio bleibt außerhalb dieser Konsolidierungsfolge, bis es ausdrücklich separat
 beauftragt wird.
 
+### Separater Audioauftrag #349 (2026-09-20, Sichtabnahme offen)
+
+Der Protokoll-Audioimport V1 wird auf dem eigenen Branch
+`protokoll/audio-import-v1-rebuild` von der geprüften Main-Basis `a64d74b3`
+neu aufgebaut. Er ist kein vorgezogenes Paket 4 und übernimmt weder Snapshot
+`77b8028c` noch den alten Audiobranch vollständig. Der Umfang bleibt auf den
+festgelegten Ablauf Dateidialog → lokale FFmpeg-/Whisper.cpp-Transkription →
+verlustfreie Punktbildung → atomare Anlage unter dem typisierten Titel `Import`
+sowie Druck-/Folgebesprechungsausschluss begrenzt.
+
+Die technische Verarbeitung mit isoliertem Profil und synthetischer WAV ist
+grün; Registry 40, Live-Diktat und die bestehenden Layoutverträge bleiben
+erhalten. Offen ist ausschließlich Steffens einmalige vollständige Sichtabnahme
+einschließlich Auswahl beziehungsweise Abbruch im echten nativen Dateidialog.
+Bis dahin erfolgen kein Commit, Push oder Merge.
+
 ### Gemeinsame Basis vor Paket 4 (2026-09-20)
 
 Vor der Übernahme der Pakete 1 bis 3 auf `main` wurde ein getrennt beauftragtes

@@ -83,7 +83,7 @@ class TranscriptionService {
     return meeting;
   }
 
-  async transcribe({ audioImportId, language = "de" }) {
+  async transcribe({ audioImportId, language = "de", signal = null }) {
     if (!audioImportId) throw new Error("audioImportId required");
 
     _audioLog("start", { audioImportId, language });
@@ -105,6 +105,7 @@ class TranscriptionService {
         language,
         modelFileName: resolvedModelFileName,
         audioImport,
+        signal,
       });
 
       const transcript = this.transcriptsRepo.upsertTranscript({

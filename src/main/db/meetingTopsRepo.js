@@ -456,6 +456,9 @@ function listJoinedByMeeting(meetingId) {
   const topCreatedSel = _hasTopCol(db, "created_at")
     ? "t.created_at AS top_created_at"
     : "NULL AS top_created_at";
+  const specialTypeSel = _hasTopCol(db, "special_type")
+    ? "t.special_type"
+    : "NULL AS special_type";
   const trashedWhere = _hasTopCol(db, "is_trashed") ? "AND COALESCE(t.is_trashed, 0) = 0" : "";
 
   // Snapshot-Spalten (optional)
@@ -472,6 +475,7 @@ function listJoinedByMeeting(meetingId) {
         t.level,
         t.number,
         t.title,
+        ${specialTypeSel},
         t.is_hidden,
         ${topCreatedSel},
 
@@ -546,6 +550,9 @@ function listLatestByProject(projectId) {
   const topCreatedSel = _hasTopCol(db, "created_at")
     ? "t.created_at AS top_created_at"
     : "NULL AS top_created_at";
+  const specialTypeSel = _hasTopCol(db, "special_type")
+    ? "t.special_type"
+    : "NULL AS special_type";
   const trashedWhere = _hasTopCol(db, "is_trashed") ? "AND COALESCE(t.is_trashed, 0) = 0" : "";
 
   // Snapshot-Spalten (optional)
@@ -562,6 +569,7 @@ function listLatestByProject(projectId) {
         t.level,
         t.number,
         t.title,
+        ${specialTypeSel},
         t.is_hidden,
         ${topCreatedSel}
       FROM tops t
@@ -744,6 +752,18 @@ function carryOverFromMeeting(arg1, arg2) {
       "(LOWER(TRIM(status)) <> 'erledigt' OR completed_in_meeting_id IS NULL OR completed_in_meeting_id = ?)"
     );
     whereParams.push(fromMeetingId);
+  }
+  if (_hasTopCol(db, "special_type")) {
+    whereParts.push(`top_id NOT IN (
+      WITH RECURSIVE import_tree(id) AS (
+        SELECT id FROM tops WHERE special_type = 'audio_import'
+        UNION ALL
+        SELECT child.id
+        FROM tops child
+        JOIN import_tree parent ON child.parent_top_id = parent.id
+      )
+      SELECT id FROM import_tree
+    )`);
   }
 
   const sql = `
