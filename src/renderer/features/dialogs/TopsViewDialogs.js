@@ -1,9 +1,402 @@
 import { applyPopupButtonStyle } from "../../ui/popupButtonStyles.js";
 import { cleanupPopupHandlers, createPopupOverlay, stylePopupCard } from "../../ui/popupCommon.js";
 
+export function canSubmitImportMove({ topIds = [], targetParentId = null, submitting = false } = {}) {
+  return !submitting && Array.isArray(topIds) && topIds.length > 0 && !!String(targetParentId || "").trim();
+}
+
+export function getProtocolAudioImportFileName(filePath) {
+  const normalized = String(filePath || "").trim().replace(/\\/g, "/");
+  return normalized.split("/").filter(Boolean).pop() || "Audiodatei";
+}
+
+export function getProtocolAudioImportPhaseLabel(phase) {
+  switch (String(phase || "").trim().toLowerCase()) {
+    case "transcription":
+      return "Spracherkennung";
+    case "parsing":
+    case "saving":
+    case "completed":
+      return "TOPs speichern";
+    case "preparing":
+    default:
+      return "Vorbereitung";
+  }
+}
+
 export class TopsViewDialogs {
   constructor({ view }) {
     this.view = view;
+  }
+
+  openProtocolAudioImportProgress({
+    filePath,
+    operationId,
+    onCancel,
+    successDurationMs = 1200,
+  } = {}) {
+    const activeOperationId = String(operationId || "").trim();
+    if (!activeOperationId) throw new Error("operationId required");
+
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 20000 });
+    overlay.style.display = "flex";
+    overlay.dataset.protocolAudioImportRole = "overlay";
+    overlay.dataset.protocolAudioImportOperationId = activeOperationId;
+
+    const card = document.createElement("div");
+    card.className = "bbm-popup-standard bbm-popup-dialog";
+    card.dataset.protocolAudioImportRole = "dialog";
+    card.setAttribute("role", "dialog");
+    card.setAttribute("aria-modal", "true");
+    card.setAttribute("aria-labelledby", `protocol-audio-import-title-${activeOperationId}`);
+    stylePopupCard(card, { width: "min(440px, calc(100vw - 24px))", maxHeight: "calc(100vh - 24px)" });
+
+    const header = document.createElement("div");
+    header.id = `protocol-audio-import-title-${activeOperationId}`;
+    header.className = "bbm-popup-header";
+    header.style.fontWeight = "700";
+    header.textContent = "Audio wird importiert – bitte warten.";
+
+    const body = document.createElement("div");
+    body.className = "bbm-popup-body bbm-form-content";
+    body.style.display = "grid";
+    body.style.gap = "10px";
+
+    const fileName = document.createElement("div");
+    fileName.dataset.protocolAudioImportRole = "file-name";
+    fileName.style.overflowWrap = "anywhere";
+    fileName.textContent = getProtocolAudioImportFileName(filePath);
+
+    const phase = document.createElement("div");
+    phase.dataset.protocolAudioImportRole = "phase";
+    phase.style.fontWeight = "600";
+    phase.textContent = "Phase: Vorbereitung";
+
+    const progress = document.createElement("progress");
+    progress.dataset.protocolAudioImportRole = "progress";
+    progress.dataset.progressMode = "indeterminate";
+    progress.setAttribute("aria-label", "Audioimport läuft");
+    progress.style.inlineSize = "100%";
+
+    const detail = document.createElement("div");
+    detail.dataset.protocolAudioImportRole = "detail";
+    detail.setAttribute("role", "status");
+    detail.setAttribute("aria-live", "polite");
+    detail.style.minBlockSize = "1.25em";
+    detail.style.color = "var(--bbm-popup-muted, #667085)";
+    detail.textContent = "Audiodatei wird vorbereitet";
+
+    const footer = document.createElement("div");
+    footer.className = "bbm-popup-footer";
+    footer.style.display = "flex";
+    footer.style.justifyContent = "flex-end";
+
+    const cancelButton = document.createElement("button");
+    cancelButton.type = "button";
+    cancelButton.dataset.protocolAudioImportRole = "cancel";
+    cancelButton.textContent = "Abbrechen";
+    applyPopupButtonStyle(cancelButton, { variant: "neutral" });
+
+    footer.appendChild(cancelButton);
+    body.append(fileName, phase, progress, detail);
+    card.append(header, body, footer);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    let state = "running";
+    let closed = false;
+    let lastProgress = { phase: "preparing", message: "Audiodatei wird vorbereitet" };
+
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      state = "closed";
+      cleanupPopupHandlers(overlay);
+      overlay.remove();
+    };
+    const renderRunningProgress = () => {
+      header.textContent = "Audio wird importiert – bitte warten.";
+      phase.textContent = `Phase: ${getProtocolAudioImportPhaseLabel(lastProgress.phase)}`;
+      detail.textContent = String(lastProgress.message || "");
+      progress.hidden = false;
+      cancelButton.hidden = false;
+      cancelButton.disabled = false;
+      cancelButton.textContent = "Abbrechen";
+    };
+    const showCanceling = () => {
+      if (closed || state === "success" || state === "error") return false;
+      state = "canceling";
+      phase.textContent = "Import wird abgebrochen …";
+      detail.textContent = "Der laufende Audioimport wird gezielt beendet.";
+      progress.hidden = false;
+      cancelButton.disabled = true;
+      return true;
+    };
+    const restoreAfterCancelFailure = (message) => {
+      if (closed || state !== "canceling") return false;
+      state = "running";
+      renderRunningProgress();
+      detail.textContent = String(message || "Der Audioimport konnte nicht abgebrochen werden.");
+      return true;
+    };
+
+    cancelButton.onclick = async () => {
+      if (!showCanceling()) return;
+      try {
+        const canceled = typeof onCancel === "function"
+          ? await onCancel(activeOperationId)
+          : false;
+        if (canceled !== true) restoreAfterCancelFailure("Der Audioimport konnte nicht abgebrochen werden.");
+      } catch (error) {
+        restoreAfterCancelFailure(error?.message || "Der Audioimport konnte nicht abgebrochen werden.");
+      }
+    };
+
+    const controller = {
+      update(progressEvent = {}) {
+        if (closed || state !== "running") return false;
+        if (String(progressEvent?.operationId || "") !== activeOperationId) return false;
+        lastProgress = {
+          phase: String(progressEvent?.phase || lastProgress.phase || "preparing"),
+          message: String(progressEvent?.message || ""),
+        };
+        renderRunningProgress();
+        return true;
+      },
+      showCanceling,
+      restoreAfterCancelFailure,
+      showError(message) {
+        if (closed) return false;
+        state = "error";
+        header.textContent = "Audioimport fehlgeschlagen";
+        phase.textContent = "Fehler";
+        detail.textContent = String(message || "Der Audioimport konnte nicht abgeschlossen werden.");
+        progress.hidden = true;
+        cancelButton.hidden = false;
+        cancelButton.disabled = false;
+        cancelButton.textContent = "Schließen";
+        cancelButton.onclick = close;
+        return true;
+      },
+      async showSuccess(pointCount) {
+        if (closed) return false;
+        state = "success";
+        const count = Math.max(0, Number(pointCount) || 0);
+        header.textContent = "Audioimport abgeschlossen";
+        phase.textContent = `${count} TOPs importiert`;
+        detail.textContent = "";
+        progress.hidden = true;
+        cancelButton.hidden = true;
+        await new Promise((resolve) => setTimeout(resolve, Math.max(0, Number(successDurationMs) || 0)));
+        close();
+        return true;
+      },
+      close,
+      isOpen: () => !closed,
+      getState: () => state,
+    };
+
+    try {
+      cancelButton.focus();
+    } catch (_error) {
+      // Dialog remains usable without programmatic focus.
+    }
+    return controller;
+  }
+
+  openImportMovePopup({ points = [], targets = [], selectedTopId = null } = {}) {
+    return new Promise((resolve) => {
+      const sourcePoints = Array.isArray(points) ? points : [];
+      const targetTitles = Array.isArray(targets) ? targets : [];
+      const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 20000 });
+      overlay.style.display = "flex";
+      overlay.dataset.importMoveRole = "overlay";
+
+      const card = document.createElement("div");
+      card.className = "bbm-popup-standard bbm-popup-dialog";
+      card.dataset.importMoveRole = "dialog";
+      stylePopupCard(card, { width: "min(720px, calc(100vw - 24px))", maxHeight: "min(720px, calc(100vh - 24px))" });
+
+      const header = document.createElement("div");
+      header.className = "bbm-popup-header";
+      header.style.fontWeight = "700";
+      header.textContent = "Import-TOPs verschieben";
+
+      const body = document.createElement("div");
+      body.className = "bbm-popup-body bbm-form-content";
+      body.style.display = "grid";
+      body.style.gap = "10px";
+      body.style.minHeight = "0";
+
+      const intro = document.createElement("div");
+      intro.textContent = "Import-TOPs auswählen und gemeinsam an einen normalen Titel anhängen.";
+      body.appendChild(intro);
+
+      const longtextToggle = document.createElement("label");
+      longtextToggle.style.display = "flex";
+      longtextToggle.style.alignItems = "center";
+      longtextToggle.style.gap = "8px";
+      longtextToggle.style.width = "fit-content";
+
+      const longtextCheckbox = document.createElement("input");
+      longtextCheckbox.type = "checkbox";
+      longtextCheckbox.dataset.importMoveRole = "longtext-toggle";
+      const longtextLabel = document.createElement("span");
+      longtextLabel.textContent = "Langtexte einblenden";
+      longtextToggle.append(longtextCheckbox, longtextLabel);
+      body.appendChild(longtextToggle);
+
+      const list = document.createElement("div");
+      list.dataset.importMoveRole = "point-list";
+      list.style.display = "grid";
+      list.style.gap = "6px";
+      list.style.maxHeight = "300px";
+      list.style.overflowY = "auto";
+      list.style.padding = "2px";
+
+      const checkboxes = [];
+      const longtexts = [];
+      for (const point of sourcePoints) {
+        const row = document.createElement("label");
+        row.dataset.importMovePointId = String(point?.id ?? "");
+        row.style.display = "grid";
+        row.style.gridTemplateColumns = "auto minmax(0, 1fr)";
+        row.style.alignItems = "start";
+        row.style.gap = "8px";
+        row.style.padding = "8px 10px";
+        row.style.border = "1px solid #d8dee6";
+        row.style.borderRadius = "8px";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = String(point?.id ?? "");
+        checkbox.checked = String(point?.id ?? "") === String(selectedTopId ?? "");
+        checkbox.dataset.importMoveRole = "point-checkbox";
+        checkboxes.push(checkbox);
+
+        const text = document.createElement("div");
+        text.style.minWidth = "0";
+
+        const shorttext = document.createElement("div");
+        shorttext.style.whiteSpace = "pre-wrap";
+        shorttext.style.overflowWrap = "anywhere";
+        shorttext.textContent = String(point?.title || "(ohne Bezeichnung)");
+        text.appendChild(shorttext);
+
+        const longtext = document.createElement("div");
+        longtext.dataset.importMoveRole = "point-longtext";
+        longtext.style.display = "none";
+        longtext.style.whiteSpace = "pre-wrap";
+        longtext.style.overflowWrap = "anywhere";
+        longtext.style.marginTop = "6px";
+        longtext.style.color = "#475569";
+        longtext.textContent = String(point?.longtext || "");
+        text.appendChild(longtext);
+        longtexts.push(longtext);
+
+        row.append(checkbox, text);
+        list.appendChild(row);
+      }
+      body.appendChild(list);
+
+      const targetLabel = document.createElement("label");
+      targetLabel.className = "bbm-form-field";
+      targetLabel.style.display = "grid";
+      targetLabel.style.gap = "6px";
+      const targetCaption = document.createElement("span");
+      targetCaption.className = "bbm-form-label";
+      targetCaption.textContent = "Zieltitel";
+      const targetSelect = document.createElement("select");
+      targetSelect.dataset.importMoveRole = "target";
+      const emptyOption = document.createElement("option");
+      emptyOption.value = "";
+      emptyOption.textContent = "Zieltitel auswählen …";
+      targetSelect.appendChild(emptyOption);
+      for (const target of targetTitles) {
+        const option = document.createElement("option");
+        option.value = String(target?.id ?? "");
+        const number = String(target?.displayNumber || target?.number || "").trim();
+        option.textContent = `${number ? `${number}. ` : ""}${String(target?.title || "(ohne Bezeichnung)")}`;
+        targetSelect.appendChild(option);
+      }
+      targetLabel.append(targetCaption, targetSelect);
+      body.appendChild(targetLabel);
+
+      const footer = document.createElement("div");
+      footer.className = "bbm-popup-footer";
+      footer.style.display = "flex";
+      footer.style.justifyContent = "flex-end";
+
+      const btnCancel = document.createElement("button");
+      btnCancel.type = "button";
+      btnCancel.textContent = "Abbrechen";
+      btnCancel.dataset.importMoveRole = "cancel";
+      applyPopupButtonStyle(btnCancel, { variant: "neutral" });
+
+      const btnMove = document.createElement("button");
+      btnMove.type = "button";
+      btnMove.textContent = "Verschieben";
+      btnMove.dataset.importMoveRole = "submit";
+      applyPopupButtonStyle(btnMove, { variant: "primary" });
+
+      let closed = false;
+      let submitting = false;
+      const selectedIds = () => checkboxes.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.value);
+      const updateSubmitState = () => {
+        btnMove.disabled = !canSubmitImportMove({
+          topIds: selectedIds(),
+          targetParentId: targetSelect.value,
+          submitting,
+        });
+      };
+      const close = (result) => {
+        if (closed) return;
+        closed = true;
+        cleanupPopupHandlers(overlay);
+        overlay.remove();
+        resolve(result);
+      };
+
+      for (const checkbox of checkboxes) checkbox.addEventListener("change", updateSubmitState);
+      targetSelect.addEventListener("change", updateSubmitState);
+      longtextCheckbox.addEventListener("change", () => {
+        for (const longtext of longtexts) {
+          longtext.style.display = longtextCheckbox.checked && longtext.textContent ? "block" : "none";
+        }
+      });
+
+      btnCancel.onclick = () => close(null);
+      btnMove.onclick = () => {
+        if (btnMove.disabled || submitting) return;
+        submitting = true;
+        updateSubmitState();
+        close({
+          topIds: selectedIds(),
+          targetParentId: String(targetSelect.value || ""),
+        });
+      };
+      overlay.addEventListener("mousedown", (event) => {
+        if (event.target === overlay && !submitting) close(null);
+      });
+      overlay.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape" || submitting) return;
+        event.preventDefault();
+        close(null);
+      });
+
+      footer.append(btnCancel, btnMove);
+      card.append(header, body, footer);
+      overlay.appendChild(card);
+      document.body.appendChild(overlay);
+      updateSubmitState();
+      setTimeout(() => {
+        try {
+          targetSelect.focus();
+        } catch (_error) {
+          // Dialog remains usable without programmatic focus.
+        }
+      }, 0);
+    });
   }
 
   clearGapPopup() {

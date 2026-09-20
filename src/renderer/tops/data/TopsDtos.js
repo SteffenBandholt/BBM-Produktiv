@@ -43,6 +43,17 @@ export function createMoveTopRequest(input = {}) {
   };
 }
 
+export function createMoveImportTopsRequest(input = {}) {
+  const src = toObject(input);
+  return {
+    meetingId: toIdOrNull(src.meetingId),
+    topIds: Array.from(
+      new Set((Array.isArray(src.topIds) ? src.topIds : []).map(toIdOrNull).filter((id) => id !== null))
+    ),
+    targetParentId: toIdOrNull(src.targetParentId),
+  };
+}
+
 export function createDeleteTopRequest(input) {
   const topId =
     input && typeof input === "object" && !Array.isArray(input)
@@ -72,6 +83,14 @@ export function toApiCreateTopPayload(req = {}) {
 export function toApiMoveTopPayload(req = {}) {
   return {
     topId: req.topId ?? null,
+    targetParentId: req.targetParentId ?? null,
+  };
+}
+
+export function toApiMoveImportTopsPayload(req = {}) {
+  return {
+    meetingId: req.meetingId ?? null,
+    topIds: Array.isArray(req.topIds) ? [...req.topIds] : [],
     targetParentId: req.targetParentId ?? null,
   };
 }

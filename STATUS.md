@@ -66,6 +66,52 @@ bleibt getrennt in einem benannten lokalen Stash erhalten.
 
 ---
 
+## 2026-09-20 – Import-TOPs gemeinsam verschieben (Arbeitsstand)
+
+Auf Branch `protokoll/import-mehrfachverschieben`, Basis `f5469a31`, erweitert
+der vorhandene Schieben-Aufruf ausschließlich für Punkte unter einem anhand
+von `special_type = 'audio_import'` erkannten Importtitel den Dialog um eine
+Mehrfachauswahl. Der aufrufende Punkt ist vorausgewählt; weitere Punkte
+desselben Importtitels können einzeln gewählt, Langtexte bei Bedarf
+eingeblendet und alle gewählten Punkte an einen gemeinsamen normalen Titel
+desselben Protokolls angehängt werden.
+
+Die Verschiebung prüft Schreibberechtigung, offene Besprechung, Quell- und
+Zielzugehörigkeit innerhalb einer unmittelbaren SQLite-Transaktion erneut.
+Reihenfolge, IDs und fachliche Inhalte bleiben erhalten; bei Fehlern erfolgt
+keine Teilverschiebung. Nicht ausgewählte Punkte und der Importtitel bleiben
+unverändert. Das bisherige Einzelverschieben normaler TOPs bleibt bestehen.
+
+Die gezielten Prüfungen für nicht benachbarte Auswahl, Reihenfolge und Inhalt,
+Abbruch, fehlende Berechtigung, geschlossenes Protokoll, ungültiges Ziel,
+Rollback, Doppelausführung, Wiederöffnen und normales Einzelverschieben sind
+grün. Audioimport-Regression und UI-Editor-Vertragscheck sind ebenfalls grün.
+Die drei bereits vorhandenen roten Erwartungen der Gruppe
+`popup-form-standard` außerhalb der TOP-Dialoge bleiben unverändert; die
+direkte TOP-Dialog-Prüfung ist grün. Der Arbeitsstand ist noch nicht committed.
+
+Der vom Nutzer abgenommene Mehrfachverschiebe-Stand und das neue Importsymbol
+blieben unverändert. Ergänzt wurde ausschließlich ein kompakter, mittiger
+Fortschrittsdialog für den Audioimport. Er erscheint nach bestätigter Auswahl
+vor Beginn der Verarbeitung, zeigt Dateiname und die Phasen `Vorbereitung`,
+`Spracherkennung` und `TOPs speichern` und verwendet in nicht messbaren Phasen
+einen unbestimmten Wartebalken ohne Prozentanzeige. Abbruch, Fehler und Erfolg
+sind an die Operations-ID des aktuellen Imports gebunden; parallele Starts
+bleiben gesperrt.
+
+Gezielte Dialog-, Screen-, Audio-Regressions-, Lint- und UI-Vertragsprüfungen
+sind grün. Mit `resources/120108_011.MP3` lief der gerenderte Importbutton in
+einem neuen isolierten DEV-Profil über den produktiven Preload-/IPC- und lokalen
+FFmpeg-/Whisper.cpp-Weg. Der Dialog war vor Eintritt in den Import-Handler
+sichtbar und blieb während der länger dauernden Spracherkennung mit
+animiertem Wartebalken sichtbar. Das Transkript hatte 2.056 Zeichen; der Import
+speicherte neun TOPs, und die kurze Erfolgsmeldung wurde angezeigt. Die native
+Dateiauswahl wurde im Prüfgerüst bestätigt. Computer Use stellte weiterhin
+keine App-Oberfläche bereit; eine zusätzliche manuelle Windows-Klickprüfung
+wird daher nicht behauptet. Auch dieser Stand ist noch nicht committed.
+
+---
+
 ## 2026-09-20 – BBM 1.5.1 Konsolidierung: Paket 1 Besprechungsreihen
 
 Auf Branch `integration/bbm-1.5.1-consolidation`, Basis `origin/main` /

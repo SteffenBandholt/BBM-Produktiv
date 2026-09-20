@@ -84,6 +84,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   topsListByProject: (projectId) => ipcRenderer.invoke("tops:listByProject", projectId),
   topsCreate: (data) => ipcRenderer.invoke("tops:create", data),
   topsMove: (data) => ipcRenderer.invoke("tops:move", data),
+  topsMoveImportBatch: (data) => ipcRenderer.invoke("tops:moveImportBatch", data),
   topsDelete: (data) => ipcRenderer.invoke("tops:delete", data),
   topsMarkTrashed: (data) => ipcRenderer.invoke("tops:markTrashed", data),
   topsPurgeTrashedByMeeting: (data) => ipcRenderer.invoke("tops:purgeTrashedByMeeting", data),

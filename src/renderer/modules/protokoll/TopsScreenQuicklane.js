@@ -61,6 +61,35 @@ function createFilterIcon(mode) {
   return iconWrap;
 }
 
+function createAudioImportIcon() {
+  const iconWrap = createTextIcon("");
+  iconWrap.dataset.quicklaneIcon = "audio-file-import";
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  svg.style.inlineSize = "20px";
+  svg.style.blockSize = "20px";
+
+  const addPath = (d) => {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", d);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "currentColor");
+    path.setAttribute("stroke-width", "1.7");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(path);
+  };
+
+  addPath("M3 2.75h8l4 4v14.5H3z M11 2.75v4h4");
+  addPath("M5.5 14v1 M8 12v5 M10.5 13v3 M13 12.5v4");
+  addPath("M19 5v10 m-2.5-2.5L19 15l2.5-2.5 M16 19h6");
+  iconWrap.appendChild(svg);
+  return iconWrap;
+}
+
 function createButton({ id, icon, title, ariaLabel = title, pressed = null, disabled = false, onClick = null }) {
   const btn = document.createElement("button");
   btn.type = "button";
@@ -172,11 +201,13 @@ export class TopsScreenQuicklane {
       }),
       createButton({
         id: null,
-        icon: importRunning ? `${Math.max(0, Math.min(100, Math.round(importProgress || 0)))}%` : "↥",
-        title: importRunning ? (importMessage || "Audioimport abbrechen") : "Import",
+        icon: importRunning
+          ? `${Math.max(0, Math.min(100, Math.round(importProgress || 0)))}%`
+          : createAudioImportIcon(),
+        title: importRunning ? (importMessage || "Audioimport abbrechen") : "Audiodatei importieren",
         ariaLabel: importRunning
           ? `Audioimport abbrechen. ${importMessage || "Verarbeitung läuft"}`
-          : "Audio oder Video importieren",
+          : "Audiodatei importieren",
         disabled: importRunning ? false : disabled || !canImport,
         onClick: () => importRunning
           ? this.callbacks.onImportCancel?.()

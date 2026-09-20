@@ -1,16 +1,19 @@
 // src/main/domain/TopService.js
 
 const { createAmpelService } = require("./AmpelService");
+const { initDatabase } = require("../db/database");
 
 class TopService {
-  constructor({ topsRepo, meetingsRepo, meetingTopsRepo }) {
+  constructor({ topsRepo, meetingsRepo, meetingTopsRepo, dbProvider = initDatabase }) {
     if (!topsRepo) throw new Error("TopService: topsRepo required");
     if (!meetingsRepo) throw new Error("TopService: meetingsRepo required");
     if (!meetingTopsRepo) throw new Error("TopService: meetingTopsRepo required");
+    if (typeof dbProvider !== "function") throw new Error("TopService: dbProvider required");
 
     this.topsRepo = topsRepo;
     this.meetingsRepo = meetingsRepo;
     this.meetingTopsRepo = meetingTopsRepo;
+    this.dbProvider = dbProvider;
   }
 
   listByMeeting(meetingId) {
@@ -430,6 +433,116 @@ class TopService {
       newLevel,
       newNumber,
     });
+  }
+
+  moveImportTops({ meetingId, topIds, targetParentId }) {
+    if (!meetingId) throw new Error("meetingId required");
+    if (!targetParentId) throw new Error("Zieltitel erforderlich");
+
+    const selectedIds = Array.from(
+      new Set((Array.isArray(topIds) ? topIds : []).map((id) => String(id || "").trim()).filter(Boolean))
+    );
+    if (!selectedIds.length) throw new Error("Mindestens einen Import-TOP auswählen");
+
+    const db = this.dbProvider();
+    const transaction = db.transaction(() => {
+      const meeting = this.meetingsRepo.assertMeetingWritable
+        ? this.meetingsRepo.assertMeetingWritable(meetingId)
+        : this.meetingsRepo.getMeetingById(meetingId);
+      if (!meeting || Number(meeting.is_closed) === 1) {
+        throw new Error("Besprechung ist geschlossen – Verschieben nicht erlaubt");
+      }
+
+      const target = this.topsRepo.getTopById(targetParentId);
+      const targetMeetingTop = target && this.meetingTopsRepo.getMeetingTop(meetingId, target.id);
+      if (
+        !target ||
+        !targetMeetingTop ||
+        String(target.project_id || "") !== String(meeting.project_id || "") ||
+        (target.series_key || "construction") !== (meeting.series_key || "construction") ||
+        target.parent_top_id ||
+        Number(target.level) !== 1 ||
+        String(target.special_type || "") !== ""
+      ) {
+        throw new Error("Zieltitel ist für diese Besprechung nicht zulässig");
+      }
+
+      const selected = selectedIds.map((topId) => {
+        const top = this.topsRepo.getTopById(topId);
+        if (!top) throw new Error("Import-TOP nicht gefunden");
+        const meetingTop = this.meetingTopsRepo.getMeetingTop(meetingId, top.id);
+        if (!meetingTop) throw new Error("Import-TOP gehört nicht zur geöffneten Besprechung");
+        if (Number(meetingTop.is_carried_over) === 1) {
+          throw new Error("Alter TOP (übernommen) – Verschieben nicht erlaubt");
+        }
+        if (this.topsRepo.hasChildren(top.id)) {
+          throw new Error("TOP mit Unterpunkten darf nicht verschoben werden");
+        }
+        if (
+          String(top.project_id || "") !== String(meeting.project_id || "") ||
+          (top.series_key || "construction") !== (meeting.series_key || "construction") ||
+          String(top.special_type || "") !== ""
+        ) {
+          throw new Error("TOP ist kein verschiebbarer Import-Punkt");
+        }
+
+        const importRoot = top.parent_top_id
+          ? this.topsRepo.getTopById(top.parent_top_id)
+          : null;
+        const importRootMeetingTop = importRoot
+          ? this.meetingTopsRepo.getMeetingTop(meetingId, importRoot.id)
+          : null;
+        if (
+          !importRoot ||
+          !importRootMeetingTop ||
+          String(importRoot.special_type || "") !== "audio_import" ||
+          String(importRoot.project_id || "") !== String(meeting.project_id || "") ||
+          (importRoot.series_key || "construction") !== (meeting.series_key || "construction") ||
+          importRoot.parent_top_id ||
+          Number(importRoot.level) !== 1
+        ) {
+          throw new Error("TOP gehört nicht mehr zum Import-Bereich");
+        }
+
+        return { top, importRootId: String(importRoot.id) };
+      });
+
+      const importRootIds = new Set(selected.map((entry) => entry.importRootId));
+      if (importRootIds.size !== 1) {
+        throw new Error("Ausgewählte TOPs gehören nicht zum selben Importtitel");
+      }
+
+      selected.sort((a, b) => {
+        const byNumber = Number(a.top.number) - Number(b.top.number);
+        if (Number.isFinite(byNumber) && byNumber !== 0) return byNumber;
+        const byCreated = String(a.top.created_at || "").localeCompare(String(b.top.created_at || ""));
+        if (byCreated !== 0) return byCreated;
+        return String(a.top.id).localeCompare(String(b.top.id));
+      });
+
+      const moved = [];
+      for (const { top } of selected) {
+        const newNumber = this.topsRepo.getNextNumber(
+          meeting.project_id,
+          target.id,
+          meeting.series_key
+        );
+        moved.push(this.topsRepo.moveTop({
+          topId: top.id,
+          targetParentId: target.id,
+          newLevel: 2,
+          newNumber,
+        }));
+      }
+
+      return {
+        movedTopIds: moved.map((top) => top.id),
+        targetParentId: target.id,
+        importTitleId: selected[0].importRootId,
+      };
+    });
+
+    return typeof transaction.immediate === "function" ? transaction.immediate() : transaction();
   }
 
   deleteTop({ meetingId, topId }) {
