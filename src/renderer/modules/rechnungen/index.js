@@ -5,6 +5,7 @@ import RechnungenDesignScreen from "./screens/RechnungenDesignScreen.js";
 import RechnungScreen from "./screens/RechnungScreen.js";
 import { RECHNUNG_WORK_SCREEN_ID } from "./screens/index.js";
 import { RECHNUNG_SCOPE_ID } from "./RechnungScreen.uiEditorContract.js";
+import { RechnungLeistungsEditboxBinding } from "./RechnungLeistungsEditboxBinding.js";
 import { createModuleDescriptor } from "../../app/modules/moduleDescriptorContract.js";
 
 export const RECHNUNG_MODULE_ID = "rechnung";
