@@ -150,6 +150,25 @@ contextBridge.exposeInMainWorld("bbmDb", {
   customerFirmApplyToCustomer: (data) => ipcRenderer.invoke("customer:firm:applyToCustomer", data),
   customerCreateGlobalFirm: (data) => ipcRenderer.invoke("customer:createGlobalFirm", data),
 
+  // Wiederverwendbare Kundenverwaltung fuer Rechnung/Admin.
+  customerManagementList: (data) => ipcRenderer.invoke("customerMgmt:list", data),
+  customerManagementGet: (customerId) => ipcRenderer.invoke("customerMgmt:get", { customerId }),
+  customerManagementPrepareCreate: (customer) => ipcRenderer.invoke("customerMgmt:prepareCreate", { customer }),
+  customerManagementCreate: (customer, options = {}) =>
+    ipcRenderer.invoke("customerMgmt:create", { customer, ...options }),
+  customerManagementUpdate: (customerId, patch, options = {}) =>
+    ipcRenderer.invoke("customerMgmt:update", { customerId, patch, ...options }),
+  customerManagementArchive: (customerId) => ipcRenderer.invoke("customerMgmt:archive", { customerId }),
+  customerManagementReactivate: (customerId) => ipcRenderer.invoke("customerMgmt:reactivate", { customerId }),
+  customerManagementContactsList: (customerId, options = {}) =>
+    ipcRenderer.invoke("customerMgmt:contacts:list", { customerId, ...options }),
+  customerManagementContactCreate: (customerId, contact) =>
+    ipcRenderer.invoke("customerMgmt:contacts:create", { customerId, contact }),
+  customerManagementContactUpdate: (contactId, patch) =>
+    ipcRenderer.invoke("customerMgmt:contacts:update", { contactId, patch }),
+  customerManagementContactDelete: (contactId) =>
+    ipcRenderer.invoke("customerMgmt:contacts:delete", { contactId }),
+
   // ============================================================
   // Rechnung: Grunddaten und Belegkopf
   // ============================================================
