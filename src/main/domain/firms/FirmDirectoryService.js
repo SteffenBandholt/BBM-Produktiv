@@ -45,10 +45,11 @@ function toDirectoryEntry(row, kind, usageCodes = null) {
       projectParticipant: Array.isArray(usageCodes)
         ? Number(usageCodes.includes(firmUsagesRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT))
         : Number(row.use_project_participant) === 1 ? 1 : 0,
-      customer: Array.isArray(usageCodes)
-        ? Number(usageCodes.includes(firmUsagesRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER))
-        : Number(row.use_customer) === 1 ? 1 : 0,
+      customer: 0,
     }),
+    legacyCustomerUse: Array.isArray(usageCodes)
+      ? Number(usageCodes.includes(firmUsagesRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER))
+      : Number(row.use_customer) === 1 ? 1 : 0,
     is_active: Number(row.is_active ?? 1) === 1 ? 1 : 0,
   });
 }
@@ -64,14 +65,11 @@ class FirmDirectoryService {
     globalRepo = firmsRepo,
     projectRepo = projectFirmsRepo,
     usageRepo = firmUsagesRepo,
-    customerImpactProvider = null,
   } = {}) {
     this.dbProvider = dbProvider;
     this.globalRepo = globalRepo;
     this.projectRepo = projectRepo;
     this.usageRepo = usageRepo;
-    this.customerImpactProvider =
-      typeof customerImpactProvider === "function" ? customerImpactProvider : null;
   }
 
   _db() {
@@ -161,16 +159,6 @@ class FirmDirectoryService {
     return [...locals, ...globals].sort((a, b) => a.label.localeCompare(b.label, "de"));
   }
 
-  listCustomers() {
-    const db = this._db();
-    const usageCode = this.usageRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER;
-    return this.usageRepo
-      .listFirmsByUsage(usageCode, db)
-      .map((row) =>
-        toDirectoryEntry(row, FIRM_KINDS.GLOBAL, this.usageRepo.listCodesByFirm(row.id, db))
-      )
-      .sort((a, b) => a.label.localeCompare(b.label, "de"));
-  }
 
   listPersons({ ref: refInput, projectId, forUse = null, participantOnly = false } = {}) {
     const ref = normalizeFirmRef(refInput, {
@@ -215,7 +203,7 @@ class FirmDirectoryService {
     const payload = {
       ...cleanPatch(data),
       use_project_participant: resolvedUses.projectParticipant,
-      use_customer: resolvedUses.customer,
+      use_customer: 0,
     };
     const row = defaults.kind === FIRM_KINDS.GLOBAL
       ? this.globalRepo.createFirm(payload)
@@ -224,9 +212,6 @@ class FirmDirectoryService {
       const usageCodes = [];
       if (resolvedUses.projectParticipant) {
         usageCodes.push(this.usageRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT);
-      }
-      if (resolvedUses.customer) {
-        usageCodes.push(this.usageRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER);
       }
       this.usageRepo.replaceUsages({ firmId: row.id, usageCodes, dbConn: this._db() });
       return this.get({ kind: FIRM_KINDS.GLOBAL, id: row.id });
@@ -254,9 +239,6 @@ class FirmDirectoryService {
     const impacts = [];
     if (current.uses.projectParticipant === 1 && next.projectParticipant === 0) {
       impacts.push(...this._participantImpacts(ref));
-    }
-    if (current.uses.customer === 1 && next.customer === 0) {
-      impacts.push(...this._customerImpacts(ref));
     }
     return Object.freeze({ allowed: impacts.length === 0, current: current.uses, next, impacts });
   }
@@ -377,12 +359,6 @@ class FirmDirectoryService {
     return impacts;
   }
 
-  _customerImpacts(ref) {
-    // Extension point for the productive invoice module. Draft/open invoice
-    // references can be supplied without importing that optional module here.
-    const result = this.customerImpactProvider ? this.customerImpactProvider({ ref }) : [];
-    return Array.isArray(result) ? result.filter((entry) => Number(entry?.count || 0) > 0) : [];
-  }
 
   setUses({ ref: refInput, uses, expectedUpdatedAt } = {}) {
     const ref = normalizeFirmRef(refInput, { projectId: refInput?.projectId || refInput?.project_id });
@@ -402,13 +378,9 @@ class FirmDirectoryService {
           error.code = "FIRM_VERSION_CONFLICT";
           throw error;
         }
-        const usageCodes = [];
-        if (assessment.next.projectParticipant) {
-          usageCodes.push(this.usageRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT);
-        }
-        if (assessment.next.customer) {
-          usageCodes.push(this.usageRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER);
-        }
+        const usageCodes = assessment.next.projectParticipant
+          ? [this.usageRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT]
+          : [];
         this.usageRepo.replaceUsages({ firmId: ref.id, usageCodes, dbConn: db });
         return this.get(ref);
       }
@@ -419,14 +391,13 @@ class FirmDirectoryService {
       const result = db
         .prepare(
           `UPDATE ${table}
-           SET use_project_participant = @participant, use_customer = @customer, updated_at = @updated_at
+           SET use_project_participant = @participant, updated_at = @updated_at
            WHERE id = @id${scopeSql}${versionSql}`
         )
         .run({
           id: ref.id,
           project_id: ref.projectId,
           participant: assessment.next.projectParticipant,
-          customer: assessment.next.customer,
           updated_at: now,
           expected_updated_at: expectedUpdatedAt || null,
         });

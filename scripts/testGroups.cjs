@@ -8,6 +8,7 @@ const TEST_GROUPS = Object.freeze([
       ["customerDedup.test.cjs", "runCustomerDedupTests"],
       ["customerRuntimeContext.test.cjs", "runCustomerRuntimeContextTests"],
       ["customerManagementUi.test.cjs", "runCustomerManagementUiTests"],
+      ["customerBbmCleanup.test.cjs", "runCustomerBbmCleanupTests"],
     ]),
   }),
   Object.freeze({

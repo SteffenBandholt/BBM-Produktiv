@@ -32,10 +32,6 @@ async function runRechnungenDesignModuleTests(run) {
   const customerModule = await importEsmFromFile(
     path.join(repoRoot, "src/renderer/modules/rechnungen/customerDirectory.js")
   );
-  const { defaultsForCreation, normalizeUses } = require(
-    path.join(repoRoot, "src/main/domain/firms/firmReference.js")
-  );
-
   await run("Rechnungen-Design: bleibt strikt auf DEV begrenzt", async () => {
     assert.equal(await designModule.isRechnungenDesignAvailable({
       api: { appGetBuildChannel: async () => ({ ok: true, channel: "DEV" }) },
@@ -78,132 +74,67 @@ async function runRechnungenDesignModuleTests(run) {
     assert.equal(screenSource.includes("INVOICE_DESIGN_FORM.customer"), false);
   });
 
-  await run("Rechnungs-Kunden 01: Liste ohne Projekt fordert ausschließlich globale Kunden an", async () => {
+  await run("Rechnungs-Kunden 01: Picker liest aktive Customers aus Rechnung/Customer Core", async () => {
     const calls = [];
-    const global = firmEntry({ id: "g1", label: "Global GmbH" });
+    const sourceCustomer = {
+      customerId: "c1",
+      customerNumber: "K-000001",
+      name1: "Global GmbH",
+      status: "ACTIVE",
+    };
     const result = await customerModule.listInvoiceCustomers({
       api: {
-        firmDirectoryListCustomers: async (payload) => {
-          calls.push(payload);
-          return { ok: true, list: [global] };
+        rechnungListCustomers: async () => {
+          calls.push("rechnungListCustomers");
+          return { ok: true, list: [sourceCustomer] };
         },
       },
     });
-    assert.deepEqual(calls, [{}]);
-    assert.deepEqual(result.list.map((entry) => entry.ref), [global.ref]);
+    assert.deepEqual(calls, ["rechnungListCustomers"]);
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.list.map((entry) => entry.key), ["c1"]);
+    assert.equal(result.list[0].ref.kind, "customer");
+    assert.equal(result.list[0].optionLabel, "K-000001 · Global GmbH");
   });
 
-  await run("Rechnungs-Kunden 02: Projektkontext ändert die zentrale Kundenliste nicht", async () => {
-    const calls = [];
-    const global = firmEntry({ id: "g1", label: "Global GmbH" });
+  await run("Rechnungs-Kunden 02: Projektkontext veraendert den zentralen Customer-Bestand nicht", async () => {
     const result = await customerModule.listInvoiceCustomers({
       api: {
-        firmDirectoryListCustomers: async (payload) => {
-          calls.push(payload);
-          return { ok: true, list: [global] };
-        },
+        rechnungListCustomers: async () => ({
+          ok: true,
+          list: [{ customerId: "c1", customerNumber: "K-000001", name1: "Kunde" }],
+        }),
       },
       projectId: "p1",
     });
-    assert.deepEqual(calls, [{}]);
-    assert.deepEqual(result.list.map((entry) => entry.key), ["global_firm:g1"]);
+    assert.deepEqual(result.list.map((entry) => entry.key), ["c1"]);
   });
 
-  await run("Rechnungs-Kunden 03: projektlokale Firma ist kein Rechnungskunde", async () => {
-    const foreign = firmEntry({ kind: "project_firm", id: "l2", projectId: "p2", label: "Fremd" });
-    const result = await customerModule.listInvoiceCustomers({
-      api: { firmDirectoryListCustomers: async () => ({ ok: true, list: [foreign] }) },
-      projectId: "p1",
-    });
-    assert.equal(result.ok, false);
-    assert.match(result.error, /ungültige Kundenreferenz/);
-  });
-
-  await run("Rechnungs-Kunden 04: globaler Kunde benötigt keine Projektzuordnung", async () => {
-    const global = firmEntry({ id: "g1", label: "Global GmbH" });
-    const result = await customerModule.listInvoiceCustomers({
-      api: { firmDirectoryListCustomers: async () => ({ ok: true, list: [global] }) },
-      projectId: "p1",
-    });
-    assert.equal(result.ok, true);
-    assert.equal(result.list[0].ref.projectId, null);
-  });
-
-  await run("Rechnungs-Kunden 05: Teilnehmer-only ist kein zulässiger Picker-Eintrag", async () => {
-    const participantOnly = firmEntry({ id: "g1", label: "Nur Teilnehmer", customer: 0, participant: 1 });
-    const result = await customerModule.listInvoiceCustomers({
-      api: { firmDirectoryListCustomers: async () => ({ ok: true, list: [participantOnly] }) },
-    });
-    assert.equal(result.ok, false);
-    assert.match(result.error, /ohne Kundennutzung/);
-  });
-
-  await run("Rechnungs-Kunden 06: Kunden-only ist im Picker zulässig", async () => {
-    const customerOnly = firmEntry({ id: "g1", label: "Nur Kunde", customer: 1, participant: 0 });
-    const result = await customerModule.listInvoiceCustomers({
-      api: { firmDirectoryListCustomers: async () => ({ ok: true, list: [customerOnly] }) },
-    });
-    assert.equal(result.ok, true);
-    assert.equal(result.list[0].label, "Nur Kunde");
-  });
-
-  await run("Rechnungs-Kunden 07: Projektzuordnung dupliziert die zentrale Firma nicht", async () => {
-    const global = firmEntry({ id: "same", label: "Gleicher Name" });
-    const result = await customerModule.listInvoiceCustomers({
-      api: { firmDirectoryListCustomers: async () => ({ ok: true, list: [global] }) },
-      projectId: "p1",
-    });
-    assert.deepEqual(result.list.map((entry) => entry.key), ["global_firm:same"]);
-    assert.deepEqual(result.list.map((entry) => entry.optionLabel), ["Gleicher Name · Zentrale Firma"]);
-  });
-
-  await run("Rechnungs-Kunden 08: Anlage ohne Projekt wird globaler Kunde", () => {
-    assert.deepEqual(defaultsForCreation({ origin: "invoice" }), {
-      kind: "global_firm",
-      uses: { projectParticipant: 0, customer: 1 },
-    });
-  });
-
-  await run("Rechnungs-Kunden 09: Anlage mit Projekt bleibt eine zentrale Firma", () => {
-    assert.deepEqual(defaultsForCreation({ origin: "invoice", projectId: "p1" }), {
-      kind: "global_firm",
-      uses: { projectParticipant: 0, customer: 1 },
-    });
-  });
-
-  await run("Rechnungs-Kunden 10: projektlokale Anlage über Rechnung wird abgewiesen", () => {
+  await run("Rechnungs-Kunden 03: Firma ohne customerId ist keine Customer-Core-Identitaet", () => {
     assert.throws(
-      () => defaultsForCreation({ origin: "invoice", projectId: "p1", kind: "project_firm" }),
-      /global firms only/
+      () => customerModule.toInvoiceCustomer({ id: "", name1: "Nur Firma" }),
+      /ungueltigen Rechnungskunden/
     );
   });
 
-  await run("Rechnungs-Kunden 11: neu geladener Kunde wird über die typisierte Referenz ausgewählt", () => {
-    const created = firmEntry({ kind: "global_firm", id: "g1", label: "Neu" });
-    const customer = customerModule.toInvoiceCustomer(created);
-    assert.equal(customerModule.resolveInvoiceCustomer([customer], created.ref), customer);
-  });
-
-  await run("Rechnungs-Kunden 12: Bearbeiten erhält den vollständigen FirmDirectory-Datensatz", () => {
-    const firm = firmEntry({ id: "g1", label: "Bearbeiten" });
-    const customer = customerModule.toInvoiceCustomer(firm);
-    assert.equal(customer.firm, firm);
-    assert.deepEqual(customer.ref, firm.ref);
-  });
-
-  await run("Rechnungs-Kunden 13: Projektteilnehmer kann zur Kundennutzung ergänzt werden", () => {
-    assert.deepEqual(normalizeUses({ customer: 1, projectParticipant: 1 }), {
-      projectParticipant: 1,
-      customer: 1,
+  await run("Rechnungs-Kunden 04: Customer wird ueber stabile customerId wiedergefunden", () => {
+    const customer = customerModule.toInvoiceCustomer({
+      customerId: "c1",
+      customerNumber: "K-000001",
+      name1: "Neu",
     });
+    assert.equal(customerModule.resolveInvoiceCustomer([customer], "c1"), customer);
+    assert.equal(customerModule.resolveInvoiceCustomer([customer], customer.ref), customer);
+    assert.equal(customer.firm, null);
   });
 
-  await run("Rechnungs-Kunden 14: deaktivierter Kunde setzt die Auswahl nach Refresh zurück", () => {
-    const previous = firmEntry({ id: "g1", label: "Entfernt" });
-    assert.equal(customerModule.resolveInvoiceCustomer([], previous.ref), null);
+  await run("Rechnungs-Kunden 05: fehlende Customer-Core-API liefert klaren Fehler", async () => {
+    const result = await customerModule.listInvoiceCustomers({ api: {} });
+    assert.equal(result.ok, false);
+    assert.match(result.error, /Customer-Core-API/);
   });
 
-  await run("Rechnungs-Kunden 15: Modul bleibt ohne Projektfachmodule lauffähig", () => {
+  await run("Rechnungs-Kunden 06: Rechnungsmodul bleibt ohne Projektfachmodule lauffaehig", () => {
     const moduleRoot = path.join(repoRoot, "src/renderer/modules/rechnungen");
     const sources = fs.readdirSync(moduleRoot, { recursive: true, withFileTypes: true })
       .filter((entry) => entry.isFile() && /\.(?:js|css|md)$/.test(entry.name))
@@ -214,25 +145,25 @@ async function runRechnungenDesignModuleTests(run) {
     });
   });
 
-  await run("Rechnungs-Kunden 16: Demo-Kundennamen sind keine produktive Pickerquelle mehr", () => {
+  await run("Rechnungs-Kunden 07: Demo-Kundennamen und FirmDirectory sind keine Pickerquelle", () => {
     const screenSource = read("src/renderer/modules/rechnungen/screens/RechnungenDesignScreen.js");
     const customerSource = read("src/renderer/modules/rechnungen/customerDirectory.js");
     assert.equal(screenSource.includes("listInvoiceCustomers({ api: this.api"), true);
     assert.equal(screenSource.includes("INVOICE_DESIGN_FORM.customer"), false);
     assert.equal(customerSource.includes("demoData"), false);
-    assert.equal(customerSource.includes("firmDirectoryListCustomers"), true);
+    assert.equal(customerSource.includes("firmDirectory"), false);
+    assert.equal(customerSource.includes("rechnungListCustomers"), true);
   });
 
-  await run("Rechnungs-Kunden: Screen bietet Picker, Neu, Bearbeiten und sichtbare Auswahl", () => {
+  await run("Rechnungs-Kunden 08: DEV-Design legt Kunden nicht mehr als BBM-Firma an", () => {
     const screenSource = read("src/renderer/modules/rechnungen/screens/RechnungenDesignScreen.js");
-    [
-      '"Rechnungskunde auswählen"',
-      'button("Neuer Kunde", "quiet")',
-      'button("Kunde bearbeiten", "quiet")',
-      '"Kein Kunde ausgewählt"',
-      'origin: "invoice"',
-      "firm: customer.firm",
-    ].forEach((needle) => assert.equal(screenSource.includes(needle), true, needle));
+    assert.equal(screenSource.includes('"Rechnungskunde auswählen"'), true);
+    assert.equal(screenSource.includes('button("Neuer Kunde", "quiet")'), true);
+    assert.equal(screenSource.includes('button("Kunde bearbeiten", "quiet")'), true);
+    assert.equal(screenSource.includes("openFirmEditor"), false);
+    assert.equal(screenSource.includes('origin: "invoice"'), false);
+    assert.equal(screenSource.includes("firm: customer.firm"), false);
+    assert.equal(screenSource.includes("Kundenverwaltung des Rechnungsmoduls"), true);
   });
 
   await run("Rechnungen-Design: bezieht die freigegebenen Werte aus dem zentralen BBM-Standard", () => {
