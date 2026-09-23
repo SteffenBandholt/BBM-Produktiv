@@ -146,6 +146,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   customerFirmCreate: (data) => ipcRenderer.invoke("customer:firm:create", data),
   customerFirmLink: (data) => ipcRenderer.invoke("customer:firm:link", data),
   customerFirmCompare: (data) => ipcRenderer.invoke("customer:firm:compare", data),
+  customerFirmLinks: (customerId) => ipcRenderer.invoke("customer:firm:links", { customerId }),
   customerFirmApplyToCustomer: (data) => ipcRenderer.invoke("customer:firm:applyToCustomer", data),
   customerCreateGlobalFirm: (data) => ipcRenderer.invoke("customer:createGlobalFirm", data),
 
