@@ -16,7 +16,7 @@ function optionalText(value) {
 }
 
 function normalizeCountryCode(value) {
-  const code = requiredText(value || "DE", "countryCode").toUpperCase();
+  const code = requiredText(value, "countryCode").toUpperCase();
   if (!/^[A-Z]{2}$/.test(code)) throw new Error("countryCode must be ISO-2");
   return code;
 }
@@ -42,6 +42,10 @@ class CustomerService {
   }
 
   createCustomer(data = {}) {
+    const normalizedName1 = requiredText(data.name1, "name1");
+    const normalizedCountryCode = normalizeCountryCode(data.countryCode);
+    const normalizedSourceCode = normalizeSourceCode(data.sourceCode);
+    const normalizedPaymentTerm = normalizePaymentTerm(data.defaultPaymentTermDays);
     const now = new Date().toISOString();
     const customerId = randomUUID();
     const customerNumber = this.repository.allocateCustomerNumber();
@@ -49,13 +53,13 @@ class CustomerService {
       customer_id: customerId,
       customer_number: customerNumber,
       status: "ACTIVE",
-      source_code: normalizeSourceCode(data.sourceCode),
-      name1: requiredText(data.name1, "name1"),
+      source_code: normalizedSourceCode,
+      name1: normalizedName1,
       name2: optionalText(data.name2),
       street: optionalText(data.street),
       postal_code: optionalText(data.postalCode),
       city: optionalText(data.city),
-      country_code: normalizeCountryCode(data.countryCode),
+      country_code: normalizedCountryCode,
       email: optionalText(data.email),
       phone: optionalText(data.phone),
       vat_id: optionalText(data.vatId),
@@ -66,7 +70,7 @@ class CustomerService {
       billing_city: optionalText(data.billingCity),
       billing_country_code: data.billingCountryCode ? normalizeCountryCode(data.billingCountryCode) : null,
       billing_email: optionalText(data.billingEmail),
-      default_payment_term_days: normalizePaymentTerm(data.defaultPaymentTermDays),
+      default_payment_term_days: normalizedPaymentTerm,
       language_code: optionalText(data.languageCode),
       internal_note: optionalText(data.internalNote),
       revision: 1,
