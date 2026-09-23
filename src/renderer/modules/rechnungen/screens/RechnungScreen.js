@@ -533,8 +533,169 @@ export default class RechnungScreen {
     return ordered;
   }
   _positionDepth(entry) { let depth = 0; let current = entry; const seen = new Set(); while (current?.parent_id && !seen.has(current.parent_id)) { seen.add(current.parent_id); current = this.positions.find((item) => item.id === current.parent_id) || null; depth += 1; } return depth; }
-  _clearPositionSelection() { this.selectedPositionId = null; this._setPositionCreateParentId(null); this.isPositionMoveMode = false; }
-  _selectPosition(entry, { setCreateContext = true } = {}) { if (!entry) return; this.selectedPositionId = entry.id; if (setCreateContext) this._setPositionCreateParentId(entry.id); }
+  _clearPositionSelection() {
+    this.selectedPositionId = null;
+    this._setPositionCreateParentId(null);
+    this.isPositionMoveMode = false;
+    this._clearPositionEditor();
+  }
+
+  _clearPositionEditor() {
+    if (!this.positionType) return;
+    this.positionIsTitle = false;
+    this.positionType.value = POSITION_TYPES.SERVICE;
+    this.positionShort.value = "";
+    this.positionLong.value = "";
+    this.positionQuantity.value = formatQuantityForInput("1", this.quantityDecimalPlaces);
+    this._lastValidQuantityInput = this.positionQuantity.value;
+    this.positionUnit.value = "";
+    this.positionPrice.value = "";
+    this.positionVatRate.textContent = "MwSt. 19 %";
+    this.positionPriceGross.checked = false;
+    this.positionNep.checked = false;
+    this._syncPositionEditorFields();
+    this._syncPositionActions();
+    this._syncQuantityDecimalStepperState();
+  }
+
+  _selectPosition(entry, { setCreateContext = true } = {}) {
+    if (!entry) return;
+    this.selectedPositionId = entry.id;
+    this.positionIsTitle = Boolean(entry.is_title);
+    if (this.positionType) {
+      this.positionType.value = entry.type || (entry.is_title ? POSITION_TYPES.HEADING : POSITION_TYPES.SERVICE);
+      this.positionShort.value = entry.short_text || "";
+      this.positionLong.value = entry.long_text || "";
+      this.positionQuantity.value = formatQuantityForInput(entry.quantity ?? "1", this.quantityDecimalPlaces);
+      this._lastValidQuantityInput = this.positionQuantity.value;
+      this.positionUnit.value = entry.unit || "";
+      this.positionPriceGross.checked = entry.price_input_mode === PRICE_INPUT_MODES.GROSS;
+      const vatRate = Number(entry.vat_rate_percent ?? 19);
+      const netCents = Number(entry.unit_price_cents || 0);
+      const grossCents = Math.round(netCents * (100 + vatRate) / 100);
+      this.positionPrice.value = ((this.positionPriceGross.checked ? grossCents : netCents) / 100).toFixed(2);
+      this.positionVatRate.textContent = `MwSt. ${vatRate} %`;
+      this.positionNep.checked = Boolean(entry.is_nep);
+      this._syncPositionEditorFields();
+      this._syncPositionActions();
+      this._syncQuantityDecimalStepperState();
+    }
+    if (setCreateContext) this._setPositionCreateParentId(entry.id);
+  }
+
+  _setQuantityDecimalPlaces(value) {
+    const numeric = Number(value);
+    const next = Number.isInteger(numeric) ? Math.max(0, Math.min(4, numeric)) : this.quantityDecimalPlaces;
+    this.quantityDecimalPlaces = next;
+    if (this.positionQuantity) {
+      this.positionQuantity.value = formatQuantityForInput(this.positionQuantity.value || "0", next);
+      this._lastValidQuantityInput = this.positionQuantity.value;
+    }
+    this._syncQuantityDecimalStepperState();
+    this._syncSelectedPositionFromEditbox();
+    this._renderPositions();
+  }
+
+  _syncQuantityDecimalStepperState() {
+    const places = normalizeQuantityDecimalPlaces(this.quantityDecimalPlaces);
+    this.quantityDecimalPlaces = places;
+    if (this.positionQuantityDecimalsValue) this.positionQuantityDecimalsValue.textContent = String(places);
+    if (this.positionQuantity) {
+      this.positionQuantity.inputMode = "decimal";
+      this.positionQuantity.setAttribute?.("aria-label", `Menge mit bis zu ${places} Nachkommastellen`);
+    }
+    const locked = !this._isFreeDraft();
+    if (this.positionQuantityDecimalsDecrease) this.positionQuantityDecimalsDecrease.disabled = locked || places === 0;
+    if (this.positionQuantityDecimalsIncrease) this.positionQuantityDecimalsIncrease.disabled = locked || places === 4;
+  }
+
+  _handlePositionQuantityInput() {
+    const value = this.positionQuantity?.value ?? "";
+    if (!isQuantityInputAllowed(value, this.quantityDecimalPlaces)) {
+      this.positionQuantity.value = this._lastValidQuantityInput;
+      return;
+    }
+    this._lastValidQuantityInput = value;
+    this._syncSelectedPositionFromEditbox();
+  }
+
+  _commitPositionQuantityInput() {
+    if (!this.positionQuantity) return;
+    this.positionQuantity.value = formatQuantityForInput(this.positionQuantity.value || "0", this.quantityDecimalPlaces);
+    this._lastValidQuantityInput = this.positionQuantity.value;
+    this._syncSelectedPositionFromEditbox();
+  }
+
+  _syncPositionEditorFields() {
+    if (!this.positionType) return;
+    const isTitle = Boolean(this.positionIsTitle);
+    const isService = !isTitle && this.positionType.value === POSITION_TYPES.SERVICE;
+    this.positionType.disabled = isTitle || !this._isFreeDraft();
+    [this.positionQuantityBlock, this.positionUnitField].filter(Boolean).forEach((fieldNode) => { fieldNode.hidden = isTitle; });
+    [this.positionPriceField, this.positionVatRateField, this.positionPriceGrossField, this.positionNepField].filter(Boolean).forEach((fieldNode) => { fieldNode.hidden = !isService; });
+    if (this.positionPriceLabel) this.positionPriceLabel.textContent = `Einzelpreis ${this.positionPriceGross.checked ? "brutto" : "netto"}`;
+  }
+
+  _syncPositionActions() {
+    const isFreeDraft = this._isFreeDraft();
+    const selected = this._getSelectedPosition();
+    if (this.positionCreateTitleButton) this.positionCreateTitleButton.disabled = !isFreeDraft;
+    if (this.positionCreateButton) this.positionCreateButton.disabled = !isFreeDraft;
+    if (this.positionDeleteButton) this.positionDeleteButton.disabled = !isFreeDraft || !selected;
+    if (this.positionMoveButton) {
+      this.positionMoveButton.disabled = !isFreeDraft || !selected || Boolean(selected?.is_title);
+      this.positionMoveButton.textContent = this.isPositionMoveMode ? "Schieben beenden" : "Schieben";
+    }
+    if (this.positionMoveRootButton) {
+      this.positionMoveRootButton.hidden = !this.isPositionMoveMode;
+      this.positionMoveRootButton.disabled = !isFreeDraft || !selected || !selected?.parent_id;
+    }
+    if (this.positionsList) this.positionsList.classList.toggle("is-move-mode", this.isPositionMoveMode);
+  }
+
+  _togglePositionPriceInputMode() {
+    const selected = this._getSelectedPosition();
+    if (!selected || selected.type !== POSITION_TYPES.SERVICE || !this._isFreeDraft()) return;
+    const vatRate = Number(selected.vat_rate_percent ?? 19);
+    const netCents = Number(selected.unit_price_cents || 0);
+    const grossCents = Math.round(netCents * (100 + vatRate) / 100);
+    this.positionPrice.value = ((this.positionPriceGross.checked ? grossCents : netCents) / 100).toFixed(2);
+    this._syncPositionEditorFields();
+    this._syncSelectedPositionFromEditbox();
+  }
+
+  _syncSelectedPositionFromEditbox() {
+    const existing = this._getSelectedPosition();
+    if (!existing || !this._isFreeDraft()) return;
+    const isTitle = Boolean(existing.is_title);
+    const type = isTitle ? POSITION_TYPES.HEADING : this.positionType.value;
+    const vatRate = type === POSITION_TYPES.SERVICE ? Number(existing.vat_rate_percent ?? 19) : null;
+    const inputCents = Math.max(0, Math.round(Number(String(this.positionPrice.value || "0").replace(",", ".")) * 100) || 0);
+    const grossMode = this.positionPriceGross.checked && type === POSITION_TYPES.SERVICE;
+    const unitPriceCents = grossMode && vatRate != null
+      ? Math.round(inputCents * 100 / (100 + vatRate))
+      : inputCents;
+    const replacement = {
+      ...existing,
+      type,
+      short_text: this.positionShort.value.trim() || "(ohne Bezeichnung)",
+      long_text: this.positionLong.value.trim(),
+      quantity: isTitle ? null : this.positionQuantity.value || "0",
+      unit: isTitle ? null : this.positionUnit.value.trim(),
+      unit_price_cents: type === POSITION_TYPES.SERVICE ? unitPriceCents : null,
+      is_nep: type === POSITION_TYPES.SERVICE ? this.positionNep.checked : false,
+      vat_rate_percent: vatRate,
+      price_input_mode: type === POSITION_TYPES.SERVICE ? (grossMode ? PRICE_INPUT_MODES.GROSS : PRICE_INPUT_MODES.NET) : null,
+      price_input_cents: grossMode ? inputCents : null,
+    };
+    const index = this.positions.findIndex((entry) => entry.id === existing.id);
+    if (index < 0) return;
+    this.positions[index] = replacement;
+    this._normalizePositions();
+    this._renderPositions();
+    this._syncPositionEditorFields();
+    void this._queueDraftSave();
+  }
   _createTitle() { if (!this._isFreeDraft()) return this._error("Titel sind nur in freien Entwuerfen verfuegbar."); this._createPositionEntry({ type: POSITION_TYPES.HEADING, is_title: true, parent_id: null }); }
   _createPosition() { if (!this._isFreeDraft()) return this._error("Positionen sind nur in freien Entwuerfen verfuegbar."); const target = this._resolvePositionCreateParent(); if (target.blocked) return this._error("Weitere Unterebenen werden erst ab Meilenstein 3 freigegeben."); this._createPositionEntry({ type: POSITION_TYPES.SERVICE, is_title: false, parent_id: target.parentId }); }
   _createPositionEntry({ type, is_title, parent_id }) { const id = this._nextPositionId(); this.positions.push({ id, type, is_title, parent_id, short_text: "(ohne Bezeichnung)", long_text: "", quantity: "1", unit: "", unit_price_cents: 0, is_nep: false, vat_rate_percent: is_title ? null : 19, price_input_mode: is_title ? null : PRICE_INPUT_MODES.NET, price_input_cents: null }); this._normalizePositions(); const created = this.positions.find((entry) => entry.id === id); this._setPositionCreateParentId(parent_id); this._selectPosition(created, { setCreateContext: false }); this._renderPositions(); void this._queueDraftSave(); }
@@ -571,7 +732,18 @@ export default class RechnungScreen {
       }
       this.positionsList.append(row);
     });
-    const totals = calculateInvoiceTotalsCents(orderedPositions); const vatRates = [...new Set(orderedPositions.filter((entry) => calculatePositionTotalCents(entry) != null).map((entry) => entry.vat_rate_percent))]; const vatLabel = vatRates.length === 1 ? `${vatRates[0]} % MwSt.` : "MwSt."; this.positionsTotal.textContent = money(totals.net_cents); this.invoiceVatLabel.textContent = vatLabel; this.invoiceVat.textContent = money(totals.vat_cents); this.invoiceTotal.textContent = money(totals.gross_cents);
+    const totals = calculateInvoiceTotalsCents(orderedPositions);
+    const vatRates = [...new Set(orderedPositions.filter((entry) => calculatePositionTotalCents(entry) != null).map((entry) => entry.vat_rate_percent))];
+    const vatLabel = vatRates.length === 1 ? `${vatRates[0]} % MwSt.` : "MwSt.";
+    this.positionsTotal.textContent = money(totals.net_cents);
+    this.invoiceVatLabel.textContent = vatLabel;
+    this.invoiceVat.textContent = money(totals.vat_cents);
+    this.invoiceTotal.textContent = money(totals.gross_cents);
+    if (this.editboxNetTotal) this.editboxNetTotal.textContent = formatEuroCents(totals.net_cents);
+    if (this.editboxVatLabel) this.editboxVatLabel.textContent = vatLabel;
+    if (this.editboxVatTotal) this.editboxVatTotal.textContent = formatEuroCents(totals.vat_cents);
+    if (this.editboxGrossTotal) this.editboxGrossTotal.textContent = formatEuroCents(totals.gross_cents);
+    this._syncPositionActions();
   }
 
   _syncDerived() {
@@ -617,6 +789,11 @@ export default class RechnungScreen {
     if (this.current?.order_binding_state === "BOUND") [this.source, this.documentType, this.installmentNumber, this.customer, this.project, this.reference].filter(Boolean).forEach(element => { element.disabled = true; });
     if (this.customerPickerButton) this.customerPickerButton.disabled = booked || this.current?.order_binding_state === "BOUND";
     if (this.servicePeriodToggle) this.servicePeriodToggle.disabled = booked;
+    const editboxLocked = booked || this.current?.order_binding_state === "BOUND";
+    [this.positionShort, this.positionLong, this.positionQuantity, this.positionUnit, this.positionPrice, this.positionPriceGross, this.positionNep].filter(Boolean).forEach((element) => { element.disabled = editboxLocked; });
+    if (this.positionType) this.positionType.disabled = editboxLocked || Boolean(this.positionIsTitle);
+    this._syncQuantityDecimalStepperState();
+    this._syncPositionActions();
     this.bookButton.hidden = booked; this.deleteButton.hidden = booked;
     if (this.previewButton) {
       this.previewButton.textContent = !booked
