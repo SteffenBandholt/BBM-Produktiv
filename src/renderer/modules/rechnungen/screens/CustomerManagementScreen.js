@@ -48,6 +48,7 @@ export default class CustomerManagementScreen {
     this.onClose = onClose;
     this.confirmFn = confirmFn;
     this.customers = [];
+    this.context = null;
     this.current = null;
     this.contacts = [];
     this.currentContact = null;
@@ -64,9 +65,10 @@ export default class CustomerManagementScreen {
 
     const header = node("header", "customer-admin__header");
     const heading = node("div", "customer-admin__heading");
+    this.subtitle = node("p", "customer-admin__subtitle", "Rechnungskunden und Ansprechpartner");
     heading.append(
       node("h1", "customer-admin__title", "Kunden"),
-      node("p", "customer-admin__subtitle", "Rechnungskunden und Ansprechpartner")
+      this.subtitle
     );
     const close = node("button", "invoice-button invoice-button--secondary", "Schließen");
     close.type = "button";
@@ -239,7 +241,21 @@ export default class CustomerManagementScreen {
   async open() {
     if (!this.root) return;
     this.root.hidden = false;
+    await this._loadContext();
     await this.load({ keepSelection: true });
+  }
+
+  async _loadContext() {
+    const response = await this.api().customerManagementContext?.();
+    this.context = response?.ok ? response.context || null : null;
+    if (!this.subtitle) return;
+    const mode = String(this.context?.mode || "").toUpperCase();
+    const scope = mode === "MANUFACTURER"
+      ? "Herstellerbestand"
+      : mode === "LICENSEE"
+        ? "Lokaler Kundenbestand"
+        : "Kundenbestand";
+    this.subtitle.textContent = `${scope} · Rechnungskunden und Ansprechpartner`;
   }
 
   close() {
