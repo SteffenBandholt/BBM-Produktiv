@@ -99,38 +99,39 @@ async function runFirmDirectoryTests(run) {
       );
     }));
 
-  await run("Firmenlogik 04-11: alle acht Art/Nutzungs-Kombinationen werden fachlich gefiltert", () =>
+  await run("Firmenlogik 04-11: aktive Firmenverwendung kennt nur Projektteilnehmer", () =>
     withDirectory(({ db, directory }) => {
       insertProject(db, "p1");
       insertProject(db, "p2");
-      const combinations = [
-        ["none", 0, 0],
-        ["participant", 1, 0],
-        ["customer", 0, 1],
-        ["both", 1, 1],
-      ];
-      for (const [name, projectParticipant, customer] of combinations) {
-        const global = directory.create({
-          origin: "firms",
-          data: { name: `G ${name}` },
-          uses: { projectParticipant, customer },
-        });
-        if (projectParticipant) {
-          db.prepare("INSERT INTO project_global_firms (project_id, firm_id) VALUES (?, ?)").run("p1", global.id);
-        }
-        directory.create({
-          origin: "project_firms",
-          projectId: "p1",
-          data: { name: `L ${name}` },
-          uses: { projectParticipant, customer },
-        });
-      }
-      const participants = directory.listProjectParticipants({ projectId: "p1" });
-      const customers = directory.listCustomers({ projectId: "p1" });
-      assert.deepEqual(participants.map((firm) => firm.name).sort(), ["G both", "G participant", "L both", "L participant"]);
-      assert.deepEqual(customers.map((firm) => firm.name).sort(), ["G both", "G customer"]);
+      const participant = directory.create({
+        origin: "firms",
+        data: { name: "G Teilnehmer" },
+        uses: { projectParticipant: 1, customer: 1 },
+      });
+      const neutral = directory.create({
+        origin: "firms",
+        data: { name: "G Neutral" },
+        uses: { projectParticipant: 0, customer: 1 },
+      });
+      const local = directory.create({
+        origin: "project_firms",
+        projectId: "p1",
+        data: { name: "L Teilnehmer" },
+        uses: { projectParticipant: 1, customer: 1 },
+      });
+      db.prepare("INSERT INTO project_global_firms (project_id, firm_id) VALUES (?, ?)").run("p1", participant.id);
+
+      assert.deepEqual(participant.uses, { projectParticipant: 1, customer: 0 });
+      assert.deepEqual(neutral.uses, { projectParticipant: 0, customer: 0 });
+      assert.deepEqual(local.uses, { projectParticipant: 1, customer: 0 });
+      assert.equal(db.prepare("SELECT use_customer FROM firms WHERE id = ?").get(participant.id).use_customer, 0);
+      assert.equal(db.prepare("SELECT use_customer FROM firms WHERE id = ?").get(neutral.id).use_customer, 0);
+      assert.deepEqual(
+        directory.listProjectParticipants({ projectId: "p1" }).map((firm) => firm.name).sort(),
+        ["G Teilnehmer", "L Teilnehmer"]
+      );
       assert.equal(directory.listProjectParticipants({ projectId: "p2" }).length, 0);
-      assert.deepEqual(directory.listCustomers({ projectId: "p2" }).map((firm) => firm.name).sort(), ["G both", "G customer"]);
+      assert.equal(typeof directory.listCustomers, "undefined");
     }));
 
   await run("Firmenlogik 12-14: Anlagekontexte setzen Art, Scope und Defaults", () =>
@@ -142,8 +143,8 @@ async function runFirmDirectoryTests(run) {
       const invoiceGlobal = directory.create({ origin: "invoice", data: { name: "Kunde global" } });
       assert.deepEqual([global.kind, global.uses], ["global_firm", { projectParticipant: 1, customer: 0 }]);
       assert.deepEqual([local.kind, local.project_id, local.uses], ["project_firm", "p1", { projectParticipant: 1, customer: 0 }]);
-      assert.deepEqual([invoiceLocal.kind, invoiceLocal.uses], ["global_firm", { projectParticipant: 0, customer: 1 }]);
-      assert.deepEqual([invoiceGlobal.kind, invoiceGlobal.uses], ["global_firm", { projectParticipant: 0, customer: 1 }]);
+      assert.deepEqual([invoiceLocal.kind, invoiceLocal.uses], ["global_firm", { projectParticipant: 0, customer: 0 }]);
+      assert.deepEqual([invoiceGlobal.kind, invoiceGlobal.uses], ["global_firm", { projectParticipant: 0, customer: 0 }]);
     }));
 
   await run("Firmenlogik 15,43,47: Nutzungsaenderung prueft Impacts und Versionskonflikte", () =>
@@ -200,11 +201,11 @@ async function runFirmDirectoryTests(run) {
       db.prepare("DELETE FROM meeting_tops WHERE meeting_id = 'meeting-open'").run();
       db.prepare("DELETE FROM restarbeiten_items WHERE id = ?").run(openRest.id);
       assert.throws(
-        () => directory.setUses({ ref: firm.ref, uses: { customer: 1 }, expectedUpdatedAt: "stale" }),
+        () => directory.setUses({ ref: firm.ref, uses: { projectParticipant: 0 }, expectedUpdatedAt: "stale" }),
         (error) => error.code === "FIRM_VERSION_CONFLICT"
       );
       const updated = directory.setUses({ ref: firm.ref, uses: { projectParticipant: 0, customer: 1 } });
-      assert.deepEqual(updated.uses, { projectParticipant: 0, customer: 1 });
+      assert.deepEqual(updated.uses, { projectParticipant: 0, customer: 0 });
       assert.equal(updated.name, "Aktiv");
       assert.deepEqual(
         db.prepare("SELECT responsible_kind, responsible_id, responsible_label FROM meeting_tops WHERE meeting_id = 'meeting-closed'").get(),
@@ -227,7 +228,6 @@ async function runFirmDirectoryTests(run) {
       db.prepare("INSERT INTO project_persons (id, project_firm_id, name) VALUES ('pl', ?, 'Local Person')").run(local.id);
       assert.equal(directory.listProjectParticipants({ projectId: "p1" }).length, 0);
       assert.equal(directory.listProjectParticipants({ projectId: "p1", includeInactive: true }).length, 2);
-      assert.equal(directory.listCustomers({ projectId: "p1" }).length, 1);
       assert.equal(directory.listPersons({ ref: global.ref, projectId: "p1", participantOnly: true }).length, 0);
       assert.equal(directory.listPersons({ ref: local.ref, participantOnly: true }).length, 0);
     }));
@@ -287,7 +287,7 @@ async function runFirmDirectoryTests(run) {
         ],
       });
       const merged = directory.get(existing.ref);
-      assert.deepEqual(merged.uses, { projectParticipant: 0, customer: 1 });
+      assert.deepEqual(merged.uses, { projectParticipant: 0, customer: 0 });
       assert.equal(merged.phone, "123");
       const globalImported = directory.listAll({ kind: "global_firm" }).find((row) => row.name === "Neu Global");
       const localImported = directory
@@ -298,14 +298,27 @@ async function runFirmDirectoryTests(run) {
       assert.notEqual(globalImported.key, localImported.key);
     }));
 
-  await run("Firmenlogik 40-42,49-51: Kundenlisten arbeiten mit und ohne Projekt unabhaengig", () =>
+  await run("Firmenlogik 40-42,49-51: invoice_customer bleibt nur lesbarer Legacy-Bestand", () =>
     withDirectory(({ db, directory }) => {
-      insertProject(db, "p1");
-      directory.create({ origin: "invoice", data: { name: "Global" } });
-      directory.create({ origin: "invoice", projectId: "p1", data: { name: "Lokal" } });
-      directory.create({ origin: "firms", data: { name: "Nur Teilnehmer" } });
-      assert.deepEqual(directory.listCustomers({}).map((row) => row.name).sort(), ["Global", "Lokal"]);
-      assert.deepEqual(directory.listCustomers({ projectId: "p1" }).map((row) => row.name).sort(), ["Global", "Lokal"]);
+      const firm = directory.create({ origin: "firms", data: { name: "Legacy Firma" }, uses: { projectParticipant: 0 } });
+      const now = "2026-09-23T18:00:00.000Z";
+      db.prepare(
+        "INSERT INTO firm_usages (firm_id, usage_code, created_at, updated_at) VALUES (?, 'invoice_customer', ?, ?)"
+      ).run(firm.id, now, now);
+      db.prepare("UPDATE firms SET use_customer = 1 WHERE id = ?").run(firm.id);
+
+      const reread = directory.get(firm.ref);
+      assert.deepEqual(reread.uses, { projectParticipant: 0, customer: 0 });
+      assert.equal(reread.legacyCustomerUse, 1);
+      assert.equal(typeof directory.listCustomers, "undefined");
+
+      directory.setUses({ ref: firm.ref, uses: { projectParticipant: 1, customer: 1 } });
+      assert.equal(
+        db.prepare("SELECT COUNT(*) AS n FROM firm_usages WHERE firm_id = ? AND usage_code = 'invoice_customer'").get(firm.id).n,
+        1
+      );
+      assert.equal(db.prepare("SELECT use_customer FROM firms WHERE id = ?").get(firm.id).use_customer, 1);
+      assert.deepEqual(directory.get(firm.ref).uses, { projectParticipant: 1, customer: 0 });
     }));
 
   await run("Firmenlogik 44,46: Scopefehler sind deterministisch, abgeschlossene Historie blockiert nicht", () =>
