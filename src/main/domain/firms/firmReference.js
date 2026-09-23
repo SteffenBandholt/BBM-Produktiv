@@ -42,7 +42,9 @@ function normalizeUses(value, fallback = {}) {
       source.projectParticipant ?? source.project_participant ?? source.use_project_participant,
       fallback.projectParticipant ?? fallback.use_project_participant
     ),
-    customer: flag(source.customer ?? source.use_customer, fallback.customer ?? fallback.use_customer),
+    // Kunden sind keine aktive Firmen-Verwendung mehr. Das Feld bleibt nur
+    // als kompatible DTO-Form erhalten und ist immer 0.
+    customer: 0,
   });
 }
 
@@ -73,7 +75,7 @@ function defaultsForCreation({ origin, kind, projectId } = {}) {
     kind: resolvedKind,
     uses:
       normalizedOrigin === "invoice"
-        ? Object.freeze({ projectParticipant: 0, customer: 1 })
+        ? Object.freeze({ projectParticipant: 0, customer: 0 })
         : Object.freeze({ projectParticipant: 1, customer: 0 }),
   });
 }
