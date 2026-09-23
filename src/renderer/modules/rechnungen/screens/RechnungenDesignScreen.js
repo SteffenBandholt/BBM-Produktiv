@@ -11,7 +11,6 @@ import {
   INVOICE_DESIGN_ROWS,
 } from "../demoData.js";
 import { ensureRechnungenDesignStyles } from "../styles.js";
-import { openFirmEditor } from "../../../features/firms/openFirmEditor.js";
 import {
   listInvoiceCustomers,
   resolveInvoiceCustomer,
@@ -70,11 +69,9 @@ export default class RechnungenDesignScreen {
   constructor({
     router,
     api = globalThis.window?.bbmDb,
-    firmEditor = openFirmEditor,
   } = {}) {
     this.router = router || null;
     this.api = api || null;
-    this.firmEditor = firmEditor;
     this.root = null;
     this.overlay = null;
     this.searchTerm = "";
@@ -130,18 +127,7 @@ export default class RechnungenDesignScreen {
   }
 
   async _createCustomer() {
-    const created = await this.firmEditor({
-      api: this.api,
-      origin: "invoice",
-      projectId: this.projectId,
-      title: "Rechnungskunde anlegen",
-    });
-    if (!created?.ok || created.canceled) return;
-    const selected = await this._loadCustomerOptions(
-      this.customerSelect,
-      created.firm?.ref || created.firm || null
-    );
-    if (selected) this._setDialogMessage(`${selected.label} wurde angelegt und ausgewählt.`);
+    this._setDialogMessage("Kunden werden in der Kundenverwaltung des Rechnungsmoduls angelegt.");
   }
 
   async _editCustomer() {
@@ -150,19 +136,7 @@ export default class RechnungenDesignScreen {
       this._applyCustomerSelection(null);
       return;
     }
-    const edited = await this.firmEditor({
-      api: this.api,
-      origin: "invoice",
-      projectId: this.projectId,
-      firm: customer.firm,
-      title: "Kunde bearbeiten",
-    });
-    if (!edited?.ok || edited.canceled) return;
-    const selected = await this._loadCustomerOptions(
-      this.customerSelect,
-      edited.firm?.ref || customer.ref
-    );
-    if (selected) this._setDialogMessage(`${selected.label} wurde aktualisiert.`);
+    this._setDialogMessage("Kundendaten werden in der Kundenverwaltung des Rechnungsmoduls bearbeitet.");
   }
 
   render() {
