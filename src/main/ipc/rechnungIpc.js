@@ -7,7 +7,6 @@ const {
   shell: electronShell,
 } = require("electron");
 const projectsRepo = require("../db/projectsRepo");
-const { getFirmDirectoryService } = require("../domain/firms/FirmDirectoryService");
 const { getInvoiceService } = require("../domain/rechnung/InvoiceService");
 const { getBillingOrderService } = require("../domain/rechnung/BillingOrderService");
 const { InvoicePdfFinalizer } = require("../domain/rechnung/InvoicePdfFinalizer");
@@ -19,7 +18,6 @@ function registerRechnungIpc({
   ipcMain = electronIpcMain,
   service = getInvoiceService(),
   billingOrderService = getBillingOrderService(),
-  firmDirectory = getFirmDirectoryService(),
   projectRepository = projectsRepo,
   app = electronApp,
   shell = electronShell,
@@ -71,7 +69,7 @@ function registerRechnungIpc({
     if (message) throw new Error(message);
     return { opened: true, filePath: reference.local_path };
   });
-  handle("rechnung:listCustomers", () => firmDirectory.listCustomers({}).filter((entry) => entry.kind === "global_firm"), "list");
+  handle("rechnung:listCustomers", () => service.listCustomers(), "list");
   handle("rechnung:listProjects", () => projectRepository.listAll(), "list");
   console.log("[main] Rechnung IPC registered");
 }

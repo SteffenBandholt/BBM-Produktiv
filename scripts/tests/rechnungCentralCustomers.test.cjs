@@ -9,9 +9,7 @@ const usagesRepo = require(path.join(rootPath, "src/main/db/firmUsagesRepo.js"))
 const { ensureInvoiceSchema } = require(path.join(rootPath, "src/main/db/invoiceMigrations.js"));
 const { InvoiceRepository } = require(path.join(rootPath, "src/main/db/invoiceRepository.js"));
 const { InvoiceService } = require(path.join(rootPath, "src/main/domain/rechnung/InvoiceService.js"));
-const { FirmDirectoryService } = require(
-  path.join(rootPath, "src/main/domain/firms/FirmDirectoryService.js")
-);
+const { createCustomerCore } = require(path.join(rootPath, "src/customer-core"));
 
 function fixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-invoice-central-customers-"));
@@ -41,10 +39,11 @@ function fixture() {
       bank_name TEXT
     );
     INSERT INTO projects (id, name) VALUES ('p1', 'Projekt Eins');
-    INSERT INTO user_profile (id, name1, street, zip, city)
-      VALUES (1, 'BBM', 'Werkweg 1', '10115', 'Berlin');
+    INSERT INTO user_profile (id, name1, street, zip, city, country)
+      VALUES (1, 'BBM', 'Werkweg 1', '10115', 'Berlin', 'DE');
   `);
   ensureInvoiceSchema(db);
+  const customerCore = createCustomerCore({ userDataPath: path.join(root, "customer-data") });
   let tick = 0;
   const repository = new InvoiceRepository({
     dbProvider: () => db,
@@ -54,13 +53,14 @@ function fixture() {
     repository,
     settingsGetMany: () => ({ "invoice.paymentTermDays": "8" }),
     today: () => "2026-08-23",
+    customerService: customerCore.service,
   });
-  const directory = new FirmDirectoryService({ dbProvider: () => db, usageRepo: usagesRepo });
   return {
     db,
     service,
-    directory,
+    customerCore,
     close() {
+      customerCore.close();
       db.close();
       fs.rmSync(root, { recursive: true, force: true });
     },
@@ -98,8 +98,10 @@ function invoiceInput(customerId, overrides = {}) {
     invoice_date: "2026-08-23",
     service_period_type: "SINGLE_DATE",
     service_date: "2026-08-23",
-    customer_ref_kind: "global_firm",
-    customer_firm_id: customerId,
+    customer_id: customerId,
+    customer_ref_kind: null,
+    customer_firm_id: null,
+    customer_project_id: null,
     service_reference: "Zentrale Kundenbasis",
     positions: [],
     payment_term_days: 8,
@@ -126,123 +128,86 @@ function insertLegacyDraft(db, { id, firmId, projectId = "p1", status = "DRAFT",
     bookedAt: status === "BOOKED" ? "2026-08-23T09:00:00.000Z" : null,
     firmId,
     projectId,
-    snapshot:
-      status === "BOOKED"
-        ? JSON.stringify(snapshot || { companyName: "Historischer Kunde" })
-        : null,
+    snapshot: status === "BOOKED"
+      ? JSON.stringify(snapshot || { companyName: "Historischer Kunde" })
+      : null,
     issuer: status === "BOOKED" ? JSON.stringify({ companyName: "BBM" }) : null,
   });
 }
 
 async function runRechnungCentralCustomersTests(run) {
-  await run("Rechnung R2-I1 01-07: zentrale Kundenrolle bleibt projektunabhängig und duplikatfrei", async () => {
+  await run("Rechnung R2-I1 neu: Rechnungskunden stammen aus Customer Core und nicht aus Firmenrollen", async () => {
     const env = fixture();
     try {
-      insertFirm(env.db, "customer", "Nur Kunde", { customer: true });
-      insertFirm(env.db, "both", "Kunde und Teilnehmer", {
-        customer: true,
-        participant: true,
-      });
+      insertFirm(env.db, "legacy-customer", "Legacy Rechnungskunde", { customer: true });
       insertFirm(env.db, "participant", "Nur Teilnehmer", { participant: true });
-      insertFirm(env.db, "none", "Ohne Rolle");
-      env.db
-        .prepare("INSERT INTO project_global_firms (project_id, firm_id) VALUES ('p1', 'customer'), ('p1', 'both')")
-        .run();
+      const customer = env.customerCore.service.createCustomer({
+        name1: "Zentraler Kunde",
+        street: "Kundenweg 1",
+        postalCode: "20095",
+        city: "Hamburg",
+        countryCode: "DE",
+      });
 
-      const withoutProject = env.directory.listCustomers({});
-      const withProject = env.directory.listCustomers({ projectId: "p1" });
-      assert.deepEqual(withoutProject.map((firm) => firm.name), ["Kunde und Teilnehmer", "Nur Kunde"]);
-      assert.deepEqual(withProject.map((firm) => firm.id), withoutProject.map((firm) => firm.id));
-      assert.equal(new Set(withProject.map((firm) => firm.id)).size, 2);
-      assert.ok(withProject.every((firm) => firm.kind === "global_firm"));
-      assert.deepEqual(
-        env.db
-          .prepare("SELECT use_project_participant, use_customer FROM firms WHERE id = 'both'")
-          .get(),
-        { use_project_participant: 1, use_customer: 1 }
-      );
+      const list = env.service.listCustomers();
+      assert.equal(list.length, 1);
+      assert.equal(list[0].customerId, customer.customerId);
+      assert.equal(list[0].name1, "Zentraler Kunde");
+      assert.equal(list.some((entry) => entry.id === "legacy-customer"), false);
 
-      const noProjectDraft = await env.service.createDraft(invoiceInput("customer"));
-      const projectDraft = await env.service.createDraft(
-        invoiceInput("both", { project_id: "p1" })
-      );
-      assert.equal(noProjectDraft.project_id, null);
-      assert.equal(projectDraft.project_id, "p1");
-      assert.equal(projectDraft.customer_project_id, null);
-      await assert.rejects(
-        () => env.service.createDraft(invoiceInput("participant")),
-        /nicht mehr verfügbar/
-      );
-      await assert.rejects(
-        () =>
-          env.service.createDraft(
-            invoiceInput("legacy", {
-              customer_ref_kind: "project_firm",
-              customer_project_id: "p1",
-            })
-          ),
-        /zentrale Firmen/
-      );
+      const draft = await env.service.createDraft(invoiceInput(customer.customerId, { project_id: "p1" }));
+      assert.equal(draft.customer_id, customer.customerId);
+      assert.equal(draft.customer_firm_id, null);
+      assert.equal(draft.customer_ref_kind, null);
+      assert.equal(draft.project_id, "p1");
     } finally {
       env.close();
     }
   });
 
-  await run("Rechnung R2-I1 08-10: Buchung friert zentrale Kunden- und Ausstellerdaten ein", async () => {
+  await run("Rechnung R2-I1 neu: Buchung friert Customer- und Ausstellerdaten dauerhaft ein", async () => {
     const env = fixture();
     try {
-      insertFirm(env.db, "customer", "Kunde Vorher", {
-        customer: true,
+      const customer = env.customerCore.service.createCustomer({
+        name1: "Kunde Vorher",
         street: "Altweg 1",
-        zip: "12345",
+        postalCode: "12345",
         city: "Altstadt",
+        countryCode: "DE",
         email: "alt@example.test",
       });
-      const draft = await env.service.createDraft(invoiceInput("customer", { project_id: "p1" }));
+      const draft = await env.service.createDraft(invoiceInput(customer.customerId, { project_id: "p1" }));
       const booked = await env.service.bookDraft(draft.id);
       assert.deepEqual(booked.customer_snapshot.source, {
-        kind: "global_firm",
-        id: "customer",
-        projectId: null,
+        kind: "customer",
+        id: customer.customerId,
       });
+      assert.equal(booked.customer_snapshot.customerNumber, customer.customerNumber);
       assert.equal(booked.customer_snapshot.companyName, "Kunde Vorher");
       assert.equal(booked.issuer_snapshot.companyName, "BBM");
 
-      env.db
-        .prepare("UPDATE firms SET name = 'Kunde Nachher', street = 'Neuweg 9' WHERE id = 'customer'")
-        .run();
-      usagesRepo.setUsage({
-        firmId: "customer",
-        usageCode: usagesRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER,
-        enabled: false,
-        dbConn: env.db,
-      });
-      assert.equal(
-        env.db.prepare("SELECT use_customer FROM firms WHERE id = 'customer'").get().use_customer,
-        0
-      );
+      env.customerCore.service.updateCustomer(customer.customerId, {
+        name1: "Kunde Nachher",
+        street: "Neuweg 9",
+      }, { expectedRevision: customer.revision });
       env.db.prepare("UPDATE user_profile SET name1 = 'Betreiber Neu' WHERE id = 1").run();
-      env.db.prepare("UPDATE invoice_issuer_profiles SET legal_name = 'BBM Neu' WHERE id = 'default'").run();
 
       const restored = env.service.get(draft.id);
       assert.equal(restored.customer_snapshot.companyName, "Kunde Vorher");
       assert.equal(restored.customer_snapshot.street, "Altweg 1");
       assert.equal(restored.issuer_snapshot.companyName, "BBM");
-      assert.equal(env.directory.listCustomers({ projectId: "p1" }).length, 0);
     } finally {
       env.close();
     }
   });
 
-  await run("Rechnung R2-I1 11-12: nur eindeutige DRAFT-Altverweise werden migriert", () => {
+  await run("Rechnung R2-I1 Legacy: alte Firmen-DRAFT-Verweise bleiben nur als kontrollierte Uebergangsmigration erhalten", () => {
     const env = fixture();
     try {
       insertFirm(env.db, "central-clear", "Eindeutig GmbH", { email: "klar@example.test" });
       insertFirm(env.db, "ambiguous-a", "Doppelt GmbH", { email: "gleich@example.test" });
       insertFirm(env.db, "ambiguous-b", "Doppelt GmbH", { email: "gleich@example.test" });
-      insertFirm(env.db, "same-raw-id", "Andere Zentralfirma", {
-        email: "zentral@example.test",
-      });
+      insertFirm(env.db, "same-raw-id", "Andere Zentralfirma", { email: "zentral@example.test" });
       insertFirm(env.db, "global-draft", "Globaler Altentwurf");
       env.db.prepare(`
         INSERT INTO project_firms (id, project_id, name, email, created_at, updated_at)
@@ -253,77 +218,35 @@ async function runRechnungCentralCustomersTests(run) {
       `).run();
       insertLegacyDraft(env.db, { id: "draft-clear", firmId: "local-clear" });
       insertLegacyDraft(env.db, { id: "draft-ambiguous", firmId: "local-ambiguous" });
-      insertLegacyDraft(env.db, {
-        id: "booked-legacy",
-        firmId: "local-booked",
-        status: "BOOKED",
-      });
+      insertLegacyDraft(env.db, { id: "booked-legacy", firmId: "local-booked", status: "BOOKED" });
       insertLegacyDraft(env.db, { id: "draft-same-raw-id", firmId: "same-raw-id" });
       insertLegacyDraft(env.db, { id: "draft-global", firmId: "global-draft" });
-      env.db
-        .prepare("UPDATE invoices SET customer_ref_kind = 'global_firm' WHERE id = 'draft-global'")
-        .run();
+      env.db.prepare("UPDATE invoices SET customer_ref_kind = 'global_firm' WHERE id = 'draft-global'").run();
 
       const result = ensureInvoiceSchema(env.db);
       assert.deepEqual(
-        env.db
-          .prepare("SELECT customer_ref_kind, customer_firm_id, customer_project_id FROM invoices WHERE id = 'draft-clear'")
-          .get(),
+        env.db.prepare("SELECT customer_id, customer_ref_kind, customer_firm_id, customer_project_id FROM invoices WHERE id = 'draft-clear'").get(),
         {
+          customer_id: null,
           customer_ref_kind: "global_firm",
           customer_firm_id: "central-clear",
           customer_project_id: null,
         }
       );
       assert.deepEqual(
-        env.db
-          .prepare("SELECT customer_ref_kind, customer_firm_id, customer_project_id FROM invoices WHERE id = 'draft-ambiguous'")
-          .get(),
+        env.db.prepare("SELECT customer_id, customer_ref_kind, customer_firm_id, customer_project_id FROM invoices WHERE id = 'draft-ambiguous'").get(),
         {
+          customer_id: null,
           customer_ref_kind: "project_firm",
           customer_firm_id: "local-ambiguous",
           customer_project_id: "p1",
         }
       );
-      assert.deepEqual(
-        env.db
-          .prepare("SELECT status, customer_ref_kind, customer_firm_id FROM invoices WHERE id = 'booked-legacy'")
-          .get(),
-        {
-          status: "BOOKED",
-          customer_ref_kind: "project_firm",
-          customer_firm_id: "local-booked",
-        }
-      );
       assert.equal(result.customerMigration.projectRefsMigrated, 1);
       assert.equal(result.customerMigration.globalRolesAdded, 1);
       assert.equal(result.customerMigration.unresolvedProjectRefs, 2);
-      assert.equal(
-        usagesRepo.hasUsage({
-          firmId: "central-clear",
-          usageCode: usagesRepo.FIRM_USAGE_CODES.INVOICE_CUSTOMER,
-          dbConn: env.db,
-        }),
-        true
-      );
-      const unresolved = env.service.get("draft-ambiguous");
-      assert.equal(unresolved.legacy_customer.name, "Doppelt GmbH");
-      assert.equal(unresolved.customer_project_id, "p1");
+      assert.equal(env.service.get("draft-ambiguous").legacy_customer.name, "Doppelt GmbH");
       assert.equal(env.service.get("draft-same-raw-id").customer_ref_kind, "project_firm");
-      assert.deepEqual(
-        env.db
-          .prepare("SELECT customer_ref_kind, customer_firm_id, customer_project_id FROM invoices WHERE id = 'draft-global'")
-          .get(),
-        {
-          customer_ref_kind: "global_firm",
-          customer_firm_id: "global-draft",
-          customer_project_id: null,
-        }
-      );
-      assert.equal(
-        env.db.prepare("SELECT use_customer FROM firms WHERE id = 'global-draft'").get().use_customer,
-        1
-      );
       const second = ensureInvoiceSchema(env.db);
       assert.equal(second.customerMigration.projectRefsMigrated, 0);
       assert.equal(env.db.prepare("SELECT COUNT(*) AS count FROM invoices").get().count, 5);

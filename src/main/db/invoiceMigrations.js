@@ -16,6 +16,7 @@ const CURRENT_INVOICE_COLUMN_DEFINITIONS = Object.freeze([
   ["service_date", "TEXT"],
   ["service_period_start", "TEXT"],
   ["service_period_end", "TEXT"],
+  ["customer_id", "TEXT"],
   ["customer_ref_kind", "TEXT CHECK (customer_ref_kind IN ('global_firm', 'project_firm'))"],
   ["customer_firm_id", "TEXT"],
   ["customer_project_id", "TEXT"],
@@ -114,6 +115,7 @@ const CREATE_INVOICES_SQL = `
     service_date TEXT,
     service_period_start TEXT,
     service_period_end TEXT,
+    customer_id TEXT,
     customer_ref_kind TEXT CHECK (customer_ref_kind IN ('global_firm', 'project_firm')),
     customer_firm_id TEXT,
     customer_project_id TEXT,
@@ -235,6 +237,7 @@ function rebuildIncompatibleLegacyInvoices(db, columns) {
       service_date TEXT,
       service_period_start TEXT,
       service_period_end TEXT,
+      customer_id TEXT,
       customer_ref_kind TEXT,
       customer_firm_id TEXT,
       customer_project_id TEXT,
@@ -533,6 +536,13 @@ const CREATE_BILLING_ORDER_SCHEMA_SQL = `
     SELECT RAISE(ABORT, 'invoice_order_snapshot_create_only');
   END;
 
+  CREATE TRIGGER IF NOT EXISTS trg_invoices_bound_customer_id_immutable
+  BEFORE UPDATE OF customer_id ON invoices
+  WHEN OLD.order_binding_state = 'BOUND' AND NEW.customer_id IS NOT OLD.customer_id
+  BEGIN
+    SELECT RAISE(ABORT, 'invoice_order_snapshot_immutable');
+  END;
+
   CREATE TRIGGER IF NOT EXISTS trg_invoices_order_snapshot_immutable
   BEFORE UPDATE ON invoices
   WHEN OLD.order_binding_state = 'BOUND' AND (
@@ -565,6 +575,7 @@ function hasUniqueInvoiceNumberIndex(db) {
 function ensureInvoiceIndexes(db) {
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_invoices_status_updated ON invoices(status, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_invoices_customer_id ON invoices(customer_id);
     CREATE INDEX IF NOT EXISTS idx_invoices_customer ON invoices(customer_ref_kind, customer_firm_id);
     CREATE INDEX IF NOT EXISTS idx_invoices_project ON invoices(project_id);
   `);

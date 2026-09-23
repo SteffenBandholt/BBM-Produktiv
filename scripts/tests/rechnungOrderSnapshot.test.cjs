@@ -26,11 +26,49 @@ function fixture() {
   const billing = new BillingOrderService({ repository: orders, authorize: () => {} });
   const invoices = new InvoiceRepository({ dbProvider: () => db });
   let sourceReads = 0;
+  const linkedCustomer = {
+    customerId: "11111111-1111-4111-8111-111111111111",
+    customerNumber: "K-000001",
+    status: "ACTIVE",
+    name1: "Bau GmbH",
+    street: "Bauweg 1",
+    postalCode: "20000",
+    city: "Hamburg",
+    countryCode: "DE",
+    email: "bau@example.test",
+    phone: "040 123",
+    vatId: null,
+    defaultPaymentTermDays: 8,
+    revision: 1,
+  };
+  const customerService = {
+    listCustomers: () => [linkedCustomer],
+    getCustomer: (id) => id === linkedCustomer.customerId ? linkedCustomer : null,
+    resolveBillingProfile: (id) => id === linkedCustomer.customerId ? {
+      customerId: linkedCustomer.customerId,
+      customerNumber: linkedCustomer.customerNumber,
+      name1: linkedCustomer.name1,
+      name2: null,
+      street: linkedCustomer.street,
+      postalCode: linkedCustomer.postalCode,
+      city: linkedCustomer.city,
+      countryCode: linkedCustomer.countryCode,
+      email: linkedCustomer.email,
+      vatId: null,
+      revision: linkedCustomer.revision,
+      resolvedAt: "2026-09-06T10:00:00.000Z",
+    } : null,
+  };
+  const customerFirmBridge = {
+    getLinkedCustomer: ({ id }) => id === "customer"
+      ? { customer: linkedCustomer }
+      : { customer: null },
+  };
   const service = new InvoiceService({ repository: invoices, billingOrderService: { get(input) {
     assert.equal(db.inTransaction, true, "Quelle muss innerhalb der Rechnungsanlage gelesen werden");
     sourceReads++;
     return billing.get(input);
-  } }, settingsGetMany: () => ({}), today: () => "2026-09-06" });
+  } }, settingsGetMany: () => ({}), today: () => "2026-09-06", customerService, customerFirmBridge });
   const order = billing.createDraft({ order_number: "A-25", order_date: "2026-08-01", customer_firm_id: "customer", project_id: "project", service_reference: "Umbau Musterstraße" });
   const heading = billing.addPosition({ id: order.id, position: { type: "heading", position_number: "10", sort_index: 10, short_text: "Rohbau", long_text: "Vertragstext" } });
   billing.addPosition({ id: order.id, position: { parent_position_id: heading.id, type: "service", position_number: "25", sort_index: 30, short_text: "Mauerwerk", long_text: "Unverändert übernehmen", quantity: "12.5000", unit: "m2", unit_price_cents: 12345, vat_rate_percent: 19, price_input_mode: "NET" } });
@@ -56,7 +94,8 @@ async function runRechnungOrderSnapshotTests(run) {
       assert.equal(draft.source_order_id, source.id);
       assert.equal(draft.source_order_number, "A-25");
       assert.equal(draft.source_order_date, "2026-08-01");
-      assert.equal(draft.customer_firm_id, source.customer_firm_id);
+      assert.equal(draft.customer_id, "11111111-1111-4111-8111-111111111111");
+      assert.equal(draft.customer_firm_id, null);
       assert.equal(draft.project_id, source.project_id);
       assert.equal(draft.service_reference, source.service_reference);
       assert.ok(draft.order_snapshot_at);
@@ -140,7 +179,7 @@ async function runRechnungOrderSnapshotTests(run) {
       const edits = [
         { source_type: "FREE" }, { source_order_id: "other" }, { source_order_number: "Neu" }, { source_order_date: "2026-09-01" },
         { order_binding_state: "NOT_APPLICABLE" }, { order_snapshot_at: "now" }, { order_snapshot_json: "{}" },
-        { customer_firm_id: "other" }, { service_reference: "Anderer Vertrag" }, { document_type: "FINAL" },
+        { customer_id: "22222222-2222-4222-8222-222222222222" }, { customer_firm_id: "other" }, { service_reference: "Anderer Vertrag" }, { document_type: "FINAL" },
         { positions: draft.positions.slice().reverse() }, { positions: draft.positions.slice(1) },
         ...["position_number", "sort_index", "source_order_position_id", "source_order_id", "parent_id", "position_origin", "quantity", "short_text"].map(key => ({ positions: draft.positions.map((p, i) => i === 0 ? { ...p, [key]: "manipuliert" } : p) })),
       ];

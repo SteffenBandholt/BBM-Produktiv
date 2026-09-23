@@ -9,7 +9,7 @@ const { assertOrderSnapshotInput } = require("../domain/rechnung/invoiceOrderSna
 const HEADER_COLUMNS = Object.freeze([
   "source_type", "document_type", "installment_number", "invoice_date",
   "service_period_type", "service_date", "service_period_start", "service_period_end",
-  "customer_ref_kind", "customer_firm_id", "customer_project_id", "project_id",
+  "customer_id", "customer_ref_kind", "customer_firm_id", "customer_project_id", "project_id",
   "source_order_id", "source_order_number", "source_order_date", "service_reference",
   "construction_project", "intro_text",
   "payment_term_days", "due_date",
@@ -86,6 +86,7 @@ class InvoiceRepository {
   }
 
   _assertDraftCustomer(db, header, current = null) {
+    if (header.customer_id) return;
     if (!header.customer_firm_id && !header.customer_ref_kind) return;
     if (header.customer_ref_kind === "global_firm" && header.customer_firm_id) {
       const available = db
@@ -205,15 +206,15 @@ class InvoiceRepository {
     return snapshot;
   }
 
-  buildPreviewSnapshots(header) {
+  buildPreviewSnapshots(header, customerSnapshot = null) {
     const db = this._db();
     return {
-      customer_snapshot: this._customerSnapshot(db, header),
+      customer_snapshot: customerSnapshot || this._customerSnapshot(db, header),
       issuer_snapshot: this._issuerSnapshot(db),
     };
   }
 
-  bookDraft(id, header) {
+  bookDraft(id, header, { customerSnapshot = null } = {}) {
     const db = this._db();
     const transaction = db.transaction(() => {
       const current = db.prepare("SELECT * FROM invoices WHERE id = ?").get(String(id || ""));
@@ -221,7 +222,7 @@ class InvoiceRepository {
       if (current.status !== "DRAFT") throw new Error("Nur Entwürfe können gebucht werden.");
       assertOrderSnapshotInput(current, header);
       if (header.project_id && !db.prepare("SELECT 1 FROM projects WHERE id = ?").get(header.project_id)) throw new Error("Das gewählte Projekt wurde nicht gefunden.");
-      const customerSnapshot = this._customerSnapshot(db, header);
+      const resolvedCustomerSnapshot = customerSnapshot || this._customerSnapshot(db, header);
       const issuerSnapshot = this._issuerSnapshot(db);
       const bookedAt = this.clock();
       const sequenceKey = String(header.invoice_date).slice(0, 4);
@@ -234,7 +235,7 @@ class InvoiceRepository {
       const invoiceNumber = formatInvoiceNumber(sequenceKey, sequence.last_value);
       const params = {
         id: String(id), ...headerParams(header), invoice_number: invoiceNumber, booked_at: bookedAt,
-        positions_json: JSON.stringify(header.positions || []), customer_snapshot_json: JSON.stringify(customerSnapshot), issuer_snapshot_json: JSON.stringify(issuerSnapshot), updated_at: bookedAt,
+        positions_json: JSON.stringify(header.positions || []), customer_snapshot_json: JSON.stringify(resolvedCustomerSnapshot), issuer_snapshot_json: JSON.stringify(issuerSnapshot), updated_at: bookedAt,
       };
       const result = db.prepare(`
         UPDATE invoices SET

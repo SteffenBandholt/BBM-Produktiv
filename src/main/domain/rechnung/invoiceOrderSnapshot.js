@@ -5,7 +5,7 @@ const { isDeepStrictEqual } = require("node:util");
 
 const LOCKED_HEADER_FIELDS = Object.freeze([
   "source_type", "source_order_id", "source_order_number", "source_order_date",
-  "customer_ref_kind", "customer_firm_id", "customer_project_id", "project_id",
+  "customer_id", "customer_ref_kind", "customer_firm_id", "customer_project_id", "project_id",
   "service_reference", "document_type", "installment_number",
   "order_binding_state", "order_snapshot_at", "order_snapshot_json",
 ]);
