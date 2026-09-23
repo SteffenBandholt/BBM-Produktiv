@@ -63,6 +63,8 @@ const firmsRepo = require("./db/firmsRepo");
 const personsRepo = require("./db/personsRepo");
 const { buildStoragePreviewPaths } = require("./ipc/projectStoragePaths");
 const { resolveBuildIdentity } = require("./buildIdentity");
+const { isModuleActive } = require("./moduleRegistry");
+const { shouldExposeCustomerDirectory } = require("./domain/customers/customerRuntimePolicy");
 
 let mainWindow;
 let uiEditorSessionController;
@@ -520,7 +522,13 @@ app.whenReady().then(async () => {
   registerProjectsIpc();
   registerCoreProjectFirmsIpc();
   registerFirmDirectoryIpc();
-  registerCustomerDirectoryIpc();
+  if (shouldExposeCustomerDirectory({
+    isPackaged: app.isPackaged,
+    licenseStatus,
+    isModuleActive,
+  })) {
+    registerCustomerDirectoryIpc();
+  }
   registerProjectParticipantsIpc();
   registerPrintIpc();
   registerTableLayoutsIpc();
