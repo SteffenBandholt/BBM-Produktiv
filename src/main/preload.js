@@ -140,6 +140,16 @@ contextBridge.exposeInMainWorld("bbmDb", {
   firmDirectoryPrepareLocalToGlobal: (data) =>
     ipcRenderer.invoke("firmDirectory:prepareLocalToGlobal", data),
 
+  // Eigenstaendige zentrale Kundenverwaltung + kontrollierte BBM-Verknuepfung.
+  customerList: (data) => ipcRenderer.invoke("customer:list", data),
+  customerGet: (customerId) => ipcRenderer.invoke("customer:get", { customerId }),
+  customerFirmPrepare: (data) => ipcRenderer.invoke("customer:firm:prepare", data),
+  customerFirmCreate: (data) => ipcRenderer.invoke("customer:firm:create", data),
+  customerFirmLink: (data) => ipcRenderer.invoke("customer:firm:link", data),
+  customerFirmCompare: (data) => ipcRenderer.invoke("customer:firm:compare", data),
+  customerFirmApplyToCustomer: (data) => ipcRenderer.invoke("customer:firm:applyToCustomer", data),
+  customerCreateGlobalFirm: (data) => ipcRenderer.invoke("customer:createGlobalFirm", data),
+
   // ============================================================
   // Rechnung: Grunddaten und Belegkopf
   // ============================================================
