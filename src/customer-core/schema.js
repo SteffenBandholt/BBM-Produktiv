@@ -103,11 +103,21 @@ function ensureCustomerSchema(db) {
       ON customer_links(customer_id);
   `);
 
-  db.prepare(`
-    INSERT INTO customer_meta (key, value)
-    VALUES ('schema_version', ?)
-    ON CONFLICT(key) DO UPDATE SET value = excluded.value
-  `).run(String(SCHEMA_VERSION));
+  const currentVersionRow = db
+    .prepare("SELECT value FROM customer_meta WHERE key = 'schema_version'")
+    .get();
+  const currentVersion = currentVersionRow ? Number(currentVersionRow.value) : 0;
+  if (Number.isFinite(currentVersion) && currentVersion > SCHEMA_VERSION) {
+    throw new Error(`customer database schema ${currentVersion} is newer than supported ${SCHEMA_VERSION}`);
+  }
+
+  if (currentVersion < SCHEMA_VERSION) {
+    db.prepare(`
+      INSERT INTO customer_meta (key, value)
+      VALUES ('schema_version', ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value
+    `).run(String(SCHEMA_VERSION));
+  }
 
   return SCHEMA_VERSION;
 }
