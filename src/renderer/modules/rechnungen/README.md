@@ -9,23 +9,22 @@ Zahlungstext und Ausstellerdaten. Kunden stammen aus der vorhandenen zentralen
 Kundenquelle. PDF/Druck, Buchung, Autosave und Rechnungsberechnung bleiben in
 ihren vorhandenen Fachpfaden.
 
-## Aktueller Zustand ohne RechnungsEditbox
+## Aktueller Zustand mit Rechnungs-Editbox
 
-Die verworfene alte RechnungsEditbox ist ersatzlos entfernt. Es gibt im
-produktiven RechnungScreen keine Editbox-DOM-Struktur, keinen reservierten
-unteren Slot, kein Overlay, keinen Positionseditor und keinen Editbox-Schalter.
-Das Rechnungsblatt beziehungsweise die LV-Liste belegt den verbleibenden
-Screenbereich ohne Restfläche.
+Die kompakte Positions-Editbox ist wieder Bestandteil des produktiven
+`RechnungScreen`. Sie arbeitet auf dem aktuellen Positionsmodell und wurde
+nicht durch Rücknahme des heutigen Rechnungsstands hergestellt.
 
-Positionsdaten und die vorhandenen fachlichen Positionsfunktionen bleiben im
-Modul erhalten. Der aktuelle Screen stellt dafür bewusst nicht die alte
-Eingabebox und keine technische Ersatzoberfläche bereit. Ein künftiger neuer
-Rechnungseditor benötigt eine eigene bestätigte UI-Entwurfsentscheidung.
+Enthalten sind Kurz-/Langtext, Menge mit 0 bis 4 Nachkommastellen, Einheit,
+Netto-/Brutto-Preiseingabe, MwSt.-Anzeige, NEP, Titel/Position anlegen,
+Löschen/Schieben sowie eine kompakte Netto-/MwSt.-/Brutto-Summenanzeige.
 
-Der gemeinsame fachneutrale Editbox-/Workbench-Core bleibt für Protokoll und
-andere vorhandene Verbraucher bestehen. Rechnung ist kein Verbraucher dieses
-Cores mehr und besitzt keine Rechnungs-spezifische Adapter-, Ref-, Reflow- oder
-Profilmigration dafür.
+Gebuchte Rechnungen und positionsgebundene `FROM_ORDER`-Rechnungen bleiben
+gegen Positionsänderungen geschützt. Customer-`customerId`, Kundensnapshot,
+OwnOrganization, Buchung, PDF und Druck bleiben unverändert.
+
+Der Leistungskatalog ist weiterhin aus der Rechnungsübersicht erreichbar und
+zusätzlich direkt aus der Kundenverwaltung aufrufbar.
 
 ## UI-Editor-Status
 
@@ -49,4 +48,3 @@ Die aktive UI-/PDF-Entwurfsentscheidung steht in
   Brutto/NEP/MwSt. oder Summenberechnung.
 - Keine Änderung an Autosave, Buchung, Navigation, Sidebar oder Actionbar.
 - Keine Änderung an PDF, Druck oder V2-Satzvertrag.
-- Keine Wiederherstellung oder Migration alter Editbox-Geometrie.
