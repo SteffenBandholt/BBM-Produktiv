@@ -51,7 +51,7 @@ async function runCustomerCoreTests(run) {
     withCore(({ service }) => {
       assert.throws(() => service.createCustomer({ countryCode: "DE" }), /name1 required/);
       assert.throws(() => service.createCustomer({ name1: "X", countryCode: "Deutschland" }), /ISO-2/);
-      assert.throws(() => service.createCustomer({ name1: "X", sourceCode: "AUTO" }), /invalid sourceCode/);
+      assert.throws(() => service.createCustomer({ name1: "X" }), /countryCode required/);\n      assert.throws(() => service.createCustomer({ name1: "X", countryCode: "DE", sourceCode: "AUTO" }), /invalid sourceCode/);
       const row = service.createCustomer({ name1: "Import", sourceCode: "IMPORT", countryCode: "de" });
       assert.equal(row.sourceCode, "IMPORT");
       assert.equal(row.countryCode, "DE");
