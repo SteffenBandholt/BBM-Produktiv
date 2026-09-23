@@ -1,5 +1,12 @@
 const TEST_GROUPS = Object.freeze([
   Object.freeze({
+    id: "customer-core",
+    label: "Eigenstaendiger Customer Core",
+    suites: Object.freeze([
+      ["customerCore.test.cjs", "runCustomerCoreTests"],
+    ]),
+  }),
+  Object.freeze({
     id: "core-protokoll",
     label: "Kern, Protokoll und Projektfirmen",
     includeStoragePathTests: true,
