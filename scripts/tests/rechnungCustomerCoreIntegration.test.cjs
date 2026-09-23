@@ -124,6 +124,7 @@ async function runRechnungCustomerCoreIntegrationTests(run) {
   await run("Rechnung Customer 03: Repository speichert neuen Entwurf direkt mit customer_id", () => {
     const db = new Database(":memory:");
     try {
+      db.exec("CREATE TABLE projects (id TEXT PRIMARY KEY, name TEXT);");
       const { ensureInvoiceSchema } = require("../../src/main/db/invoiceMigrations");
       const { InvoiceRepository } = require("../../src/main/db/invoiceRepository");
       ensureInvoiceSchema(db);
@@ -166,8 +167,15 @@ async function runRechnungCustomerCoreIntegrationTests(run) {
     });
     await assert.rejects(
       () => service.createDraft({
-        ...draftBase(customer.customerId),
+        source_type: "FREE",
+        document_type: "INVOICE",
+        invoice_date: "2026-09-23",
+        service_period_type: "SINGLE_DATE",
+        service_date: "2026-09-23",
+        customer_id: customer.customerId,
+        service_reference: "Test",
         positions: [],
+        payment_term_days: 8,
       }),
       /archiviert/
     );
