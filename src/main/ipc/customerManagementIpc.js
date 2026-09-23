@@ -21,8 +21,20 @@ function duplicateCandidates(customerService, data, excludeCustomerId = "") {
 
 function registerCustomerManagementIpc({
   ipcMain = electronIpcMain,
-  customerService = getRuntimeCustomerCore().service,
+  customerService = null,
+  runtimeContext = null,
 } = {}) {
+  let resolvedService = customerService;
+  let resolvedContext = runtimeContext;
+  if (!resolvedService) {
+    const core = getRuntimeCustomerCore();
+    resolvedService = core.service;
+    resolvedContext = core.context;
+  }
+  if (!resolvedContext) {
+    resolvedContext = { mode: "UNKNOWN", sharedManufacturerData: false };
+  }
+
   const handle = (channel, operation, resultKey) => {
     ipcMain.handle(channel, async (_event, payload) => {
       try {
@@ -34,8 +46,12 @@ function registerCustomerManagementIpc({
     });
   };
 
-  handle("customerMgmt:list", (data) => customerService.listCustomers(data), "list");
-  handle("customerMgmt:get", (data) => customerService.getCustomer(data.customerId), "customer");
+  handle("customerMgmt:context", () => ({
+    mode: resolvedContext.mode,
+    sharedManufacturerData: resolvedContext.sharedManufacturerData === true,
+  }), "context");
+  handle("customerMgmt:list", (data) => resolvedService.listCustomers(data), "list");
+  handle("customerMgmt:get", (data) => resolvedService.getCustomer(data.customerId), "customer");
   handle("customerMgmt:prepareCreate", (data) => ({
     candidates: duplicateCandidates(customerService, data.customer || data),
   }), "data");
@@ -49,14 +65,14 @@ function registerCustomerManagementIpc({
       error.candidates = candidates;
       throw error;
     }
-    return customerService.createCustomer({
+    return resolvedService.createCustomer({
       ...input,
       sourceCode: input.sourceCode || "MANUAL",
     });
   }, "customer");
 
   handle("customerMgmt:update", (data) => {
-    const current = customerService.getCustomer(data.customerId);
+    const current = resolvedService.getCustomer(data.customerId);
     if (!current) {
       const error = new Error("customer not found");
       error.code = "CUSTOMER_NOT_FOUND";
@@ -71,24 +87,24 @@ function registerCustomerManagementIpc({
       error.candidates = candidates;
       throw error;
     }
-    return customerService.updateCustomer(
+    return resolvedService.updateCustomer(
       current.customerId,
       patch,
       { expectedRevision: data.expectedRevision }
     );
   }, "customer");
 
-  handle("customerMgmt:archive", (data) => customerService.archiveCustomer(data.customerId), "customer");
-  handle("customerMgmt:reactivate", (data) => customerService.reactivateCustomer(data.customerId), "customer");
+  handle("customerMgmt:archive", (data) => resolvedService.archiveCustomer(data.customerId), "customer");
+  handle("customerMgmt:reactivate", (data) => resolvedService.reactivateCustomer(data.customerId), "customer");
 
   handle("customerMgmt:contacts:list", (data) =>
-    customerService.listContacts(data.customerId, { includeInactive: data.includeInactive === true }), "list");
+    resolvedService.listContacts(data.customerId, { includeInactive: data.includeInactive === true }), "list");
   handle("customerMgmt:contacts:create", (data) =>
-    customerService.createContact(data.customerId, data.contact || {}), "contact");
+    resolvedService.createContact(data.customerId, data.contact || {}), "contact");
   handle("customerMgmt:contacts:update", (data) =>
-    customerService.updateContact(data.contactId, data.patch || {}), "contact");
+    resolvedService.updateContact(data.contactId, data.patch || {}), "contact");
   handle("customerMgmt:contacts:delete", (data) =>
-    ({ deleted: customerService.deleteContact(data.contactId) }), "data");
+    ({ deleted: resolvedService.deleteContact(data.contactId) }), "data");
 
   console.log("[main] customer management IPC registered");
 }
