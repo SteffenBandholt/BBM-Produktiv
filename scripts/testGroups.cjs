@@ -4,6 +4,7 @@ const TEST_GROUPS = Object.freeze([
     label: "Eigenstaendiger Customer Core",
     suites: Object.freeze([
       ["customerCore.test.cjs", "runCustomerCoreTests"],
+      ["customerBbmLink.test.cjs", "runCustomerBbmLinkTests"],
     ]),
   }),
   Object.freeze({
