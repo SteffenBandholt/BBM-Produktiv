@@ -1034,3 +1034,37 @@ select.invoice-control { padding-right: 28px; }
     max-height: none;
   }
 }
+
+
+.customer-admin__bbm-links {
+  padding: 8px 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  background: var(--card-bg);
+}
+
+.customer-admin__bbm-links[hidden] {
+  display: none !important;
+}
+
+.customer-admin__bbm-link-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.customer-admin__bbm-link-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 28px;
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.customer-admin__bbm-link-row:last-child {
+  border-bottom: 0;
+}
