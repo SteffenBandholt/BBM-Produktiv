@@ -35,6 +35,7 @@ function registerCustomerDirectoryIpc({
   handle("customer:firm:create", (data) => service.createCustomerFromFirm(data), "data");
   handle("customer:firm:link", (data) => service.linkFirmToCustomer(data), "data");
   handle("customer:firm:compare", (data) => service.compareFirmAndCustomer(data), "data");
+  handle("customer:firm:links", (data) => service.listFirmLinks(data?.customerId), "list");
   handle("customer:firm:applyToCustomer", (data) => service.applyFirmFieldsToCustomer(data), "customer");
   handle("customer:createGlobalFirm", (data) => service.createGlobalFirmFromCustomer(data), "data");
 

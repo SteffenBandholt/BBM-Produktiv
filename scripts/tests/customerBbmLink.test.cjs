@@ -313,6 +313,7 @@ async function runCustomerBbmLinkTests(run) {
         createCustomerFromFirm: () => ({}),
         linkFirmToCustomer: () => ({}),
         compareFirmAndCustomer: () => ({}),
+        listFirmLinks: () => [],
         applyFirmFieldsToCustomer: () => ({}),
         createGlobalFirmFromCustomer: () => ({}),
       };
@@ -325,6 +326,7 @@ async function runCustomerBbmLinkTests(run) {
           "customer:firm:compare",
           "customer:firm:create",
           "customer:firm:link",
+          "customer:firm:links",
           "customer:firm:prepare",
           "customer:get",
           "customer:list",
@@ -343,6 +345,7 @@ async function runCustomerBbmLinkTests(run) {
     assert.match(preloadSource, /customerFirmCreate/);
     assert.match(preloadSource, /customerFirmLink/);
     assert.match(preloadSource, /customerFirmCompare/);
+    assert.match(preloadSource, /customerFirmLinks/);
     assert.doesNotMatch(
       fs.readFileSync(path.join(process.cwd(), "src/main/domain/customers/CustomerFirmBridgeService.js"), "utf8"),
       /license-tool|PDFtoGAEB|invoice_customer/

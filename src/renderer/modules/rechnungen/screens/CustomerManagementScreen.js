@@ -52,6 +52,7 @@ export default class CustomerManagementScreen {
     this.current = null;
     this.contacts = [];
     this.currentContact = null;
+    this.bbmLinks = [];
     this.root = null;
   }
 
@@ -94,7 +95,7 @@ export default class CustomerManagementScreen {
     this.listPane.append(this._listHeader(), this.list);
 
     this.editorPane = node("section", "customer-admin__editor-pane");
-    this.editorPane.append(this._customerEditor(), this._contactsEditor());
+    this.editorPane.append(this._customerEditor(), this._bbmLinksPanel(), this._contactsEditor());
 
     body.append(this.listPane, this.editorPane);
     this.message = node("div", "customer-admin__message");
@@ -179,6 +180,62 @@ export default class CustomerManagementScreen {
 
     section.append(head, grid, billing, field("Interne Notiz", this.internalNote, true));
     return section;
+  }
+
+  _bbmLinksPanel() {
+    const section = node("section", "customer-admin__bbm-links");
+    section.hidden = true;
+    const head = node("div", "customer-admin__contacts-head");
+    head.append(
+      node("h3", "customer-admin__section-title", "BBM-Verknüpfung"),
+      node("span", "customer-admin__meta", "nur Zusatzinformation")
+    );
+    this.bbmLinksList = node("div", "customer-admin__bbm-link-list");
+    section.append(head, this.bbmLinksList);
+    this.bbmLinksSection = section;
+    return section;
+  }
+
+  async _loadBbmLinks() {
+    const bridgeApi = this.api().customerFirmLinks;
+    if (typeof bridgeApi !== "function" || !this.current) {
+      this.bbmLinks = [];
+      if (this.bbmLinksSection) this.bbmLinksSection.hidden = true;
+      if (this.bbmLinksList) this.bbmLinksList.replaceChildren();
+      return;
+    }
+
+    const response = await bridgeApi(this.current.customerId);
+    if (!response?.ok) {
+      this.bbmLinks = [];
+      if (this.bbmLinksSection) this.bbmLinksSection.hidden = true;
+      return;
+    }
+
+    this.bbmLinks = response.list || [];
+    if (this.bbmLinksSection) this.bbmLinksSection.hidden = false;
+    this._renderBbmLinks();
+  }
+
+  _renderBbmLinks() {
+    if (!this.bbmLinksList) return;
+    this.bbmLinksList.replaceChildren();
+    if (!this.bbmLinks.length) {
+      this.bbmLinksList.append(
+        node("div", "customer-admin__empty customer-admin__empty--small", "Keine BBM-Firma verknüpft.")
+      );
+      return;
+    }
+
+    for (const entry of this.bbmLinks) {
+      const row = node("div", "customer-admin__bbm-link-row");
+      const kind = entry?.ref?.kind === "project_firm" ? "Projektfirma" : "Globale Firma";
+      row.append(
+        node("strong", "", entry.label || "BBM-Firma"),
+        node("span", "customer-admin__meta", kind)
+      );
+      this.bbmLinksList.append(row);
+    }
   }
 
   _contactsEditor() {
@@ -314,7 +371,7 @@ export default class CustomerManagementScreen {
     }
     this.current = response.customer;
     this._fillCustomerEditor(this.current);
-    await this._loadContacts();
+    await Promise.all([this._loadContacts(), this._loadBbmLinks()]);
     this._renderList();
     this._message("");
   }
@@ -323,6 +380,7 @@ export default class CustomerManagementScreen {
     this.current = null;
     this.contacts = [];
     this.currentContact = null;
+    this.bbmLinks = [];
     this._clearCustomerEditor();
     this._renderList();
     this.customerInputs.name1?.focus?.();
@@ -362,7 +420,10 @@ export default class CustomerManagementScreen {
     this._setEditorReadOnly(false);
     this.archiveButton.hidden = true;
     this.contacts = [];
+    this.bbmLinks = [];
     this._renderContacts();
+    if (this.bbmLinksSection) this.bbmLinksSection.hidden = true;
+    if (this.bbmLinksList) this.bbmLinksList.replaceChildren();
     this._newContact();
   }
 

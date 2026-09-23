@@ -303,6 +303,38 @@ class CustomerFirmBridgeService {
     return this.customerService.listCustomers(options);
   }
 
+  listFirmLinks(customerId) {
+    const customer = this._customer(customerId);
+    const links = this.customerService
+      .listLinks(customer.customerId)
+      .filter((link) => String(link.systemCode || "").toUpperCase() === SYSTEM_CODE);
+
+    return links.map((link) => {
+      let firm = null;
+      if (link.entityType === FIRM_KINDS.GLOBAL) {
+        try {
+          firm = this.firmDirectory.get({ kind: FIRM_KINDS.GLOBAL, id: link.entityId });
+        } catch (_error) {
+          firm = null;
+        }
+      }
+      const shortId = String(link.entityId || "").slice(-8);
+      const label = firm?.label || firm?.name ||
+        (link.entityType === FIRM_KINDS.PROJECT
+          ? `Projektfirma · …${shortId}`
+          : `BBM-Firma · …${shortId}`);
+      return Object.freeze({
+        link,
+        ref: Object.freeze({
+          kind: link.entityType,
+          id: link.entityId,
+        }),
+        firm,
+        label,
+      });
+    });
+  }
+
   getCustomer(customerId) {
     return this._customer(customerId);
   }
