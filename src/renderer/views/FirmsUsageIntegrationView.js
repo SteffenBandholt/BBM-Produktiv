@@ -1,34 +1,19 @@
 import FirmsUsageView from "./FirmsUsageView.js";
-import { isModuleActive } from "../app/modules/moduleAccessState.js";
 
 const PROJECT = "project_participant";
-const INVOICE = "invoice_customer";
-const PROJECT_MODULE_IDS = ["protokoll", "restarbeiten", "sigeko"];
 
 function codesFromFirm(firm) {
-  if (Array.isArray(firm?.usages)) return firm.usages.map((value) => String(value || "").trim());
-  const codes = [];
   const project = firm?.uses?.projectParticipant ?? firm?.use_project_participant ?? firm?.project_participant;
-  const customer = firm?.uses?.customer ?? firm?.use_customer ?? firm?.invoice_customer;
-  if (project === true || Number(project) === 1) codes.push(PROJECT);
-  if (customer === true || Number(customer) === 1) codes.push(INVOICE);
-  return codes;
+  return project === true || Number(project) === 1 ? [PROJECT] : [];
 }
 
 function usesPayload(codes = []) {
-  const set = new Set(codes.map((value) => String(value || "").trim()));
   return {
-    projectParticipant: set.has(PROJECT) ? 1 : 0,
-    customer: set.has(INVOICE) ? 1 : 0,
+    projectParticipant: codes.includes(PROJECT) ? 1 : 0,
   };
 }
 
 export default class FirmsUsageIntegrationView extends FirmsUsageView {
-  async _loadInvoiceLicenseState() {
-    this.invoiceModuleLicensed = isModuleActive("rechnung");
-    this.projectModuleLicensed = PROJECT_MODULE_IDS.some((moduleId) => isModuleActive(moduleId));
-  }
-
   _decorateFirmUsages() {
     this.firms = (this.firms || []).map((firm) => ({ ...firm, usages: codesFromFirm(firm) }));
     if (this.selectedFirmId) {
@@ -46,14 +31,9 @@ export default class FirmsUsageIntegrationView extends FirmsUsageView {
 
   async _saveFirm() {
     if (this.savingFirm) return;
-
     const data = this._getFirmFormData();
     if (!data.name) {
       alert("Name 1 ist Pflicht.");
-      return;
-    }
-    if (this.firmMode === "create" && this._createUsageMode() === "both" && !data.usages.length) {
-      alert("Bitte festlegen, ob die Firma Projektteilnehmer, Rechnungskunde oder beides ist.");
       return;
     }
 
