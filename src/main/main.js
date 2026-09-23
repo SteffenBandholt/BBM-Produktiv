@@ -38,6 +38,7 @@ if (uiEditorAcceptanceProfile.enabled) {
 const { registerProjectsIpc } = require("./ipc/projectsIpc");
 const { registerCoreProjectFirmsIpc } = require("./core/projectFirmsCore");
 const { registerFirmDirectoryIpc } = require("./ipc/firmDirectoryIpc");
+const { registerCustomerDirectoryIpc } = require("./ipc/customerDirectoryIpc");
 const { registerProjectParticipantsIpc } = require("./ipc/participantsIpc");
 const { registerMailIpc } = require("./ipc/mailIpc");
 const { registerPrintIpc } = require("./ipc/printIpc");
@@ -519,6 +520,7 @@ app.whenReady().then(async () => {
   registerProjectsIpc();
   registerCoreProjectFirmsIpc();
   registerFirmDirectoryIpc();
+  registerCustomerDirectoryIpc();
   registerProjectParticipantsIpc();
   registerPrintIpc();
   registerTableLayoutsIpc();
