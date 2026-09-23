@@ -31,9 +31,14 @@ async function runCustomerManagementUiTests(run) {
       deleteContact: () => 1,
     };
     const { registerCustomerManagementIpc } = require("../../src/main/ipc/customerManagementIpc");
-    registerCustomerManagementIpc({ ipcMain, customerService: service });
+    registerCustomerManagementIpc({
+      ipcMain,
+      customerService: service,
+      runtimeContext: { mode: "MANUFACTURER", sharedManufacturerData: true },
+    });
 
     const expected = [
+      "customerMgmt:context",
       "customerMgmt:list",
       "customerMgmt:get",
       "customerMgmt:prepareCreate",
@@ -47,6 +52,11 @@ async function runCustomerManagementUiTests(run) {
       "customerMgmt:contacts:delete",
     ];
     assert.deepEqual([...handlers.keys()].sort(), expected.sort());
+
+    const context = await handlers.get("customerMgmt:context")(null, {});
+    assert.equal(context.ok, true);
+    assert.equal(context.context.mode, "MANUFACTURER");
+    assert.equal(context.context.sharedManufacturerData, true);
 
     const list = await handlers.get("customerMgmt:list")(null, {});
     assert.equal(list.ok, true);
@@ -84,10 +94,13 @@ async function runCustomerManagementUiTests(run) {
 
   await run("Customer UI 02: Preload exponiert Management-API getrennt von BBM-Firmen-Bridge", () => {
     const source = fs.readFileSync(path.join(process.cwd(), "src/main/preload.js"), "utf8");
+    assert.match(source, /customerManagementContext/);
     assert.match(source, /customerManagementList/);
     assert.match(source, /customerManagementCreate/);
     assert.match(source, /customerManagementUpdate/);
     assert.match(source, /customerManagementArchive/);
+    assert.match(source, /Herstellerbestand/);
+    assert.match(source, /Lokaler Kundenbestand/);
     assert.match(source, /customerManagementContactsList/);
     assert.match(source, /customerManagementContactCreate/);
   });
