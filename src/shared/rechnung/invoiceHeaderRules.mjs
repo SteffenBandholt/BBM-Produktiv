@@ -65,6 +65,7 @@ export function normalizeInvoiceHeader(input = {}, { requireBookingFields = fals
   const paymentTermDays = Number(input.payment_term_days);
   if (!Number.isInteger(paymentTermDays) || paymentTermDays < 0 || paymentTermDays > 3650) throw new Error("Zahlungsziel muss zwischen 0 und 3650 Kalendertagen liegen.");
   const serviceReference = text(input.service_reference);
+  const customerId = text(input.customer_id);
   const customerRefKind = text(input.customer_ref_kind);
   const customerFirmId = text(input.customer_firm_id);
   const projectId = text(input.project_id) || null;
@@ -73,7 +74,7 @@ export function normalizeInvoiceHeader(input = {}, { requireBookingFields = fals
   if (documentType !== "PARTIAL" && installmentNumber !== null) throw new Error("Eine Abschlagsnummer ist nur für Abschlagsrechnungen zulässig.");
   const servicePeriod = normalizeServicePeriod(input);
   if (requireBookingFields) {
-    if (!customerFirmId || customerRefKind !== "global_firm") throw new Error("Bitte einen zentralen Rechnungskunden wählen.");
+    if (!customerId && (!customerFirmId || customerRefKind !== "global_firm")) throw new Error("Bitte einen Rechnungskunden wählen.");
     if (!serviceReference) throw new Error("Bitte Bauvorhaben / Leistungsbezug eingeben.");
     if (sourceType === "FROM_ORDER") {
       if (!text(input.source_order_id) || !text(input.source_order_number) || !isIsoDate(input.source_order_date)) throw new Error("Der Auftragsbezug ist unvollständig.");
@@ -85,9 +86,10 @@ export function normalizeInvoiceHeader(input = {}, { requireBookingFields = fals
     installment_number: installmentNumber,
     invoice_date: invoiceDate,
     ...servicePeriod,
-    customer_ref_kind: customerRefKind || null,
-    customer_firm_id: customerFirmId || null,
-    customer_project_id: customerRefKind === "project_firm" ? text(input.customer_project_id) || null : null,
+    customer_id: customerId || null,
+    customer_ref_kind: customerId ? null : customerRefKind || null,
+    customer_firm_id: customerId ? null : customerFirmId || null,
+    customer_project_id: customerId ? null : customerRefKind === "project_firm" ? text(input.customer_project_id) || null : null,
     project_id: projectId,
     source_order_id: text(input.source_order_id) || null,
     source_order_number: text(input.source_order_number) || null,
