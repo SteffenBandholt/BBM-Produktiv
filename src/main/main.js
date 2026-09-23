@@ -39,6 +39,7 @@ const { registerProjectsIpc } = require("./ipc/projectsIpc");
 const { registerCoreProjectFirmsIpc } = require("./core/projectFirmsCore");
 const { registerFirmDirectoryIpc } = require("./ipc/firmDirectoryIpc");
 const { registerCustomerDirectoryIpc } = require("./ipc/customerDirectoryIpc");
+const { registerCustomerManagementIpc } = require("./ipc/customerManagementIpc");
 const { registerProjectParticipantsIpc } = require("./ipc/participantsIpc");
 const { registerMailIpc } = require("./ipc/mailIpc");
 const { registerPrintIpc } = require("./ipc/printIpc");
@@ -528,6 +529,7 @@ app.whenReady().then(async () => {
     isModuleActive,
   })) {
     registerCustomerDirectoryIpc();
+    registerCustomerManagementIpc();
   }
   registerProjectParticipantsIpc();
   registerPrintIpc();
