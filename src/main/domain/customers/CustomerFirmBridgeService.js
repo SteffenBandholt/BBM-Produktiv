@@ -2,7 +2,7 @@
 
 const { getFirmDirectoryService } = require("../firms/FirmDirectoryService");
 const { normalizeFirmRef, FIRM_KINDS } = require("../firms/firmReference");
-const { getBbmCustomerCore } = require("./customerCoreProvider");
+const { getRuntimeCustomerCore } = require("./customerCoreProvider");
 const { DUPLICATE_STATUS } = require("../../../customer-core");
 
 const SYSTEM_CODE = "BBM";
@@ -49,7 +49,7 @@ function normalizeFieldList(fields, allowed) {
 class CustomerFirmBridgeService {
   constructor({
     firmDirectory = getFirmDirectoryService(),
-    customerCore = getBbmCustomerCore(),
+    customerCore = getRuntimeCustomerCore(),
   } = {}) {
     this.firmDirectory = firmDirectory;
     this.customerCore = customerCore;

@@ -29,7 +29,7 @@ class InvoiceService {
     settingsGetMany = appSettingsGetMany,
     today = () => new Date().toISOString().slice(0, 10),
     customerService = null,
-    customerServiceProvider = () => require("../customers/customerCoreProvider").getBbmCustomerCore().service,
+    customerServiceProvider = () => require("../customers/customerCoreProvider").getRuntimeCustomerCore().service,
     customerFirmBridge = null,
     customerFirmBridgeProvider = () => require("../customers/CustomerFirmBridgeService").getCustomerFirmBridgeService(),
   } = {}) {
