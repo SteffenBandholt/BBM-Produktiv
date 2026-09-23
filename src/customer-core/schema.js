@@ -10,7 +10,20 @@ function ensureCustomerSchema(db) {
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+  `);
 
+  const currentVersionRow = db
+    .prepare("SELECT value FROM customer_meta WHERE key = 'schema_version'")
+    .get();
+  const currentVersion = currentVersionRow ? Number(currentVersionRow.value) : 0;
+  if (!Number.isFinite(currentVersion) || currentVersion < 0) {
+    throw new Error("invalid customer database schema version");
+  }
+  if (currentVersion > SCHEMA_VERSION) {
+    throw new Error(`customer database schema ${currentVersion} is newer than supported ${SCHEMA_VERSION}`);
+  }
+
+  db.exec(`
     CREATE TABLE IF NOT EXISTS customer_number_sequence (
       id INTEGER PRIMARY KEY CHECK (id = 1),
       next_value INTEGER NOT NULL CHECK (next_value >= 1)
@@ -102,14 +115,6 @@ function ensureCustomerSchema(db) {
     CREATE INDEX IF NOT EXISTS idx_customer_links_customer
       ON customer_links(customer_id);
   `);
-
-  const currentVersionRow = db
-    .prepare("SELECT value FROM customer_meta WHERE key = 'schema_version'")
-    .get();
-  const currentVersion = currentVersionRow ? Number(currentVersionRow.value) : 0;
-  if (Number.isFinite(currentVersion) && currentVersion > SCHEMA_VERSION) {
-    throw new Error(`customer database schema ${currentVersion} is newer than supported ${SCHEMA_VERSION}`);
-  }
 
   if (currentVersion < SCHEMA_VERSION) {
     db.prepare(`
