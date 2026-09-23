@@ -698,3 +698,339 @@ select.invoice-control { padding-right: 28px; }
 .rechnung-catalog-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .rechnung-catalog-form > .invoice-button { justify-self: start; }
 @media (max-width: 900px) { .rechnung-catalog-grid { grid-template-columns: minmax(0, 1fr); } }
+
+
+/* Kundenverwaltung: kompakte klassische Verwaltungsansicht */
+.customer-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  font-size: 12px;
+}
+
+.customer-admin[hidden] {
+  display: none !important;
+}
+
+.customer-admin__header,
+.customer-admin__toolbar,
+.customer-admin__editor-head,
+.customer-admin__contacts-head,
+.customer-admin__actions,
+.customer-admin__contact-actions,
+.customer-admin__contact-flags {
+  display: flex;
+  align-items: center;
+}
+
+.customer-admin__header {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.customer-admin__heading {
+  min-width: 0;
+}
+
+.customer-admin__title,
+.customer-admin__editor-title {
+  margin: 0;
+}
+
+.customer-admin__title {
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.customer-admin__subtitle,
+.customer-admin__meta {
+  margin: 2px 0 0;
+  color: var(--muted, #667085);
+  font-size: 11px;
+}
+
+.customer-admin__toolbar {
+  gap: 8px;
+}
+
+.customer-admin__toolbar > .customer-admin__control[type="search"] {
+  flex: 1 1 360px;
+  min-width: 180px;
+}
+
+.customer-admin__body {
+  display: grid;
+  grid-template-columns: minmax(420px, 0.9fr) minmax(520px, 1.2fr);
+  gap: 10px;
+  min-height: 0;
+}
+
+.customer-admin__list-pane,
+.customer-admin__editor-pane,
+.customer-admin__editor,
+.customer-admin__contacts {
+  min-width: 0;
+}
+
+.customer-admin__list-pane,
+.customer-admin__editor,
+.customer-admin__contacts {
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  background: var(--card-bg);
+}
+
+.customer-admin__list-pane {
+  overflow: hidden;
+}
+
+.customer-admin__list {
+  max-height: calc(100vh - 250px);
+  overflow: auto;
+}
+
+.customer-admin__row {
+  display: grid;
+  grid-template-columns: 86px minmax(150px, 1.5fr) minmax(90px, 0.8fr) minmax(130px, 1.1fr) 64px;
+  gap: 8px;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--card-border);
+  text-align: left;
+  font: inherit;
+}
+
+.customer-admin__row--head {
+  min-height: 28px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  background: var(--panel-bg, rgba(127, 127, 127, 0.07));
+}
+
+.customer-admin__row--data {
+  width: 100%;
+  cursor: pointer;
+  background: transparent;
+  color: inherit;
+}
+
+.customer-admin__row--data:hover,
+.customer-admin__row--data[data-selected="true"] {
+  background: var(--hover-bg, rgba(127, 127, 127, 0.10));
+}
+
+.customer-admin__number {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.customer-admin__name {
+  font-weight: 600;
+}
+
+.customer-admin__ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-admin__status {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.customer-admin__status--archived {
+  opacity: 0.65;
+}
+
+.customer-admin__editor-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  overflow: auto;
+  max-height: calc(100vh - 205px);
+}
+
+.customer-admin__editor,
+.customer-admin__contacts {
+  padding: 10px;
+}
+
+.customer-admin__editor-head,
+.customer-admin__contacts-head {
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.customer-admin__editor-title {
+  font-size: 15px;
+}
+
+.customer-admin__actions,
+.customer-admin__contact-actions {
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.customer-admin__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(90px, 1fr));
+  gap: 6px 8px;
+}
+
+.customer-admin__field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.customer-admin__field--wide {
+  grid-column: span 2;
+}
+
+.customer-admin__label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted, #667085);
+}
+
+.customer-admin__control {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 28px;
+  padding: 4px 6px;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  background: var(--input-bg, var(--card-bg));
+  color: inherit;
+  font: inherit;
+}
+
+.customer-admin__control[type="checkbox"] {
+  width: auto;
+  min-height: 0;
+  padding: 0;
+}
+
+.customer-admin__note {
+  resize: vertical;
+}
+
+.customer-admin__billing {
+  margin: 8px 0;
+  border-top: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--card-border);
+  padding: 6px 0;
+}
+
+.customer-admin__billing > summary {
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+
+.customer-admin__section-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.customer-admin__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.customer-admin__contacts-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 160px;
+  overflow: auto;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+}
+
+.customer-admin__contact-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(90px, 0.8fr) minmax(140px, 1.1fr) minmax(100px, 0.9fr);
+  gap: 8px;
+  align-items: center;
+  min-height: 28px;
+  padding: 3px 6px;
+  border: 0;
+  border-bottom: 1px solid var(--card-border);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.customer-admin__contact-row:hover,
+.customer-admin__contact-row[data-selected="true"] {
+  background: var(--hover-bg, rgba(127, 127, 127, 0.10));
+}
+
+.customer-admin__contact-tags {
+  font-size: 10px;
+  color: var(--muted, #667085);
+}
+
+.customer-admin__contact-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(100px, 1fr));
+  gap: 6px 8px;
+  margin-top: 8px;
+}
+
+.customer-admin__contact-flags {
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.customer-admin__contact-actions {
+  margin-top: 6px;
+}
+
+.customer-admin__empty {
+  padding: 18px 10px;
+  color: var(--muted, #667085);
+  text-align: center;
+}
+
+.customer-admin__empty--small {
+  padding: 8px;
+  font-size: 11px;
+}
+
+.customer-admin__message {
+  min-height: 18px;
+  font-size: 11px;
+}
+
+.customer-admin__message[data-tone="error"] {
+  color: var(--danger, #b42318);
+}
+
+@media (max-width: 1100px) {
+  .customer-admin__body {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-admin__list {
+    max-height: 260px;
+  }
+
+  .customer-admin__editor-pane {
+    max-height: none;
+  }
+}
