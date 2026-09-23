@@ -13,7 +13,7 @@ function failure(error) {
   };
 }
 
-function duplicateCandidates(customerService, data, excludeCustomerId = "") {
+function duplicateCandidates(resolvedService, data, excludeCustomerId = "") {
   return customerService
     .findDuplicates(data || {}, { includeArchived: true })
     .filter((entry) => String(entry?.customerId || "") !== String(excludeCustomerId || ""));
@@ -53,12 +53,12 @@ function registerCustomerManagementIpc({
   handle("customerMgmt:list", (data) => resolvedService.listCustomers(data), "list");
   handle("customerMgmt:get", (data) => resolvedService.getCustomer(data.customerId), "customer");
   handle("customerMgmt:prepareCreate", (data) => ({
-    candidates: duplicateCandidates(customerService, data.customer || data),
+    candidates: duplicateCandidates(resolvedService, data.customer || data),
   }), "data");
 
   handle("customerMgmt:create", (data) => {
     const input = data.customer || {};
-    const candidates = duplicateCandidates(customerService, input);
+    const candidates = duplicateCandidates(resolvedService, input);
     if (candidates.length && data.confirmCreateDespiteCandidates !== true) {
       const error = new Error("possible customer duplicate requires explicit review");
       error.code = "CUSTOMER_DUPLICATE_REVIEW_REQUIRED";
@@ -80,7 +80,7 @@ function registerCustomerManagementIpc({
     }
     const patch = data.patch || {};
     const proposed = { ...current, ...patch };
-    const candidates = duplicateCandidates(customerService, proposed, current.customerId);
+    const candidates = duplicateCandidates(resolvedService, proposed, current.customerId);
     if (candidates.length && data.confirmUpdateDespiteCandidates !== true) {
       const error = new Error("possible customer duplicate requires explicit review");
       error.code = "CUSTOMER_DUPLICATE_REVIEW_REQUIRED";
