@@ -25,7 +25,6 @@ async function runFirmDirectoryIpcTests(run) {
       get: (data) => data,
       listAll: () => [],
       listProjectParticipants: () => [],
-      listCustomers: () => [],
       listPersons: () => [],
       create: () => ({ id: "created" }),
       update: () => ({ id: "updated" }),
@@ -40,7 +39,7 @@ async function runFirmDirectoryIpcTests(run) {
     };
     loadModule().registerFirmDirectoryIpc({ ipcMain, service });
     const expected = [
-      "get", "listAll", "listProjectParticipants", "listCustomers", "listPersons",
+      "get", "listAll", "listProjectParticipants", "listPersons",
       "create", "update", "checkUseChange", "setUses", "prepareLocalToGlobal",
     ].map((name) => `firmDirectory:${name}`);
     assert.deepEqual([...handlers.keys()], expected);
