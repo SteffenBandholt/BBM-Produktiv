@@ -31,7 +31,7 @@ function field(labelText, input, className = "") {
   wrapper.append(labelElement, input);
   return wrapper;
 }
-function address(value = {}) { const source = value || {}; return [source.companyName || source.name, source.companyName2 || source.name2, source.street, [source.zip, source.city].filter(Boolean).join(" "), source.country].filter(Boolean).join("\n"); }
+function address(value = {}) { const source = value || {}; return [source.companyName || source.name || source.name1, source.companyName2 || source.name2, source.street, [source.zip || source.postalCode, source.city].filter(Boolean).join(" "), source.country || source.countryCode].filter(Boolean).join("\n"); }
 export function issuerInformation(value = {}) {
   const source = value || {};
   const sourceAddress = source.address || source;
@@ -48,7 +48,7 @@ export function issuerInformation(value = {}) {
   const managingDirector = text(sourceLegal.managingDirector || source.managing_director);
   return Object.freeze({ nameLines, addressLines, taxRow: vatId ? Object.freeze({ label: "USt-IdNr.", value: vatId }) : taxNumber ? Object.freeze({ label: "Steuernr.", value: taxNumber }) : null, bankRows: Object.freeze([...(iban ? [{ label: "IBAN", value: iban }] : []), ...(bic ? [{ label: "BIC", value: bic }] : [])]), footerLines: Object.freeze([[...nameLines, ...addressLines].join(" · "), [vatId && `USt-IdNr. ${vatId}`, taxNumber && `Steuernr. ${taxNumber}`, iban && `IBAN ${iban}`, bic && `BIC ${bic}`].filter(Boolean).join(" · "), [register, registerNumber && `Registernr. ${registerNumber}`, managingDirector && `Geschäftsführer ${managingDirector}`].filter(Boolean).join(" · ")].filter(Boolean)) });
 }
-function customerKey(value = {}) { return `${value.kind || value.ref?.kind}:${value.id || value.ref?.id}`; }
+function customerKey(value = {}) { return String(value.customerId || value.customer_id || value.id || ""); }
 function money(cents) { return `${(Number(cents || 0) / 100).toFixed(2).replace(".", ",")} EUR`; }
 export function formatEuroCents(cents) { return `${GERMAN_EURO_AMOUNT_FORMATTER.format(Number(cents || 0) / 100)} €`; }
 function formatDate(value) { const [year, month, day] = String(value || "").split("-"); return year && month && day ? `${day}.${month}.${year}` : ""; }
@@ -162,7 +162,16 @@ export default class RechnungScreen {
     const recipient = node("section", "rechnung-sheet__recipient");
     this.customer = node("select", "invoice-control"); this.customer.hidden = true;
     this.customerPickerButton = button("Rechnungsempfänger wählen", "rechnung.editor.customerPicker", () => { this.customer.hidden = !this.customer.hidden; if (!this.customer.hidden) this.customer.focus(); }, "quiet");
-    this.customer.addEventListener("change", () => { this.customer.hidden = true; this._syncDerived(); void this._queueDraftSave(); });
+    this.customer.addEventListener("change", () => {
+      const selected = this.customers.find((entry) => customerKey(entry) === this.customer.value);
+      if (selected?.defaultPaymentTermDays !== null && selected?.defaultPaymentTermDays !== undefined) {
+        this.paymentTerm.value = String(selected.defaultPaymentTermDays);
+      }
+      this.customer.hidden = true;
+      this._syncDerived();
+      this._updatePaymentText();
+      void this._queueDraftSave();
+    });
     this.customerAddress = bind(node("div", "rechnung-sheet__address"), "rechnung.editor.customerAddress");
     recipient.append(this.customerPickerButton, this.customer, this.customerAddress);
 
@@ -325,8 +334,8 @@ export default class RechnungScreen {
 
   _draftCustomerLabel(invoice) {
     const snapshot = invoice.customer_snapshot || {};
-    const customer = this.customers.find((entry) => customerKey(entry) === `${invoice.customer_ref_kind || ""}:${invoice.customer_firm_id || ""}`);
-    return text(snapshot.companyName || snapshot.name || customer?.label || customer?.name || invoice.legacy_customer?.name);
+    const customer = this.customers.find((entry) => customerKey(entry) === String(invoice.customer_id || ""));
+    return text(snapshot.companyName || snapshot.name || customer?.label || customer?.name1 || invoice.legacy_customer?.name);
   }
 
   _draftContext(invoice) {
@@ -355,21 +364,18 @@ export default class RechnungScreen {
     this.invoiceNumber.value = invoice.invoice_number || "wird bei Buchung vergeben"; this.invoiceDate.value = invoice.invoice_date || "";
     this.serviceType.value = invoice.service_period_type || "SINGLE_DATE"; this.serviceDate.value = invoice.service_date || ""; this.serviceMonth.value = invoice.service_period_start?.slice(0, 7) || ""; this.serviceStart.value = invoice.service_period_start || ""; this.serviceEnd.value = invoice.service_period_end || "";
     this.reference.value = invoice.service_reference || ""; this.constructionProject.value = invoice.construction_project || ""; if (this.introText) this.introText.value = invoice.intro_text || ""; this.positions = (invoice.positions || []).map((entry) => ({ ...entry })); this._normalizePositions(); this._clearPositionSelection(); this._renderPositions(); this.paymentTerm.value = String(invoice.payment_term_days ?? 8); this.dueDate.value = invoice.due_date || "";
-    this.customer.replaceChildren(option("", "Rechnungskunde wählen")); this.customers.forEach((entry) => this.customer.append(option(customerKey(entry), entry.label || entry.name)));
-    const selectedCustomerKey = `${invoice.customer_ref_kind || ""}:${invoice.customer_firm_id || ""}`;
-    if (invoice.status === "BOOKED" && invoice.customer_snapshot && ![...this.customer.options].some((entry) => entry.value === selectedCustomerKey)) this.customer.append(option(selectedCustomerKey, invoice.customer_snapshot.companyName || "Gebuchter Kunde"));
-    if (invoice.status === "DRAFT" && invoice.customer_ref_kind === "project_firm" && ![...this.customer.options].some((entry) => entry.value === selectedCustomerKey)) this.customer.append(option(selectedCustomerKey, `${invoice.legacy_customer?.name || "Unaufgelöster Kunde"} · Altverweis`));
-    this.customer.value = selectedCustomerKey === ":" ? "" : selectedCustomerKey;
+    this.customer.replaceChildren(option("", "Rechnungskunde wählen")); this.customers.forEach((entry) => this.customer.append(option(customerKey(entry), entry.label || entry.name1 || entry.customerNumber)));
+    const selectedCustomerKey = String(invoice.customer_id || "");
+    if (invoice.status === "BOOKED" && selectedCustomerKey && invoice.customer_snapshot && ![...this.customer.options].some((entry) => entry.value === selectedCustomerKey)) this.customer.append(option(selectedCustomerKey, invoice.customer_snapshot.companyName || "Gebuchter Kunde"));
+    this.customer.value = selectedCustomerKey;
     this.project.replaceChildren(option("", "Kein Projekt")); this.projects.forEach((entry) => this.project.append(option(entry.id, entry.name))); this.project.value = invoice.project_id || "";
     this._isServicePeriodEditing = false; this.servicePeriodContainer?.classList.toggle("is-editing", false);
     if (this.headContent) { this.headContent.hidden = false; this._syncHeadToggle(); } this._syncDerived(); this._setBooked(invoice.status === "BOOKED");
   }
 
   _payload() {
-    const customer = this.customers.find((entry) => customerKey(entry) === this.customer.value);
-    const [fallbackKind, fallbackId] = this.customer.value.split(":");
-    const preservesLegacyRef = fallbackKind === "project_firm" && this.current?.customer_ref_kind === "project_firm" && fallbackId === this.current?.customer_firm_id;
-    return { source_type: this.source.value, document_type: this.documentType.value, installment_number: this.installmentNumber.value, invoice_date: this.invoiceDate.value, service_period_type: this.serviceType.value, service_date: this.serviceDate.value, service_month: this.serviceMonth.value, service_period_start: this.serviceStart.value, service_period_end: this.serviceEnd.value, customer_ref_kind: customer?.kind || customer?.ref?.kind || fallbackKind || null, customer_firm_id: customer?.id || customer?.ref?.id || fallbackId || null, customer_project_id: customer?.project_id || customer?.ref?.projectId || (preservesLegacyRef ? this.current.customer_project_id : null), project_id: this.project.value || null, service_reference: this.reference.value, construction_project: this.constructionProject.value, intro_text: this.introText.value, positions: this.positions, payment_term_days: this.paymentTerm.value };
+    const customerId = String(this.customer.value || "").trim() || null;
+    return { source_type: this.source.value, document_type: this.documentType.value, installment_number: this.installmentNumber.value, invoice_date: this.invoiceDate.value, service_period_type: this.serviceType.value, service_date: this.serviceDate.value, service_month: this.serviceMonth.value, service_period_start: this.serviceStart.value, service_period_end: this.serviceEnd.value, customer_id: customerId, customer_ref_kind: null, customer_firm_id: null, customer_project_id: null, project_id: this.project.value || null, service_reference: this.reference.value, construction_project: this.constructionProject.value, intro_text: this.introText.value, positions: this.positions, payment_term_days: this.paymentTerm.value };
   }
 
   _toggleHead() { if (!this.headContent) return; this.headContent.hidden = !this.headContent.hidden; this._syncHeadToggle(); }
