@@ -335,9 +335,22 @@ export default class CustomerManagementScreen {
     }
     this.editorTitle.textContent = customerDisplayName(customer) || "Kunde";
     this.editorMeta.textContent = [customer.customerNumber, customer.status === "ARCHIVED" ? "archiviert" : "aktiv"].filter(Boolean).join(" · ");
+    const archived = customer.status === "ARCHIVED";
     this.archiveButton.hidden = false;
-    this.archiveButton.textContent = customer.status === "ARCHIVED" ? "Reaktivieren" : "Archivieren";
+    this.archiveButton.textContent = archived ? "Reaktivieren" : "Archivieren";
     this._newContact();
+    this._setEditorReadOnly(archived);
+  }
+
+  _setEditorReadOnly(readOnly) {
+    for (const control of Object.values(this.customerInputs || {})) control.disabled = readOnly;
+    for (const control of Object.values(this.contactInputs || {})) control.disabled = readOnly;
+    for (const control of [this.contactPrimary, this.contactBilling, this.contactLicense, this.contactActive]) {
+      if (control) control.disabled = readOnly;
+    }
+    if (this.saveButton) this.saveButton.disabled = readOnly;
+    if (this.contactSaveButton) this.contactSaveButton.disabled = readOnly;
+    if (this.contactDeleteButton) this.contactDeleteButton.disabled = readOnly || !this.currentContact;
   }
 
   _clearCustomerEditor() {
@@ -346,6 +359,7 @@ export default class CustomerManagementScreen {
     }
     this.editorTitle.textContent = "Neuer Kunde";
     this.editorMeta.textContent = "";
+    this._setEditorReadOnly(false);
     this.archiveButton.hidden = true;
     this.contacts = [];
     this._renderContacts();
@@ -467,7 +481,7 @@ export default class CustomerManagementScreen {
     this.contactBilling.checked = contact?.isBillingContact === true;
     this.contactLicense.checked = contact?.isLicenseContact === true;
     this.contactActive.checked = contact?.isActive !== false;
-    this.contactDeleteButton.disabled = false;
+    this.contactDeleteButton.disabled = this.current?.status === "ARCHIVED";
     this._renderContacts();
   }
 
