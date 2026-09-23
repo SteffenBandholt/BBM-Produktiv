@@ -151,6 +151,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   customerCreateGlobalFirm: (data) => ipcRenderer.invoke("customer:createGlobalFirm", data),
 
   // Wiederverwendbare Kundenverwaltung fuer Rechnung/Admin.
+  customerManagementContext: () => ipcRenderer.invoke("customerMgmt:context"),
   customerManagementList: (data) => ipcRenderer.invoke("customerMgmt:list", data),
   customerManagementGet: (customerId) => ipcRenderer.invoke("customerMgmt:get", { customerId }),
   customerManagementPrepareCreate: (customer) => ipcRenderer.invoke("customerMgmt:prepareCreate", { customer }),
