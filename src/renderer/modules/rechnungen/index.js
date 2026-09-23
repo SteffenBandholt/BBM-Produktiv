@@ -109,7 +109,7 @@ class RechnungEditorScreen extends RechnungScreen {
   }
 
   _showSelectedPositionInLeistungsEditbox() {
-    if (!this.leistungsEditboxEnabled) {
+    if (!this.leistungsEditboxEnabled || !this._isFreeDraft()) {
       this.leistungsEditboxBinding?.hide();
       return;
     }
@@ -282,7 +282,7 @@ class RechnungEditorScreen extends RechnungScreen {
   }
 
   _applyLeistungsEditboxChange(positionId, values = {}) {
-    if (this.current?.status !== "DRAFT") return;
+    if (!this._isFreeDraft()) return;
     const index = this.positions.findIndex((entry) => entry.id === positionId);
     if (index < 0) return;
 
