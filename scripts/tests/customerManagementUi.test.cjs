@@ -133,6 +133,7 @@ async function runCustomerManagementUiTests(run) {
     assert.match(source, /customerManagementArchive/);
     assert.match(source, /customerManagementContactCreate/);
     assert.match(source, /CUSTOMER_DUPLICATE_REVIEW_REQUIRED/);
+    assert.match(source, /_setEditorReadOnly/);
     assert.doesNotMatch(source, /firmDirectory/);
     assert.doesNotMatch(source, /deleteCustomer/);
 
