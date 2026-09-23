@@ -14,7 +14,7 @@ function failure(error) {
 }
 
 function duplicateCandidates(resolvedService, data, excludeCustomerId = "") {
-  return customerService
+  return resolvedService
     .findDuplicates(data || {}, { includeArchived: true })
     .filter((entry) => String(entry?.customerId || "") !== String(excludeCustomerId || ""));
 }
