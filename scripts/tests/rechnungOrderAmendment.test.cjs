@@ -197,7 +197,21 @@ async function runRechnungOrderAmendmentTests(run) {
     try {
       const order = e.order();
       const invoices = new InvoiceRepository({ dbProvider: () => e.db });
-      const service = new InvoiceService({ repository: invoices, billingOrderService: e.service, settingsGetMany: () => ({}), today: () => "2026-09-06" });
+      const service = new InvoiceService({
+        repository: invoices,
+        billingOrderService: e.service,
+        settingsGetMany: () => ({}),
+        today: () => "2026-09-06",
+        customerFirmBridge: {
+          getLinkedCustomer: () => ({
+            customer: {
+              customerId: "11111111-1111-4111-8111-111111111111",
+              status: "ACTIVE",
+              defaultPaymentTermDays: 8,
+            },
+          }),
+        },
+      });
       const draft = await service.createDraftFromOrder({ source_order_id: order.id, service_period_type: "SINGLE_DATE", service_date: "2026-09-01" });
       const before = e.db.prepare("SELECT * FROM invoices WHERE id = ?").get(draft.id);
       confirm(e, order, create(e, order));
