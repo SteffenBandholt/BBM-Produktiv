@@ -9,22 +9,28 @@ Zahlungstext und Ausstellerdaten. Kunden stammen aus der vorhandenen zentralen
 Kundenquelle. PDF/Druck, Buchung, Autosave und Rechnungsberechnung bleiben in
 ihren vorhandenen Fachpfaden.
 
-## Aktueller Zustand mit Rechnungs-Editbox
+## Aktueller Zustand mit gemeinsamer LeistungsEditbox
 
-Die kompakte Positions-Editbox ist wieder Bestandteil des produktiven
-`RechnungScreen`. Sie arbeitet auf dem aktuellen Positionsmodell und wurde
-nicht durch Rücknahme des heutigen Rechnungsstands hergestellt.
+Die Rechnung verwendet wieder den bereits am 30.08.2026 erreichten gemeinsamen
+Editbox-/Workbench-Unterbau. Maßgeblicher historischer Stand ist Commit
+`b80bd8dcda` („Rechnung auf gemeinsame Editbox-Basis umstellen“).
+
+Die Rechnung besitzt keine zweite eigene Editbox. Sie bindet den gemeinsamen
+`SharedEditboxCore` und `WorkbenchShellFrame` ausschließlich über
+`RechnungLeistungsEditboxBinding` an ihre Positionsfachlogik an.
 
 Enthalten sind Kurz-/Langtext, Menge mit 0 bis 4 Nachkommastellen, Einheit,
-Netto-/Brutto-Preiseingabe, MwSt.-Anzeige, NEP, Titel/Position anlegen,
-Löschen/Schieben sowie eine kompakte Netto-/MwSt.-/Brutto-Summenanzeige.
+Einzelpreis, Positionsart, NEP, Titel/Position anlegen, Löschen/Schieben und
+rechnungsspezifische Metadaten. Bruttoeingaben werden verlustfrei über
+`price_input_cents` wieder angezeigt.
 
 Gebuchte Rechnungen und positionsgebundene `FROM_ORDER`-Rechnungen bleiben
 gegen Positionsänderungen geschützt. Customer-`customerId`, Kundensnapshot,
 OwnOrganization, Buchung, PDF und Druck bleiben unverändert.
 
-Der Leistungskatalog ist weiterhin aus der Rechnungsübersicht erreichbar und
-zusätzlich direkt aus der Kundenverwaltung aufrufbar.
+Der Leistungskatalog ist aus der Rechnungsübersicht und aus der
+Kundenverwaltung erreichbar; beim Schließen wird in die jeweilige
+Ausgangsansicht zurückgekehrt.
 
 ## UI-Editor-Status
 
