@@ -8,6 +8,7 @@ function foldText(value) {
   return String(value ?? "")
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ß/g, "ss")
     .toLocaleLowerCase("de-DE")
     .replace(/&/g, " und ")
     .replace(/[^a-z0-9]+/g, " ")
@@ -18,6 +19,7 @@ function foldText(value) {
 function normalizeCompanyName(value) {
   return foldText(value)
     .replace(/\b(gmbh|mbh|ag|kg|ohg|ug|haftungsbeschrankt|e k|ek|gbr)\b/g, " ")
+    .replace(/\b(und\s+co|co)\b/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
