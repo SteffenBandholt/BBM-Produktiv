@@ -123,8 +123,8 @@ export function openFirmEditor({
     scopeCaption.classList.add("bbm-form-label");
     const scope = document.createElement("select");
     for (const [value, label] of [
-      ["project_firm", "Projektlokaler Kunde"],
-      ["global_firm", "Globaler Kunde"],
+      ["project_firm", "Projektlokale Firma"],
+      ["global_firm", "Globale Firma"],
     ]) {
       const entry = document.createElement("option");
       entry.value = value;
@@ -180,12 +180,8 @@ export function openFirmEditor({
     const defaultParticipant = firm
       ? Number(firm?.uses?.projectParticipant ?? firm?.use_project_participant) === 1
       : origin !== "invoice";
-    const defaultCustomer = firm
-      ? Number(firm?.uses?.customer ?? firm?.use_customer) === 1
-      : origin === "invoice";
     const participant = makeCheckbox("Projektteilnehmer", defaultParticipant);
-    const customer = makeCheckbox("Rechnungskunde", defaultCustomer);
-    usesRow.append(legend, participant.wrapper, customer.wrapper);
+    usesRow.append(legend, participant.wrapper);
 
     const message = document.createElement("div");
     message.setAttribute("role", "status");
@@ -238,7 +234,6 @@ export function openFirmEditor({
       }
       const uses = {
         projectParticipant: participant.input.checked ? 1 : 0,
-        customer: customer.input.checked ? 1 : 0,
       };
       save.disabled = true;
       message.textContent = "Speichere …";
