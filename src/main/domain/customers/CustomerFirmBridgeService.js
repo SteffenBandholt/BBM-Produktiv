@@ -3,6 +3,7 @@
 const { getFirmDirectoryService } = require("../firms/FirmDirectoryService");
 const { normalizeFirmRef, FIRM_KINDS } = require("../firms/firmReference");
 const { getBbmCustomerCore } = require("./customerCoreProvider");
+const { DUPLICATE_STATUS } = require("../../../customer-core");
 
 const SYSTEM_CODE = "BBM";
 
@@ -129,33 +130,65 @@ class CustomerFirmBridgeService {
     return { ref, firm, link, customer };
   }
 
-  prepareFirmAsCustomer({ ref: refInput, fields } = {}) {
+  prepareFirmAsCustomer({ ref: refInput, fields, overrides = {} } = {}) {
     const current = this.getLinkedCustomer(refInput);
-    const proposed = this._customerDataFromFirm(current.firm, fields);
+    const mapped = this._customerDataFromFirm(current.firm, fields);
+    const proposed = {
+      ...mapped,
+      ...overrides,
+      countryCode: overrides.countryCode || "DE",
+      sourceCode: "BBM",
+    };
+
+    const candidates = current.link
+      ? []
+      : this.customerService.findDuplicates(proposed, { includeArchived: true });
+    const duplicateState = Object.freeze({
+      status: current.link
+        ? DUPLICATE_STATUS.ALREADY_LINKED
+        : candidates.length
+          ? DUPLICATE_STATUS.POSSIBLE_MATCH
+          : DUPLICATE_STATUS.NO_MATCH,
+      linkedCustomer: current.customer || null,
+      candidates: Object.freeze(candidates),
+    });
+
     return {
       ...current,
-      proposed: {
-        ...proposed,
-        countryCode: "DE",
-        sourceCode: "BBM",
-      },
+      proposed,
+      duplicateState,
     };
   }
 
-  createCustomerFromFirm({ ref: refInput, fields, overrides = {} } = {}) {
-    const prepared = this.prepareFirmAsCustomer({ ref: refInput, fields });
+  createCustomerFromFirm({
+    ref: refInput,
+    fields,
+    overrides = {},
+    confirmCreateDespiteCandidates = false,
+  } = {}) {
+    const prepared = this.prepareFirmAsCustomer({ ref: refInput, fields, overrides });
     if (prepared.link) {
       const error = new Error("firm is already linked to a customer");
       error.code = "CUSTOMER_LINK_EXISTS";
       error.customerId = prepared.link.customerId;
+      error.duplicateState = prepared.duplicateState;
+      throw error;
+    }
+
+    if (
+      prepared.duplicateState.status === DUPLICATE_STATUS.POSSIBLE_MATCH &&
+      confirmCreateDespiteCandidates !== true
+    ) {
+      const error = new Error("possible customer duplicate requires explicit review");
+      error.code = "CUSTOMER_DUPLICATE_REVIEW_REQUIRED";
+      error.candidates = prepared.duplicateState.candidates;
+      error.duplicateState = prepared.duplicateState;
       throw error;
     }
 
     const customer = this.customerService.createCustomer({
       ...prepared.proposed,
-      ...overrides,
       sourceCode: "BBM",
-      countryCode: overrides.countryCode || prepared.proposed.countryCode || "DE",
     });
 
     try {

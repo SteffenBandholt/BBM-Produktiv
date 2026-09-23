@@ -1,5 +1,6 @@
 const { randomUUID } = require("node:crypto");
 const { CustomerRepository } = require("./repository");
+const { findDuplicateCandidates } = require("./dedup");
 
 const CUSTOMER_STATUSES = Object.freeze(["ACTIVE", "ARCHIVED"]);
 const CUSTOMER_SOURCE_CODES = Object.freeze(["MANUAL", "BBM", "IMPORT", "MIGRATION"]);
@@ -86,6 +87,11 @@ class CustomerService {
 
   listCustomers(options = {}) {
     return this.repository.listCustomers(options);
+  }
+
+  findDuplicates(data = {}, { includeArchived = true } = {}) {
+    const customers = this.repository.listCustomers({ includeArchived });
+    return findDuplicateCandidates(data, customers);
   }
 
   updateCustomer(customerId, patch = {}, { expectedRevision } = {}) {

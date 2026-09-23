@@ -6,6 +6,19 @@ const {
   CUSTOMER_SOURCE_CODES,
 } = require("./service");
 const { SCHEMA_VERSION, ensureCustomerSchema } = require("./schema");
+const {
+  DUPLICATE_STATUS,
+  normalizeCompanyName,
+  normalizeEmail,
+  normalizeVatId,
+  normalizePostalCode,
+  normalizeStreet,
+  normalizeCity,
+  customerFingerprint,
+  evaluateCandidate,
+  findDuplicateCandidates,
+  evaluateDuplicateState,
+} = require("./dedup");
 
 function createCustomerCore(options = {}) {
   const connection = openCustomerDatabase(options);
@@ -29,4 +42,15 @@ module.exports = {
   CUSTOMER_SOURCE_CODES,
   SCHEMA_VERSION,
   ensureCustomerSchema,
+  DUPLICATE_STATUS,
+  normalizeCompanyName,
+  normalizeEmail,
+  normalizeVatId,
+  normalizePostalCode,
+  normalizeStreet,
+  normalizeCity,
+  customerFingerprint,
+  evaluateCandidate,
+  findDuplicateCandidates,
+  evaluateDuplicateState,
 };

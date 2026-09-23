@@ -5,6 +5,7 @@ const TEST_GROUPS = Object.freeze([
     suites: Object.freeze([
       ["customerCore.test.cjs", "runCustomerCoreTests"],
       ["customerBbmLink.test.cjs", "runCustomerBbmLinkTests"],
+      ["customerDedup.test.cjs", "runCustomerDedupTests"],
     ]),
   }),
   Object.freeze({

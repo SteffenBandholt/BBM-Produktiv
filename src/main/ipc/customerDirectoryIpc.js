@@ -9,6 +9,8 @@ function failure(error) {
     error: error?.message || String(error),
     code: error?.code || null,
     customerId: error?.customerId || null,
+    candidates: Array.isArray(error?.candidates) ? error.candidates : [],
+    duplicateState: error?.duplicateState || null,
   };
 }
 
