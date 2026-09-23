@@ -194,6 +194,11 @@ function setUsage({ firmId, usageCode, enabled, dbConn } = {}) {
   ensureFirmUsagesSchema(db);
   const id = _assertFirm(db, firmId);
   const code = _normUsageCode(usageCode);
+  if (code === FIRM_USAGE_CODES.INVOICE_CUSTOMER) {
+    const error = new Error("invoice_customer ist eine schreibgeschuetzte Legacy-Verwendung.");
+    error.code = "FIRM_USAGE_LEGACY_READ_ONLY";
+    throw error;
+  }
   const active = enabled !== false && Number(enabled) !== 0;
   const now = _nowIso();
 
@@ -228,16 +233,19 @@ function replaceUsages({ firmId, usageCodes, dbConn } = {}) {
   const db = _getDb(dbConn);
   ensureFirmUsagesSchema(db);
   const id = _assertFirm(db, firmId);
-  const codes = Array.from(
-    new Set((Array.isArray(usageCodes) ? usageCodes : []).map(_normUsageCode))
-  );
-  const mutate = () => {
-    for (const code of ALLOWED_USAGE_CODES) {
-      setUsage({ firmId: id, usageCode: code, enabled: codes.includes(code), dbConn: db });
-    }
-  };
-  if (db.inTransaction) mutate();
-  else db.transaction(mutate)();
+  const requested = Array.isArray(usageCodes) ? usageCodes : [];
+  const participantEnabled = requested
+    .map((value) => String(value || "").trim().toLowerCase())
+    .includes(FIRM_USAGE_CODES.PROJECT_PARTICIPANT);
+
+  // invoice_customer bleibt absichtlich unangetastet: vorhandene Werte sind
+  // nur Legacy-Bestand und dürfen durch normale Firmenpflege nicht verändert werden.
+  setUsage({
+    firmId: id,
+    usageCode: FIRM_USAGE_CODES.PROJECT_PARTICIPANT,
+    enabled: participantEnabled,
+    dbConn: db,
+  });
 
   return { firmId: id, usages: listCodesByFirm(id, db) };
 }
