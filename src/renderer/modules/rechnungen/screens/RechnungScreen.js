@@ -5,6 +5,7 @@ import { beginM83ComponentBinding, completeM80PilotRender, registerM80Ref } from
 import { ensureRechnungenDesignStyles } from "../styles.js";
 import { RECHNUNG_COMPONENT_ID, RECHNUNG_SCOPE_ID } from "../RechnungScreen.uiEditorContract.js";
 import { formatCatalogVatRate } from "../masterDataCatalogFormat.mjs";
+import CustomerManagementScreen from "./CustomerManagementScreen.js";
 
 const GERMAN_EURO_AMOUNT_FORMATTER = new Intl.NumberFormat("de-DE", {
   minimumFractionDigits: 2,
@@ -80,7 +81,24 @@ export function formatQuantityForDisplay(value, decimalPlaces) { return formatQu
 export { draftPreviewIdentifier };
 
 export default class RechnungScreen {
-  constructor({ router = null } = {}) { this.invoices = []; this.customers = []; this.projects = []; this.positions = []; this.selectedPositionId = null; this.positionCreateParentId = null; this.positionSequence = 0; this.isPositionMoveMode = false; this.quantityDecimalPlaces = DEFAULT_QUANTITY_DECIMAL_PLACES; this.current = null; this.root = null; this.router = router; this.draftSaveChain = Promise.resolve(true); }
+  constructor({ router = null } = {}) {
+    this.invoices = [];
+    this.customers = [];
+    this.projects = [];
+    this.positions = [];
+    this.selectedPositionId = null;
+    this.positionCreateParentId = null;
+    this.positionSequence = 0;
+    this.isPositionMoveMode = false;
+    this.quantityDecimalPlaces = DEFAULT_QUANTITY_DECIMAL_PLACES;
+    this.current = null;
+    this.root = null;
+    this.router = router;
+    this.draftSaveChain = Promise.resolve(true);
+    this.customerManagementScreen = new CustomerManagementScreen({
+      onClose: () => this._closeCustomerManagement(),
+    });
+  }
 
   render() {
     ensureRechnungenDesignStyles();
@@ -88,7 +106,7 @@ export default class RechnungScreen {
     const root = bind(node("section", "bbm-invoice-design bbm-popup-standard bbm-rechnung-live"), RECHNUNG_SCOPE_ID);
     root.dataset.invoiceLiveScreen = "step-2";
     const content = bind(node("div", "rechnung-live-content"), "rechnung.screen.content");
-    content.append(this._overview(), this._catalog(), this._editor(), this._preview());
+    content.append(this._overview(), this.customerManagementScreen.render(), this._catalog(), this._editor(), this._preview());
     root.append(content); this.root = root;
     completeM80PilotRender();
     this._setEditorSidebarState(false);
@@ -101,7 +119,12 @@ export default class RechnungScreen {
     const header = bind(node("header", "invoice-page-header"), "rechnung.overview.header");
     const heading = node("div", "invoice-page-heading");
     heading.append(bind(node("h1", "invoice-page-title", "Rechnungen"), "rechnung.overview.title"), bind(node("p", "invoice-page-subtitle", "Rechnungsgrunddaten und Belegköpfe"), "rechnung.overview.subtitle"));
-    header.append(heading, button("Leistungskatalog", "rechnung.overview.catalog", () => void this._openCatalog()), button("Freie Rechnung", "rechnung.overview.new", () => void this._newDraft(), "primary"));
+    header.append(
+      heading,
+      button("Kunden", "rechnung.overview.customers", () => void this._openCustomerManagement()),
+      button("Leistungskatalog", "rechnung.overview.catalog", () => void this._openCatalog()),
+      button("Freie Rechnung", "rechnung.overview.new", () => void this._newDraft(), "primary")
+    );
     this.list = bind(node("div", "rechnung-live-list"), "rechnung.overview.list");
     overview.append(header, this.list); this.overview = overview; return overview;
   }
@@ -126,6 +149,16 @@ export default class RechnungScreen {
     this.catalogInputs.vatRate.readOnly = true;
     catalog.append(field("Katalogleistung", this.catalogSelect), catalogGrid, button("Neue Katalogleistung", "rechnung.catalog.create", () => this._newCatalogEntry()), button("Katalogleistung speichern", "rechnung.catalog.save", () => void this._saveCatalogEntry(), "primary"));
     this.catalogMessage = node("div", "rechnung-live-message"); area.append(header, catalog, this.catalogMessage); this.catalog = area; return area;
+  }
+
+  async _openCustomerManagement() {
+    this.overview.hidden = true;
+    await this.customerManagementScreen.open();
+  }
+
+  _closeCustomerManagement() {
+    this.overview.hidden = false;
+    void this._load();
   }
 
   async _openCatalog() { this.overview.hidden = true; this.catalog.hidden = false; await this._loadCatalog(); }
