@@ -40,9 +40,8 @@ function normalizePostalCode(value) {
 
 function normalizeStreet(value) {
   return foldText(value)
-    .replace(/\bstrasse\b/g, "str")
-    .replace(/\bstraße\b/g, "str")
-    .replace(/\bstr\.?\b/g, "str")
+    .replace(/strasse\b/g, "str")
+    .replace(/str\b/g, "str")
     .replace(/\s+/g, " ")
     .trim();
 }
