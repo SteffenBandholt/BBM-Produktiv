@@ -42,10 +42,12 @@ export default class CustomerManagementScreen {
   constructor({
     apiProvider = apiDefault,
     onClose = () => {},
+    onOpenCatalog = () => {},
     confirmFn = (message) => globalThis.window?.confirm?.(message) ?? false,
   } = {}) {
     this.apiProvider = apiProvider;
     this.onClose = onClose;
+    this.onOpenCatalog = onOpenCatalog;
     this.confirmFn = confirmFn;
     this.customers = [];
     this.context = null;
@@ -71,10 +73,15 @@ export default class CustomerManagementScreen {
       node("h1", "customer-admin__title", "Kunden"),
       this.subtitle
     );
+    const catalog = node("button", "invoice-button invoice-button--secondary", "Leistungskatalog");
+    catalog.type = "button";
+    catalog.onclick = () => this.onOpenCatalog();
     const close = node("button", "invoice-button invoice-button--secondary", "Schließen");
     close.type = "button";
     close.onclick = () => this.close();
-    header.append(heading, close);
+    const headerActions = node("div", "customer-admin__actions");
+    headerActions.append(catalog, close);
+    header.append(heading, headerActions);
 
     const toolbar = node("div", "customer-admin__toolbar");
     this.searchInput = input("search");
