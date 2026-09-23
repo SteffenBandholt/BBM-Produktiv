@@ -23,23 +23,36 @@ async function withBridge(fn) {
     return originalLoad.apply(this, arguments);
   };
 
-  const dbPath = path.join(process.cwd(), "src/main/db/database.js");
-  const firmDirectoryPath = path.join(process.cwd(), "src/main/domain/firms/FirmDirectoryService.js");
-  const bridgePath = path.join(process.cwd(), "src/main/domain/customers/CustomerFirmBridgeService.js");
+  const paths = {
+    db: path.join(process.cwd(), "src/main/db/database.js"),
+    firmsRepo: path.join(process.cwd(), "src/main/db/firmsRepo.js"),
+    projectFirmsRepo: path.join(process.cwd(), "src/main/db/projectFirmsRepo.js"),
+    firmUsagesRepo: path.join(process.cwd(), "src/main/db/firmUsagesRepo.js"),
+    firmDirectory: path.join(process.cwd(), "src/main/domain/firms/FirmDirectoryService.js"),
+    bridge: path.join(process.cwd(), "src/main/domain/customers/CustomerFirmBridgeService.js"),
+  };
   const customerCorePath = path.join(process.cwd(), "src/customer-core");
+  let customerCore = null;
+  let database = null;
 
   try {
-    for (const modulePath of [dbPath, firmDirectoryPath, bridgePath]) {
+    for (const modulePath of Object.values(paths)) {
       delete require.cache[require.resolve(modulePath)];
     }
 
-    const database = require(dbPath);
-    const { FirmDirectoryService } = require(firmDirectoryPath);
-    const { CustomerFirmBridgeService } = require(bridgePath);
+    database = require(paths.db);
+    // Repositories must be required only after the fresh database module so their
+    // initDatabase closure points at this test's temporary BBM database.
+    require(paths.firmsRepo);
+    require(paths.projectFirmsRepo);
+    require(paths.firmUsagesRepo);
+
+    const { FirmDirectoryService } = require(paths.firmDirectory);
+    const { CustomerFirmBridgeService } = require(paths.bridge);
     const { createCustomerCore } = require(customerCorePath);
 
     const bbmDb = database.initDatabase();
-    const customerCore = createCustomerCore({ userDataPath: customerUserData });
+    customerCore = createCustomerCore({ userDataPath: customerUserData });
     const firmDirectory = new FirmDirectoryService({ dbProvider: () => bbmDb });
     const bridge = new CustomerFirmBridgeService({ firmDirectory, customerCore });
 
@@ -54,12 +67,16 @@ async function withBridge(fn) {
     });
   } finally {
     try {
-      require(dbPath).closeDatabase();
+      customerCore?.close();
     } catch (_) {}
     try {
-      const loaded = require.cache[require.resolve(customerCorePath)];
-      void loaded;
+      database?.closeDatabase();
     } catch (_) {}
+    for (const modulePath of Object.values(paths)) {
+      try {
+        delete require.cache[require.resolve(modulePath)];
+      } catch (_) {}
+    }
     Module._load = originalLoad;
     fs.rmSync(root, { recursive: true, force: true });
   }
