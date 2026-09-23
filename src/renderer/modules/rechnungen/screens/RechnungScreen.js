@@ -616,7 +616,7 @@ export default class RechnungScreen {
       return;
     }
     this._lastValidQuantityInput = value;
-    this._syncSelectedPositionFromEditbox();
+    if (value && !/[,.]$/.test(value)) this._syncSelectedPositionFromEditbox();
   }
 
   _commitPositionQuantityInput() {
