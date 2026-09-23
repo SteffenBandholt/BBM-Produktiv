@@ -154,6 +154,19 @@ async function runCustomerManagementUiTests(run) {
     assert.ok(managementIndex > policyIndex);
     assert.ok(managementIndex < source.indexOf("registerProjectParticipantsIpc();"));
   });
+
+  await run("Customer UI 06: BBM-Firmenlinks sind rein optional und Standalone bleibt ohne Bridge lauffaehig", () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), "src/renderer/modules/rechnungen/screens/CustomerManagementScreen.js"),
+      "utf8"
+    );
+    assert.match(source, /typeof bridgeApi !== "function"/);
+    assert.match(source, /customerFirmLinks/);
+    assert.match(source, /BBM-Verknüpfung/);
+    assert.doesNotMatch(source, /FirmDirectoryService/);
+    assert.doesNotMatch(source, /firmDirectory/);
+    assert.doesNotMatch(source, /CustomerFirmBridgeService/);
+  });
 }
 
 module.exports = { runCustomerManagementUiTests };
