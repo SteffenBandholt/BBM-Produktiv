@@ -97,6 +97,7 @@ export default class RechnungScreen {
     this.draftSaveChain = Promise.resolve(true);
     this.customerManagementScreen = new CustomerManagementScreen({
       onClose: () => this._closeCustomerManagement(),
+      onOpenCatalog: () => void this._openCatalogFromCustomerManagement(),
     });
   }
 
@@ -159,6 +160,13 @@ export default class RechnungScreen {
   _closeCustomerManagement() {
     this.overview.hidden = false;
     void this._load();
+  }
+
+  async _openCatalogFromCustomerManagement() {
+    if (this.customerManagementScreen?.root) this.customerManagementScreen.root.hidden = true;
+    this.overview.hidden = true;
+    this.catalog.hidden = false;
+    await this._loadCatalog();
   }
 
   async _openCatalog() { this.overview.hidden = true; this.catalog.hidden = false; await this._loadCatalog(); }
@@ -265,6 +273,86 @@ export default class RechnungScreen {
     this.positionsList = bind(node("div", "rechnung-live-positions__list rechnung-lv-list"), "rechnung.editor.positions.list");
     positions.append(this.positionsList);
 
+    const positionEditor = bind(node("section", "rechnung-live-position-editor rechnung-sheet__position-editor"), "rechnung.editor.positionEditor");
+    const positionEditorTitle = bind(node("h3", "rechnung-live-position-editor__title", "Position bearbeiten"), "rechnung.editor.positionEditor.title.label");
+
+    this.positionType = control("select", "rechnung.editor.positionType");
+    [
+      [POSITION_TYPES.SERVICE, "Leistung"],
+      [POSITION_TYPES.HEADING, "Überschrift"],
+      [POSITION_TYPES.NOTE, "Hinweis"],
+    ].forEach(([value, label]) => this.positionType.append(option(value, label)));
+
+    this.positionShort = control("input", "rechnung.editor.positionShort", "text");
+    this.positionShort.maxLength = 100;
+    this.positionLong = control("textarea", "rechnung.editor.positionLong");
+    this.positionLong.maxLength = 500;
+
+    this.positionQuantity = control("input", "rechnung.editor.positionQuantity", "text");
+    this.positionQuantity.inputMode = "decimal";
+    this.positionQuantity.value = formatQuantityForInput("1", this.quantityDecimalPlaces);
+    this._lastValidQuantityInput = this.positionQuantity.value;
+    this.positionUnit = control("input", "rechnung.editor.positionUnit", "text");
+    this.positionPrice = control("input", "rechnung.editor.positionPrice", "number");
+    this.positionPrice.min = "0";
+    this.positionPrice.step = "0.01";
+    this.positionVatRate = bind(node("span", "rechnung-live-position-editor__vat-rate", "MwSt. 19 %"), "rechnung.editor.positionVatRate");
+    this.positionPriceGross = control("input", "rechnung.editor.positionPriceGross", "checkbox");
+    this.positionNep = control("input", "rechnung.editor.positionNep", "checkbox");
+
+    this.positionTypeField = field("Typ", this.positionType);
+    this.positionShortField = field("Kurztext", this.positionShort, "invoice-field--wide");
+    this.positionLongField = field("Langtext", this.positionLong, "invoice-field--wide");
+    this.positionQuantityField = field("Menge", this.positionQuantity);
+    this.positionUnitField = field("Einheit", this.positionUnit);
+    this.positionPriceField = field("Einzelpreis", this.positionPrice);
+    this.positionPriceLabel = this.positionPriceField.firstElementChild || this.positionPriceField.children?.[0];
+    this.positionVatRateField = field("MwSt.", this.positionVatRate);
+    this.positionPriceGrossField = field("Brutto eingeben", this.positionPriceGross);
+    this.positionNepField = field("NEP", this.positionNep);
+
+    this.positionQuantityBlock = bind(node("div", "rechnung-live-position-editor__quantity-block"), "rechnung.editor.positionQuantityBlock");
+    this.positionQuantityDecimals = bind(node("div", "rechnung-live-position-editor__decimal-stepper"), "rechnung.editor.positionQuantityDecimals");
+    const quantityDecimalsLabel = bind(node("span", "rechnung-live-position-editor__decimal-label", "Nachkommastellen"), "rechnung.editor.positionQuantityDecimals.label");
+    this.positionQuantityDecimalsDecrease = button("−", "rechnung.editor.positionQuantityDecimals.decrease", () => this._setQuantityDecimalPlaces(this.quantityDecimalPlaces - 1), "quiet");
+    this.positionQuantityDecimalsValue = bind(node("output", "rechnung-live-position-editor__decimal-value", String(this.quantityDecimalPlaces)), "rechnung.editor.positionQuantityDecimals.value");
+    this.positionQuantityDecimalsIncrease = button("+", "rechnung.editor.positionQuantityDecimals.increase", () => this._setQuantityDecimalPlaces(this.quantityDecimalPlaces + 1), "quiet");
+    this.positionQuantityDecimals.append(quantityDecimalsLabel, this.positionQuantityDecimalsDecrease, this.positionQuantityDecimalsValue, this.positionQuantityDecimalsIncrease);
+    this.positionQuantityBlock.append(this.positionQuantityDecimals, this.positionQuantityField);
+
+    const positionActions = bind(node("div", "rechnung-live-position-editor__actions"), "rechnung.editor.positionActions");
+    this.positionCreateTitleButton = button("Titel neu", "rechnung.editor.positionCreateTitle", () => this._createTitle(), "secondary");
+    this.positionCreateButton = button("Position neu", "rechnung.editor.positionCreate", () => this._createPosition(), "primary");
+    this.positionMoveButton = button("Schieben", "rechnung.editor.positionMove", () => this._togglePositionMove(), "secondary");
+    this.positionDeleteButton = button("Löschen", "rechnung.editor.positionDelete", () => this._deletePosition(), "secondary");
+    this.positionMoveRootButton = button("Auf Ebene 0", "rechnung.editor.positionMoveRoot", () => this._moveSelectedPositionToRoot(), "quiet");
+    positionActions.append(this.positionCreateTitleButton, this.positionCreateButton, node("span", "rechnung-live-position-editor__action-spacer"), this.positionMoveButton, this.positionMoveRootButton, this.positionDeleteButton);
+
+    const editboxTotals = bind(node("aside", "rechnung-live-position-editor__totals"), "rechnung.editor.editboxTotals");
+    const editboxTotalsTitle = bind(node("h4", "rechnung-live-position-editor__totals-title", "Gesamtbetrag"), "rechnung.editor.editboxTotals.title");
+    const editboxNetLabel = bind(node("span", "rechnung-live-position-editor__totals-label", "Netto"), "rechnung.editor.editboxTotals.netLabel");
+    this.editboxNetTotal = bind(node("strong", "rechnung-live-position-editor__totals-value", "0,00 €"), "rechnung.editor.editboxTotals.netValue");
+    this.editboxVatLabel = bind(node("span", "rechnung-live-position-editor__totals-label", "MwSt."), "rechnung.editor.editboxTotals.vatLabel");
+    this.editboxVatTotal = bind(node("strong", "rechnung-live-position-editor__totals-value", "0,00 €"), "rechnung.editor.editboxTotals.vatValue");
+    const editboxGrossLabel = bind(node("span", "rechnung-live-position-editor__totals-label rechnung-live-position-editor__totals-label--gross", "Brutto"), "rechnung.editor.editboxTotals.grossLabel");
+    this.editboxGrossTotal = bind(node("strong", "rechnung-live-position-editor__totals-value rechnung-live-position-editor__totals-value--gross", "0,00 €"), "rechnung.editor.editboxTotals.grossValue");
+    editboxTotals.append(editboxTotalsTitle, editboxNetLabel, this.editboxNetTotal, this.editboxVatLabel, this.editboxVatTotal, editboxGrossLabel, this.editboxGrossTotal);
+
+    positionEditor.append(
+      positionEditorTitle,
+      positionActions,
+      this.positionTypeField,
+      this.positionShortField,
+      this.positionLongField,
+      this.positionQuantityBlock,
+      this.positionUnitField,
+      this.positionPriceField,
+      this.positionVatRateField,
+      this.positionPriceGrossField,
+      this.positionNepField,
+      editboxTotals
+    );
+
     const payment = bind(node("section", "rechnung-sheet__payment"), "rechnung.editor.payment");
     this.paymentTerm = control("input", "rechnung.editor.paymentTermDays", "number"); this.paymentTerm.min = "0"; this.paymentTerm.max = "3650";
     this.dueDate = control("input", "rechnung.editor.dueDate", "date"); this.dueDate.readOnly = true;
@@ -305,12 +393,22 @@ export default class RechnungScreen {
       "rechnung.editor.footer.label"
     ));
     sheetCanvas.append(body); sheetArea.append(sheetCanvas);
-    editor.append(headerCanvas, sheetArea, this.message, footer); this.editor = editor;
-    const syncAndSave = () => { this._syncDerived(); this._updatePaymentText(); void this._queueDraftSave(); };
+    const editArea = bind(node("section", "rechnung-screen__edit-area"), "rechnung.editor.editArea");
+    const editCanvas = bind(node("div", "rechnung-screen__edit-canvas"), "rechnung.editor.editCanvas");
+    editCanvas.append(positionEditor);
+    editArea.append(editCanvas);
+    editor.append(headerCanvas, sheetArea, editArea, this.message, footer); this.editor = editor;
+
+    const syncAndSave = () => { this._syncDerived(); this._updatePaymentText(); this._syncPositionActions(); void this._queueDraftSave(); };
     [this.source, this.documentType, this.installmentNumber, this.invoiceDate, this.serviceType, this.serviceDate, this.serviceMonth, this.serviceStart, this.serviceEnd, this.reference, this.constructionProject, this.project, this.introText, this.paymentTerm].forEach((element) => {
       element.addEventListener("change", syncAndSave);
       element.addEventListener("input", syncAndSave);
     });
+    [this.positionType, this.positionNep].forEach((element) => element.addEventListener("change", () => this._syncSelectedPositionFromEditbox()));
+    this.positionPriceGross.addEventListener("change", () => this._togglePositionPriceInputMode());
+    [this.positionShort, this.positionLong, this.positionUnit, this.positionPrice].forEach((element) => element.addEventListener("input", () => this._syncSelectedPositionFromEditbox()));
+    this.positionQuantity.addEventListener("input", () => this._handlePositionQuantityInput());
+    this.positionQuantity.addEventListener("blur", () => this._commitPositionQuantityInput());
     return editor;
   }
 
@@ -396,7 +494,7 @@ export default class RechnungScreen {
     this.source.value = invoice.source_type || "FREE"; this.documentType.value = invoice.document_type || "INVOICE"; this.installmentNumber.value = invoice.installment_number || "";
     this.invoiceNumber.value = invoice.invoice_number || "wird bei Buchung vergeben"; this.invoiceDate.value = invoice.invoice_date || "";
     this.serviceType.value = invoice.service_period_type || "SINGLE_DATE"; this.serviceDate.value = invoice.service_date || ""; this.serviceMonth.value = invoice.service_period_start?.slice(0, 7) || ""; this.serviceStart.value = invoice.service_period_start || ""; this.serviceEnd.value = invoice.service_period_end || "";
-    this.reference.value = invoice.service_reference || ""; this.constructionProject.value = invoice.construction_project || ""; if (this.introText) this.introText.value = invoice.intro_text || ""; this.positions = (invoice.positions || []).map((entry) => ({ ...entry })); this._normalizePositions(); this._clearPositionSelection(); this._renderPositions(); this.paymentTerm.value = String(invoice.payment_term_days ?? 8); this.dueDate.value = invoice.due_date || "";
+    this.reference.value = invoice.service_reference || ""; this.constructionProject.value = invoice.construction_project || ""; if (this.introText) this.introText.value = invoice.intro_text || ""; this.positions = (invoice.positions || []).map((entry) => ({ ...entry })); this._normalizePositions(); this._clearPositionSelection(); this._clearPositionEditor(); this._renderPositions(); this.paymentTerm.value = String(invoice.payment_term_days ?? 8); this.dueDate.value = invoice.due_date || "";
     this.customer.replaceChildren(option("", "Rechnungskunde wählen")); this.customers.forEach((entry) => this.customer.append(option(customerKey(entry), entry.label || entry.name1 || entry.customerNumber)));
     const selectedCustomerKey = String(invoice.customer_id || "");
     if (invoice.status === "BOOKED" && selectedCustomerKey && invoice.customer_snapshot && ![...this.customer.options].some((entry) => entry.value === selectedCustomerKey)) this.customer.append(option(selectedCustomerKey, invoice.customer_snapshot.companyName || "Gebuchter Kunde"));
