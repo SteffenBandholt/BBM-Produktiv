@@ -10,7 +10,7 @@ async function runRechnungEditboxRestoredTests(run) {
     assert.match(moduleSource, /RechnungLeistungsEditboxBinding/);
     assert.match(moduleSource, /_installLeistungsEditboxBinding/);
     assert.match(moduleSource, /_mountBeforeUiEditorComplete/);
-    assert.match(moduleSource, /leistungsEditboxBinding\.showPosition/);
+    assert.match(moduleSource, /leistungsEditboxBinding\\?\\.showPosition/);
   });
 
   await run("Rechnung Shared Editbox 02: Binding basiert auf gemeinsamem Protokoll-Unterbau", () => {
