@@ -70,6 +70,7 @@ export function m83Element(values) {
   return Object.freeze({
     visible: true,
     ...elementValues,
+    unboundedGeometry: Boolean(unboundedGeometry),
     editable: elementValues.visible !== false,
     hasVisibleText,
     stableIdSource: "declaration",
