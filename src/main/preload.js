@@ -55,6 +55,19 @@ contextBridge.exposeInMainWorld("bbmDb", {
   projectsStoragePreview: (data) => ipcRenderer.invoke("projects:storagePreview", data),
   projectsOpenRestarbeitenDir: (data) => ipcRenderer.invoke("projects:openRestarbeitenDir", data),
 
+  // ============================================================
+  // azL – zusätzlich auszuführende Leistungen
+  // ============================================================
+  azlList: (projectId) => ipcRenderer.invoke("azl:list", { projectId }),
+  azlGet: (id) => ipcRenderer.invoke("azl:get", { id }),
+  azlCreateDraft: (data) => ipcRenderer.invoke("azl:createDraft", data),
+  azlUpdate: (id, patch) => ipcRenderer.invoke("azl:update", { id, patch }),
+  azlSetStatus: (id, status) => ipcRenderer.invoke("azl:setStatus", { id, status }),
+  azlContractsList: (projectId) => ipcRenderer.invoke("azl:contracts:list", { projectId }),
+  azlContractSave: (data) => ipcRenderer.invoke("azl:contracts:save", data),
+  azlProjectReport: (projectId) => ipcRenderer.invoke("azl:report:project", { projectId }),
+  azlFirmReport: (contractId) => ipcRenderer.invoke("azl:report:firm", { contractId }),
+
   // Archiv
   projectsArchive: _wrapIdArg("projects:archive", "projectId"),
   projectsUnarchive: _wrapIdArg("projects:unarchive", "projectId"),
