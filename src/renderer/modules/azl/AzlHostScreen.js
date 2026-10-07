@@ -37,6 +37,23 @@ function createServices() {
         return requireOk(await window.bbmDb.azlList(projectId), "list") || [];
       },
     }),
+    contracts: Object.freeze({
+      async list(projectId) {
+        return requireOk(await window.bbmDb.azlContractsList(projectId), "list") || [];
+      },
+      async save(input) {
+        return requireOk(await window.bbmDb.azlContractSave(input), "result");
+      },
+    }),
+    projectFirms: Object.freeze({
+      async list(projectId) {
+        const result = await window.bbmDb.firmDirectoryListProjectParticipants({
+          projectId,
+          includeInactive: false,
+        });
+        return requireOk(result, "list") || [];
+      },
+    }),
   });
 }
 
@@ -48,6 +65,7 @@ export default class AzlHostScreen {
     this.root = null;
     this.inner = new ExternalAzlScreen({
       projectId: this.projectId,
+      project: this.project,
       services: createServices(),
     });
   }
