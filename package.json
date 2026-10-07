@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "archiver": "^5.3.2",
+    "bbm-azl": "file:../BBM-azL",
     "better-sqlite3": "^12.6.2",
     "extract-zip": "^2.0.1",
     "pdfjs-dist": "^4.10.38",
