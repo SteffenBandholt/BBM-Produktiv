@@ -1,5 +1,16 @@
 import ExternalAzlScreen from "../../../../node_modules/bbm-azl/src/ui/AzlScreen.js";
 
+const AZL_STYLE_ID = "bbm-azl-module-style";
+
+function ensureAzlStyles() {
+  if (document.getElementById(AZL_STYLE_ID)) return;
+  const link = document.createElement("link");
+  link.id = AZL_STYLE_ID;
+  link.rel = "stylesheet";
+  link.href = new URL("../../../../node_modules/bbm-azl/src/ui/azl.css", import.meta.url).href;
+  document.head.appendChild(link);
+}
+
 function requireOk(result, key) {
   if (!result?.ok) throw new Error(result?.error || "azL-Daten konnten nicht verarbeitet werden.");
   return result[key];
@@ -42,6 +53,7 @@ export default class AzlHostScreen {
   }
 
   render() {
+    ensureAzlStyles();
     const root = document.createElement("section");
     root.className = "bbm-azl-host";
     this.root = root;
