@@ -95,7 +95,22 @@ export default class AzlHostScreen {
 
     queueMicrotask(async () => {
       if (!this.root?.isConnected) return;
+
+      if (!this.projectId) {
+        this.root.textContent = "Bitte zuerst ein Projekt auswählen …";
+        try {
+          window.localStorage?.setItem?.("bbm.startTargetModuleId", "azl");
+        } catch (_e) {
+          // ignore
+        }
+        if (typeof this.router?.showProjects === "function") {
+          await this.router.showProjects();
+        }
+        return;
+      }
+
       try {
+        this.router?._setProjectRuntimeContext?.({ projectId: this.projectId, meetingId: null });
         await this.inner.mount(this.root);
       } catch (error) {
         if (!this.root) return;
