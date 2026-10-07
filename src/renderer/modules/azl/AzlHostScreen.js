@@ -54,6 +54,23 @@ function createServices() {
         return requireOk(result, "list") || [];
       },
     }),
+    firmPool: Object.freeze({
+      async list() {
+        const result = await window.bbmDb.firmDirectoryListAll({
+          kind: "global",
+          includeInactive: true,
+        });
+        return requireOk(result, "list") || [];
+      },
+      async assign({ projectId, firmId }) {
+        const result = await window.bbmDb.projectFirmsAssignGlobalFirm({
+          projectId,
+          firmId,
+        });
+        if (!result?.ok) throw new Error(result?.error || "Firma konnte nicht zugeordnet werden.");
+        return result.result;
+      },
+    }),
   });
 }
 
