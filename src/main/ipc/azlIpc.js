@@ -14,6 +14,20 @@ function fail(error) {
   };
 }
 
+function toBbmFirmKind(kind) {
+  const normalized = String(kind || "").trim();
+  if (normalized === "global" || normalized === "global_firm") return "global_firm";
+  if (normalized === "project" || normalized === "project_firm") return "project_firm";
+  return normalized;
+}
+
+function toBbmFirmRef(ref = {}) {
+  return {
+    ...ref,
+    kind: toBbmFirmKind(ref.kind),
+  };
+}
+
 function createPorts() {
   const firms = getFirmDirectoryService();
   return {
@@ -24,19 +38,33 @@ function createPorts() {
     },
     firmsPort: {
       get(payload) {
-        return firms.get(payload?.ref || payload);
+        const ref = payload?.ref || payload || {};
+        return firms.get(toBbmFirmRef(ref));
       },
       listAll(payload) {
-        return firms.listAll(payload || {});
+        const source = payload || {};
+        return firms.listAll({
+          ...source,
+          kind: toBbmFirmKind(source.kind),
+        });
       },
       listProjectParticipants(payload) {
         return firms.listProjectParticipants(payload || {});
       },
       create(payload) {
-        return firms.create(payload || {});
+        const source = payload || {};
+        return firms.create({
+          ...source,
+          kind: toBbmFirmKind(source.kind),
+          origin: source.origin || (toBbmFirmKind(source.kind) === "global_firm" ? "firms" : "project_firms"),
+        });
       },
       update(payload) {
-        return firms.update(payload || {});
+        const source = payload || {};
+        return firms.update({
+          ...source,
+          ref: toBbmFirmRef(source.ref || {}),
+        });
       },
     },
   };
