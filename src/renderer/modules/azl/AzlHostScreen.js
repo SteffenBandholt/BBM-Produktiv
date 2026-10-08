@@ -90,6 +90,14 @@ function createServices() {
         return result.result;
       },
     }),
+    orcaImport: Object.freeze({
+      async chooseAndPlan() {
+        return requireOk(await window.bbmDb.azlOrcaChooseAndPlan(), "result");
+      },
+      async apply(plan) {
+        return requireOk(await window.bbmDb.azlOrcaApply(plan), "result");
+      },
+    }),
   });
 }
 
