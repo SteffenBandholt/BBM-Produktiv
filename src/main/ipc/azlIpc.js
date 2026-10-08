@@ -1,5 +1,9 @@
 "use strict";
 
+const fs = require("node:fs");
+const path = require("node:path");
+const { TextDecoder } = require("node:util");
+const { dialog } = require("electron");
 const { initDatabase } = require("../db/database");
 const projectsRepo = require("../db/projectsRepo");
 const { getFirmDirectoryService } = require("../domain/firms/FirmDirectoryService");
@@ -79,12 +83,14 @@ async function getRuntime() {
         { AzlListService },
         { ProjectContractService },
         { ReportingService },
+        { OrcaFirmImportService },
       ] = await Promise.all([
         import("bbm-azl/src/infrastructure/sqlite/AzlRepository.js"),
         import("bbm-azl/src/application/AzlService.js"),
         import("bbm-azl/src/application/AzlListService.js"),
         import("bbm-azl/src/application/ProjectContractService.js"),
         import("bbm-azl/src/application/ReportingService.js"),
+        import("bbm-azl/src/application/OrcaFirmImportService.js"),
       ]);
 
       const repository = new AzlRepository({ db: initDatabase() });
@@ -96,10 +102,43 @@ async function getRuntime() {
         azlList: new AzlListService({ repository }),
         contracts: new ProjectContractService({ projectPort, firmsPort, repository }),
         reporting: new ReportingService({ repository }),
+        orca: new OrcaFirmImportService({ firmsPort }),
       });
     })();
   }
   return runtimePromise;
+}
+
+
+function decodeCsvBuffer(buffer) {
+  const bytes = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer || []);
+  if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {
+    return bytes.subarray(3).toString("utf8");
+  }
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch (_error) {
+    return new TextDecoder("windows-1252").decode(bytes);
+  }
+}
+
+async function chooseOrcaCsvFile() {
+  const result = await dialog.showOpenDialog({
+    title: "ORCA-Firmen CSV auswählen",
+    properties: ["openFile"],
+    filters: [
+      { name: "CSV-Dateien", extensions: ["csv"] },
+      { name: "Textdateien", extensions: ["txt"] },
+    ],
+  });
+  if (result.canceled || !result.filePaths?.[0]) return null;
+  const filePath = result.filePaths[0];
+  const buffer = await fs.promises.readFile(filePath);
+  return {
+    filePath,
+    fileName: path.basename(filePath),
+    csvText: decodeCsvBuffer(buffer),
+  };
 }
 
 function registerAzlIpc({ ipcMain } = {}) {
@@ -128,6 +167,21 @@ function registerAzlIpc({ ipcMain } = {}) {
   handle("azl:contracts:save", (runtime, data) => runtime.contracts.save(data), "result");
   handle("azl:report:project", (runtime, data) => runtime.reporting.project(data.projectId), "report");
   handle("azl:report:firm", (runtime, data) => runtime.reporting.firm(data.contractId), "report");
+
+  handle("azl:orca:chooseAndPlan", async (runtime) => {
+    const selected = await chooseOrcaCsvFile();
+    if (!selected) return { canceled: true };
+    const plan = await runtime.orca.plan({ csvText: selected.csvText });
+    return {
+      canceled: false,
+      fileName: selected.fileName,
+      plan,
+    };
+  }, "result");
+
+  handle("azl:orca:apply", async (runtime, data) => {
+    return await runtime.orca.apply(data.plan);
+  }, "result");
 
   console.log("[main] azL IPC registered");
 }
