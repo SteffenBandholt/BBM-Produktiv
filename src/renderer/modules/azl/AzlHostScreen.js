@@ -51,16 +51,35 @@ function createServices() {
           projectId,
           includeInactive: false,
         });
-        return requireOk(result, "list") || [];
+        const list = requireOk(result, "list") || [];
+        return list.map((firm) => ({
+          ...firm,
+          ref: firm?.ref
+            ? {
+                ...firm.ref,
+                kind: firm.ref.kind === "global_firm"
+                  ? "global"
+                  : firm.ref.kind === "project_firm"
+                    ? "project"
+                    : firm.ref.kind,
+              }
+            : firm?.ref,
+        }));
       },
     }),
     firmPool: Object.freeze({
       async list() {
         const result = await window.bbmDb.firmDirectoryListAll({
-          kind: "global",
+          kind: "global_firm",
           includeInactive: true,
         });
-        return requireOk(result, "list") || [];
+        const list = requireOk(result, "list") || [];
+        return list.map((firm) => ({
+          ...firm,
+          ref: firm?.ref
+            ? { ...firm.ref, kind: "global" }
+            : { kind: "global", id: firm?.id },
+        }));
       },
       async assign({ projectId, firmId }) {
         const result = await window.bbmDb.projectFirmsAssignGlobalFirm({
