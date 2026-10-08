@@ -67,6 +67,8 @@ contextBridge.exposeInMainWorld("bbmDb", {
   azlContractSave: (data) => ipcRenderer.invoke("azl:contracts:save", data),
   azlProjectReport: (projectId) => ipcRenderer.invoke("azl:report:project", { projectId }),
   azlFirmReport: (contractId) => ipcRenderer.invoke("azl:report:firm", { contractId }),
+  azlOrcaChooseAndPlan: () => ipcRenderer.invoke("azl:orca:chooseAndPlan"),
+  azlOrcaApply: (plan) => ipcRenderer.invoke("azl:orca:apply", { plan }),
 
   // Archiv
   projectsArchive: _wrapIdArg("projects:archive", "projectId"),
