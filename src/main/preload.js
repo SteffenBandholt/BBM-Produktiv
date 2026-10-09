@@ -161,6 +161,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   firmDirectoryListProjectParticipants: (data) =>
     ipcRenderer.invoke("firmDirectory:listProjectParticipants", data),
   firmDirectoryListPersons: (data) => ipcRenderer.invoke("firmDirectory:listPersons", data),
+  firmDirectoryCreatePerson: (data) => ipcRenderer.invoke("firmDirectory:createPerson", data),
   firmDirectoryCreate: (data) => ipcRenderer.invoke("firmDirectory:create", data),
   firmDirectoryUpdate: (data) => ipcRenderer.invoke("firmDirectory:update", data),
   firmDirectoryCheckUseChange: (data) => ipcRenderer.invoke("firmDirectory:checkUseChange", data),
