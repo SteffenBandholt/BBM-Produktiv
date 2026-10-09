@@ -3386,15 +3386,10 @@ const taFirmNotes = document.createElement("textarea");
           it.firm_name = fallbackFirm.name || "";
           this._recalcPersonImportStatus(it);
         }
-        const hasFirm = Boolean(String(it.firm_id || "").trim());
-        const hasName = Boolean(String(it.first_name || "").trim() || String(it.last_name || "").trim());
-        const isConflict = Boolean(
-          String(it.existing_person_id || "").trim() ||
-          String(it.conflict_state || "").trim().toLowerCase() === "needs_decision"
-        );
-        const shouldTake = hasFirm && hasName && !isConflict;
-        it.auto_take = shouldTake ? 1 : 0;
-        it.take = shouldTake ? 1 : 0;
+        // Kontakte werden nie pauschal importiert. Erst eine ausdrückliche
+        // Auswahl/Übernahme durch den Benutzer aktiviert den Datensatz.
+        it.auto_take = 0;
+        it.take = 0;
       }
       this.personImportSelectedRowId = this.personImportItems[0]?.row_id || null;
       if (this.personImportFileNameEl) this.personImportFileNameEl.textContent = filePath;
