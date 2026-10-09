@@ -1511,11 +1511,15 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
         skipConflicts: false,
       });
       const cleanedItems = boundFirm
-        ? prepared.cleaned.map((item) => ({
-            ...item,
-            firm_id: boundFirm.id,
-            firm_name: boundFirm.name || "",
-          }))
+        ? prepared.cleaned.map((item) =>
+            Number(item?.take ?? 0) === 1
+              ? {
+                  ...item,
+                  firm_id: boundFirm.id,
+                  firm_name: boundFirm.name || "",
+                }
+              : item
+          )
         : prepared.cleaned;
       const summary =
         target === "project"
