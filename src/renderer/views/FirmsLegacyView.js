@@ -3186,8 +3186,45 @@ const taFirmNotes = document.createElement("textarea");
         alert(
           `Import abgeschlossen:\n${s.created || 0} neu\n${s.merged || 0} gemerged\n${s.skipped || 0} übersprungen`
         );
+
+        // Bei einem gezielten Einzelimport direkt anschließend den importierten
+        // Mitarbeiter zum Bearbeiten öffnen.
+        const importedCandidate =
+          activeItems.length === 1
+            ? {
+                firm_id: String(activeItems[0]?.firm_id || ""),
+                first_name: String(activeItems[0]?.first_name || "").trim(),
+                last_name: String(activeItems[0]?.last_name || "").trim(),
+                email: String(activeItems[0]?.email || "").trim().toLocaleLowerCase("de-DE"),
+              }
+            : null;
+
         this._closePersonImportModal();
         await this._refreshAfterImport();
+
+        if (
+          importedCandidate &&
+          String(this.selectedFirmId || "") === importedCandidate.firm_id &&
+          Array.isArray(this.persons)
+        ) {
+          const importedPerson =
+            (importedCandidate.email
+              ? this.persons.find(
+                  (person) =>
+                    String(person?.email || "").trim().toLocaleLowerCase("de-DE") ===
+                    importedCandidate.email
+                )
+              : null) ||
+            this.persons.find(
+              (person) =>
+                String(person?.first_name || "").trim() === importedCandidate.first_name &&
+                String(person?.last_name || "").trim() === importedCandidate.last_name
+            );
+
+          if (importedPerson?.id) {
+            await this._openPersonEditor({ mode: "edit", personId: importedPerson.id });
+          }
+        }
       } finally {
         this.savingFirm = false;
         this.savingPerson = false;
