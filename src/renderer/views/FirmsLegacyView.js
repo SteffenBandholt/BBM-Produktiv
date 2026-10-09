@@ -1101,7 +1101,9 @@ const taFirmNotes = document.createElement("textarea");
   _getImportContextPayload() {
     const ctx = String(this.importContext || "stamm").trim().toLowerCase();
     const isProject = ctx === "projekt" || ctx === "project";
-    const personImportFirmId = this._getProjectFirmIdForPersonImport();
+    const projectFirmId = this._getProjectFirmIdForPersonImport();
+    const selectedFirmId = String(this.selectedFirmId || "").trim();
+    const personImportFirmId = projectFirmId || (!isProject ? selectedFirmId : "");
     if (!isProject) {
       return personImportFirmId ? { context: "stamm", personImportFirmId } : { context: "stamm" };
     }
@@ -1133,7 +1135,11 @@ const taFirmNotes = document.createElement("textarea");
   }
 
   _resolveProjectFirmFallback() {
-    const firmId = this._getProjectFirmIdForPersonImport();
+    const ctx = String(this.importContext || "stamm").trim().toLowerCase();
+    const isProject = ctx === "projekt" || ctx === "project";
+    const configuredId = this._getProjectFirmIdForPersonImport();
+    const selectedId = String(this.selectedFirmId || "").trim();
+    const firmId = configuredId || (!isProject ? selectedId : "");
     if (!firmId) return null;
     return (this.personImportFirms || []).find((f) => String(f.id || "") === firmId) || null;
   }
@@ -3931,12 +3937,14 @@ const taFirmNotes = document.createElement("textarea");
         row.style.cursor = "pointer";
         row.style.borderBottom = "1px solid #eef2f7";
         row.style.background = String(firm.id) === String(draft.firm_id) ? "#e8f1ff" : "transparent";
-        row.addEventListener("dblclick", () => {
+        const chooseFirm = () => {
           draft.firm_id = String(firm.id || "");
           draft.firm_name = String(firm.name || firm.short || "");
           setAssignedText();
           renderFirmList();
-        });
+        };
+        row.addEventListener("click", chooseFirm);
+        row.addEventListener("dblclick", chooseFirm);
         firmList.appendChild(row);
       }
     };
@@ -3961,6 +3969,10 @@ const taFirmNotes = document.createElement("textarea");
     btnApply.textContent = "Übernehmen";
     applyPopupButtonStyle(btnApply, { variant: "primary" });
     btnApply.onclick = () => {
+      if (!String(draft.firm_id || "").trim()) {
+        alert("Bitte zuerst eine Firma für diesen Kontakt auswählen.");
+        return;
+      }
       this._applyPersonImportDetailDraft(item, draft);
       this._closePersonImportDetailPopup();
     };
