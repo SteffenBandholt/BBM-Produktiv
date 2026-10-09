@@ -90,6 +90,12 @@ function createServices() {
         return result.result;
       },
     }),
+    project: Object.freeze({
+      async getBuilder(projectId) {
+        const result = await window.bbmDb.projectsGetBuilder({ projectId });
+        return requireOk(result, "data") || null;
+      },
+    }),
     orcaImport: Object.freeze({
       async chooseAndPlan() {
         return requireOk(await window.bbmDb.azlOrcaChooseAndPlan(), "result");
