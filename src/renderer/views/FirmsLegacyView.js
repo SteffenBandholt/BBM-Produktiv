@@ -1150,7 +1150,16 @@ const taFirmNotes = document.createElement("textarea");
       return;
     }
     if (typeof this.reloadFirms === "function") {
+      const selectedFirmId = String(this.selectedFirmId || "").trim();
       await this.reloadFirms();
+
+      // Eine normal ausgewählte Firma läuft nicht im Editor-Modus.
+      // reloadFirms() leert in diesem Fall die Mitarbeiterliste. Nach einem
+      // Kontaktimport muss die weiterhin ausgewählte Firma deshalb ausdrücklich
+      // neu geladen werden, damit der importierte Kontakt sofort sichtbar ist.
+      if (selectedFirmId && this._sameId(this.selectedFirmId, selectedFirmId)) {
+        await this._reloadPersons();
+      }
     }
   }
 
