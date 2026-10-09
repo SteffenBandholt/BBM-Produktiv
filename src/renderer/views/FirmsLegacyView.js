@@ -3208,7 +3208,6 @@ const taFirmNotes = document.createElement("textarea");
 
         this._closePersonImportModal();
         await this._refreshAfterImport();
-        }
       } finally {
         this.savingFirm = false;
         this.savingPerson = false;
