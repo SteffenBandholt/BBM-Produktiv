@@ -2672,6 +2672,7 @@ const taFirmNotes = document.createElement("textarea");
       const firm = (this.personImportFirms || []).find((f) => f.id === id) || null;
       item.firm_name = firm?.name || "";
       this._markPersonImportDirty(item, "firm_id");
+      item.auto_take = 1;
       this._setPersonImportTakeByRules(item);
       this._recalcPersonImportStatus(item);
       this._renderPersonImportRows();
@@ -4052,6 +4053,7 @@ const taFirmNotes = document.createElement("textarea");
       this._clearPersonImportConflict(item);
       item.status_base = nextFirmId ? "Neu" : "Firma fehlt";
       this._markPersonImportDirty(item, "firm_id");
+      item.auto_take = 1;
     }
 
     this._setPersonImportTakeByRules(item);
@@ -4151,6 +4153,7 @@ const taFirmNotes = document.createElement("textarea");
     item.firm_id = firm.id;
     item.firm_name = firm.name || "";
     this._markPersonImportDirty(item, "firm_id");
+    item.auto_take = 1;
     this._setPersonImportTakeByRules(item);
     this._recalcPersonImportStatus(item);
     this._renderPersonImportRows();
