@@ -7,6 +7,8 @@ const { dialog } = require("electron");
 const { initDatabase } = require("../db/database");
 const projectsRepo = require("../db/projectsRepo");
 const { getFirmDirectoryService } = require("../domain/firms/FirmDirectoryService");
+const { appSettingsGetMany, appSettingsSetMany } = require("../db/appSettingsRepo");
+const { createProjectStorageAccess, sanitizeDirName } = require("./projectStoragePaths");
 
 let runtimePromise = null;
 
@@ -122,6 +124,44 @@ function decodeCsvBuffer(buffer) {
   }
 }
 
+async function chooseOfferPdf({ projectId, azlId } = {}) {
+  const id = String(azlId || "").trim();
+  if (!id) throw new TypeError("azL-ID fehlt.");
+  const result = await dialog.showOpenDialog({
+    title: "Angebot zur AzL auswählen",
+    properties: ["openFile"],
+    filters: [{ name: "PDF-Dateien", extensions: ["pdf"] }],
+  });
+  if (result.canceled || !result.filePaths?.[0]) return { canceled: true };
+
+  const sourcePath = result.filePaths[0];
+  const runtime = await getRuntime();
+  const azl = runtime.azl.getById(id);
+  if (!azl) throw new Error("azL nicht gefunden.");
+  if (String(azl.project_id ?? azl.projectId) !== String(projectId || "")) {
+    throw new Error("AzL gehört nicht zum angegebenen Projekt.");
+  }
+
+  const storage = createProjectStorageAccess();
+  const paths = storage.ensure({ projectId, moduleId: "azl" });
+  const baseName = sanitizeDirName(path.basename(sourcePath, path.extname(sourcePath))) || "Angebot";
+  const ext = ".pdf";
+  let targetPath = path.join(paths.targets.Angebote, `${baseName}${ext}`);
+  let index = 2;
+  while (fs.existsSync(targetPath)) {
+    targetPath = path.join(paths.targets.Angebote, `${baseName} (${index++})${ext}`);
+  }
+  await fs.promises.copyFile(sourcePath, targetPath);
+
+  const document = runtime.azl.replaceOfferDocument(id, {
+    storageRef: targetPath,
+    originalName: path.basename(sourcePath),
+    mimeType: "application/pdf",
+    sourceKind: "file",
+  });
+  return { canceled: false, document };
+}
+
 async function chooseOrcaCsvFile() {
   const result = await dialog.showOpenDialog({
     title: "ORCA-Firmen CSV auswählen",
@@ -165,6 +205,18 @@ function registerAzlIpc({ ipcMain } = {}) {
   handle("azl:setStatus", (runtime, data) => runtime.azl.setStatus(data.id, data.status), "azl");
   handle("azl:positions:list", (runtime, data) => runtime.azl.listPositions(data.id), "list");
   handle("azl:positions:replace", (runtime, data) => runtime.azl.replacePositions(data.id, data.positions || []), "list");
+  handle("azl:documents:list", (runtime, data) => runtime.azl.listDocuments(data.id, data.documentKind || null), "list");
+  handle("azl:offer:choose", async (_runtime, data) => chooseOfferPdf(data), "result");
+  handle("azl:offer:remove", (runtime, data) => runtime.azl.replaceOfferDocument(data.id, null), "document");
+  handle("azl:preferences:get", async () => {
+    const settings = appSettingsGetMany(["azl.defaultIssuerName"]);
+    return { issuerName: String(settings?.["azl.defaultIssuerName"] || "") };
+  }, "preferences");
+  handle("azl:preferences:setIssuer", async (_runtime, data) => {
+    const issuerName = String(data.issuerName || "").trim();
+    appSettingsSetMany({ "azl.defaultIssuerName": issuerName });
+    return { issuerName };
+  }, "preferences");
   handle("azl:contracts:list", (runtime, data) => runtime.contracts.list(data.projectId), "list");
   handle("azl:contracts:save", (runtime, data) => runtime.contracts.save(data), "result");
   handle("azl:orders:list", (runtime, data) => runtime.contracts.listOrders(data.contractId), "list");
