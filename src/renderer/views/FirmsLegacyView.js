@@ -1101,7 +1101,15 @@ const taFirmNotes = document.createElement("textarea");
   _getImportContextPayload() {
     const ctx = String(this.importContext || "stamm").trim().toLowerCase();
     const isProject = ctx === "projekt" || ctx === "project";
-    const personImportFirmId = this._getProjectFirmIdForPersonImport();
+
+    // Kontaktimport aus einer geöffneten Stammfirma:
+    // Die aktuell ausgewählte Firma ist die Ziel-Firma. Die Firmenangabe
+    // in der CSV ist dafür unerheblich. Damit kann jeder beliebige Kontakt
+    // (z. B. Erna Meier) gezielt Haberland zugeordnet werden.
+    const selectedFirmId = String(this.selectedFirmId || "").trim();
+    const configuredFirmId = this._getProjectFirmIdForPersonImport();
+    const personImportFirmId = configuredFirmId || (!isProject ? selectedFirmId : "");
+
     if (!isProject) {
       return personImportFirmId ? { context: "stamm", personImportFirmId } : { context: "stamm" };
     }
