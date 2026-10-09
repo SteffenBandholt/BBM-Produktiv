@@ -167,6 +167,8 @@ contextBridge.exposeInMainWorld("bbmDb", {
   firmDirectorySetUses: (data) => ipcRenderer.invoke("firmDirectory:setUses", data),
   firmDirectoryPrepareLocalToGlobal: (data) =>
     ipcRenderer.invoke("firmDirectory:prepareLocalToGlobal", data),
+  firmDirectoryImportCsvParse: (data) =>
+    ipcRenderer.invoke("firmDirectory:importCsvParse", data),
 
   // Eigenstaendige zentrale Kundenverwaltung + kontrollierte BBM-Verknuepfung.
   customerList: (data) => ipcRenderer.invoke("customer:list", data),
