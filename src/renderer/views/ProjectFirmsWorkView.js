@@ -67,6 +67,7 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     super(args);
     this.projectLocalFirms = [];
     this.contactsByKey = new Map();
+    this.azlContracts = [];
     this.selectedEntry = null;
   }
 
@@ -77,6 +78,15 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
 
     const api = window.bbmDb || {};
     this.contactsByKey = new Map();
+
+    try {
+      const contractRes = typeof api.azlContractsList === "function"
+        ? await api.azlContractsList(this.projectId)
+        : null;
+      this.azlContracts = contractRes?.ok && Array.isArray(contractRes.list) ? contractRes.list : [];
+    } catch (_error) {
+      this.azlContracts = [];
+    }
 
     const globalLoads = (this.assignedGlobalFirms || []).map(async (firm) => {
       const firmId = text(firm?.id);
@@ -306,6 +316,137 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
       }
       card.append(list);
     }
+
+    const orderCard = style(document.createElement("section"), {
+      marginTop: "4px",
+      paddingTop: "12px",
+      borderTop: "1px solid #edf0f4",
+      display: "grid",
+      gap: "8px",
+    });
+    const orderTitle = style(document.createElement("div"), {
+      fontSize: "12px",
+      fontWeight: "850",
+      color: "#344054",
+    });
+    orderTitle.textContent = "Auftragsdaten für azL";
+
+    const firmKind = kind === "project" ? "project" : "global";
+    const contractEntry = (this.azlContracts || []).find((entry) => {
+      const contract = entry?.contract || entry;
+      return String(contract?.firm_kind || contract?.firmKind || "") === firmKind
+        && String(contract?.firm_id || contract?.firmId || "") === text(firm?.id);
+    });
+    const contract = contractEntry?.contract || contractEntry || null;
+
+    const orderGrid = style(document.createElement("div"), {
+      display: "grid",
+      gridTemplateColumns: "150px minmax(0,1fr)",
+      gap: "7px 9px",
+      alignItems: "center",
+    });
+    const makeInput = (labelText, value = "", type = "text") => {
+      const label = style(document.createElement("label"), {
+        fontSize: "11px",
+        color: "#475467",
+        fontWeight: "700",
+      });
+      label.textContent = labelText;
+      const input = document.createElement("input");
+      input.type = type;
+      if (type === "checkbox") {
+        input.checked = !!value;
+      } else {
+        input.value = value == null ? "" : String(value);
+        style(input, {
+          width: "100%",
+          minHeight: "32px",
+          border: "1px solid #cfd7e3",
+          borderRadius: "7px",
+          padding: "0 8px",
+          boxSizing: "border-box",
+          fontSize: "11.5px",
+        });
+      }
+      orderGrid.append(label, input);
+      return input;
+    };
+
+    const tradeInput = makeInput("Gewerk", contract?.trade || "");
+    const orderNoInput = makeInput("Auftragsnummer", contract?.order_number || contract?.orderNumber || "");
+    const mainOrderInput = makeInput(
+      "Hauptauftrag netto",
+      ((Number(contract?.main_order_net_cents ?? contract?.mainOrderNetCents ?? 0) || 0) / 100)
+        .toFixed(2).replace(".", ",")
+    );
+    const rateAgreedInput = makeInput(
+      "Stundensatz vereinbart",
+      Number(contract?.hourly_rate_agreed ?? contract?.hourlyRateAgreed ?? 0) === 1,
+      "checkbox"
+    );
+    const hourlyRateInput = makeInput(
+      "Stundenverrechnungssatz €/h",
+      contract?.hourly_rate_cents == null && contract?.hourlyRateCents == null
+        ? ""
+        : ((Number(contract?.hourly_rate_cents ?? contract?.hourlyRateCents) || 0) / 100)
+            .toFixed(2).replace(".", ",")
+    );
+
+    const parseEuro = (value) => {
+      const normalized = String(value || "").replace(/\./g, "").replace(",", ".").replace(/[^0-9.-]/g, "");
+      return Math.round(Number(normalized || 0) * 100);
+    };
+    const syncHourlyEnabled = () => {
+      hourlyRateInput.disabled = !rateAgreedInput.checked;
+      if (!rateAgreedInput.checked) hourlyRateInput.value = "";
+    };
+    rateAgreedInput.addEventListener("change", syncHourlyEnabled);
+    syncHourlyEnabled();
+
+    const orderActions = style(document.createElement("div"), {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      flexWrap: "wrap",
+    });
+    const saveOrder = button("Auftragsdaten speichern", { primary: true });
+    const orderStatus = style(document.createElement("span"), {
+      fontSize: "10.5px",
+      color: "#667085",
+    });
+    saveOrder.addEventListener("click", async () => {
+      const api = window.bbmDb || {};
+      if (typeof api.azlContractSave !== "function") {
+        orderStatus.textContent = "azL-Auftragsdaten sind nicht verfügbar.";
+        return;
+      }
+      try {
+        const result = await api.azlContractSave({
+          id: contract?.id || undefined,
+          projectId: this.projectId,
+          firmRef: {
+            kind: firmKind,
+            id: text(firm?.id),
+            projectId: firmKind === "project" ? this.projectId : undefined,
+          },
+          trade: text(tradeInput.value),
+          orderNumber: text(orderNoInput.value),
+          mainOrderNetCents: parseEuro(mainOrderInput.value),
+          hourlyRateAgreed: rateAgreedInput.checked,
+          hourlyRateCents: rateAgreedInput.checked ? parseEuro(hourlyRateInput.value) : null,
+        });
+        if (!result?.ok) throw new Error(result?.error || "Auftragsdaten konnten nicht gespeichert werden.");
+        orderStatus.textContent = "Auftragsdaten gespeichert.";
+        const refreshed = await api.azlContractsList?.(this.projectId);
+        this.azlContracts = refreshed?.ok && Array.isArray(refreshed.list) ? refreshed.list : this.azlContracts;
+      } catch (error) {
+        orderStatus.textContent = error?.message || "Auftragsdaten konnten nicht gespeichert werden.";
+      }
+    });
+
+    orderActions.append(saveOrder, orderStatus);
+    orderCard.append(orderTitle, orderGrid, orderActions);
+    card.append(orderCard);
 
     const actions = style(document.createElement("div"), {
       display: "flex",
