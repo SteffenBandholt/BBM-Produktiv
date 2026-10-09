@@ -1398,71 +1398,41 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
       const filePath = payload?.filePath;
       const parsed = _loadCsvAndBuildRows(filePath);
       const target = _resolveImportTarget(payload);
-      const boundFirm = _resolveBoundPersonImportFirm(payload);
       let firms = [];
       let existingPersons = [];
+
       if (target === "project") {
         const projectId = _requireProjectId(payload);
-        if (boundFirm) {
-          firms = [boundFirm];
-          existingPersons = projectPersonsRepo.listActiveByProjectFirm(boundFirm.id).map((p) => ({
-            id: p.id,
-            firm_id: p.project_firm_id,
-            first_name: p.first_name,
-            last_name: p.last_name,
-            email: p.email,
-            phone: p.phone,
-            funktion: p.funktion,
-            rolle: p.rolle,
-            notes: p.notes,
-          }));
-        } else {
-          firms = projectFirmsRepo.listActiveByProject(projectId).map((f) => ({ id: f.id, name: f.name, email: f.email }));
-          existingPersons = projectPersonsRepo.listActiveByProject(projectId).map((p) => ({
-            id: p.id,
-            firm_id: p.project_firm_id,
-            first_name: p.first_name,
-            last_name: p.last_name,
-            email: p.email,
-            phone: p.phone,
-            funktion: p.funktion,
-            rolle: p.rolle,
-            notes: p.notes,
-          }));
-        }
+        firms = projectFirmsRepo
+          .listActiveByProject(projectId)
+          .map((f) => ({ id: f.id, name: f.name }));
+        existingPersons = projectPersonsRepo.listActiveByProject(projectId).map((p) => ({
+          id: p.id,
+          firm_id: p.project_firm_id,
+          first_name: p.first_name,
+          last_name: p.last_name,
+          email: p.email,
+          phone: p.phone,
+          funktion: p.funktion,
+          rolle: p.rolle,
+          notes: p.notes,
+        }));
       } else {
-        if (boundFirm) {
-          firms = [boundFirm];
-          existingPersons = personsRepo.listActiveByFirm(boundFirm.id).map((p) => ({
-            id: p.id,
-            firm_id: p.firm_id,
-            first_name: p.first_name,
-            last_name: p.last_name,
-            email: p.email,
-            phone: p.phone,
-            funktion: p.funktion,
-            rolle: p.rolle,
-            notes: p.notes,
-          }));
-        } else {
-          firms = firmsRepo.listActive().map((f) => ({ id: f.id, name: f.name, email: f.email }));
-          existingPersons = personsRepo.listActiveAll().map((p) => ({
-            id: p.id,
-            firm_id: p.firm_id,
-            first_name: p.first_name,
-            last_name: p.last_name,
-            email: p.email,
-            phone: p.phone,
-            funktion: p.funktion,
-            rolle: p.rolle,
-            notes: p.notes,
-          }));
-        }
+        firms = firmsRepo.listActive().map((f) => ({ id: f.id, name: f.name }));
+        existingPersons = personsRepo.listActiveAll().map((p) => ({
+          id: p.id,
+          firm_id: p.firm_id,
+          first_name: p.first_name,
+          last_name: p.last_name,
+          email: p.email,
+          phone: p.phone,
+          funktion: p.funktion,
+          rolle: p.rolle,
+          notes: p.notes,
+        }));
       }
-      const stagingBase = _buildPersonsStagingFromRows(parsed.rows, firms, existingPersons);
-      const staging = boundFirm
-        ? _bindPersonsStagingToFirm(stagingBase.items, boundFirm, existingPersons)
-        : stagingBase;
+
+      const staging = _buildPersonsStagingFromRows(parsed.rows, firms, existingPersons);
       return {
         ok: true,
         filePath: _normStr(filePath),
@@ -1487,26 +1457,20 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
   ipcMain.handle("persons:importApplyStaging", (_e, payload) => {
     try {
       const target = _resolveImportTarget(payload);
-      const boundFirm = _resolveBoundPersonImportFirm(payload);
       const items = Array.isArray(payload?.items) ? payload.items : [];
       const prepared = _cleanPersonsImportItems(items, {
         strictDecision: true,
         skipConflicts: false,
       });
-      const cleanedItems = boundFirm
-        ? prepared.cleaned.map((item) => ({
-            ...item,
-            firm_id: boundFirm.id,
-            firm_name: boundFirm.name || "",
-          }))
-        : prepared.cleaned;
+
       const summary =
         target === "project"
           ? projectPersonsRepo.importPersonsFromOutlookStaging({
               projectId: _requireProjectId(payload),
-              stagingRows: cleanedItems,
+              stagingRows: prepared.cleaned,
             })
-          : personsRepo.importPersonsFromOutlookStaging(cleanedItems);
+          : personsRepo.importPersonsFromOutlookStaging(prepared.cleaned);
+
       return { ok: true, summary };
     } catch (err) {
       console.error("[topsIpc] persons:importApplyStaging failed", {
