@@ -492,13 +492,22 @@ function _buildPersonsStagingFromRows(parsedRows, firms, existingPersons) {
   const notesKeys = ["Notizen", "Notes"];
 
   const firmNameToFirms = new Map();
+  const firmEmailToFirms = new Map();
   for (const f of firms || []) {
-    const key = _normStr(f?.name).toLocaleLowerCase("de-DE");
-    if (!key) continue;
-    if (!firmNameToFirms.has(key)) {
-      firmNameToFirms.set(key, []);
+    const firmEntry = {
+      id: f.id,
+      name: _normStr(f.name),
+      email: _normStr(f.email).toLocaleLowerCase("de-DE"),
+    };
+    const key = firmEntry.name.toLocaleLowerCase("de-DE");
+    if (key) {
+      if (!firmNameToFirms.has(key)) firmNameToFirms.set(key, []);
+      firmNameToFirms.get(key).push(firmEntry);
     }
-    firmNameToFirms.get(key).push({ id: f.id, name: _normStr(f.name) });
+    if (firmEntry.email) {
+      if (!firmEmailToFirms.has(firmEntry.email)) firmEmailToFirms.set(firmEntry.email, []);
+      firmEmailToFirms.get(firmEntry.email).push(firmEntry);
+    }
   }
 
   const byEmail = new Map();
@@ -533,7 +542,15 @@ function _buildPersonsStagingFromRows(parsedRows, firms, existingPersons) {
     const notes = _getField(row, notesKeys);
 
     const firmKey = _normStr(companyName).toLocaleLowerCase("de-DE");
-    const firmCandidates = firmKey ? firmNameToFirms.get(firmKey) || [] : [];
+    let firmCandidates = firmKey ? firmNameToFirms.get(firmKey) || [] : [];
+
+    // Falls der Firmenname im Quellsystem leicht abweicht (z. B. Haberland/Haberlandt),
+    // darf eine eindeutige Firmen-E-Mail die Zuordnung stabilisieren.
+    if (firmCandidates.length !== 1 && email) {
+      const emailCandidates = firmEmailToFirms.get(email) || [];
+      if (emailCandidates.length === 1) firmCandidates = emailCandidates;
+    }
+
     const firmAmbiguous = firmCandidates.length > 1;
     const firm = firmCandidates.length === 1 ? firmCandidates[0] : null;
     const firmId = firm?.id || "";
@@ -1264,9 +1281,9 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
         const projectId = _requireProjectId(payload);
         existing = projectFirmsRepo
           .listActiveByProject(projectId)
-          .map((f) => ({ id: f.id, name: f.name }));
+          .map((f) => ({ id: f.id, name: f.name, email: f.email }));
       } else {
-        existing = firmsRepo.listActive().map((f) => ({ id: f.id, name: f.name }));
+        existing = firmsRepo.listActive().map((f) => ({ id: f.id, name: f.name, email: f.email }));
       }
       const ext = _buildOutlookStagingFromRows(parsed.rows, existing);
       return {
@@ -1321,7 +1338,7 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
         let existingPersons = [];
         if (target === "project") {
           const projectId = _requireProjectId(payload);
-          firms = projectFirmsRepo.listActiveByProject(projectId).map((f) => ({ id: f.id, name: f.name }));
+          firms = projectFirmsRepo.listActiveByProject(projectId).map((f) => ({ id: f.id, name: f.name, email: f.email }));
           existingPersons = projectPersonsRepo.listActiveByProject(projectId).map((p) => ({
             id: p.id,
             firm_id: p.project_firm_id,
@@ -1353,7 +1370,7 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
             autoSkippedConflicts: prepared.forcedSkippedConflicts,
           };
         } else {
-          firms = firmsRepo.listActive().map((f) => ({ id: f.id, name: f.name }));
+          firms = firmsRepo.listActive().map((f) => ({ id: f.id, name: f.name, email: f.email }));
           existingPersons = personsRepo.listActiveAll().map((p) => ({
             id: p.id,
             firm_id: p.firm_id,
@@ -1417,7 +1434,7 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
             notes: p.notes,
           }));
         } else {
-          firms = projectFirmsRepo.listActiveByProject(projectId).map((f) => ({ id: f.id, name: f.name }));
+          firms = projectFirmsRepo.listActiveByProject(projectId).map((f) => ({ id: f.id, name: f.name, email: f.email }));
           existingPersons = projectPersonsRepo.listActiveByProject(projectId).map((p) => ({
             id: p.id,
             firm_id: p.project_firm_id,
@@ -1445,7 +1462,7 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
             notes: p.notes,
           }));
         } else {
-          firms = firmsRepo.listActive().map((f) => ({ id: f.id, name: f.name }));
+          firms = firmsRepo.listActive().map((f) => ({ id: f.id, name: f.name, email: f.email }));
           existingPersons = personsRepo.listActiveAll().map((p) => ({
             id: p.id,
             firm_id: p.firm_id,
