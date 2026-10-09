@@ -445,8 +445,155 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     });
 
     orderActions.append(saveOrder, orderStatus);
-    orderCard.append(orderTitle, orderGrid, orderActions);
+
+    const sideOrdersTitle = style(document.createElement("div"), {
+      marginTop: "6px",
+      fontSize: "11.5px",
+      fontWeight: "850",
+      color: "#344054",
+    });
+    sideOrdersTitle.textContent = "Nebenaufträge";
+
+    const sideOrdersList = style(document.createElement("div"), {
+      display: "grid",
+      gap: "6px",
+    });
+
+    const addSideOrder = button("+ Nebenauftrag");
+    const sideOrderStatus = style(document.createElement("span"), {
+      fontSize: "10.5px",
+      color: "#667085",
+    });
+    const sideOrderActions = style(document.createElement("div"), {
+      display: "flex",
+      gap: "8px",
+      alignItems: "center",
+      flexWrap: "wrap",
+    });
+    sideOrderActions.append(addSideOrder, sideOrderStatus);
+
+    const renderSideOrders = async () => {
+      sideOrdersList.innerHTML = "";
+      const api = window.bbmDb || {};
+      const activeContractId = text(contract?.id);
+      if (!activeContractId || typeof api.azlOrdersList !== "function") {
+        const empty = style(document.createElement("div"), {
+          fontSize: "10.5px",
+          color: "#98a2b3",
+        });
+        empty.textContent = activeContractId
+          ? "Nebenaufträge sind nicht verfügbar."
+          : "Zuerst Auftragsdaten speichern.";
+        sideOrdersList.append(empty);
+        addSideOrder.disabled = !activeContractId;
+        return;
+      }
+
+      const res = await api.azlOrdersList(activeContractId);
+      if (!res?.ok) {
+        sideOrderStatus.textContent = res?.error || "Nebenaufträge konnten nicht geladen werden.";
+        return;
+      }
+      const rows = (res.list || []).filter((row) => String(row?.order_kind || row?.orderKind || "") !== "main");
+      if (!rows.length) {
+        const empty = style(document.createElement("div"), {
+          fontSize: "10.5px",
+          color: "#98a2b3",
+        });
+        empty.textContent = "Keine Nebenaufträge hinterlegt.";
+        sideOrdersList.append(empty);
+        return;
+      }
+
+      for (const row of rows) {
+        const line = style(document.createElement("div"), {
+          display: "grid",
+          gridTemplateColumns: "90px minmax(0,1fr) 100px auto",
+          gap: "6px",
+          alignItems: "center",
+          padding: "6px",
+          border: "1px solid #edf0f4",
+          borderRadius: "7px",
+          background: "#f8fafc",
+        });
+        const no = document.createElement("input");
+        no.value = text(row?.order_number ?? row?.orderNumber);
+        const label = document.createElement("input");
+        label.value = text(row?.label);
+        const net = document.createElement("input");
+        net.value = ((Number(row?.net_cents ?? row?.netCents ?? 0) || 0) / 100).toFixed(2).replace(".", ",");
+        for (const input of [no, label, net]) {
+          style(input, {
+            minWidth: "0",
+            minHeight: "30px",
+            border: "1px solid #cfd7e3",
+            borderRadius: "6px",
+            padding: "0 7px",
+            fontSize: "11px",
+          });
+        }
+        no.placeholder = "Nr.";
+        label.placeholder = "Bezeichnung";
+        net.placeholder = "Netto";
+
+        const actions = style(document.createElement("div"), {
+          display: "flex",
+          gap: "4px",
+        });
+        const saveRow = button("Speichern");
+        const deleteRow = button("×", { danger: true });
+        saveRow.addEventListener("click", async () => {
+          const saveRes = await api.azlOrderSave?.({
+            id: row.id,
+            contractId: activeContractId,
+            orderKind: "side",
+            orderNumber: text(no.value),
+            label: text(label.value),
+            netCents: parseEuro(net.value),
+          });
+          sideOrderStatus.textContent = saveRes?.ok ? "Nebenauftrag gespeichert." : (saveRes?.error || "Speichern fehlgeschlagen.");
+        });
+        deleteRow.addEventListener("click", async () => {
+          if (!confirm("Nebenauftrag wirklich löschen?")) return;
+          const deleteRes = await api.azlOrderDelete?.(row.id);
+          if (!deleteRes?.ok) {
+            sideOrderStatus.textContent = deleteRes?.error || "Löschen fehlgeschlagen.";
+            return;
+          }
+          sideOrderStatus.textContent = "Nebenauftrag gelöscht.";
+          await renderSideOrders();
+        });
+        actions.append(saveRow, deleteRow);
+        line.append(no, label, net, actions);
+        sideOrdersList.append(line);
+      }
+    };
+
+    addSideOrder.addEventListener("click", async () => {
+      const api = window.bbmDb || {};
+      const activeContractId = text(contract?.id);
+      if (!activeContractId) {
+        sideOrderStatus.textContent = "Zuerst Auftragsdaten speichern.";
+        return;
+      }
+      const saveRes = await api.azlOrderSave?.({
+        contractId: activeContractId,
+        orderKind: "side",
+        orderNumber: "",
+        label: "Nebenauftrag",
+        netCents: 0,
+      });
+      if (!saveRes?.ok) {
+        sideOrderStatus.textContent = saveRes?.error || "Nebenauftrag konnte nicht angelegt werden.";
+        return;
+      }
+      sideOrderStatus.textContent = "Nebenauftrag angelegt.";
+      await renderSideOrders();
+    });
+
+    orderCard.append(orderTitle, orderGrid, orderActions, sideOrdersTitle, sideOrdersList, sideOrderActions);
     card.append(orderCard);
+    void renderSideOrders();
 
     const actions = style(document.createElement("div"), {
       display: "flex",
