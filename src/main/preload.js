@@ -63,6 +63,8 @@ contextBridge.exposeInMainWorld("bbmDb", {
   azlCreateDraft: (data) => ipcRenderer.invoke("azl:createDraft", data),
   azlUpdate: (id, patch) => ipcRenderer.invoke("azl:update", { id, patch }),
   azlSetStatus: (id, status) => ipcRenderer.invoke("azl:setStatus", { id, status }),
+  azlPositionsList: (id) => ipcRenderer.invoke("azl:positions:list", { id }),
+  azlPositionsReplace: (id, positions) => ipcRenderer.invoke("azl:positions:replace", { id, positions }),
   azlContractsList: (projectId) => ipcRenderer.invoke("azl:contracts:list", { projectId }),
   azlContractSave: (data) => ipcRenderer.invoke("azl:contracts:save", data),
   azlOrdersList: (contractId) => ipcRenderer.invoke("azl:orders:list", { contractId }),
