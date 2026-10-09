@@ -174,8 +174,9 @@ function detectOfferFields(text) {
 
   let netCents = null;
   const moneyPatterns = [
-    /(?:Angebotssumme|Gesamtsumme|Summe)\s*(?:netto)?\s*[: ]{0,3}([0-9][0-9.\s]*,[0-9]{2})\s*(?:€|EUR)?/i,
-    /(?:Netto(?:summe|betrag)?|Zwischensumme)\s*[: ]{0,3}([0-9][0-9.\s]*,[0-9]{2})\s*(?:€|EUR)?/i,
+    /(?:Angebotssumme|Gesamtsumme|Summe)\s*netto\s*[: ]{0,3}([0-9][0-9.\s]*,[0-9]{2})\s*(?:€|EUR)?/i,
+    /(?:Nettosumme|Nettobetrag|Netto\s*Betrag)\s*[: ]{0,3}([0-9][0-9.\s]*,[0-9]{2})\s*(?:€|EUR)?/i,
+    /Zwischensumme\s*netto\s*[: ]{0,3}([0-9][0-9.\s]*,[0-9]{2})\s*(?:€|EUR)?/i,
   ];
   for (const pattern of moneyPatterns) {
     const m = source.match(pattern);
