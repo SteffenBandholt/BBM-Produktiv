@@ -16,7 +16,7 @@ function requireOk(result, key) {
   return result[key];
 }
 
-function createServices() {
+function createServices(router) {
   return Object.freeze({
     azl: Object.freeze({
       async createDraft(input) {
@@ -100,6 +100,14 @@ function createServices() {
         return requireOk(result, "organization") || null;
       },
     }),
+    navigation: Object.freeze({
+      async openProjectFirms(projectId) {
+        if (typeof router?.showProjectFirms !== "function") {
+          throw new Error("Projektfirmenverwaltung ist nicht verfügbar.");
+        }
+        await router.showProjectFirms(projectId);
+      },
+    }),
     orcaImport: Object.freeze({
       async chooseAndPlan() {
         return requireOk(await window.bbmDb.azlOrcaChooseAndPlan(), "result");
@@ -120,7 +128,7 @@ export default class AzlHostScreen {
     this.inner = new ExternalAzlScreen({
       projectId: this.projectId,
       project: this.project,
-      services: createServices(),
+      services: createServices(this.router),
     });
   }
 
