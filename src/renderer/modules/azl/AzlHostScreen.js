@@ -95,6 +95,10 @@ function createServices() {
         const result = await window.bbmDb.projectsGetBuilder({ projectId });
         return requireOk(result, "data") || null;
       },
+      async getOwnOrganization() {
+        const result = await window.bbmDb.ownOrganizationGet();
+        return requireOk(result, "organization") || null;
+      },
     }),
     orcaImport: Object.freeze({
       async chooseAndPlan() {
