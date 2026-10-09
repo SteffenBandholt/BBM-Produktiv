@@ -37,6 +37,23 @@ function createServices(router) {
       async replacePositions(id, positions) {
         return requireOk(await window.bbmDb.azlPositionsReplace(id, positions), "list") || [];
       },
+      async listDocuments(id, documentKind = null) {
+        return requireOk(await window.bbmDb.azlDocumentsList(id, documentKind), "list") || [];
+      },
+      async chooseOffer(projectId, id) {
+        return requireOk(await window.bbmDb.azlOfferChoose(projectId, id), "result");
+      },
+      async removeOffer(id) {
+        return requireOk(await window.bbmDb.azlOfferRemove(id), "document");
+      },
+    }),
+    preferences: Object.freeze({
+      async get() {
+        return requireOk(await window.bbmDb.azlPreferencesGet(), "preferences") || {};
+      },
+      async setIssuer(issuerName) {
+        return requireOk(await window.bbmDb.azlPreferencesSetIssuer(issuerName), "preferences") || {};
+      },
     }),
     azlList: Object.freeze({
       async list(projectId) {
