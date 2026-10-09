@@ -492,22 +492,13 @@ function _buildPersonsStagingFromRows(parsedRows, firms, existingPersons) {
   const notesKeys = ["Notizen", "Notes"];
 
   const firmNameToFirms = new Map();
-  const firmEmailToFirms = new Map();
   for (const f of firms || []) {
-    const firmEntry = {
-      id: f.id,
-      name: _normStr(f.name),
-      email: _normStr(f.email).toLocaleLowerCase("de-DE"),
-    };
-    const key = firmEntry.name.toLocaleLowerCase("de-DE");
-    if (key) {
-      if (!firmNameToFirms.has(key)) firmNameToFirms.set(key, []);
-      firmNameToFirms.get(key).push(firmEntry);
+    const key = _normStr(f?.name).toLocaleLowerCase("de-DE");
+    if (!key) continue;
+    if (!firmNameToFirms.has(key)) {
+      firmNameToFirms.set(key, []);
     }
-    if (firmEntry.email) {
-      if (!firmEmailToFirms.has(firmEntry.email)) firmEmailToFirms.set(firmEntry.email, []);
-      firmEmailToFirms.get(firmEntry.email).push(firmEntry);
-    }
+    firmNameToFirms.get(key).push({ id: f.id, name: _normStr(f.name) });
   }
 
   const byEmail = new Map();
@@ -542,15 +533,7 @@ function _buildPersonsStagingFromRows(parsedRows, firms, existingPersons) {
     const notes = _getField(row, notesKeys);
 
     const firmKey = _normStr(companyName).toLocaleLowerCase("de-DE");
-    let firmCandidates = firmKey ? firmNameToFirms.get(firmKey) || [] : [];
-
-    // Falls der Firmenname im Quellsystem leicht abweicht (z. B. Haberland/Haberlandt),
-    // darf eine eindeutige Firmen-E-Mail die Zuordnung stabilisieren.
-    if (firmCandidates.length !== 1 && email) {
-      const emailCandidates = firmEmailToFirms.get(email) || [];
-      if (emailCandidates.length === 1) firmCandidates = emailCandidates;
-    }
-
+    const firmCandidates = firmKey ? firmNameToFirms.get(firmKey) || [] : [];
     const firmAmbiguous = firmCandidates.length > 1;
     const firm = firmCandidates.length === 1 ? firmCandidates[0] : null;
     const firmId = firm?.id || "";
@@ -1511,15 +1494,11 @@ function registerTopsIpc({ ipcMain = electronIpcMain } = {}) {
         skipConflicts: false,
       });
       const cleanedItems = boundFirm
-        ? prepared.cleaned.map((item) =>
-            Number(item?.take ?? 0) === 1
-              ? {
-                  ...item,
-                  firm_id: boundFirm.id,
-                  firm_name: boundFirm.name || "",
-                }
-              : item
-          )
+        ? prepared.cleaned.map((item) => ({
+            ...item,
+            firm_id: boundFirm.id,
+            firm_name: boundFirm.name || "",
+          }))
         : prepared.cleaned;
       const summary =
         target === "project"
