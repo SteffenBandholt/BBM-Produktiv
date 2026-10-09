@@ -1101,15 +1101,7 @@ const taFirmNotes = document.createElement("textarea");
   _getImportContextPayload() {
     const ctx = String(this.importContext || "stamm").trim().toLowerCase();
     const isProject = ctx === "projekt" || ctx === "project";
-
-    // Kontaktimport aus einer geöffneten Stammfirma:
-    // Die aktuell ausgewählte Firma ist die Ziel-Firma. Die Firmenangabe
-    // in der CSV ist dafür unerheblich. Damit kann jeder beliebige Kontakt
-    // (z. B. Erna Meier) gezielt Haberland zugeordnet werden.
-    const selectedFirmId = String(this.selectedFirmId || "").trim();
-    const configuredFirmId = this._getProjectFirmIdForPersonImport();
-    const personImportFirmId = configuredFirmId || (!isProject ? selectedFirmId : "");
-
+    const personImportFirmId = this._getProjectFirmIdForPersonImport();
     if (!isProject) {
       return personImportFirmId ? { context: "stamm", personImportFirmId } : { context: "stamm" };
     }
@@ -2116,8 +2108,7 @@ const taFirmNotes = document.createElement("textarea");
 
   async _loadImportCsvFile(filePath) {
     const api = window.bbmDb || {};
-    const hasCentralParser = typeof api.firmDirectoryImportCsvParse === "function";
-    if (!hasCentralParser && typeof api.firmsImportParseCsv !== "function") {
+    if (typeof api.firmsImportParseCsv !== "function") {
       alert("CSV-Import ist nicht verfügbar (Preload/IPC fehlt).");
       return;
     }
@@ -2129,35 +2120,20 @@ const taFirmNotes = document.createElement("textarea");
         alert("Bitte zuerst ein Projekt auswählen.");
         return;
       }
-
-      let res = null;
-      if (hasCentralParser) {
-        const parsed = await api.firmDirectoryImportCsvParse({ filePath, ...ctxPayload });
-        if (!parsed?.ok) {
-          alert(parsed?.error || "CSV konnte nicht gelesen werden.");
-          return;
-        }
-        res = { ok: true, ...(parsed.result || {}) };
-      } else {
-        res = await api.firmsImportParseCsv({ filePath, ...ctxPayload });
-      }
-
+      const res = await api.firmsImportParseCsv({ filePath, ...ctxPayload });
       if (!res?.ok) {
         alert(res?.error || "CSV konnte nicht gelesen werden.");
         return;
       }
-
       this.importItems = Array.isArray(res.items) ? res.items : [];
       this.importSourceFilePath = String(res.filePath || filePath || "");
       for (const it of this.importItems) {
         it.take = 0;
       }
       this.importSelectedRowId = this.importItems[0]?.row_id || null;
-      if (this.importFileNameEl) this.importFileNameEl.textContent = res.fileName || filePath;
+      if (this.importFileNameEl) this.importFileNameEl.textContent = filePath;
       if (this.importSummaryEl) {
-        const delimiterLabel = res.delimiter === "\t" ? "Tab" : (res.delimiter || "?");
-        this.importSummaryEl.textContent =
-          `${res.rowsCount || 0} Datensätze gelesen, ${this.importItems.length} Firmen erkannt, ${res.ignoredWithoutCompany || 0} ohne Firma ignoriert · Trennzeichen: ${delimiterLabel}.`;
+        this.importSummaryEl.textContent = `${res.rowsCount || 0} Kontakte gelesen, ${this.importItems.length} Firmen erkannt, ${res.ignoredWithoutCompany || 0} ohne Firma ignoriert.`;
       }
       this._renderImportRows();
       this._renderImportDetail();
@@ -2680,7 +2656,6 @@ const taFirmNotes = document.createElement("textarea");
       const firm = (this.personImportFirms || []).find((f) => f.id === id) || null;
       item.firm_name = firm?.name || "";
       this._markPersonImportDirty(item, "firm_id");
-      item.auto_take = 1;
       this._setPersonImportTakeByRules(item);
       this._recalcPersonImportStatus(item);
       this._renderPersonImportRows();
@@ -3386,10 +3361,6 @@ const taFirmNotes = document.createElement("textarea");
           it.firm_name = fallbackFirm.name || "";
           this._recalcPersonImportStatus(it);
         }
-        // Kontakte werden nie pauschal importiert. Erst eine ausdrückliche
-        // Auswahl/Übernahme durch den Benutzer aktiviert den Datensatz.
-        // Beim gezielten Kontaktimport wird nie automatisch jemand übernommen.
-        // Erst "Übernehmen" im Zuordnungs-Popup aktiviert genau diesen Kontakt.
         it.auto_take = 0;
         it.take = 0;
       }
@@ -3618,12 +3589,9 @@ const taFirmNotes = document.createElement("textarea");
     if (!item) return;
     this._closePersonImportDetailPopup();
 
-    const boundFirmId = String(this._getImportContextPayload()?.personImportFirmId || "").trim();
-    const isBoundFirmImport = Boolean(boundFirmId);
-
     const draft = {
       take: Number(item.take || 0) === 1 ? 1 : 0,
-      firm_id: String(item.firm_id || boundFirmId || ""),
+      firm_id: String(item.firm_id || ""),
       firm_name: String(item.firm_name || ""),
       first_name: String(item.first_name || ""),
       last_name: String(item.last_name || ""),
@@ -3713,21 +3681,6 @@ const taFirmNotes = document.createElement("textarea");
       return input;
     };
 
-    const firmSelect = document.createElement("select");
-    firmSelect.style.width = "100%";
-    const emptyFirmOption = document.createElement("option");
-    emptyFirmOption.value = "";
-    emptyFirmOption.textContent = "-- keine Firma --";
-    firmSelect.appendChild(emptyFirmOption);
-    for (const firm of this.personImportFirms || []) {
-      const option = document.createElement("option");
-      option.value = String(firm.id || "");
-      option.textContent = firm.name || firm.short || "(ohne Name)";
-      firmSelect.appendChild(option);
-    }
-    firmSelect.value = String(draft.firm_id || "");
-    firmSelect.disabled = isBoundFirmImport;
-
     const inpFirstName = mkInput(draft.first_name);
     const inpLastName = mkInput(draft.last_name);
     const inpEmail = mkInput(draft.email);
@@ -3755,21 +3708,7 @@ const taFirmNotes = document.createElement("textarea");
     const setAssignedText = () => {
       assignedEl.textContent = draft.firm_name ? `Zugeordnet: ${draft.firm_name}` : "Zugeordnet: keine Firma";
       assignedEl.style.color = draft.firm_name ? "blue" : "#c62828";
-      if (firmSelect) firmSelect.value = String(draft.firm_id || "");
     };
-
-    const assignFirm = (firm) => {
-      draft.firm_id = String(firm?.id || "");
-      draft.firm_name = String(firm?.name || firm?.short || "");
-      setAssignedText();
-      renderFirmList();
-    };
-
-    firmSelect.addEventListener("change", () => {
-      const id = String(firmSelect.value || "");
-      const firm = (this.personImportFirms || []).find((entry) => String(entry.id || "") === id) || null;
-      assignFirm(firm);
-    });
 
     const rawLabel = document.createElement("div");
     rawLabel.className = "bbm-form-label";
@@ -3791,7 +3730,6 @@ const taFirmNotes = document.createElement("textarea");
 
     leftCard.append(
       leftTitle,
-      mkRow("Firma", firmSelect),
       mkRow("Vorname", inpFirstName),
       mkRow("Nachname", inpLastName),
       mkRow("E-Mail", inpEmail),
@@ -3809,9 +3747,7 @@ const taFirmNotes = document.createElement("textarea");
     rightTitle.style.fontWeight = "700";
 
     const rightHint = document.createElement("div");
-    rightHint.textContent = isBoundFirmImport
-      ? "Ziel ist die bereits geöffnete Firma."
-      : "Ein Klick auf eine Firma übernimmt die Zuordnung.";
+    rightHint.textContent = "Doppelklick auf eine Firma uebernimmt die Zuordnung.";
     rightHint.style.fontSize = "12px";
     rightHint.style.opacity = "0.78";
 
@@ -3819,7 +3755,6 @@ const taFirmNotes = document.createElement("textarea");
     btnNewFirm.textContent = "Neue Firma";
     applyPopupButtonStyle(btnNewFirm, { variant: "neutral" });
     btnNewFirm.style.alignSelf = "flex-start";
-    btnNewFirm.hidden = isBoundFirmImport;
 
     const firmList = document.createElement("div");
     firmList.style.border = "1px solid var(--bbm-popup-border)";
@@ -3964,8 +3899,10 @@ const taFirmNotes = document.createElement("textarea");
         const firm = createRes.firm || null;
         if (firm) {
           this.personImportFirms = [...(this.personImportFirms || []), firm];
-          // Neue Firma sofort als Ziel des Kontakts setzen.
-          assignFirm(firm);
+          draft.firm_id = String(firm.id || "");
+          draft.firm_name = String(firm.name || firm.short || "");
+          setAssignedText();
+          renderFirmList();
           this._renderPersonImportFirmList();
         }
         closeCreateFirmPopup();
@@ -3994,9 +3931,11 @@ const taFirmNotes = document.createElement("textarea");
         row.style.cursor = "pointer";
         row.style.borderBottom = "1px solid #eef2f7";
         row.style.background = String(firm.id) === String(draft.firm_id) ? "#e8f1ff" : "transparent";
-        row.addEventListener("click", () => {
-          if (isBoundFirmImport) return;
-          assignFirm(firm);
+        row.addEventListener("dblclick", () => {
+          draft.firm_id = String(firm.id || "");
+          draft.firm_name = String(firm.name || firm.short || "");
+          setAssignedText();
+          renderFirmList();
         });
         firmList.appendChild(row);
       }
@@ -4090,7 +4029,6 @@ const taFirmNotes = document.createElement("textarea");
       this._clearPersonImportConflict(item);
       item.status_base = nextFirmId ? "Neu" : "Firma fehlt";
       this._markPersonImportDirty(item, "firm_id");
-      item.auto_take = 1;
     }
 
     this._setPersonImportTakeByRules(item);
@@ -4190,7 +4128,6 @@ const taFirmNotes = document.createElement("textarea");
     item.firm_id = firm.id;
     item.firm_name = firm.name || "";
     this._markPersonImportDirty(item, "firm_id");
-    item.auto_take = 1;
     this._setPersonImportTakeByRules(item);
     this._recalcPersonImportStatus(item);
     this._renderPersonImportRows();
@@ -4466,54 +4403,23 @@ const taFirmNotes = document.createElement("textarea");
     let reloadPersonsAfter = false;
     try {
       if (this.personMode === "create") {
-        const selected = this.selectedFirm || {};
-        const rawKind = String(selected?.kind || "").trim();
-        const refKind = rawKind === "project_firm" || rawKind === "project"
-          ? "project_firm"
-          : "global_firm";
-        const refProjectId =
-          selected?.project_id ||
-          selected?.projectId ||
-          this.router?.currentProjectId ||
-          null;
-
-        let res = null;
-        if (typeof window.bbmDb.firmDirectoryCreatePerson === "function") {
-          res = await window.bbmDb.firmDirectoryCreatePerson({
-            ref: {
-              kind: refKind,
-              id: this.selectedFirmId,
-              projectId: refKind === "project_firm" ? refProjectId : null,
-            },
-            projectId: refProjectId,
-            data: {
-              firstName: data.firstName,
-              lastName: data.lastName,
-              funktion: data.funktion,
-              email: data.email,
-              phone: data.phone,
-              rolle: data.rolle,
-              notes: data.notes,
-            },
-          });
-        } else {
-          res = await window.bbmDb.personsCreate({
-            firmId: this.selectedFirmId,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            funktion: data.funktion,
-            email: data.email,
-            phone: data.phone,
-            rolle: data.rolle,
-            notes: data.notes,
-          });
-        }
+        const res = await window.bbmDb.personsCreate({
+          firmId: this.selectedFirmId,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          funktion: data.funktion,
+          email: data.email,
+          phone: data.phone,
+          rolle: data.rolle,
+          notes: data.notes,
+        });
 
         if (!res?.ok) {
           alert(res?.error || "Fehler beim Anlegen");
           return;
         }
 
+        // Form zu (damit Firmenfelder wieder sichtbar)
         this.personMode = "none";
         this.editPersonId = null;
 
