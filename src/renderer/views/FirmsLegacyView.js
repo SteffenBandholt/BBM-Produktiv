@@ -3713,6 +3713,20 @@ const taFirmNotes = document.createElement("textarea");
       return input;
     };
 
+    const firmSelect = document.createElement("select");
+    firmSelect.style.width = "100%";
+    const emptyFirmOption = document.createElement("option");
+    emptyFirmOption.value = "";
+    emptyFirmOption.textContent = "-- keine Firma --";
+    firmSelect.appendChild(emptyFirmOption);
+    for (const firm of this.personImportFirms || []) {
+      const option = document.createElement("option");
+      option.value = String(firm.id || "");
+      option.textContent = firm.name || firm.short || "(ohne Name)";
+      firmSelect.appendChild(option);
+    }
+    firmSelect.value = String(draft.firm_id || "");
+
     const inpFirstName = mkInput(draft.first_name);
     const inpLastName = mkInput(draft.last_name);
     const inpEmail = mkInput(draft.email);
@@ -3740,7 +3754,21 @@ const taFirmNotes = document.createElement("textarea");
     const setAssignedText = () => {
       assignedEl.textContent = draft.firm_name ? `Zugeordnet: ${draft.firm_name}` : "Zugeordnet: keine Firma";
       assignedEl.style.color = draft.firm_name ? "blue" : "#c62828";
+      if (firmSelect) firmSelect.value = String(draft.firm_id || "");
     };
+
+    const assignFirm = (firm) => {
+      draft.firm_id = String(firm?.id || "");
+      draft.firm_name = String(firm?.name || firm?.short || "");
+      setAssignedText();
+      renderFirmList();
+    };
+
+    firmSelect.addEventListener("change", () => {
+      const id = String(firmSelect.value || "");
+      const firm = (this.personImportFirms || []).find((entry) => String(entry.id || "") === id) || null;
+      assignFirm(firm);
+    });
 
     const rawLabel = document.createElement("div");
     rawLabel.className = "bbm-form-label";
@@ -3762,6 +3790,7 @@ const taFirmNotes = document.createElement("textarea");
 
     leftCard.append(
       leftTitle,
+      mkRow("Firma", firmSelect),
       mkRow("Vorname", inpFirstName),
       mkRow("Nachname", inpLastName),
       mkRow("E-Mail", inpEmail),
@@ -3779,7 +3808,7 @@ const taFirmNotes = document.createElement("textarea");
     rightTitle.style.fontWeight = "700";
 
     const rightHint = document.createElement("div");
-    rightHint.textContent = "Doppelklick auf eine Firma uebernimmt die Zuordnung.";
+    rightHint.textContent = "Ein Klick auf eine Firma übernimmt die Zuordnung.";
     rightHint.style.fontSize = "12px";
     rightHint.style.opacity = "0.78";
 
@@ -3931,10 +3960,8 @@ const taFirmNotes = document.createElement("textarea");
         const firm = createRes.firm || null;
         if (firm) {
           this.personImportFirms = [...(this.personImportFirms || []), firm];
-          draft.firm_id = String(firm.id || "");
-          draft.firm_name = String(firm.name || firm.short || "");
-          setAssignedText();
-          renderFirmList();
+          // Neue Firma sofort als Ziel des Kontakts setzen.
+          assignFirm(firm);
           this._renderPersonImportFirmList();
         }
         closeCreateFirmPopup();
@@ -3963,11 +3990,8 @@ const taFirmNotes = document.createElement("textarea");
         row.style.cursor = "pointer";
         row.style.borderBottom = "1px solid #eef2f7";
         row.style.background = String(firm.id) === String(draft.firm_id) ? "#e8f1ff" : "transparent";
-        row.addEventListener("dblclick", () => {
-          draft.firm_id = String(firm.id || "");
-          draft.firm_name = String(firm.name || firm.short || "");
-          setAssignedText();
-          renderFirmList();
+        row.addEventListener("click", () => {
+          assignFirm(firm);
         });
         firmList.appendChild(row);
       }
