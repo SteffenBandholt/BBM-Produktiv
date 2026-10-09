@@ -1,7 +1,10 @@
 "use strict";
 
+const fs = require("node:fs");
+const path = require("node:path");
 const { ipcMain: electronIpcMain } = require("electron");
 const { getFirmDirectoryService } = require("../domain/firms/FirmDirectoryService");
+const { decodeCsvBuffer, parseFirmCsvText } = require("../domain/firms/firmCsvImport");
 
 function failure(error) {
   return {
@@ -37,6 +40,26 @@ function registerFirmDirectoryIpc({ ipcMain = electronIpcMain, service = getFirm
   handle("firmDirectory:checkUseChange", (data) => service.checkUseChange(data), "assessment");
   handle("firmDirectory:setUses", (data) => service.setUses(data), "firm");
   handle("firmDirectory:prepareLocalToGlobal", (data) => service.prepareLocalToGlobal(data), "plan");
+  handle("firmDirectory:importCsvParse", async (data) => {
+    const filePath = String(data?.filePath || "").trim();
+    if (!filePath) throw new TypeError("CSV-Dateipfad fehlt.");
+    const buffer = await fs.promises.readFile(filePath);
+    const csvText = decodeCsvBuffer(buffer);
+    const context = String(data?.context || "stamm").trim().toLowerCase();
+    const existingFirms =
+      context === "projekt" || context === "project"
+        ? service.listAll({
+            kind: "project_firm",
+            projectId: String(data?.projectId || "").trim(),
+            includeInactive: true,
+          })
+        : service.listAll({ kind: "global_firm", includeInactive: true });
+    return {
+      ...parseFirmCsvText(csvText, { existingFirms }),
+      filePath,
+      fileName: path.basename(filePath),
+    };
+  }, "result");
 
   console.log("[main] firmDirectory IPC registered");
 }
