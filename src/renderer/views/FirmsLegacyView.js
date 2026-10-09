@@ -863,9 +863,12 @@ const taFirmNotes = document.createElement("textarea");
   }
 
   async _openPersonEditor({ mode = "create", personId = null } = {}) {
+    // Mitarbeiterbearbeitung ist ein normaler Schreibdialog. Import-/Busy-Zustände
+    // dürfen ihn nicht schreibgeschützt hinterlassen.
     this._clearStaleBusyState();
     this._releaseImportUiLock();
-    if (this.savingPerson || this.savingFirm) return;
+    this.savingFirm = false;
+    this.savingPerson = false;
     if (!this._hasFirmSelectedSaved()) return;
     if (mode === "edit" && personId !== null && personId !== undefined) {
       const targetId = String(personId);
@@ -878,6 +881,22 @@ const taFirmNotes = document.createElement("textarea");
     this.editPersonId = mode === "edit" ? this._personIdKey(personId) : null;
     this._applyPersonFormState();
     this._showPersonPopup();
+
+    for (const control of [
+      this.inpFirstName,
+      this.inpLastName,
+      this.inpFunktion,
+      this.inpEmail,
+      this.inpPhone,
+      this.taPersonNotes,
+    ]) {
+      if (!control) continue;
+      control.disabled = false;
+      control.readOnly = false;
+      control.style.pointerEvents = "auto";
+    }
+    if (this.btnSavePerson) this.btnSavePerson.disabled = false;
+
     this.inpFirstName?.focus();
   }
 
@@ -3187,43 +3206,8 @@ const taFirmNotes = document.createElement("textarea");
           `Import abgeschlossen:\n${s.created || 0} neu\n${s.merged || 0} gemerged\n${s.skipped || 0} übersprungen`
         );
 
-        // Bei einem gezielten Einzelimport direkt anschließend den importierten
-        // Mitarbeiter zum Bearbeiten öffnen.
-        const importedCandidate =
-          activeItems.length === 1
-            ? {
-                firm_id: String(activeItems[0]?.firm_id || ""),
-                first_name: String(activeItems[0]?.first_name || "").trim(),
-                last_name: String(activeItems[0]?.last_name || "").trim(),
-                email: String(activeItems[0]?.email || "").trim().toLocaleLowerCase("de-DE"),
-              }
-            : null;
-
         this._closePersonImportModal();
         await this._refreshAfterImport();
-
-        if (
-          importedCandidate &&
-          String(this.selectedFirmId || "") === importedCandidate.firm_id &&
-          Array.isArray(this.persons)
-        ) {
-          const importedPerson =
-            (importedCandidate.email
-              ? this.persons.find(
-                  (person) =>
-                    String(person?.email || "").trim().toLocaleLowerCase("de-DE") ===
-                    importedCandidate.email
-                )
-              : null) ||
-            this.persons.find(
-              (person) =>
-                String(person?.first_name || "").trim() === importedCandidate.first_name &&
-                String(person?.last_name || "").trim() === importedCandidate.last_name
-            );
-
-          if (importedPerson?.id) {
-            await this._openPersonEditor({ mode: "edit", personId: importedPerson.id });
-          }
         }
       } finally {
         this.savingFirm = false;
