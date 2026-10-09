@@ -3388,6 +3388,8 @@ const taFirmNotes = document.createElement("textarea");
         }
         // Kontakte werden nie pauschal importiert. Erst eine ausdrückliche
         // Auswahl/Übernahme durch den Benutzer aktiviert den Datensatz.
+        // Beim gezielten Kontaktimport wird nie automatisch jemand übernommen.
+        // Erst "Übernehmen" im Zuordnungs-Popup aktiviert genau diesen Kontakt.
         it.auto_take = 0;
         it.take = 0;
       }
@@ -3616,9 +3618,12 @@ const taFirmNotes = document.createElement("textarea");
     if (!item) return;
     this._closePersonImportDetailPopup();
 
+    const boundFirmId = String(this._getImportContextPayload()?.personImportFirmId || "").trim();
+    const isBoundFirmImport = Boolean(boundFirmId);
+
     const draft = {
       take: Number(item.take || 0) === 1 ? 1 : 0,
-      firm_id: String(item.firm_id || ""),
+      firm_id: String(item.firm_id || boundFirmId || ""),
       firm_name: String(item.firm_name || ""),
       first_name: String(item.first_name || ""),
       last_name: String(item.last_name || ""),
@@ -3721,6 +3726,7 @@ const taFirmNotes = document.createElement("textarea");
       firmSelect.appendChild(option);
     }
     firmSelect.value = String(draft.firm_id || "");
+    firmSelect.disabled = isBoundFirmImport;
 
     const inpFirstName = mkInput(draft.first_name);
     const inpLastName = mkInput(draft.last_name);
@@ -3803,7 +3809,9 @@ const taFirmNotes = document.createElement("textarea");
     rightTitle.style.fontWeight = "700";
 
     const rightHint = document.createElement("div");
-    rightHint.textContent = "Ein Klick auf eine Firma übernimmt die Zuordnung.";
+    rightHint.textContent = isBoundFirmImport
+      ? "Ziel ist die bereits geöffnete Firma."
+      : "Ein Klick auf eine Firma übernimmt die Zuordnung.";
     rightHint.style.fontSize = "12px";
     rightHint.style.opacity = "0.78";
 
@@ -3811,6 +3819,7 @@ const taFirmNotes = document.createElement("textarea");
     btnNewFirm.textContent = "Neue Firma";
     applyPopupButtonStyle(btnNewFirm, { variant: "neutral" });
     btnNewFirm.style.alignSelf = "flex-start";
+    btnNewFirm.hidden = isBoundFirmImport;
 
     const firmList = document.createElement("div");
     firmList.style.border = "1px solid var(--bbm-popup-border)";
@@ -3986,6 +3995,7 @@ const taFirmNotes = document.createElement("textarea");
         row.style.borderBottom = "1px solid #eef2f7";
         row.style.background = String(firm.id) === String(draft.firm_id) ? "#e8f1ff" : "transparent";
         row.addEventListener("click", () => {
+          if (isBoundFirmImport) return;
           assignFirm(firm);
         });
         firmList.appendChild(row);
