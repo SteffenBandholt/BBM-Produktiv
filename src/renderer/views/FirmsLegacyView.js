@@ -2108,7 +2108,8 @@ const taFirmNotes = document.createElement("textarea");
 
   async _loadImportCsvFile(filePath) {
     const api = window.bbmDb || {};
-    if (typeof api.firmsImportParseCsv !== "function") {
+    const hasCentralParser = typeof api.firmDirectoryImportCsvParse === "function";
+    if (!hasCentralParser && typeof api.firmsImportParseCsv !== "function") {
       alert("CSV-Import ist nicht verfügbar (Preload/IPC fehlt).");
       return;
     }
@@ -2120,20 +2121,35 @@ const taFirmNotes = document.createElement("textarea");
         alert("Bitte zuerst ein Projekt auswählen.");
         return;
       }
-      const res = await api.firmsImportParseCsv({ filePath, ...ctxPayload });
+
+      let res = null;
+      if (hasCentralParser) {
+        const parsed = await api.firmDirectoryImportCsvParse({ filePath, ...ctxPayload });
+        if (!parsed?.ok) {
+          alert(parsed?.error || "CSV konnte nicht gelesen werden.");
+          return;
+        }
+        res = { ok: true, ...(parsed.result || {}) };
+      } else {
+        res = await api.firmsImportParseCsv({ filePath, ...ctxPayload });
+      }
+
       if (!res?.ok) {
         alert(res?.error || "CSV konnte nicht gelesen werden.");
         return;
       }
+
       this.importItems = Array.isArray(res.items) ? res.items : [];
       this.importSourceFilePath = String(res.filePath || filePath || "");
       for (const it of this.importItems) {
         it.take = 0;
       }
       this.importSelectedRowId = this.importItems[0]?.row_id || null;
-      if (this.importFileNameEl) this.importFileNameEl.textContent = filePath;
+      if (this.importFileNameEl) this.importFileNameEl.textContent = res.fileName || filePath;
       if (this.importSummaryEl) {
-        this.importSummaryEl.textContent = `${res.rowsCount || 0} Kontakte gelesen, ${this.importItems.length} Firmen erkannt, ${res.ignoredWithoutCompany || 0} ohne Firma ignoriert.`;
+        const delimiterLabel = res.delimiter === "\t" ? "Tab" : (res.delimiter || "?");
+        this.importSummaryEl.textContent =
+          `${res.rowsCount || 0} Datensätze gelesen, ${this.importItems.length} Firmen erkannt, ${res.ignoredWithoutCompany || 0} ohne Firma ignoriert · Trennzeichen: ${delimiterLabel}.`;
       }
       this._renderImportRows();
       this._renderImportDetail();
