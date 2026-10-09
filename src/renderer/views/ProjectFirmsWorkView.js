@@ -337,7 +337,7 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
       return String(contract?.firm_kind || contract?.firmKind || "") === firmKind
         && String(contract?.firm_id || contract?.firmId || "") === text(firm?.id);
     });
-    const contract = contractEntry?.contract || contractEntry || null;
+    let contract = contractEntry?.contract || contractEntry || null;
 
     const orderGrid = style(document.createElement("div"), {
       display: "grid",
@@ -437,8 +437,10 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
         });
         if (!result?.ok) throw new Error(result?.error || "Auftragsdaten konnten nicht gespeichert werden.");
         orderStatus.textContent = "Auftragsdaten gespeichert.";
+        contract = result?.result?.contract || result?.contract || contract;
         const refreshed = await api.azlContractsList?.(this.projectId);
         this.azlContracts = refreshed?.ok && Array.isArray(refreshed.list) ? refreshed.list : this.azlContracts;
+        await renderSideOrders();
       } catch (error) {
         orderStatus.textContent = error?.message || "Auftragsdaten konnten nicht gespeichert werden.";
       }
