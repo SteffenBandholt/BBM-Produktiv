@@ -4,6 +4,7 @@
 
 const { ipcMain: electronIpcMain } = require("electron");
 const fs = require("fs");
+const { TextDecoder } = require("node:util");
 
 const topsRepo = require("../db/topsRepo");
 const meetingsRepo = require("../db/meetingsRepo");
@@ -311,13 +312,15 @@ function _parseStreetBlock(streetRaw) {
 }
 
 function _buildOutlookStagingFromRows(parsedRows, existingFirms) {
-  const companyKeys = ["Firma", "Company"];
+  const companyKeys = ["Firma", "Company", "Firma Zeile 1", "Firmenname"];
   const streetKeys = ["Straße geschäftlich", "Business Street", "Straße privat", "Home Street"];
   const zipKeys = ["PLZ geschäftlich", "Business Postal Code", "PLZ privat", "Home Postal Code"];
   const cityKeys = ["Ort geschäftlich", "Business City", "Ort privat", "Home City"];
   const phoneKeys = [
     "Telefon geschäftlich",
     "Business Phone",
+    "Telefon",
+    "Tel",
     "Telefon (privat)",
     "Home Phone",
     "Mobiltelefon",
@@ -326,6 +329,8 @@ function _buildOutlookStagingFromRows(parsedRows, existingFirms) {
   const emailKeys = [
     "E-Mail-Adresse",
     "E-mail Address",
+    "E-Mail",
+    "Email",
     "E-Mail 2: Adresse",
     "E-mail 2 Address",
     "E-Mail 3: Adresse",
@@ -522,7 +527,7 @@ function _buildPersonsStagingFromRows(parsedRows, firms, existingPersons) {
     const email = _normStr(_getField(row, emailKeys)).toLocaleLowerCase("de-DE");
     const phone = _normStr(_getField(row, phoneKeys));
     const funktion = _joinNonEmpty([
-      _getField(row, ["Position", "Job Title"]),
+      _getField(row, ["Tätigkeit", "Taetigkeit", "Position", "Job Title"]),
       _getField(row, ["Abteilung", "Department"]),
     ], " | ");
     const notes = _getField(row, notesKeys);
@@ -738,7 +743,17 @@ function _loadCsvAndBuildRows(filePath) {
   if (!p) throw new Error("filePath fehlt");
   if (!fs.existsSync(p)) throw new Error("Datei nicht gefunden");
 
-  let text = fs.readFileSync(p, "utf8");
+  const buffer = fs.readFileSync(p);
+  let text = "";
+  if (buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) {
+    text = buffer.subarray(3).toString("utf8");
+  } else {
+    try {
+      text = new TextDecoder("utf-8", { fatal: true }).decode(buffer);
+    } catch (_error) {
+      text = new TextDecoder("windows-1252").decode(buffer);
+    }
+  }
   if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
 
   const firstLine = String(text.split(/\r?\n/, 1)[0] || "");
