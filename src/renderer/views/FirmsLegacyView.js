@@ -4419,23 +4419,54 @@ const taFirmNotes = document.createElement("textarea");
     let reloadPersonsAfter = false;
     try {
       if (this.personMode === "create") {
-        const res = await window.bbmDb.personsCreate({
-          firmId: this.selectedFirmId,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          funktion: data.funktion,
-          email: data.email,
-          phone: data.phone,
-          rolle: data.rolle,
-          notes: data.notes,
-        });
+        const selected = this.selectedFirm || {};
+        const rawKind = String(selected?.kind || "").trim();
+        const refKind = rawKind === "project_firm" || rawKind === "project"
+          ? "project"
+          : "global";
+        const refProjectId =
+          selected?.project_id ||
+          selected?.projectId ||
+          this.router?.currentProjectId ||
+          null;
+
+        let res = null;
+        if (typeof window.bbmDb.firmDirectoryCreatePerson === "function") {
+          res = await window.bbmDb.firmDirectoryCreatePerson({
+            ref: {
+              kind: refKind,
+              id: this.selectedFirmId,
+              projectId: refKind === "project" ? refProjectId : null,
+            },
+            projectId: refProjectId,
+            data: {
+              firstName: data.firstName,
+              lastName: data.lastName,
+              funktion: data.funktion,
+              email: data.email,
+              phone: data.phone,
+              rolle: data.rolle,
+              notes: data.notes,
+            },
+          });
+        } else {
+          res = await window.bbmDb.personsCreate({
+            firmId: this.selectedFirmId,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            funktion: data.funktion,
+            email: data.email,
+            phone: data.phone,
+            rolle: data.rolle,
+            notes: data.notes,
+          });
+        }
 
         if (!res?.ok) {
           alert(res?.error || "Fehler beim Anlegen");
           return;
         }
 
-        // Form zu (damit Firmenfelder wieder sichtbar)
         this.personMode = "none";
         this.editPersonId = null;
 
