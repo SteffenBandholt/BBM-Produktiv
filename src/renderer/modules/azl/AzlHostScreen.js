@@ -31,6 +31,12 @@ function createServices(router) {
       async setStatus(id, status) {
         return requireOk(await window.bbmDb.azlSetStatus(id, status), "azl");
       },
+      async listPositions(id) {
+        return requireOk(await window.bbmDb.azlPositionsList(id), "list") || [];
+      },
+      async replacePositions(id, positions) {
+        return requireOk(await window.bbmDb.azlPositionsReplace(id, positions), "list") || [];
+      },
     }),
     azlList: Object.freeze({
       async list(projectId) {
