@@ -165,6 +165,9 @@ function registerAzlIpc({ ipcMain } = {}) {
   handle("azl:setStatus", (runtime, data) => runtime.azl.setStatus(data.id, data.status), "azl");
   handle("azl:contracts:list", (runtime, data) => runtime.contracts.list(data.projectId), "list");
   handle("azl:contracts:save", (runtime, data) => runtime.contracts.save(data), "result");
+  handle("azl:orders:list", (runtime, data) => runtime.contracts.listOrders(data.contractId), "list");
+  handle("azl:orders:save", (runtime, data) => runtime.contracts.saveOrder(data), "order");
+  handle("azl:orders:delete", (runtime, data) => runtime.contracts.deleteOrder(data.id), "result");
   handle("azl:report:project", (runtime, data) => runtime.reporting.project(data.projectId), "report");
   handle("azl:report:firm", (runtime, data) => runtime.reporting.firm(data.contractId), "report");
 
