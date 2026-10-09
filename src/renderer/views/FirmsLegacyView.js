@@ -1649,7 +1649,11 @@ const taFirmNotes = document.createElement("textarea");
 
   _applyPersonFormState() {
     const hasFirm = this._hasFirmSelectedSaved();
-    const isSaving = !!this.savingPerson || !!this.savingFirm;
+
+    // Mitarbeiterbearbeitung darf nicht von einem Firmen-/Importzustand
+    // schreibgeschützt werden. Nur ein laufender Mitarbeiter-Speichervorgang
+    // sperrt die Mitarbeiterfelder.
+    const isSaving = !!this.savingPerson;
 
     const currentEditId =
       this.editPersonId === null || this.editPersonId === undefined ? null : String(this.editPersonId);
