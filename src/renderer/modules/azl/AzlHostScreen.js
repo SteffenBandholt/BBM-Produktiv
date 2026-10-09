@@ -40,6 +40,18 @@ function createServices(router) {
       async listDocuments(id, documentKind = null) {
         return requireOk(await window.bbmDb.azlDocumentsList(id, documentKind), "list") || [];
       },
+      async chooseOfferReview() {
+        return requireOk(await window.bbmDb.azlOfferReviewChoose(), "result");
+      },
+      async commitOfferReview(projectId, id, reviewToken) {
+        return requireOk(await window.bbmDb.azlOfferReviewCommit(projectId, id, reviewToken), "result");
+      },
+      async openOfferReview(reviewToken) {
+        return requireOk(await window.bbmDb.azlOfferReviewOpen(reviewToken), "result");
+      },
+      async discardOfferReview(reviewToken) {
+        return requireOk(await window.bbmDb.azlOfferReviewDiscard(reviewToken), "result");
+      },
       async chooseOffer(projectId, id) {
         return requireOk(await window.bbmDb.azlOfferChoose(projectId, id), "result");
       },
