@@ -3,6 +3,8 @@
 const { initDatabase } = require("../../db/database");
 const firmsRepo = require("../../db/firmsRepo");
 const projectFirmsRepo = require("../../db/projectFirmsRepo");
+const personsRepo = require("../../db/personsRepo");
+const projectPersonsRepo = require("../../db/projectPersonsRepo");
 const firmUsagesRepo = require("../../db/firmUsagesRepo");
 const {
   FIRM_KINDS,
@@ -195,6 +197,37 @@ class FirmDirectoryService {
          ORDER BY LOWER(COALESCE(name, ''))`
       )
       .all(ref.id);
+  }
+
+
+  createPerson({ ref: refInput, projectId, data = {} } = {}) {
+    const ref = normalizeFirmRef(refInput, {
+      projectId: refInput?.projectId || refInput?.project_id || projectId,
+    });
+    const firm = this.get(ref);
+    if (!firm) throw new Error("firm not found");
+
+    const payload = {
+      firstName: data?.firstName ?? data?.first_name ?? "",
+      lastName: data?.lastName ?? data?.last_name ?? "",
+      funktion: data?.funktion ?? "",
+      rolle: data?.rolle ?? "",
+      notes: data?.notes ?? "",
+      email: data?.email ?? "",
+      phone: data?.phone ?? "",
+    };
+
+    if (ref.kind === FIRM_KINDS.GLOBAL) {
+      return personsRepo.createPerson({
+        firmId: ref.id,
+        ...payload,
+      });
+    }
+
+    return projectPersonsRepo.createProjectPerson({
+      projectFirmId: ref.id,
+      ...payload,
+    });
   }
 
   create({ kind, projectId, origin, data = {}, uses } = {}) {
