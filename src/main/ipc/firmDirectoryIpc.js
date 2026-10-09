@@ -35,6 +35,7 @@ function registerFirmDirectoryIpc({ ipcMain = electronIpcMain, service = getFirm
     "list"
   );
   handle("firmDirectory:listPersons", (data) => service.listPersons(data), "list");
+  handle("firmDirectory:createPerson", (data) => service.createPerson(data), "person");
   handle("firmDirectory:create", (data) => service.create(data), "firm");
   handle("firmDirectory:update", (data) => service.update(data), "firm");
   handle("firmDirectory:checkUseChange", (data) => service.checkUseChange(data), "assessment");
