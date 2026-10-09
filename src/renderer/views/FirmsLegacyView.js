@@ -4422,8 +4422,8 @@ const taFirmNotes = document.createElement("textarea");
         const selected = this.selectedFirm || {};
         const rawKind = String(selected?.kind || "").trim();
         const refKind = rawKind === "project_firm" || rawKind === "project"
-          ? "project"
-          : "global";
+          ? "project_firm"
+          : "global_firm";
         const refProjectId =
           selected?.project_id ||
           selected?.projectId ||
@@ -4436,7 +4436,7 @@ const taFirmNotes = document.createElement("textarea");
             ref: {
               kind: refKind,
               id: this.selectedFirmId,
-              projectId: refKind === "project" ? refProjectId : null,
+              projectId: refKind === "project_firm" ? refProjectId : null,
             },
             projectId: refProjectId,
             data: {
