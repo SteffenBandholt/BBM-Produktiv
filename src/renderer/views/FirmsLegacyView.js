@@ -3206,12 +3206,31 @@ const taFirmNotes = document.createElement("textarea");
           return;
         }
         const s = res.summary || {};
+
+        // Wichtig: Die Import-Sperre muss VOR dem Schließen/Refresh aufgehoben
+        // werden. Sonst können neu gerenderte Mitarbeiterfelder einen alten
+        // disabled-/pointer-Zustand übernehmen, bis Electron einen neuen
+        // Mouse/Focus-Zyklus bekommt.
+        this.savingFirm = false;
+        this.savingPerson = false;
+        this.personImportLoading = false;
+        this.personImportNewFirmSaving = false;
+        this._setMsg("");
+        this._applyFirmFormState();
+        this._applyPersonFormState();
+
         alert(
           `Import abgeschlossen:\n${s.created || 0} neu\n${s.merged || 0} gemerged\n${s.skipped || 0} übersprungen`
         );
 
         this._closePersonImportModal();
         await this._refreshAfterImport();
+
+        // Nach dem DOM-Neuaufbau noch einmal ausdrücklich entsperren.
+        this.savingFirm = false;
+        this.savingPerson = false;
+        this._applyFirmFormState();
+        this._applyPersonFormState();
       } finally {
         this.savingFirm = false;
         this.savingPerson = false;
