@@ -736,6 +736,7 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
       close();
       this.selectedEntry = null;
       await this.reload();
+      this._notifyProjectFirmDataChanged(editing ? "project-firm-updated" : "project-firm-created");
     });
     setTimeout(() => fields.name.focus(), 0);
   }
@@ -750,6 +751,7 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     }
     this.selectedEntry = null;
     await this.reload();
+    this._notifyProjectFirmDataChanged("project-firm-deleted");
   }
 
   _renderContent() {
