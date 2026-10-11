@@ -2,7 +2,6 @@
 
 const fs = require("node:fs");
 const { randomUUID } = require("node:crypto");
-const { pathToFileURL } = require("node:url");
 const path = require("node:path");
 const { TextDecoder } = require("node:util");
 const { dialog, shell } = require("electron");
@@ -224,9 +223,22 @@ async function chooseOfferForReview() {
   const token = randomUUID();
   const extracted = await extractOfferReview(filePath);
   pendingOfferReviews.set(token, { filePath, createdAt: Date.now() });
+
+  // Renderer läuft mit Sandbox + webSecurity. Direkte file://-URLs werden
+  // dort für eingebettete PDFs blockiert. Für die Vorschau deshalb eine
+  // in-memory Data-URL bereitstellen; die Originaldatei bleibt unverändert
+  // und wird erst bei "Übernehmen" in den Projektspeicher kopiert.
+  const previewBuffer = await fs.promises.readFile(filePath);
+  const previewDataUrl =
+    "data:application/pdf;base64," + previewBuffer.toString("base64");
+
   return {
-    canceled: false, reviewToken: token, fileName: path.basename(filePath),
-    fileUrl: pathToFileURL(filePath).href, fileSize: stat.size, extracted,
+    canceled: false,
+    reviewToken: token,
+    fileName: path.basename(filePath),
+    previewDataUrl,
+    fileSize: stat.size,
+    extracted,
   };
 }
 
