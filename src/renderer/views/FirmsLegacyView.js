@@ -627,6 +627,21 @@ const taFirmNotes = document.createElement("textarea");
     this.msgEl.textContent = text || "";
   }
 
+  _notifyFirmDataChanged(reason = "firm-updated") {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("bbm:pool-data-changed", {
+          detail: {
+            reason,
+            source: "FirmsLegacyView",
+          },
+        })
+      );
+    } catch (_e) {
+      // ignore
+    }
+  }
+
   _hasFirmSelectedSaved() {
     return !!this.selectedFirmId;
   }
@@ -4299,6 +4314,7 @@ const taFirmNotes = document.createElement("textarea");
         this.selectedFirm = updatedFirm;
         this._renderFirmsOnly();
         this._renderFirmDetails();
+        this._notifyFirmDataChanged("global-firm-updated");
 
         // Speichern schließt Editbox
         this._closeFirmEditor();
@@ -4372,6 +4388,7 @@ const taFirmNotes = document.createElement("textarea");
       this.selectedFirm = updatedFirm;
       this._renderFirmsOnly();
       this._renderFirmDetails();
+      this._notifyFirmDataChanged("global-firm-updated");
 
       try {
         await this.reloadFirms();
