@@ -88,6 +88,22 @@ export default class ProjectFirmsView {
     if (this.msgEl) this.msgEl.textContent = text(value);
   }
 
+  _notifyProjectFirmDataChanged(reason) {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("bbm:pool-data-changed", {
+          detail: {
+            projectId: this.projectId || null,
+            reason: text(reason) || "project-firms-updated",
+            source: "ProjectFirmsBaseView",
+          },
+        })
+      );
+    } catch (_error) {
+      // Der nächste normale Reload bleibt der Fallback.
+    }
+  }
+
   async _backToProject() {
     if (typeof this.router?.showProjectWorkspace === "function" && this.projectId) {
       await this.router.showProjectWorkspace(this.projectId);
@@ -483,6 +499,7 @@ export default class ProjectFirmsView {
       }
       close();
       await this.reload();
+      this._notifyProjectFirmDataChanged("global-firm-assigned");
     });
 
     const body = style(document.createElement("div"), {
@@ -535,6 +552,7 @@ export default class ProjectFirmsView {
       return;
     }
     await this.reload();
+    this._notifyProjectFirmDataChanged("global-firm-unassigned");
   }
 
   _renderContent() {
