@@ -189,6 +189,18 @@ export default class AzlHostScreen {
     this.projectId = projectId || null;
     this.project = project || null;
     this.root = null;
+    this._onFirmDataChanged = async () => {
+      if (!this.root?.isConnected) return;
+      try {
+        await this.inner.refreshContracts?.();
+        await this.inner.refreshProjectFirms?.();
+        this.inner.syncContractDisplay?.();
+      } catch (_error) {
+        // azL bleibt benutzbar; nächster normaler Refresh versucht es erneut.
+      }
+    };
+    window.addEventListener("bbm:pool-data-changed", this._onFirmDataChanged);
+
     this.inner = new ExternalAzlScreen({
       projectId: this.projectId,
       project: this.project,
@@ -231,6 +243,9 @@ export default class AzlHostScreen {
   }
 
   destroy() {
+    if (this._onFirmDataChanged) {
+      window.removeEventListener("bbm:pool-data-changed", this._onFirmDataChanged);
+    }
     this.root = null;
   }
 }
