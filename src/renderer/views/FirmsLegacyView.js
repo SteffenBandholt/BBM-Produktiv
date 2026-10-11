@@ -4449,6 +4449,7 @@ const taFirmNotes = document.createElement("textarea");
       this._renderFirmsOnly();
       this._renderPersonsOnly();
       this._renderFirmDetails();
+      this._notifyFirmDataChanged("global-firm-deleted");
     } finally {
       this.savingFirm = false;
       this._setMsg("");
