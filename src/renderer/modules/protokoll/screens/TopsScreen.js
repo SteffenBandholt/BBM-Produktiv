@@ -159,6 +159,17 @@ export default class TopsScreen {
       options.textLimitSettingsService || new TextLimitSettingsService();
     this.textLimits = { ...DEFAULT_TEXT_LIMITS };
     this._textLimitUnsubscribe = null;
+    this._onPoolDataChanged = async (event) => {
+      const changedProjectId = String(event?.detail?.projectId || "").trim();
+      const currentProjectId = String(this.projectId || this.store?.getState?.()?.projectId || "").trim();
+      if (changedProjectId && currentProjectId && changedProjectId !== currentProjectId) return;
+      try {
+        await this.workbench?.metaColumn?.responsibleBridge?.refreshCompanies?.();
+      } catch (_error) {
+        // Beim nächsten normalen Screenaufbau wird erneut geladen.
+      }
+    };
+    window.addEventListener("bbm:pool-data-changed", this._onPoolDataChanged);
 
     this._buildProtocolModuleRuntime(options);
   }
@@ -2009,6 +2020,10 @@ export default class TopsScreen {
       window.removeEventListener("bbm:tableLayoutChanged", this._onTableLayoutChanged);
     }
     this._onTableLayoutChanged = null;
+    if (this._onPoolDataChanged && typeof window?.removeEventListener === "function") {
+      window.removeEventListener("bbm:pool-data-changed", this._onPoolDataChanged);
+    }
+    this._onPoolDataChanged = null;
     await this.closeFlow?.destroy?.();
     this._destroyAudioFeature?.();
     this._destroyDictationController?.();
