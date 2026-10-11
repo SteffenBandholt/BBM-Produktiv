@@ -74,36 +74,7 @@ function createServices(router) {
     }),
     contracts: Object.freeze({
       async list(projectId) {
-        const [contractResult, firmsResult] = await Promise.all([
-          window.bbmDb.azlContractsList(projectId),
-          window.bbmDb.firmDirectoryListProjectParticipants({
-            projectId,
-            includeInactive: false,
-          }),
-        ]);
-
-        const contracts = requireOk(contractResult, "list") || [];
-        const firms = requireOk(firmsResult, "list") || [];
-
-        const activeFirmKeys = new Set(
-          firms.map((firm) => {
-            const kind =
-              firm?.ref?.kind === "global_firm"
-                ? "global"
-                : firm?.ref?.kind === "project_firm"
-                  ? "project"
-                  : String(firm?.ref?.kind || firm?.kind || "");
-            const id = String(firm?.ref?.id || firm?.id || "");
-            return `${kind}:${id}`;
-          })
-        );
-
-        return contracts.filter((entry) => {
-          const contract = entry?.contract || entry || {};
-          const kind = String(contract?.firm_kind || contract?.firmKind || "");
-          const id = String(contract?.firm_id || contract?.firmId || "");
-          return activeFirmKeys.has(`${kind}:${id}`);
-        });
+        return requireOk(await window.bbmDb.azlContractsList(projectId), "list") || [];
       },
       async save(input) {
         return requireOk(await window.bbmDb.azlContractSave(input), "result");
