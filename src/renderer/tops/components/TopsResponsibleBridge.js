@@ -62,6 +62,12 @@ export class TopsResponsibleBridge {
     this._refreshOptions();
   }
 
+  async refreshCompanies() {
+    const companies = await this._loadCompaniesSafe();
+    this.sources = { companies };
+    this._refreshOptions();
+  }
+
   async _loadCompaniesSafe() {
     if (!this.loadCompanies) return [];
     try {
