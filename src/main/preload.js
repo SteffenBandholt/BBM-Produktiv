@@ -171,33 +171,6 @@ contextBridge.exposeInMainWorld("bbmDb", {
     ipcRenderer.invoke("customerMgmt:contacts:delete", { contactId }),
 
   // ============================================================
-  // Rechnung: Grunddaten und Belegkopf
-  // ============================================================
-  rechnungDefaults: () => ipcRenderer.invoke("rechnung:defaults"),
-  rechnungOrderGet: (id) => ipcRenderer.invoke("rechnung:order:get", { id }),
-  rechnungOrderCreateDraft: (header) => ipcRenderer.invoke("rechnung:order:createDraft", header),
-  rechnungOrderAddPosition: (id, position) => ipcRenderer.invoke("rechnung:order:addPosition", { id, position }),
-  rechnungOrderConfirm: (id) => ipcRenderer.invoke("rechnung:order:confirm", { id }),
-  rechnungOrderAmendmentCreateDraft: (id, amendment) => ipcRenderer.invoke("rechnung:order:amendment:createDraft", { id, amendment }),
-  rechnungOrderAmendmentConfirm: (id, amendment_id) => ipcRenderer.invoke("rechnung:order:amendment:confirm", { id, amendment_id }),
-  rechnungList: () => ipcRenderer.invoke("rechnung:list"),
-  rechnungGet: (id) => ipcRenderer.invoke("rechnung:get", { id }),
-  rechnungCreateDraft: (header) => ipcRenderer.invoke("rechnung:createDraft", header),
-  rechnungCreateDraftFromOrder: (data) => ipcRenderer.invoke("rechnung:createDraftFromOrder", data),
-  rechnungUpdateDraft: (id, header) => ipcRenderer.invoke("rechnung:updateDraft", { id, header }),
-  rechnungDeleteDraft: (id) => ipcRenderer.invoke("rechnung:deleteDraft", { id }),
-  rechnungPreviewDraft: (id, header) => ipcRenderer.invoke("rechnung:previewDraft", { id, header }),
-  rechnungBookDraft: (id, header) => ipcRenderer.invoke("rechnung:bookDraft", { id, header }),
-  rechnungFinalizePdf: (id) => ipcRenderer.invoke("rechnung:finalizePdf", { id }),
-  rechnungOpenPdf: (id) => ipcRenderer.invoke("rechnung:openPdf", { id }),
-  rechnungListCustomers: () => ipcRenderer.invoke("rechnung:listCustomers"),
-  rechnungListProjects: () => ipcRenderer.invoke("rechnung:listProjects"),
-  rechnungCatalogList: () => ipcRenderer.invoke("rechnung:catalog:list"),
-  rechnungCatalogDefaults: () => ipcRenderer.invoke("rechnung:catalog:defaults"),
-  rechnungCatalogCreate: (entry) => ipcRenderer.invoke("rechnung:catalog:create", entry),
-  rechnungCatalogUpdate: (id, entry) => ipcRenderer.invoke("rechnung:catalog:update", { id, entry }),
-
-  // ============================================================
   // GLOBAL Mitarbeiter (Persons) je Firma
   // ============================================================
   personsListByFirm: (firmId) => ipcRenderer.invoke("persons:listByFirm", firmId),
