@@ -148,8 +148,8 @@ async function runSigekoReadinessTests(run) {
       assert.equal(repo.getById(a.id).bauherr_firm_id, "builder");
       db.prepare("UPDATE firms SET removed_at=NULL,is_trashed=0 WHERE id='builder'").run();
     }
-    db.prepare("DELETE FROM firms WHERE id='builder'").run();
-    assert.equal(read().projectData.issues[0].code, "BUILDER_SOURCE_MISSING");
+    assert.throws(() => db.prepare("DELETE FROM firms WHERE id='builder'").run(), /FOREIGN KEY constraint failed/);
+    assert.equal(read().projectData.status, "green");
     repo.updateProject({ id: a.id, bauherr: { kind: "project_firm", id: `firm-${a.id}` } });
     db.prepare("UPDATE project_firms SET is_active=0 WHERE id=?").run(`firm-${a.id}`);
     assert.equal(read().projectData.issues[0].code, "BUILDER_SOURCE_MISSING");
