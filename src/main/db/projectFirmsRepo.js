@@ -352,15 +352,15 @@ function setProjectFirmRole({ projectId, firmId, kind, role }) {
     if (normalizedRole === "bauherr") {
       db.prepare(`
         UPDATE projects
-        SET bauherr_firm_kind = ?, bauherr_firm_id = ?, updated_at = ?
+        SET bauherr_firm_kind = ?, bauherr_firm_id = ?
         WHERE id = ?
-      `).run(kind, firmId, now, projectId);
+      `).run(kind, firmId, projectId);
     } else {
       db.prepare(`
         UPDATE projects
-        SET bauherr_firm_kind = NULL, bauherr_firm_id = NULL, updated_at = ?
+        SET bauherr_firm_kind = NULL, bauherr_firm_id = NULL
         WHERE id = ? AND bauherr_firm_kind = ? AND bauherr_firm_id = ?
-      `).run(now, projectId, kind, firmId);
+      `).run(projectId, kind, firmId);
     }
 
     return {
