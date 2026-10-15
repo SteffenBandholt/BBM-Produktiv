@@ -78,22 +78,18 @@ async function runM82AppStarterPackageTests(run) {
   await run("M82 BBM: Target-Manifest leitet alle aktiven Scope-Zahlen exakt aus Komponentenvertrag und Registry ab", async () => {
     const registry = await importEsmFromFile(path.join(ROOT, "src/renderer/ui-editor/m80Registry.js"));
     const registryScopes = registry.listM80RegistryScopes();
-    const invoiceContract = registry.getM83ComponentContract("bbm.rechnung.screen");
-    const invoiceScope = registryScopes.find((scope) => scope.scopeId === "rechnung.screen");
-    const invoiceTarget = manifest.scopes.find((scope) => scope.scopeId === "rechnung.screen");
-
-    assert.equal(invoiceContract.slots.length, 107);
-    assert.equal(invoiceScope.elements.length, invoiceContract.slots.length);
-    assert.equal(invoiceTarget.elementCount, invoiceScope.elements.length);
+    assert.equal(registry.getM83ComponentContract("bbm.rechnung.screen"), null);
+    assert.equal(registryScopes.some((scope) => scope.scopeId === "rechnung.screen"), false);
+    assert.equal(manifest.scopes.some((scope) => scope.scopeId === "rechnung.screen"), false);
     assert.deepEqual(compareManifestScopeCounts(manifest, registryScopes), []);
 
     const staleManifest = structuredClone(manifest);
-    staleManifest.scopes.find((scope) => scope.scopeId === "rechnung.screen").elementCount = 112;
+    staleManifest.scopes.find((scope) => scope.scopeId === "restarbeiten.list.root").elementCount += 1;
     assert.deepEqual(compareManifestScopeCounts(staleManifest, registryScopes), [{
       code: "target_manifest_element_count_mismatch",
-      scopeId: "rechnung.screen",
-      manifestElementCount: 112,
-      registryElementCount: 107,
+      scopeId: "restarbeiten.list.root",
+      manifestElementCount: 33,
+      registryElementCount: 32,
     }]);
   });
 
