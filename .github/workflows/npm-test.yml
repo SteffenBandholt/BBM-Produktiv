@@ -25,6 +25,32 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Checkout UI Editor kit sibling for branch verification
+        run: git clone --depth 1 https://github.com/SteffenBandholt/UI-Editor-kit.git ../UI-Editor-kit
+
+      - name: Provide BBM-azL sibling contract stub for branch verification
+        shell: bash
+        run: |
+          mkdir -p ../BBM-azL/src/ui ../BBM-azL/host
+          cat > ../BBM-azL/package.json <<'EOF'
+          {
+            "name": "bbm-azl",
+            "version": "0.1.0",
+            "private": true,
+            "type": "module"
+          }
+          EOF
+          cat > ../BBM-azL/src/ui/AzlScreen.js <<'EOF'
+          export default class AzlScreen {
+            constructor() {}
+            async mount() { return this; }
+          }
+          EOF
+          cat > ../BBM-azL/host/bbmProduktiv.cjs <<'EOF'
+          function ensureAzlSchema() {}
+          module.exports = { ensureAzlSchema };
+          EOF
+
       - name: Install dependencies
         run: npm ci
 
