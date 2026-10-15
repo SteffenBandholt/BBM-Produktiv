@@ -76,8 +76,20 @@ export default class ProjectsScreen {
 
       this._projectFormModal = view;
       view.render();
-      await view.load();
-      view.openModal();
+
+      // Das Projektfenster muss sofort sichtbar werden. Das Laden von
+      // Bauherr/Firmen/Protokollhistorie darf den Bearbeiten-Button nicht
+      // scheinbar wirkungslos machen.
+      await view.openModal();
+
+      try {
+        await view.load();
+      } catch (loadError) {
+        console.error("[ProjectsScreen] Project data load failed:", loadError);
+        if (typeof view._setMsg === "function") {
+          view._setMsg(loadError?.message || "Projekt konnte nicht vollständig geladen werden.");
+        }
+      }
     } catch (err) {
       console.error("[ProjectsScreen] Project modal failed:", err);
       this._cleanupProjectFormModal();
