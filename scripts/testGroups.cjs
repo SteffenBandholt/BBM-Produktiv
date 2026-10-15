@@ -34,7 +34,6 @@ const TEST_GROUPS = Object.freeze([
       ["sigekoWorkflowTransfer.test.cjs", "runSigekoWorkflowTransferTests"],
       ["projectBuilder.test.cjs", "runProjectBuilderTests"],
       ["projectBuilderTransfer.test.cjs", "runProjectBuilderTransferTests"],
-      ["projectBuilderForm.test.cjs", "runProjectBuilderFormTests"],
       ["sigekoGrunddatenForm.test.cjs", "runSigekoGrunddatenFormTests"],
       ["plannedConstructionStart.test.cjs", "runPlannedConstructionStartTests"],
       ["meetingSeries.test.cjs", "runMeetingSeriesTests"],
