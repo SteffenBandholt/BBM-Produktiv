@@ -117,7 +117,7 @@ async function runM80ElectronUiEditorTests(run) {
   });
 
   await run("M80/M82.6 Registry: aktive BBM-Produktiv-Scopes sind explizit, Restbereiche bleiben gesperrt", () => {
-    assert.deepEqual(scopes.filter((scope) => scope.status === "complete").map((scope) => scope.scopeId), ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root", "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root", "sigeko.screen", "sigeko.preNotification", "projektverwaltung.plannedStart", "projektverwaltung.builder", "projektverwaltung.meetingSeries", "projektverwaltung.meetingSeriesEntry", "projektverwaltung.overview"]);
+    assert.deepEqual(scopes.filter((scope) => scope.status === "complete").map((scope) => scope.scopeId), ["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root", "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root", "sigeko.screen", "sigeko.preNotification", "projektverwaltung.plannedStart", "projektverwaltung.meetingSeries", "projektverwaltung.meetingSeriesEntry", "projektverwaltung.overview"]);
     assert.ok(scopes.some((scope) => scope.scopeId === "restarbeiten.layout.root" && scope.status === "blocked"));
     assert.equal(entries.some((entry) => entry.id === "restarbeiten.layout.split"), false);
     assert.equal(new Set(entries.map((entry) => entry.id)).size, entries.length);

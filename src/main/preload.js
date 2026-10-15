@@ -198,6 +198,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   projectFirmsAssignGlobalFirm: (data) => ipcRenderer.invoke("projectFirms:assignGlobalFirm", data),
   projectFirmsUnassignGlobalFirm: (data) => ipcRenderer.invoke("projectFirms:unassignGlobalFirm", data),
   projectFirmsSetActive: (data) => ipcRenderer.invoke("projectFirms:setActive", data),
+  projectFirmsSetRole: (data) => ipcRenderer.invoke("projectFirms:setRole", data),
   projectFirmsCanDeactivate: (data) => ipcRenderer.invoke("projectFirms:canDeactivate", data),
 
   // ============================================================

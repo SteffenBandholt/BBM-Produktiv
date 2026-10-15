@@ -20,7 +20,7 @@ module.exports = async function projectOverviewAcceptance({ evaluate, waitFor, c
     [table, database.initDatabase().prepare("SELECT * FROM " + table + " ORDER BY rowid").all()]));
   const openEdit = async id => {
     await projects(); await cardClick(id, "edit");
-    await waitFor("!!msAcceptance.currentForm()?.historySavedState && !!msAcceptance.currentForm()?.builderField.ready");
+    await waitFor("!!msAcceptance.currentForm()?.historySavedState");
   };
   const saveEdit = async () => { await click("save"); await waitFor("!msAcceptance.projectsScreen._projectFormModal"); };
   const fixtures = [];
@@ -34,7 +34,7 @@ module.exports = async function projectOverviewAcceptance({ evaluate, waitFor, c
   }
   await projects();
   const beforeToolbar = snapshot(); await click("create");
-  await waitFor("!!msAcceptance.currentForm()?.btnModalCancel && msAcceptance.currentForm().builderField.ready");
+  await waitFor("!!msAcceptance.currentForm()?.btnModalCancel");
   await click("cancel"); await waitFor("!msAcceptance.projectsScreen._projectFormModal");
   assert.equal(snapshot(), beforeToolbar, "Opening/cancelling create must not modify fixture data");
   await click("transfer"); await waitFor("!!msAcceptance.projectsScreen._transferModalEl");
@@ -64,7 +64,7 @@ module.exports = async function projectOverviewAcceptance({ evaluate, waitFor, c
   assert.deepEqual(await evaluate("msAcceptance.cardButtons(" + json(projectId) + ")"), []);
   await openEdit(projectId);
   assert.deepEqual((await evaluate("msAcceptance.historyButtons()")).map(button => button.seriesKey), ["construction", "owner", "planning"]);
-  await checkRefs(["bbm.projektverwaltung.meetingSeries", "bbm.projektverwaltung.builder"], "Edit-only histories: all three optional mounted targets have valid parents and refs.");
+  await checkRefs(["bbm.projektverwaltung.meetingSeries"], "Edit-only histories: mounted targets have valid parents and refs.");
   await screenshot("project-edit-history");
   const beforeHistory = snapshot();
   await fill("name", "Ungespeicherte Änderung bleibt im Dialog");
@@ -79,10 +79,6 @@ module.exports = async function projectOverviewAcceptance({ evaluate, waitFor, c
   await click("history.construction");
   assert.equal(snapshot(), beforeHistory); assert.equal(await evaluate("msAcceptance.currentForm().meetingSeriesField.inputs.get('owner').checked"), true);
   await click("series.owner");
-  await fill("builder", json(["global_firm", "ms-builder"]));
-  await click("history.owner");
-  assert.equal(snapshot(), beforeHistory); assert.equal(await evaluate("msAcceptance.currentForm().builderField.input.value"), json(["global_firm", "ms-builder"]));
-  await fill("builder", "");
   await click("history.planning");
   await waitFor("msAcceptance.router.currentSeriesKey === 'planning' && msAcceptance.router.currentView?.historyOnly === true");
   assert.equal(snapshot(), beforeHistory);

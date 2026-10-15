@@ -15,6 +15,15 @@ function _label(short, name) {
   return "(ohne Name)";
 }
 
+function _columnExists(db, tableName, columnName) {
+  try {
+    return db.prepare(`PRAGMA table_info(${tableName})`).all()
+      .some((column) => String(column?.name || "") === String(columnName || ""));
+  } catch (_error) {
+    return false;
+  }
+}
+
 function _normalizeActiveFlag(v) {
   if (v === undefined || v === null || v === "") return 1;
   const n = Number(v);
@@ -68,6 +77,13 @@ function listFirmCandidatesByProject(projectId) {
   const db = initDatabase();
   if (!projectId) throw new Error("projectId required");
 
+  const localProjectRole = _columnExists(db, "project_firms", "project_role")
+    ? "project_role"
+    : "NULL AS project_role";
+  const globalProjectRole = _columnExists(db, "project_global_firms", "project_role")
+    ? "pgf.project_role AS project_role"
+    : "NULL AS project_role";
+
   const locals = db.prepare(`
     SELECT
       id,
@@ -79,6 +95,7 @@ function listFirmCandidatesByProject(projectId) {
       phone,
       email,
       COALESCE(role_code, 60) AS role_code,
+      ${localProjectRole},
       COALESCE(is_active, 1) AS is_active
     FROM project_firms
     WHERE project_id = ?
@@ -95,6 +112,7 @@ function listFirmCandidatesByProject(projectId) {
     phone: r.phone ?? null,
     email: r.email ?? null,
     role_code: Number(r.role_code || 60) || 60,
+    project_role: r.project_role ?? null,
     is_active: _normalizeActiveFlag(r.is_active),
     label: _label(r.short, r.name),
   }));
@@ -110,6 +128,7 @@ function listFirmCandidatesByProject(projectId) {
       f.phone AS phone,
       f.email AS email,
       COALESCE(f.role_code, 60) AS role_code,
+      ${globalProjectRole},
       COALESCE(pgf.is_active, 1) AS is_active
     FROM project_global_firms pgf
     JOIN firms f ON f.id = pgf.firm_id
@@ -129,6 +148,7 @@ function listFirmCandidatesByProject(projectId) {
     phone: r.phone ?? null,
     email: r.email ?? null,
     role_code: Number(r.role_code || 60) || 60,
+    project_role: r.project_role ?? null,
     is_active: _normalizeActiveFlag(r.is_active),
     label: _label(r.short, r.name),
   }));
@@ -184,6 +204,15 @@ function unassignGlobalFirmFromProject({ projectId, firmId }) {
 
   const now = _nowIso();
 
+  const assignment = db.prepare(`
+    SELECT project_role
+    FROM project_global_firms
+    WHERE project_id = ? AND firm_id = ? AND removed_at IS NULL
+  `).get(projectId, firmId);
+  if (assignment?.project_role === "bauherr") {
+    throw new Error("Bauherr-Rolle zuerst entfernen.");
+  }
+
   const info = db.prepare(`
     UPDATE project_global_firms
     SET removed_at = ?, updated_at = ?
@@ -202,6 +231,23 @@ function setProjectFirmActive({ projectId, firmId, kind, isActive }) {
 
   const active = _normalizeActiveFlag(isActive);
   const now = _nowIso();
+
+  if (active === 0) {
+    const roleRow = kind === "global_firm"
+      ? db.prepare(`
+          SELECT project_role
+          FROM project_global_firms
+          WHERE project_id = ? AND firm_id = ? AND removed_at IS NULL
+        `).get(projectId, firmId)
+      : db.prepare(`
+          SELECT project_role
+          FROM project_firms
+          WHERE project_id = ? AND id = ? AND removed_at IS NULL
+        `).get(projectId, firmId);
+    if (roleRow?.project_role === "bauherr") {
+      throw new Error("Bauherr-Rolle zuerst entfernen.");
+    }
+  }
 
   const tx = db.transaction(() => {
     const localInfo = kind === "global_firm" ? { changes: 0 } : db.prepare(`
@@ -230,6 +276,102 @@ function setProjectFirmActive({ projectId, firmId, kind, isActive }) {
     firm_id: firmId,
     is_active: active,
   };
+}
+
+function setProjectFirmRole({ projectId, firmId, kind, role }) {
+  const db = initDatabase();
+  if (!projectId) throw new Error("projectId required");
+  if (!firmId) throw new Error("firmId required");
+  if (!["project_firm", "global_firm"].includes(kind)) throw new Error("kind invalid");
+
+  const normalizedRole = String(role || "").trim().toLowerCase() || null;
+  if (normalizedRole && normalizedRole !== "bauherr") {
+    throw new Error("Unbekannte Projektrolle.");
+  }
+
+  const now = _nowIso();
+  const tx = db.transaction(() => {
+    const target = kind === "global_firm"
+      ? db.prepare(`
+          SELECT firm_id AS id
+          FROM project_global_firms
+          WHERE project_id = ? AND firm_id = ? AND removed_at IS NULL
+          LIMIT 1
+        `).get(projectId, firmId)
+      : db.prepare(`
+          SELECT id
+          FROM project_firms
+          WHERE project_id = ? AND id = ? AND removed_at IS NULL
+          LIMIT 1
+        `).get(projectId, firmId);
+
+    if (!target) throw new Error("Firma ist dem Projekt nicht zugeordnet.");
+
+    if (normalizedRole === "bauherr") {
+      const activeRow = kind === "global_firm"
+        ? db.prepare(`
+            SELECT COALESCE(is_active, 1) AS is_active
+            FROM project_global_firms
+            WHERE project_id = ? AND firm_id = ? AND removed_at IS NULL
+          `).get(projectId, firmId)
+        : db.prepare(`
+            SELECT COALESCE(is_active, 1) AS is_active
+            FROM project_firms
+            WHERE project_id = ? AND id = ? AND removed_at IS NULL
+          `).get(projectId, firmId);
+      if (Number(activeRow?.is_active || 0) !== 1) {
+        throw new Error("Nur eine aktive Projektfirma kann Bauherr sein.");
+      }
+
+      db.prepare(`
+        UPDATE project_firms
+        SET project_role = NULL, updated_at = ?
+        WHERE project_id = ? AND removed_at IS NULL AND project_role = 'bauherr'
+      `).run(now, projectId);
+      db.prepare(`
+        UPDATE project_global_firms
+        SET project_role = NULL, updated_at = ?
+        WHERE project_id = ? AND removed_at IS NULL AND project_role = 'bauherr'
+      `).run(now, projectId);
+    }
+
+    if (kind === "global_firm") {
+      db.prepare(`
+        UPDATE project_global_firms
+        SET project_role = ?, updated_at = ?
+        WHERE project_id = ? AND firm_id = ? AND removed_at IS NULL
+      `).run(normalizedRole, now, projectId, firmId);
+    } else {
+      db.prepare(`
+        UPDATE project_firms
+        SET project_role = ?, updated_at = ?
+        WHERE project_id = ? AND id = ? AND removed_at IS NULL
+      `).run(normalizedRole, now, projectId, firmId);
+    }
+
+    if (normalizedRole === "bauherr") {
+      db.prepare(`
+        UPDATE projects
+        SET bauherr_firm_kind = ?, bauherr_firm_id = ?
+        WHERE id = ?
+      `).run(kind, firmId, projectId);
+    } else {
+      db.prepare(`
+        UPDATE projects
+        SET bauherr_firm_kind = NULL, bauherr_firm_id = NULL
+        WHERE id = ? AND bauherr_firm_kind = ? AND bauherr_firm_id = ?
+      `).run(projectId, kind, firmId);
+    }
+
+    return {
+      project_id: projectId,
+      firm_id: firmId,
+      kind,
+      project_role: normalizedRole,
+    };
+  });
+
+  return tx();
 }
 
 function canDeactivateProjectFirm({ projectId, firmId, kind }) {
@@ -518,6 +660,11 @@ function softDeleteProjectFirm(projectFirmId) {
   const db = initDatabase();
   if (!projectFirmId) throw new Error("projectFirmId required");
 
+  const firm = getById(projectFirmId);
+  if (firm?.project_role === "bauherr") {
+    throw new Error("Bauherr-Rolle zuerst entfernen.");
+  }
+
   const active = _countActivePersons(projectFirmId);
   if (active > 0) {
     throw new Error("Entfernen blockiert: zuerst zugeordnete Mitarbeiter entfernen.");
@@ -707,6 +854,7 @@ module.exports = {
   assignGlobalFirmToProject,
   unassignGlobalFirmFromProject,
   setProjectFirmActive,
+  setProjectFirmRole,
   canDeactivateProjectFirm,
   createProjectFirm,
   updateProjectFirm,

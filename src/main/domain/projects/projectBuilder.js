@@ -37,12 +37,54 @@ function validateBuilder(value, projectId, db) {
   return { kind: ref.kind, id: ref.id };
 }
 
+function hasColumn(db, tableName, columnName) {
+  try {
+    return db.prepare(`PRAGMA table_info(${tableName})`).all()
+      .some((column) => String(column?.name || "") === String(columnName || ""));
+  } catch (_error) {
+    return false;
+  }
+}
+
 function resolveBuilder(project, db) {
-  const kind = project.bauherr_firm_kind;
-  const id = project.bauherr_firm_id;
+  const projectId = project?.id;
+  if (!projectId) return { ref: null, firm: null, sourceMissing: false };
+
+  const roleSchemaAvailable =
+    hasColumn(db, "project_firms", "project_role") &&
+    hasColumn(db, "project_global_firms", "project_role");
+
+  let kind = null;
+  let id = null;
+
+  if (roleSchemaAvailable) {
+    const local = db.prepare(`
+      SELECT id
+      FROM project_firms
+      WHERE project_id = ?
+        AND removed_at IS NULL
+        AND project_role = 'bauherr'
+      LIMIT 1
+    `).get(projectId);
+
+    const global = local ? null : db.prepare(`
+      SELECT firm_id AS id
+      FROM project_global_firms
+      WHERE project_id = ?
+        AND removed_at IS NULL
+        AND project_role = 'bauherr'
+      LIMIT 1
+    `).get(projectId);
+
+    kind = local ? FIRM_KINDS.PROJECT : global ? FIRM_KINDS.GLOBAL : null;
+    id = local?.id || global?.id || null;
+  } else {
+    kind = project.bauherr_firm_kind || null;
+    id = project.bauherr_firm_id || null;
+  }
+
   if (!kind && !id) return { ref: null, firm: null, sourceMissing: false };
-  const ref = { kind, id, projectId: kind === FIRM_KINDS.PROJECT ? project.id : null };
-  // Keep incomplete historical references visible; never guess a replacement.
+  const ref = { kind, id, projectId: kind === FIRM_KINDS.PROJECT ? projectId : null };
   if (!id || ![FIRM_KINDS.GLOBAL, FIRM_KINDS.PROJECT].includes(kind)) {
     return { ref, firm: null, sourceMissing: true };
   }

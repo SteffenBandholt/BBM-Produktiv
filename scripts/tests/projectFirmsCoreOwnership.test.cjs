@@ -72,11 +72,22 @@ async function runProjectFirmsCoreOwnershipTests(run) {
 
   await run("Paket 3: Projektfirmen kennzeichnen Bauherr und bearbeiten globale Firmen zentral", () => {
     const source = read("src/renderer/views/ProjectFirmsWorkView.js");
-    assert.match(source, /projectsGetBuilder/);
+    assert.match(source, /project_role/);
     assert.match(source, /badge\.textContent = "Bauherr"/);
     assert.match(source, /Im Firmenstamm bearbeiten/);
     assert.match(source, /firmDirectoryUpdate/);
-    assert.match(source, /Diese Firma ist als Bauherr des Projekts festgelegt/);
+    assert.match(source, /Bitte zuerst die Rolle „Bauherr“ entfernen/);
+  });
+
+  await run("Paket 3: Bauherr ist eine projektbezogene Firmenrolle", () => {
+    const repoSource = read("src/main/db/projectFirmsRepo.js");
+    const viewSource = read("src/renderer/views/ProjectFirmsWorkView.js");
+    const formSource = read("src/renderer/modules/projektverwaltung/screens/ProjectFormScreen.js");
+    assert.match(repoSource, /setProjectFirmRole/);
+    assert.match(repoSource, /project_role = 'bauherr'/);
+    assert.match(viewSource, /Rolle im Projekt/);
+    assert.match(viewSource, /\["bauherr", "Bauherr"\]/);
+    assert.equal(formSource.includes("ProjectBuilderField"), false);
   });
 
   await run("Paket 3: bestehende Projektfirmenlogik bleibt singulaer", () => {

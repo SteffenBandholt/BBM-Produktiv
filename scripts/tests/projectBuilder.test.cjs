@@ -54,6 +54,24 @@ async function runProjectBuilderTests(run) {
     }, { modules }));
   }
 
+  await run("Bauherr: Projektrolle setzt, wechselt und entfernt den Bauherrn", () => seeded(({ repo, db, database, first }) => {
+    const projectFirmsRepo = load("src/main/db/projectFirmsRepo.js", { "./database": database });
+    db.prepare("UPDATE firms SET use_project_participant=1 WHERE id='global'").run();
+    projectFirmsRepo.assignGlobalFirmToProject({ projectId: first.id, firmId: "global" });
+    projectFirmsRepo.setProjectFirmRole({ projectId: first.id, firmId: "global", kind: "global_firm", role: "bauherr" });
+    assert.equal(db.prepare("SELECT project_role FROM project_global_firms WHERE project_id=? AND firm_id=?").get(first.id, "global").project_role, "bauherr");
+    assert.equal(repo.getBuilder(first.id).ref.id, "global");
+
+    projectFirmsRepo.setProjectFirmRole({ projectId: first.id, firmId: "local", kind: "project_firm", role: "bauherr" });
+    assert.equal(db.prepare("SELECT project_role FROM project_global_firms WHERE project_id=? AND firm_id=?").get(first.id, "global").project_role, null);
+    assert.equal(db.prepare("SELECT project_role FROM project_firms WHERE id='local'").get().project_role, "bauherr");
+    assert.equal(repo.getBuilder(first.id).ref.id, "local");
+
+    projectFirmsRepo.setProjectFirmRole({ projectId: first.id, firmId: "local", kind: "project_firm", role: null });
+    assert.deepEqual(repo.getBuilder(first.id), { ref: null, firm: null, sourceMissing: false });
+    assert.equal(repo.getById(first.id).bauherr_firm_id, null);
+  }));
+
   await run("Bauherr: all update envelopes preserve omission and accept explicit change or clear", () => seeded(({ invoke, repo, first }) => {
     for (const idKey of ["projectId", "project_id", "id"]) for (const nested of [true, false]) {
       const update = (patch) => invoke("projects:update", nested ? { [idKey]: first.id, patch } : { [idKey]: first.id, ...patch });

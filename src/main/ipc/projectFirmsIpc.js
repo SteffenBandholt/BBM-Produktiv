@@ -312,6 +312,20 @@ function registerProjectFirmsIpc() {
     }
   });
 
+  ipcMain.handle("projectFirms:setRole", (_evt, data) => {
+    try {
+      const result = projectFirmsRepo.setProjectFirmRole({
+        projectId: data?.projectId,
+        firmId: data?.firmId,
+        kind: data?.kind,
+        role: data?.role,
+      });
+      return { ok: true, data: result };
+    } catch (error) {
+      return { ok: false, error: error?.message || String(error) };
+    }
+  });
+
   ipcMain.handle("projectFirms:canDeactivate", (_evt, data) => {
     try {
       const result = projectFirmsRepo.canDeactivateProjectFirm({
