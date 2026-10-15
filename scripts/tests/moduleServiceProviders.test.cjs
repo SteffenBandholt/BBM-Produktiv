@@ -23,27 +23,27 @@ async function runModuleServiceProviderTests(run) {
       provide: ({ input }) => ({ documentType: "protocol", viewModel: input, layoutRules: { header: "protocol" } }),
     }));
     registry.register(PdfDocumentProvider({
-      moduleId: "rechnung",
-      type: "invoice",
-      provide: ({ input }) => ({ documentType: "invoice", viewModel: input, layoutRules: { header: "invoice" } }),
+      moduleId: "sigeko",
+      type: "report",
+      provide: ({ input }) => ({ documentType: "report", viewModel: input, layoutRules: { header: "report" } }),
     }));
 
     const protocol = registry.provide({ kind: PROVIDER_KINDS.PDF_DOCUMENT, moduleId: "protokoll", type: "protocol", input: { meetingId: "m1" } });
-    const invoice = registry.provide({ kind: PROVIDER_KINDS.PDF_DOCUMENT, moduleId: "rechnung", type: "invoice", input: { invoiceId: "i1" } });
+    const report = registry.provide({ kind: PROVIDER_KINDS.PDF_DOCUMENT, moduleId: "sigeko", type: "report", input: { reportId: "s1" } });
     assert.deepEqual(protocol, { documentType: "protocol", viewModel: { meetingId: "m1" }, layoutRules: { header: "protocol" } });
-    assert.deepEqual(invoice, { documentType: "invoice", viewModel: { invoiceId: "i1" }, layoutRules: { header: "invoice" } });
+    assert.deepEqual(report, { documentType: "report", viewModel: { reportId: "s1" }, layoutRules: { header: "report" } });
   });
 
   await run("Paket 6: Mail-Provider liefert fachlichen Payload an gemeinsamen Dienst", () => {
     const registry = createModuleServiceProviderRegistry();
     registry.register(MailPayloadProvider({
-      moduleId: "rechnung",
-      type: "invoice",
-      provide: ({ input }) => ({ to: input.to, subject: `Rechnung ${input.number}`, attachments: input.files }),
+      moduleId: "sigeko",
+      type: "report",
+      provide: ({ input }) => ({ to: input.to, subject: `SiGeKo ${input.number}`, attachments: input.files }),
     }));
     assert.deepEqual(
-      registry.provide({ kind: PROVIDER_KINDS.MAIL_PAYLOAD, moduleId: "rechnung", type: "invoice", input: { to: ["a@example.test"], number: "42", files: ["42.pdf"] } }),
-      { to: ["a@example.test"], subject: "Rechnung 42", attachments: ["42.pdf"] }
+      registry.provide({ kind: PROVIDER_KINDS.MAIL_PAYLOAD, moduleId: "sigeko", type: "report", input: { to: ["a@example.test"], number: "42", files: ["42.pdf"] } }),
+      { to: ["a@example.test"], subject: "SiGeKo 42", attachments: ["42.pdf"] }
     );
   });
 
@@ -71,16 +71,16 @@ async function runModuleServiceProviderTests(run) {
 
   await run("Paket 6: Provider sind pro Modul und Fachtyp eindeutig", () => {
     const registry = createModuleServiceProviderRegistry();
-    const provider = PdfDocumentProvider({ moduleId: "rechnung", type: "invoice", provide: () => ({}) });
+    const provider = PdfDocumentProvider({ moduleId: "sigeko", type: "report", provide: () => ({}) });
     registry.register(provider);
     assert.throws(() => registry.register(provider), /bereits registriert/);
-    assert.equal(registry.resolve({ kind: PROVIDER_KINDS.PDF_DOCUMENT, moduleId: "protokoll", type: "invoice" }), null);
+    assert.equal(registry.resolve({ kind: PROVIDER_KINDS.PDF_DOCUMENT, moduleId: "protokoll", type: "report" }), null);
   });
 
   await run("Paket 6: neutrale Providergrenze importiert keine Fachimplementierung", () => {
     const shared = read("src/shared/providers/serviceProviderRegistry.cjs");
     const bridge = read("src/main/moduleServiceProviders.js");
-    for (const forbidden of ["protokoll", "restarbeiten", "rechnung", "PrintShell", "MailFlow", "projectTransferIpc"]) {
+    for (const forbidden of ["protokoll", "restarbeiten", "sigeko", "PrintShell", "MailFlow", "projectTransferIpc"]) {
       assert.equal(shared.includes(forbidden), false, forbidden);
       assert.equal(bridge.includes(forbidden), false, forbidden);
     }
