@@ -42,6 +42,9 @@ const MODULE_STORAGE_TARGETS = Object.freeze({
   sigeko: Object.freeze({ folder: "SiGeKo", targets: Object.freeze([
     "Unterlagen", "SiGePläne", "Zeichnungen", "Berichte",
   ]) }),
+  azl: Object.freeze({ folder: "AzL", targets: Object.freeze([
+    "Angebote", "Ausgaben",
+  ]) }),
 });
 
 function storageError(code, message, targetPath) {
