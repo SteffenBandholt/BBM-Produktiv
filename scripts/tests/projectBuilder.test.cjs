@@ -56,6 +56,7 @@ async function runProjectBuilderTests(run) {
 
   await run("Bauherr: Projektrolle setzt, wechselt und entfernt den Bauherrn", () => seeded(({ repo, db, database, first }) => {
     const projectFirmsRepo = load("src/main/db/projectFirmsRepo.js", { "./database": database });
+    db.prepare("UPDATE firms SET use_project_participant=1 WHERE id='global'").run();
     projectFirmsRepo.assignGlobalFirmToProject({ projectId: first.id, firmId: "global" });
     projectFirmsRepo.setProjectFirmRole({ projectId: first.id, firmId: "global", kind: "global_firm", role: "bauherr" });
     assert.equal(db.prepare("SELECT project_role FROM project_global_firms WHERE project_id=? AND firm_id=?").get(first.id, "global").project_role, "bauherr");
