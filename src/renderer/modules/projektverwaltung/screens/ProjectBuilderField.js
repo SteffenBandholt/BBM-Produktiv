@@ -25,14 +25,22 @@ export default class ProjectBuilderField {
     const label = make("label", ".label", "Bauherr"); label.htmlFor = `${BUILDER_SCOPE}.input`;
     this.input = make("select", ".input"); this.input.id = label.htmlFor;
     this.input.style.cssText = "box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-height:34px;padding:6px;font:inherit;border:1px solid #afbdcb;border-radius:4px";
-    this.input.onchange = () => this._showSelection(); group.append(label, this.input);
+    this.input.onchange = () => { this._showSelection(); this._syncClearButton(); }; group.append(label, this.input);
     const hint = make("p", ".hint", "Vorhandene Firma auswählen. Neue Firmen zuerst in der Firmenverwaltung anlegen. Die Zuordnung wird mit dem Projekt gespeichert."); hint.style.margin = "0";
     this.status = make("p", ".status", "Firmenauswahl wird geladen …"); this.status.setAttribute("role", "status"); this.status.style.margin = "0";
+    this.clear = make("button", ".clear", "Bauherr entfernen"); this.clear.type = "button";
+    this.clear.style.cssText = "align-self:flex-start;max-width:100%;white-space:normal;padding:6px 10px";
+    this.clear.onclick = () => {
+      if (this.busy || this.loading || this.archived || !this.input) return;
+      this.input.value = "";
+      this._showSelection();
+      this._syncClearButton();
+    };
     this.refresh = make("button", ".refresh", "Firmenauswahl aktualisieren"); this.refresh.type = "button";
     this.refresh.style.cssText = "align-self:flex-start;max-width:100%;white-space:normal;padding:6px 10px";
     this.refresh.onclick = () => this.load();
-    root.append(group, hint, this.status, this.refresh); this.root = root;
-    this._options(""); this.bind(); this.setBusy(false);
+    root.append(group, hint, this.status, this.clear, this.refresh); this.root = root;
+    this._options(""); this.bind(); this._syncClearButton(); this.setBusy(false);
     void installDevelopmentUiEditorOpenButton({ host: root, scopeId: BUILDER_SCOPE }).then(button => {
       if (!button) return;
       this.refs[".editor"] = button;
@@ -60,7 +68,7 @@ export default class ProjectBuilderField {
     this.archived = !!project?.archived_at;
     this.savedKey = project?.bauherr_firm_kind && project?.bauherr_firm_id
       ? keyFor({ kind: project.bauherr_firm_kind, id: project.bauherr_firm_id }) : "";
-    this._options(this.savedKey); this._showSelection(); this.setBusy(this.busy);
+    this._options(this.savedKey); this._showSelection(); this._syncClearButton(); this.setBusy(this.busy);
   }
   _options(selected) {
     this.input.textContent = "";
@@ -73,14 +81,22 @@ export default class ProjectBuilderField {
   _showSelection() {
     if (this.error) { this.status.textContent = this.error; return; }
     const key = this.input.value, firm = this.firms.get(key);
-    this.status.textContent = !key ? "Noch kein Bauherr zugeordnet."
+    this.status.textContent = !key
+      ? (this.savedKey ? "Bauherr wird beim Speichern entfernt." : "Noch kein Bauherr zugeordnet.")
       : !firm ? "Die zugeordnete Firma ist nicht verfügbar. Bitte Zuordnung prüfen."
       : [firm.name, firm.street, [firm.zip, firm.city].filter(Boolean).join(" "), firm.phone, firm.email].filter(Boolean).join(" · ");
+  }
+  _syncClearButton() {
+    if (!this.clear) return;
+    const hasCurrentOrSavedBuilder = !!this.input?.value || !!this.savedKey;
+    this.clear.hidden = !hasCurrentOrSavedBuilder;
+    this.clear.disabled = this.busy || this.loading || this.archived || !hasCurrentOrSavedBuilder;
   }
   setBusy(on) {
     this.busy = !!on;
     if (this.input) this.input.disabled = this.busy || this.loading || !this.ready || this.archived;
     if (this.refresh) this.refresh.disabled = this.busy || this.loading;
+    this._syncClearButton();
   }
   async load() {
     if (!this.alive || this.busy || this.loading) return;
@@ -95,7 +111,7 @@ export default class ProjectBuilderField {
       if (!this.alive || sequence !== this.sequence) return;
       const firms = groups.flatMap(list).filter(active);
       this.firms = new Map(firms.map(firm => [keyFor(firm.ref), { ...firm, kind: firm.ref.kind }]));
-      this.ready = true; this.error = ""; this._options(this.input.value); this._showSelection();
+      this.ready = true; this.error = ""; this._options(this.input.value); this._showSelection(); this._syncClearButton();
     } catch (error) {
       if (!this.alive || sequence !== this.sequence) return;
       this.ready = false; this.error = `Firmenauswahl konnte nicht geladen werden: ${error.message} Bitte aktualisieren.`;
