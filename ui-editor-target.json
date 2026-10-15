@@ -7,7 +7,7 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 40,
+  "registryVersion": 41,
   "registryFingerprint": "sha256:b7bca32c4e3801e823cb8f33eea10575bf73c9d16e4c8dee5eaa3f7b22f6caea",
   "registryStatus": "incomplete",
   "activeScopes": [
@@ -17,7 +17,6 @@
     "protokoll.screen.root",
     "protokoll.list.root",
     "protokoll.edit.root",
-    "rechnung.screen",
     "sigeko.screen",
     "sigeko.preNotification",
     "projektverwaltung.plannedStart",
@@ -55,22 +54,111 @@
   "labelFieldSeparation": true,
   "transportProtocolVersion": "1.0",
   "scopes": [
-    {"scopeId":"restarbeiten.header.root","status":"complete","reason":null,"elementCount":44,"missingReferenceCount":0},
-    {"scopeId":"restarbeiten.list.root","status":"complete","reason":null,"elementCount":32,"missingReferenceCount":0},
-    {"scopeId":"restarbeiten.edit.root","status":"complete","reason":null,"elementCount":53,"missingReferenceCount":0},
-    {"scopeId":"protokoll.screen.root","status":"complete","reason":null,"elementCount":34,"missingReferenceCount":0},
-    {"scopeId":"protokoll.list.root","status":"complete","reason":null,"elementCount":32,"missingReferenceCount":0},
-    {"scopeId":"protokoll.edit.root","status":"complete","reason":null,"elementCount":38,"missingReferenceCount":0},
-    {"scopeId":"rechnung.screen","status":"complete","reason":null,"elementCount":107,"missingReferenceCount":0},
-    {"scopeId":"sigeko.screen","status":"complete","reason":null,"elementCount":208,"missingReferenceCount":0},
-    {"scopeId":"sigeko.preNotification","status":"complete","reason":null,"elementCount":144,"missingReferenceCount":0},
-    {"scopeId":"projektverwaltung.plannedStart","status":"complete","reason":null,"elementCount":5,"missingReferenceCount":0},
-    {"scopeId":"projektverwaltung.builder","status":"complete","reason":null,"elementCount":8,"missingReferenceCount":0},
-    {"scopeId":"projektverwaltung.meetingSeries","status":"complete","reason":null,"elementCount":14,"missingReferenceCount":0},
-    {"scopeId":"projektverwaltung.meetingSeriesEntry","status":"complete","reason":null,"elementCount":4,"missingReferenceCount":0},
-    {"scopeId":"projektverwaltung.overview","status":"complete","reason":null,"elementCount":12,"missingReferenceCount":0},
-    {"scopeId":"bbm.remaining","status":"blocked","reason":"registration_inventory_pending","elementCount":0,"missingReferenceCount":0},
-    {"scopeId":"pdf.bbm.protocol","status":"complete","reason":null,"elementCount":28,"missingReferenceCount":0}
+    {
+      "scopeId": "restarbeiten.header.root",
+      "status": "complete",
+      "reason": null,
+      "elementCount": 44,
+      "missingReferenceCount": 0
+    },
+    {
+      "scopeId": "restarbeiten.list.root",
+      "status": "complete",
+      "reason": null,
+      "elementCount": 32,
+      "missingReferenceCount": 0
+    },
+    {
+      "scopeId": "restarbeiten.edit.root",
+      "status": "complete",
+      "reason": null,
+      "elementCount": 53,
+      "missingReferenceCount": 0
+    },
+    {
+      "scopeId": "protokoll.screen.root",
+      "status": "complete",
+      "reason": null,
+      "elementCount": 34,
+      "missingReferenceCount": 0
+    },
+    {
+      "scopeId": "protokoll.list.root",
+      "status": "complete",
+      "reason": null,
+      "elementCount": 32,
+      "missingReferenceCount": 0
+    },
+    {
+      "scopeId": "protokoll.edit.root",
+      "status": "complete",
+      "reason": null,
+      "elementCount": 38,
+      "missingReferenceCount": 0
+    },
+    {
+      "scopeId": "sigeko.screen",
+      "status": "complete",
+      "reason": null,
+      "elementCount": 208,
+      "missingReferenceCount": 0
+    },
+    {
+      "scopeId": "sigeko.preNotification",
+      "status": "complete",
+      "reason": null,
+      "elementCount": 144,
+      "missingReferenceCount": 0
+    },
+    {
+      "scopeId": "projektverwaltung.plannedStart",
+      "status": "complete",
+      "reason": null,
+      "elementCount": 5,
+      "missingReferenceCount": 0
+    },
+    {
+      "scopeId": "projektverwaltung.builder",
+      "status": "complete",
+      "reason": null,
+      "elementCount": 8,
+      "missingReferenceCount": 0
+    },
+    {
+      "scopeId": "projektverwaltung.meetingSeries",
+      "status": "complete",
+      "reason": null,
+      "elementCount": 14,
+      "missingReferenceCount": 0
+    },
+    {
+      "scopeId": "projektverwaltung.meetingSeriesEntry",
+      "status": "complete",
+      "reason": null,
+      "elementCount": 4,
+      "missingReferenceCount": 0
+    },
+    {
+      "scopeId": "projektverwaltung.overview",
+      "status": "complete",
+      "reason": null,
+      "elementCount": 12,
+      "missingReferenceCount": 0
+    },
+    {
+      "scopeId": "bbm.remaining",
+      "status": "blocked",
+      "reason": "registration_inventory_pending",
+      "elementCount": 0,
+      "missingReferenceCount": 0
+    },
+    {
+      "scopeId": "pdf.bbm.protocol",
+      "status": "complete",
+      "reason": null,
+      "elementCount": 28,
+      "missingReferenceCount": 0
+    }
   ],
   "installationOwnership": {
     "owner": "App-Starterpaket",
@@ -81,5 +169,5 @@
     ]
   },
   "installedAt": "2026-07-27T00:00:00+00:00",
-  "updatedAt": "2026-09-18T00:00:00+00:00"
+  "updatedAt": "2026-10-15T00:00:00+00:00"
 }
