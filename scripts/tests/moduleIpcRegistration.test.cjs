@@ -22,7 +22,7 @@ async function runModuleIpcRegistrationTests(run) {
         guarded.handle("protokoll:test", () => "ok");
       },
       restarbeiten: () => calls.push("restarbeiten"),
-      rechnung: () => calls.push("rechnung"),
+      sigeko: () => calls.push("sigeko"),
     };
 
     const result = registerActiveModuleIpcs({
@@ -62,17 +62,17 @@ async function runModuleIpcRegistrationTests(run) {
   await run("Paket 4: registrierter Fach-IPC prueft die aktuelle Modulfreigabe erneut", async () => {
     const { createGuardedIpcMain } = require(path.join(process.cwd(), "src/main/moduleIpcRegistry.js"));
     const handlers = new Map();
-    let currentStatus = status(["rechnung"]);
+    let currentStatus = status(["restarbeiten"]);
     const guarded = createGuardedIpcMain({
       ipcMain: { handle: (channel, listener) => handlers.set(channel, listener) },
-      moduleId: "rechnung",
+      moduleId: "restarbeiten",
       getLicenseStatus: () => currentStatus,
     });
-    guarded.handle("rechnung:test", async () => ({ ok: true }));
+    guarded.handle("restarbeiten:test", async () => ({ ok: true }));
 
-    assert.deepEqual(await handlers.get("rechnung:test")({}, {}), { ok: true });
+    assert.deepEqual(await handlers.get("restarbeiten:test")({}, {}), { ok: true });
     currentStatus = status([]);
-    assert.throws(() => handlers.get("rechnung:test")({}, {}), /MODULE_NOT_ACTIVE:rechnung/);
+    assert.throws(() => handlers.get("restarbeiten:test")({}, {}), /MODULE_NOT_ACTIVE:restarbeiten/);
   });
 
   await run("Paket 4: Main enthaelt keine statische Fach-IPC-Einzelregistrierung", () => {
@@ -108,7 +108,7 @@ async function runModuleIpcRegistrationTests(run) {
 
   await run("Paket 4: Preload-Fachzugriffe bleiben durch nicht registrierte oder geguardete Handler begrenzt", () => {
     const preload = read("src/main/preload.js");
-    assert.match(preload, /rechnung:defaults/);
+    assert.doesNotMatch(preload, /rechnung:/);
     assert.match(preload, /restarbeiten:listByProject/);
     const registrySource = read("src/main/moduleIpcRegistry.js");
     assert.match(registrySource, /resolveActiveModuleIds/);
