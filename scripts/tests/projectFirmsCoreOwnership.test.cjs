@@ -92,9 +92,13 @@ async function runProjectFirmsCoreOwnershipTests(run) {
     const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
     assert.match(overviewSource, /Bauherr festlegen/);
     assert.match(overviewSource, /Ändern/);
-    assert.match(projectsSource, /Aus Firmenstamm wählen/);
+    assert.match(projectsSource, /Aus Projektfirmen wählen/);
+    assert.match(projectsSource, /projectFirmsListFirmCandidatesByProject/);
+    assert.match(projectsSource, /projectFirmsCreate/);
     assert.match(projectsSource, /Neue Firma anlegen/);
     assert.match(projectsSource, /Bauherr entfernen/);
+    assert.equal(projectsSource.includes("firmDirectoryListAll({ kind: \"global_firm\""), false);
+    assert.equal(projectsSource.includes("_assignBuilderFromGlobalFirm"), false);
   });
 
   await run("Paket 3: bestehende Projektfirmenlogik bleibt singulaer", () => {
