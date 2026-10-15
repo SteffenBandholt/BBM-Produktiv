@@ -69,6 +69,16 @@ async function runProjectFirmsCoreOwnershipTests(run) {
     assert.equal(source.includes("license"), false);
   });
 
+
+  await run("Paket 3: Projektfirmen kennzeichnen Bauherr und bearbeiten globale Firmen zentral", () => {
+    const source = read("src/renderer/views/ProjectFirmsWorkView.js");
+    assert.match(source, /projectsGetBuilder/);
+    assert.match(source, /badge\.textContent = "Bauherr"/);
+    assert.match(source, /Im Firmenstamm bearbeiten/);
+    assert.match(source, /firmDirectoryUpdate/);
+    assert.match(source, /Diese Firma ist als Bauherr des Projekts festgelegt/);
+  });
+
   await run("Paket 3: bestehende Projektfirmenlogik bleibt singulaer", () => {
     const ipcSource = read("src/main/ipc/projectFirmsIpc.js");
     const coreSource = read("src/main/core/projectFirmsCore.js");
