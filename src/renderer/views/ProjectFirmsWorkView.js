@@ -67,6 +67,7 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     super(args);
     this.projectLocalFirms = [];
     this.contactsByKey = new Map();
+    this.azlContracts = [];
     this.selectedEntry = null;
   }
 
@@ -77,6 +78,15 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
 
     const api = window.bbmDb || {};
     this.contactsByKey = new Map();
+
+    try {
+      const contractRes = typeof api.azlContractsList === "function"
+        ? await api.azlContractsList(this.projectId)
+        : null;
+      this.azlContracts = contractRes?.ok && Array.isArray(contractRes.list) ? contractRes.list : [];
+    } catch (_error) {
+      this.azlContracts = [];
+    }
 
     const globalLoads = (this.assignedGlobalFirms || []).map(async (firm) => {
       const firmId = text(firm?.id);
@@ -336,6 +346,284 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
       }
       card.append(list);
     }
+
+    const orderCard = style(document.createElement("section"), {
+      marginTop: "4px",
+      paddingTop: "12px",
+      borderTop: "1px solid #edf0f4",
+      display: "grid",
+      gap: "8px",
+    });
+    const orderTitle = style(document.createElement("div"), {
+      fontSize: "12px",
+      fontWeight: "850",
+      color: "#344054",
+    });
+    orderTitle.textContent = "Auftragsdaten für azL";
+
+    const firmKind = kind === "project" ? "project" : "global";
+    const contractEntry = (this.azlContracts || []).find((entry) => {
+      const contract = entry?.contract || entry;
+      return String(contract?.firm_kind || contract?.firmKind || "") === firmKind
+        && String(contract?.firm_id || contract?.firmId || "") === text(firm?.id);
+    });
+    let contract = contractEntry?.contract || contractEntry || null;
+
+    const orderGrid = style(document.createElement("div"), {
+      display: "grid",
+      gridTemplateColumns: "150px minmax(0,1fr)",
+      gap: "7px 9px",
+      alignItems: "center",
+    });
+    const makeInput = (labelText, value = "", type = "text") => {
+      const label = style(document.createElement("label"), {
+        fontSize: "11px",
+        color: "#475467",
+        fontWeight: "700",
+      });
+      label.textContent = labelText;
+      const input = document.createElement("input");
+      input.type = type;
+      if (type === "checkbox") {
+        input.checked = !!value;
+      } else {
+        input.value = value == null ? "" : String(value);
+        style(input, {
+          width: "100%",
+          minHeight: "32px",
+          border: "1px solid #cfd7e3",
+          borderRadius: "7px",
+          padding: "0 8px",
+          boxSizing: "border-box",
+          fontSize: "11.5px",
+        });
+      }
+      orderGrid.append(label, input);
+      return input;
+    };
+
+    const tradeInput = makeInput("Gewerk", contract?.trade || text(firm?.gewerk));
+    const orderNoInput = makeInput("Auftragsnummer", contract?.order_number || contract?.orderNumber || "");
+    const mainOrderInput = makeInput(
+      "Hauptauftrag netto",
+      ((Number(contract?.main_order_net_cents ?? contract?.mainOrderNetCents ?? 0) || 0) / 100)
+        .toFixed(2).replace(".", ",")
+    );
+    const rateAgreedInput = makeInput(
+      "Stundensatz vereinbart",
+      Number(contract?.hourly_rate_agreed ?? contract?.hourlyRateAgreed ?? 0) === 1,
+      "checkbox"
+    );
+    const hourlyRateInput = makeInput(
+      "Stundenverrechnungssatz €/h",
+      contract?.hourly_rate_cents == null && contract?.hourlyRateCents == null
+        ? ""
+        : ((Number(contract?.hourly_rate_cents ?? contract?.hourlyRateCents) || 0) / 100)
+            .toFixed(2).replace(".", ",")
+    );
+
+    const parseEuro = (value) => {
+      const normalized = String(value || "").replace(/\./g, "").replace(",", ".").replace(/[^0-9.-]/g, "");
+      return Math.round(Number(normalized || 0) * 100);
+    };
+    const syncHourlyEnabled = () => {
+      hourlyRateInput.disabled = !rateAgreedInput.checked;
+      if (!rateAgreedInput.checked) hourlyRateInput.value = "";
+    };
+    rateAgreedInput.addEventListener("change", syncHourlyEnabled);
+    syncHourlyEnabled();
+
+    const orderActions = style(document.createElement("div"), {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      flexWrap: "wrap",
+    });
+    const saveOrder = button("Auftragsdaten speichern", { primary: true });
+    const orderStatus = style(document.createElement("span"), {
+      fontSize: "10.5px",
+      color: "#667085",
+    });
+
+    const sideOrdersTitle = style(document.createElement("div"), {
+      marginTop: "6px",
+      fontSize: "11.5px",
+      fontWeight: "850",
+      color: "#344054",
+    });
+    sideOrdersTitle.textContent = "Nebenaufträge";
+
+    const sideOrdersList = style(document.createElement("div"), {
+      display: "grid",
+      gap: "6px",
+    });
+    const addSideOrder = button("+ Nebenauftrag");
+    const sideOrderStatus = style(document.createElement("span"), {
+      fontSize: "10.5px",
+      color: "#667085",
+    });
+    const sideOrderActions = style(document.createElement("div"), {
+      display: "flex",
+      gap: "8px",
+      alignItems: "center",
+      flexWrap: "wrap",
+    });
+    sideOrderActions.append(addSideOrder, sideOrderStatus);
+
+    const renderSideOrders = async () => {
+      sideOrdersList.innerHTML = "";
+      const api = window.bbmDb || {};
+      const activeContractId = text(contract?.id);
+      if (!activeContractId || typeof api.azlOrdersList !== "function") {
+        const empty = style(document.createElement("div"), {
+          fontSize: "10.5px",
+          color: "#98a2b3",
+        });
+        empty.textContent = activeContractId
+          ? "Nebenaufträge sind nicht verfügbar."
+          : "Zuerst Auftragsdaten speichern.";
+        sideOrdersList.append(empty);
+        addSideOrder.disabled = !activeContractId;
+        return;
+      }
+
+      const res = await api.azlOrdersList(activeContractId);
+      if (!res?.ok) {
+        sideOrderStatus.textContent = res?.error || "Nebenaufträge konnten nicht geladen werden.";
+        return;
+      }
+      const rows = (res.list || []).filter((row) => String(row?.order_kind || row?.orderKind || "") !== "main");
+      if (!rows.length) {
+        const empty = style(document.createElement("div"), {
+          fontSize: "10.5px",
+          color: "#98a2b3",
+        });
+        empty.textContent = "Keine Nebenaufträge hinterlegt.";
+        sideOrdersList.append(empty);
+        return;
+      }
+
+      for (const row of rows) {
+        const line = style(document.createElement("div"), {
+          display: "grid",
+          gridTemplateColumns: "90px minmax(0,1fr) 100px auto",
+          gap: "6px",
+          alignItems: "center",
+          padding: "6px",
+          border: "1px solid #edf0f4",
+          borderRadius: "7px",
+          background: "#f8fafc",
+        });
+        const no = document.createElement("input");
+        no.value = text(row?.order_number ?? row?.orderNumber);
+        const label = document.createElement("input");
+        label.value = text(row?.label);
+        const net = document.createElement("input");
+        net.value = ((Number(row?.net_cents ?? row?.netCents ?? 0) || 0) / 100).toFixed(2).replace(".", ",");
+        for (const field of [no, label, net]) {
+          style(field, {
+            minWidth: "0",
+            minHeight: "30px",
+            border: "1px solid #cfd7e3",
+            borderRadius: "6px",
+            padding: "0 7px",
+            fontSize: "11px",
+          });
+        }
+        no.placeholder = "Nr.";
+        label.placeholder = "Bezeichnung";
+        net.placeholder = "Netto";
+
+        const rowActions = style(document.createElement("div"), { display: "flex", gap: "4px" });
+        const saveRow = button("Speichern");
+        const deleteRow = button("×", { danger: true });
+        saveRow.addEventListener("click", async () => {
+          const saveRes = await api.azlOrderSave?.({
+            id: row.id,
+            contractId: activeContractId,
+            orderKind: "side",
+            orderNumber: text(no.value),
+            label: text(label.value),
+            netCents: parseEuro(net.value),
+          });
+          sideOrderStatus.textContent = saveRes?.ok
+            ? "Nebenauftrag gespeichert."
+            : (saveRes?.error || "Speichern fehlgeschlagen.");
+        });
+        deleteRow.addEventListener("click", async () => {
+          if (!confirm("Nebenauftrag wirklich löschen?")) return;
+          const deleteRes = await api.azlOrderDelete?.(row.id);
+          if (!deleteRes?.ok) {
+            sideOrderStatus.textContent = deleteRes?.error || "Löschen fehlgeschlagen.";
+            return;
+          }
+          sideOrderStatus.textContent = "Nebenauftrag gelöscht.";
+          await renderSideOrders();
+        });
+        rowActions.append(saveRow, deleteRow);
+        line.append(no, label, net, rowActions);
+        sideOrdersList.append(line);
+      }
+    };
+
+    saveOrder.addEventListener("click", async () => {
+      const api = window.bbmDb || {};
+      if (typeof api.azlContractSave !== "function") {
+        orderStatus.textContent = "azL-Auftragsdaten sind nicht verfügbar.";
+        return;
+      }
+      try {
+        const result = await api.azlContractSave({
+          id: contract?.id || undefined,
+          projectId: this.projectId,
+          firmRef: {
+            kind: firmKind,
+            id: text(firm?.id),
+            projectId: firmKind === "project" ? this.projectId : undefined,
+          },
+          trade: text(tradeInput.value),
+          orderNumber: text(orderNoInput.value),
+          mainOrderNetCents: parseEuro(mainOrderInput.value),
+          hourlyRateAgreed: rateAgreedInput.checked,
+          hourlyRateCents: rateAgreedInput.checked ? parseEuro(hourlyRateInput.value) : null,
+        });
+        if (!result?.ok) throw new Error(result?.error || "Auftragsdaten konnten nicht gespeichert werden.");
+        orderStatus.textContent = "Auftragsdaten gespeichert.";
+        contract = result?.result?.contract || result?.contract || contract;
+        const refreshed = await api.azlContractsList?.(this.projectId);
+        this.azlContracts = refreshed?.ok && Array.isArray(refreshed.list) ? refreshed.list : this.azlContracts;
+        await renderSideOrders();
+      } catch (error) {
+        orderStatus.textContent = error?.message || "Auftragsdaten konnten nicht gespeichert werden.";
+      }
+    });
+    orderActions.append(saveOrder, orderStatus);
+
+    addSideOrder.addEventListener("click", async () => {
+      const api = window.bbmDb || {};
+      const activeContractId = text(contract?.id);
+      if (!activeContractId) {
+        sideOrderStatus.textContent = "Zuerst Auftragsdaten speichern.";
+        return;
+      }
+      const saveRes = await api.azlOrderSave?.({
+        contractId: activeContractId,
+        orderKind: "side",
+        orderNumber: "",
+        label: "Nebenauftrag",
+        netCents: 0,
+      });
+      if (!saveRes?.ok) {
+        sideOrderStatus.textContent = saveRes?.error || "Nebenauftrag konnte nicht angelegt werden.";
+        return;
+      }
+      sideOrderStatus.textContent = "Nebenauftrag angelegt.";
+      await renderSideOrders();
+    });
+
+    orderCard.append(orderTitle, orderGrid, orderActions, sideOrdersTitle, sideOrdersList, sideOrderActions);
+    card.append(orderCard);
+    void renderSideOrders();
 
     const actions = style(document.createElement("div"), {
       display: "flex",

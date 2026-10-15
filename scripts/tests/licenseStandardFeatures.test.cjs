@@ -46,6 +46,7 @@ async function runLicenseStandardFeaturesTests(run) {
       "protokoll",
       "restarbeiten",
       "sigeko",
+      "azl",
     ]);
     assert.deepEqual(moduleRegistry.getCapabilityIds(), [
       "pdf",
@@ -125,6 +126,7 @@ async function runLicenseStandardFeaturesTests(run) {
     const moduleFiles = {
       protokoll: "src/renderer/modules/protokoll/index.js",
       restarbeiten: "src/renderer/modules/restarbeiten/index.js",
+      azl: "src/renderer/modules/azl/index.js",
     };
 
     for (const [moduleId, relativePath] of Object.entries(moduleFiles)) {

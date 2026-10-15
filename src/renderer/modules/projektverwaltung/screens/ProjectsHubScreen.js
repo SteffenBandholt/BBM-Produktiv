@@ -35,7 +35,9 @@ export default class ProjectsHubScreen extends LegacyProjectsScreen {
 
   // Der direkte Reihen-Einstieg verwendet die bestehende Modul-/Lizenzfreigabe.
   _getProjectTileModuleActions(project) {
-    return super._getProjectTileModuleActions(project).filter(action => action.moduleId === "protokoll");
+    return super
+      ._getProjectTileModuleActions(project)
+      .filter((action) => ["protokoll", "azl"].includes(String(action?.moduleId || "").trim()));
   }
 
   async _openProjectFormModal({ projectId } = {}) {

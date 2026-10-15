@@ -93,7 +93,7 @@ async function runDevelopmentLicenseProviderTests(run) {
       assert.equal(status.valid, true);
       assert.equal(status.developmentLicense, true);
       assert.equal(status.displayLabel, "Entwicklungsversion – Testlizenz");
-      assert.deepEqual(status.license.modules, ["protokoll", "restarbeiten", "sigeko"]);
+      assert.deepEqual(status.license.modules, ["protokoll", "restarbeiten", "sigeko", "azl"]);
     } finally {
       fs.rmSync(fixture.root, { recursive: true, force: true });
     }
