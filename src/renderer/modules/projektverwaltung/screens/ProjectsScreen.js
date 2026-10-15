@@ -1016,31 +1016,18 @@ export default class ProjectsScreen {
     this._builderModalEl = null;
   }
 
-  async _assignBuilderFromGlobalFirm(projectId, firm) {
+  async _setBuilderFromProjectFirm(projectId, firm) {
     const api = window.bbmDb || {};
     const firmId = String(firm?.id || firm?.ref?.id || "").trim();
-    if (!projectId || !firmId) throw new Error("Firma oder Projekt fehlt.");
-
-    const ref = { kind: "global_firm", id: firmId };
-    if (typeof api.firmDirectorySetUses === "function") {
-      const usageRes = await api.firmDirectorySetUses({
-        ref,
-        uses: { projectParticipant: 1 },
-      });
-      if (!usageRes?.ok) {
-        throw new Error(usageRes?.error || "Firma konnte nicht als Projektteilnehmer freigegeben werden.");
-      }
-    }
-
-    const assignRes = await api.projectFirmsAssignGlobalFirm?.({ projectId, firmId });
-    if (!assignRes?.ok) {
-      throw new Error(assignRes?.error || "Firma konnte dem Projekt nicht zugeordnet werden.");
+    const kind = String(firm?.kind || firm?.ref?.kind || "").trim();
+    if (!projectId || !firmId || !["global_firm", "project_firm"].includes(kind)) {
+      throw new Error("Projektfirma fehlt oder ist ungültig.");
     }
 
     const roleRes = await api.projectFirmsSetRole?.({
       projectId,
       firmId,
-      kind: "global_firm",
+      kind,
       role: "bauherr",
     });
     if (!roleRes?.ok) {
@@ -1069,13 +1056,14 @@ export default class ProjectsScreen {
     const api = window.bbmDb || {};
 
     let firmList = [];
-    if (typeof api.firmDirectoryListAll === "function") {
-      const result = await api.firmDirectoryListAll({ kind: "global_firm", includeInactive: false });
+    if (typeof api.projectFirmsListFirmCandidatesByProject === "function") {
+      const result = await api.projectFirmsListFirmCandidatesByProject(project.id);
       if (!result?.ok) {
-        this._flashMsg(result?.error || "Firmenstamm konnte nicht geladen werden.", 9000);
+        this._flashMsg(result?.error || "Projektfirmen konnten nicht geladen werden.", 9000);
         return;
       }
-      firmList = Array.isArray(result.list) ? result.list : [];
+      firmList = (Array.isArray(result.list) ? result.list : [])
+        .filter(firm => Number(firm?.is_active ?? 1) === 1);
     }
 
     const overlay = createPopupOverlay({ background: "rgba(15,23,42,.38)", zIndex: 10000 });
@@ -1116,7 +1104,7 @@ export default class ProjectsScreen {
     }
 
     const selectLabel = document.createElement("label");
-    selectLabel.textContent = "Aus Firmenstamm wählen";
+    selectLabel.textContent = "Aus Projektfirmen wählen";
     selectLabel.style.fontWeight = "700";
     selectLabel.style.fontSize = "12px";
     const select = document.createElement("select");
@@ -1130,11 +1118,13 @@ export default class ProjectsScreen {
     });
     const emptyOption = document.createElement("option");
     emptyOption.value = "";
-    emptyOption.textContent = "Firma auswählen …";
+    emptyOption.textContent = "Projektfirma auswählen …";
     select.append(emptyOption);
     for (const firm of firmList) {
       const option = document.createElement("option");
-      option.value = String(firm?.id || firm?.ref?.id || "");
+      const firmKind = String(firm?.kind || firm?.ref?.kind || "").trim();
+      const firmId = String(firm?.id || firm?.ref?.id || "").trim();
+      option.value = JSON.stringify([firmKind, firmId]);
       option.textContent = [firm?.name || firm?.short || "(ohne Name)", firm?.city].filter(Boolean).join(" – ");
       select.append(option);
     }
@@ -1250,14 +1240,24 @@ export default class ProjectsScreen {
     });
 
     choose.addEventListener("click", async () => {
-      const firm = firmList.find(item => String(item?.id || item?.ref?.id || "") === String(select.value || ""));
+      let selected = null;
+      try {
+        selected = JSON.parse(String(select.value || ""));
+      } catch (_error) {
+        selected = null;
+      }
+      const firm = Array.isArray(selected) && selected.length === 2
+        ? firmList.find(item =>
+            String(item?.kind || item?.ref?.kind || "") === String(selected[0] || "") &&
+            String(item?.id || item?.ref?.id || "") === String(selected[1] || ""))
+        : null;
       if (!firm) {
-        alert("Bitte eine Firma auswählen.");
+        alert("Bitte eine Projektfirma auswählen.");
         return;
       }
       choose.disabled = true;
       try {
-        await this._assignBuilderFromGlobalFirm(project.id, firm);
+        await this._setBuilderFromProjectFirm(project.id, firm);
         this._closeBuilderModal();
         await this.reloadProjects();
       } catch (error) {
@@ -1275,25 +1275,25 @@ export default class ProjectsScreen {
       }
       createAndUse.disabled = true;
       try {
-        const created = await api.firmDirectoryCreate?.({
-          kind: "global_firm",
-          origin: "firms",
-          data: {
-            name,
-            name2: String(fields.name2.value || "").trim(),
-            short: String(fields.short.value || "").trim(),
-            street: String(fields.street.value || "").trim(),
-            zip: String(fields.zip.value || "").trim(),
-            city: String(fields.city.value || "").trim(),
-            email: String(fields.email.value || "").trim(),
-            phone: String(fields.phone.value || "").trim(),
-          },
-          uses: { projectParticipant: 1 },
+        const created = await api.projectFirmsCreate?.({
+          projectId: project.id,
+          name,
+          name2: String(fields.name2.value || "").trim(),
+          short: String(fields.short.value || "").trim(),
+          street: String(fields.street.value || "").trim(),
+          zip: String(fields.zip.value || "").trim(),
+          city: String(fields.city.value || "").trim(),
+          email: String(fields.email.value || "").trim(),
+          phone: String(fields.phone.value || "").trim(),
+          use_project_participant: 1,
         });
         if (!created?.ok || !created?.firm) {
-          throw new Error(created?.error || "Firma konnte nicht angelegt werden.");
+          throw new Error(created?.error || "Projektfirma konnte nicht angelegt werden.");
         }
-        await this._assignBuilderFromGlobalFirm(project.id, created.firm);
+        await this._setBuilderFromProjectFirm(project.id, {
+          ...created.firm,
+          kind: "project_firm",
+        });
         this._closeBuilderModal();
         await this.reloadProjects();
       } catch (error) {
