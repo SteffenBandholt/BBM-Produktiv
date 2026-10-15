@@ -33,6 +33,19 @@ async function runMeetingSeriesUiContractTests(run) {
       }
     }
   });
+  await run("Bauherr UI: expliziter Entfernen-Button ist registriert und fachlich gesperrt", () => {
+    const builder = registry.listM83ComponentContracts().find(component => component.componentId === "bbm.projektverwaltung.builder");
+    assert.equal(builder.slots.length, 9);
+    const clear = builder.slots.find(slot => slot.element.id === "projektverwaltung.builder.clear");
+    assert.ok(clear);
+    assert.equal(clear.element.actionKind, "clearBuilder");
+    assert.equal(clear.element.lockedOps.includes("modifyDomainData"), true);
+    const source = fs.readFileSync(path.join(ROOT, "src/renderer/modules/projektverwaltung/screens/ProjectBuilderField.js"), "utf8");
+    assert.match(source, /Bauherr entfernen/);
+    assert.match(source, /Bauherr wird beim Speichern entfernt/);
+    assert.match(source, /return \{ bauherr: null \}/);
+  });
+
   await run("Projektübersicht UI: complete explicit component and histories belong only to edit fields", () => {
     const overview = registry.listM83ComponentContracts().find(component => component.componentId === "bbm.projektverwaltung.overview");
     assert.equal(overview.slots.length, 16);
