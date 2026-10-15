@@ -45,7 +45,6 @@ async function runLicenseStandardFeaturesTests(run) {
     assert.deepEqual(moduleRegistry.getCanonicalModuleIds(), [
       "protokoll",
       "restarbeiten",
-      "rechnung",
       "sigeko",
     ]);
     assert.deepEqual(moduleRegistry.getCapabilityIds(), [
@@ -58,7 +57,7 @@ async function runLicenseStandardFeaturesTests(run) {
     ]);
     assert.deepEqual(Object.values(licenseFeatures.LICENSE_MODULES), moduleRegistry.getCanonicalModuleIds());
     assert.deepEqual(Object.values(licenseFeatures.LICENSE_CAPABILITIES), moduleRegistry.getCapabilityIds());
-    assert.equal(moduleRegistry.getModuleLicenseKey("rechnung"), "module:rechnung");
+    assert.equal(moduleRegistry.getModuleDefinition("rechnung"), null);
     assert.equal(moduleRegistry.getCapabilityLicenseKey("pdf"), "service:pdf");
     assert.equal(moduleRegistry.isKnownModuleId("sigeko"), true);
     assert.equal(moduleRegistry.isKnownCapabilityId("mail"), true);
@@ -126,7 +125,6 @@ async function runLicenseStandardFeaturesTests(run) {
     const moduleFiles = {
       protokoll: "src/renderer/modules/protokoll/index.js",
       restarbeiten: "src/renderer/modules/restarbeiten/index.js",
-      rechnung: "src/renderer/modules/rechnungen/index.js",
     };
 
     for (const [moduleId, relativePath] of Object.entries(moduleFiles)) {
