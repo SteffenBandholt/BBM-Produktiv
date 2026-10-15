@@ -20,6 +20,7 @@ const LICENSE_MODULES = Object.freeze({
   PROTOKOLL: "protokoll",
   RESTARBEITEN: "restarbeiten",
   SIGEKO: "sigeko",
+  AZL: "azl",
 });
 
 const LICENSE_CAPABILITIES = Object.freeze({
