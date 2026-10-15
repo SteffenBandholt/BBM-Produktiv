@@ -102,29 +102,6 @@ function createServices(router) {
         }));
       },
     }),
-    firmPool: Object.freeze({
-      async list() {
-        const result = await window.bbmDb.firmDirectoryListAll({
-          kind: "global_firm",
-          includeInactive: true,
-        });
-        const list = requireOk(result, "list") || [];
-        return list.map((firm) => ({
-          ...firm,
-          ref: firm?.ref
-            ? { ...firm.ref, kind: "global" }
-            : { kind: "global", id: firm?.id },
-        }));
-      },
-      async assign({ projectId, firmId }) {
-        const result = await window.bbmDb.projectFirmsAssignGlobalFirm({
-          projectId,
-          firmId,
-        });
-        if (!result?.ok) throw new Error(result?.error || "Firma konnte nicht zugeordnet werden.");
-        return result.result;
-      },
-    }),
     project: Object.freeze({
       async getBuilder(projectId) {
         const result = await window.bbmDb.projectsGetBuilder({ projectId });
