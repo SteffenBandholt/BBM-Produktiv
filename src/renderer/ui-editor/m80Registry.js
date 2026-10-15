@@ -11,7 +11,6 @@ import { restarbeitenEditboxUiEditorContract } from "../modules/restarbeiten/Res
 import { protokollQuicklaneUiEditorContract, protokollScreenUiEditorContract } from "../modules/protokoll/screens/TopsScreen.uiEditorContract.js";
 import { protokollListColumnsUiEditorContract, protokollListUiEditorContract } from "../modules/protokoll/TopsList.uiEditorContract.js";
 import { protokollEditUiEditorContract } from "../modules/protokoll/TopsWorkbench.uiEditorContract.js";
-import { rechnungUiEditorContract } from "../modules/rechnungen/RechnungScreen.uiEditorContract.js";
 import {
   sigekoMainHeaderLauncherUiEditorContract,
   sigekoPreNotificationMainHeaderLauncherUiEditorContract,
@@ -20,7 +19,7 @@ import {
 } from "../ui/MainHeader.uiEditorContract.js";
 import { aggregateBbmM83Components } from "./m83ComponentContract.js";
 
-export const BBM_M80_REGISTRY_VERSION = 40;
+export const BBM_M80_REGISTRY_VERSION = 41;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
@@ -44,7 +43,6 @@ export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
   protokollListUiEditorContract,
   protokollListColumnsUiEditorContract,
   protokollEditUiEditorContract,
-  rechnungUiEditorContract,
 ]);
 
 const aggregate = aggregateBbmM83Components(BBM_M83_COMPONENT_CONTRACTS);
@@ -69,7 +67,7 @@ function blockedScope(scopeId, name, reason = "registration_inventory_pending") 
 export const BBM_M80_ACTIVE_SCOPES = Object.freeze([
   "restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root",
   "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root",
-  "rechnung.screen", "sigeko.screen", "sigeko.preNotification", PLANNED_START_SCOPE, BUILDER_SCOPE, SERIES_SCOPE, SERIES_ENTRY_SCOPE, OVERVIEW_SCOPE,
+  "sigeko.screen", "sigeko.preNotification", PLANNED_START_SCOPE, BUILDER_SCOPE, SERIES_SCOPE, SERIES_ENTRY_SCOPE, OVERVIEW_SCOPE,
 ]);
 
 export const BBM_M80_ACTIVE_SCOPE_GROUPS = Object.freeze([
@@ -77,7 +75,6 @@ export const BBM_M80_ACTIVE_SCOPE_GROUPS = Object.freeze([
   Object.freeze([SERIES_ENTRY_SCOPE, OVERVIEW_SCOPE]),
   Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]),
   Object.freeze(["protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root"]),
-  Object.freeze(["rechnung.screen"]),
   Object.freeze(["sigeko.screen"]),
   Object.freeze(["sigeko.preNotification"]),
 ]);
