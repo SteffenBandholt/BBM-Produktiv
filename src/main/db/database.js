@@ -4,7 +4,6 @@ const Database = require("better-sqlite3");
 const fs = require("fs");
 const { app } = require("electron");
 const path = require("path");
-const { ensureInvoiceSchema } = require("./invoiceMigrations");
 const { ensureFirmUsagesSchema } = require("./firmUsagesRepo");
 const { getModuleIds, resolveActiveModuleIds } = require("../moduleRegistry");
 const moduleMigrationRegistrars = require("../moduleMigrationRegistrars");
@@ -1901,7 +1900,7 @@ function ensureSchema(dbConn, { moduleIds = configuredModuleIds ?? getModuleIds(
     db: dbConn,
     moduleIds,
     registrars: moduleMigrationRegistrars,
-    migrations: { ensureProtokollSchema, ensureRestarbeitenSchema, ensureInvoiceSchema },
+    migrations: { ensureProtokollSchema, ensureRestarbeitenSchema },
   });
 }
 

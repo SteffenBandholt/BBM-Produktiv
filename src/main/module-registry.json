@@ -8,7 +8,6 @@
   "canonicalModuleIds": [
     "protokoll",
     "restarbeiten",
-    "rechnung",
     "sigeko"
   ],
   "modules": {
@@ -49,20 +48,6 @@
       "requiredCapabilities": [
         "pdf",
         "mail",
-        "file-storage",
-        "ui-editor"
-      ]
-    },
-    "rechnung": {
-      "kind": "hybrid",
-      "licenseKey": "module:rechnung",
-      "ipcGroup": "rechnung",
-      "ipcRegistrar": "rechnung",
-      "migrationRegistrar": "rechnung",
-      "requiredCapabilities": [
-        "pdf",
-        "mail",
-        "export",
         "file-storage",
         "ui-editor"
       ]

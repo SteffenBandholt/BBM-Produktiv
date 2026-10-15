@@ -21,7 +21,7 @@ BBM wird schrittweise zu einer **modularen App** umgebaut.
 
 Das Ziel ist:
 - die App kann mit einem, mehreren oder spaeter anderen Fachmodulen laufen
-- `Protokoll`, `Restarbeiten` und `Rechnung` sind im aktuellen technischen Modulregister bereits als Module gefuehrt; ihre fachliche und technische Bereinigung ist unterschiedlich weit fortgeschritten
+- `Protokoll`, `Restarbeiten` und `SiGeKo` werden im aktuellen BBM-Produktiv-Modulrahmen gefuehrt. `Rechnung` ist seit 2026-10-15 kein BBM-Produktiv-Modul mehr; die Neuentwicklung erfolgt in BBMpro.
 - der App-Kern bleibt fuer Host-, Navigations- und Aktivierungsaufgaben zustaendig
 - gemeinsame Kernbausteine, gemeinsame Domaenen und gemeinsame Dienste bleiben ausserhalb der Fachmodule
 
@@ -37,7 +37,6 @@ Die gesamte App folgt dabei verbindlich dem **Mutter-/Kind-Prinzip**:
 Nicht jedes Modul ist ein auswaehlbares Projektmodul:
 - Auswaehlbare Projektmodule sind nur fachliche Arbeitsbereiche innerhalb eines Projekts.
 - `Protokoll` und `Restarbeiten` sind im aktuellen technischen Modulregister als `project` gefuehrt.
-- `Rechnung` ist im aktuellen technischen Modulregister als `hybrid` gefuehrt und darf deshalb nicht pauschal wie ein reines Projektmodul behandelt werden.
 - Der konkrete sichtbare Modulzugang richtet sich nach Modulrahmen, Projektkontext und Freigabelogik; aeltere Pilotformulierungen duerfen den aktuellen technischen Registry-Stand nicht ueberschreiben.
 - `Ausgabe / Drucken / E-Mail` ist kein auswaehlbares Projektmodul, sondern ein Maschinenraum-Dienst.
 - `Audio / Diktat` ist kein auswaehlbares Projektmodul, sondern ein Maschinenraum-Dienst.
@@ -115,12 +114,11 @@ Dazu koennen insbesondere gehoeren:
 Im aktuellen technischen Modulregister gefuehrt:
 - `Protokoll` (`project`)
 - `Restarbeiten` (`project`)
-- `Rechnung` (`hybrid`)
 
 Dabei gilt:
 - `Protokoll` ist produktiv, besitzt aber noch historischen Modularisierungs-/Kompatibilitaetsbestand.
 - `Restarbeiten` ist implementiert; parallel existiert eine V2-/Read-only-/Migrationsschicht, deren verbleibende Aufgabe in der Revision geklaert werden muss.
-- `Rechnung` besitzt bereits einen substanziellen Implementierungsstand und wird nicht mehr als reiner Entwurf behandelt.
+- Historischer Rechnungscode kann bis zur technischen Bereinigung als nicht aktiver Altbestand im Repository verbleiben; er ist kein produktiver Modulvertrag mehr.
 
 Geplantes Fachmodul:
 - `SiGeKo`; fuehrendes Fachkonzept: [docs/modules/sigeko.md](docs/modules/sigeko.md). Die fachliche Planung ist weit fortgeschritten, eine produktive Modulimplementierung unter `src/renderer/modules/` steht noch aus.
@@ -274,4 +272,4 @@ Die Repository-Revision arbeitet fuer jeden relevanten Bereich mit vier verbindl
 
 Die vollstaendige Ausgangsbasis steht in [docs/revision/01_REPOSITORY_BESTANDSAUFNAHME.md](docs/revision/01_REPOSITORY_BESTANDSAUFNAHME.md).
 
-Vor strukturellen Loeschungen oder breiten Verschiebungen muss die Besitzgrenze im BBM-Core geklaert sein. Die Reihenfolge der Revision ist deshalb: Core zuerst, danach Protokoll und Restarbeiten, anschliessend SiGeKo/Rechnung sowie darauf aufbauende mobile Funktionen.
+Vor strukturellen Loeschungen oder breiten Verschiebungen muss die Besitzgrenze im BBM-Core geklaert sein. Die Reihenfolge der Revision ist deshalb: Core zuerst, danach Protokoll und Restarbeiten, anschliessend SiGeKo sowie darauf aufbauende mobile Funktionen.

@@ -7,10 +7,6 @@ import {
   RESTARBEITEN_MODULE_ID,
 } from "../../modules/restarbeiten/index.js";
 import {
-  getRechnungModuleEntry,
-  RECHNUNG_MODULE_ID,
-} from "../../modules/rechnungen/index.js";
-import {
   getSigekoModuleEntry,
   SIGEKO_MODULE_ID,
 } from "../../modules/sigeko/index.js";
@@ -28,17 +24,12 @@ const AVAILABLE_MODULE_ENTRIES = Object.freeze([
     moduleId: RESTARBEITEN_MODULE_ID,
     entry: getRestarbeitenModuleEntry(),
   }),
-  Object.freeze({
-    moduleId: RECHNUNG_MODULE_ID,
-    entry: getRechnungModuleEntry(),
-  }),
 ]);
 
 const DEFAULT_ACTIVE_MODULE_IDS = Object.freeze([
   SIGEKO_MODULE_ID,
   PROTOKOLL_MODULE_ID,
   RESTARBEITEN_MODULE_ID,
-  RECHNUNG_MODULE_ID,
 ]);
 
 const PRODUCTIVE_DEFAULT_RELEASE_STATE = Object.freeze({
@@ -243,4 +234,4 @@ export function getActiveModuleIdsForReleaseState(releaseState) {
   return RELEASE_STATE_MODULE_ACCESS.getModuleIds(releaseState);
 }
 
-export { PROTOKOLL_MODULE_ID, RESTARBEITEN_MODULE_ID, RECHNUNG_MODULE_ID };
+export { PROTOKOLL_MODULE_ID, RESTARBEITEN_MODULE_ID };

@@ -41,14 +41,14 @@ async function runGateBRegressionTests(run) {
     assert.match(routeRuntime, /moduleType === "global" \|\| moduleType === "hybrid"/);
     assert.match(routeRuntime, /moduleType === "project" \|\| moduleType === "hybrid"/);
     assert.match(routeRuntime, /normalizedScope === "project" && !projectId/);
-    assert.equal(moduleRegistry.getModuleDefinition("rechnung").kind, "hybrid");
+    assert.equal(moduleRegistry.getModuleDefinition("rechnung"), null);
     assert.equal(moduleRegistry.getModuleDefinition("protokoll").kind, "project");
   });
 
   await run("Paket 8 / Gate B: Modulnavigation folgt ausschliesslich dem aktiven Modulset", () => {
-    const status = { valid: true, license: { modules: ["rechnung", "not-installed"] } };
-    assert.deepEqual(moduleRegistry.resolveActiveModuleIds(status), ["rechnung"]);
-    assert.deepEqual(moduleRegistry.resolveActiveModuleIds({ valid: false, license: { modules: ["rechnung"] } }), []);
+    const status = { valid: true, license: { modules: ["restarbeiten", "not-installed"] } };
+    assert.deepEqual(moduleRegistry.resolveActiveModuleIds(status), ["restarbeiten"]);
+    assert.deepEqual(moduleRegistry.resolveActiveModuleIds({ valid: false, license: { modules: ["restarbeiten"] } }), []);
     const navigation = read("src/renderer/app/modules/moduleNavigation.js");
     assert.match(navigation, /getCachedActiveModuleCatalog/);
     assert.match(navigation, /deriveModuleNavigationByScope/);
@@ -69,7 +69,7 @@ async function runGateBRegressionTests(run) {
     const { registerActiveModuleIpcs } = require(path.join(process.cwd(), "src/main/moduleIpcRegistry.js"));
     const calls = [];
     const registrar = ({ moduleId }) => calls.push(moduleId);
-    const registrars = { protokoll: registrar, restarbeiten: registrar, rechnung: registrar };
+    const registrars = { protokoll: registrar, restarbeiten: registrar, sigeko: registrar };
     const registered = registerActiveModuleIpcs({
       licenseStatus: { valid: true, license: { modules: ["restarbeiten"] } },
       getLicenseStatus: () => ({ valid: true, license: { modules: ["restarbeiten"] } }),
@@ -86,10 +86,10 @@ async function runGateBRegressionTests(run) {
   await run("Paket 8 / Gate B: Fachmigrationen laufen modular in einer Bestands-DB", () => withDatabase((db) => {
     db.prepare("INSERT INTO projects (id, name) VALUES ('existing', 'Bestand')").run();
     const { ensureSchema } = require(path.join(process.cwd(), "src/main/db/database.js"));
-    assert.deepEqual(ensureSchema(db, { moduleIds: ["rechnung"] }), ["rechnung"]);
+    assert.deepEqual(ensureSchema(db, { moduleIds: ["restarbeiten"] }), ["restarbeiten"]);
     assert.ok(db.prepare("SELECT name FROM projects WHERE id = 'existing'").get());
-    assert.ok(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='invoices'").get());
-    assert.equal(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='meetings'").get(), undefined);
+    assert.ok(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='restarbeiten_items'").get());
+    assert.equal(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='invoices'").get(), undefined);
   }));
 
   await run("Paket 8 / Gate B: Core-DB funktioniert ohne Protokolltabellen und Fachlogik", () => withDatabase((db) => {
@@ -105,11 +105,11 @@ async function runGateBRegressionTests(run) {
     const { PROVIDER_KINDS, PdfDocumentProvider, MailPayloadProvider, ExportProvider, createModuleServiceProviderRegistry } = require(path.join(process.cwd(), "src/main/moduleServiceProviders.js"));
     const registry = createModuleServiceProviderRegistry();
     registry.register(PdfDocumentProvider({ moduleId: "protokoll", type: "protocol", provide: ({ input }) => input }));
-    registry.register(PdfDocumentProvider({ moduleId: "rechnung", type: "invoice", provide: ({ input }) => input }));
-    registry.register(MailPayloadProvider({ moduleId: "rechnung", type: "invoice", provide: ({ input }) => input }));
+    registry.register(PdfDocumentProvider({ moduleId: "sigeko", type: "report", provide: ({ input }) => input }));
+    registry.register(MailPayloadProvider({ moduleId: "sigeko", type: "report", provide: ({ input }) => input }));
     registry.register(ExportProvider({ moduleId: "restarbeiten", type: "list", provide: ({ input }) => input }));
     assert.equal(registry.list({ kind: PROVIDER_KINDS.PDF_DOCUMENT }).length, 2);
-    assert.deepEqual(registry.provide({ kind: PROVIDER_KINDS.PDF_DOCUMENT, moduleId: "rechnung", type: "invoice", input: { invoiceId: "i1" } }), { invoiceId: "i1" });
+    assert.deepEqual(registry.provide({ kind: PROVIDER_KINDS.PDF_DOCUMENT, moduleId: "sigeko", type: "report", input: { reportId: "s1" } }), { reportId: "s1" });
   });
 
   await run("Paket 8 / Gate B: OwnOrganization bleibt vom LicenseSubject getrennt", () => {

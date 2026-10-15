@@ -3,7 +3,6 @@
 import { getCachedActiveModuleCatalog } from "../app/modules/moduleAccessState.js";
 
 const COLORS = Object.freeze({
-  invoice: "#1769d2",
   protocol: "#37a447",
   restarbeiten: "#ef7d00",
   sigeko: "#7b3fb3",
@@ -16,13 +15,6 @@ const COLORS = Object.freeze({
 });
 
 const ICONS = Object.freeze({
-  invoice: `
-    <svg viewBox="0 0 48 48" aria-hidden="true">
-      <path d="M13 6h18l7 7v29H13V6Z" fill="currentColor" opacity=".12"/>
-      <path d="M13 6h18l7 7v29H13V6Z" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linejoin="round"/>
-      <path d="M31 6v8h7" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linejoin="round"/>
-      <text x="24" y="33" text-anchor="middle" font-size="19" font-family="Arial,sans-serif" font-weight="700" fill="currentColor">€</text>
-    </svg>`,
   protocol: `
     <svg viewBox="0 0 48 48" aria-hidden="true">
       <path d="M12 7h24v34H12z" fill="currentColor" opacity=".10"/>
@@ -228,11 +220,6 @@ export default class HomeView {
         color: COLORS.restarbeiten,
         icon: "restarbeiten",
         description: "Restarbeiten erfassen, verfolgen und abschließen.",
-      },
-      rechnung: {
-        color: COLORS.invoice,
-        icon: "invoice",
-        description: "Angebote, Aufträge und Rechnungen erstellen und verwalten.",
       },
       sigeko: {
         color: COLORS.sigeko,
@@ -661,14 +648,6 @@ export default class HomeView {
       if (!this.devBuild || !devExtraHost.isConnected) return;
 
       const existingIds = new Set(this.moduleCatalog.map((x) => String(x?.moduleId || "").toLowerCase()));
-      if (!existingIds.has("rechnung")) {
-        devExtraHost.append(this._createModuleCard({
-          moduleId: "rechnung",
-          moduleLabel: "Rechnung",
-          placeholder: true,
-          presentation: { color: COLORS.invoice, icon: "invoice", description: "Angebote, Aufträge und Rechnungen erstellen und verwalten.", start: { mode: "free" } },
-        }));
-      }
       if (!existingIds.has("sigeko")) {
         devExtraHost.append(this._createModuleCard({
           moduleId: "sigeko",

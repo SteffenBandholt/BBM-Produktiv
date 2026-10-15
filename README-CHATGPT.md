@@ -82,7 +82,7 @@ Bei jeder PDF-V2-Arbeit ist zusätzlich zwingend vor der Implementierung zu lese
 
 `docs/PDF_V2_VERBINDLICHE_MODULGRUNDLAGE.md`
 
-Diese Regel ist verbindlich. PDF V2 wurde ausdrücklich als gemeinsame Modulgrundlage entwickelt. Ein Fachmodul darf unterhalb des gemeinsamen V2-Mainheaders und seiner Trennlinie kein unabhängig neues PDF-Design erfinden, wenn bereits ein verbindlicher UI-/Layoutvertrag existiert. Für Rechnungen gilt ausdrücklich: **Die Rechnungs-UI ist die visuelle Referenz; der Nutzer sieht in der UI, was später gedruckt wird.**
+Diese Regel ist verbindlich. PDF V2 wurde ausdrücklich als gemeinsame Modulgrundlage entwickelt. Ein Fachmodul darf unterhalb des gemeinsamen V2-Mainheaders und seiner Trennlinie kein unabhängig neues PDF-Design erfinden, wenn bereits ein verbindlicher UI-/Layoutvertrag existiert.
 
 ## Verbindliche Git-Kurzregel
 

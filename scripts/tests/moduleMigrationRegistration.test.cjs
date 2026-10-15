@@ -58,15 +58,15 @@ async function runModuleMigrationRegistrationTests(run) {
   await run("Paket 5: alle installierten Module migrieren gemeinsam in derselben SQLite-Datei", () => withDatabase((db) => {
     const { ensureSchema } = require(path.join(process.cwd(), "src/main/db/database.js"));
     db.exec("CREATE TABLE projects (id TEXT PRIMARY KEY, name TEXT NOT NULL)");
-    const migrated = ensureSchema(db, { moduleIds: ["protokoll", "restarbeiten", "rechnung"] });
+    const migrated = ensureSchema(db, { moduleIds: ["protokoll", "restarbeiten"] });
     const tables = tableNames(db);
-    assert.deepEqual(migrated, ["protokoll", "restarbeiten", "rechnung"]);
+    assert.deepEqual(migrated, ["protokoll", "restarbeiten"]);
     assert.ok(tables.includes("meetings"));
     assert.ok(tables.includes("tops"));
     assert.ok(tables.includes("project_candidates"));
     assert.ok(tables.includes("meeting_participants"));
     assert.ok(tables.includes("restarbeiten_items"));
-    assert.ok(tables.includes("invoices"));
+    assert.equal(tables.includes("invoices"), false);
   }));
 
   await run("Paket 5: Bestands-DB wird idempotent und ohne Datenverlust migriert", () => withDatabase((db) => {
@@ -77,14 +77,14 @@ async function runModuleMigrationRegistrationTests(run) {
       INSERT INTO projects (id, name) VALUES ('p-1', 'Bestand');
       INSERT INTO meetings (id, project_id, meeting_index, title) VALUES ('m-1', 'p-1', 1, 'Jour fixe');
     `);
-    ensureSchema(db, { moduleIds: ["protokoll", "restarbeiten", "rechnung"] });
-    ensureSchema(db, { moduleIds: ["protokoll", "restarbeiten", "rechnung"] });
+    ensureSchema(db, { moduleIds: ["protokoll", "restarbeiten"] });
+    ensureSchema(db, { moduleIds: ["protokoll", "restarbeiten"] });
     assert.equal(db.prepare("SELECT name FROM projects WHERE id = 'p-1'").get().name, "Bestand");
     assert.equal(db.prepare("SELECT title FROM meetings WHERE id = 'm-1'").get().title, "Jour fixe");
     const meeting = db.prepare("SELECT created_at, updated_at FROM meetings WHERE id = 'm-1'").get();
     assert.ok(meeting.created_at);
     assert.ok(meeting.updated_at);
-    assert.ok(tableNames(db).includes("invoices"));
+    assert.equal(tableNames(db).includes("invoices"), false);
   }));
 
   await run("Paket 5: Migrationsregistrare folgen dem Deskriptor ohne Fachmodul-Sonderliste", () => {

@@ -16,7 +16,6 @@ const EXISTING_SCOPE_FINGERPRINTS = Object.freeze({
   'protokoll.screen.root': 'sha256:7251a69f8243bb21a4768170d75ea0d51a4a43a48db0cb4b06caaca565185029',
   'protokoll.list.root': 'sha256:3bf84a38e4db80d49102e9fd0e8e80202c354d451df63e77242a4f899b8c8e53',
   'protokoll.edit.root': 'sha256:e53adb228924f283bf1158613f70bd6a6b927065c9ca24eb528caded776c0005',
-  'rechnung.screen': 'sha256:0eaa9315cedabd5eae9b64f04db083941e4b945b1ffedd930ddcd8e83f84d459',
 });
 
 function savedElement(scopeId, entry) {
@@ -42,7 +41,7 @@ async function runSigekoEditorManifestTests(run) {
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'ui-editor-target.json'), 'utf8'));
   const scopes = registry.listM80RegistryScopes();
   await run('S1.2-Fix: kanonisches Manifest enthaelt exakt den additiven SiGeKo-Scope', () => {
-    assert.deepEqual(manifest.activeScopes, [...Object.keys(EXISTING_SCOPE_FINGERPRINTS), 'sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.builder']);
+    assert.deepEqual(manifest.activeScopes, ['restarbeiten.header.root', 'restarbeiten.list.root', 'restarbeiten.edit.root', 'protokoll.screen.root', 'protokoll.list.root', 'protokoll.edit.root', 'sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.builder', 'projektverwaltung.meetingSeries', 'projektverwaltung.meetingSeriesEntry', 'projektverwaltung.overview']);
     assert.deepEqual(manifest.activeScopes, registry.BBM_M80_ACTIVE_SCOPES);
     assert.equal(manifest.registryVersion, registry.BBM_M80_REGISTRY_VERSION);
     assert.equal(manifest.registryFingerprint, createRegistryFingerprint(scopes));
@@ -54,15 +53,15 @@ async function runSigekoEditorManifestTests(run) {
     assert.equal(scopes.find(s => s.scopeId === 'sigeko.screen').elements.length, 208);
     assert.deepEqual(manifest.scopes.filter(s => s.scopeId === 'sigeko.preNotification'), [{ scopeId: 'sigeko.preNotification', status: 'complete', reason: null, elementCount: 144, missingReferenceCount: 0 }]);
   });
-  await run('S1.2-Fix: alle sieben bisherigen Scope-Fingerprints bleiben bytegleich', () => {
+  await run('S1.2-Fix: bisherige aktive Scope-Fingerprints bleiben bytegleich', () => {
     for (const [scopeId, fingerprint] of Object.entries(EXISTING_SCOPE_FINGERPRINTS)) {
       assert.equal(createUiScopeFingerprint(scopes.find(s => s.scopeId === scopeId)), fingerprint, scopeId);
     }
     assert.equal(createUiScopeFingerprint(scopes.find(s => s.scopeId === 'projektverwaltung.plannedStart')), 'sha256:a3959a7358504a1a26f6b303de8929e6dab722b5835aa586be573646c04485a5');
-    assert.deepEqual(manifest.scopes.filter(s => !['sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.builder'].includes(s.scopeId)).map(s => [s.scopeId, s.status, s.elementCount]), [
+    assert.deepEqual(manifest.scopes.filter(s => !['sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.builder', 'projektverwaltung.meetingSeries', 'projektverwaltung.meetingSeriesEntry', 'projektverwaltung.overview'].includes(s.scopeId)).map(s => [s.scopeId, s.status, s.elementCount]), [
       ['restarbeiten.header.root', 'complete', 44], ['restarbeiten.list.root', 'complete', 32], ['restarbeiten.edit.root', 'complete', 53],
       ['protokoll.screen.root', 'complete', 34], ['protokoll.list.root', 'complete', 32], ['protokoll.edit.root', 'complete', 38],
-      ['rechnung.screen', 'complete', 107], ['bbm.remaining', 'blocked', 0], ['pdf.bbm.protocol', 'complete', 28],
+      ['bbm.remaining', 'blocked', 0], ['pdf.bbm.protocol', 'complete', 28],
     ]);
   });
   const registryScopes = scopes.map(scope => scope.status === 'complete' ? {
