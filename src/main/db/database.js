@@ -762,6 +762,7 @@ function ensureProjectFirmsAndPersonsSchema(dbConn) {
         notes TEXT,
 
         role_code INTEGER DEFAULT 60,
+        project_role TEXT,
 
         use_project_participant INTEGER NOT NULL DEFAULT 0 CHECK (use_project_participant IN (0, 1)),
         use_customer INTEGER NOT NULL DEFAULT 0 CHECK (use_customer IN (0, 1)),
