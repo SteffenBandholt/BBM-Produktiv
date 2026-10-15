@@ -5,9 +5,16 @@ import { OVERVIEW_COMPONENT, OVERVIEW_SCOPE, projectOverviewUiEditorContract } f
 const text = value => String(value ?? "").trim();
 export function projectCardDetails(project = {}) {
   const name = text(project.name), short = text(project.short);
+  const builder = project.bauherr || project.builder || null;
+  const builderName = text(builder?.name) || text(builder?.short);
+  const builderAddress = [text(builder?.street), [text(builder?.zip), text(builder?.city)].filter(Boolean).join(" ")].filter(Boolean).join("\n");
+  const builderContact = [text(builder?.phone), text(builder?.email)].filter(Boolean).join(" · ");
   return { name: name || short, short: name && short && name !== short ? short : "",
     number: text(project.project_number ?? project.projectNumber),
-    address: [text(project.street), [text(project.zip), text(project.city)].filter(Boolean).join(" ")].filter(Boolean).join("\n") };
+    address: [text(project.street), [text(project.zip), text(project.city)].filter(Boolean).join(" ")].filter(Boolean).join("\n"),
+    builder: builderName || builderAddress || builderContact
+      ? { name: builderName, address: builderAddress, contact: builderContact }
+      : null };
 }
 
 export default class ProjectOverview {
@@ -81,6 +88,24 @@ export default class ProjectOverview {
       if (details.address) {
         const address = this.node("div", ".card.address", details.address);
         address.style.cssText = "font-size:11.5px;line-height:1.25;opacity:.85;white-space:pre-line"; card.append(address);
+      }
+      if (details.builder) {
+        const builder = this.node("div", ".card.builder");
+        builder.style.cssText = "min-width:0;display:flex;flex-direction:column;gap:1px;margin-top:3px;padding-top:4px;border-top:1px solid var(--bbm-popup-border,#d7dee8)";
+        const builderName = this.node("div", ".card.builder.name", `Bauherr: ${details.builder.name}`);
+        builderName.style.cssText = "min-width:0;font-size:11.5px;line-height:1.25;font-weight:700";
+        builder.append(builderName);
+        if (details.builder.address) {
+          const builderAddress = this.node("div", ".card.builder.address", details.builder.address);
+          builderAddress.style.cssText = "font-size:11px;line-height:1.25;opacity:.85;white-space:pre-line";
+          builder.append(builderAddress);
+        }
+        if (details.builder.contact) {
+          const builderContact = this.node("div", ".card.builder.contact", details.builder.contact);
+          builderContact.style.cssText = "font-size:10.5px;line-height:1.25;opacity:.8;overflow-wrap:anywhere";
+          builder.append(builderContact);
+        }
+        card.append(builder);
       }
       const moduleActions = getModuleActions(project), protocolAction = moduleActions.find(action => action.moduleId === "protokoll");
       if (protocolAction) {
