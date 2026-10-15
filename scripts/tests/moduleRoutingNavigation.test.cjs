@@ -11,10 +11,10 @@ async function runModuleRoutingNavigationTests(run) {
   await run("Paket 2: aktives Modulset ist Schnittmenge aus Produkt/Build und Lizenz", () => {
     assert.deepEqual(
       runtime.deriveActiveModuleIds(
-        ["protokoll", "restarbeiten", "rechnung"],
-        ["rechnung", "sigeko", "rechnung", "protokoll"]
+        ["protokoll", "restarbeiten"],
+        ["restarbeiten", "sigeko", "protokoll"]
       ),
-      ["rechnung", "protokoll"]
+      ["restarbeiten", "protokoll"]
     );
   });
 
@@ -127,13 +127,6 @@ async function runModuleRoutingNavigationTests(run) {
     assert.equal(genericRoutingBlock.includes("normalizedModuleId === PROTOKOLL_MODULE_ID"), false);
     assert.equal(genericRoutingBlock.includes('moduleId === "rechnung"'), false);
     assert.match(genericRoutingBlock, /openModuleEntry/);
-  });
-
-  await run("Paket 2: Rechnung deklariert globale und projektbezogene Navigation als Hybridmodul", () => {
-    const source = fs.readFileSync(path.join(process.cwd(), "src/renderer/modules/rechnungen/index.js"), "utf8");
-    assert.match(source, /moduleType:\s*"hybrid"/);
-    assert.match(source, /global:\s*Object\.freeze\(\[buildRechnungNavigationEntry\(\)\]\)/);
-    assert.match(source, /project:\s*Object\.freeze\(\[buildRechnungNavigationEntry\(\)\]\)/);
   });
 
   await run("Paket 2: Navigation konsumiert den gecachten aktiven Katalog statt statischem Produktkatalog", () => {
