@@ -41,7 +41,7 @@ async function runSigekoEditorManifestTests(run) {
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'ui-editor-target.json'), 'utf8'));
   const scopes = registry.listM80RegistryScopes();
   await run('S1.2-Fix: kanonisches Manifest enthaelt exakt den additiven SiGeKo-Scope', () => {
-    assert.deepEqual(manifest.activeScopes, ['restarbeiten.header.root', 'restarbeiten.list.root', 'restarbeiten.edit.root', 'protokoll.screen.root', 'protokoll.list.root', 'protokoll.edit.root', 'sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.builder', 'projektverwaltung.meetingSeries', 'projektverwaltung.meetingSeriesEntry', 'projektverwaltung.overview']);
+    assert.deepEqual(manifest.activeScopes, ['restarbeiten.header.root', 'restarbeiten.list.root', 'restarbeiten.edit.root', 'protokoll.screen.root', 'protokoll.list.root', 'protokoll.edit.root', 'sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.meetingSeries', 'projektverwaltung.meetingSeriesEntry', 'projektverwaltung.overview']);
     assert.deepEqual(manifest.activeScopes, registry.BBM_M80_ACTIVE_SCOPES);
     assert.equal(manifest.registryVersion, registry.BBM_M80_REGISTRY_VERSION);
     assert.equal(manifest.registryFingerprint, createRegistryFingerprint(scopes));
@@ -58,7 +58,7 @@ async function runSigekoEditorManifestTests(run) {
       assert.equal(createUiScopeFingerprint(scopes.find(s => s.scopeId === scopeId)), fingerprint, scopeId);
     }
     assert.equal(createUiScopeFingerprint(scopes.find(s => s.scopeId === 'projektverwaltung.plannedStart')), 'sha256:a3959a7358504a1a26f6b303de8929e6dab722b5835aa586be573646c04485a5');
-    assert.deepEqual(manifest.scopes.filter(s => !['sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.builder', 'projektverwaltung.meetingSeries', 'projektverwaltung.meetingSeriesEntry', 'projektverwaltung.overview'].includes(s.scopeId)).map(s => [s.scopeId, s.status, s.elementCount]), [
+    assert.deepEqual(manifest.scopes.filter(s => !['sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.meetingSeries', 'projektverwaltung.meetingSeriesEntry', 'projektverwaltung.overview'].includes(s.scopeId)).map(s => [s.scopeId, s.status, s.elementCount]), [
       ['restarbeiten.header.root', 'complete', 44], ['restarbeiten.list.root', 'complete', 32], ['restarbeiten.edit.root', 'complete', 53],
       ['protokoll.screen.root', 'complete', 34], ['protokoll.list.root', 'complete', 32], ['protokoll.edit.root', 'complete', 38],
       ['bbm.remaining', 'blocked', 0], ['pdf.bbm.protocol', 'complete', 28],
