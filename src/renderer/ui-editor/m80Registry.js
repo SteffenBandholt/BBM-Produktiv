@@ -1,4 +1,3 @@
-import { projectBuilderUiEditorContract, BUILDER_SCOPE } from "../modules/projektverwaltung/screens/ProjectBuilder.uiEditorContract.js";
 import { projectMeetingSeriesUiEditorContract, projectMeetingSeriesEntryUiEditorContract, SERIES_SCOPE, SERIES_ENTRY_SCOPE } from "../modules/projektverwaltung/screens/ProjectMeetingSeries.uiEditorContract.js";
 import { projectOverviewUiEditorContract, OVERVIEW_SCOPE } from "../modules/projektverwaltung/screens/ProjectOverview.uiEditorContract.js";
 import { projectPlannedStartUiEditorContract, PLANNED_START_SCOPE } from "../modules/projektverwaltung/screens/ProjectPlannedStart.uiEditorContract.js";
@@ -19,7 +18,7 @@ import {
 } from "../ui/MainHeader.uiEditorContract.js";
 import { aggregateBbmM83Components } from "./m83ComponentContract.js";
 
-export const BBM_M80_REGISTRY_VERSION = 42;
+export const BBM_M80_REGISTRY_VERSION = 43;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
@@ -27,7 +26,6 @@ export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
   projectMeetingSeriesEntryUiEditorContract,
   projectOverviewUiEditorContract,
   projectPlannedStartUiEditorContract,
-  projectBuilderUiEditorContract,
   sigekoScreenUiEditorContract,
   sigekoMainHeaderLauncherUiEditorContract,
   sigekoPreNotificationUiEditorContract,
@@ -67,11 +65,11 @@ function blockedScope(scopeId, name, reason = "registration_inventory_pending") 
 export const BBM_M80_ACTIVE_SCOPES = Object.freeze([
   "restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root",
   "protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root",
-  "sigeko.screen", "sigeko.preNotification", PLANNED_START_SCOPE, BUILDER_SCOPE, SERIES_SCOPE, SERIES_ENTRY_SCOPE, OVERVIEW_SCOPE,
+  "sigeko.screen", "sigeko.preNotification", PLANNED_START_SCOPE, SERIES_SCOPE, SERIES_ENTRY_SCOPE, OVERVIEW_SCOPE,
 ]);
 
 export const BBM_M80_ACTIVE_SCOPE_GROUPS = Object.freeze([
-  Object.freeze([PLANNED_START_SCOPE, BUILDER_SCOPE, SERIES_SCOPE]),
+  Object.freeze([PLANNED_START_SCOPE, SERIES_SCOPE]),
   Object.freeze([SERIES_ENTRY_SCOPE, OVERVIEW_SCOPE]),
   Object.freeze(["restarbeiten.header.root", "restarbeiten.list.root", "restarbeiten.edit.root"]),
   Object.freeze(["protokoll.screen.root", "protokoll.list.root", "protokoll.edit.root"]),
