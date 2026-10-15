@@ -19,7 +19,6 @@ const CANONICAL_CAPABILITY_IDS = getCapabilityIds();
 const LICENSE_MODULES = Object.freeze({
   PROTOKOLL: "protokoll",
   RESTARBEITEN: "restarbeiten",
-  RECHNUNG: "rechnung",
   SIGEKO: "sigeko",
 });
 
