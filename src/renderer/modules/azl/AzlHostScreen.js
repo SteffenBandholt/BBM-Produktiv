@@ -157,7 +157,8 @@ export default class AzlHostScreen {
 
   async _ensureInner() {
     if (this.inner) return this.inner;
-    const module = await import("bbm-azl/src/ui/AzlScreen.js");
+    const moduleUrl = new URL("../../../../node_modules/bbm-azl/src/ui/AzlScreen.js", import.meta.url).href;
+    const module = await import(moduleUrl);
     const ExternalAzlScreen = module?.default;
     if (typeof ExternalAzlScreen !== "function") {
       throw new Error("BBM-azL Screen ist nicht verfügbar.");
