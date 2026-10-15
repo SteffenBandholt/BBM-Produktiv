@@ -1,3 +1,9 @@
+## 2026-10-15 – Rechnung aus BBM-Produktiv entfernt
+
+Auf Nutzerentscheidung wird das Fachmodul `Rechnung` nicht in BBM-Produktiv weitergeführt. Die Rechnungsentwicklung erfolgt vollständig neu in BBMpro. Aus BBM-Produktiv werden deshalb Modulregister, Navigation/Startseite, Modul-IPC, Rechnungs-Migrationen, Preload-Rechnungs-API und der aktive UI-Editor-Scope entfernt. Historische Rechnungsdaten in bestehenden Datenbanken werden nicht gelöscht. Historische Rechnungsdokumentation und Quellcode dürfen bis zu einem separaten Bereinigungspaket als nicht aktiver Altbestand erhalten bleiben.
+
+---
+
 ## 2026-09-14 – Rechnung RE-S1.1 / PR #348: technischer Abschluss
 
 Der fehlende Bestandsschutz-Nachweis läuft nun reproduzierbar mit einer frisch
