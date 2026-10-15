@@ -104,45 +104,24 @@ async function runCustomerRuntimeContextTests(run) {
     }
   });
 
-  await run("Customer Context 05: Standard-BBM ohne Rechnung exponiert keine Kundenverwaltung", () => {
-    const moduleActive = (_status, moduleId) => moduleId === "rechnung";
-    assert.equal(shouldExposeCustomerDirectory({
-      isPackaged: false,
-      licenseStatus: { valid: true },
-      isModuleActive: () => false,
-    }), true);
-    assert.equal(shouldExposeCustomerDirectory({
-      isPackaged: true,
-      licenseStatus: { valid: true, license: { modules: ["protokoll"] } },
-      isModuleActive: () => false,
-    }), false);
-    assert.equal(shouldExposeCustomerDirectory({
-      isPackaged: true,
-      licenseStatus: { valid: true, license: { modules: ["rechnung"] } },
-      isModuleActive: moduleActive,
-    }), true);
+  await run("Customer Context 05: Kundenverwaltung bleibt in BBM-Produktiv auf DEV beschraenkt", () => {
+    assert.equal(shouldExposeCustomerDirectory({ isPackaged: false }), true);
+    assert.equal(shouldExposeCustomerDirectory({ isPackaged: true }), false);
   });
 
   await run("Customer Context 06: Main registriert Customer-IPC nur nach Laufzeitpolicy", () => {
     const source = fs.readFileSync(path.join(process.cwd(), "src/main/main.js"), "utf8");
     assert.match(source, /shouldExposeCustomerDirectory/);
-    assert.match(source, /isModuleActive/);
     assert.match(source, /if \(shouldExposeCustomerDirectory\(/);
     assert.doesNotMatch(source, /registerFirmDirectoryIpc\(\);\s*registerCustomerDirectoryIpc\(\);/);
   });
 
-  await run("Customer Context 07: Rechnung und BBM-Bridge nutzen den kontextabhaengigen Provider", () => {
-    const invoiceSource = fs.readFileSync(
-      path.join(process.cwd(), "src/main/domain/rechnung/InvoiceService.js"),
-      "utf8"
-    );
+  await run("Customer Context 07: BBM-Bridge nutzt den kontextabhaengigen Provider", () => {
     const bridgeSource = fs.readFileSync(
       path.join(process.cwd(), "src/main/domain/customers/CustomerFirmBridgeService.js"),
       "utf8"
     );
-    assert.match(invoiceSource, /getRuntimeCustomerCore/);
     assert.match(bridgeSource, /getRuntimeCustomerCore/);
-    assert.doesNotMatch(invoiceSource, /getBbmCustomerCore/);
     assert.doesNotMatch(bridgeSource, /getBbmCustomerCore/);
   });
 }
