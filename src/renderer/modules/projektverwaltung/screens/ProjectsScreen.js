@@ -1025,7 +1025,21 @@ export default class ProjectsScreen {
         return;
       }
 
-      this.projects = res.list || [];
+      const projects = res.list || [];
+      if (typeof api.projectsGetBuilder === "function") {
+        this.projects = await Promise.all(projects.map(async (project) => {
+          if (!project?.id || !project?.bauherr_firm_id) return project;
+          try {
+            const builderRes = await api.projectsGetBuilder({ projectId: project.id });
+            if (!builderRes?.ok || !builderRes?.data?.firm) return project;
+            return { ...project, bauherr: builderRes.data.firm };
+          } catch (_error) {
+            return project;
+          }
+        }));
+      } else {
+        this.projects = projects;
+      }
       this._setMsg("");
     } finally {
       this.loading = false;
