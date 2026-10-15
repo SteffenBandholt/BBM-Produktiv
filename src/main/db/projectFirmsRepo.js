@@ -15,6 +15,15 @@ function _label(short, name) {
   return "(ohne Name)";
 }
 
+function _columnExists(db, tableName, columnName) {
+  try {
+    return db.prepare(`PRAGMA table_info(${tableName})`).all()
+      .some((column) => String(column?.name || "") === String(columnName || ""));
+  } catch (_error) {
+    return false;
+  }
+}
+
 function _normalizeActiveFlag(v) {
   if (v === undefined || v === null || v === "") return 1;
   const n = Number(v);
@@ -68,6 +77,13 @@ function listFirmCandidatesByProject(projectId) {
   const db = initDatabase();
   if (!projectId) throw new Error("projectId required");
 
+  const localProjectRole = _columnExists(db, "project_firms", "project_role")
+    ? "project_role"
+    : "NULL AS project_role";
+  const globalProjectRole = _columnExists(db, "project_global_firms", "project_role")
+    ? "pgf.project_role AS project_role"
+    : "NULL AS project_role";
+
   const locals = db.prepare(`
     SELECT
       id,
@@ -79,7 +95,7 @@ function listFirmCandidatesByProject(projectId) {
       phone,
       email,
       COALESCE(role_code, 60) AS role_code,
-      project_role,
+      ${localProjectRole},
       COALESCE(is_active, 1) AS is_active
     FROM project_firms
     WHERE project_id = ?
@@ -112,7 +128,7 @@ function listFirmCandidatesByProject(projectId) {
       f.phone AS phone,
       f.email AS email,
       COALESCE(f.role_code, 60) AS role_code,
-      pgf.project_role AS project_role,
+      ${globalProjectRole},
       COALESCE(pgf.is_active, 1) AS is_active
     FROM project_global_firms pgf
     JOIN firms f ON f.id = pgf.firm_id
