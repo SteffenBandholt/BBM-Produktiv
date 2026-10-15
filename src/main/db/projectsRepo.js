@@ -31,25 +31,49 @@ function _tableExists(db, tableName) {
 }
 
 function _ensureBuilderProjectFirm(db, projectId, builder) {
-  if (!builder || builder.kind !== FIRM_KINDS.GLOBAL) return;
-
-  firmUsagesRepo.setUsage({
-    firmId: builder.id,
-    usageCode: firmUsagesRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT,
-    enabled: true,
-    dbConn: db,
-  });
-
   const now = new Date().toISOString();
+
   db.prepare(`
-    INSERT OR IGNORE INTO project_global_firms (project_id, firm_id, removed_at)
-    VALUES (?, ?, NULL)
-  `).run(projectId, builder.id);
+    UPDATE project_firms
+    SET project_role = NULL, updated_at = ?
+    WHERE project_id = ? AND removed_at IS NULL AND project_role = 'bauherr'
+  `).run(now, projectId);
   db.prepare(`
     UPDATE project_global_firms
-    SET removed_at = NULL, is_active = 1, updated_at = ?
-    WHERE project_id = ? AND firm_id = ?
-  `).run(now, projectId, builder.id);
+    SET project_role = NULL, updated_at = ?
+    WHERE project_id = ? AND removed_at IS NULL AND project_role = 'bauherr'
+  `).run(now, projectId);
+
+  if (!builder) return;
+
+  if (builder.kind === FIRM_KINDS.GLOBAL) {
+    firmUsagesRepo.setUsage({
+      firmId: builder.id,
+      usageCode: firmUsagesRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT,
+      enabled: true,
+      dbConn: db,
+    });
+
+    db.prepare(`
+      INSERT OR IGNORE INTO project_global_firms
+        (project_id, firm_id, is_active, project_role, removed_at)
+      VALUES (?, ?, 1, 'bauherr', NULL)
+    `).run(projectId, builder.id);
+    db.prepare(`
+      UPDATE project_global_firms
+      SET removed_at = NULL, is_active = 1, project_role = 'bauherr', updated_at = ?
+      WHERE project_id = ? AND firm_id = ?
+    `).run(now, projectId, builder.id);
+    return;
+  }
+
+  if (builder.kind === FIRM_KINDS.PROJECT) {
+    db.prepare(`
+      UPDATE project_firms
+      SET project_role = 'bauherr', updated_at = ?
+      WHERE project_id = ? AND id = ? AND removed_at IS NULL
+    `).run(now, projectId, builder.id);
+  }
 }
 
 function _ensureProjectNumber(db) {
