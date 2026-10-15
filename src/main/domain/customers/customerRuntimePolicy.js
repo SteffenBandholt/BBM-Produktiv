@@ -61,11 +61,8 @@ function resolveCustomerRuntimeContext({
 
 function shouldExposeCustomerDirectory({
   isPackaged = false,
-  licenseStatus = null,
-  isModuleActive = () => false,
 } = {}) {
-  if (!isPackaged) return true;
-  return isModuleActive(licenseStatus, "rechnung") === true;
+  return !isPackaged;
 }
 
 module.exports = {
