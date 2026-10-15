@@ -18,7 +18,7 @@ import {
 } from "../ui/MainHeader.uiEditorContract.js";
 import { aggregateBbmM83Components } from "./m83ComponentContract.js";
 
-export const BBM_M80_REGISTRY_VERSION = 43;
+export const BBM_M80_REGISTRY_VERSION = 44;
 export const BBM_M80_REGISTRY_STATUS = "incomplete";
 
 export const BBM_M83_COMPONENT_CONTRACTS = Object.freeze([
