@@ -1,6 +1,7 @@
 "use strict";
 const assert = require("node:assert/strict");
 const { fixture, load } = require("./plannedConstructionStart.test.cjs");
+const projectFirmsRepo = require("../../src/main/db/projectFirmsRepo");
 
 function firms(db, projectId, otherProjectId) {
   db.prepare("INSERT INTO firms (id,name,street,zip,city,role_code) VALUES (?,?,?,?,?,?)")
@@ -53,6 +54,22 @@ async function runProjectBuilderTests(run) {
       assert.equal(repo.createProject({ name: "Legacy API" }).bauherr_firm_id, null);
     }, { modules }));
   }
+
+  await run("Bauherr: Projektrolle setzt, wechselt und entfernt den Bauherrn", () => seeded(({ repo, db, first }) => {
+    projectFirmsRepo.assignGlobalFirmToProject({ projectId: first.id, firmId: "global" });
+    projectFirmsRepo.setProjectFirmRole({ projectId: first.id, firmId: "global", kind: "global_firm", role: "bauherr" });
+    assert.equal(db.prepare("SELECT project_role FROM project_global_firms WHERE project_id=? AND firm_id=?").get(first.id, "global").project_role, "bauherr");
+    assert.equal(repo.getBuilder(first.id).ref.id, "global");
+
+    projectFirmsRepo.setProjectFirmRole({ projectId: first.id, firmId: "local", kind: "project_firm", role: "bauherr" });
+    assert.equal(db.prepare("SELECT project_role FROM project_global_firms WHERE project_id=? AND firm_id=?").get(first.id, "global").project_role, null);
+    assert.equal(db.prepare("SELECT project_role FROM project_firms WHERE id='local'").get().project_role, "bauherr");
+    assert.equal(repo.getBuilder(first.id).ref.id, "local");
+
+    projectFirmsRepo.setProjectFirmRole({ projectId: first.id, firmId: "local", kind: "project_firm", role: null });
+    assert.deepEqual(repo.getBuilder(first.id), { ref: null, firm: null, sourceMissing: false });
+    assert.equal(repo.getById(first.id).bauherr_firm_id, null);
+  }));
 
   await run("Bauherr: all update envelopes preserve omission and accept explicit change or clear", () => seeded(({ invoke, repo, first }) => {
     for (const idKey of ["projectId", "project_id", "id"]) for (const nested of [true, false]) {
