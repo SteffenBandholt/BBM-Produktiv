@@ -568,6 +568,7 @@ function ensureFirmsAndPersonsSchema(dbConn) {
         notes TEXT,
 
         role_code INTEGER DEFAULT 60,
+        project_role TEXT,
 
         use_project_participant INTEGER NOT NULL DEFAULT 0 CHECK (use_project_participant IN (0, 1)),
         use_customer INTEGER NOT NULL DEFAULT 0 CHECK (use_customer IN (0, 1)),
@@ -695,6 +696,7 @@ function ensureProjectGlobalFirmsSchema(dbConn) {
         project_id TEXT NOT NULL,
         firm_id TEXT NOT NULL,
         is_active INTEGER NOT NULL DEFAULT 1,
+        project_role TEXT,
 
         removed_at TEXT,
         created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
@@ -717,6 +719,7 @@ function ensureProjectGlobalFirmsSchema(dbConn) {
     if (!columnExists(dbConn, "project_global_firms", "is_active")) {
       dbConn.exec(`ALTER TABLE project_global_firms ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1;`);
     }
+    addCol("project_role", "TEXT");
     addCol("removed_at", "TEXT");
 
     if (!columnExists(dbConn, "project_global_firms", "created_at")) {
@@ -792,6 +795,7 @@ function ensureProjectFirmsAndPersonsSchema(dbConn) {
     addCol("gewerk", "TEXT");
     addCol("notes", "TEXT");
     addCol("role_code", "INTEGER DEFAULT 60");
+    addCol("project_role", "TEXT");
     addCol("removed_at", "TEXT");
 
     if (!columnExists(dbConn, "project_firms", "created_at")) {
@@ -1807,6 +1811,34 @@ function ensureBuilderProjectFirmAssignments(dbConn) {
           AND COALESCE(f.is_trashed, 0) = 0
       )
     `).run(now);
+
+    if (columnExists(dbConn, "project_global_firms", "project_role")) {
+      dbConn.prepare(`
+        UPDATE project_global_firms
+        SET project_role = 'bauherr', updated_at = ?
+        WHERE EXISTS (
+          SELECT 1
+          FROM projects p
+          WHERE p.id = project_global_firms.project_id
+            AND p.bauherr_firm_kind = 'global_firm'
+            AND p.bauherr_firm_id = project_global_firms.firm_id
+        )
+      `).run(now);
+    }
+
+    if (tableExists(dbConn, "project_firms") && columnExists(dbConn, "project_firms", "project_role")) {
+      dbConn.prepare(`
+        UPDATE project_firms
+        SET project_role = 'bauherr', updated_at = ?
+        WHERE EXISTS (
+          SELECT 1
+          FROM projects p
+          WHERE p.id = project_firms.project_id
+            AND p.bauherr_firm_kind = 'project_firm'
+            AND p.bauherr_firm_id = project_firms.id
+        )
+      `).run(now);
+    }
   };
 
   if (dbConn.inTransaction) migrate();
