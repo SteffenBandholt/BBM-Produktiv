@@ -48,6 +48,8 @@ async function runProjectBuilderTests(run) {
       assert.equal(resolved.data.firm.street, "Weg 10"); assert.equal(resolved.data.sourceMissing, false);
       assert.equal(db.prepare("SELECT COUNT(*) n FROM firms").get().n, beforeFirms);
       assert.equal(repo.listAll().find((p) => p.id === result.project.id).bauherr_firm_id, "global");
+      assert.ok(db.prepare("SELECT 1 AS yes FROM project_global_firms WHERE project_id = ? AND firm_id = ? AND removed_at IS NULL").get(result.project.id, "global"));
+      assert.equal(Number(db.prepare("SELECT use_project_participant FROM firms WHERE id = ?").get("global").use_project_participant), 1);
       assert.equal(repo.createProject({ name: "Legacy API" }).bauherr_firm_id, null);
     }, { modules }));
   }
@@ -110,7 +112,7 @@ async function runProjectBuilderTests(run) {
     assert.deepEqual(result.ref, { ...globalRef, projectId: null }); assert.equal(result.sourceMissing, false);
   }));
 
-  for (const state of ["inactive", "removed", "trashed", "deleted"]) {
+  for (const state of ["inactive", "removed", "trashed"]) {
     await run(`Bauherr: ${state} source remains explicit and cannot be reassigned silently`, () => seeded(({ repo, invoke, db, first }) => {
       const ref = state === "inactive" ? localRef : globalRef;
       repo.updateProject({ id: first.id, bauherr: ref });
@@ -126,6 +128,12 @@ async function runProjectBuilderTests(run) {
       assert.equal(repo.updateProject({ id: first.id, bauherr: null }).bauherr_firm_id, null);
     }));
   }
+
+  await run("Bauherr: globale Projektfirma verhindert harte Loeschung des zugeordneten Bauherrn", () => seeded(({ repo, db, first }) => {
+    repo.updateProject({ id: first.id, bauherr: globalRef });
+    assert.throws(() => db.prepare("DELETE FROM firms WHERE id='global'").run(), /FOREIGN KEY constraint failed/);
+    assert.equal(repo.getBuilder(first.id).firm.name, "Bauherr GmbH");
+  }));
 
   await run("Bauherr: reopening keeps references and later explicit clearing", () => seeded(({ repo, database, first }) => {
     repo.updateProject({ id: first.id, bauherr: localRef }); database.closeDatabase();
