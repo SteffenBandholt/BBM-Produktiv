@@ -285,7 +285,9 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
       color: "#172033",
     });
     title.textContent = "";
-    title.append(document.createTextNode(firmName(firm)));
+    const titleName = document.createElement("span");
+    titleName.textContent = firmName(firm);
+    title.append(titleName);
     if (this._isBuilderFirm(firm, kind)) title.append(this._builderBadge());
 
     const addressParts = [text(firm?.street), [text(firm?.zip), text(firm?.city)].filter(Boolean).join(" ")].filter(Boolean);
