@@ -7,7 +7,7 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 42,
+  "registryVersion": 43,
   "registryFingerprint": "sha256:c2237311b0a3c7514e6bd07547fdced238e2b15a953f3d4a1f4c0017e08c7149",
   "registryStatus": "incomplete",
   "activeScopes": [
@@ -121,7 +121,7 @@
       "scopeId": "projektverwaltung.builder",
       "status": "complete",
       "reason": null,
-      "elementCount": 8,
+      "elementCount": 9,
       "missingReferenceCount": 0
     },
     {
