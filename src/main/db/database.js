@@ -1747,6 +1747,73 @@ function migrateLegacyTopsToMeetingTops(dbConn) {
   ensureTopsAudioImportSpecialTypeColumn(dbConn);
 }
 
+function ensureBuilderProjectFirmAssignments(dbConn) {
+  if (!tableExists(dbConn, "projects") || !tableExists(dbConn, "firms") ||
+      !tableExists(dbConn, "project_global_firms") || !tableExists(dbConn, "firm_usages")) return;
+  if (!columnExists(dbConn, "projects", "bauherr_firm_kind") ||
+      !columnExists(dbConn, "projects", "bauherr_firm_id")) return;
+
+  const now = new Date().toISOString();
+  const migrate = () => {
+    dbConn.prepare(`
+      INSERT OR IGNORE INTO firm_usages (firm_id, usage_code, created_at, updated_at)
+      SELECT DISTINCT p.bauherr_firm_id, 'project_participant', ?, ?
+      FROM projects p
+      INNER JOIN firms f ON f.id = p.bauherr_firm_id
+      WHERE p.bauherr_firm_kind = 'global_firm'
+        AND p.bauherr_firm_id IS NOT NULL
+        AND f.removed_at IS NULL
+        AND COALESCE(f.is_trashed, 0) = 0
+    `).run(now, now);
+
+    if (columnExists(dbConn, "firms", "use_project_participant")) {
+      dbConn.prepare(`
+        UPDATE firms
+        SET use_project_participant = 1
+        WHERE id IN (
+          SELECT p.bauherr_firm_id
+          FROM projects p
+          INNER JOIN firms f ON f.id = p.bauherr_firm_id
+          WHERE p.bauherr_firm_kind = 'global_firm'
+            AND p.bauherr_firm_id IS NOT NULL
+            AND f.removed_at IS NULL
+            AND COALESCE(f.is_trashed, 0) = 0
+        )
+      `).run();
+    }
+
+    dbConn.prepare(`
+      INSERT OR IGNORE INTO project_global_firms
+        (project_id, firm_id, is_active, removed_at, created_at, updated_at)
+      SELECT p.id, p.bauherr_firm_id, 1, NULL, ?, ?
+      FROM projects p
+      INNER JOIN firms f ON f.id = p.bauherr_firm_id
+      WHERE p.bauherr_firm_kind = 'global_firm'
+        AND p.bauherr_firm_id IS NOT NULL
+        AND f.removed_at IS NULL
+        AND COALESCE(f.is_trashed, 0) = 0
+    `).run(now, now);
+
+    dbConn.prepare(`
+      UPDATE project_global_firms
+      SET is_active = 1, removed_at = NULL, updated_at = ?
+      WHERE EXISTS (
+        SELECT 1
+        FROM projects p
+        INNER JOIN firms f ON f.id = p.bauherr_firm_id
+        WHERE p.id = project_global_firms.project_id
+          AND p.bauherr_firm_kind = 'global_firm'
+          AND p.bauherr_firm_id = project_global_firms.firm_id
+          AND f.removed_at IS NULL
+          AND COALESCE(f.is_trashed, 0) = 0
+      )
+    `).run(now);
+  };
+
+  if (dbConn.inTransaction) migrate();
+  else dbConn.transaction(migrate)();
+}
+
 function ensureCoreSchema(dbConn) {
   // ✅ Projekte zuerst
   ensureProjectsSchema(dbConn);
@@ -1758,6 +1825,7 @@ function ensureCoreSchema(dbConn) {
   ensureProjectFirmsAndPersonsSchema(dbConn);
   ensureFirmUsesSchema(dbConn);
   ensureFirmUsagesSchema(dbConn);
+  ensureBuilderProjectFirmAssignments(dbConn);
 
   ensureProjectSettingsSchema(dbConn);
   ensureProjectCandidatesSchema(dbConn);
