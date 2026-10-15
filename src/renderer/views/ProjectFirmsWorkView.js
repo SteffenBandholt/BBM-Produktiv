@@ -68,7 +68,6 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     this.projectLocalFirms = [];
     this.contactsByKey = new Map();
     this.selectedEntry = null;
-    this.projectBuilderRef = null;
   }
 
   async _loadData() {
@@ -78,21 +77,6 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
 
     const api = window.bbmDb || {};
     this.contactsByKey = new Map();
-    this.projectBuilderRef = null;
-
-    if (this.projectId && typeof api.projectsGetBuilder === "function") {
-      try {
-        const builderRes = await api.projectsGetBuilder({ projectId: this.projectId });
-        if (builderRes?.ok && builderRes?.data?.ref?.id) {
-          this.projectBuilderRef = {
-            kind: text(builderRes.data.ref.kind),
-            id: text(builderRes.data.ref.id),
-          };
-        }
-      } catch (_error) {
-        this.projectBuilderRef = null;
-      }
-    }
 
     const globalLoads = (this.assignedGlobalFirms || []).map(async (firm) => {
       const firmId = text(firm?.id);
@@ -129,11 +113,8 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     return (this.allGlobalFirms || []).filter((firm) => hasProjectUsage(firm));
   }
 
-  _isBuilderFirm(firm, kind) {
-    const ref = this.projectBuilderRef;
-    if (!ref?.id) return false;
-    const expectedKind = kind === "global" ? "global_firm" : "project_firm";
-    return ref.kind === expectedKind && ref.id === text(firm?.id);
+  _isBuilderFirm(firm) {
+    return text(firm?.project_role).toLowerCase() === "bauherr";
   }
 
   _builderBadge() {
@@ -186,7 +167,7 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     const nameText = document.createElement("span");
     nameText.textContent = firmName(firm);
     name.append(nameText);
-    if (this._isBuilderFirm(firm, kind)) name.append(this._builderBadge());
+    if (this._isBuilderFirm(firm)) name.append(this._builderBadge());
 
     const secondary = style(document.createElement("div"), {
       fontSize: "11.5px",
@@ -288,7 +269,7 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     const titleName = document.createElement("span");
     titleName.textContent = firmName(firm);
     title.append(titleName);
-    if (this._isBuilderFirm(firm, kind)) title.append(this._builderBadge());
+    if (this._isBuilderFirm(firm)) title.append(this._builderBadge());
 
     const addressParts = [text(firm?.street), [text(firm?.zip), text(firm?.city)].filter(Boolean).join(" ")].filter(Boolean);
     const details = style(document.createElement("div"), {
@@ -304,6 +285,61 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     ].filter(Boolean);
     details.textContent = detailLines.join(" · ") || "Keine weiteren Firmendaten hinterlegt";
 
+    const roleRow = style(document.createElement("div"), {
+      display: "grid",
+      gridTemplateColumns: "120px minmax(0, 1fr)",
+      gap: "8px",
+      alignItems: "center",
+    });
+    const roleLabel = style(document.createElement("label"), {
+      fontSize: "11.5px",
+      color: "#475467",
+      fontWeight: "800",
+    });
+    roleLabel.textContent = "Rolle im Projekt";
+    const roleSelect = document.createElement("select");
+    style(roleSelect, {
+      width: "100%",
+      minHeight: "34px",
+      border: "1px solid #cfd7e3",
+      borderRadius: "8px",
+      padding: "0 8px",
+      background: "#fff",
+      fontSize: "12px",
+    });
+    for (const [value, label] of [["", "keine Rolle"], ["bauherr", "Bauherr"]]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      roleSelect.append(option);
+    }
+    roleSelect.value = text(firm?.project_role).toLowerCase();
+    roleSelect.addEventListener("change", async () => {
+      const api = window.bbmDb || {};
+      if (typeof api.projectFirmsSetRole !== "function") {
+        alert("Projektrolle kann nicht gespeichert werden.");
+        roleSelect.value = text(firm?.project_role).toLowerCase();
+        return;
+      }
+      const nextRole = text(roleSelect.value).toLowerCase() || null;
+      roleSelect.disabled = true;
+      const res = await api.projectFirmsSetRole({
+        projectId: this.projectId,
+        firmId: firm.id,
+        kind: kind === "global" ? "global_firm" : "project_firm",
+        role: nextRole,
+      });
+      if (!res?.ok) {
+        roleSelect.disabled = false;
+        roleSelect.value = text(firm?.project_role).toLowerCase();
+        alert(res?.error || "Projektrolle konnte nicht gespeichert werden.");
+        return;
+      }
+      this.selectedEntry = { kind, firm: { ...firm, project_role: nextRole } };
+      await this.reload();
+    });
+    roleRow.append(roleLabel, roleSelect);
+
     const divider = style(document.createElement("div"), { borderTop: "1px solid #edf0f4" });
     const contactTitle = style(document.createElement("div"), {
       fontSize: "12px",
@@ -312,7 +348,7 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     });
     contactTitle.textContent = "Ansprechpartner";
 
-    card.append(title, details, divider, contactTitle);
+    card.append(title, details, roleRow, divider, contactTitle);
 
     const key = `${kind}:${text(firm?.id)}`;
     const contacts = this.contactsByKey.get(key) || [];
@@ -370,8 +406,8 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
       edit.addEventListener("click", () => this._openGlobalFirmEditor(firm));
       const remove = button("Zuordnung entfernen", { danger: true });
       remove.addEventListener("click", async () => {
-        if (this._isBuilderFirm(firm, kind)) {
-          alert("Diese Firma ist als Bauherr des Projekts festgelegt. Bitte zuerst im Projekt den Bauherrn ändern oder entfernen.");
+        if (this._isBuilderFirm(firm)) {
+          alert("Bitte zuerst die Rolle „Bauherr“ entfernen.");
           return;
         }
         await this._unassignFirm(firm);
@@ -382,7 +418,13 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
       const edit = button("Bearbeiten");
       edit.addEventListener("click", () => this._openProjectFirmEditor(firm));
       const remove = button("Projektfirma löschen", { danger: true });
-      remove.addEventListener("click", async () => this._deleteProjectFirm(firm));
+      remove.addEventListener("click", async () => {
+        if (this._isBuilderFirm(firm)) {
+          alert("Bitte zuerst die Rolle „Bauherr“ entfernen.");
+          return;
+        }
+        await this._deleteProjectFirm(firm);
+      });
       actions.append(edit, remove);
     }
 
