@@ -85,9 +85,16 @@ async function runProjectFirmsCoreOwnershipTests(run) {
     const formSource = read("src/renderer/modules/projektverwaltung/screens/ProjectFormScreen.js");
     assert.match(repoSource, /setProjectFirmRole/);
     assert.match(repoSource, /project_role = 'bauherr'/);
-    assert.match(viewSource, /Rolle im Projekt/);
-    assert.match(viewSource, /\["bauherr", "Bauherr"\]/);
+    assert.equal(viewSource.includes("Rolle im Projekt"), false);
+    assert.equal(viewSource.includes('[["", "keine Rolle"], ["bauherr", "Bauherr"]]'), false);
     assert.equal(formSource.includes("ProjectBuilderField"), false);
+    const overviewSource = read("src/renderer/modules/projektverwaltung/screens/ProjectOverview.js");
+    const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
+    assert.match(overviewSource, /Bauherr festlegen/);
+    assert.match(overviewSource, /Ändern/);
+    assert.match(projectsSource, /Aus Firmenstamm wählen/);
+    assert.match(projectsSource, /Neue Firma anlegen/);
+    assert.match(projectsSource, /Bauherr entfernen/);
   });
 
   await run("Paket 3: bestehende Projektfirmenlogik bleibt singulaer", () => {
