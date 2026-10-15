@@ -285,61 +285,6 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     ].filter(Boolean);
     details.textContent = detailLines.join(" · ") || "Keine weiteren Firmendaten hinterlegt";
 
-    const roleRow = style(document.createElement("div"), {
-      display: "grid",
-      gridTemplateColumns: "120px minmax(0, 1fr)",
-      gap: "8px",
-      alignItems: "center",
-    });
-    const roleLabel = style(document.createElement("label"), {
-      fontSize: "11.5px",
-      color: "#475467",
-      fontWeight: "800",
-    });
-    roleLabel.textContent = "Rolle im Projekt";
-    const roleSelect = document.createElement("select");
-    style(roleSelect, {
-      width: "100%",
-      minHeight: "34px",
-      border: "1px solid #cfd7e3",
-      borderRadius: "8px",
-      padding: "0 8px",
-      background: "#fff",
-      fontSize: "12px",
-    });
-    for (const [value, label] of [["", "keine Rolle"], ["bauherr", "Bauherr"]]) {
-      const option = document.createElement("option");
-      option.value = value;
-      option.textContent = label;
-      roleSelect.append(option);
-    }
-    roleSelect.value = text(firm?.project_role).toLowerCase();
-    roleSelect.addEventListener("change", async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.projectFirmsSetRole !== "function") {
-        alert("Projektrolle kann nicht gespeichert werden.");
-        roleSelect.value = text(firm?.project_role).toLowerCase();
-        return;
-      }
-      const nextRole = text(roleSelect.value).toLowerCase() || null;
-      roleSelect.disabled = true;
-      const res = await api.projectFirmsSetRole({
-        projectId: this.projectId,
-        firmId: firm.id,
-        kind: kind === "global" ? "global_firm" : "project_firm",
-        role: nextRole,
-      });
-      if (!res?.ok) {
-        roleSelect.disabled = false;
-        roleSelect.value = text(firm?.project_role).toLowerCase();
-        alert(res?.error || "Projektrolle konnte nicht gespeichert werden.");
-        return;
-      }
-      this.selectedEntry = { kind, firm: { ...firm, project_role: nextRole } };
-      await this.reload();
-    });
-    roleRow.append(roleLabel, roleSelect);
-
     const divider = style(document.createElement("div"), { borderTop: "1px solid #edf0f4" });
     const contactTitle = style(document.createElement("div"), {
       fontSize: "12px",
@@ -348,7 +293,7 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     });
     contactTitle.textContent = "Ansprechpartner";
 
-    card.append(title, details, roleRow, divider, contactTitle);
+    card.append(title, details, divider, contactTitle);
 
     const key = `${kind}:${text(firm?.id)}`;
     const contacts = this.contactsByKey.get(key) || [];
