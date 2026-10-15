@@ -57,7 +57,6 @@ const firmsRepo = require("./db/firmsRepo");
 const personsRepo = require("./db/personsRepo");
 const { buildStoragePreviewPaths } = require("./ipc/projectStoragePaths");
 const { resolveBuildIdentity } = require("./buildIdentity");
-const { isModuleActive } = require("./moduleRegistry");
 const { shouldExposeCustomerDirectory } = require("./domain/customers/customerRuntimePolicy");
 
 let mainWindow;
@@ -518,8 +517,6 @@ app.whenReady().then(async () => {
   registerFirmDirectoryIpc();
   if (shouldExposeCustomerDirectory({
     isPackaged: app.isPackaged,
-    licenseStatus,
-    isModuleActive,
   })) {
     registerCustomerDirectoryIpc();
     registerCustomerManagementIpc();
