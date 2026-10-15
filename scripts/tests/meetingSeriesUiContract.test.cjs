@@ -35,7 +35,7 @@ async function runMeetingSeriesUiContractTests(run) {
   });
   await run("Projektübersicht UI: complete explicit component and histories belong only to edit fields", () => {
     const overview = registry.listM83ComponentContracts().find(component => component.componentId === "bbm.projektverwaltung.overview");
-    assert.equal(overview.slots.length, 12);
+    assert.equal(overview.slots.length, 16);
     assert.equal(overview.requiredSlots.length, 5);
     const ids = new Set(overview.slots.map(slot => slot.element.id));
     for (const slot of overview.slots) {
