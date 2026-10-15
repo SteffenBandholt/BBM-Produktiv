@@ -48,6 +48,8 @@ async function runProjectBuilderTests(run) {
       assert.equal(resolved.data.firm.street, "Weg 10"); assert.equal(resolved.data.sourceMissing, false);
       assert.equal(db.prepare("SELECT COUNT(*) n FROM firms").get().n, beforeFirms);
       assert.equal(repo.listAll().find((p) => p.id === result.project.id).bauherr_firm_id, "global");
+      assert.ok(db.prepare("SELECT 1 AS yes FROM project_global_firms WHERE project_id = ? AND firm_id = ? AND removed_at IS NULL").get(result.project.id, "global"));
+      assert.equal(Number(db.prepare("SELECT use_project_participant FROM firms WHERE id = ?").get("global").use_project_participant), 1);
       assert.equal(repo.createProject({ name: "Legacy API" }).bauherr_firm_id, null);
     }, { modules }));
   }
