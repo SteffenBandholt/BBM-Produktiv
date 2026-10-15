@@ -22,6 +22,10 @@ const elements = [
   element({ id: id(".card.name"), name: "Projektname", type: "label", role: "content", parentId: id(".card"), order: 9 }),
   element({ id: id(".card.short"), name: "Kurzbezeichnung", type: "label", role: "content", parentId: id(".card"), order: 10 }),
   element({ id: id(".card.address"), name: "Bauvorhabenadresse", type: "label", role: "content", parentId: id(".card"), order: 11 }),
+  element({ id: id(".card.builder"), name: "Bauherr", type: "group", role: "layout", selectionKind: "group", parentId: id(".card"), order: 12 }),
+  element({ id: id(".card.builder.name"), name: "Bauherrname", type: "label", role: "content", parentId: id(".card.builder"), order: 13 }),
+  element({ id: id(".card.builder.address"), name: "Bauherranschrift", type: "label", role: "content", parentId: id(".card.builder"), order: 14 }),
+  element({ id: id(".card.builder.contact"), name: "Bauherrkontakt", type: "label", role: "content", parentId: id(".card.builder"), order: 15 }),
 ];
 export const projectOverviewUiEditorContract = m83Component({
   componentId: OVERVIEW_COMPONENT, scopeId: OVERVIEW_SCOPE,
