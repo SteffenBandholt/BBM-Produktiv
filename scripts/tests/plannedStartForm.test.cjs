@@ -51,7 +51,6 @@ async function runPlannedStartFormTests(run) {
   try {
     await run("S2.2: new form starts empty and sends independent dates through existing create", async () => {
       form = await make(); assert.equal(form.inpPlannedStart.type, "date"); assert.equal(form.inpPlannedStart.value, "");
-      form.builderField.input.value = JSON.stringify(["global_firm", "builder"]);
       form.inpName.value = "Projekt"; form.inpStart.value = "2026-01-01"; form.inpEnd.value = "2027-12-31"; form.inpPlannedStart.value = "2026-09-08";
       await form._save(); assert.equal(writes.at(-1).geplanter_baubeginn, "2026-09-08"); assert.equal(writes.at(-1).start_date, "2026-01-01"); assert.equal(writes.at(-1).end_date, "2027-12-31");
       assert.equal(refs.getM80Ref(scope), null);
@@ -88,7 +87,7 @@ async function runPlannedStartFormTests(run) {
         if (slot.element.parentId) assert.equal(ref.element.parentElement, refs.getM80Ref(slot.element.parentId).element);
         assert.ok(slot.element.lockedOps.includes("modifyDomainData"));
       }
-      assert.deepEqual(createM80RegistrationDescriptor().activeScopes, [scope, "projektverwaltung.builder"]);
+      assert.deepEqual(createM80RegistrationDescriptor().activeScopes, [scope]);
     });
     await run("S2.2: layout change does not change dates or write projects", () => {
       const count = writes.length, payload = form._collectPayload();
@@ -99,7 +98,7 @@ async function runPlannedStartFormTests(run) {
       const other = new Element("div"); document.body.append(other); refs.registerM80Ref("sigeko.screen", other);
       const originalRoot = form.root; form._closeModal(); assert.equal(refs.getM80Ref(scope), null); assert.equal(refs.getM80Ref("sigeko.screen").element, other);
       await form.openModal(); assert.equal(form.root, originalRoot); assert.equal(refs.validateM83ComponentReferences([contract.componentId]).ok, true);
-      assert.deepEqual(createM80RegistrationDescriptor().activeScopes, [scope, "projektverwaltung.builder"]); form.destroy(); assert.equal(refs.getM80Ref(scope), null);
+      assert.deepEqual(createM80RegistrationDescriptor().activeScopes, [scope]); form.destroy(); assert.equal(refs.getM80Ref(scope), null);
     });
     await run("S2.2: page mode uses the same control and destroy clears its scope", () => {
       form = new Form({ router }); document.body.append(form.render()); form._fill(list[0]);
