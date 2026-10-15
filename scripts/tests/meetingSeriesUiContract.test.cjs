@@ -35,7 +35,7 @@ async function runMeetingSeriesUiContractTests(run) {
   });
   await run("Projektübersicht UI: complete explicit component and histories belong only to edit fields", () => {
     const overview = registry.listM83ComponentContracts().find(component => component.componentId === "bbm.projektverwaltung.overview");
-    assert.equal(overview.slots.length, 12);
+    assert.equal(overview.slots.length, 16);
     assert.equal(overview.requiredSlots.length, 5);
     const ids = new Set(overview.slots.map(slot => slot.element.id));
     for (const slot of overview.slots) {
@@ -53,8 +53,8 @@ async function runMeetingSeriesUiContractTests(run) {
   });
   const { projectCardDetails } = await esm("src/renderer/modules/projektverwaltung/screens/ProjectOverview.js");
   await run("Projektübersicht UI: distinct name/short and partial site addresses contain no placeholders", () => {
-    assert.deepEqual(projectCardDetails({ name: "Haus", short: "Haus", street: "Weg 1", city: "Ort" }), { name: "Haus", short: "", number: "", address: "Weg 1\nOrt" });
-    assert.deepEqual(projectCardDetails({ name: "Langer Name", short: "LN", zip: "12345" }), { name: "Langer Name", short: "LN", number: "", address: "12345" });
+    assert.deepEqual(projectCardDetails({ name: "Haus", short: "Haus", street: "Weg 1", city: "Ort" }), { name: "Haus", short: "", number: "", address: "Weg 1\nOrt", builder: null });
+    assert.deepEqual(projectCardDetails({ name: "Langer Name", short: "LN", zip: "12345" }), { name: "Langer Name", short: "LN", number: "", address: "12345", builder: null });
     assert.equal(projectCardDetails({ name: "Haus" }).address, "");
     assert.equal(projectCardDetails({ short: "Kurz", street: "  ", zip: null, city: undefined }).name, "Kurz");
   });
