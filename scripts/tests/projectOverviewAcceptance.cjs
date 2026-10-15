@@ -158,10 +158,17 @@ module.exports.runProjectOverviewAcceptanceTests = async function runProjectOver
   await run("Projektübersicht Acceptance: Karteninhalt bleibt kompakt und frei von Platzhaltern", () => {
     assert.deepEqual(projectCardDetails({ name: "Langname", short: "Kurz", project_number: "26-018",
       street: "Bauweg 1", zip: "12345", city: "Musterstadt" }), {
-      name: "Langname", short: "Kurz", number: "26-018", address: "Bauweg 1\n12345 Musterstadt",
+      name: "Langname", short: "Kurz", number: "26-018", address: "Bauweg 1\n12345 Musterstadt", builder: null,
     });
     assert.deepEqual(projectCardDetails({ short: "Nur Kurzname", zip: "12345" }), {
-      name: "Nur Kurzname", short: "", number: "", address: "12345",
+      name: "Nur Kurzname", short: "", number: "", address: "12345", builder: null,
+    });
+    assert.deepEqual(projectCardDetails({
+      name: "Projekt mit Bauherr",
+      bauherr: { name: "Bauherr GmbH", street: "Auftraggeberweg 7", zip: "23552", city: "Luebeck", phone: "0451 123", email: "bauherr@example.de" },
+    }), {
+      name: "Projekt mit Bauherr", short: "", number: "", address: "",
+      builder: { name: "Bauherr GmbH", address: "Auftraggeberweg 7\n23552 Luebeck", contact: "0451 123 · bauherr@example.de" },
     });
   });
   await run("Projektübersicht Acceptance: produktiver Aufbau hält Toolbar und Kartenaktionen getrennt", () => {
