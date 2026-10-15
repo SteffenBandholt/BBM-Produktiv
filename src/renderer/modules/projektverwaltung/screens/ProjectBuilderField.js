@@ -26,7 +26,7 @@ export default class ProjectBuilderField {
     this.input = make("select", ".input"); this.input.id = label.htmlFor;
     this.input.style.cssText = "box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-height:34px;padding:6px;font:inherit;border:1px solid #afbdcb;border-radius:4px";
     this.input.onchange = () => this._showSelection(); group.append(label, this.input);
-    const hint = make("p", ".hint", "Vorhandene Firma auswählen. Neue Firmen zuerst in der Firmenverwaltung anlegen. Die Zuordnung wird mit dem Projekt gespeichert."); hint.style.margin = "0";
+    const hint = make("p", ".hint", "Vorhandene Firma auswählen oder den Bauherrn direkt hier neu anlegen. Die Zuordnung wird mit dem Projekt gespeichert."); hint.style.margin = "0";
     this.status = make("p", ".status", "Firmenauswahl wird geladen …"); this.status.setAttribute("role", "status"); this.status.style.margin = "0";
     this.refresh = make("button", ".refresh", "Firmenauswahl aktualisieren"); this.refresh.type = "button";
     this.refresh.style.cssText = "align-self:flex-start;max-width:100%;white-space:normal;padding:6px 10px";
