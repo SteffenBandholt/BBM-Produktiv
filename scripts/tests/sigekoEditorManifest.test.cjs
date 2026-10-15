@@ -41,7 +41,7 @@ async function runSigekoEditorManifestTests(run) {
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'ui-editor-target.json'), 'utf8'));
   const scopes = registry.listM80RegistryScopes();
   await run('S1.2-Fix: kanonisches Manifest enthaelt exakt den additiven SiGeKo-Scope', () => {
-    assert.deepEqual(manifest.activeScopes, [...Object.keys(EXISTING_SCOPE_FINGERPRINTS), 'sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.builder']);
+    assert.deepEqual(manifest.activeScopes, ['restarbeiten.header.root', 'restarbeiten.list.root', 'restarbeiten.edit.root', 'protokoll.screen.root', 'protokoll.list.root', 'protokoll.edit.root', 'sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.builder', 'projektverwaltung.meetingSeries', 'projektverwaltung.meetingSeriesEntry', 'projektverwaltung.overview']);
     assert.deepEqual(manifest.activeScopes, registry.BBM_M80_ACTIVE_SCOPES);
     assert.equal(manifest.registryVersion, registry.BBM_M80_REGISTRY_VERSION);
     assert.equal(manifest.registryFingerprint, createRegistryFingerprint(scopes));
