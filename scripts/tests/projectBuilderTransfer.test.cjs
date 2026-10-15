@@ -43,7 +43,7 @@ async function runProjectBuilderTransferTests(run) {
     const result = await transfer.importProject(exported.exportPath); assert.equal(result.ok, true, result.error);
     assert.equal(ctx.repo.getById(p.id).bauherr_firm_kind, "global_firm");
     assert.equal(ctx.repo.getById(p.id).bauherr_firm_id, "builder");
-    assert.equal(ctx.db.prepare("SELECT COUNT(*) n FROM project_global_firms").get().n, 0);
+    assert.equal(ctx.db.prepare("SELECT COUNT(*) n FROM project_global_firms").get().n, 1);
     assert.equal(ctx.db.prepare("SELECT COUNT(*) n FROM firms").get().n, 1);
   }));
   await run("Bauherr-Transfer: own project firm is restored before reference and survives restart", () => fixture(async ctx => {
