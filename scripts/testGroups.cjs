@@ -90,6 +90,7 @@ const TEST_GROUPS = Object.freeze([
       ["bbmUiEditorInstalledArtifacts.test.cjs", "runBbmUiEditorInstalledArtifactsTests"],
       ["bbmUiEditorRuntimeLauncher.test.cjs", "runBbmUiEditorRuntimeLauncherTests"],
       ["projektverwaltungModule.test.cjs", "runProjektverwaltungModuleTests"],
+      ["azlModuleIntegration.test.cjs", "runAzlModuleIntegrationTests"],
       ["plaeneModule.test.cjs", "runPlaeneModuleTests"],
       ["restarbeitenDataModel.test.cjs", "runRestarbeitenDataModelTests"],
       ["restarbeitenRules.test.cjs", "runRestarbeitenRulesTests"],
