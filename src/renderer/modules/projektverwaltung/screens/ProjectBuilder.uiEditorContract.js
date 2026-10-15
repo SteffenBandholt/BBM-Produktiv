@@ -15,12 +15,13 @@ const elements = [
   element(".input", "Bauherr", "field", "dataFieldLayout", `${BUILDER_SCOPE}.group`, 3),
   element(".hint", "Hinweis zur Bauherr-Auswahl", "label", "content", BUILDER_SCOPE, 4),
   element(".status", "Bauherr-Angaben und Ladestatus", "label", "status", BUILDER_SCOPE, 5),
-  m83DomainButton({ id: `${BUILDER_SCOPE}.refresh`, name: "Firmenauswahl aktualisieren", parentId: BUILDER_SCOPE, order: 6, actionKind: "refreshBuilderOptions" }),
-  m83DomainButton({ id: `${BUILDER_SCOPE}.editor`, name: "UI-Editor", parentId: BUILDER_SCOPE, order: 7, actionKind: "openUiEditor" }),
+  m83DomainButton({ id: `${BUILDER_SCOPE}.clear`, name: "Bauherr entfernen", parentId: BUILDER_SCOPE, order: 6, actionKind: "clearBuilder" }),
+  m83DomainButton({ id: `${BUILDER_SCOPE}.refresh`, name: "Firmenauswahl aktualisieren", parentId: BUILDER_SCOPE, order: 7, actionKind: "refreshBuilderOptions" }),
+  m83DomainButton({ id: `${BUILDER_SCOPE}.editor`, name: "UI-Editor", parentId: BUILDER_SCOPE, order: 8, actionKind: "openUiEditor" }),
 ];
 export const projectBuilderUiEditorContract = m83Component({
   componentId: BUILDER_COMPONENT, scopeId: BUILDER_SCOPE,
-  requiredSlots: elements.slice(0, 7).map(entry => entry.id),
+  requiredSlots: elements.slice(0, 8).map(entry => entry.id),
   slots: elements.map((entry, index) => m83Slot(entry.id, entry,
-    index === 7 ? { required: false, referenceKind: "multi", presence: "whenVisibleInstances" } : {})),
+    index === 8 ? { required: false, referenceKind: "multi", presence: "whenVisibleInstances" } : {})),
 });
