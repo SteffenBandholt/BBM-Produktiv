@@ -68,6 +68,7 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     this.projectLocalFirms = [];
     this.contactsByKey = new Map();
     this.selectedEntry = null;
+    this.projectBuilderRef = null;
   }
 
   async _loadData() {
@@ -77,6 +78,21 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
 
     const api = window.bbmDb || {};
     this.contactsByKey = new Map();
+    this.projectBuilderRef = null;
+
+    if (this.projectId && typeof api.projectsGetBuilder === "function") {
+      try {
+        const builderRes = await api.projectsGetBuilder({ projectId: this.projectId });
+        if (builderRes?.ok && builderRes?.data?.ref?.id) {
+          this.projectBuilderRef = {
+            kind: text(builderRes.data.ref.kind),
+            id: text(builderRes.data.ref.id),
+          };
+        }
+      } catch (_error) {
+        this.projectBuilderRef = null;
+      }
+    }
 
     const globalLoads = (this.assignedGlobalFirms || []).map(async (firm) => {
       const firmId = text(firm?.id);
@@ -113,6 +129,32 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     return (this.allGlobalFirms || []).filter((firm) => hasProjectUsage(firm));
   }
 
+  _isBuilderFirm(firm, kind) {
+    const ref = this.projectBuilderRef;
+    if (!ref?.id) return false;
+    const expectedKind = kind === "global" ? "global_firm" : "project_firm";
+    return ref.kind === expectedKind && ref.id === text(firm?.id);
+  }
+
+  _builderBadge() {
+    const badge = style(document.createElement("span"), {
+      display: "inline-flex",
+      alignItems: "center",
+      minHeight: "20px",
+      padding: "0 7px",
+      borderRadius: "999px",
+      background: "#eef4ff",
+      color: "#175cd3",
+      fontSize: "10px",
+      fontWeight: "800",
+      whiteSpace: "nowrap",
+      marginLeft: "7px",
+      verticalAlign: "middle",
+    });
+    badge.textContent = "Bauherr";
+    return badge;
+  }
+
   _createFirmRow(firm, kind) {
     const row = document.createElement("button");
     row.type = "button";
@@ -141,7 +183,10 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
       textOverflow: "ellipsis",
       whiteSpace: "nowrap",
     });
-    name.textContent = firmName(firm);
+    const nameText = document.createElement("span");
+    nameText.textContent = firmName(firm);
+    name.append(nameText);
+    if (this._isBuilderFirm(firm, kind)) name.append(this._builderBadge());
 
     const secondary = style(document.createElement("div"), {
       fontSize: "11.5px",
@@ -239,7 +284,9 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
       fontWeight: "850",
       color: "#172033",
     });
-    title.textContent = firmName(firm);
+    title.textContent = "";
+    title.append(document.createTextNode(firmName(firm)));
+    if (this._isBuilderFirm(firm, kind)) title.append(this._builderBadge());
 
     const addressParts = [text(firm?.street), [text(firm?.zip), text(firm?.city)].filter(Boolean).join(" ")].filter(Boolean);
     const details = style(document.createElement("div"), {
@@ -317,12 +364,18 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
     });
 
     if (kind === "global") {
+      const edit = button("Im Firmenstamm bearbeiten");
+      edit.addEventListener("click", () => this._openGlobalFirmEditor(firm));
       const remove = button("Zuordnung entfernen", { danger: true });
       remove.addEventListener("click", async () => {
+        if (this._isBuilderFirm(firm, kind)) {
+          alert("Diese Firma ist als Bauherr des Projekts festgelegt. Bitte zuerst im Projekt den Bauherrn ändern oder entfernen.");
+          return;
+        }
         await this._unassignFirm(firm);
         this.selectedEntry = null;
       });
-      actions.append(remove);
+      actions.append(edit, remove);
     } else {
       const edit = button("Bearbeiten");
       edit.addEventListener("click", () => this._openProjectFirmEditor(firm));
@@ -333,6 +386,125 @@ export default class ProjectFirmsView extends ProjectFirmsBaseView {
 
     card.append(actions);
     container.append(card);
+  }
+
+  async _openGlobalFirmEditor(firm) {
+    const api = window.bbmDb || {};
+    const firmId = text(firm?.id);
+    if (!firmId || typeof api.firmDirectoryUpdate !== "function") {
+      alert("Bearbeiten im Firmenstamm ist nicht verfügbar.");
+      return;
+    }
+
+    const overlay = style(document.createElement("div"), {
+      position: "fixed",
+      inset: "0",
+      background: "rgba(15,23,42,.38)",
+      display: "grid",
+      placeItems: "center",
+      zIndex: "10000",
+      padding: "20px",
+    });
+    const modal = style(document.createElement("div"), {
+      width: "min(620px, calc(100vw - 40px))",
+      maxHeight: "calc(100vh - 40px)",
+      overflow: "auto",
+      background: "#fff",
+      borderRadius: "14px",
+      boxShadow: "0 22px 60px rgba(15,23,42,.22)",
+      padding: "18px",
+      display: "grid",
+      gap: "12px",
+    });
+    const title = style(document.createElement("div"), { fontSize: "18px", fontWeight: "850" });
+    title.textContent = "Firma im Firmenstamm bearbeiten";
+    const hint = style(document.createElement("div"), { fontSize: "11.5px", color: "#667085" });
+    hint.textContent = "Änderungen gelten zentral und damit in allen Projekten, in denen diese Firma verwendet wird.";
+
+    const grid = style(document.createElement("div"), {
+      display: "grid",
+      gridTemplateColumns: "150px minmax(0, 1fr)",
+      gap: "8px 10px",
+      alignItems: "center",
+    });
+    const fields = {};
+    const defs = [
+      ["name", "Name 1", firm?.name],
+      ["name2", "Name 2", firm?.name2],
+      ["short", "Kurzbezeichnung", firm?.short],
+      ["gewerk", "Funktion / Gewerk", firm?.gewerk],
+      ["street", "Straße", firm?.street],
+      ["zip", "PLZ", firm?.zip],
+      ["city", "Ort", firm?.city],
+      ["email", "E-Mail", firm?.email],
+      ["phone", "Telefon", firm?.phone],
+    ];
+    for (const [key, labelText, initial] of defs) {
+      const label = style(document.createElement("label"), { fontSize: "11.5px", color: "#475467", fontWeight: "700" });
+      label.textContent = labelText;
+      const input = document.createElement("input");
+      input.value = text(initial);
+      style(input, {
+        width: "100%",
+        minHeight: "36px",
+        border: "1px solid #cfd7e3",
+        borderRadius: "8px",
+        padding: "0 9px",
+        boxSizing: "border-box",
+        fontSize: "12px",
+      });
+      fields[key] = input;
+      grid.append(label, input);
+    }
+
+    const actions = style(document.createElement("div"), { display: "flex", justifyContent: "flex-end", gap: "8px" });
+    const cancel = button("Abbrechen");
+    const save = button("Speichern", { primary: true });
+    actions.append(cancel, save);
+    modal.append(title, hint, grid, actions);
+    overlay.append(modal);
+    document.body.append(overlay);
+
+    const close = () => overlay.remove();
+    cancel.addEventListener("click", close);
+    overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
+
+    save.addEventListener("click", async () => {
+      const name = text(fields.name.value);
+      if (!name) {
+        alert("Name 1 ist Pflicht.");
+        fields.name.focus();
+        return;
+      }
+      save.disabled = true;
+      const patch = {
+        short: text(fields.short.value),
+        name,
+        name2: text(fields.name2.value),
+        street: text(fields.street.value),
+        zip: text(fields.zip.value),
+        city: text(fields.city.value),
+        phone: text(fields.phone.value),
+        email: text(fields.email.value),
+        gewerk: text(fields.gewerk.value),
+        role_code: text(firm?.role_code),
+        notes: text(firm?.notes),
+      };
+      const res = await api.firmDirectoryUpdate({
+        ref: { kind: "global_firm", id: firmId },
+        patch,
+      });
+      if (!res?.ok) {
+        save.disabled = false;
+        alert(res?.error || "Firma konnte nicht gespeichert werden.");
+        return;
+      }
+      close();
+      this.selectedEntry = null;
+      await this.reload();
+    });
+
+    setTimeout(() => fields.name.focus(), 0);
   }
 
   async _openProjectFirmEditor(firm = null) {
