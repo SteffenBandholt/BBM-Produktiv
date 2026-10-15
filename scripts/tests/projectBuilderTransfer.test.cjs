@@ -28,10 +28,10 @@ function unchanged(ctx, before) {
 }
 
 async function runProjectBuilderTransferTests(run) {
-  await run("Bauherr-Transfer: global selection outside project participants roundtrips in V5 without SiGeKo", () => fixture(async ctx => {
+  await run("Bauherr-Transfer: global selection roundtrips als Projektteilnehmer in V5 ohne SiGeKo", () => fixture(async ctx => {
     globalFirm(ctx.db); const transfer = register(ctx);
     const p = ctx.repo.createProject({ name: "Global", bauherr: { kind: "global_firm", id: "builder" } });
-    assert.equal(ctx.db.prepare("SELECT COUNT(*) n FROM project_global_firms").get().n, 0);
+    assert.equal(ctx.db.prepare("SELECT COUNT(*) n FROM project_global_firms").get().n, 1);
     const exported = await transfer.exportProject(p.id); assert.equal(exported.ok, true, exported.error);
     assert.equal(ctx.repo.getById(p.id), undefined);
     const unpacked = path.join(ctx.root, "inspect"); await extract(exported.exportPath, { dir: unpacked });
@@ -43,7 +43,7 @@ async function runProjectBuilderTransferTests(run) {
     const result = await transfer.importProject(exported.exportPath); assert.equal(result.ok, true, result.error);
     assert.equal(ctx.repo.getById(p.id).bauherr_firm_kind, "global_firm");
     assert.equal(ctx.repo.getById(p.id).bauherr_firm_id, "builder");
-    assert.equal(ctx.db.prepare("SELECT COUNT(*) n FROM project_global_firms").get().n, 0);
+    assert.equal(ctx.db.prepare("SELECT COUNT(*) n FROM project_global_firms").get().n, 1);
     assert.equal(ctx.db.prepare("SELECT COUNT(*) n FROM firms").get().n, 1);
   }));
   await run("Bauherr-Transfer: own project firm is restored before reference and survives restart", () => fixture(async ctx => {
