@@ -92,6 +92,7 @@ export default class ProjectsScreen {
       }
     } catch (err) {
       console.error("[ProjectsScreen] Project modal failed:", err);
+      alert(`Projekt bearbeiten konnte nicht geöffnet werden:\n${err?.message || err}`);
       this._cleanupProjectFormModal();
     }
   }
