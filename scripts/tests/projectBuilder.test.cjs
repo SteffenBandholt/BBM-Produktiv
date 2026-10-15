@@ -112,7 +112,7 @@ async function runProjectBuilderTests(run) {
     assert.deepEqual(result.ref, { ...globalRef, projectId: null }); assert.equal(result.sourceMissing, false);
   }));
 
-  for (const state of ["inactive", "removed", "trashed", "deleted"]) {
+  for (const state of ["inactive", "removed", "trashed"]) {
     await run(`Bauherr: ${state} source remains explicit and cannot be reassigned silently`, () => seeded(({ repo, invoke, db, first }) => {
       const ref = state === "inactive" ? localRef : globalRef;
       repo.updateProject({ id: first.id, bauherr: ref });
@@ -128,6 +128,12 @@ async function runProjectBuilderTests(run) {
       assert.equal(repo.updateProject({ id: first.id, bauherr: null }).bauherr_firm_id, null);
     }));
   }
+
+  await run("Bauherr: globale Projektfirma verhindert harte Loeschung des zugeordneten Bauherrn", () => seeded(({ repo, db, first }) => {
+    repo.updateProject({ id: first.id, bauherr: globalRef });
+    assert.throws(() => db.prepare("DELETE FROM firms WHERE id='global'").run(), /FOREIGN KEY constraint failed/);
+    assert.equal(repo.getBuilder(first.id).firm.name, "Bauherr GmbH");
+  }));
 
   await run("Bauherr: reopening keeps references and later explicit clearing", () => seeded(({ repo, database, first }) => {
     repo.updateProject({ id: first.id, bauherr: localRef }); database.closeDatabase();
