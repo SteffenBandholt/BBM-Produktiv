@@ -216,6 +216,23 @@ function setProjectFirmActive({ projectId, firmId, kind, isActive }) {
   const active = _normalizeActiveFlag(isActive);
   const now = _nowIso();
 
+  if (active === 0) {
+    const roleRow = kind === "global_firm"
+      ? db.prepare(`
+          SELECT project_role
+          FROM project_global_firms
+          WHERE project_id = ? AND firm_id = ? AND removed_at IS NULL
+        `).get(projectId, firmId)
+      : db.prepare(`
+          SELECT project_role
+          FROM project_firms
+          WHERE project_id = ? AND id = ? AND removed_at IS NULL
+        `).get(projectId, firmId);
+    if (roleRow?.project_role === "bauherr") {
+      throw new Error("Bauherr-Rolle zuerst entfernen.");
+    }
+  }
+
   const tx = db.transaction(() => {
     const localInfo = kind === "global_firm" ? { changes: 0 } : db.prepare(`
       UPDATE project_firms
@@ -275,6 +292,21 @@ function setProjectFirmRole({ projectId, firmId, kind, role }) {
     if (!target) throw new Error("Firma ist dem Projekt nicht zugeordnet.");
 
     if (normalizedRole === "bauherr") {
+      const activeRow = kind === "global_firm"
+        ? db.prepare(`
+            SELECT COALESCE(is_active, 1) AS is_active
+            FROM project_global_firms
+            WHERE project_id = ? AND firm_id = ? AND removed_at IS NULL
+          `).get(projectId, firmId)
+        : db.prepare(`
+            SELECT COALESCE(is_active, 1) AS is_active
+            FROM project_firms
+            WHERE project_id = ? AND id = ? AND removed_at IS NULL
+          `).get(projectId, firmId);
+      if (Number(activeRow?.is_active || 0) !== 1) {
+        throw new Error("Nur eine aktive Projektfirma kann Bauherr sein.");
+      }
+
       db.prepare(`
         UPDATE project_firms
         SET project_role = NULL, updated_at = ?
