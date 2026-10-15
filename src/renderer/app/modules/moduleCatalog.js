@@ -10,8 +10,16 @@ import {
   getSigekoModuleEntry,
   SIGEKO_MODULE_ID,
 } from "../../modules/sigeko/index.js";
+import {
+  getAzlModuleEntry,
+  AZL_MODULE_ID,
+} from "../../modules/azl/index.js";
 
 const AVAILABLE_MODULE_ENTRIES = Object.freeze([
+  Object.freeze({
+    moduleId: AZL_MODULE_ID,
+    entry: getAzlModuleEntry(),
+  }),
   Object.freeze({
     moduleId: SIGEKO_MODULE_ID,
     entry: getSigekoModuleEntry(),
@@ -27,6 +35,7 @@ const AVAILABLE_MODULE_ENTRIES = Object.freeze([
 ]);
 
 const DEFAULT_ACTIVE_MODULE_IDS = Object.freeze([
+  AZL_MODULE_ID,
   SIGEKO_MODULE_ID,
   PROTOKOLL_MODULE_ID,
   RESTARBEITEN_MODULE_ID,
@@ -234,4 +243,4 @@ export function getActiveModuleIdsForReleaseState(releaseState) {
   return RELEASE_STATE_MODULE_ACCESS.getModuleIds(releaseState);
 }
 
-export { PROTOKOLL_MODULE_ID, RESTARBEITEN_MODULE_ID };
+export { AZL_MODULE_ID, PROTOKOLL_MODULE_ID, RESTARBEITEN_MODULE_ID };
