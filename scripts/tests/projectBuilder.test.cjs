@@ -1,7 +1,6 @@
 "use strict";
 const assert = require("node:assert/strict");
 const { fixture, load } = require("./plannedConstructionStart.test.cjs");
-const projectFirmsRepo = require("../../src/main/db/projectFirmsRepo");
 
 function firms(db, projectId, otherProjectId) {
   db.prepare("INSERT INTO firms (id,name,street,zip,city,role_code) VALUES (?,?,?,?,?,?)")
@@ -55,7 +54,8 @@ async function runProjectBuilderTests(run) {
     }, { modules }));
   }
 
-  await run("Bauherr: Projektrolle setzt, wechselt und entfernt den Bauherrn", () => seeded(({ repo, db, first }) => {
+  await run("Bauherr: Projektrolle setzt, wechselt und entfernt den Bauherrn", () => seeded(({ repo, db, database, first }) => {
+    const projectFirmsRepo = load("src/main/db/projectFirmsRepo.js", { "./database": database });
     projectFirmsRepo.assignGlobalFirmToProject({ projectId: first.id, firmId: "global" });
     projectFirmsRepo.setProjectFirmRole({ projectId: first.id, firmId: "global", kind: "global_firm", role: "bauherr" });
     assert.equal(db.prepare("SELECT project_role FROM project_global_firms WHERE project_id=? AND firm_id=?").get(first.id, "global").project_role, "bauherr");
