@@ -79,6 +79,17 @@ async function runProjectFirmsCoreOwnershipTests(run) {
     assert.match(source, /Diese Firma ist als Bauherr des Projekts festgelegt/);
   });
 
+  await run("Paket 3: Bauherr ist eine projektbezogene Firmenrolle", () => {
+    const repoSource = read("src/main/db/projectFirmsRepo.js");
+    const viewSource = read("src/renderer/views/ProjectFirmsWorkView.js");
+    const formSource = read("src/renderer/modules/projektverwaltung/screens/ProjectFormScreen.js");
+    assert.match(repoSource, /setProjectFirmRole/);
+    assert.match(repoSource, /project_role = 'bauherr'/);
+    assert.match(viewSource, /Rolle im Projekt/);
+    assert.match(viewSource, /\["bauherr", "Bauherr"\]/);
+    assert.equal(formSource.includes("ProjectBuilderField"), false);
+  });
+
   await run("Paket 3: bestehende Projektfirmenlogik bleibt singulaer", () => {
     const ipcSource = read("src/main/ipc/projectFirmsIpc.js");
     const coreSource = read("src/main/core/projectFirmsCore.js");
