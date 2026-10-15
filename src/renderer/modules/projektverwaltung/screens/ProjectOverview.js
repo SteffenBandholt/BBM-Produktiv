@@ -26,7 +26,7 @@ export default class ProjectOverview {
     this.refs.get(id).push(node);
     return node;
   }
-  render({ projects, entries, getModuleActions, selectedSeriesForProject, onCreate, onTransfer, onEdit, onProject, onSeries, isBusy }) {
+  render({ projects, entries, getModuleActions, selectedSeriesForProject, onCreate, onTransfer, onEdit, onBuilder, onProject, onSeries, isBusy }) {
     this.root = this.node("section", "");
     this.root.style.cssText = "min-width:0;display:flex;flex-direction:column;gap:12px";
     const toolbar = this.node("div", ".toolbar");
@@ -89,9 +89,9 @@ export default class ProjectOverview {
         const address = this.node("div", ".card.address", details.address);
         address.style.cssText = "font-size:11.5px;line-height:1.25;opacity:.85;white-space:pre-line"; card.append(address);
       }
+      const builder = this.node("div", ".card.builder");
+      builder.style.cssText = "min-width:0;display:flex;flex-direction:column;gap:3px;margin-top:3px;padding-top:4px;border-top:1px solid var(--bbm-popup-border,#d7dee8)";
       if (details.builder) {
-        const builder = this.node("div", ".card.builder");
-        builder.style.cssText = "min-width:0;display:flex;flex-direction:column;gap:1px;margin-top:3px;padding-top:4px;border-top:1px solid var(--bbm-popup-border,#d7dee8)";
         const builderName = this.node("div", ".card.builder.name", `Bauherr: ${details.builder.name}`);
         builderName.style.cssText = "min-width:0;font-size:11.5px;line-height:1.25;font-weight:700";
         builder.append(builderName);
@@ -105,8 +105,22 @@ export default class ProjectOverview {
           builderContact.style.cssText = "font-size:10.5px;line-height:1.25;opacity:.8;overflow-wrap:anywhere";
           builder.append(builderContact);
         }
-        card.append(builder);
+      } else {
+        const builderName = this.node("div", ".card.builder.name", "Kein Bauherr festgelegt");
+        builderName.style.cssText = "min-width:0;font-size:11px;line-height:1.25;opacity:.7";
+        builder.append(builderName);
       }
+      const builderAction = button({
+        text: details.builder ? "Ändern" : "Bauherr festlegen",
+        actionType: "builder",
+        onClick: () => onBuilder?.(project),
+      });
+      builderAction.style.cssText += ";align-self:flex-start;padding:3px 6px;font-size:10.5px;line-height:1.2";
+      const builderActionId = OVERVIEW_SCOPE + ".card.builder.action";
+      if (!this.refs.has(builderActionId)) this.refs.set(builderActionId, []);
+      this.refs.get(builderActionId).push(builderAction);
+      builder.append(builderAction);
+      card.append(builder);
       const moduleActions = getModuleActions(project), protocolAction = moduleActions.find(action => action.moduleId === "protokoll");
       if (protocolAction) {
         const actions = entries.render({ project, selectedSeriesKey: selectedSeriesForProject?.(project.id), makeButton: button,

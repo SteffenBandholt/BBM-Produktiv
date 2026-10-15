@@ -26,6 +26,7 @@ const elements = [
   element({ id: id(".card.builder.name"), name: "Bauherrname", type: "label", role: "content", parentId: id(".card.builder"), order: 13 }),
   element({ id: id(".card.builder.address"), name: "Bauherranschrift", type: "label", role: "content", parentId: id(".card.builder"), order: 14 }),
   element({ id: id(".card.builder.contact"), name: "Bauherrkontakt", type: "label", role: "content", parentId: id(".card.builder"), order: 15 }),
+  m83DomainButton({ id: id(".card.builder.action"), name: "Bauherr festlegen/ändern", parentId: id(".card.builder"), order: 16, actionKind: "manageBuilder" }),
 ];
 export const projectOverviewUiEditorContract = m83Component({
   componentId: OVERVIEW_COMPONENT, scopeId: OVERVIEW_SCOPE,

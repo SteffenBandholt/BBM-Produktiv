@@ -41,6 +41,7 @@ export default class ProjectsScreen {
     this._projectFormModal = null;
     this._projectFormPrevProjectId = null;
     this._transferModalEl = null;
+    this._builderModalEl = null;
   }
 
   _cleanupProjectFormModal() {
@@ -1006,6 +1007,302 @@ export default class ProjectsScreen {
     }
   }
 
+  _closeBuilderModal() {
+    if (!this._builderModalEl) return;
+    try {
+      cleanupPopupHandlers(this._builderModalEl);
+      this._builderModalEl.remove();
+    } catch (_error) {}
+    this._builderModalEl = null;
+  }
+
+  async _assignBuilderFromGlobalFirm(projectId, firm) {
+    const api = window.bbmDb || {};
+    const firmId = String(firm?.id || firm?.ref?.id || "").trim();
+    if (!projectId || !firmId) throw new Error("Firma oder Projekt fehlt.");
+
+    const ref = { kind: "global_firm", id: firmId };
+    if (typeof api.firmDirectorySetUses === "function") {
+      const usageRes = await api.firmDirectorySetUses({
+        ref,
+        uses: { projectParticipant: 1 },
+      });
+      if (!usageRes?.ok) {
+        throw new Error(usageRes?.error || "Firma konnte nicht als Projektteilnehmer freigegeben werden.");
+      }
+    }
+
+    const assignRes = await api.projectFirmsAssignGlobalFirm?.({ projectId, firmId });
+    if (!assignRes?.ok) {
+      throw new Error(assignRes?.error || "Firma konnte dem Projekt nicht zugeordnet werden.");
+    }
+
+    const roleRes = await api.projectFirmsSetRole?.({
+      projectId,
+      firmId,
+      kind: "global_firm",
+      role: "bauherr",
+    });
+    if (!roleRes?.ok) {
+      throw new Error(roleRes?.error || "Bauherr konnte nicht festgelegt werden.");
+    }
+  }
+
+  async _removeBuilder(project) {
+    const api = window.bbmDb || {};
+    const projectId = String(project?.id || "").trim();
+    const firmId = String(project?.bauherr_firm_id || "").trim();
+    const kind = String(project?.bauherr_firm_kind || "").trim();
+    if (!projectId || !firmId || !kind) return;
+
+    const res = await api.projectFirmsSetRole?.({
+      projectId,
+      firmId,
+      kind,
+      role: null,
+    });
+    if (!res?.ok) throw new Error(res?.error || "Bauherr konnte nicht entfernt werden.");
+  }
+
+  async _openBuilderDialog(project) {
+    if (!project?.id || this._builderModalEl) return;
+    const api = window.bbmDb || {};
+
+    let firmList = [];
+    if (typeof api.firmDirectoryListAll === "function") {
+      const result = await api.firmDirectoryListAll({ kind: "global_firm", includeInactive: false });
+      if (!result?.ok) {
+        this._flashMsg(result?.error || "Firmenstamm konnte nicht geladen werden.", 9000);
+        return;
+      }
+      firmList = Array.isArray(result.list) ? result.list : [];
+    }
+
+    const overlay = createPopupOverlay({ background: "rgba(15,23,42,.38)", zIndex: 10000 });
+    overlay.style.display = "flex";
+    const modal = document.createElement("div");
+    modal.className = "bbm-popup-standard bbm-popup-dialog";
+    Object.assign(modal.style, {
+      width: "min(620px, calc(100vw - 32px))",
+      maxHeight: "calc(100vh - 32px)",
+      overflow: "auto",
+      display: "grid",
+      gap: "12px",
+    });
+
+    const header = document.createElement("div");
+    header.className = "bbm-popup-header";
+    const title = document.createElement("div");
+    title.textContent = project?.bauherr ? "Bauherr ändern" : "Bauherr festlegen";
+    title.style.fontWeight = "800";
+    title.style.fontSize = "18px";
+    const close = document.createElement("button");
+    close.type = "button";
+    close.textContent = "×";
+    close.setAttribute("aria-label", "Dialog schließen");
+    applyPopupButtonStyle(close);
+    header.append(title, close);
+
+    const body = document.createElement("div");
+    body.className = "bbm-popup-body bbm-form-content";
+    Object.assign(body.style, { display: "grid", gap: "12px" });
+
+    if (project?.bauherr) {
+      const current = document.createElement("div");
+      current.style.fontSize = "12px";
+      current.style.color = "#475467";
+      current.textContent = `Aktuell: ${project.bauherr.name || project.bauherr.short || "Bauherr"}`;
+      body.append(current);
+    }
+
+    const selectLabel = document.createElement("label");
+    selectLabel.textContent = "Aus Firmenstamm wählen";
+    selectLabel.style.fontWeight = "700";
+    selectLabel.style.fontSize = "12px";
+    const select = document.createElement("select");
+    Object.assign(select.style, {
+      width: "100%",
+      minHeight: "38px",
+      border: "1px solid #cfd7e3",
+      borderRadius: "8px",
+      padding: "0 8px",
+      background: "#fff",
+    });
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = "Firma auswählen …";
+    select.append(emptyOption);
+    for (const firm of firmList) {
+      const option = document.createElement("option");
+      option.value = String(firm?.id || firm?.ref?.id || "");
+      option.textContent = [firm?.name || firm?.short || "(ohne Name)", firm?.city].filter(Boolean).join(" – ");
+      select.append(option);
+    }
+    body.append(selectLabel, select);
+
+    const choose = document.createElement("button");
+    choose.type = "button";
+    choose.textContent = project?.bauherr ? "Ausgewählte Firma als neuen Bauherrn setzen" : "Ausgewählte Firma als Bauherrn setzen";
+    applyPopupButtonStyle(choose, { variant: "primary" });
+    body.append(choose);
+
+    const divider = document.createElement("div");
+    divider.style.borderTop = "1px solid #e5e7eb";
+    body.append(divider);
+
+    const newToggle = document.createElement("button");
+    newToggle.type = "button";
+    newToggle.textContent = "Neue Firma anlegen";
+    applyPopupButtonStyle(newToggle);
+    body.append(newToggle);
+
+    const newForm = document.createElement("div");
+    Object.assign(newForm.style, {
+      display: "none",
+      gridTemplateColumns: "130px minmax(0, 1fr)",
+      gap: "8px 10px",
+      alignItems: "center",
+    });
+    const fields = {};
+    const defs = [
+      ["name", "Name 1"],
+      ["name2", "Name 2"],
+      ["short", "Kurzbezeichnung"],
+      ["street", "Straße"],
+      ["zip", "PLZ"],
+      ["city", "Ort"],
+      ["email", "E-Mail"],
+      ["phone", "Telefon"],
+    ];
+    for (const [key, labelText] of defs) {
+      const label = document.createElement("label");
+      label.textContent = labelText;
+      label.style.fontSize = "11.5px";
+      label.style.fontWeight = "700";
+      const input = document.createElement("input");
+      input.type = "text";
+      Object.assign(input.style, {
+        width: "100%",
+        minHeight: "36px",
+        border: "1px solid #cfd7e3",
+        borderRadius: "8px",
+        padding: "0 9px",
+        boxSizing: "border-box",
+      });
+      fields[key] = input;
+      newForm.append(label, input);
+    }
+    body.append(newForm);
+
+    const createAndUse = document.createElement("button");
+    createAndUse.type = "button";
+    createAndUse.textContent = "Firma anlegen und als Bauherr setzen";
+    applyPopupButtonStyle(createAndUse, { variant: "primary" });
+    createAndUse.style.display = "none";
+    body.append(createAndUse);
+
+    const footer = document.createElement("div");
+    footer.className = "bbm-popup-footer";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = "Abbrechen";
+    applyPopupButtonStyle(cancel);
+    footer.append(cancel);
+
+    if (project?.bauherr_firm_id) {
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "Bauherr entfernen";
+      applyPopupButtonStyle(remove, { variant: "danger" });
+      remove.addEventListener("click", async () => {
+        if (!confirm("Bauherr-Zuordnung dieses Projekts wirklich entfernen?")) return;
+        remove.disabled = true;
+        try {
+          await this._removeBuilder(project);
+          this._closeBuilderModal();
+          await this.reloadProjects();
+        } catch (error) {
+          remove.disabled = false;
+          alert(error?.message || "Bauherr konnte nicht entfernt werden.");
+        }
+      });
+      footer.prepend(remove);
+    }
+
+    modal.append(header, body, footer);
+    overlay.append(modal);
+    document.body.append(overlay);
+    this._builderModalEl = overlay;
+
+    const closeDialog = () => this._closeBuilderModal();
+    close.addEventListener("click", closeDialog);
+    cancel.addEventListener("click", closeDialog);
+    overlay.addEventListener("mousedown", event => {
+      if (event.target === overlay) closeDialog();
+    });
+
+    newToggle.addEventListener("click", () => {
+      const open = newForm.style.display === "none";
+      newForm.style.display = open ? "grid" : "none";
+      createAndUse.style.display = open ? "inline-flex" : "none";
+      newToggle.textContent = open ? "Neue Firma ausblenden" : "Neue Firma anlegen";
+      if (open) fields.name.focus();
+    });
+
+    choose.addEventListener("click", async () => {
+      const firm = firmList.find(item => String(item?.id || item?.ref?.id || "") === String(select.value || ""));
+      if (!firm) {
+        alert("Bitte eine Firma auswählen.");
+        return;
+      }
+      choose.disabled = true;
+      try {
+        await this._assignBuilderFromGlobalFirm(project.id, firm);
+        this._closeBuilderModal();
+        await this.reloadProjects();
+      } catch (error) {
+        choose.disabled = false;
+        alert(error?.message || "Bauherr konnte nicht festgelegt werden.");
+      }
+    });
+
+    createAndUse.addEventListener("click", async () => {
+      const name = String(fields.name.value || "").trim();
+      if (!name) {
+        alert("Name 1 ist Pflicht.");
+        fields.name.focus();
+        return;
+      }
+      createAndUse.disabled = true;
+      try {
+        const created = await api.firmDirectoryCreate?.({
+          kind: "global_firm",
+          origin: "firms",
+          data: {
+            name,
+            name2: String(fields.name2.value || "").trim(),
+            short: String(fields.short.value || "").trim(),
+            street: String(fields.street.value || "").trim(),
+            zip: String(fields.zip.value || "").trim(),
+            city: String(fields.city.value || "").trim(),
+            email: String(fields.email.value || "").trim(),
+            phone: String(fields.phone.value || "").trim(),
+          },
+          uses: { projectParticipant: 1 },
+        });
+        if (!created?.ok || !created?.firm) {
+          throw new Error(created?.error || "Firma konnte nicht angelegt werden.");
+        }
+        await this._assignBuilderFromGlobalFirm(project.id, created.firm);
+        this._closeBuilderModal();
+        await this.reloadProjects();
+      } catch (error) {
+        createAndUse.disabled = false;
+        alert(error?.message || "Firma konnte nicht als Bauherr angelegt werden.");
+      }
+    });
+  }
+
   async reloadProjects() {
     this.loading = true;
     this._setMsg("Lade...");
@@ -1072,6 +1369,10 @@ export default class ProjectsScreen {
         this.router.currentProjectId = project.id;
         this.router.currentMeetingId = null;
         await this._openProjectFormModal({ projectId: project.id });
+      },
+      onBuilder: async project => {
+        if (!project?.id) return;
+        await this._openBuilderDialog(project);
       },
       onSeries: async (project, action, seriesKey) => {
         const opened = await this._openProjectModuleFromTile({
