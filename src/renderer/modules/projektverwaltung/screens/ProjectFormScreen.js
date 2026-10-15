@@ -703,6 +703,11 @@ export default class ProjectFormScreen {
     leftCol.style.paddingRight = "4px";
     leftCol.append(row0, row1, row2, row3, storagePreviewWrap);
 
+    this.builderField?.destroy();
+    this.builderField = new ProjectBuilderField({ projectId: this.projectId });
+    const builderSection = this.builderField.render();
+    builderSection.style.marginTop = "0";
+
     const rightCol = document.createElement("div");
     rightCol.classList.add("bbm-form-group");
     rightCol.style.minWidth = "0";
@@ -710,7 +715,7 @@ export default class ProjectFormScreen {
     rightCol.style.flexDirection = "column";
     rightCol.style.gap = "var(--bbm-form-group-gap)";
     rightCol.style.paddingLeft = "4px";
-    rightCol.append(row4, row5, plannedStartRow, row6);
+    rightCol.append(row4, row5, plannedStartRow, builderSection, row6);
 
     const separator = document.createElement("div");
     separator.style.width = "1px";
@@ -765,11 +770,9 @@ export default class ProjectFormScreen {
       el.addEventListener("keydown", enterToSave);
     }
 
-    this.builderField?.destroy();
-    this.builderField = new ProjectBuilderField({ projectId: this.projectId });
     this.meetingSeriesField?.destroy();
     this.meetingSeriesField = new ProjectMeetingSeriesField({ onHistory: seriesKey => this._openSeriesHistory(seriesKey) });
-    root.append(header, formCard, this.meetingSeriesField.render(), this.builderField.render());
+    root.append(header, formCard, this.meetingSeriesField.render());
 
     this.root = root;
     this.msgEl = msg;
