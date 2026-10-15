@@ -7,7 +7,7 @@
   "integrationMode": "existing-app",
   "contractVersion": "1.2",
   "adapterVersion": "1.2",
-  "registryVersion": 42,
+  "registryVersion": 43,
   "registryFingerprint": "sha256:c2237311b0a3c7514e6bd07547fdced238e2b15a953f3d4a1f4c0017e08c7149",
   "registryStatus": "incomplete",
   "activeScopes": [
@@ -20,7 +20,6 @@
     "sigeko.screen",
     "sigeko.preNotification",
     "projektverwaltung.plannedStart",
-    "projektverwaltung.builder",
     "projektverwaltung.meetingSeries",
     "projektverwaltung.meetingSeriesEntry",
     "projektverwaltung.overview"
@@ -115,13 +114,6 @@
       "status": "complete",
       "reason": null,
       "elementCount": 5,
-      "missingReferenceCount": 0
-    },
-    {
-      "scopeId": "projektverwaltung.builder",
-      "status": "complete",
-      "reason": null,
-      "elementCount": 8,
       "missingReferenceCount": 0
     },
     {
