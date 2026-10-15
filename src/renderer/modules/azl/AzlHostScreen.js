@@ -1,5 +1,3 @@
-import ExternalAzlScreen from "../../../../node_modules/bbm-azl/src/ui/AzlScreen.js";
-
 const AZL_STYLE_ID = "bbm-azl-module-style";
 
 function ensureAzlStyles() {
@@ -143,8 +141,9 @@ export default class AzlHostScreen {
     this.projectId = projectId || null;
     this.project = project || null;
     this.root = null;
+    this.inner = null;
     this._onFirmDataChanged = async () => {
-      if (!this.root?.isConnected) return;
+      if (!this.root?.isConnected || !this.inner) return;
       try {
         await this.inner.refreshContracts?.();
         await this.inner.refreshProjectFirms?.();
@@ -154,12 +153,21 @@ export default class AzlHostScreen {
       }
     };
     window.addEventListener("bbm:pool-data-changed", this._onFirmDataChanged);
+  }
 
+  async _ensureInner() {
+    if (this.inner) return this.inner;
+    const module = await import("bbm-azl/src/ui/AzlScreen.js");
+    const ExternalAzlScreen = module?.default;
+    if (typeof ExternalAzlScreen !== "function") {
+      throw new Error("BBM-azL Screen ist nicht verfügbar.");
+    }
     this.inner = new ExternalAzlScreen({
       projectId: this.projectId,
       project: this.project,
       services: createServices(this.router),
     });
+    return this.inner;
   }
 
   render() {
@@ -186,7 +194,8 @@ export default class AzlHostScreen {
 
       try {
         this.router?._setProjectRuntimeContext?.({ projectId: this.projectId, meetingId: null });
-        await this.inner.mount(this.root);
+        const inner = await this._ensureInner();
+        await inner.mount(this.root);
       } catch (error) {
         if (!this.root) return;
         this.root.textContent = `azL konnte nicht geöffnet werden: ${error?.message || error}`;
@@ -200,6 +209,10 @@ export default class AzlHostScreen {
     if (this._onFirmDataChanged) {
       window.removeEventListener("bbm:pool-data-changed", this._onFirmDataChanged);
     }
+    try {
+      this.inner?.destroy?.();
+    } catch (_error) {}
+    this.inner = null;
     this.root = null;
   }
 }
