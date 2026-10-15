@@ -46,6 +46,35 @@ contextBridge.exposeInMainWorld("bbmDb", {
 
 
   // ============================================================
+  // azL – zusätzlich auszuführende Leistungen
+  // ============================================================
+  azlList: (projectId) => ipcRenderer.invoke("azl:list", { projectId }),
+  azlGet: (id) => ipcRenderer.invoke("azl:get", { id }),
+  azlCreateDraft: (data) => ipcRenderer.invoke("azl:createDraft", data),
+  azlUpdate: (id, patch) => ipcRenderer.invoke("azl:update", { id, patch }),
+  azlSetStatus: (id, status) => ipcRenderer.invoke("azl:setStatus", { id, status }),
+  azlPositionsList: (id) => ipcRenderer.invoke("azl:positions:list", { id }),
+  azlPositionsReplace: (id, positions) => ipcRenderer.invoke("azl:positions:replace", { id, positions }),
+  azlDocumentsList: (id, documentKind = null) => ipcRenderer.invoke("azl:documents:list", { id, documentKind }),
+  azlOfferReviewChoose: () => ipcRenderer.invoke("azl:offer:review:choose"),
+  azlOfferReviewCommit: (projectId, id, reviewToken) => ipcRenderer.invoke("azl:offer:review:commit", { projectId, azlId: id, reviewToken }),
+  azlOfferReviewOpen: (reviewToken) => ipcRenderer.invoke("azl:offer:review:open", { reviewToken }),
+  azlOfferReviewDiscard: (reviewToken) => ipcRenderer.invoke("azl:offer:review:discard", { reviewToken }),
+  azlOfferChoose: (projectId, id) => ipcRenderer.invoke("azl:offer:choose", { projectId, azlId: id }),
+  azlOfferRemove: (id) => ipcRenderer.invoke("azl:offer:remove", { id }),
+  azlPreferencesGet: () => ipcRenderer.invoke("azl:preferences:get"),
+  azlPreferencesSetIssuer: (issuerName) => ipcRenderer.invoke("azl:preferences:setIssuer", { issuerName }),
+  azlContractsList: (projectId) => ipcRenderer.invoke("azl:contracts:list", { projectId }),
+  azlContractSave: (data) => ipcRenderer.invoke("azl:contracts:save", data),
+  azlOrdersList: (contractId) => ipcRenderer.invoke("azl:orders:list", { contractId }),
+  azlOrderSave: (data) => ipcRenderer.invoke("azl:orders:save", data),
+  azlOrderDelete: (id) => ipcRenderer.invoke("azl:orders:delete", { id }),
+  azlProjectReport: (projectId) => ipcRenderer.invoke("azl:report:project", { projectId }),
+  azlFirmReport: (contractId) => ipcRenderer.invoke("azl:report:firm", { contractId }),
+  azlOrcaChooseAndPlan: () => ipcRenderer.invoke("azl:orca:chooseAndPlan"),
+  azlOrcaApply: (plan) => ipcRenderer.invoke("azl:orca:apply", { plan }),
+
+  // ============================================================
   // Projekte
   // ============================================================
   projectsList: () => ipcRenderer.invoke("projects:list"),
