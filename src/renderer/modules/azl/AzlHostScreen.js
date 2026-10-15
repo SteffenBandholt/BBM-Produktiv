@@ -142,6 +142,12 @@ function createServices(router) {
         }
         await router.showProjectFirms(projectId);
       },
+      async closeProjectModule(projectId, project = null) {
+        if (typeof router?.showProjectWorkspace !== "function") {
+          throw new Error("Projektübersicht ist nicht verfügbar.");
+        }
+        await router.showProjectWorkspace(projectId, { project });
+      },
     }),
     orcaImport: Object.freeze({
       async chooseAndPlan() {
