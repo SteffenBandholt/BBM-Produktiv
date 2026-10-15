@@ -3,6 +3,8 @@ const { initDatabase } = require("./database");
 const { randomUUID } = require("crypto");
 const { normalizeSeriesMask } = require("../../shared/meetingSeries.cjs");
 const { validateBuilder, resolveBuilder } = require("../domain/projects/projectBuilder");
+const firmUsagesRepo = require("./firmUsagesRepo");
+const { FIRM_KINDS } = require("../domain/firms/firmReference");
 
 let _ensuredProjectNumberColumn = false;
 let _ensuredArchivedAtColumn = false;
@@ -26,6 +28,28 @@ function _tableExists(db, tableName) {
   } catch (_e) {
     return false;
   }
+}
+
+function _ensureBuilderProjectFirm(db, projectId, builder) {
+  if (!builder || builder.kind !== FIRM_KINDS.GLOBAL) return;
+
+  firmUsagesRepo.setUsage({
+    firmId: builder.id,
+    usageCode: firmUsagesRepo.FIRM_USAGE_CODES.PROJECT_PARTICIPANT,
+    enabled: true,
+    dbConn: db,
+  });
+
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT OR IGNORE INTO project_global_firms (project_id, firm_id, removed_at)
+    VALUES (?, ?, NULL)
+  `).run(projectId, builder.id);
+  db.prepare(`
+    UPDATE project_global_firms
+    SET removed_at = NULL, is_active = 1, updated_at = ?
+    WHERE project_id = ? AND firm_id = ?
+  `).run(now, projectId, builder.id);
 }
 
 function _ensureProjectNumber(db) {
@@ -509,6 +533,7 @@ function createProject(data) {
     }
   }
 
+  _ensureBuilderProjectFirm(db, id, builder);
   return _safeGetById(db, id);
 }
 
@@ -607,6 +632,7 @@ function updateProject(data) {
   `
   ).run(...vals);
 
+  if (changesBuilder) _ensureBuilderProjectFirm(db, projectId, builder);
   return _safeGetById(db, projectId);
 }
 
