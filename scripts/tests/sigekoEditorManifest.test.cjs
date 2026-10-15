@@ -58,7 +58,7 @@ async function runSigekoEditorManifestTests(run) {
       assert.equal(createUiScopeFingerprint(scopes.find(s => s.scopeId === scopeId)), fingerprint, scopeId);
     }
     assert.equal(createUiScopeFingerprint(scopes.find(s => s.scopeId === 'projektverwaltung.plannedStart')), 'sha256:a3959a7358504a1a26f6b303de8929e6dab722b5835aa586be573646c04485a5');
-    assert.deepEqual(manifest.scopes.filter(s => !['sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.builder'].includes(s.scopeId)).map(s => [s.scopeId, s.status, s.elementCount]), [
+    assert.deepEqual(manifest.scopes.filter(s => !['sigeko.screen', 'sigeko.preNotification', 'projektverwaltung.plannedStart', 'projektverwaltung.builder', 'projektverwaltung.meetingSeries', 'projektverwaltung.meetingSeriesEntry', 'projektverwaltung.overview'].includes(s.scopeId)).map(s => [s.scopeId, s.status, s.elementCount]), [
       ['restarbeiten.header.root', 'complete', 44], ['restarbeiten.list.root', 'complete', 32], ['restarbeiten.edit.root', 'complete', 53],
       ['protokoll.screen.root', 'complete', 34], ['protokoll.list.root', 'complete', 32], ['protokoll.edit.root', 'complete', 38],
       ['bbm.remaining', 'blocked', 0], ['pdf.bbm.protocol', 'complete', 28],
