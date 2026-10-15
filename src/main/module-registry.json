@@ -8,7 +8,8 @@
   "canonicalModuleIds": [
     "protokoll",
     "restarbeiten",
-    "sigeko"
+    "sigeko",
+    "azl"
   ],
   "modules": {
     "protokoll": {
@@ -48,6 +49,19 @@
       "requiredCapabilities": [
         "pdf",
         "mail",
+        "file-storage",
+        "ui-editor"
+      ]
+    },
+    "azl": {
+      "kind": "project",
+      "licenseKey": "module:azl",
+      "ipcGroup": "azl",
+      "ipcRegistrar": "azl",
+      "migrationRegistrar": "azl",
+      "requiredCapabilities": [
+        "pdf",
+        "export",
         "file-storage",
         "ui-editor"
       ]
