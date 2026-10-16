@@ -235,8 +235,8 @@ export default class AzlHostScreen {
           onNew: () => {
             this.inner?.management?.clear?.click?.();
           },
-          onSave: () => {
-            this.inner?.management?.save?.click?.();
+          onPreview: () => {
+            this.inner?.previewPdf?.();
           },
           onClose: async () => {
             if (typeof this.inner?.closeModule === "function") {
