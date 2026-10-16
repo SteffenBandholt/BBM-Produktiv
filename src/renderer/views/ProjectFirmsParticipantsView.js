@@ -67,6 +67,17 @@ export default class ProjectFirmsParticipantsView extends ProjectFirmsPromotionV
       return;
     }
 
+    if (
+      router &&
+      ctx?.section === "azl" &&
+      typeof router.openProjectModule === "function"
+    ) {
+      await router.openProjectModule(projectId, "azl", {
+        project: ctx?.project || null,
+      });
+      return;
+    }
+
     if (router && ctx?.section === "meetings" && typeof router.showMeetings === "function") {
       await router.showMeetings(projectId);
       return;
