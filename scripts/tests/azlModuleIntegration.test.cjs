@@ -32,6 +32,7 @@ async function runAzlModuleIntegrationTests(run) {
       "src/main/ipc/azlIpc.js",
       "src/renderer/modules/azl/index.js",
       "src/renderer/modules/azl/AzlHostScreen.js",
+      "src/renderer/modules/azl/AzlQuicklane.js",
     ]) {
       assert.equal(fs.existsSync(path.join(ROOT, relative)), true, relative);
     }
@@ -50,6 +51,15 @@ async function runAzlModuleIntegrationTests(run) {
     assert.match(host, /firmDirectoryListProjectParticipants/);
     assert.equal(host.includes("firmDirectoryListAll"), false);
     assert.equal(host.includes("projectFirmsAssignGlobalFirm"), false);
+    assert.match(host, /includes\("bauherr"\)/);
+  });
+
+  await run("azL: Quicklane bietet Projekt, Firmen, Neu und Speichern", () => {
+    const quicklane = read("src/renderer/modules/azl/AzlQuicklane.js");
+    assert.match(quicklane, /Projektfirmen/);
+    assert.match(quicklane, /Neue azL/);
+    assert.match(quicklane, /azL speichern/);
+    assert.match(quicklane, /data-bbm-quicklane/);
   });
 
   await run("azL: Auftragsdaten werden an Projektfirmen gepflegt", () => {
