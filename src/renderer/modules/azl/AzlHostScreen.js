@@ -1,3 +1,5 @@
+import AzlQuicklane from "./AzlQuicklane.js";
+
 const AZL_STYLE_ID = "bbm-azl-module-style";
 
 function ensureAzlStyles() {
@@ -12,6 +14,20 @@ function ensureAzlStyles() {
 function requireOk(result, key) {
   if (!result?.ok) throw new Error(result?.error || "azL-Daten konnten nicht verarbeitet werden.");
   return result[key];
+}
+
+function isBuilderFirm(firm) {
+  const values = [
+    firm?.gewerk,
+    firm?.project_role,
+    firm?.projectRole,
+    firm?.role,
+    firm?.function,
+    firm?.funktion,
+    firm?.funktion_gewerk,
+    firm?.funktionGewerk,
+  ];
+  return values.some((value) => String(value || "").toLocaleLowerCase("de").includes("bauherr"));
 }
 
 function createServices(router) {
@@ -84,7 +100,7 @@ function createServices(router) {
           projectId,
           includeInactive: false,
         });
-        const list = requireOk(result, "list") || [];
+        const list = (requireOk(result, "list") || []).filter((firm) => !isBuilderFirm(firm));
         return list.map((firm) => ({
           ...firm,
           ref: firm?.ref
@@ -142,6 +158,7 @@ export default class AzlHostScreen {
     this.project = project || null;
     this.root = null;
     this.inner = null;
+    this.quicklane = null;
     this._onFirmDataChanged = async () => {
       if (!this.root?.isConnected || !this.inner) return;
       try {
@@ -197,6 +214,33 @@ export default class AzlHostScreen {
         this.router?._setProjectRuntimeContext?.({ projectId: this.projectId, meetingId: null });
         const inner = await this._ensureInner();
         await inner.mount(this.root);
+        this.quicklane?.destroy?.();
+        this.quicklane = new AzlQuicklane({
+          onProject: async () => {
+            if (typeof this.router?.openProjectFormModal === "function") {
+              await this.router.openProjectFormModal({ projectId: this.projectId });
+              return;
+            }
+            await this.router?.showProjectForm?.({ projectId: this.projectId });
+          },
+          onFirms: async () => {
+            await this.router?.showProjectFirms?.(this.projectId);
+          },
+          onNew: () => {
+            this.inner?.management?.clear?.click?.();
+          },
+          onSave: () => {
+            this.inner?.management?.save?.click?.();
+          },
+          onClose: async () => {
+            if (typeof this.inner?.closeModule === "function") {
+              await this.inner.closeModule();
+              return;
+            }
+            await this.router?.showProjectWorkspace?.(this.projectId, { project: this.project });
+          },
+        });
+        this.quicklane.mount();
       } catch (error) {
         if (!this.root) return;
         this.root.textContent = `azL konnte nicht geöffnet werden: ${error?.message || error}`;
@@ -210,6 +254,10 @@ export default class AzlHostScreen {
     if (this._onFirmDataChanged) {
       window.removeEventListener("bbm:pool-data-changed", this._onFirmDataChanged);
     }
+    try {
+      this.quicklane?.destroy?.();
+    } catch (_error) {}
+    this.quicklane = null;
     try {
       this.inner?.destroy?.();
     } catch (_error) {}
