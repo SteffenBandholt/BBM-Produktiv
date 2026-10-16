@@ -33,8 +33,8 @@ function makeButton({ icon, title, onClick, disabled = false }) {
 }
 
 export default class AzlQuicklane {
-  constructor({ onProject, onFirms, onNew, onSave, onClose } = {}) {
-    this.callbacks = { onProject, onFirms, onNew, onSave, onClose };
+  constructor({ onProject, onFirms, onNew, onPreview, onClose } = {}) {
+    this.callbacks = { onProject, onFirms, onNew, onPreview, onClose };
     this.root = null;
     this.grip = null;
     this.open = false;
@@ -132,7 +132,7 @@ export default class AzlQuicklane {
     });
     documentActions.append(
       makeButton({ icon: "＋", title: "Neue azL", onClick: this.callbacks.onNew }),
-      makeButton({ icon: "💾", title: "azL speichern", onClick: this.callbacks.onSave })
+      makeButton({ icon: "📄", title: "PDF-Vorschau", onClick: this.callbacks.onPreview })
     );
 
     const moduleActions = document.createElement("div");
