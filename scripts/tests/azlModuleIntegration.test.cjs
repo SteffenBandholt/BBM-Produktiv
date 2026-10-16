@@ -54,11 +54,12 @@ async function runAzlModuleIntegrationTests(run) {
     assert.match(host, /includes\("bauherr"\)/);
   });
 
-  await run("azL: Quicklane bietet Projekt, Firmen, Neu und Speichern", () => {
+  await run("azL: Quicklane bietet Projekt, Firmen, Neu und PDF-Vorschau", () => {
     const quicklane = read("src/renderer/modules/azl/AzlQuicklane.js");
     assert.match(quicklane, /Projektfirmen/);
     assert.match(quicklane, /Neue azL/);
-    assert.match(quicklane, /azL speichern/);
+    assert.match(quicklane, /PDF-Vorschau/);
+    assert.equal(quicklane.includes("azL speichern"), false);
     assert.match(quicklane, /data-bbm-quicklane/);
   });
 
