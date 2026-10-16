@@ -38,6 +38,8 @@ export default class AzlQuicklane {
     this.root = null;
     this.grip = null;
     this.open = false;
+    this.pinned = false;
+    this.pinButton = null;
   }
 
   mount() {
@@ -97,10 +99,11 @@ export default class AzlQuicklane {
     grip.addEventListener("click", () => this.setOpen(true));
 
     const pin = makeButton({
-      icon: "×",
-      title: "Quicklane schließen",
-      onClick: () => this.setOpen(false),
+      icon: "🔓",
+      title: "Quicklane fixieren",
+      onClick: () => this.togglePinned(),
     });
+    this.pinButton = pin;
 
     const navigation = document.createElement("div");
     navigation.setAttribute("aria-label", "Navigation");
@@ -159,6 +162,19 @@ export default class AzlQuicklane {
     this.root.style.right = this.open ? "0" : "-" + PANEL_WIDTH_PX + "px";
     this.grip.style.display = this.open ? "none" : "block";
     this.grip.setAttribute("aria-expanded", this.open ? "true" : "false");
+  }
+
+  togglePinned() {
+    this.pinned = !this.pinned;
+    if (this.pinButton) {
+      this.pinButton.textContent = this.pinned ? "🔒" : "🔓";
+      this.pinButton.title = this.pinned ? "Quicklane lösen" : "Quicklane fixieren";
+      this.pinButton.setAttribute("aria-label", this.pinButton.title);
+      this.pinButton.style.background = this.pinned ? "#eef7ff" : "#ffffff";
+      this.pinButton.style.borderColor = this.pinned ? "#b6d4ff" : "#d7dee8";
+    }
+    if (!this.pinned) this.setOpen(false);
+    else this.setOpen(true);
   }
 
   destroy() {
