@@ -224,7 +224,13 @@ export default class AzlHostScreen {
             await this.router?.showProjectForm?.({ projectId: this.projectId });
           },
           onFirms: async () => {
-            await this.router?.showProjectFirms?.(this.projectId);
+            await this.router?.showProjectFirms?.(this.projectId, {
+              returnContext: {
+                section: "azl",
+                projectId: this.projectId,
+                project: this.project || null,
+              },
+            });
           },
           onNew: () => {
             this.inner?.management?.clear?.click?.();
