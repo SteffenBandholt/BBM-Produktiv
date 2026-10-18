@@ -5522,3 +5522,24 @@ Nächster offener Konsolidierungsschritt ist Paket 4; dessen Umfang bleibt vor
 Beginn getrennt zu bestimmen.
 
 ---
+
+
+---
+## 2026-10-18 – Nächster Architekturpunkt: gemeinsamer BBM-Storage-Core
+
+Als nächstes Architekturthema ist festgelegt: **Ein gemeinsamer BBM-Storage-Core verwaltet projektbezogene Ablagen.**
+
+Ziel:
+- Der Nutzer legt einmal einen Projekt-Stammordner fest.
+- Die Projektstruktur darunter wird von BBM automatisch und einheitlich erzeugt.
+- Module verwalten keine eigenen freien Speicherpfade, sondern erhalten ihren projektbezogenen Speicherbereich über einen gemeinsamen Storage-Vertrag.
+- Derselbe Vertrag muss sowohl in BBM-Produktiv als Host als auch in Standalone-Modulen funktionieren.
+- Bestehende Logik aus `src/main/ipc/projectStoragePaths.js` ist Ausgangspunkt und soll zu einem host-unabhängigen gemeinsamen Storage-Core weiterentwickelt werden.
+
+Für azL ist die bestehende Zielstruktur zunächst:
+- `<Projekt>\AzL\Angebote`
+- `<Projekt>\AzL\Ausgaben`
+
+Weitere Module wie Protokoll, SiGeKo und Restarbeiten sollen denselben Core verwenden und jeweils nur ihre Modulziele registrieren.
+
+**Nächster Schritt:** Architektur und API des BBM-Storage-Core festlegen, bevor weitere modulspezifische Speicherlogik ergänzt wird.
