@@ -8,8 +8,8 @@ function ensureSchema(db,{projectKey="id",createProjects=false}={}) {
  s.ensureFirmsAndPersonsSchema(db);s.ensureProjectGlobalFirmsSchema(db);s.ensureProjectFirmsAndPersonsSchema(db);
  require('./firmUsagesRepo.cjs').create({initDatabase:()=>db}).ensureFirmUsagesSchema(db);
 }
-function createRepositories({getDb,projectKey="id",projects}) {
- const deps={initDatabase:getDb,projectKey};
+function createRepositories({getDb,projectKey="id",projects,protocolInstalled=true}) {
+ const deps={initDatabase:getDb,projectKey,protocolInstalled};
  const firms=require('./firmsRepo.cjs').create(deps),persons=require('./personsRepo.cjs').create(deps);
  const projectFirms=require('./projectFirmsRepo.cjs').create(deps),projectPersons=require('./projectPersonsRepo.cjs').create(deps),usages=require('./firmUsagesRepo.cjs').create(deps);
  const {FirmDirectoryService}=require('./FirmDirectoryService.cjs').create({initDatabase:getDb,firmsRepo:firms,projectFirmsRepo:projectFirms,firmUsagesRepo:usages});

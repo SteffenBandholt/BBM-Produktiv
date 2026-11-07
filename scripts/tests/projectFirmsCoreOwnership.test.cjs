@@ -80,7 +80,9 @@ async function runProjectFirmsCoreOwnershipTests(run) {
   });
 
   await run("Paket 3: Bauherr ist eine projektbezogene Firmenrolle", () => {
-    const repoSource = read("src/main/db/projectFirmsRepo.js");
+    const compatibilitySource = read("src/main/db/projectFirmsRepo.js");
+    assert.match(compatibilitySource, /family-host-ports/);
+    const repoSource = read("packages/family-host-ports/src/projectFirmsRepo.cjs");
     const viewSource = read("src/renderer/views/ProjectFirmsWorkView.js");
     const formSource = read("src/renderer/modules/projektverwaltung/screens/ProjectFormScreen.js");
     assert.match(repoSource, /setProjectFirmRole/);

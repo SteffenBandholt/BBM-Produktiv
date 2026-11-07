@@ -1,6 +1,6 @@
 "use strict";
 // Extracted from src/main/db/projectPersonsRepo.js; dependency injection only.
-exports.create = function({initDatabase}) {
+exports.create = function({initDatabase, protocolInstalled=true}) {
 // src/main/db/projectPersonsRepo.js
 
 
@@ -227,6 +227,10 @@ function softDeleteProjectPerson(projectPersonId) {
   const db = initDatabase();
   if (!projectPersonId) throw new Error("projectPersonId required");
 
+  if(!protocolInstalled && ['meetings','meeting_participants','project_candidates'].some(table=>db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(table))) {
+    throw Error('Unexpected protocol reference tables; deletion refused');
+  }
+  if(protocolInstalled) {
   const inOpenMeeting = db
     .prepare(
       `
@@ -272,6 +276,7 @@ function softDeleteProjectPerson(projectPersonId) {
     throw new Error("Entfernen blockiert: Person ist noch im Personalpool. Bitte zuerst aus dem Pool entfernen.");
   }
 
+  }
   const now = _nowIso();
 
   const info = db.prepare(`
