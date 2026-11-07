@@ -1,0 +1,10 @@
+{
+  "name": "@bbm/family-host-ports",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.cjs",
+  "files": [
+    "src",
+    "README.md"
+  ]
+}
