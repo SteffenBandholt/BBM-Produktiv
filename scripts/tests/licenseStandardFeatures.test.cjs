@@ -166,16 +166,20 @@ async function runLicenseStandardFeaturesTests(run) {
     assert.throws(() => svc.requireFeature("export"), /LICENSE_INVALID:NO_LICENSE/);
   });
 
-  await run("Lizenzmodell: APP/PDF/MAIL/EXPORT bleiben als Alias auf Modul Protokoll erlaubt", () => {
+  await run("Lizenzmodell: Legacy-Dienste sind keine Modulaufrufe; alte Lizenzfeatures bleiben lesbar", () => {
     const svc = loadLicenseServiceWithStatus({
       valid: true,
       reason: "OK",
       license: { modules: ["protokoll"], features: [] },
     });
-    assert.equal(svc.requireFeature("app"), true);
-    assert.equal(svc.requireFeature("pdf"), true);
-    assert.equal(svc.requireFeature("mail"), true);
-    assert.equal(svc.requireFeature("export"), true);
+    // a0685bc449b836ae48b269c307b8df7623e39a84 intentionally removed these
+    // request aliases. Legacy *license data* still normalizes to protokoll.
+    const features = require(path.join(process.cwd(), "src/main/licensing/licenseFeatures.js"));
+    for (const id of ["app", "pdf", "mail", "export"]) {
+      assert.throws(() => svc.requireFeature(id), new RegExp(`FEATURE_NOT_ALLOWED:${id}`));
+      assert.deepEqual(features.normalizeLicensedModules([], [id]), ["protokoll"]);
+    }
+    assert.equal(svc.requireFeature("protokoll"), true);
   });
 
   await run("Lizenzmodell: AUDIO ohne audio-Feature wirft FEATURE_NOT_ALLOWED:diktat", () => {

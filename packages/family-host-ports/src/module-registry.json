@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 2,
+  "moduleTypes": [
+    "global",
+    "project",
+    "hybrid"
+  ],
+  "canonicalModuleIds": [
+    "protokoll",
+    "restarbeiten",
+    "sigeko",
+    "azl"
+  ],
+  "modules": {
+    "protokoll": {
+      "kind": "project",
+      "licenseKey": "module:protokoll",
+      "ipcGroup": "protokoll",
+      "ipcRegistrar": "protokoll",
+      "migrationRegistrar": "protokoll",
+      "requiredCapabilities": [
+        "pdf",
+        "mail",
+        "export",
+        "file-storage",
+        "audio",
+        "ui-editor"
+      ]
+    },
+    "restarbeiten": {
+      "kind": "project",
+      "licenseKey": "module:restarbeiten",
+      "ipcGroup": "restarbeiten",
+      "ipcRegistrar": "restarbeiten",
+      "migrationRegistrar": "restarbeiten",
+      "requiredCapabilities": [
+        "pdf",
+        "export",
+        "file-storage",
+        "ui-editor"
+      ]
+    },
+    "sigeko": {
+      "kind": "project",
+      "licenseKey": "module:sigeko",
+      "ipcGroup": "sigeko",
+      "ipcRegistrar": "sigeko",
+      "migrationRegistrar": "sigeko",
+      "requiredCapabilities": [
+        "pdf",
+        "mail",
+        "file-storage",
+        "ui-editor"
+      ]
+    },
+    "azl": {
+      "kind": "project",
+      "licenseKey": "module:azl",
+      "ipcGroup": "azl",
+      "ipcRegistrar": "azl",
+      "migrationRegistrar": "azl",
+      "requiredCapabilities": [
+        "pdf",
+        "export",
+        "file-storage",
+        "ui-editor"
+      ]
+    }
+  },
+  "capabilities": {
+    "pdf": {
+      "licenseKey": "service:pdf"
+    },
+    "mail": {
+      "licenseKey": "service:mail"
+    },
+    "export": {
+      "licenseKey": "service:export"
+    },
+    "file-storage": {
+      "licenseKey": "service:file-storage"
+    },
+    "audio": {
+      "licenseKey": "service:audio"
+    },
+    "ui-editor": {
+      "licenseKey": "service:ui-editor"
+    }
+  }
+}

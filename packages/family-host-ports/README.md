@@ -1,0 +1,1 @@
+Shared existing repositories, schema and signature verifier. Host supplies exactly one existing SQLite connection, primary project key and trusted verification inputs. Core 0.1.0 artifacts remain immutable. No Electron, default profile or database opening in this package.
