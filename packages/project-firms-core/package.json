@@ -1,0 +1,11 @@
+{
+  "name": "@bbm/project-firms-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "src/index.cjs",
+  "files": [
+    "src",
+    "README.md"
+  ]
+}
