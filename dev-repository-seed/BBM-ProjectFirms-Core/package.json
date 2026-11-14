@@ -1,0 +1,15 @@
+{
+  "name": "@bbm/project-firms-core",
+  "version": "0.2.0-dev.0",
+  "private": true,
+  "description": "BBMpro shared project, firms, persons and participants core — isolated development seed",
+  "type": "commonjs",
+  "main": "src/index.cjs",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "check": "node --check src/index.cjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
