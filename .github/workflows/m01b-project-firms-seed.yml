@@ -1,0 +1,31 @@
+name: M01-B ProjectFirms standalone seed checks
+on:
+  push:
+    branches: [dev/m01b-project-firms-v2-core]
+    paths:
+      - 'dev-repository-seed/BBM-ProjectFirms-Core/**'
+      - '.github/workflows/m01b-project-firms-seed.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-seed:
+    name: Source seed only - ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: Run isolated seed contract tests without any installation
+        working-directory: dev-repository-seed/BBM-ProjectFirms-Core
+        run: |
+          node --check src/index.cjs
+          node --test tests/contract.test.cjs
